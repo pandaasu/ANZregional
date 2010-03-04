@@ -28,6 +28,7 @@ create or replace package site_app.ladwgb02_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2010/02   Steve Gregan   Added new interface fields
 
    *******************************************************************************/
 
