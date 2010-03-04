@@ -104,7 +104,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.gross_weight,
                 t01.net_weight,
                 t01.bds_pce_factor_from_base_uom,
-                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO','TDU'),'VERP',substr(t01.bds_material_desc_en,1,3),'*NONE') material_usage,
+                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO','TDU'),'VERP',decode(substr(t01.bds_material_desc_en,1,3),'GUS','GUSSET',substr(t01.bds_material_desc_en,1,3)),'*NONE') material_usage,
                 t02.sap_prodctn_line_code,
                 t03.*,
                 t04.lli_lin_code,
@@ -126,7 +126,7 @@ create or replace package body psa_app.psa_mat_function as
             and t04.lli_lin_code = t05.lde_lin_code(+)
             and t01.plant_code = 'NZ01'
             and ((t01.material_type = 'FERT' and t01.plant_specific_status = '20' and (t01.mars_traded_unit_flag = 'X' or t01.mars_intrmdt_prdct_compnt_flag = 'X')) or
-                 (t01.material_type = 'VERP' and t01.plant_specific_status = '20' and (substr(t01.bds_material_desc_en,1,3)) in ('PCH','RLS')))
+                 (t01.material_type = 'VERP' and t01.plant_specific_status = '20' and (substr(t01.bds_material_desc_en,1,3) in ('PCH','RLS') or substr(t01.bds_material_desc_en,1,6) in ('GUSSET'))))
           order by t01.sap_material_code asc;
       rcd_bds_data csr_bds_data%rowtype;
 
@@ -156,14 +156,14 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from psa_mat_defn t01
           where t01.mde_mat_type = 'VERP'
-            and t01.mde_mat_usage in ('PCH','RLS')
+            and t01.mde_mat_usage in ('PCH','RLS','GUSSET')
             and (t01.mde_mat_status != '*INACTIVE' and t01.mde_mat_status != '*DEL')
             and not(t01.mde_sap_code in (select sap_material_code
                                            from bds.bds_material_plant_mfanz
                                           where plant_code = 'NZ01'
                                             and material_type = 'VERP'
                                             and plant_specific_status = '20'
-                                            and (substr(bds_material_desc_en,1,3)) in ('PCH','RLS')))
+                                            and (substr(bds_material_desc_en,1,3) in ('PCH','RLS') or substr(bds_material_desc_en,1,6) in ('GUSSET'))))
           order by t01.mde_mat_code asc;
       rcd_psa_verp csr_psa_verp%rowtype;
 
@@ -708,7 +708,7 @@ create or replace package body psa_app.psa_mat_function as
            from psa_mat_defn t01
           where t01.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
           order by t01.mde_mat_type asc,
-                   decode(t01.mde_mat_usage,'TDU','1','MPO','2',t01.mde_mat_usage) asc,
+                   decode(t01.mde_mat_usage,'TDU','1','MPO','2','PCH','3','RLS','4','GUSSET','5',t01.mde_mat_usage) asc,
                    t01.mde_mat_code asc;
       rcd_defn csr_defn%rowtype;
 
@@ -2054,8 +2054,8 @@ create or replace package body psa_app.psa_mat_function as
             if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'TDU') then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / TDU for packing component');
             end if;
-            if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or rcd_retrieve.mde_mat_usage != 'RLS') then
-               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS for forming component');
+            if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or (rcd_retrieve.mde_mat_usage != 'RLS' and rcd_retrieve.mde_mat_usage != 'GUSSET')) then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS or VERP / GUSSET for forming component');
             end if;
          end if;
       end if;
