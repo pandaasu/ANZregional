@@ -28,6 +28,7 @@ create or replace package site_app.ladwgb05_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2010/02   Steve Gregan   Added new interface fields
 
    *******************************************************************************/
 
@@ -69,11 +70,10 @@ create or replace package body site_app.ladwgb05_extract as
       /*-*/
       cursor csr_extract is
          select decode(trim(t01.vendor_code),null,';','"'||replace(trim(t01.vendor_code),'"','""')||'";') as vendor_code,
-                decode(trim(t02.vendor_code),null,';','"'||replace(trim(t02.vendor_code),'"','""')||'";') as vendor_name,
+                decode(trim(t02.vendor_name),null,';','"'||replace(trim(t02.vendor_name),'"','""')||'";') as vendor_name,
                 decode(trim(t01.group_key),null,';','"'||replace(trim(t01.group_key),'"','""')||'";') as group_key,
                 decode(trim(t01.representative_name),null,';','"'||replace(trim(t01.representative_name),'"','""')||'";') as representative_name,
                 decode(trim(t01.deletion_flag),null,';','"'||replace(trim(t01.deletion_flag),'"','""')||'";') as deletion_flag,
-                decode(trim(t01.account_group_code),null,';','"'||replace(trim(t01.account_group_code),'"','""')||'";') as account_group_code,
                 decode(trim(t03.bank_number),null,';','"'||replace(trim(t03.bank_number),'"','""')||'";') as bank_number,
                 decode(trim(t03.bank_account_number),null,';','"'||replace(trim(t03.bank_account_number),'"','""')||'";') as bank_account_number,
                 decode(trim(t03.bank_name),null,';','"'||replace(trim(t03.bank_name),'"','""')||'";') as bank_name,
@@ -140,7 +140,6 @@ create or replace package body site_app.ladwgb05_extract as
                                           rcd_extract.group_key ||
                                           rcd_extract.representative_name ||
                                           rcd_extract.deletion_flag ||
-                                          rcd_extract.account_group_code ||
                                           rcd_extract.bank_number ||
                                           rcd_extract.bank_account_number ||
                                           rcd_extract.bank_name ||
