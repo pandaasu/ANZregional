@@ -128,7 +128,7 @@ create or replace package body site_app.ladwgb05_extract as
          /* Create outbound interface if record(s) exist
          /*-*/
          if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('LADWGB05',null,'MARS_GB_05_VEND.txt');
+            var_instance := lics_outbound_loader.create_interface('LADWGB05');
             var_start := false;
          end if;
 

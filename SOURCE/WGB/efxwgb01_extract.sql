@@ -165,7 +165,7 @@ create or replace package body iface_app.efxwgb01_extract as
          /* Create outbound interface if record(s) exist
          /*-*/
          if (var_start) then
-            var_instance := lics_outbound_loader.create_interface('EFXWGB01',null,'MARS_GB_06_OTLS.txt');
+            var_instance := lics_outbound_loader.create_interface('EFXWGB01');
             var_start := false;
          end if;
 
