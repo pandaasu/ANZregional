@@ -7,7 +7,7 @@
 
  Description
  -----------
- Production Scheduling Application - Production Schedule Crew Table
+ Production Scheduling Application - Production Schedule Resource Table
 
  YYYY/MM   Author         Description
  -------   ------         -----------
@@ -29,7 +29,7 @@ create table psa.psa_psr_reso
 /**/
 /* Comments
 /**/
-comment on table psa.psa_psr_reso is 'Production Schedule Crew Table';
+comment on table psa.psa_psr_reso is 'Production Schedule Resource Table';
 comment on column psa.psa_psr_reso.psr_psr_code is 'Schedule code';
 comment on column psa.psa_psr_reso.psr_psr_week is 'Schedule MARS week';
 comment on column psa.psa_psr_reso.psr_prd_type is 'Production type code';
