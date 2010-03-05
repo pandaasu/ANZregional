@@ -77,7 +77,7 @@ create or replace package body site_app.ladwgb01_extract as
                 decode(trim(t01.bds_material_desc_zh),null,';','"'||replace(trim(t01.bds_material_desc_zh),'"','""')||'";') as bds_material_desc_zh,
                 decode(trim(t01.bds_material_desc_en),null,';','"'||replace(trim(t01.bds_material_desc_en),'"','""')||'";') as bds_material_desc_en,
                 decode(trim(t03.dstrbtn_chain_status),null,';','"'||replace(trim(t03.dstrbtn_chain_status),'"','""')||'";') as dstrbtn_chain_status,
-                decode(trim(t04.vakey),null,';','"'||to_char(t04.kbetr,'fm00000.00000')||'"') as list_price
+                decode(trim(t04.vakey),null,'','"'||to_char(t04.kbetr,'fm00000.00000')||'"') as list_price
            from bds_material_hdr t01,
                 bds_material_classfctn_en t02,
                 bds_material_dstrbtn_chain t03,

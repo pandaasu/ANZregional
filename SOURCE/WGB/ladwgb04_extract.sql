@@ -101,7 +101,7 @@ create or replace package body site_app.ladwgb04_extract as
                 decode(trim(t01.sap_sales_org_code_level_5),null,';','"'||replace(trim(t01.sap_sales_org_code_level_5),'"','""')||'";') as sap_sales_org_code_level_5,
                 decode(trim(t01.sap_distbn_chnl_code_level_5),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_5),'"','""')||'";') as sap_distbn_chnl_code_level_5,
                 decode(trim(t01.sap_division_code_level_5),null,';','"'||replace(trim(t01.sap_division_code_level_5),'"','""')||'";') as sap_division_code_level_5,
-                decode(trim(t01.cust_hier_sort_level_5),null,';','"'||replace(trim(t01.cust_hier_sort_level_5),'"','""')||'"') as cust_hier_sort_level_5
+                decode(trim(t01.cust_hier_sort_level_5),null,'','"'||replace(trim(t01.cust_hier_sort_level_5),'"','""')||'"') as cust_hier_sort_level_5
            from sales_force_geo_hier t01
           where t01.sap_sales_org_code = '135';
       rcd_extract csr_extract%rowtype;

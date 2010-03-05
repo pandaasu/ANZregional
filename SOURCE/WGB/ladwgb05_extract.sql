@@ -78,7 +78,7 @@ create or replace package body site_app.ladwgb05_extract as
                 decode(trim(t03.bank_account_number),null,';','"'||replace(trim(t03.bank_account_number),'"','""')||'";') as bank_account_number,
                 decode(trim(t03.bank_name),null,';','"'||replace(trim(t03.bank_name),'"','""')||'";') as bank_name,
                 decode(trim(t03.bank_branch),null,';','"'||replace(trim(t03.bank_branch),'"','""')||'";') as bank_branch,
-                decode(trim(t03.location),null,';','"'||replace(trim(t03.location),'"','""')||'"') as location
+                decode(trim(t03.location),null,'','"'||replace(trim(t03.location),'"','""')||'"') as location
            from bds_vend_header t01,
                 (select t01.vendor_code,
                         max(ltrim(t01.name ||' '|| t01.name_02)) as vendor_name

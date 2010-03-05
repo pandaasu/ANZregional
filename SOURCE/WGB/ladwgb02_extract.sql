@@ -80,7 +80,7 @@ create or replace package body site_app.ladwgb02_extract as
                 decode(trim(t05.sales_org_code),null,';','"'||replace(trim(t05.sales_org_code),'"','""')||'";') as sales_org_code,
                 decode(trim(t05.distbn_chnl_code),null,';','"'||replace(trim(t05.distbn_chnl_code),'"','""')||'";') as distbn_chnl_code,
                 decode(trim(t05.division_code),null,';','"'||replace(trim(t05.division_code),'"','""')||'";') as division_code,
-                decode(trim(t05.za_cust_code),null,';','"'||replace(trim(t05.za_cust_code),'"','""')||'"') as za_cust_code
+                decode(trim(t05.za_cust_code),null,'','"'||replace(trim(t05.za_cust_code),'"','""')||'"') as za_cust_code
            from bds_cust_header t01,
                 (select t01.customer_code,
                         max(ltrim(t01.name ||' '|| t01.name_02)) as customer_name

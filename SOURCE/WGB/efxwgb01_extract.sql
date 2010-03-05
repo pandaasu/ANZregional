@@ -27,6 +27,7 @@ create or replace package iface_app.efxwgb01_extract as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2010/02   Steve Gregan   Added new interface fields
 
    *******************************************************************************/
 
@@ -53,6 +54,8 @@ create or replace package body iface_app.efxwgb01_extract as
    /* Private constants
    /*-*/
    con_market_id constant number := 4;
+   con_snack_id constant number := 5;
+   con_pet_id constant number := 6;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -75,9 +78,11 @@ create or replace package body iface_app.efxwgb01_extract as
                 decode(trim(t01.customer_name),null,';','"'||replace(trim(t01.customer_name),'"','""')||'";') as customer_name,
                 decode(trim(t02.cust_type_name),null,';','"'||replace(trim(t02.cust_type_name),'"','""')||'";') as cust_type_name,
                 decode(trim(t01.geo_level5_code),null,';','"'||replace(trim(t01.geo_level5_code),'"','""')||'";') as geo_level5_code,
-                decode(trim(t09.distcust_code),null,';','"'||replace(trim(t09.distcust_code),'"','""')||'";') as distcust_code,
+                decode(trim(t10.customer_code),null,';','"'||replace(trim(t10.customer_code),'"','""')||'";') as distributor_code,
                 decode(trim(t07.segment_name),null,';','"'||replace(trim(t07.segment_name),'"','""')||'";') as segment_name,
-                decode(trim(t01.active_flg),null,';','"'||replace(trim(t01.active_flg),'"','""')||'"') as active_flg
+                decode(trim(t01.active_flg),null,';','"'||replace(trim(t01.active_flg),'"','""')||'";') as active_flg,
+                decode(trim(t09.affiliation_name),null,';','"'||replace(trim(t09.affiliation_name),'"','""')||'";') as banner_name,
+                '"'||decode(t01.business_unit_id,con_snack_id,'51',con_pet_id,'56','51')||'"' as division_code
            from customer t01,
                 cust_type t02,
                 (select t01.customer_id,
@@ -97,7 +102,8 @@ create or replace package body iface_app.efxwgb01_extract as
                 sales_region t06,
                 segment t07,
                 geo_hierarchy t08,
-                distributor_cust t09
+                affiliation t09,
+                customer t10
           where t01.cust_type_id = t02.cust_type_id(+)
             and t01.customer_id = t03.customer_id(+)
             and t03.sales_territory_id = t04.sales_territory_id(+)
@@ -110,9 +116,11 @@ create or replace package body iface_app.efxwgb01_extract as
             and t01.geo_level4_code = t08.geo_level4_code(+)
             and t01.geo_level5_code = t08.geo_level5_code(+)
             and t01.business_unit_id = t08.business_unit_id(+)
-            and t01.customer_id = t09.customer_id(+)
-            and t01.distributor_id = t09.distributor_id(+)
+            and t01.affiliation_id = t09.affiliation_id(+)
+            and t01.distributor_id = t10.customer_id(+)
             and t01.market_id = con_market_id
+            and t01.status = 'A'
+            and t01.outlet_flg = 'Y'
             and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t02.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t03.modified_date) >= trunc(sysdate) - var_history or
@@ -120,7 +128,8 @@ create or replace package body iface_app.efxwgb01_extract as
                  trunc(t05.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t06.modified_date) >= trunc(sysdate) - var_history or
                  trunc(t07.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t09.modified_date) >= trunc(sysdate) - var_history);
+                 trunc(t09.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t10.modified_date) >= trunc(sysdate) - var_history);
       rcd_customer csr_customer%rowtype;
 
    /*-------------*/
@@ -167,9 +176,11 @@ create or replace package body iface_app.efxwgb01_extract as
                                           rcd_customer.customer_name ||
                                           rcd_customer.cust_type_name ||
                                           rcd_customer.geo_level5_code ||
-                                          rcd_customer.distcust_code ||
+                                          rcd_customer.distributor_code ||
                                           rcd_customer.segment_name ||
-                                          rcd_customer.active_flg);
+                                          rcd_customer.active_flg ||
+                                          rcd_customer.account_group_name ||
+                                          rcd_customer.division_code);
 
       end loop;
       close csr_customer;
