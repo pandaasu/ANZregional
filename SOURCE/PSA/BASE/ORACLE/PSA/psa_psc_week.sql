@@ -41,7 +41,7 @@ comment on column psa.psa_psc_week.psw_upd_date is 'Last updated date';
 /* Primary Key Constraint
 /**/
 alter table psa.psa_psc_week
-   add constraint psa_psc_week_pk primary key (psw_psc_code, psw_psc_wee);
+   add constraint psa_psc_week_pk primary key (psw_psc_code, psw_psc_week);
 
 /**/
 /* Authority
