@@ -179,7 +179,7 @@ create or replace package body iface_app.efxwgb01_extract as
                                           rcd_customer.distributor_code ||
                                           rcd_customer.segment_name ||
                                           rcd_customer.active_flg ||
-                                          rcd_customer.account_group_name ||
+                                          rcd_customer.banner_name ||
                                           rcd_customer.division_code);
 
       end loop;
