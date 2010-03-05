@@ -102,7 +102,7 @@ create or replace package body site_app.ladwgb01_extract as
             and t03.dstrbtn_channel = '10'
             and t03.dstrbtn_chain_delete_indctr is null
             and t03.dstrbtn_chain_status in ('20','99')
-            and t03.bds_dstrbtn_chain_valid <= to_char(sysdate,'yyyymmdd')
+            and t03.bds_dstrbtn_chain_valid <= trunc(sysdate)
             and trunc(t01.bds_lads_date) >= trunc(sysdate) - var_history;
       rcd_extract csr_extract%rowtype;
 
