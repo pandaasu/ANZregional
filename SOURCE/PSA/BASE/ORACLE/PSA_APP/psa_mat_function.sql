@@ -465,8 +465,10 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          if rcd_psa_fert.mde_mat_status = '*ADD' then
 
-            delete from psa_mat_defn
-             where mde_mat_code = rcd_psa_fert.mde_mat_code;
+            delete from psa_mat_comp where mco_mat_code = rcd_psa_fert.mde_mat_code;
+            delete from psa_mat_line where mli_mat_code = rcd_psa_fert.mde_mat_code;
+            delete from psa_mat_prod where mpr_mat_code = rcd_psa_fert.mde_mat_code;
+            delete from psa_mat_defn where mde_mat_code = rcd_psa_fert.mde_mat_code;
 
          /*-*/
          /* Remove existing FERT materials (*DEL)
@@ -502,8 +504,10 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          if rcd_psa_verp.mde_mat_status = '*ADD' then
 
-            delete from psa_mat_defn
-             where mde_mat_code = rcd_psa_verp.mde_mat_code;
+            delete from psa_mat_comp where mco_mat_code = rcd_psa_verp.mde_mat_code;
+            delete from psa_mat_line where mli_mat_code = rcd_psa_verp.mde_mat_code;
+            delete from psa_mat_prod where mpr_mat_code = rcd_psa_verp.mde_mat_code;
+            delete from psa_mat_defn where mde_mat_code = rcd_psa_verp.mde_mat_code;
 
          /*-*/
          /* Remove existing VERP materials (*DEL)
