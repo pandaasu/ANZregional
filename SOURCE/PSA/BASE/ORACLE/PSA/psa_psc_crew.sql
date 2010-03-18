@@ -39,7 +39,7 @@ comment on column psa.psa_psc_crew.psc_cmo_code is 'Crew model code';
 /* Primary Key Constraint
 /**/
 alter table psa.psa_psc_crew
-   add constraint psa_psc_crew_pk primary key (psc_psc_code, psc_psc_week, psc_prd_type, psc_shf_code, psc_cmo_code);
+   add constraint psa_psc_crew_pk primary key (psc_psc_code, psc_psc_week, psc_prd_type, psc_shf_code);
 
 /**/
 /* Authority
