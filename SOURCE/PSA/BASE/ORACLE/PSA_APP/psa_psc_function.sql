@@ -27,6 +27,7 @@ create or replace package psa_app.psa_psc_function as
    /*-*/
    function select_list return psa_xml_type pipelined;
    function retrieve_data return psa_xml_type pipelined;
+   function retrieve_week return psa_xml_type pipelined;
 
 end psa_psc_function;
 /
@@ -230,6 +231,343 @@ create or replace package body psa_app.psa_psc_function as
       var_action varchar2(32);
       var_found boolean;
       var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_output varchar2(2000 char);
+      var_shf_flag boolean;
+      var_bar_snam varchar2(512);
+      var_bar_spos number;
+      var_bar_scnt number;
+      var_bar_sday number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_psc_hedr t01
+          where t01.psh_psc_code = var_psc_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_week is
+         select t01.psw_psc_code,
+                t01.psw_psc_week,
+                'Y'||substr(t01.psw_psc_week,1,4)||' P'||substr(t01.psw_psc_week,5,2)||' W'||substr(t01.psw_psc_week,7,1) as wek_name,
+                to_char(t02.calendar_date,'yyyy/mm/dd') as day_code,
+                to_char(t02.calendar_date,'dy') as day_name
+           from psa_psc_week t01,
+                mars_date t02
+          where t01.psw_psc_week = to_char(t02.mars_week,'fm0000000')
+            and t01.psw_psc_code = rcd_retrieve.psh_psc_code
+          order by t01.psw_psc_week asc,
+                   t02.calendar_date asc;
+      rcd_week csr_week%rowtype;
+
+      cursor csr_shft is
+         select t01.pss_shf_code,
+                t01.pss_shf_start,
+                t01.pss_shf_duration,
+                t02.sde_shf_name
+           from psa_psc_shft t01,
+                psa_shf_defn t02
+          where t01.pss_shf_code = t02.sde_shf_code
+            and t01.pss_psc_code = rcd_week.psw_psc_code
+            and t01.pss_psc_week = rcd_week.psw_psc_week
+          order by t01.pss_smo_seqn asc;
+      rcd_shft csr_shft%rowtype;
+
+      cursor csr_prod is
+         select t01.psp_psc_code,
+                t01.psp_psc_week,
+                t01.psp_prd_type,
+                t02.pty_prd_name
+           from psa_psc_prod t01,
+                psa_prd_type t02
+          where t01.psp_prd_type = t02.pty_prd_type
+            and t01.psp_psc_code = rcd_week.psw_psc_code
+            and t01.psp_psc_week = rcd_week.psw_psc_week
+            and t01.psp_prd_type in ('*FILL','*PACK','*FORM')
+          order by decode(t01.psp_prd_type,'*FILL',1,'*PACK',2,'*FORM',3) asc;
+      rcd_prod csr_prod%rowtype;
+
+      cursor csr_crew is
+         select t01.psc_shf_code,
+                t01.psc_cmo_code
+           from psa_psc_crew t01
+          where t01.psc_psc_code = rcd_prod.psp_psc_code
+            and t01.psc_psc_week = rcd_prod.psp_psc_week
+            and t01.psc_prd_type = rcd_prod.psp_prd_type
+          order by t01.psc_shf_code asc;
+      rcd_crew csr_crew%rowtype;
+
+      cursor csr_line is
+         select t01.psl_lin_code,
+                t01.psl_con_code
+           from psa_psc_line t01
+          where t01.psl_psc_code = rcd_prod.psp_psc_code
+            and t01.psl_psc_week = rcd_prod.psp_psc_week
+            and t01.psl_prd_type = rcd_prod.psp_prd_type
+          order by t01.psl_lin_code asc,
+                   t01.psl_con_code asc;
+      rcd_line csr_line%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing production schedule when required
+      /*-*/
+      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
+         var_found := false;
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+         if var_found = false then
+            psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') does not exist');
+         end if;
+         if psa_gen_function.get_mesg_count != 0 then
+            return;
+         end if;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the production schedule XML
+      /*-*/
+      if var_action = '*UPDDEF' then
+         var_output := '<PSCDFN PSCCDE="'||psa_to_xml(rcd_retrieve.psh_psc_code||' - (Last updated by '||rcd_retrieve.psh_upd_user||' on '||to_char(rcd_retrieve.psh_upd_date,'yyyy/mm/dd')||')')||'"';
+         var_output := var_output||' PSCNAM="'||psa_to_xml(rcd_retrieve.psh_psc_name)||'"';
+         var_output := var_output||' PSCSTS="'||psa_to_xml(rcd_retrieve.psh_psc_status)||'"/>';
+         pipe row(psa_xml_object(var_output));
+      elsif var_action = '*CPYDEF' then
+         var_output := '<PSCDFN PSCCDE=""';
+         var_output := var_output||' PSCNAM="'||psa_to_xml(rcd_retrieve.psh_psc_name)||'"';
+         var_output := var_output||' PSCSTS="'||psa_to_xml(rcd_retrieve.psh_psc_status)||'"/>';
+         pipe row(psa_xml_object(var_output));
+      elsif var_action = '*CRTDEF' then
+         var_output := '<PSCDFN PSCCDE=""';
+         var_output := var_output||' PSCNAM=""';
+         var_output := var_output||' PSCSTS="*WORK"/>';
+         pipe row(psa_xml_object(var_output));
+      end if;
+
+      /*-*/
+      /* Pipe the week data XML
+      /*-*/
+      var_wek_code := '*NULL';
+      open csr_week;
+      loop
+         fetch csr_week into rcd_week;
+         if csr_week%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Pipe the week data XML
+         /*-*/
+         if rcd_week.psw_psc_week != var_wek_code then
+            var_wek_code := rcd_week.psw_psc_week;
+            pipe row(psa_xml_object('<WEKDFN WEKCDE="'||psa_to_xml(rcd_week.psw_psc_week)||'"'||
+                                           ' DAYNAM="'||psa_to_xml(rcd_week.wek_name)||'"/>'));
+         end if;
+
+         /*-*/
+         /* Pipe the day data XML
+         /*-*/
+         pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_week.day_code)||'"'||
+                                        ' DAYNAM="'||psa_to_xml(rcd_week.day_name)||'"/>'));
+
+         /*-*/
+         /* Pipe the shift data XML
+         /*-*/
+         var_shf_flag := false;
+         open csr_shft;
+         loop
+            fetch csr_shft into rcd_shft;
+            if csr_shft%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Calculate the shift name
+            /*-*/
+            if var_shf_flag = false then
+               var_bar_spos := ((trunc(rcd_shft.pss_shf_start / 100) + (mod(rcd_shft.pss_shf_start,100) / 60)) * 4) + 1;
+            else
+               var_bar_spos := var_bar_spos + var_bar_scnt;
+            end if;
+            var_bar_scnt := (rcd_shft.pss_shf_duration / 60) * 4;
+            var_bar_sday := trunc(var_bar_spos / 96) + 1;
+            var_bar_snam := 'Sunday';
+            if var_bar_sday = 1 then
+               var_bar_snam := 'Sunday';
+            elsif var_bar_sday = 2 then
+               var_bar_snam := 'Monday';
+            elsif var_bar_sday = 3 then
+               var_bar_snam := 'Tuesday';
+            elsif var_bar_sday = 4 then
+               var_bar_snam := 'Wednesday';
+            elsif var_bar_sday = 5 then
+               var_bar_snam := 'Thursday';
+            elsif var_bar_sday = 6 then
+               var_bar_snam := 'Friday';
+            elsif var_bar_sday = 7 then
+               var_bar_snam := 'Saturday';
+            elsif var_bar_sday = 8 then
+               var_bar_snam := 'Sunday';
+            end if;
+            var_bar_snam := var_bar_snam||' - '||rcd_shft.sde_shf_name;
+
+            /*-*/
+            /* Pipe the shift data XML
+            /*-*/
+            pipe row(psa_xml_object('<SHFDFN SHFCDE="'||psa_to_xml(rcd_shft.pss_shf_code)||'"'||
+                                           ' SFHNAM="'||psa_to_xml(var_bar_snam)||'"'||
+                                           ' SHFSTR="'||psa_to_xml(to_char(rcd_shft.pss_shf_start))||'"'||
+                                           ' SHFDUR="'||psa_to_xml(to_char(rcd_shft.pss_shf_duration))||'"/>'));
+
+         end loop;
+         close csr_shft;
+
+         /*-*/
+         /* Pipe the production type data XML
+         /*-*/
+         open csr_prod;
+         loop
+            fetch csr_prod into rcd_prod;
+            if csr_prod%notfound then
+               exit;
+            end if;
+
+            /*-*/
+            /* Pipe the production type data XML
+            /*-*/
+            pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_prod.psp_prd_type)||'"'||
+                                           ' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"/>'));
+
+            /*-*/
+            /* Pipe the production type crew data XML
+            /*-*/
+            open csr_crew;
+            loop
+               fetch csr_crew into rcd_crew;
+               if csr_crew%notfound then
+                  exit;
+               end if;
+
+               /*-*/
+               /* Pipe the production type crew data XML
+               /*-*/
+               pipe row(psa_xml_object('<CREDFN SHFCDE="'||psa_to_xml(rcd_crew.psc_shf_code)||'"'||
+                                              ' CMOCDE="'||psa_to_xml(rcd_crew.psc_cmo_code)||'"/>'));
+
+            end loop;
+            close csr_crew;
+
+            /*-*/
+            /* Pipe the production type line data XML
+            /*-*/
+            open csr_line;
+            loop
+               fetch csr_line into rcd_line;
+               if csr_line%notfound then
+                  exit;
+               end if;
+
+               /*-*/
+               /* Pipe the production type line data XML
+               /*-*/
+               pipe row(psa_xml_object('<LINDFN LINCDE="'||psa_to_xml(rcd_line.psl_lin_code)||'"'||
+                                              ' CONCDE="'||psa_to_xml(rcd_line.psl_con_code)||'"/>'));
+
+            end loop;
+            close csr_line;
+
+         end loop;
+         close csr_prod;
+
+      end loop;
+      close csr_week;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(psa_xml_object('</PSA_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_data;
+
+   /*****************************************************/
+   /* This procedure performs the retrieve week routine */
+   /*****************************************************/
+   function retrieve_week return psa_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
       var_output varchar2(2000 char);
       var_wek_code varchar2(32);
       var_smo_code varchar2(32);
@@ -248,11 +586,11 @@ create or replace package body psa_app.psa_psc_function as
          select to_char(t01.mars_week,'fm0000000') as wek_code,
                 'Y'||substr(to_char(t01.mars_week,'fm0000000'),1,4)||' P'||substr(to_char(t01.mars_week,'fm0000000'),5,2)||' W'||substr(to_char(t01.mars_week,'fm0000000'),7,1) as wek_name,
                 to_char(t01.calendar_date,'yyyy/mm/dd') as day_code,
-                to_char(t01.calendar_date,'dy') as day_name 
+                to_char(t01.calendar_date,'dy') as day_name
            from mars_date t01
           where t01.mars_week in (select distinct(mars_week)
                                     from mars_date
-                                    where calendar_date >= trunc(sysdate-14)
+                                    where calendar_date >= trunc(sysdate-28)
                                       and calendar_date <= trunc(sysdate+28))
           order by t01.mars_week asc,
                    t01.calendar_date asc;
@@ -266,7 +604,7 @@ create or replace package body psa_app.psa_psc_function as
           where t01.rhe_req_status = '*LOADED'
             and t01.rhe_str_week in (select distinct(mars_week)
                                        from mars_date
-                                      where calendar_date >= trunc(sysdate-14)
+                                      where calendar_date >= trunc(sysdate-28)
                                         and calendar_date <= trunc(sysdate+28))
           order by t01.rhe_req_code asc;
       rcd_preq csr_preq%rowtype;
@@ -361,7 +699,7 @@ create or replace package body psa_app.psa_psc_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
+      if var_action != '*CRTWEK' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -369,48 +707,26 @@ create or replace package body psa_app.psa_psc_function as
       end if;
 
       /*-*/
-      /* Retrieve the existing production schedule when required
+      /* Retrieve the existing production schedule
       /*-*/
-      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
-         var_found := false;
-         open csr_retrieve;
-         fetch csr_retrieve into rcd_retrieve;
-         if csr_retrieve%found then
-            var_found := true;
-         end if;
-         close csr_retrieve;
-         if var_found = false then
-            psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') does not exist');
-         end if;
-         if psa_gen_function.get_mesg_count != 0 then
-            return;
-         end if;
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
       end if;
 
       /*-*/
       /* Pipe the XML start
       /*-*/
       pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
-
-      /*-*/
-      /* Pipe the production schedule XML
-      /*-*/
-      if var_action = '*UPDDEF' then
-         var_output := '<PSCDFN PSCCDE="'||psa_to_xml(rcd_retrieve.psh_psc_code||' - (Last updated by '||rcd_retrieve.psh_upd_user||' on '||to_char(rcd_retrieve.psh_upd_date,'yyyy/mm/dd')||')')||'"';
-         var_output := var_output||' PSCNAM="'||psa_to_xml(rcd_retrieve.psh_psc_name)||'"';
-         var_output := var_output||' PSCSTS="'||psa_to_xml(rcd_retrieve.psh_psc_status)||'"/>';
-         pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CPYDEF' then
-         var_output := '<PSCDFN PSCCDE=""';
-         var_output := var_output||' PSCNAM="'||psa_to_xml(rcd_retrieve.psh_psc_name)||'"';
-         var_output := var_output||' PSCSTS="'||psa_to_xml(rcd_retrieve.psh_psc_status)||'"/>';
-         pipe row(psa_xml_object(var_output));
-      elsif var_action = '*CRTDEF' then
-         var_output := '<PSCDFN PSCCDE=""';
-         var_output := var_output||' PSCNAM=""';
-         var_output := var_output||' PSCSTS="*WORK"/>';
-         pipe row(psa_xml_object(var_output));
-      end if;
 
       /*-*/
       /* Pipe the week data XML
@@ -569,12 +885,12 @@ create or replace package body psa_app.psa_psc_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_WEEK - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end retrieve_data;
+   end retrieve_week;
 
 end psa_psc_function;
 /
