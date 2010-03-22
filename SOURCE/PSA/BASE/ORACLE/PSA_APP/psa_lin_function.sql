@@ -528,7 +528,7 @@ create or replace package body psa_app.psa_lin_function as
       if rcd_psa_lin_defn.lde_lin_name is null then
          psa_gen_function.add_mesg_data('Line name must be supplied');
       end if;
-      if rcd_psa_lin_defn.lde_lin_wastage is null or (rcd_psa_lin_defn.lde_lin_wastage < 1 or rcd_psa_lin_defn.lde_lin_wastage > 100) then
+      if rcd_psa_lin_defn.lde_lin_wastage is null or (rcd_psa_lin_defn.lde_lin_wastage < 0 or rcd_psa_lin_defn.lde_lin_wastage > 100) then
          psa_gen_function.add_mesg_data('Line wastage must be in range 1 to 100');
       end if;
       if rcd_psa_lin_defn.lde_lin_events is null or (rcd_psa_lin_defn.lde_lin_events != '0' and rcd_psa_lin_defn.lde_lin_events != '1') then
