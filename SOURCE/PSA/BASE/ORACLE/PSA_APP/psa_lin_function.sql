@@ -623,6 +623,7 @@ create or replace package body psa_app.psa_lin_function as
                    lde_upd_user = rcd_psa_lin_defn.lde_upd_user,
                    lde_upd_date = rcd_psa_lin_defn.lde_upd_date
              where lde_lin_code = rcd_psa_lin_defn.lde_lin_code;
+            delete from psa_lin_link where lli_lin_code = rcd_psa_lin_defn.lde_lin_code;
          end if;
       elsif var_action = '*CRTDEF' then
          var_confirm := 'created';
