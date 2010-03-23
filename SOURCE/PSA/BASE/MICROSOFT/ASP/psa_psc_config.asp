@@ -127,9 +127,30 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
+      cobjScreens[3] = new clsScreen('dspDetail','hedDetail');
+      cobjScreens[4] = new clsScreen('dspWeek','hedWeek');
+      cobjScreens[5] = new clsScreen('dspEvnt','hedEvnt');
+      cobjScreens[6] = new clsScreen('dspFill','hedFill');
+      cobjScreens[7] = new clsScreen('dspPack','hedPack');
+      cobjScreens[8] = new clsScreen('dspForm','hedForm');
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Production Schedule Selection';
-      cobjScreens[2].hedtxt = 'Create Production Schedule';
+      cobjScreens[2].hedtxt = 'Production Schedule Definition';
+      cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Review';
+      cobjScreens[4].hedtxt = 'Production Schedule Maintenance - Week Definition';
+      cobjScreens[5].hedtxt = 'Production Schedule Maintenance - Event Activity';
+      cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Filling Activity';
+      cobjScreens[7].hedtxt = 'Production Schedule Maintenance - Packing Activity';
+      cobjScreens[8].hedtxt = 'Production Schedule Maintenance - Forming Activity';
+      cobjScreens[0].bodsrl = 'no';
+      cobjScreens[1].bodsrl = 'no';
+      cobjScreens[2].bodsrl = 'auto';
+      cobjScreens[3].bodsrl = 'no';
+      cobjScreens[4].bodsrl = 'auto';
+      cobjScreens[5].bodsrl = 'auto';
+      cobjScreens[6].bodsrl = 'auto';
+      cobjScreens[7].bodsrl = 'auto';
+      cobjScreens[8].bodsrl = 'auto';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -142,6 +163,7 @@ sub PaintFunction()%>
       this.scrnam = strScrName;
       this.hednam = strHedName;
       this.hedtxt = '';
+      this.bodsrl = '';
    }
    function displayScreen(strScreen) {
       var objScreen;
@@ -150,6 +172,7 @@ sub PaintFunction()%>
          objScreen = document.getElementById(cobjScreens[i].scrnam);
          objHeading = document.getElementById(cobjScreens[i].hednam);
          if (cobjScreens[i].scrnam == strScreen) {
+            document.getElementById('dspBody').scroll = cobjScreens[i].bodsrl;
             objScreen.style.display = 'block';
             objHeading.innerText = cobjScreens[i].hedtxt;
             objScreen.focus();
@@ -177,6 +200,11 @@ sub PaintFunction()%>
       }
       doActivityStart(document.body);
       window.setTimeout('requestDelete(\''+strCode+'\');',10);
+   }
+   function doSelectDetail(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestDetailLoad(\''+strCode+'\');',10);
    }
    function doSelectCopy(strCode) {
       if (!processForm()) {return;}
@@ -284,7 +312,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDetail(\''+objElements[i].getAttribute('PSCCDE')+'\');">Schedule</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -373,82 +401,6 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDefineMode;
    var cstrDefineCode;
-   var cobjWekData = new Array();
-   var cobjSmoData = new Array();
-   var cobjPtyData = new Array();
-   var cobjPscHder = new Array();
-   function clsWekData() {
-      this.wekcde = '';
-      this.weknam = '';
-      this.wekslt = '0';
-      this.smoidx = -1;
-      this.dayary = new Array();
-      this.ptyary = new Array();
-   }
-   function clsDayData() {
-      this.daycde = '';
-      this.daynam = '';
-   }
-   function clsSmoData() {
-      this.smocde = '';
-      this.smonam = '';
-      this.shfary = new Array();
-   }
-   function clsShfData() {
-      this.shfcde = '';
-      this.shfnam = '';
-      this.shfstr = '';
-      this.shfdur = '';
-   }
-   function clsPtyData() {
-      this.ptycde = '';
-      this.ptynam = '';
-      this.cmoary = new Array();
-      this.lcoary = new Array();
-   }
-   function clsCmoData() {
-      this.cmocde = '';
-      this.cmonam = '';
-   }
-   function clsLcoData() {
-      this.lincde = '';
-      this.linnam = '';
-      this.linwas = '';
-      this.linevt = '';
-      this.lcocde = '';
-      this.lconam = '';
-      this.filnam = '';
-   }
-
-
-   function clsPscHder() {
-      this.psccde = '';
-      this.pscnam = '';
-      this.strwek = '';
-      this.endwek = '';
-      this.reqcde = '';
-      this.wekary = new Array();
-
-   }
-   function clsPscWeek() {
-      this.wekcde = '';
-      this.smocde = '';
-      this.shfary = new Array();
-    //  this.ptyary = new Array();
-   }
-   function clsPscShft() {
-      this.shfcde = '';
-      this.ptyary = new Array();
-   }
-   function clsPscType() {
-      this.ptycde = '';
-      this.cmocde = '';
-      this.lcoary = new Array();
-   }
-   function clsPscLine() {
-      this.shfcde = '';
-      this.cmocde = '';
-   }
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -486,28 +438,18 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         if (cstrDefineMode == '*UPD') {
+            cobjScreens[2].hedtxt = 'Update Production Schedule';
+            document.getElementById('addDefine').style.display = 'none';
+            document.getElementById('updDefine').style.display = 'block';
+         } else {
+            cobjScreens[2].hedtxt = 'Create Production Schedule';
+            document.getElementById('addDefine').style.display = 'block';
+            document.getElementById('updDefine').style.display = 'none';
+         }
          displayScreen('dspDefine');
-         document.getElementById('HEDR_DATA').style.display = 'block';
-         document.getElementById('WEEK_DATA').style.display = 'none';
-         document.getElementById('TYPE_DATA').style.display = 'none';
-         cobjWekData.length = 0;
-         cobjSmoData.length = 0;
-         cobjPtyData.length = 0;
-         var objArray;
          document.getElementById('DEF_PscCode').value = '';
          document.getElementById('DEF_PscName').value = '';
-         var objPscSwek = document.getElementById('DEF_PscSwek');
-         var objPscEwek = document.getElementById('DEF_PscEwek');
-         var objPscPreq = document.getElementById('DEF_PscPreq');
-         objPscSwek.options.length = 0;
-         objPscEwek.options.length = 0;
-         objPscPreq.options.length = 0;
-         objPscSwek.options[0] = new Option('** Select Start Week **','*NONE');
-         objPscEwek.options[0] = new Option('** Select End Week **','*NONE');
-         objPscPreq.options[0] = new Option('** Select Production Requirement **','*NONE');
-         objPscSwek.selectedIndex = 0;
-         objPscEwek.selectedIndex = 0;
-         objPscPreq.selectedIndex = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PSCDFN') {
                if (cstrDefineMode == '*UPD') {
@@ -516,299 +458,1140 @@ sub PaintFunction()%>
                   document.getElementById('DEF_PscCode').value = objElements[i].getAttribute('PSCCDE');
                }
                document.getElementById('DEF_PscName').value = objElements[i].getAttribute('PSCNAM');
-               strPscStat = objElements[i].getAttribute('PSCSTS');
-            } else if (objElements[i].nodeName == 'WEKDFN') {
-               cobjWekData[cobjWekData.length] = new clsWekData();
-               cobjWekData[cobjWekData.length-1].wekcde = objElements[i].getAttribute('WEKCDE');
-               cobjWekData[cobjWekData.length-1].weknam = objElements[i].getAttribute('WEKNAM');
-               objPscSwek.options[objPscSwek.options.length] = new Option(objElements[i].getAttribute('WEKNAM'),objElements[i].getAttribute('WEKCDE'));
-               objPscEwek.options[objPscEwek.options.length] = new Option(objElements[i].getAttribute('WEKNAM'),objElements[i].getAttribute('WEKCDE'));
+            }
+         }
+         if (cstrDefineMode == '*UPD') {
+            document.getElementById('DEF_PscName').focus();
+         } else {
+            document.getElementById('DEF_pscCode').focus();
+         }
+      }
+   }
+   function doDefineAccept() {
+      if (!processForm()) {return;}
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      if (cstrDefineMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDefineCode)+'"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
+         strXML = strXML+' PSCCDE="'+fixXML(document.getElementById('DEF_PscCode').value)+'"';
+      }
+      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
+   }
+   function requestDefineAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkDefineAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doSelectRefresh();
+      }
+   }
+   function doDefineCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspSelect');
+      document.getElementById('SEL_SelCode').focus();
+   }
+
+
+   //////////////////////
+   // Detail Functions //
+   //////////////////////
+   var cstrDetailCode;
+   var cobjDetailCell;
+   var cintDetailIndx;
+   var cstrDetailType;
+   function requestDetailLoad(strCode) {
+      cstrDetailCode = strCode;
+      cobjDetailCell = null;
+      cintDetailIndx = -1;
+      cstrDetailType = '*NONE';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETDET" PSCCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_detail_retrieve.asp',function(strResponse) {checkDetailLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkDetailLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspDetail');
+      }
+   }
+   function doDetailSelect(objSelect) {
+      if (cobDetailCell != null) {
+         if (cobjDetailCell.className == 'clsFloCntx') {
+            cobjDetailCell.className = 'clsFloCntl';
+         } else if (cobjDetailCell.className == 'clsFloNodx') {
+            cobjDetailCell.className = 'clsFloNode';
+         }
+      }
+      cobjDetailCell = objSelect;
+      cintDetailIndx = objSelect.getAttribute('schidx');
+      cstrDetailType = objSelect.getAttribute('schtyp');
+      if (cobjDetailCell.className == 'clsFloCntl') {
+         cobjDetailCell.className = 'clsFloCntx';
+      } else if (cobjDetailCell.className == 'clsFloNode') {
+         cobjDetailCell.className = 'clsFloNodx';
+      }
+   }
+   function doDetailRefresh() {
+      // Update the model and paint from the model
+      displayScreen('dspDetail');
+   }
+   function doDetailBack() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspSelect');
+      document.getElementById('SEL_SelCode').focus();
+   }
+   function doDetailAddWeek() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekAdd();',10);
+   }
+   function doDetailDelete() {
+      if (cobDetailCell == null) {
+         return;
+      }
+      if (cstrDetailType == '*EVNT') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule event activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
+         }
+         doActivityStart(document.body);
+         window.setTimeout('requestEvntDelete(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*FILL') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule filling activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
+         }
+         doActivityStart(document.body);
+         window.setTimeout('requestFillDelete(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*PACK') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule packing activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
+         }
+         doActivityStart(document.body);
+         window.setTimeout('requestPackDelete(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*FORM') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule forming activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
+         }
+         doActivityStart(document.body);
+         window.setTimeout('requestFormDelete(\''+strCode+'\');',10);
+      }
+   }
+   function doDetailUpdate() {
+      if (cobDetailCell == null) {
+         return;
+      }
+      if (cstrDetailType == '*EVNT') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestEvntUpdate(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*FILL') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestFillUpdate(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*PACK') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestPackUpdate(\''+strCode+'\');',10);
+      } else if (cstrDetailType == '*FORM') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestFormUpdate(\''+strCode+'\');',10);
+      }
+   }
+   function doDetailAddEvnt() {
+      if (cobDetailCell == null) {
+         return;
+      }
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestEvntAdd();',10);
+   }
+   function doDetailAddFill() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestFillAdd();',10);
+   }
+   function doDetailAddPack() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestPackAdd();',10);
+   }
+   function doDetailAddForm() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestFormAdd();',10);
+   }
+
+   /////////////////////
+   // Event Functions //
+   /////////////////////
+   var cstrEvntMode;
+   var cstrEvntCode;
+   function requestEvntAdd() {
+      cstrEvntMode = '*ADD';
+      cstrEvntCode = '';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_evnt_retrieve.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestEvntUpdate(strCode) {
+      cstrEvntMode = '*UPD';
+      cstrEvntCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_evnt_retrieve.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestEvntDelete(strCode) {
+      cstrEvntMode = '*DLT';
+      cstrEvntCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_evnt_delete.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkEvntLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrDefineMode == '*DLT') {
+            doDetailRefresh();
+            return;
+         } else if (cstrDefineMode == '*UPD') {
+            cobjScreens[2].hedtxt = 'Update Production Schedule';
+            document.getElementById('addEvnt').style.display = 'none';
+            document.getElementById('updEvnt').style.display = 'block';
+         } else if (cstrDefineMode == '*CRT') {
+            cobjScreens[2].hedtxt = 'Create Production Schedule';
+            document.getElementById('addEvnt').style.display = 'block';
+            document.getElementById('updEvnt').style.display = 'none';
+         }
+         displayScreen('dspEvnt');
+         document.getElementById('EVT_MatCode').value = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'EVTDFN') {
+               if (cstrEvntMode == '*UPD') {
+                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
+               } else {
+                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
+               }
+               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            }
+         }
+         if (cstrEvntMode == '*UPD') {
+            document.getElementById('EVT_EvtName').focus();
+         } else {
+            document.getElementById('EVT_EvtCode').focus();
+         }
+      }
+   }
+   function doEvntCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspDetail');
+   }
+   function doEvntAccept() {
+      if (!processForm()) {return;}
+      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      if (cstrEvntMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDEVT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTEVT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      }
+      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
+      if (objEvtCode.selectedIndex == -1) {
+         strXML = strXML+' EVTCDE=""';
+      } else {
+         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
+      }
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestEvntAccept(\''+strXML+'\');',10);
+   }
+   function requestEvntAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_evnt_update.asp',function(strResponse) {checkEvntAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkEvntAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doDetailRefresh();
+      }
+   }
+
+   ///////////////////////
+   // Filling Functions //
+   ///////////////////////
+   var cstrFillMode;
+   var cstrFillCode;
+   function requestFillAdd() {
+      cstrFillMode = '*ADD';
+      cstrFillCode = '';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_fill_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestFillUpdate(strCode) {
+      cstrFillMode = '*UPD';
+      cstrFillCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_fill_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestFillDelete(strCode) {
+      cstrFillMode = '*DLT';
+      cstrFillCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_fill_delete.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkFillLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrDefineMode == '*DLT') {
+            doDetailRefresh();
+            return;
+         } else if (cstrDefineMode == '*UPD') {
+            cobjScreens[2].hedtxt = 'Update Production Schedule';
+            document.getElementById('addFill').style.display = 'none';
+            document.getElementById('updFill').style.display = 'block';
+         } else if (cstrDefineMode == '*CRT') {
+            cobjScreens[2].hedtxt = 'Create Production Schedule';
+            document.getElementById('addFill').style.display = 'block';
+            document.getElementById('updFill').style.display = 'none';
+         }
+         displayScreen('dspFill');
+         document.getElementById('EVT_MatCode').value = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'EVTDFN') {
+               if (cstrFillMode == '*UPD') {
+                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
+               } else {
+                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
+               }
+               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            }
+         }
+         if (cstrFillMode == '*UPD') {
+            document.getElementById('EVT_EvtName').focus();
+         } else {
+            document.getElementById('EVT_EvtCode').focus();
+         }
+      }
+   }
+   function doFillCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspDetail');
+   }
+   function doFillAccept() {
+      if (!processForm()) {return;}
+      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      if (cstrFillMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      }
+      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
+      if (objEvtCode.selectedIndex == -1) {
+         strXML = strXML+' EVTCDE=""';
+      } else {
+         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
+      }
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestFillAccept(\''+strXML+'\');',10);
+   }
+   function requestFillAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_fill_update.asp',function(strResponse) {checkFillAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkFillAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doDetailRefresh();
+      }
+   }
+
+   ///////////////////////
+   // Packing Functions //
+   ///////////////////////
+   var cstrPackMode;
+   var cstrPackCode;
+   function requestPackAdd() {
+      cstrPackMode = '*ADD';
+      cstrPackCode = '';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_pack_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestPackUpdate(strCode) {
+      cstrPackMode = '*UPD';
+      cstrPackCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_pack_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestPackDelete(strCode) {
+      cstrPackMode = '*DLT';
+      cstrPackCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_pack_delete.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkPackLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrDefineMode == '*DLT') {
+            doDetailRefresh();
+            return;
+         } else if (cstrDefineMode == '*UPD') {
+            cobjScreens[2].hedtxt = 'Update Production Schedule';
+            document.getElementById('addPack').style.display = 'none';
+            document.getElementById('updPack').style.display = 'block';
+         } else if (cstrDefineMode == '*CRT') {
+            cobjScreens[2].hedtxt = 'Create Production Schedule';
+            document.getElementById('addPack').style.display = 'block';
+            document.getElementById('updPack').style.display = 'none';
+         }
+         displayScreen('dspPack');
+         document.getElementById('EVT_MatCode').value = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'EVTDFN') {
+               if (cstrPackMode == '*UPD') {
+                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
+               } else {
+                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
+               }
+               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            }
+         }
+         if (cstrPackMode == '*UPD') {
+            document.getElementById('EVT_EvtName').focus();
+         } else {
+            document.getElementById('EVT_EvtCode').focus();
+         }
+      }
+   }
+   function doPackCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspDetail');
+   }
+   function doPackAccept() {
+      if (!processForm()) {return;}
+      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      if (cstrPackMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      }
+      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
+      if (objEvtCode.selectedIndex == -1) {
+         strXML = strXML+' EVTCDE=""';
+      } else {
+         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
+      }
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestPackAccept(\''+strXML+'\');',10);
+   }
+   function requestPackAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_pack_update.asp',function(strResponse) {checkPackAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkPackAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doDetailRefresh();
+      }
+   }
+
+   ///////////////////////
+   // Forming Functions //
+   ///////////////////////
+   var cstrFormMode;
+   var cstrFormCode;
+   function requestFormAdd() {
+      cstrFormMode = '*ADD';
+      cstrFormCode = '';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_form_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestFormUpdate(strCode) {
+      cstrFormMode = '*UPD';
+      cstrFormCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_form_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestFormDelete(strCode) {
+      cstrFormMode = '*DLT';
+      cstrFormCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_form_delete.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkFormLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrDefineMode == '*DLT') {
+            doDetailRefresh();
+            return;
+         } else if (cstrDefineMode == '*UPD') {
+            cobjScreens[2].hedtxt = 'Update Production Schedule';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('updForm').style.display = 'block';
+         } else if (cstrDefineMode == '*CRT') {
+            cobjScreens[2].hedtxt = 'Create Production Schedule';
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('updForm').style.display = 'none';
+         }
+         displayScreen('dspForm');
+         document.getElementById('EVT_MatCode').value = '';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'EVTDFN') {
+               if (cstrFormMode == '*UPD') {
+                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
+               } else {
+                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
+               }
+               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            }
+         }
+         if (cstrFormMode == '*UPD') {
+            document.getElementById('EVT_EvtName').focus();
+         } else {
+            document.getElementById('EVT_EvtCode').focus();
+         }
+      }
+   }
+   function doFormCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspDetail');
+   }
+   function doFormAccept() {
+      if (!processForm()) {return;}
+      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      if (cstrFormMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
+         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      }
+      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
+      if (objEvtCode.selectedIndex == -1) {
+         strXML = strXML+' EVTCDE=""';
+      } else {
+         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
+      }
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestFormAccept(\''+strXML+'\');',10);
+   }
+   function requestFormAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_form_update.asp',function(strResponse) {checkFormAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkFormAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doDetailRefresh();
+      }
+   }
+
+   ////////////////////
+   // Week Functions //
+   ////////////////////
+   var cstrWeekMode;
+   var cobjWeekData;
+   var cobjWeekSmod;
+   var cobjWeekPtyp;
+   function clsWeekData() {
+      this.wekcde = '';
+      this.weknam = '';
+      this.smoidx = 0;
+      this.dayary = new Array();
+   }
+   function clsWeekDayd() {
+      this.daycde = '';
+      this.daynam = '';
+   }
+   function clsWeekSmod() {
+      this.smocde = '';
+      this.smonam = '';
+      this.shfary = new Array();
+   }
+   function clsWeekShfd() {
+      this.shfcde = '';
+      this.shfnam = '';
+      this.shfstr = '';
+      this.shfdur = '';
+   }
+   function clsWeekPtyp() {
+      this.ptycde = '';
+      this.ptynam = '';
+      this.cmoary = new Array();
+      this.lcoary = new Array();
+   }
+   function clsWeekCmod() {
+      this.cmocde = '';
+      this.cmonam = '';
+   }
+   function clsWeekLcod() {
+      this.lincde = '';
+      this.linnam = '';
+      this.lcocde = '';
+      this.lconam = '';
+      this.filnam = '';
+   }
+   function requestWeekAdd() {
+      cstrWeekMode = '*ADD';
+      cstrWeekCode = '';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="2010034"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestWeekUpdate(strCode) {
+      cstrWeekMode = '*UPD';
+      cstrWeekCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestWeekDelete(strCode) {
+      cstrWeekMode = '*DLT';
+      cstrWeekCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_delete.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrWeekMode == '*DLT') {
+            doDetailRefresh();
+            return;
+         } else if (cstrWeekMode == '*UPD') {
+            cobjScreens[4].hedtxt = 'Update Production Schedule Week';
+            document.getElementById('addWeek').style.display = 'none';
+            document.getElementById('updWeek').style.display = 'block';
+         } else if (cstrWeekMode == '*CRT') {
+            cobjScreens[4].hedtxt = 'Create Production Schedule Week';
+            document.getElementById('addWeek').style.display = 'block';
+            document.getElementById('updWeek').style.display = 'none';
+         }
+         displayScreen('dspWeek');
+         cobjWeekData = new clsWeekData();
+         cobjWeekSmod = new Array();
+         cobjWeekPtyp = new Array();
+         var objArray;
+         var objPscPreq = document.getElementById('WEK_PscPreq');
+         objPscPreq.options.length = 0;
+         objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
+         objPscPreq.selectedIndex = 0;
+         var objPscSmod = document.getElementById('WEK_PscSmod');
+         objPscSmod.options.length = 0;
+         objPscSmod.options[0] = new Option('** Select Shift Model **','*NONE');
+         objPscSmod.selectedIndex = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'WEKDFN') {
+               cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
+               cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
             } else if (objElements[i].nodeName == 'DAYDFN') {
-               objArray = cobjWekData[cobjWekData.length-1].dayary;
-               objArray[objArray.length] = new clsDayData();
+               objArray = cobjWeekData.dayary;
+               objArray[objArray.length] = new clsWeekDayd();
                objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
                objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
             } else if (objElements[i].nodeName == 'REQDFN') {
                objPscPreq.options[objPscPreq.options.length] = new Option(objElements[i].getAttribute('REQNAM'),objElements[i].getAttribute('REQCDE'));
                objPscPreq.options[objPscPreq.options.length-1].setAttribute('reqwek',objElements[i].getAttribute('REQWEK'));
             } else if (objElements[i].nodeName == 'SMODFN') {
-               cobjSmoData[cobjSmoData.length] = new clsSmoData();
-               cobjSmoData[cobjSmoData.length-1].smocde = objElements[i].getAttribute('SMOCDE');
-               cobjSmoData[cobjSmoData.length-1].smonam = objElements[i].getAttribute('SMONAM');
+               cobjWeekSmod[cobjWeekSmod.length] = new clsWeekSmod();
+               cobjWeekSmod[cobjWeekSmod.length-1].smocde = objElements[i].getAttribute('SMOCDE');
+               cobjWeekSmod[cobjWeekSmod.length-1].smonam = objElements[i].getAttribute('SMONAM');
+               objPscSmod.options[objPscSmod.options.length] = new Option(objElements[i].getAttribute('SMONAM'),objElements[i].getAttribute('SMOCDE'));
+               objPscSmod.options[objPscSmod.options.length-1].setAttribute('smoidx',cobjWeekSmod.length-1);
             } else if (objElements[i].nodeName == 'SHFDFN') {
-               objArray = cobjSmoData[cobjSmoData.length-1].shfary;
-               objArray[objArray.length] = new clsShfData();
+               objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
+               objArray[objArray.length] = new clsWeekShfd();
                objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
                objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
                objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
                objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
             } else if (objElements[i].nodeName == 'PTYDFN') {
-               cobjPtyData[cobjPtyData.length] = new clsPtyData();
-               cobjPtyData[cobjPtyData.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
-               cobjPtyData[cobjPtyData.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
+               cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
             } else if (objElements[i].nodeName == 'CMODFN') {
-               objArray = cobjPtyData[cobjPtyData.length-1].cmoary;
-               objArray[objArray.length] = new clsCmoData();
+               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].cmoary;
+               objArray[objArray.length] = new clsWeekCmod();
                objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
                objArray[objArray.length-1].cmonam = objElements[i].getAttribute('CMONAM');
             } else if (objElements[i].nodeName == 'LCODFN') {
-               objArray = cobjPtyData[cobjPtyData.length-1].lcoary;
-               objArray[objArray.length] = new clsLcoData();
+               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].lcoary;
+               objArray[objArray.length] = new clsWeekLcod();
                objArray[objArray.length-1].lincde = objElements[i].getAttribute('LINCDE');
                objArray[objArray.length-1].linnam = objElements[i].getAttribute('LINNAM');
-               objArray[objArray.length-1].linwas = objElements[i].getAttribute('LINWAS');
-               objArray[objArray.length-1].linevt = objElements[i].getAttribute('LINEVT');
                objArray[objArray.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
                objArray[objArray.length-1].lconam = objElements[i].getAttribute('LCONAM');
                objArray[objArray.length-1].filnam = objElements[i].getAttribute('FILNAM');
             }
          }
-         document.getElementById('DEF_PscCode').focus();
-      }
-   }
-   function doBackHedr() {
-      if (!processForm()) {return;}
-      document.getElementById('HEDR_DATA').style.display = 'block';
-      document.getElementById('WEEK_DATA').style.display = 'none';
-      document.getElementById('TYPE_DATA').style.display = 'none';
-   }
-
-   function doDefineWeek() {
-      if (!processForm()) {return;}
-      var objPscSwek = document.getElementById('DEF_PscSwek');
-      var objPscEwek = document.getElementById('DEF_PscEwek');
-      var objPscPreq = document.getElementById('DEF_PscPreq');
-      var strMessage = '';
-      if (document.getElementById('DEF_PscCode').value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production schedule code must be entered';
-      }
-      if (document.getElementById('DEF_PscName').value == '') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production schedule name must be entered';
-      }
-      if (objPscSwek.selectedIndex == -1 || objPscSwek.options[objPscSwek.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production schedule start MARS week must be selected';
-      }
-      if (objPscEwek.selectedIndex == -1 || objPscEwek.options[objPscEwek.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production schedule end MARS week must be selected';
-      }
-      if (objPscSwek.selectedIndex != -1 && objPscSwek.options[objPscSwek.selectedIndex].value != '*NONE') {
-         if (objPscEwek.selectedIndex != -1 && objPscEwek.options[objPscEwek.selectedIndex].value != '*NONE') {
-            if (objPscSwek.options[objPscSwek.selectedIndex].value > objPscEwek.options[objPscEwek.selectedIndex].value) {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Production schedule end MARS week must be greater tha or equal to start MARS week';
-            }
-         }
-      }
-    //  if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
-    //     if (strMessage != '') {strMessage = strMessage + '\r\n';}
-    //     strMessage = strMessage + 'Production requirements must be selected';
-    //  }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      document.getElementById('HEDR_DATA').style.display = 'none';
-      document.getElementById('WEEK_DATA').style.display = 'block';
-      document.getElementById('TYPE_DATA').style.display = 'none';
-      var objPscWeek = document.getElementById('DEF_PscWeek');
-      for (var i=objPscWeek.rows.length-1;i>=1;i--) {
-         objPscWeek.deleteRow(i);
-      }
-      var objRow;
-      var objCell;
-      var objSelect;
-      var objArray;
-      for (var i=0;i<cobjWekData.length;i++) {
-         cobjWekData[i].wekslt = '0';
-         cobjWekData[i].smoidx = -1;
-         for (var j=0;j<cobjPtyData.length;j++) {
-            cobjWekData[i].ptyary[j] = '0';
-         }
-      }
-      for (var i=0;i<cobjWekData.length;i++) {
-         if (cobjWekData[i].wekcde >= objPscSwek.options[objPscSwek.selectedIndex].value &&
-             cobjWekData[i].wekcde <= objPscEwek.options[objPscEwek.selectedIndex].value) {
-            cobjWekData[i].wekslt = '1';
-            objRow = objPscWeek.insertRow(-1);
-            objRow.setAttribute('wekcde',cobjWekData[i].wekcde);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBB';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.appendChild(document.createTextNode(cobjWekData[i].weknam));
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBN';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objSelect = document.createElement('select');
-            objSelect.id = 'WEKSMO_'+cobjWekData[i].wekcde;
-            objSelect.className = 'clsInputNN';
-            objSelect.selectedIndex = -1;
-            objSelect.options[0] = new Option('** Select Shift Model **','*NONE');
-            objSelect.options[0].setAttribute('smocde','');
-            objSelect.options[0].selected = true;
-            for (var j=0;j<cobjSmoData.length;j++) {
-               objSelect.options[objSelect.options.length] = new Option(cobjSmoData[j].smonam,cobjSmoData[j].smocde);
-               objSelect.options[objSelect.options.length-1].setAttribute('smoidx',j);
-            }
-            objCell.appendChild(objSelect);
+         if (cstrWeekMode == '*UPD') {
+            document.getElementById('WEK_PscPreq').focus();
+         } else {
+            document.getElementById('WEK_PscPreq').focus();
          }
       }
    }
-   function doBackWeek() {
-      if (!processForm()) {return;}
-      document.getElementById('HEDR_DATA').style.display = 'none';
-      document.getElementById('WEEK_DATA').style.display = 'block';
-      document.getElementById('TYPE_DATA').style.display = 'none';
-   }
-
-   function doDefineType() {
-      if (!processForm()) {return;}
-      var objPscSmod;
-      var strMessage = '';
-      for (var i=0;i<cobjWekData.length;i++) {
-         if (cobjWekData[i].wekslt == '1') {
-            objPscSmod = document.getElementById('WEKSMO_'+cobjWekData[i].wekcde);
-            cobjWekData[i].smoidx = objPscSmod.options[objPscSmod.selectedIndex].getAttribute('smoidx');
-            if (objPscSmod.selectedIndex == -1 || objPscSmod.options[objPscSmod.selectedIndex].value == '*NONE') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Production schedule week ('+cobjWekData[i].weknam+') must have a shift model selected';
-            }
-         }
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-
-      document.getElementById('HEDR_DATA').style.display = 'none';
-      document.getElementById('WEEK_DATA').style.display = 'none';
-      document.getElementById('TYPE_DATA').style.display = 'block';
-      var objPscType = document.getElementById('DEF_PscType');
+   function doWeekCancel() {
+      if (checkChange() == false) {return;}
+      cobjWeekData = null;
+      cobjWeekSmod = null;
+      cobjWeekPtyp = null;
+      var objPscType = document.getElementById('WEK_PscType');
       for (var i=objPscType.rows.length-1;i>=0;i--) {
          objPscType.deleteRow(i);
+      }
+      displayScreen('dspDetail');
+   }
+   function doWeekAccept() {
+      if (!processForm()) {return;}
+      var objShfAry;
+      var objLcoAry;
+      var objElePtyp;
+      var objEleShft;
+      var objEleLine;
+      var bolPtypFound;
+      var bolShftFound;
+      var bolLineFound;
+      var objPscPreq = document.getElementById('WEK_PscPreq');
+      var objPscSmod = document.getElementById('WEK_PscSmod');
+      var strMessage = '';
+      if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Production requirements must be selected';
+      }
+      if (objPscSmod.selectedIndex == -1 || objPscSmod.options[objPscSmod.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Shift model must be selected';
+      } else {
+         bolPtypFound = false;
+         for (var i=0;i<cobjWeekPtyp.length;i++) {
+            objElePtyp = document.getElementById('WEKPTY_'+i);
+            if (objElePtyp.checked == true) {
+               bolPtypFound = true;
+               bolShftFound = false;
+               objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
+               for (var j=0;j<objShfAry.length;j++) {
+                  objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
+                  if (objEleShft.selectedIndex != -1 && objEleShft.options[objEleShft.selectedIndex].value != '*NONE') {
+                     bolShftFound = true;
+                  }
+               }
+               if (bolShftFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'At least one shift must have a crew model selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
+               }
+               bolLineFound = false;
+               objLcoAry = cobjWeekPtyp[i].lcoary;
+               for (var j=0;j<objLcoAry.length;j++) {
+                  objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+                  if (objEleLine.checked == true) {
+                     bolLineFound = true;
+                  }
+               }
+               if (bolLineFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'At least one line configuration must be selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
+               }
+            }
+         }
+         if (bolPtypFound == false) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'At least one production type (Filling, Packing or Forming must be selected) for for the week';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      if (cstrWeekMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
+      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
+      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
+      strXML = strXML+' SMOCDE="'+fixXML(objPscSmod.options[objPscSmod.selectedIndex].value)+'">';
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objElePtyp = document.getElementById('WEKPTY_'+i);
+         if (objElePtyp.checked == true) {
+            strXML = strXML+'<PSCPTY PTYCDE="'+fixXML(cobjWeekPtyp[i].ptycde)+'">';
+            objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
+            for (var j=0;j<objShfAry.length;j++) {
+               objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
+               if (objEleShft.selectedIndex == -1) {
+                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" CMOCDE="'+fixXML('*NONE')+'"/>';
+               } else {
+                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
+               }
+            }
+            objLcoAry = cobjWeekPtyp[i].lcoary;
+            for (var j=0;j<objLcoAry.length;j++) {
+               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+               if (objEleLine.checked == true) {
+                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+'"/>';
+               }
+            }
+            strXML = strXML+'</PSCPTY>';
+         }
+      }
+      strXML = strXML+'</PSA_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekAccept(\''+strXML+'\');',10);
+   }
+   function requestWeekAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_week_update.asp',function(strResponse) {checkWeekAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         cobjWeekData = null;
+         cobjWeekSmod = null;
+         cobjWeekPtyp = null;
+         var objPscType = document.getElementById('WEK_PscType');
+         for (var i=objPscType.rows.length-1;i>=0;i--) {
+            objPscType.deleteRow(i);
+         }
+         doDetailRefresh();
+      }
+   }
+   function doWeekSmodChange(objSelect) {
+      if (objSelect.selectedIndex == -1) {
+         return;
+      }
+      var objPscType = document.getElementById('WEK_PscType');
+      for (var i=objPscType.rows.length-1;i>=0;i--) {
+         objPscType.deleteRow(i);
+      }
+      cobjWeekData.smoidx = objSelect.options[objSelect.selectedIndex].getAttribute('smoidx');
+      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
+         return;
       }
       var objTable;
       var objRow;
       var objCell;
-      var objImage;
       var objInput;
       var objSelect;
-      for (var i=0;i<cobjWekData.length;i++) {
-         if (cobjWekData[i].wekslt == '1') {
-
-            objRow = objPscType.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBB';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-
-            objRow = objPscType.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelHB';
-            objCell.style.width = '100%';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.appendChild(document.createTextNode(cobjWekData[i].weknam));
-
-            for (var j=0;j<cobjPtyData.length;j++) {
-
-               objRow = objPscType.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBB';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-               objRow = objPscType.insertRow(-1);
-               objRow.setAttribute('wekidx',i);
-               objRow.setAttribute('ptyidx',j);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBB';
-               objCell.style.width = '100%';
-               objCell.style.fontSize = '8pt';
-               objCell.style.backgroundColor = '#ffffc0';
-               objCell.style.color = '#000000';
-               objCell.style.border = '#708090 1px solid';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-               objInput = document.createElement('input');
-               objInput.type = 'checkbox';
-               objInput.value = '';
-               objInput.id = 'WEKPTY_'+i+'_'+j;
-               objInput.onfocus = function() {setSelect(this);};
-               objInput.onclick = function() {doTypeClick(this);};
-               objInput.checked = false;
-               objCell.appendChild(objInput);
-               objCell.appendChild(document.createTextNode(cobjPtyData[j].ptynam));
-
-               objRow = objPscType.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBB';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-
-               objTable = document.createElement('table');
-               objTable.id = 'WEKPTYDATA_'+i+'_'+j;
-               objTable.className = 'clsPanel';
-               objTable.align = 'center';
-               objTable.cellSpacing = '0';
-               objTable.style.display = 'none';
-               objCell.appendChild(objTable);
-               objRow = objTable.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBN';
-               objCell.style.whiteSpace = 'nowrap';
-               doSmodLoad(objCell,i,j,cobjWekData[i].smoidx);
-               objRow = objTable.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.className = 'clsLabelBB';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-               doLconLoad(objCell,i,j);
-            }
-
-         }
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objRow = objPscType.insertRow(-1);
+         objRow.setAttribute('ptyidx',i);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.width = '100%';
+         objCell.style.fontSize = '8pt';
+         objCell.style.backgroundColor = '#ffffc0';
+         objCell.style.color = '#000000';
+         objCell.style.border = '#708090 1px solid';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'WEKPTY_'+i;
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.onclick = function() {doWeekPtypClick(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objTable = document.createElement('table');
+         objTable.id = 'WEKPTYDATA_'+i;
+         objTable.className = 'clsPanel';
+         objTable.align = 'center';
+         objTable.cellSpacing = '0';
+         objTable.style.display = 'none';
+         objCell.appendChild(objTable);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekLconLoad(objCell,i);
       }
    }
-   function doSmodLoad(objParent, intWekIdx, intPtyIdx, intSmoIdx) {
+   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx) {
       var objTable = document.createElement('table');
       var objRow;
       var objCell;
@@ -821,7 +1604,7 @@ sub PaintFunction()%>
       var intStrTim;
       var intDurMin;
       var strDayNam;
-      objTable.id = 'WEKPTYCMOD_'+intWekIdx+'_'+intPtyIdx;
+      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
       objTable.className = 'clsPanel';
       objTable.align = 'center';
       objTable.cellSpacing = '0';
@@ -853,7 +1636,7 @@ sub PaintFunction()%>
       objCell.style.paddingRight = '2px';
       objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode('Crew Model'));
-      objShfAry = cobjSmoData[intSmoIdx].shfary;
+      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
       for (var i=0;i<objShfAry.length;i++) {
          intStrTim = objShfAry[i].shfstr;
          intDurMin = objShfAry[i].shfdur;
@@ -903,14 +1686,14 @@ sub PaintFunction()%>
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
          objSelect = document.createElement('select');
-         objSelect.id = 'WEKPTYCMODDATA_'+intWekIdx+'_'+intPtyIdx+'_'+i;
+         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
          objSelect.className = 'clsInputNN';
          objSelect.style.fontSize = '8pt';
          objSelect.selectedIndex = -1;
          objSelect.options[0] = new Option('** NONE **','*NONE');
          objSelect.options[0].setAttribute('cmocde','');
          objSelect.options[0].selected = true;
-         objCmoAry = cobjPtyData[intPtyIdx].cmoary;
+         objCmoAry = cobjWeekPtyp[intPtyIdx].cmoary;
          for (var j=0;j<objCmoAry.length;j++) {
             objSelect.options[objSelect.options.length] = new Option('('+objCmoAry[j].cmocde+') '+objCmoAry[j].cmonam,objCmoAry[j].cmocde);
             objSelect.options[objSelect.options.length-1].setAttribute('cmoidx',j);
@@ -918,13 +1701,13 @@ sub PaintFunction()%>
          objCell.appendChild(objSelect);
       }
    }
-   function doLconLoad(objParent, intWekIdx, intPtyIdx) {
+   function doWeekLconLoad(objParent, intPtyIdx) {
       var objTable = document.createElement('table');
       var objRow;
       var objCell;
       var objInput;
       var objLcoAry;
-      objTable.id = 'WEKPTYLCON_'+intWekIdx+'_'+intPtyIdx;
+      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
       objTable.className = 'clsPanel';
       objTable.align = 'center';
       objTable.cellSpacing = '0';
@@ -943,7 +1726,7 @@ sub PaintFunction()%>
       objCell.style.paddingRight = '2px';
       objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode('Line Configurations'));
-      objLcoAry = cobjPtyData[intPtyIdx].lcoary;
+      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
       for (var i=0;i<objLcoAry.length;i++) {
          objRow = objTable.insertRow(-1);
          objCell = objRow.insertCell(-1);
@@ -958,83 +1741,26 @@ sub PaintFunction()%>
          objInput = document.createElement('input');
          objInput.type = 'checkbox';
          objInput.value = '';
-         objInput.id = 'WEKPTYLCONDATA_'+intWekIdx+'_'+intPtyIdx+'_'+i;
+         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
          objInput.onfocus = function() {setSelect(this);};
          objInput.checked = false;
          objCell.appendChild(objInput);
-         objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+         }
       }
    }
-   function doTypeClick(objCheck) {
-      var intWekIdx = objCheck.parentNode.parentNode.getAttribute('wekidx');
+   function doWeekPtypClick(objCheck) {
       var intPtyIdx = objCheck.parentNode.parentNode.getAttribute('ptyidx');
       if (objCheck.checked == false) {
-         cobjWekData[intWekIdx].ptyary[intPtyIdx] = '0';
-         document.getElementById('WEKPTYDATA_'+intWekIdx+'_'+intPtyIdx).style.display = 'none';
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'none';
       } else {
-         document.getElementById('WEKPTYDATA_'+intWekIdx+'_'+intPtyIdx).style.display = 'block';
-         cobjWekData[intWekIdx].ptyary[intPtyIdx] = '1';
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'block';
       }
    }
 
-   function doDefineAccept() {
-      if (!processForm()) {return;}
-      var objPscStat = document.getElementById('DEF_PscStat');
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDefineCode)+'"';
-      } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' PSCCDE="'+fixXML(document.getElementById('DEF_PscCode').value)+'"';
-      }
-      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
-      if (objPscStat.selectedIndex == -1) {
-         strXML = strXML+' PSCSTS=""';
-      } else {
-         strXML = strXML+' PSCSTS="'+fixXML(objPscStat.options[objPscStat.selectedIndex].value)+'"';
-      }
-      strXML = strXML+'/>';
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
-   }
-   function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkDefineAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
-         }
-         doSelectRefresh();
-      }
-   }
-   function doDefineCancel() {
-      if (checkChange() == false) {return;}
-      displayScreen('dspSelect');
-      document.getElementById('SEL_SelCode').focus();
-   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -1047,7 +1773,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_psc_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body id="dspBody" class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_psc_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -1098,143 +1824,254 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
+   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Create Production Schedule</nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr id="addDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PscCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr id="updDefine" style="display:none;visibility:visible">
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Production Schedule Code:&nbsp;</nobr></td>
+         <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule Name:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_PscName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
       </table></nobr></td></tr>
-
-      <tr id="HEDR_Data" style="display:none;visibility:visible">
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=0>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Definition</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule Code:&nbsp;</nobr></td>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-                     <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PscCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule Name:&nbsp;</nobr></td>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-                     <input class="clsInputNN" type="text" name="DEF_PscName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Start MARS Week:&nbsp;</nobr></td>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="DEF_PscSwek"></select>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production End MARS Week:&nbsp;</nobr></td>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="DEF_PscEwek"></select>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Requirement:&nbsp;</nobr></td>
-                  <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-                     <select class="clsInputBN" id="DEF_PscPreq"></select>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
-                        <tr>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineWeek();">&nbsp;Next&nbsp;</a></nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-
-      <tr id="WEEK_Data" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=0>
+   </table>
+   <table id="dspDetail" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=1 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedDetail" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Shift Models</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table id="DEF_PscWeek" class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=1>
-                        <tr>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Production Week</nobr></td>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Shift Model</nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
-                        <tr>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doBackHedr();">&nbsp;Back&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineType();">&nbsp;Next&nbsp;</a></nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddWeek();">&nbsp;Add Week&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-
-      <tr id="TYPE_Data" style="display:none;visibility:visible">
+      <tr height=100%>
+         <td align=center colspan=1 nowrap><nobr>
+            <div style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
+               <table id="UPD_Table" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border-style:none;" align=left cellspacing="0" cellpadding="0"></table>
+            </div>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspWeek" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedWeek" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Week Definition</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Requirements:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="WEK_PscPreq"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Model:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="WEK_PscSmod" onChange="doWeekSmodChange(this);"></select>
+         </nobr></td>
+      </tr>
+      <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsGrid02" align=center valign=top cols=2 cellpadding=0 cellspacing=0>
+            <table id="WEK_PscType" class="clsGrid02" align=center valign=top cols=1 cellpadding=0 cellspacing=1></table>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Production Types</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table id="DEF_PscType" class="clsGrid02" align=center valign=top cols=1 cellpadding=0 cellspacing=1></table>
-                  </nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-               </tr>
-               <tr>
-                  <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
-                        <tr>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doBackWeek();">&nbsp;Back&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
-                        </tr>
-                     </table>
-                  </nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-
+   </table>
+   <table id="dspEvnt" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedEvnt" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Event Activity</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Activity:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="EVT_ActCode"></select>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doEventCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doEventAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspFill" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedFill" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Filling Activity</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FIL_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="FIL_MatCode"></select>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspPack" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedPack" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Packing Activity</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAC_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="PAC_MatCode"></select>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspForm" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedForm" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Forming Activity</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FOR_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="FOR_MatCode"></select>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
    </table>
 </body>
 </html>
