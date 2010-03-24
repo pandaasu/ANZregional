@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_psc_detail_retrieve.asp                        //
+'// Script  : psa_psc_type_retrieve.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the production schedule     //
-'//           detail retrieve functionality                      //
+'//           type retrieve functionality                        //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the producton schedule detail
+   '// Retrieve the producton schedule type
    '//
-   strStatement = "select xml_text from table(psa_app.psa_psc_function.retrieve_detail)"
+   strStatement = "select xml_text from table(psa_app.psa_psc_function.retrieve_type)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

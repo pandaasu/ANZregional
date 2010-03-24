@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_psc_detail_update.asp                          //
+'// Script  : psa_psc_type_update.asp                            //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the production schedule     //
-'//           detail update functionality                        //
+'//           type update functionality                          //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the production schedule detail update
+   '// Perform the production schedule type update
    '//
-   call objProcedure.Execute("psa_app.psa_psc_function.update_detail('" & GetUser() & "')")
+   call objProcedure.Execute("psa_app.psa_psc_function.update_type('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if
