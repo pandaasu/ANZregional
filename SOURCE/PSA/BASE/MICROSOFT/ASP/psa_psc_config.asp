@@ -127,30 +127,33 @@ sub PaintFunction()%>
       cobjScreens[0] = new clsScreen('dspLoad','hedLoad');
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
-      cobjScreens[3] = new clsScreen('dspDetail','hedDetail');
-      cobjScreens[4] = new clsScreen('dspWeek','hedWeek');
-      cobjScreens[5] = new clsScreen('dspEvnt','hedEvnt');
-      cobjScreens[6] = new clsScreen('dspFill','hedFill');
-      cobjScreens[7] = new clsScreen('dspPack','hedPack');
-      cobjScreens[8] = new clsScreen('dspForm','hedForm');
+      cobjScreens[3] = new clsScreen('dspWeeks','hedWeeks');
+      cobjScreens[4] = new clsScreen('dspWeekd','hedWeekd');
+      cobjScreens[5] = new clsScreen('dspType','hedType');
+      cobjScreens[6] = new clsScreen('dspEvnt','hedEvnt');
+      cobjScreens[7] = new clsScreen('dspFill','hedFill');
+      cobjScreens[8] = new clsScreen('dspPack','hedPack');
+      cobjScreens[9] = new clsScreen('dspForm','hedForm');
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Production Schedule Selection';
       cobjScreens[2].hedtxt = 'Production Schedule Definition';
-      cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Review';
+      cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Week Selection';
       cobjScreens[4].hedtxt = 'Production Schedule Maintenance - Week Definition';
-      cobjScreens[5].hedtxt = 'Production Schedule Maintenance - Event Activity';
-      cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Filling Activity';
-      cobjScreens[7].hedtxt = 'Production Schedule Maintenance - Packing Activity';
-      cobjScreens[8].hedtxt = 'Production Schedule Maintenance - Forming Activity';
+      cobjScreens[5].hedtxt = 'Production Schedule Maintenance - Production Type';
+      cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Event Activity';
+      cobjScreens[7].hedtxt = 'Production Schedule Maintenance - Filling Activity';
+      cobjScreens[8].hedtxt = 'Production Schedule Maintenance - Packing Activity';
+      cobjScreens[9].hedtxt = 'Production Schedule Maintenance - Forming Activity';
       cobjScreens[0].bodsrl = 'no';
       cobjScreens[1].bodsrl = 'no';
       cobjScreens[2].bodsrl = 'auto';
       cobjScreens[3].bodsrl = 'no';
       cobjScreens[4].bodsrl = 'auto';
-      cobjScreens[5].bodsrl = 'auto';
+      cobjScreens[5].bodsrl = 'no';
       cobjScreens[6].bodsrl = 'auto';
       cobjScreens[7].bodsrl = 'auto';
       cobjScreens[8].bodsrl = 'auto';
+      cobjScreens[9].bodsrl = 'auto';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -201,10 +204,11 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDelete(\''+strCode+'\');',10);
    }
-   function doSelectDetail(strCode) {
+   function doSelectWeek(strCode) {
       if (!processForm()) {return;}
+      cstrWeekProd = strCode;
       doActivityStart(document.body);
-      window.setTimeout('requestDetailLoad(\''+strCode+'\');',10);
+      window.setTimeout('requestWeekList();',10);
    }
    function doSelectCopy(strCode) {
       if (!processForm()) {return;}
@@ -312,7 +316,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDetail(\''+objElements[i].getAttribute('PSCCDE')+'\');">Schedule</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks/a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -520,23 +524,59 @@ sub PaintFunction()%>
       document.getElementById('SEL_SelCode').focus();
    }
 
-
-   //////////////////////
-   // Detail Functions //
-   //////////////////////
-   var cstrDetailCode;
-   var cobjDetailCell;
-   var cintDetailIndx;
-   var cstrDetailType;
-   function requestDetailLoad(strCode) {
-      cstrDetailCode = strCode;
-      cobjDetailCell = null;
-      cintDetailIndx = -1;
-      cstrDetailType = '*NONE';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETDET" PSCCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_detail_retrieve.asp',function(strResponse) {checkDetailLoad(strResponse);},false,streamXML(strXML));
+   ////////////////////
+   // Week Functions //
+   ////////////////////
+   var cstrWeekMode;
+   var cstrWeekProd;
+   var cstrWeekCode;
+   var cobjWeekData;
+   var cobjWeekSmod;
+   var cobjWeekPtyp;
+   function clsWeekData() {
+      this.wekcde = '';
+      this.weknam = '';
+      this.reqidx = 0;
+      this.smoidx = 0;
+      this.dayary = new Array();
    }
-   function checkDetailLoad(strResponse) {
+   function clsWeekDayd() {
+      this.daycde = '';
+      this.daynam = '';
+   }
+   function clsWeekSmod() {
+      this.smocde = '';
+      this.smonam = '';
+      this.shfary = new Array();
+   }
+   function clsWeekShfd() {
+      this.shfcde = '';
+      this.shfnam = '';
+      this.shfstr = '';
+      this.shfdur = '';
+   }
+   function clsWeekPtyp() {
+      this.ptycde = '';
+      this.ptynam = '';
+      this.cmoary = new Array();
+      this.lcoary = new Array();
+   }
+   function clsWeekCmod() {
+      this.cmocde = '';
+      this.cmonam = '';
+   }
+   function clsWeekLcod() {
+      this.lincde = '';
+      this.linnam = '';
+      this.lcocde = '';
+      this.lconam = '';
+      this.filnam = '';
+   }
+   function requestWeekList() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_select.asp',function(strResponse) {checkWeekList(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekList(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -555,118 +595,626 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspDetail');
-      }
-   }
-   function doDetailSelect(objSelect) {
-      if (cobDetailCell != null) {
-         if (cobjDetailCell.className == 'clsFloCntx') {
-            cobjDetailCell.className = 'clsFloCntl';
-         } else if (cobjDetailCell.className == 'clsFloNodx') {
-            cobjDetailCell.className = 'clsFloNode';
+         displayScreen('dspWeeks');
+         var objTabHead = document.getElementById('tabHeadWeeks');
+         var objTabBody = document.getElementById('tabBodyWeeks');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Week/Production Type&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Last Updated&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTROW') {
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                  objCell.className = 'clsLabelFB';
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               } else {
+                  objCell.className = 'clsLabelFN';
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               }
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTCDE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTUPD')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 3;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadWeeks','BodyWeeks','horizontal');
+            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('HeadWeeks','BodyWeeks','horizontal');
+            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
          }
       }
-      cobjDetailCell = objSelect;
-      cintDetailIndx = objSelect.getAttribute('schidx');
-      cstrDetailType = objSelect.getAttribute('schtyp');
-      if (cobjDetailCell.className == 'clsFloCntl') {
-         cobjDetailCell.className = 'clsFloCntx';
-      } else if (cobjDetailCell.className == 'clsFloNode') {
-         cobjDetailCell.className = 'clsFloNodx';
+   }
+   function doWeekCreate() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekCreate(\'*NEW\');',10);
+   }
+   function doWeekUpdate(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekUpdate(\''+strCode+'\');',10);
+   }
+   function doWeekRefresh() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekList();',10);
+   }
+   function requestWeekCreate(strCode) {
+      cstrWeekMode = '*CRT';
+      cstrWeekCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTWEK" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestWeekUpdate(strCode) {
+      cstrWeekMode = '*UPD';
+      cstrWeekCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDWEK" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         if (cstrWeekMode == '*UPD') {
+            cobjScreens[4].hedtxt = 'Update Production Schedule Week';
+        //    document.getElementById('addWeek').style.display = 'none';
+        //    document.getElementById('updWeek').style.display = 'block';
+         } else if (cstrWeekMode == '*CRT') {
+            cobjScreens[4].hedtxt = 'Create Production Schedule Week';
+         //   document.getElementById('addWeek').style.display = 'block';
+         //   document.getElementById('updWeek').style.display = 'none';
+         }
+         displayScreen('dspWeekd');
+         cobjWeekData = new clsWeekData();
+         cobjWeekSmod = new Array();
+         cobjWeekPtyp = new Array();
+         var objArray;
+         var strReqCde = '*NONE';
+         var strSmoCde = '*NONE';
+         var objPscPreq = document.getElementById('WEK_PscPreq');
+         objPscPreq.options.length = 0;
+         objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
+         objPscPreq.selectedIndex = 0;
+         var objPscSmod = document.getElementById('WEK_PscSmod');
+         objPscSmod.options.length = 0;
+         objPscSmod.options[0] = new Option('** Select Shift Model **','*NONE');
+         objPscSmod.selectedIndex = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'WEKDFN') {
+               cstrWeekCode = objElements[i].getAttribute('WEKCDE');
+               cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
+               cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
+               strReqCde = objElements[i].getAttribute('REQCDE');
+               strSmoCde = objElements[i].getAttribute('SMOCDE');
+            } else if (objElements[i].nodeName == 'DAYDFN') {
+               objArray = cobjWeekData.dayary;
+               objArray[objArray.length] = new clsWeekDayd();
+               objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
+               objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
+            } else if (objElements[i].nodeName == 'REQDFN') {
+               objPscPreq.options[objPscPreq.options.length] = new Option('('+objElements[i].getAttribute('REQCDE')+') '+objElements[i].getAttribute('REQNAM'),objElements[i].getAttribute('REQCDE'));
+               objPscPreq.options[objPscPreq.options.length-1].setAttribute('reqwek',objElements[i].getAttribute('REQWEK'));
+            } else if (objElements[i].nodeName == 'SMODFN') {
+               cobjWeekSmod[cobjWeekSmod.length] = new clsWeekSmod();
+               cobjWeekSmod[cobjWeekSmod.length-1].smocde = objElements[i].getAttribute('SMOCDE');
+               cobjWeekSmod[cobjWeekSmod.length-1].smonam = objElements[i].getAttribute('SMONAM');
+               objPscSmod.options[objPscSmod.options.length] = new Option('('+objElements[i].getAttribute('SMOCDE')+') '+objElements[i].getAttribute('SMONAM'),objElements[i].getAttribute('SMOCDE'));
+               objPscSmod.options[objPscSmod.options.length-1].setAttribute('smoidx',cobjWeekSmod.length-1);
+            } else if (objElements[i].nodeName == 'SHFDFN') {
+               objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
+               objArray[objArray.length] = new clsWeekShfd();
+               objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
+               objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
+               objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
+               objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
+            } else if (objElements[i].nodeName == 'PTYDFN') {
+               cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
+            } else if (objElements[i].nodeName == 'CMODFN') {
+               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].cmoary;
+               objArray[objArray.length] = new clsWeekCmod();
+               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
+               objArray[objArray.length-1].cmonam = objElements[i].getAttribute('CMONAM');
+            } else if (objElements[i].nodeName == 'LCODFN') {
+               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].lcoary;
+               objArray[objArray.length] = new clsWeekLcod();
+               objArray[objArray.length-1].lincde = objElements[i].getAttribute('LINCDE');
+               objArray[objArray.length-1].linnam = objElements[i].getAttribute('LINNAM');
+               objArray[objArray.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
+               objArray[objArray.length-1].lconam = objElements[i].getAttribute('LCONAM');
+               objArray[objArray.length-1].filnam = objElements[i].getAttribute('FILNAM');
+            }
+         }
+         for (var i=0;i<objPscPreq.length;i++) {
+            if (objPscPreq.options[i].value == strReqCde) {
+               objPscPreq.options[i].selected = true;
+               break;
+            }
+         }
+         for (var i=0;i<objPscSmod.length;i++) {
+            if (objPscSmod.options[i].value == strSmoCde) {
+               objPscSmod.options[i].selected = true;
+               break;
+            }
+         }
+         document.getElementById('WEK_PscPreq').focus();
       }
    }
-   function doDetailRefresh() {
-      // Update the model and paint from the model
-      displayScreen('dspDetail');
-   }
-   function doDetailBack() {
+   function doWeekCancel() {
       if (checkChange() == false) {return;}
-      displayScreen('dspSelect');
-      document.getElementById('SEL_SelCode').focus();
+      cobjWeekData = null;
+      cobjWeekSmod = null;
+      cobjWeekPtyp = null;
+      var objPscType = document.getElementById('WEK_PscType');
+      for (var i=objPscType.rows.length-1;i>=0;i--) {
+         objPscType.deleteRow(i);
+      }
+      displayScreen('dspWeeks');
    }
-   function doDetailAddWeek() {
+   function doWeekAccept() {
       if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestWeekAdd();',10);
-   }
-   function doDetailDelete() {
-      if (cobDetailCell == null) {
+      var objShfAry;
+      var objLcoAry;
+      var objElePtyp;
+      var objEleShft;
+      var objEleLine;
+      var bolPtypFound;
+      var bolShftFound;
+      var bolLineFound;
+      var objPscPreq = document.getElementById('WEK_PscPreq');
+      var objPscSmod = document.getElementById('WEK_PscSmod');
+      var strMessage = '';
+      if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Production requirements must be selected';
+      }
+      if (objPscSmod.selectedIndex == -1 || objPscSmod.options[objPscSmod.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Shift model must be selected';
+      } else {
+         bolPtypFound = false;
+         for (var i=0;i<cobjWeekPtyp.length;i++) {
+            objElePtyp = document.getElementById('WEKPTY_'+i);
+            if (objElePtyp.checked == true) {
+               bolPtypFound = true;
+               bolShftFound = false;
+               objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
+               for (var j=0;j<objShfAry.length;j++) {
+                  objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
+                  if (objEleShft.selectedIndex != -1 && objEleShft.options[objEleShft.selectedIndex].value != '*NONE') {
+                     bolShftFound = true;
+                  }
+               }
+               if (bolShftFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'At least one shift must have a crew model selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
+               }
+               bolLineFound = false;
+               objLcoAry = cobjWeekPtyp[i].lcoary;
+               for (var j=0;j<objLcoAry.length;j++) {
+                  objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+                  if (objEleLine.checked == true) {
+                     bolLineFound = true;
+                  }
+               }
+               if (bolLineFound == false) {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'At least one line configuration must be selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
+               }
+            }
+         }
+         if (bolPtypFound == false) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'At least one production type (Filling, Packing or Forming must be selected) for for the week';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
          return;
       }
-      if (cstrDetailType == '*EVNT') {
-         if (!processForm()) {return;}
-         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule event activity will be deleted)\r\npress Cancel to cancel and return') == false) {
-            return;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      if (cstrWeekMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
+      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
+      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
+      strXML = strXML+' SMOCDE="'+fixXML(objPscSmod.options[objPscSmod.selectedIndex].value)+'">';
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objElePtyp = document.getElementById('WEKPTY_'+i);
+         if (objElePtyp.checked == true) {
+            strXML = strXML+'<PSCPTY PTYCDE="'+fixXML(cobjWeekPtyp[i].ptycde)+'">';
+            objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
+            for (var j=0;j<objShfAry.length;j++) {
+               objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
+               if (objEleShft.selectedIndex == -1) {
+                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" SHFSTR="'+fixXML(objShfAry[j].shfstr)+'" SHFDUR="'+fixXML(objShfAry[j].shfdur)+'" CMOCDE="'+fixXML('*NONE')+'"/>';
+               } else {
+                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" SHFSTR="'+fixXML(objShfAry[j].shfstr)+'" SHFDUR="'+fixXML(objShfAry[j].shfdur)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
+               }
+            }
+            objLcoAry = cobjWeekPtyp[i].lcoary;
+            for (var j=0;j<objLcoAry.length;j++) {
+               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+               if (objEleLine.checked == true) {
+                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+'"/>';
+               }
+            }
+            strXML = strXML+'</PSCPTY>';
          }
-         doActivityStart(document.body);
-         window.setTimeout('requestEvntDelete(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*FILL') {
-         if (!processForm()) {return;}
-         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule filling activity will be deleted)\r\npress Cancel to cancel and return') == false) {
-            return;
+      }
+      strXML = strXML+'</PSA_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekAccept(\''+strXML+'\');',10);
+   }
+   function requestWeekAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_week_update.asp',function(strResponse) {checkWeekAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
          }
-         doActivityStart(document.body);
-         window.setTimeout('requestFillDelete(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*PACK') {
-         if (!processForm()) {return;}
-         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule packing activity will be deleted)\r\npress Cancel to cancel and return') == false) {
-            return;
+         cobjWeekData = null;
+         cobjWeekSmod = null;
+         cobjWeekPtyp = null;
+         var objPscType = document.getElementById('WEK_PscType');
+         for (var i=objPscType.rows.length-1;i>=0;i--) {
+            objPscType.deleteRow(i);
          }
-         doActivityStart(document.body);
-         window.setTimeout('requestPackDelete(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*FORM') {
-         if (!processForm()) {return;}
-         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule forming activity will be deleted)\r\npress Cancel to cancel and return') == false) {
-            return;
-         }
-         doActivityStart(document.body);
-         window.setTimeout('requestFormDelete(\''+strCode+'\');',10);
+         doWeekRefresh();
       }
    }
-   function doDetailUpdate() {
-      if (cobDetailCell == null) {
+   function doWeekSmodChange(objSelect) {
+      if (objSelect.selectedIndex == -1) {
          return;
       }
-      if (cstrDetailType == '*EVNT') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestEvntUpdate(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*FILL') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestFillUpdate(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*PACK') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestPackUpdate(\''+strCode+'\');',10);
-      } else if (cstrDetailType == '*FORM') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestFormUpdate(\''+strCode+'\');',10);
+      var objPscType = document.getElementById('WEK_PscType');
+      for (var i=objPscType.rows.length-1;i>=0;i--) {
+         objPscType.deleteRow(i);
       }
-   }
-   function doDetailAddEvnt() {
-      if (cobDetailCell == null) {
+      cobjWeekData.smoidx = objSelect.options[objSelect.selectedIndex].getAttribute('smoidx');
+      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
          return;
       }
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestEvntAdd();',10);
+      var objTable;
+      var objRow;
+      var objCell;
+      var objInput;
+      var objSelect;
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objRow = objPscType.insertRow(-1);
+         objRow.setAttribute('ptyidx',i);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.width = '100%';
+         objCell.style.fontSize = '8pt';
+         objCell.style.backgroundColor = '#ffffc0';
+         objCell.style.color = '#000000';
+         objCell.style.border = '#708090 1px solid';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'WEKPTY_'+i;
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.onclick = function() {doWeekPtypClick(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objTable = document.createElement('table');
+         objTable.id = 'WEKPTYDATA_'+i;
+         objTable.className = 'clsPanel';
+         objTable.align = 'center';
+         objTable.cellSpacing = '0';
+         objTable.style.display = 'none';
+         objCell.appendChild(objTable);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekLconLoad(objCell,i);
+      }
    }
-   function doDetailAddFill() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestFillAdd();',10);
+   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx) {
+      var objTable = document.createElement('table');
+      var objRow;
+      var objCell;
+      var objSelect;
+      var objShfAry;
+      var objCmoAry;
+      var intBarDay;
+      var intBarCnt;
+      var intBarStr;
+      var intStrTim;
+      var intDurMin;
+      var strDayNam;
+      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
+      objTable.className = 'clsPanel';
+      objTable.align = 'center';
+      objTable.cellSpacing = '0';
+      objParent.appendChild(objTable);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Shifts'));
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Crew Model'));
+      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
+      for (var i=0;i<objShfAry.length;i++) {
+         intStrTim = objShfAry[i].shfstr;
+         intDurMin = objShfAry[i].shfdur;
+         if (i == 0) {
+            intBarStr = ((Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4) + 1;
+         } else {
+            intBarStr = intBarStr + intBarCnt;
+         }
+         intBarCnt = (intDurMin / 60) * 4;
+         intBarDay = Math.floor(intBarStr / 96) + 1;
+         strDayNam = 'Sunday';
+         if (intBarDay == 1) {
+            strDayNam = 'Sunday';
+         } else if (intBarDay == 2) {
+            strDayNam = 'Monday';
+         } else if (intBarDay == 3) {
+            strDayNam = 'Tuesday';
+         } else if (intBarDay == 4) {
+            strDayNam = 'Wednesday';
+         } else if (intBarDay == 5) {
+            strDayNam = 'Thursday';
+         } else if (intBarDay == 6) {
+            strDayNam = 'Friday';
+         } else if (intBarDay == 7) {
+            strDayNam = 'Saturday';
+         } else if (intBarDay == 8) {
+            strDayNam = 'Sunday';
+         }
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.appendChild(document.createTextNode(strDayNam+' - '+objShfAry[i].shfnam));
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objSelect = document.createElement('select');
+         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
+         objSelect.className = 'clsInputNN';
+         objSelect.style.fontSize = '8pt';
+         objSelect.selectedIndex = -1;
+         objSelect.options[0] = new Option('** NONE **','*NONE');
+         objSelect.options[0].setAttribute('cmocde','');
+         objSelect.options[0].selected = true;
+         objCmoAry = cobjWeekPtyp[intPtyIdx].cmoary;
+         for (var j=0;j<objCmoAry.length;j++) {
+            objSelect.options[objSelect.options.length] = new Option('('+objCmoAry[j].cmocde+') '+objCmoAry[j].cmonam,objCmoAry[j].cmocde);
+            objSelect.options[objSelect.options.length-1].setAttribute('cmoidx',j);
+         }
+         objCell.appendChild(objSelect);
+      }
    }
-   function doDetailAddPack() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestPackAdd();',10);
+   function doWeekLconLoad(objParent, intPtyIdx) {
+      var objTable = document.createElement('table');
+      var objRow;
+      var objCell;
+      var objInput;
+      var objLcoAry;
+      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
+      objTable.className = 'clsPanel';
+      objTable.align = 'center';
+      objTable.cellSpacing = '0';
+      objParent.appendChild(objTable);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Line Configurations'));
+      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
+      for (var i=0;i<objLcoAry.length;i++) {
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+         }
+      }
    }
-   function doDetailAddForm() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestFormAdd();',10);
+   function doWeekPtypClick(objCheck) {
+      var intPtyIdx = objCheck.parentNode.parentNode.getAttribute('ptyidx');
+      if (objCheck.checked == false) {
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'none';
+      } else {
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'block';
+      }
    }
 
    /////////////////////
@@ -1197,570 +1745,6 @@ sub PaintFunction()%>
       }
    }
 
-   ////////////////////
-   // Week Functions //
-   ////////////////////
-   var cstrWeekMode;
-   var cobjWeekData;
-   var cobjWeekSmod;
-   var cobjWeekPtyp;
-   function clsWeekData() {
-      this.wekcde = '';
-      this.weknam = '';
-      this.smoidx = 0;
-      this.dayary = new Array();
-   }
-   function clsWeekDayd() {
-      this.daycde = '';
-      this.daynam = '';
-   }
-   function clsWeekSmod() {
-      this.smocde = '';
-      this.smonam = '';
-      this.shfary = new Array();
-   }
-   function clsWeekShfd() {
-      this.shfcde = '';
-      this.shfnam = '';
-      this.shfstr = '';
-      this.shfdur = '';
-   }
-   function clsWeekPtyp() {
-      this.ptycde = '';
-      this.ptynam = '';
-      this.cmoary = new Array();
-      this.lcoary = new Array();
-   }
-   function clsWeekCmod() {
-      this.cmocde = '';
-      this.cmonam = '';
-   }
-   function clsWeekLcod() {
-      this.lincde = '';
-      this.linnam = '';
-      this.lcocde = '';
-      this.lconam = '';
-      this.filnam = '';
-   }
-   function requestWeekAdd() {
-      cstrWeekMode = '*ADD';
-      cstrWeekCode = '';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="2010034"/>';
-      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestWeekUpdate(strCode) {
-      cstrWeekMode = '*UPD';
-      cstrWeekCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestWeekDelete(strCode) {
-      cstrWeekMode = '*DLT';
-      cstrWeekCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTWEK" PSCCDE="'+fixXML(cstrDetailCode)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_week_delete.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
-   }
-   function checkWeekLoad(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-            }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
-         }
-         if (cstrWeekMode == '*DLT') {
-            doDetailRefresh();
-            return;
-         } else if (cstrWeekMode == '*UPD') {
-            cobjScreens[4].hedtxt = 'Update Production Schedule Week';
-            document.getElementById('addWeek').style.display = 'none';
-            document.getElementById('updWeek').style.display = 'block';
-         } else if (cstrWeekMode == '*CRT') {
-            cobjScreens[4].hedtxt = 'Create Production Schedule Week';
-            document.getElementById('addWeek').style.display = 'block';
-            document.getElementById('updWeek').style.display = 'none';
-         }
-         displayScreen('dspWeek');
-         cobjWeekData = new clsWeekData();
-         cobjWeekSmod = new Array();
-         cobjWeekPtyp = new Array();
-         var objArray;
-         var objPscPreq = document.getElementById('WEK_PscPreq');
-         objPscPreq.options.length = 0;
-         objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
-         objPscPreq.selectedIndex = 0;
-         var objPscSmod = document.getElementById('WEK_PscSmod');
-         objPscSmod.options.length = 0;
-         objPscSmod.options[0] = new Option('** Select Shift Model **','*NONE');
-         objPscSmod.selectedIndex = 0;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'WEKDFN') {
-               cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
-               cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
-            } else if (objElements[i].nodeName == 'DAYDFN') {
-               objArray = cobjWeekData.dayary;
-               objArray[objArray.length] = new clsWeekDayd();
-               objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
-               objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
-            } else if (objElements[i].nodeName == 'REQDFN') {
-               objPscPreq.options[objPscPreq.options.length] = new Option(objElements[i].getAttribute('REQNAM'),objElements[i].getAttribute('REQCDE'));
-               objPscPreq.options[objPscPreq.options.length-1].setAttribute('reqwek',objElements[i].getAttribute('REQWEK'));
-            } else if (objElements[i].nodeName == 'SMODFN') {
-               cobjWeekSmod[cobjWeekSmod.length] = new clsWeekSmod();
-               cobjWeekSmod[cobjWeekSmod.length-1].smocde = objElements[i].getAttribute('SMOCDE');
-               cobjWeekSmod[cobjWeekSmod.length-1].smonam = objElements[i].getAttribute('SMONAM');
-               objPscSmod.options[objPscSmod.options.length] = new Option(objElements[i].getAttribute('SMONAM'),objElements[i].getAttribute('SMOCDE'));
-               objPscSmod.options[objPscSmod.options.length-1].setAttribute('smoidx',cobjWeekSmod.length-1);
-            } else if (objElements[i].nodeName == 'SHFDFN') {
-               objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
-               objArray[objArray.length] = new clsWeekShfd();
-               objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
-               objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
-               objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
-               objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
-            } else if (objElements[i].nodeName == 'PTYDFN') {
-               cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
-               cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
-               cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
-            } else if (objElements[i].nodeName == 'CMODFN') {
-               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].cmoary;
-               objArray[objArray.length] = new clsWeekCmod();
-               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
-               objArray[objArray.length-1].cmonam = objElements[i].getAttribute('CMONAM');
-            } else if (objElements[i].nodeName == 'LCODFN') {
-               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].lcoary;
-               objArray[objArray.length] = new clsWeekLcod();
-               objArray[objArray.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               objArray[objArray.length-1].linnam = objElements[i].getAttribute('LINNAM');
-               objArray[objArray.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
-               objArray[objArray.length-1].lconam = objElements[i].getAttribute('LCONAM');
-               objArray[objArray.length-1].filnam = objElements[i].getAttribute('FILNAM');
-            }
-         }
-         if (cstrWeekMode == '*UPD') {
-            document.getElementById('WEK_PscPreq').focus();
-         } else {
-            document.getElementById('WEK_PscPreq').focus();
-         }
-      }
-   }
-   function doWeekCancel() {
-      if (checkChange() == false) {return;}
-      cobjWeekData = null;
-      cobjWeekSmod = null;
-      cobjWeekPtyp = null;
-      var objPscType = document.getElementById('WEK_PscType');
-      for (var i=objPscType.rows.length-1;i>=0;i--) {
-         objPscType.deleteRow(i);
-      }
-      displayScreen('dspDetail');
-   }
-   function doWeekAccept() {
-      if (!processForm()) {return;}
-      var objShfAry;
-      var objLcoAry;
-      var objElePtyp;
-      var objEleShft;
-      var objEleLine;
-      var bolPtypFound;
-      var bolShftFound;
-      var bolLineFound;
-      var objPscPreq = document.getElementById('WEK_PscPreq');
-      var objPscSmod = document.getElementById('WEK_PscSmod');
-      var strMessage = '';
-      if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production requirements must be selected';
-      }
-      if (objPscSmod.selectedIndex == -1 || objPscSmod.options[objPscSmod.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Shift model must be selected';
-      } else {
-         bolPtypFound = false;
-         for (var i=0;i<cobjWeekPtyp.length;i++) {
-            objElePtyp = document.getElementById('WEKPTY_'+i);
-            if (objElePtyp.checked == true) {
-               bolPtypFound = true;
-               bolShftFound = false;
-               objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
-               for (var j=0;j<objShfAry.length;j++) {
-                  objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
-                  if (objEleShft.selectedIndex != -1 && objEleShft.options[objEleShft.selectedIndex].value != '*NONE') {
-                     bolShftFound = true;
-                  }
-               }
-               if (bolShftFound == false) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'At least one shift must have a crew model selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
-               }
-               bolLineFound = false;
-               objLcoAry = cobjWeekPtyp[i].lcoary;
-               for (var j=0;j<objLcoAry.length;j++) {
-                  objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
-                  if (objEleLine.checked == true) {
-                     bolLineFound = true;
-                  }
-               }
-               if (bolLineFound == false) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'At least one line configuration must be selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
-               }
-            }
-         }
-         if (bolPtypFound == false) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'At least one production type (Filling, Packing or Forming must be selected) for for the week';
-         }
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
-      if (cstrWeekMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
-      } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
-      }
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
-      strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
-      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
-      strXML = strXML+' SMOCDE="'+fixXML(objPscSmod.options[objPscSmod.selectedIndex].value)+'">';
-      for (var i=0;i<cobjWeekPtyp.length;i++) {
-         objElePtyp = document.getElementById('WEKPTY_'+i);
-         if (objElePtyp.checked == true) {
-            strXML = strXML+'<PSCPTY PTYCDE="'+fixXML(cobjWeekPtyp[i].ptycde)+'">';
-            objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
-            for (var j=0;j<objShfAry.length;j++) {
-               objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
-               if (objEleShft.selectedIndex == -1) {
-                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" CMOCDE="'+fixXML('*NONE')+'"/>';
-               } else {
-                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
-               }
-            }
-            objLcoAry = cobjWeekPtyp[i].lcoary;
-            for (var j=0;j<objLcoAry.length;j++) {
-               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
-               if (objEleLine.checked == true) {
-                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+'"/>';
-               }
-            }
-            strXML = strXML+'</PSCPTY>';
-         }
-      }
-      strXML = strXML+'</PSA_REQUEST>';
-      doActivityStart(document.body);
-      window.setTimeout('requestWeekAccept(\''+strXML+'\');',10);
-   }
-   function requestWeekAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_week_update.asp',function(strResponse) {checkWeekAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkWeekAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
-         }
-         cobjWeekData = null;
-         cobjWeekSmod = null;
-         cobjWeekPtyp = null;
-         var objPscType = document.getElementById('WEK_PscType');
-         for (var i=objPscType.rows.length-1;i>=0;i--) {
-            objPscType.deleteRow(i);
-         }
-         doDetailRefresh();
-      }
-   }
-   function doWeekSmodChange(objSelect) {
-      if (objSelect.selectedIndex == -1) {
-         return;
-      }
-      var objPscType = document.getElementById('WEK_PscType');
-      for (var i=objPscType.rows.length-1;i>=0;i--) {
-         objPscType.deleteRow(i);
-      }
-      cobjWeekData.smoidx = objSelect.options[objSelect.selectedIndex].getAttribute('smoidx');
-      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
-         return;
-      }
-      var objTable;
-      var objRow;
-      var objCell;
-      var objInput;
-      var objSelect;
-      for (var i=0;i<cobjWeekPtyp.length;i++) {
-         objRow = objPscType.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objRow = objPscType.insertRow(-1);
-         objRow.setAttribute('ptyidx',i);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.width = '100%';
-         objCell.style.fontSize = '8pt';
-         objCell.style.backgroundColor = '#ffffc0';
-         objCell.style.color = '#000000';
-         objCell.style.border = '#708090 1px solid';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objInput = document.createElement('input');
-         objInput.type = 'checkbox';
-         objInput.value = '';
-         objInput.id = 'WEKPTY_'+i;
-         objInput.onfocus = function() {setSelect(this);};
-         objInput.onclick = function() {doWeekPtypClick(this);};
-         objInput.checked = false;
-         objCell.appendChild(objInput);
-         objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
-         objRow = objPscType.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objTable = document.createElement('table');
-         objTable.id = 'WEKPTYDATA_'+i;
-         objTable.className = 'clsPanel';
-         objTable.align = 'center';
-         objTable.cellSpacing = '0';
-         objTable.style.display = 'none';
-         objCell.appendChild(objTable);
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.whiteSpace = 'nowrap';
-         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx);
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         doWeekLconLoad(objCell,i);
-      }
-   }
-   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx) {
-      var objTable = document.createElement('table');
-      var objRow;
-      var objCell;
-      var objSelect;
-      var objShfAry;
-      var objCmoAry;
-      var intBarDay;
-      var intBarCnt;
-      var intBarStr;
-      var intStrTim;
-      var intDurMin;
-      var strDayNam;
-      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
-      objRow = objTable.insertRow(-1);
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Shifts'));
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Crew Model'));
-      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
-      for (var i=0;i<objShfAry.length;i++) {
-         intStrTim = objShfAry[i].shfstr;
-         intDurMin = objShfAry[i].shfdur;
-         if (i == 0) {
-            intBarStr = ((Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4) + 1;
-         } else {
-            intBarStr = intBarStr + intBarCnt;
-         }
-         intBarCnt = (intDurMin / 60) * 4;
-         intBarDay = Math.floor(intBarStr / 96) + 1;
-         strDayNam = 'Sunday';
-         if (intBarDay == 1) {
-            strDayNam = 'Sunday';
-         } else if (intBarDay == 2) {
-            strDayNam = 'Monday';
-         } else if (intBarDay == 3) {
-            strDayNam = 'Tuesday';
-         } else if (intBarDay == 4) {
-            strDayNam = 'Wednesday';
-         } else if (intBarDay == 5) {
-            strDayNam = 'Thursday';
-         } else if (intBarDay == 6) {
-            strDayNam = 'Friday';
-         } else if (intBarDay == 7) {
-            strDayNam = 'Saturday';
-         } else if (intBarDay == 8) {
-            strDayNam = 'Sunday';
-         }
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell.appendChild(document.createTextNode(strDayNam+' - '+objShfAry[i].shfnam));
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objSelect = document.createElement('select');
-         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
-         objSelect.className = 'clsInputNN';
-         objSelect.style.fontSize = '8pt';
-         objSelect.selectedIndex = -1;
-         objSelect.options[0] = new Option('** NONE **','*NONE');
-         objSelect.options[0].setAttribute('cmocde','');
-         objSelect.options[0].selected = true;
-         objCmoAry = cobjWeekPtyp[intPtyIdx].cmoary;
-         for (var j=0;j<objCmoAry.length;j++) {
-            objSelect.options[objSelect.options.length] = new Option('('+objCmoAry[j].cmocde+') '+objCmoAry[j].cmonam,objCmoAry[j].cmocde);
-            objSelect.options[objSelect.options.length-1].setAttribute('cmoidx',j);
-         }
-         objCell.appendChild(objSelect);
-      }
-   }
-   function doWeekLconLoad(objParent, intPtyIdx) {
-      var objTable = document.createElement('table');
-      var objRow;
-      var objCell;
-      var objInput;
-      var objLcoAry;
-      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
-      objRow = objTable.insertRow(-1);
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Line Configurations'));
-      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
-      for (var i=0;i<objLcoAry.length;i++) {
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objInput = document.createElement('input');
-         objInput.type = 'checkbox';
-         objInput.value = '';
-         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
-         objInput.onfocus = function() {setSelect(this);};
-         objInput.checked = false;
-         objCell.appendChild(objInput);
-         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
-         } else {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
-         }
-      }
-   }
-   function doWeekPtypClick(objCheck) {
-      var intPtyIdx = objCheck.parentNode.parentNode.getAttribute('ptyidx');
-      if (objCheck.checked == false) {
-         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'none';
-      } else {
-         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'block';
-      }
-   }
-
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -1864,40 +1848,51 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDetail" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=1 cellpadding=1 cellspacing=0>
-      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+   <table id="dspWeeks" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDetail" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance</nobr></td>
+         <td id="hedWeeks" class="clsFunction" align=center colspan=2 nowrap><nobr>Production Schedule Week Selection</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailBack();">&nbsp;Back&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddWeek();">&nbsp;Add Week&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
       <tr height=100%>
-         <td align=center colspan=1 nowrap><nobr>
-            <div style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
-               <table id="UPD_Table" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border-style:none;" align=left cellspacing="0" cellpadding="0"></table>
-            </div>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadWeeks">
+                     <table class="clsTableHead" id="tabHeadWeeks" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyWeeks">
+                     <table class="clsTableBody" id="tabBodyWeeks" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspWeek" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+   <table id="dspWeekd" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
       <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedWeek" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Week Definition</nobr></td>
+         <td id="hedWeekd" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Week Definition</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
@@ -1932,6 +1927,36 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspType" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=1 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedType" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddWeek();">&nbsp;Add Week&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=1 nowrap><nobr>
+            <div style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
+               <table id="UPD_Table" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border-style:none;" align=left cellspacing="0" cellpadding="0"></table>
+            </div>
          </nobr></td>
       </tr>
    </table>
