@@ -21,7 +21,9 @@
 create table psa.psa_psc_prod
    (psp_psc_code                    varchar2(32)                  not null,
     psp_psc_week                    varchar2(7)                   not null,
-    psp_prd_type                    varchar2(32)                  not null);
+    psp_prd_type                    varchar2(32)                  not null,
+    psp_upd_user                    varchar2(30)                  not null,
+    psp_upd_date                    date                          not null);
 
 /**/
 /* Comments
@@ -30,6 +32,8 @@ comment on table psa.psa_psc_prod is 'Production Schedule Production Type Table'
 comment on column psa.psa_psc_prod.psp_psc_code is 'Schedule code';
 comment on column psa.psa_psc_prod.psp_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_prod.psp_prd_type is 'Production type code';
+comment on column psa.psa_psc_prod.psp_upd_user is 'Last updated user';
+comment on column psa.psa_psc_prod.psp_upd_date is 'Last updated date';
 
 /**/
 /* Primary Key Constraint
