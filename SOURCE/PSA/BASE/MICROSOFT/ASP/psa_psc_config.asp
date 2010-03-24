@@ -316,7 +316,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks/a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -573,7 +573,7 @@ sub PaintFunction()%>
       this.filnam = '';
    }
    function requestWeekList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_week_select.asp',function(strResponse) {checkWeekList(strResponse);},false,streamXML(strXML));
    }
    function checkWeekList(strResponse) {
@@ -618,7 +618,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Week/Production Type&nbsp;';
+         objCell.innerHTML = '&nbsp;Week / Production Type&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -639,19 +639,22 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
+               objCell.className = 'clsLabelFN';
                if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
-                  objCell.className = 'clsLabelFB';
                   objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
                } else {
-                  objCell.className = 'clsLabelFN';
                   objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
                }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTCDE')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTTXT')+'&nbsp;';
+               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                  objCell.className = 'clsLabelFB';
+               } else {
+                  objCell.className = 'clsLabelFN';
+               }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -679,6 +682,10 @@ sub PaintFunction()%>
             objTabBody.style.tableLayout = 'fixed';
          }
       }
+   }
+   function doWeekBack() {
+      displayScreen('dspSelect');
+      document.getElementById('SEL_SelCode').focus();
    }
    function doWeekCreate() {
       if (!processForm()) {return;}
@@ -753,6 +760,7 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'WEKDFN') {
                cstrWeekCode = objElements[i].getAttribute('WEKCDE');
+               document.getElementById('hedWeekd').innerText = cobjScreens[4].hedtxt+' - '+objElements[i].getAttribute('WEKNAM');
                cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
                cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
                strReqCde = objElements[i].getAttribute('REQCDE');
@@ -890,7 +898,7 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
       }
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
       strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
       strXML = strXML+' SMOCDE="'+fixXML(objPscSmod.options[objPscSmod.selectedIndex].value)+'">';
@@ -1814,7 +1822,7 @@ sub PaintFunction()%>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Create Production Schedule</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule Code:&nbsp;</nobr></td>
@@ -1861,6 +1869,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
@@ -1895,7 +1904,7 @@ sub PaintFunction()%>
          <td id="hedWeekd" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Week Definition</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Requirements:&nbsp;</nobr></td>
@@ -1916,7 +1925,7 @@ sub PaintFunction()%>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
