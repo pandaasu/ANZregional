@@ -536,6 +536,8 @@ sub PaintFunction()%>
    function clsWeekData() {
       this.wekcde = '';
       this.weknam = '';
+      this.reqcde = '*NONE';
+      this.smocde = '*NONE';
       this.reqidx = 0;
       this.smoidx = 0;
       this.dayary = new Array();
@@ -558,18 +560,25 @@ sub PaintFunction()%>
    function clsWeekPtyp() {
       this.ptycde = '';
       this.ptynam = '';
+      this.ptyusd = '0';
       this.cmoary = new Array();
+      this.shfary = new Array();
       this.lcoary = new Array();
    }
    function clsWeekCmod() {
       this.cmocde = '';
       this.cmonam = '';
    }
+   function clsWeekPshf() {
+      this.smoseq = '';
+      this.cmocde = '';
+   }
    function clsWeekLcod() {
       this.lincde = '';
       this.linnam = '';
       this.lcocde = '';
       this.lconam = '';
+      this.lcousd = '0';
       this.filnam = '';
    }
    function requestWeekList() {
@@ -640,10 +649,14 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.className = 'clsLabelFN';
-               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
-                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               if (objElements[i].getAttribute('SLTSTS') == '0') {
+                  objCell.innerHTML = '&nbsp;';
                } else {
-                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+                  if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+                  } else {
+                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+                  }
                }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -697,6 +710,13 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestWeekUpdate(\''+strCode+'\');',10);
    }
+   function doTypeUpdate(strWeek,strCode) {
+      if (!processForm()) {return;}
+      cstrTypeProd = cstrWeekProd;
+      cstrTypeWeek = strWeek;
+      doActivityStart(document.body);
+      window.setTimeout('requestTypeLoad(\''+strCode+'\');',10);
+   }
    function doWeekRefresh() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
@@ -735,20 +755,14 @@ sub PaintFunction()%>
          }
          if (cstrWeekMode == '*UPD') {
             cobjScreens[4].hedtxt = 'Update Production Schedule Week';
-        //    document.getElementById('addWeek').style.display = 'none';
-        //    document.getElementById('updWeek').style.display = 'block';
          } else if (cstrWeekMode == '*CRT') {
             cobjScreens[4].hedtxt = 'Create Production Schedule Week';
-         //   document.getElementById('addWeek').style.display = 'block';
-         //   document.getElementById('updWeek').style.display = 'none';
          }
          displayScreen('dspWeekd');
          cobjWeekData = new clsWeekData();
          cobjWeekSmod = new Array();
          cobjWeekPtyp = new Array();
          var objArray;
-         var strReqCde = '*NONE';
-         var strSmoCde = '*NONE';
          var objPscPreq = document.getElementById('WEK_PscPreq');
          objPscPreq.options.length = 0;
          objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
@@ -763,8 +777,8 @@ sub PaintFunction()%>
                document.getElementById('hedWeekd').innerText = cobjScreens[4].hedtxt+' - '+objElements[i].getAttribute('WEKNAM');
                cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
                cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
-               strReqCde = objElements[i].getAttribute('REQCDE');
-               strSmoCde = objElements[i].getAttribute('SMOCDE');
+               cobjWeekData.reqcde = objElements[i].getAttribute('REQCDE');
+               cobjWeekData.smocde = objElements[i].getAttribute('SMOCDE');
             } else if (objElements[i].nodeName == 'DAYDFN') {
                objArray = cobjWeekData.dayary;
                objArray[objArray.length] = new clsWeekDayd();
@@ -790,11 +804,17 @@ sub PaintFunction()%>
                cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
                cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
                cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptyusd = objElements[i].getAttribute('PTYUSD');
             } else if (objElements[i].nodeName == 'CMODFN') {
                objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].cmoary;
                objArray[objArray.length] = new clsWeekCmod();
                objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
                objArray[objArray.length-1].cmonam = objElements[i].getAttribute('CMONAM');
+            } else if (objElements[i].nodeName == 'SHFLNK') {
+               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].shfary;
+               objArray[objArray.length] = new clsWeekPshf();
+               objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
+               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             } else if (objElements[i].nodeName == 'LCODFN') {
                objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].lcoary;
                objArray[objArray.length] = new clsWeekLcod();
@@ -802,22 +822,24 @@ sub PaintFunction()%>
                objArray[objArray.length-1].linnam = objElements[i].getAttribute('LINNAM');
                objArray[objArray.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
                objArray[objArray.length-1].lconam = objElements[i].getAttribute('LCONAM');
+               objArray[objArray.length-1].lcousd = objElements[i].getAttribute('LCOUSD');
                objArray[objArray.length-1].filnam = objElements[i].getAttribute('FILNAM');
             }
          }
          for (var i=0;i<objPscPreq.length;i++) {
-            if (objPscPreq.options[i].value == strReqCde) {
+            if (objPscPreq.options[i].value == cobjWeekData.reqcde) {
                objPscPreq.options[i].selected = true;
                break;
             }
          }
          for (var i=0;i<objPscSmod.length;i++) {
-            if (objPscSmod.options[i].value == strSmoCde) {
+            if (objPscSmod.options[i].value == cobjWeekData.smocde) {
                objPscSmod.options[i].selected = true;
                break;
             }
          }
          document.getElementById('WEK_PscPreq').focus();
+         doWeekSmodChange(objPscSmod,true);
       }
    }
    function doWeekCancel() {
@@ -968,7 +990,7 @@ sub PaintFunction()%>
          doWeekRefresh();
       }
    }
-   function doWeekSmodChange(objSelect) {
+   function doWeekSmodChange(objSelect, bolLoad) {
       if (objSelect.selectedIndex == -1) {
          return;
       }
@@ -995,6 +1017,531 @@ sub PaintFunction()%>
          objCell.style.paddingLeft = '2px';
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
+         objRow = objPscType.insertRow(-1);
+         objRow.setAttribute('ptyidx',i);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.width = '100%';
+         objCell.style.fontSize = '8pt';
+         objCell.style.backgroundColor = '#ffffc0';
+         objCell.style.color = '#000000';
+         objCell.style.border = '#708090 1px solid';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'WEKPTY_'+i;
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.onclick = function() {doWeekPtypClick(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
+         if (bolLoad == true && cobjWeekPtyp[i].ptyusd == '1') {
+            objInput.checked = true;
+         }
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objTable = document.createElement('table');
+         objTable.id = 'WEKPTYDATA_'+i;
+         objTable.className = 'clsPanel';
+         objTable.align = 'center';
+         objTable.cellSpacing = '0';
+         objTable.style.display = 'none';
+         objCell.appendChild(objTable);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx,bolLoad);
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         doWeekLconLoad(objCell,i,bolLoad);
+         if (bolLoad == true) {
+            doWeekPtypClick(objInput);
+         }
+      }
+   }
+   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx, bolLoad) {
+      var objTable = document.createElement('table');
+      var objRow;
+      var objCell;
+      var objSelect;
+      var objShfAry;
+      var objCmoAry;
+      var objWrkAry;
+      var intBarDay;
+      var intBarCnt;
+      var intBarStr;
+      var intStrTim;
+      var intDurMin;
+      var strDayNam;
+      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
+      objTable.className = 'clsPanel';
+      objTable.align = 'center';
+      objTable.cellSpacing = '0';
+      objParent.appendChild(objTable);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Shifts'));
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Crew Model'));
+      objWrkAry = cobjWeekPtyp[intPtyIdx].shfary;
+      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
+      for (var i=0;i<objShfAry.length;i++) {
+         intStrTim = objShfAry[i].shfstr;
+         intDurMin = objShfAry[i].shfdur;
+         if (i == 0) {
+            intBarStr = ((Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4) + 1;
+         } else {
+            intBarStr = intBarStr + intBarCnt;
+         }
+         intBarCnt = (intDurMin / 60) * 4;
+         intBarDay = Math.floor(intBarStr / 96) + 1;
+         strDayNam = 'Sunday';
+         if (intBarDay == 1) {
+            strDayNam = 'Sunday';
+         } else if (intBarDay == 2) {
+            strDayNam = 'Monday';
+         } else if (intBarDay == 3) {
+            strDayNam = 'Tuesday';
+         } else if (intBarDay == 4) {
+            strDayNam = 'Wednesday';
+         } else if (intBarDay == 5) {
+            strDayNam = 'Thursday';
+         } else if (intBarDay == 6) {
+            strDayNam = 'Friday';
+         } else if (intBarDay == 7) {
+            strDayNam = 'Saturday';
+         } else if (intBarDay == 8) {
+            strDayNam = 'Sunday';
+         }
+         objRow = objTable.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.appendChild(document.createTextNode(strDayNam+' - '+objShfAry[i].shfnam));
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objSelect = document.createElement('select');
+         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
+         objSelect.className = 'clsInputNN';
+         objSelect.style.fontSize = '8pt';
+         objSelect.selectedIndex = -1;
+         objSelect.options[0] = new Option('** NONE **','*NONE');
+         objSelect.options[0].selected = true;
+         objCmoAry = cobjWeekPtyp[intPtyIdx].cmoary;
+         for (var j=0;j<objCmoAry.length;j++) {
+            objSelect.options[objSelect.options.length] = new Option('('+objCmoAry[j].cmocde+') '+objCmoAry[j].cmonam,objCmoAry[j].cmocde);
+            if (bolLoad == true && objWrkAry[i] != null && objCmoAry[j].cmocde == objWrkAry[i].cmocde) {
+               objSelect.options[objSelect.options.length-1].selected = true;
+            }
+         }
+         objCell.appendChild(objSelect);
+      }
+   }
+   function doWeekLconLoad(objParent, intPtyIdx, bolLoad) {
+      var objTable = document.createElement('table');
+      var objRow;
+      var objCell;
+      var objInput;
+      var objLcoAry;
+      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
+      objTable.className = 'clsPanel';
+      objTable.align = 'center';
+      objTable.cellSpacing = '0';
+      objParent.appendChild(objTable);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Line Configurations'));
+      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
+      for (var i=0;i<objLcoAry.length;i++) {
+         objRow = objTable.insertRow(-1);
+         objRow.setAttribute('ptyidx',intPtyIdx);
+         objRow.setAttribute('lcoidx',i);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
+         objInput.onfocus = function() {setSelect(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+         }
+         if (bolLoad == true && objLcoAry[i].lcousd == '1') {
+            objInput.checked = true;
+         }
+      }
+   }
+   function doWeekPtypClick(objCheck) {
+      var intPtyIdx = objCheck.parentNode.parentNode.getAttribute('ptyidx');
+      if (objCheck.checked == false) {
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'none';
+      } else {
+         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'block';
+      }
+   }
+
+
+
+
+   ////////////////////
+   // Type Functions //
+   ////////////////////
+   var cstrTypeProd;
+   var cstrTypeWeek;
+   var cstrTypeCode;
+   var cobjTypeCell;
+   var cintTypeIndx;
+   var cstrTypeType;
+   var cobjTypeWeek = new Array();
+   var cobjTypeShft = new Array();
+   var cobjTypeLine = new Array();
+   function clsTypeWeek() {
+      this.wekcde = '';
+      this.weknam = '';
+      this.dayary = new Array();
+      this.ptyary = new Array();
+   }
+   function clsTypeDate() {
+      this.daycde = '';
+      this.daynam = '';
+   }
+   function clsTypePtyp() {
+      this.ptycde = '';
+      this.ptynam = '';
+      this.shfary = new Array();
+      this.lcoary = new Array();
+   }
+   function clsTypeShfd() {
+      this.shfcde = '';
+      this.shfnam = '';
+      this.shfstr = '';
+      this.shfdur = '';
+   }
+   function clsTypeLine() {
+      this.lincde = '';
+      this.linnam = '';
+      this.lcocde = '';
+      this.lconam = '';
+      this.filnam = '';
+   }
+   function requestTypeLoad(strCode) {
+      cstrTypeCode = strCode;
+      cobjTypeCell = null;
+      cintTypeIndx = -1;
+      cstrTypeType = '*NONE';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkTypeLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspType');
+         var objArray;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'PTYDFN') {
+               cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
+               cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
+            } else if (objElements[i].nodeName == 'DAYDFN') {
+               objArray = cobjDetailWeek[cobjDetailWeek.length-1].dayary;
+               objArray[objArray.length] = new clsDetailDate();
+               objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
+               objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
+            } else if (objElements[i].nodeName == 'SHFDFN') {
+
+cobjTypeShft
+
+
+               objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
+               objArray[objArray.length] = new clsWeekShfd();
+               objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
+               objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
+               objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
+               objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
+               objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
+               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
+            } else if (objElements[i].nodeName == 'LINDFN') {
+               cobjTypeLine[cobjTypeLine.length] = new clsTypeLine();
+               cobjTypeLine[cobjTypeLine.length-1].lincde = objElements[i].getAttribute('LINCDE');
+               cobjTypeLine[cobjTypeLine.length-1].linnam = objElements[i].getAttribute('LINNAM');
+               cobjTypeLine[cobjTypeLine.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
+               cobjTypeLine[cobjTypeLine.length-1].lconam = objElements[i].getAttribute('LCONAM');
+               cobjTypeLine[cobjTypeLine.length-1].filnam = objElements[i].getAttribute('FILNAM');
+            }
+         }
+         doTypeRefresh();
+      }
+   }
+   function doTypeSelect(objSelect) {
+      if (cobTypeCell != null) {
+         if (cobjTypeCell.className == 'clsFloCntx') {
+            cobjTypeCell.className = 'clsFloCntl';
+         } else if (cobjTypeCell.className == 'clsFloNodx') {
+            cobjTypeCell.className = 'clsFloNode';
+         }
+      }
+      cobjTypeCell = objSelect;
+      cintTypeIndx = objSelect.getAttribute('schidx');
+      cstrTypeType = objSelect.getAttribute('schtyp');
+      if (cobjTypeCell.className == 'clsFloCntl') {
+         cobjTypeCell.className = 'clsFloCntx';
+      } else if (cobjTypeCell.className == 'clsFloNode') {
+         cobjTypeCell.className = 'clsFloNodx';
+      }
+   }
+   function doTypeRefresh() {
+      displayScreen('dspDetail');
+      var objTable;
+      var objRow;
+      var objCell;
+      var objInput;
+      var objSelect;
+      var objArray;
+      var strTime;
+
+      for (var i=0;i<cobjDetailWeek.length;i++) {
+         objRow = objPscType.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelHB';
+         objCell.style.width = '100%';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.appendChild(document.createTextNode(cobjDetailWeek[i].weknam));
+
+         objArray = cobjDetailWeek[i].dayary;
+         for (var j=0;j<objArray.length;j++) {
+            objRow = objPscType.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelHB';
+            objCell.style.paddingLeft = '2px';
+            objCell.style.paddingRight = '2px';
+             objCell.style.whiteSpace = 'nowrap';
+            objCell.appendChild(document.createTextNode(strTime));
+         for (var i=0;i<=23;i++) {
+            if ( i < 10) {
+               strTime = '0'+i+':00';
+            } else {
+               strTime = i+':00';
+            }
+            objRow = objPscType.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelHB';
+            objCell.style.paddingLeft = '2px';
+            objCell.style.paddingRight = '2px';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.appendChild(document.createTextNode(strTime));
+
+
+         objRow = objTabShift.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.rowSpan = 4;
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.innerHTML = strTime;
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.style.fontSize = '8pt';
+         objCell.style.border = '#c0c0c0 1px solid';
+         objCell.style.padding = '1px';
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 1;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
+            objCell.style.borderTop = '#c0c0c0 1px solid';
+            objCell.style.borderRight = '#c0c0c0 1px solid';
+            objCell.style.paddingTop = '1px';
+            objImage = document.createElement('img');
+            objImage.id = 'DEF_B'+intBarIdx;
+            objImage.src = cobjBar0.src;
+            objImage.align = 'absmiddle';
+            objImage.style.height = '4px';
+            objImage.style.width = '16px';
+            objCell.appendChild(objImage);
+         }
+         objRow = objTabShift.insertRow(-1);
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 2;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
+            objCell.style.borderRight = '#c0c0c0 1px solid';
+            objImage = document.createElement('img');
+            objImage.id = 'DEF_B'+intBarIdx;
+            objImage.src = cobjBar0.src;
+            objImage.align = 'absmiddle';
+            objImage.style.height = '4px';
+            objImage.style.width = '16px';
+            objCell.appendChild(objImage);
+         }
+         objRow = objTabShift.insertRow(-1);
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 3;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
+            objCell.style.borderRight = '#c0c0c0 1px solid';
+            objImage = document.createElement('img');
+            objImage.id = 'DEF_B'+intBarIdx;
+            objImage.src = cobjBar0.src;
+            objImage.align = 'absmiddle';
+            objImage.style.height = '4px';
+            objImage.style.width = '16px';
+            objCell.appendChild(objImage);
+         }
+         objRow = objTabShift.insertRow(-1);
+         for (var j=1;j<=8;j++) {
+            intBarIdx = ((j - 1) * 96) + (i * 4) + 4;
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBN';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.style.fontSize = '8pt';
+            objCell.style.borderRight = '#c0c0c0 1px solid';
+            objImage = document.createElement('img');
+            objImage.id = 'DEF_B'+intBarIdx;
+            objImage.src = cobjBar0.src;
+            objImage.align = 'absmiddle';
+            objImage.style.height = '4px';
+            objImage.style.width = '16px';
+            objCell.appendChild(objImage);
+         }
+      }
+
+
+
+         for (var j=0;j<objArray.length;j++) {
+            objRow = objPscType.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBB';
+            objCell.style.paddingLeft = '2px';
+            objCell.style.paddingRight = '2px';
+            objCell.style.whiteSpace = 'nowrap';
          objRow = objPscType.insertRow(-1);
          objRow.setAttribute('ptyidx',i);
          objCell = objRow.insertCell(-1);
@@ -1055,174 +1602,96 @@ sub PaintFunction()%>
          doWeekLconLoad(objCell,i);
       }
    }
-   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx) {
-      var objTable = document.createElement('table');
-      var objRow;
-      var objCell;
-      var objSelect;
-      var objShfAry;
-      var objCmoAry;
-      var intBarDay;
-      var intBarCnt;
-      var intBarStr;
-      var intStrTim;
-      var intDurMin;
-      var strDayNam;
-      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
-      objRow = objTable.insertRow(-1);
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Shifts'));
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Crew Model'));
-      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
-      for (var i=0;i<objShfAry.length;i++) {
-         intStrTim = objShfAry[i].shfstr;
-         intDurMin = objShfAry[i].shfdur;
-         if (i == 0) {
-            intBarStr = ((Math.floor(intStrTim / 100) + ((intStrTim % 100) / 60)) * 4) + 1;
-         } else {
-            intBarStr = intBarStr + intBarCnt;
+
+
+   function doTypeBack() {
+      cobjTypeData = null;
+      cobjTypeSmod = null;
+      cobjTypePtyp = null;
+      var objPscType = document.getElementById('TYP_PscType');
+      for (var i=objPscType.rows.length-1;i>=0;i--) {
+         objPscType.deleteRow(i);
+      }
+      displayScreen('dspWeeks');
+   }
+   function doTypeDelete() {
+      if (cobTypeCell == null) {
+         return;
+      }
+      if (cstrTypeType == '*EVNT') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule event activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
          }
-         intBarCnt = (intDurMin / 60) * 4;
-         intBarDay = Math.floor(intBarStr / 96) + 1;
-         strDayNam = 'Sunday';
-         if (intBarDay == 1) {
-            strDayNam = 'Sunday';
-         } else if (intBarDay == 2) {
-            strDayNam = 'Monday';
-         } else if (intBarDay == 3) {
-            strDayNam = 'Tuesday';
-         } else if (intBarDay == 4) {
-            strDayNam = 'Wednesday';
-         } else if (intBarDay == 5) {
-            strDayNam = 'Thursday';
-         } else if (intBarDay == 6) {
-            strDayNam = 'Friday';
-         } else if (intBarDay == 7) {
-            strDayNam = 'Saturday';
-         } else if (intBarDay == 8) {
-            strDayNam = 'Sunday';
+         doActivityStart(document.body);
+         window.setTimeout('requestEvntDelete(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*FILL') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule filling activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
          }
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell.appendChild(document.createTextNode(strDayNam+' - '+objShfAry[i].shfnam));
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objSelect = document.createElement('select');
-         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
-         objSelect.className = 'clsInputNN';
-         objSelect.style.fontSize = '8pt';
-         objSelect.selectedIndex = -1;
-         objSelect.options[0] = new Option('** NONE **','*NONE');
-         objSelect.options[0].setAttribute('cmocde','');
-         objSelect.options[0].selected = true;
-         objCmoAry = cobjWeekPtyp[intPtyIdx].cmoary;
-         for (var j=0;j<objCmoAry.length;j++) {
-            objSelect.options[objSelect.options.length] = new Option('('+objCmoAry[j].cmocde+') '+objCmoAry[j].cmonam,objCmoAry[j].cmocde);
-            objSelect.options[objSelect.options.length-1].setAttribute('cmoidx',j);
+         doActivityStart(document.body);
+         window.setTimeout('requestFillDelete(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*PACK') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule packing activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
          }
-         objCell.appendChild(objSelect);
+         doActivityStart(document.body);
+         window.setTimeout('requestPackDelete(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*FORM') {
+         if (!processForm()) {return;}
+         if (confirm('Please confirm the deletion\r\npress OK continue (the selected production schedule forming activity will be deleted)\r\npress Cancel to cancel and return') == false) {
+            return;
+         }
+         doActivityStart(document.body);
+         window.setTimeout('requestFormDelete(\''+strCode+'\');',10);
       }
    }
-   function doWeekLconLoad(objParent, intPtyIdx) {
-      var objTable = document.createElement('table');
-      var objRow;
-      var objCell;
-      var objInput;
-      var objLcoAry;
-      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
-      objRow = objTable.insertRow(-1);
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Line Configurations'));
-      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
-      for (var i=0;i<objLcoAry.length;i++) {
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objInput = document.createElement('input');
-         objInput.type = 'checkbox';
-         objInput.value = '';
-         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
-         objInput.onfocus = function() {setSelect(this);};
-         objInput.checked = false;
-         objCell.appendChild(objInput);
-         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
-         } else {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
-         }
+   function doTypeUpdate() {
+      if (cobTypeCell == null) {
+         return;
+      }
+      if (cstrTypeType == '*EVNT') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestEvntUpdate(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*FILL') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestFillUpdate(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*PACK') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestPackUpdate(\''+strCode+'\');',10);
+      } else if (cstrTypeType == '*FORM') {
+         if (!processForm()) {return;}
+         doActivityStart(document.body);
+         window.setTimeout('requestFormUpdate(\''+strCode+'\');',10);
       }
    }
-   function doWeekPtypClick(objCheck) {
-      var intPtyIdx = objCheck.parentNode.parentNode.getAttribute('ptyidx');
-      if (objCheck.checked == false) {
-         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'none';
-      } else {
-         document.getElementById('WEKPTYDATA_'+intPtyIdx).style.display = 'block';
+   function doTypeAddEvnt() {
+      if (cobTypeCell == null) {
+         return;
       }
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestEvntAdd();',10);
+   }
+   function doTypeAddFill() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestFillAdd();',10);
+   }
+   function doTypeAddPack() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestPackAdd();',10);
+   }
+   function doTypeAddForm() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestFormAdd();',10);
    }
 
    /////////////////////
@@ -1915,7 +2384,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Model:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="WEK_PscSmod" onChange="doWeekSmodChange(this);"></select>
+            <select class="clsInputBN" id="WEK_PscSmod" onChange="doWeekSmodChange(this,false);"></select>
          </nobr></td>
       </tr>
       <tr>
