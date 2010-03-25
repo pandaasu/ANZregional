@@ -16,6 +16,10 @@ CREATE OR REPLACE PACKAGE pds_cust_01_int IS
                                          Delete from new (temp) customer table in
 					 preparation for reloading with new customers.
   2.0   06/08/2009 Steve Gregan         Added create log.
+  2.1   06/11/2009 Steve Gregan         Added additional criteria to the create INSERT INTO 
+                                         pds_cust_hier_load so it's most selective by Unit.
+  2.1   01/02/2010 Rob Bishop           Modified Steve's changes to INSERT INTO pds_cust_hier_load 
+                                         criteria to include channel '20' for AUS-Pet.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -179,9 +183,9 @@ BEGIN
       pds_pos_format_grpg t3
     WHERE
       t1.cocode = v_cmpny_code AND
-      ((v_div_code = '01' and (t1.divcode = '55' or (t1.divcode = '51' and t1.chncode in ('10','11','16','18','31')))) or   
+      ((v_div_code = '01' and (t1.divcode = '55' or (t1.divcode = '51' and t1.chncode in ('10','11','16','18','31')))) or
        (v_div_code = '02' and (t1.divcode = '57' or (t1.divcode = '51' and t1.chncode in ('10','11','12')))) or
-       (v_div_code = '05' and (t1.divcode = '56' or (t1.divcode = '51' and t1.chncode in ('10','11','18'))))) AND
+       (v_div_code = '05' and (t1.divcode = '56' or (t1.divcode = '51' and t1.chncode in ('10','11','18','20'))))) AND
       t2.cmpny_code = v_cmpny_code AND
       t2.div_code = v_div_code AND
       t1.posformat = t3.pos_format_grpg_code (+) AND

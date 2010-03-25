@@ -15,7 +15,6 @@ CREATE OR REPLACE PACKAGE pds_cust_01_prc IS
              If FALSE (ie. we're running in production) then send Alerts, else
              sends emails.
 
-        .
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -113,6 +112,12 @@ PROCEDURE transfer_customer;
   1.2   14/03/2006 Craig Ford           Add processing to identify new Customers.
                                          Insert new customers into (temp) customer table for reporting.
   1.3   05/10/2009 Steve Gregan         Modified processing to fix hierarchy loading bug.
+  1.4   10/02/2010 Rob Bishop           Merged Snack data mapping section from Dev package
+                                          into this one and added more comments.
+  1.5   26/02/2010 Rob Bishop           Modified logic from Steve so it didn't do work or generate
+                                          error messages for Customers not being inserted.
+                                          (Relocated an IF statement).
+                                        Also replaced hardcoding with constants.
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -178,6 +183,7 @@ PROCEDURE write_log (
   i_log_text IN pds_log.log_text%TYPE);
 
 END pds_cust_01_prc;
+
 /
 
 
@@ -215,14 +221,21 @@ CREATE OR REPLACE PACKAGE BODY         pds_cust_01_prc IS
   pc_cust_maj_ref             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('maj_ref','CUST');
   pc_cust_invc                CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('invc','CUST');
   pc_cust_cust_family         CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_family','CUST');
+  pc_cust_funding             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_funding','CUST');
   pc_cust_gl_level_1          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_1','CUST');
   pc_cust_gl_level_2          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_2','CUST');
+  pc_cust_gl_level_3          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_3','CUST');
+  pc_cust_gl_level_4          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_4','CUST');
+  pc_cust_gl_level_5          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_5','CUST');
   pc_cust_gl_level_6          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('gl_level_6','CUST');
   pc_cust_not_prom            CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_prom','CUST');
   pc_cust_not_active          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_active','CUST');
   pc_cust_not_extax           CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('not_extax','CUST');
   pc_cust_level_1             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_1','CUST');
   pc_cust_level_2             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_2','CUST');
+  pc_cust_level_3             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_3','CUST');
+  pc_cust_level_4             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_4','CUST');
+  pc_cust_level_5             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_5','CUST');
   pc_cust_level_6             CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('level_6','CUST');
   pc_pstbx_cust_load          CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('cust_load','PSTBX');
   pc_job_status_completed     CONSTANT pds_constants.const_value%TYPE := pds_lookup.lookup_constant('completed','JOB_STATUS');
@@ -562,7 +575,7 @@ BEGIN
     ELSIF v_last_valdtn_status = pc_valdtn_status_excluded THEN
       v_valdtn_status := pc_valdtn_status_excluded;
 
-      --write_log(pc_data_type_cust,'N/A',pv_log_level + 3,'Prior Hierarchy branch node excluded, so flag next Cust node as EXCLUDED.');
+      write_log(pc_data_type_cust,'N/A',pv_log_level + 3,'Prior Hierarchy branch node excluded, so flag next Cust node as EXCLUDED.');
     END IF;
 
     -- Store the values of the last processed record.
@@ -784,7 +797,7 @@ BEGIN
   check_result_status;
 
   -- Read through each of the Customer records to be transferred.
-  write_log(pc_data_type_cust,'N/A',pv_log_level + 2,'Open csr_customer cursor.');
+  write_log(pc_data_type_cust,'N/A',pv_log_level + 2,'Open csr_customer cursor. [i_cmpny_code='||i_cmpny_code||',i_div_code='||i_div_code||',v_pmx_cmpny_code='||v_pmx_cmpny_code||',v_pmx_div_code='||v_pmx_div_code||']');
   OPEN csr_customer;
   write_log(pc_data_type_cust,'N/A',pv_log_level + 2,'Looping through the csr_customer cursor.');
   LOOP
@@ -859,166 +872,248 @@ BEGIN
 
     END IF;
 
-    -- Now assign the Region Code to the Level 1 to 5 Customers.  Level 6 Customers
-    -- will have Region assigned.
-    IF v_cust_hier_level <> pc_cust_level_6 AND TRIM(rv_customer.regn_code) IS NULL THEN
-      IF rv_customer.cmpny_code = pc_cmpny_code_australia THEN
-        v_regn_code := pc_regn_code_australia;
-      ELSIF rv_customer.cmpny_code = pc_cmpny_code_new_zealand THEN
-        v_regn_code := pc_regn_code_new_zealand;
-      END IF;
-    ELSE
-      v_regn_code := TRIM(rv_customer.regn_code);
-    END IF;
-
-    -- Now retrieve the Region Code from the PROMAX.REGNAME table.
-    SELECT regcode INTO v_regn_code
-    FROM regname
-    WHERE cocode = v_pmx_cmpny_code
-      AND divcode = v_pmx_div_code
-      AND region = v_regn_code;
-
-    -- Reset the New Customer Flag variable.
-    v_new_customer_flag := FALSE;
-
-    /*
-    Check whether Customer already exists in the PDS_CUST_HIER table. If the
-    Customer does exist then check whether the Effective Date is greater, if so
-    then an update is required. If the Customer does not exist then insert the
-    Customer into the PDS_CUST_HIER table.
-    */
-    OPEN csr_exist_customer;
-    FETCH csr_exist_customer INTO rv_exist_customer;
-    IF csr_exist_customer%FOUND THEN
-
-      -- Check whether the received Customer is more recent than that in the
-      -- PDS_CUST_HIER table.  If so, then update the Customer.
-      IF rv_customer.eff_from_date > rv_exist_customer.eff_from_date THEN
-
-        /*
-        Log (and potentially send an alert) when the Parent Customer has changed.
-        A re-calculation of sales history is required if the Customer has changed
-        Hierarchy branches.  The re-calculation functionality has not been
-        implemented within this procedure.  This functionality will need to be
-        investigated as a future activity.
-        */
-        IF rv_exist_customer.parent_cust_code != v_parent_cust_code THEN
-          pv_result_msg := 'Parent Customer has changed. Parent Customer used to be [' ||
-            rv_exist_customer.parent_cust_code || '] and is now [ ' || v_parent_cust_code || '].'||
-            'Customer Hierarchy details are as follows: ' ||
-            'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
-            'Company Code [' || rv_customer.cmpny_code || '],'||
-            'Division Code [' || rv_customer.div_code || '],'||
-            'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
-            'Customer Code [' || rv_customer.cust_code || '].';
-          write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
-
---Added by Anna Every 30th May, 2006, Ticket 581874 to email if this is a problem.
-
-	   pds_utils.add_validation_reason(pc_valdtn_type_cust,
-          'ACTION: Parent has changed WAS [' ||rv_exist_customer.parent_cust_code || '] now [ '|| v_parent_cust_code ||'].''CoCode [' || rv_customer.cmpny_code || '],'||'DivCode [' || rv_customer.div_code || ']',
-          pc_valdtn_severity_critical,
-          rv_customer.cust_hier_hdr_seq,
-          rv_customer.cmpny_code,
-          rv_customer.div_code,
-          rv_customer.cust_hier_level,
-          rv_customer.cust_code,
-          NULL,
-          pv_log_level + 3);
-
-        END IF;
-
-        /*
-        Log (and potentially send an alert) when the Distribution Channel has changed.
-        A re-calculation of sales history is required if the Customer has changed
-        Hierarchy branches.  The re-calculation functionality has not been
-        implemented within this procedure.  This functionality will need to be
-        investigated as a future activity.
-        */
-        IF rv_exist_customer.distbn_chnl_code != rv_customer.distbn_chnl_code THEN
-          pv_result_msg := 'Distribution Channel has changed. Distribution Channel used to be [' ||
-            rv_exist_customer.distbn_chnl_code || '] and is now [ ' || rv_customer.distbn_chnl_code || '].' ||
-            'Customer Hierarchy details are as follows: ' ||
-            'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
-            'Company Code [' || rv_customer.cmpny_code || '],'||
-            'Division Code [' || rv_customer.div_code || '],'||
-            'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
-            'Customer Code [' || rv_customer.cust_code || '].';
-          write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
-        END IF;
-
-        /*
-        Log (and potentially send an alert) when the Customer Hierarchy Level
-        has changed. A re-calculation of sales history is required if the Customer
-        has changed Hierarchy branches.  The re-calculation functionality has not
-        been implemented within this procedure.  This functionality will
-        need to be investigated as a future activity.
-        */
-        IF rv_exist_customer.cust_hier_level != v_cust_hier_level THEN
-          pv_result_msg := 'Customer Hierarchy Level has changed. Customer Hierarchy Level used to be [' ||
-            rv_exist_customer.cust_hier_level || '] and is now [ ' || v_cust_hier_level || '].'||
-            'Customer Hierarchy details are as follows: ' ||
-            'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
-            'Company Code [' || rv_customer.cmpny_code || '],'||
-            'Division Code [' || rv_customer.div_code || '],'||
-            'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
-            'Customer Code [' || rv_customer.cust_code || '].';
-          write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
-        END IF;
-
-        -- Update the existing Customer in the PDS_CUST_HIER table.
-        UPDATE pds_cust_hier
-        SET parent_cust_code = v_parent_cust_code,
-          cust_hier_level = v_cust_hier_level,
-          distbn_chnl_code = rv_customer.distbn_chnl_code,
-          eff_from_date = rv_customer.eff_from_date
-        WHERE  cmpny_code = v_pmx_cmpny_code
-          AND div_code = v_pmx_div_code
-          AND cust_code = TO_CHAR(rv_customer.cust_code);
-
-        -- Customer is not more recent than that in the PDS_CUST_HIER table.
-        -- Therefore do not load into Promax.
-      ELSE
-        v_load_into_promax := FALSE;
-
-      END IF;
-
-    -- Customer does not exist in the PDS_CUST_HIER table, therefore insert the Customer.
-    ELSE
-
-      -- Insert into PDS_CUST_HIER table.
-      INSERT INTO pds_cust_hier
-        (
-        cmpny_code,
-        div_code,
-        distbn_chnl_code,
-        cust_code,
-        parent_cust_code,
-        cust_hier_level,
-        eff_from_date
-        )
-      VALUES
-        (
-        v_pmx_cmpny_code,
-        v_pmx_div_code,
-        rv_customer.distbn_chnl_code,
-        rv_customer.cust_code,
-        v_parent_cust_code,
-        v_cust_hier_level,
-        rv_customer.eff_from_date
-        );
-
-      -- Set the New Customer Flag variable to pc_boolean_true as this Customer will need
-      -- to be inserted into the PBCHAIN table.
-      v_new_customer_flag := TRUE;
-
-    END IF;
-
-    CLOSE csr_exist_customer;
-
-    -- Assign all variables for the new Customer to be inserted into the PBCHAIN table.
+    -- Only do this section if customer is to be loaded into Promax
+    -- Relocated by RB 26/2/10 so that error messages (and work) are not generated for customers 
+    --  not being inserted.
     IF v_load_into_promax = TRUE THEN
+      
+      -- Now assign the Region Code to the Level 1 to 5 Customers.  Level 6 Customers
+      -- will have Region assigned.
+      IF v_cust_hier_level <> pc_cust_level_6 AND TRIM(rv_customer.regn_code) IS NULL THEN
+        IF rv_customer.cmpny_code = pc_cmpny_code_australia THEN
+          v_regn_code := pc_regn_code_australia;
+        ELSIF rv_customer.cmpny_code = pc_cmpny_code_new_zealand THEN
+          v_regn_code := pc_regn_code_new_zealand;
+        END IF;
+      ELSE
+        v_regn_code := TRIM(rv_customer.regn_code);
+      END IF;
+  
+      -- Now retrieve the Region Code from the PROMAX.REGNAME table.
+      SELECT regcode INTO v_regn_code
+      FROM regname
+      WHERE cocode = v_pmx_cmpny_code
+        AND divcode = v_pmx_div_code
+        AND region = v_regn_code;
+  
+      -- Reset the New Customer Flag variable.
+      v_new_customer_flag := FALSE;
+  
+      /*
+      Check whether Customer already exists in the PDS_CUST_HIER table. If the
+      Customer does exist then check whether the Effective Date is greater, if so
+      then an update is required. If the Customer does not exist then insert the
+      Customer into the PDS_CUST_HIER table.
+      */
+      OPEN csr_exist_customer;
+      FETCH csr_exist_customer INTO rv_exist_customer;
+      IF csr_exist_customer%FOUND THEN
+  
+        -- Check whether the received Customer is more recent than that in the
+        -- PDS_CUST_HIER table.  If so, then update the Customer.
+        IF rv_customer.eff_from_date > rv_exist_customer.eff_from_date THEN
+  
+          /*
+          Log (and potentially send an alert) when the Parent Customer has changed.
+          A re-calculation of sales history is required if the Customer has changed
+          Hierarchy branches.  The re-calculation functionality has not been
+          implemented within this procedure.  This functionality will need to be
+          investigated as a future activity.
+          */
+          IF rv_exist_customer.parent_cust_code != v_parent_cust_code THEN
+            pv_result_msg := 'Parent Customer has changed. Parent Customer used to be [' ||
+              rv_exist_customer.parent_cust_code || '] and is now [ ' || v_parent_cust_code || '].'||
+              'Customer Hierarchy details are as follows: ' ||
+              'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
+              'Company Code [' || rv_customer.cmpny_code || '],'||
+              'Division Code [' || rv_customer.div_code || '],'||
+              'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
+              'Customer Code [' || rv_customer.cust_code || '].';
+            write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
+  
+            --Added by Anna Every 30th May, 2006, Ticket 581874 to email if this is a problem.
+            pds_utils.add_validation_reason(pc_valdtn_type_cust,
+                  'ACTION: Parent has changed WAS [' ||rv_exist_customer.parent_cust_code || 
+                    '] now [ '|| v_parent_cust_code ||'].''CoCode [' || rv_customer.cmpny_code || '],'||'DivCode [' || rv_customer.div_code || ']',
+                  pc_valdtn_severity_critical,
+                  rv_customer.cust_hier_hdr_seq,
+                  rv_customer.cmpny_code,
+                  rv_customer.div_code,
+                  rv_customer.cust_hier_level,
+                  rv_customer.cust_code,
+                  NULL,
+                  pv_log_level + 3);
+  
+          END IF;
+  
+          /*
+          Log (and potentially send an alert) when the Distribution Channel has changed.
+          A re-calculation of sales history is required if the Customer has changed
+          Hierarchy branches.  The re-calculation functionality has not been
+          implemented within this procedure.  This functionality will need to be
+          investigated as a future activity.
+          */
+          IF rv_exist_customer.distbn_chnl_code != rv_customer.distbn_chnl_code THEN
+            pv_result_msg := 'Distribution Channel has changed. Distribution Channel used to be [' ||
+              rv_exist_customer.distbn_chnl_code || '] and is now [ ' || rv_customer.distbn_chnl_code || '].' ||
+              'Customer Hierarchy details are as follows: ' ||
+              'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
+              'Company Code [' || rv_customer.cmpny_code || '],'||
+              'Division Code [' || rv_customer.div_code || '],'||
+              'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
+              'Customer Code [' || rv_customer.cust_code || '].';
+            write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
+          END IF;
+  
+          /*
+          Log (and potentially send an alert) when the Customer Hierarchy Level
+          has changed. A re-calculation of sales history is required if the Customer
+          has changed Hierarchy branches.  The re-calculation functionality has not
+          been implemented within this procedure.  This functionality will
+          need to be investigated as a future activity.
+          */
+          IF rv_exist_customer.cust_hier_level != v_cust_hier_level THEN
+            pv_result_msg := 'Customer Hierarchy Level has changed. Customer Hierarchy Level used to be [' ||
+              rv_exist_customer.cust_hier_level || '] and is now [ ' || v_cust_hier_level || '].'||
+              'Customer Hierarchy details are as follows: ' ||
+              'Customer Hierarchy Sequence [' || rv_customer.cust_hier_hdr_seq || '],'||
+              'Company Code [' || rv_customer.cmpny_code || '],'||
+              'Division Code [' || rv_customer.div_code || '],'||
+              'Customer Hierarchy Level [' || rv_customer.cust_hier_level || '],'||
+              'Customer Code [' || rv_customer.cust_code || '].';
+            write_log(pc_data_type_cust,'N/A',pv_log_level + 3,pv_result_msg);
+          END IF;
+  
+          -- Update the existing Customer in the PDS_CUST_HIER table.
+          UPDATE pds_cust_hier
+          SET parent_cust_code = v_parent_cust_code,
+            cust_hier_level = v_cust_hier_level,
+            distbn_chnl_code = rv_customer.distbn_chnl_code,
+            eff_from_date = rv_customer.eff_from_date
+          WHERE  cmpny_code = v_pmx_cmpny_code
+            AND div_code = v_pmx_div_code
+            AND cust_code = TO_CHAR(rv_customer.cust_code);
+  
+          -- Customer is not more recent than that in the PDS_CUST_HIER table.
+          -- Therefore do not load into Promax.
+        ELSE
+          v_load_into_promax := FALSE;
+  
+        END IF;
+  
+      -- Customer does not exist in the PDS_CUST_HIER table, therefore insert the Customer.
+      ELSE
+  
+        -- Insert into PDS_CUST_HIER table.
+        INSERT INTO pds_cust_hier
+          (
+          cmpny_code,
+          div_code,
+          distbn_chnl_code,
+          cust_code,
+          parent_cust_code,
+          cust_hier_level,
+          eff_from_date
+          )
+        VALUES
+          (
+          v_pmx_cmpny_code,
+          v_pmx_div_code,
+          rv_customer.distbn_chnl_code,
+          rv_customer.cust_code,
+          v_parent_cust_code,
+          v_cust_hier_level,
+          rv_customer.eff_from_date
+          );
+  
+        -- Set the New Customer Flag variable to pc_boolean_true as this Customer will need
+        -- to be inserted into the PBCHAIN table.
+        v_new_customer_flag := TRUE;
+  
+      END IF;
+  
+      CLOSE csr_exist_customer;
 
+    -- Statement below relocated by RB 26/2/10 so that error messages (and work) are not generated 
+    --  for customers not being inserted.
+    --IF v_load_into_promax = TRUE THEN
+    
+      -- Assign all variables for the new Customer to be inserted into the PBCHAIN table.
+      -- If Division is Snack, then do this specific mapping
+      IF i_cmpny_code = pc_cmpny_code_australia AND i_div_code = pc_div_code_snack THEN
+        IF v_cust_hier_level = pc_cust_level_1 THEN
+          v_majorref := rv_customer.cust_code;
+          v_midref := ' ';
+          v_minorref := rv_customer.cust_code;
+          v_maincode := ' ';
+          v_custlevel := pc_cust_maj_ref;
+          v_glcode := pc_cust_gl_level_1;
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSIF v_cust_hier_level = pc_cust_level_2 THEN
+          v_majorref := ' ';
+          v_midref := rv_customer.cust_code;
+          v_minorref := rv_customer.cust_code;
+          v_maincode := ' ';
+          v_custlevel := pc_cust_mid_ref;
+          v_glcode := pc_cust_gl_level_2;
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSIF v_cust_hier_level = pc_cust_level_3 THEN
+          v_majorref := rcd_customer(1);
+          v_midref :=  rcd_customer(2);
+          v_minorref := rv_customer.cust_code;
+          v_maincode := ' ';
+          v_custlevel := pc_cust_funding;
+          v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSIF v_cust_hier_level = pc_cust_level_4 THEN
+          v_majorref := rcd_customer(1);
+          v_midref := rcd_customer(2);
+          v_minorref := rcd_customer(3);
+          v_maincode := ' ';
+          v_custlevel := pc_cust_invc;
+          v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSIF v_cust_hier_level = pc_cust_level_5 THEN
+          v_majorref := rcd_customer(1);
+          v_midref := rcd_customer(2);
+          v_minorref := rcd_customer(3);
+          v_maincode := ' ';
+          v_custlevel := pc_cust_invc;
+          v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSIF v_cust_hier_level = pc_cust_level_6 THEN
+          v_majorref := rcd_customer(1);
+          v_midref := rcd_customer(2);
+          v_minorref := rcd_customer(3);
+          v_maincode := ' ';
+          v_custlevel := pc_cust_invc;
+          v_glcode := pc_cust_gl_level_6;
+          v_parentkacc := ' ';
+          v_parentperc := 0;
+          v_kaccxref := ' ';
+        ELSE
+          v_minorref := rcd_customer(3);
+          v_maincode := ' ';
+          v_majorref := rcd_customer(1);
+          v_custlevel := pc_cust_cust_family;
+          v_glcode := 'Level' || TO_CHAR(v_cust_hier_level,'9');
+          v_midref := rcd_customer(2);
+          v_parentkacc := rcd_customer(1);
+          v_parentperc := 99;
+          v_kaccxref := rv_customer.cust_code;
+        END IF;
+    ELSE
+      -- For Non-Snack Divisiona, do this general mapping
       IF v_cust_hier_level = pc_cust_level_1 THEN
         v_minorref := rv_customer.cust_code;
         v_maincode := ' ';
@@ -1060,6 +1155,7 @@ BEGIN
         v_parentperc := 99;
         v_kaccxref := rv_customer.cust_code;
       END IF;
+    END IF;
 
       -- Check whether the existing Customer in the CHAIN table has had a name change.
       -- If so, then update the existing name of the Customer using the new name.
@@ -1369,5 +1465,6 @@ EXCEPTION
       v_result_msg);
 END write_log;
 
-END pds_cust_01_prc;
+END pds_cust_01_prc; 
+
 /
