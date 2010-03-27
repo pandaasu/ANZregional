@@ -139,7 +139,7 @@ sub PaintFunction()%>
       cobjScreens[2].hedtxt = 'Production Schedule Definition';
       cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Week Selection';
       cobjScreens[4].hedtxt = 'Production Schedule Maintenance - Week Definition';
-      cobjScreens[5].hedtxt = 'Production Schedule Maintenance - Production Type';
+      cobjScreens[5].hedtxt = 'Production Schedule Maintenance';
       cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Event Activity';
       cobjScreens[7].hedtxt = 'Production Schedule Maintenance - Filling Activity';
       cobjScreens[8].hedtxt = 'Production Schedule Maintenance - Packing Activity';
@@ -1261,9 +1261,6 @@ sub PaintFunction()%>
       }
    }
 
-
-
-
    ////////////////////
    // Type Functions //
    ////////////////////
@@ -1273,30 +1270,21 @@ sub PaintFunction()%>
    var cobjTypeCell;
    var cintTypeIndx;
    var cstrTypeType;
-   var cobjTypeWeek = new Array();
+   var cobjTypeDate = new Array();
    var cobjTypeShft = new Array();
    var cobjTypeLine = new Array();
-   function clsTypeWeek() {
-      this.wekcde = '';
-      this.weknam = '';
-      this.dayary = new Array();
-      this.ptyary = new Array();
-   }
    function clsTypeDate() {
       this.daycde = '';
       this.daynam = '';
    }
-   function clsTypePtyp() {
-      this.ptycde = '';
-      this.ptynam = '';
-      this.shfary = new Array();
-      this.lcoary = new Array();
-   }
-   function clsTypeShfd() {
+   function clsTypeShft() {
       this.shfcde = '';
       this.shfnam = '';
       this.shfstr = '';
       this.shfdur = '';
+      this.cmocde = '';
+      this.barstr = 0;
+      this.barend = 0;
    }
    function clsTypeLine() {
       this.lincde = '';
@@ -1304,6 +1292,7 @@ sub PaintFunction()%>
       this.lcocde = '';
       this.lconam = '';
       this.filnam = '';
+      this.actary = new Array();
    }
    function requestTypeLoad(strCode) {
       cstrTypeCode = strCode;
@@ -1333,30 +1322,21 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspType');
-         var objArray;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
-               cobjWeekPtyp[cobjWeekPtyp.length] = new clsWeekPtyp();
-               cobjWeekPtyp[cobjWeekPtyp.length-1].ptycde = objElements[i].getAttribute('PTYCDE');
-               cobjWeekPtyp[cobjWeekPtyp.length-1].ptynam = objElements[i].getAttribute('PTYNAM');
+               document.getElementById('hedType').innerText = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
             } else if (objElements[i].nodeName == 'DAYDFN') {
-               objArray = cobjDetailWeek[cobjDetailWeek.length-1].dayary;
-               objArray[objArray.length] = new clsDetailDate();
-               objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
-               objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
+               cobjTypeDate[cobjTypeDate.length] = new clsTypeDate();
+               cobjTypeDate[cobjTypeDate.length-1].daycde = objElements[i].getAttribute('DAYCDE');
+               cobjTypeDate[cobjTypeDate.length-1].daynam = objElements[i].getAttribute('DAYNAM');
             } else if (objElements[i].nodeName == 'SHFDFN') {
-
-cobjTypeShft
-
-
-               objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
-               objArray[objArray.length] = new clsWeekShfd();
-               objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
-               objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
-               objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
-               objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
-               objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
-               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
+               cobjTypeShft[cobjTypeShft.length] = new clsTypeShft();
+               cobjTypeShft[cobjTypeShft.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
+               cobjTypeShft[cobjTypeShft.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
+               cobjTypeShft[cobjTypeShft.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
+               cobjTypeShft[cobjTypeShft.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
+               cobjTypeShft[cobjTypeShft.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
+               cobjTypeShft[cobjTypeShft.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             } else if (objElements[i].nodeName == 'LINDFN') {
                cobjTypeLine[cobjTypeLine.length] = new clsTypeLine();
                cobjTypeLine[cobjTypeLine.length-1].lincde = objElements[i].getAttribute('LINCDE');
@@ -1366,7 +1346,7 @@ cobjTypeShft
                cobjTypeLine[cobjTypeLine.length-1].filnam = objElements[i].getAttribute('FILNAM');
             }
          }
-         doTypeRefresh();
+         doTypePaint();
       }
    }
    function doTypeSelect(objSelect) {
@@ -1386,235 +1366,382 @@ cobjTypeShft
          cobjTypeCell.className = 'clsFloNodx';
       }
    }
-   function doTypeRefresh() {
-      displayScreen('dspDetail');
+   function doTypePaint() {
       var objTable;
       var objRow;
       var objCell;
-      var objInput;
-      var objSelect;
-      var objArray;
       var strTime;
+      var intBarCnt;
+      var intWrkCnt;
+      var bolStrDay;
 
-      for (var i=0;i<cobjDetailWeek.length;i++) {
-         objRow = objPscType.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelHB';
-         objCell.style.width = '100%';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell.appendChild(document.createTextNode(cobjDetailWeek[i].weknam));
+     // for (var i=0;i<cobjTypeLine.length;i++) {
 
-         objArray = cobjDetailWeek[i].dayary;
-         for (var j=0;j<objArray.length;j++) {
-            objRow = objPscType.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelHB';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-             objCell.style.whiteSpace = 'nowrap';
-            objCell.appendChild(document.createTextNode(strTime));
-         for (var i=0;i<=23;i++) {
-            if ( i < 10) {
-               strTime = '0'+i+':00';
+         for (var j=0;j<cobjTypeShft.length;j++) {
+            intBarCnt = (cobjTypeShft[j].shfdur / 60) * 4;
+            if (j == 0) {
+               cobjTypeShft[j].barstr = ((Math.floor(cobjTypeShft[j].shfstr / 100) + ((cobjTypeShft[j].shfstr % 100) / 60)) * 4) + 1;
+               cobjTypeShft[j].barend = cobjTypeShft[j].barstr + intBarCnt - 1;
             } else {
-               strTime = i+':00';
+               cobjTypeShft[j].barstr = cobjTypeShft[j-1].barend + 1;
+               cobjTypeShft[j].barend = cobjTypeShft[j].barstr + intBarCnt - 1;
             }
-            objRow = objPscType.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelHB';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.appendChild(document.createTextNode(strTime));
+         }
 
+     // }
 
-         objRow = objTabShift.insertRow(-1);
+      var objTypHead = document.getElementById('tabHeadType');
+      var objTypBody = document.getElementById('tabBodyType');
+      objTypHead.style.tableLayout = 'auto';
+      objTypBody.style.tableLayout = 'auto';
+      for (var i=objTypHead.rows.length-1;i>=0;i--) {
+         objTypHead.deleteRow(i);
+      }
+      for (var i=objTypBody.rows.length-1;i>=0;i--) {
+         objTypBody.deleteRow(i);
+      }
+
+      objRow = objTypHead.insertRow(-1);
+
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.fontWeight = 'bold';
+      objCell.style.backgroundColor = '#40414c';
+      objCell.style.color = '#ffffff';
+      objCell.style.border = '#c0c0c0 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Date'));
+
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.fontWeight = 'bold';
+      objCell.style.backgroundColor = '#40414c';
+      objCell.style.color = '#ffffff';
+      objCell.style.border = '#c0c0c0 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Time'));
+
+      for (var i=0;i<cobjTypeLine.length;i++) {
+
          objCell = objRow.insertCell(-1);
-         objCell.rowSpan = 4;
          objCell.colSpan = 1;
          objCell.align = 'center';
          objCell.vAlign = 'center';
-         objCell.innerHTML = strTime;
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
+         objCell.className = 'clsLabelBB';
          objCell.style.fontSize = '8pt';
+         objCell.style.backgroundColor = '#04aa04';
+         objCell.style.color = '#ffffff';
          objCell.style.border = '#c0c0c0 1px solid';
-         objCell.style.padding = '1px';
-         for (var j=1;j<=8;j++) {
-            intBarIdx = ((j - 1) * 96) + (i * 4) + 1;
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.style.fontSize = '8pt';
-            objCell.style.borderTop = '#c0c0c0 1px solid';
-            objCell.style.borderRight = '#c0c0c0 1px solid';
-            objCell.style.paddingTop = '1px';
-            objImage = document.createElement('img');
-            objImage.id = 'DEF_B'+intBarIdx;
-            objImage.src = cobjBar0.src;
-            objImage.align = 'absmiddle';
-            objImage.style.height = '4px';
-            objImage.style.width = '16px';
-            objCell.appendChild(objImage);
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell.innerHTML = '&nbsp;';
+
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.fontSize = '8pt';
+         objCell.style.fontWeight = 'bold';
+         objCell.style.backgroundColor = '#40414c';
+         objCell.style.color = '#ffffff';
+         objCell.style.border = '#c0c0c0 1px solid';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         if (cobjTypeLine[i].filnam != '' && cobjTypeLine[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam+' - '+cobjTypeLine[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
          }
-         objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=8;j++) {
-            intBarIdx = ((j - 1) * 96) + (i * 4) + 2;
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.style.fontSize = '8pt';
-            objCell.style.borderRight = '#c0c0c0 1px solid';
-            objImage = document.createElement('img');
-            objImage.id = 'DEF_B'+intBarIdx;
-            objImage.src = cobjBar0.src;
-            objImage.align = 'absmiddle';
-            objImage.style.height = '4px';
-            objImage.style.width = '16px';
-            objCell.appendChild(objImage);
-         }
-         objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=8;j++) {
-            intBarIdx = ((j - 1) * 96) + (i * 4) + 3;
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.style.fontSize = '8pt';
-            objCell.style.borderRight = '#c0c0c0 1px solid';
-            objImage = document.createElement('img');
-            objImage.id = 'DEF_B'+intBarIdx;
-            objImage.src = cobjBar0.src;
-            objImage.align = 'absmiddle';
-            objImage.style.height = '4px';
-            objImage.style.width = '16px';
-            objCell.appendChild(objImage);
-         }
-         objRow = objTabShift.insertRow(-1);
-         for (var j=1;j<=8;j++) {
-            intBarIdx = ((j - 1) * 96) + (i * 4) + 4;
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBN';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.style.fontSize = '8pt';
-            objCell.style.borderRight = '#c0c0c0 1px solid';
-            objImage = document.createElement('img');
-            objImage.id = 'DEF_B'+intBarIdx;
-            objImage.src = cobjBar0.src;
-            objImage.align = 'absmiddle';
-            objImage.style.height = '4px';
-            objImage.style.width = '16px';
-            objCell.appendChild(objImage);
-         }
+
       }
 
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#40414c';
+      objCell.style.color = '#000000';
+      objCell.style.border = 'none';
+      objCell.style.paddingLeft = '4px';
+      objCell.style.paddingRight = '4px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.innerHTML = '&nbsp;';
 
+      intWrkCnt = 0;
 
-         for (var j=0;j<objArray.length;j++) {
-            objRow = objPscType.insertRow(-1);
+      for (var i=0;i<cobjTypeDate.length;i++) {
+
+         bolStrDay = true;
+
+         for (var j=0;j<=23;j++) {
+
+            if (j < 10) {
+               strTime = '0'+j;
+            } else {
+               strTime = j;
+            }
+
+            objRow = objTypBody.insertRow(-1);
+            intWrkCnt++;
+            objCell = objRow.insertCell(-1);
+            objCell.rowSpan = 4;
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.style.fontSize = '8pt';
+            if (bolStrDay == true) {
+               objCell.style.fontWeight = 'bold';
+               objCell.style.backgroundColor = '#ffffc0';
+            } else {
+               objCell.style.fontWeight = 'normal';
+               objCell.style.backgroundColor = '#ffffe0';
+            }
+            objCell.style.color = '#000000';
+            objCell.style.border = '#000000 1px solid';
+            objCell.style.paddingLeft = '2px';
+            objCell.style.paddingRight = '2px';
+            objCell.appendChild(document.createTextNode(cobjTypeDate[i].daynam));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode(cobjTypeDate[i].daycde));
+            bolStrDay = false;
+            doTypePaintTime(objRow, strTime, '00', intWrkCnt);
+
+            objRow = objTypBody.insertRow(-1);
+            intWrkCnt++;
+            doTypePaintTime(objRow, strTime, '15', intWrkCnt);
+
+            objRow = objTypBody.insertRow(-1);
+            intWrkCnt++;
+            doTypePaintTime(objRow, strTime, '30', intWrkCnt);
+
+            objRow = objTypBody.insertRow(-1);
+            intWrkCnt++;
+            doTypePaintTime(objRow, strTime, '45', intWrkCnt);
+
+         }
+
+      }
+
+      if (objTypBody.rows.length == 0) {
+         setScrollable('HeadType','BodyType','horizontal');
+         objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
+         objTypHead.style.tableLayout = 'auto';
+         objTypBody.style.tableLayout = 'auto';
+      } else {
+         setScrollable('HeadType','BodyType','horizontal');
+         objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
+         objTypHead.style.tableLayout = 'fixed';
+         objTypBody.style.tableLayout = 'fixed';
+      }
+
+   }
+
+   function doTypePaintTime(objRow, strTime, strMins, intWrkCnt) {
+
+      var objTable;
+      var objCell;
+      var strWrkInd;
+      var intWrkStr;
+      var intWrkEnd;
+      var strWrkNam;
+
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.style.fontSize = '8pt';
+      if (strMins == '00') {
+         objCell.style.fontWeight = 'bold';
+      } else {
+         objCell.style.fontWeight = 'normal';
+      }
+      objCell.style.backgroundColor = '#ffffe0';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#000000 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode(strTime+':'+strMins));
+
+      for (var k=0;k<cobjTypeLine.length;k++) {
+
+         intWrkInd = 'N';
+         for (var w=0;w<cobjTypeShft.length;w++) {
+            if (cobjTypeShft[w].cmocde != '*NONE' && (intWrkCnt >= cobjTypeShft[w].barstr && intWrkCnt <= cobjTypeShft[w].barend)) {
+               intWrkInd = 'X';
+               if (intWrkCnt == cobjTypeShft[w].barstr) {
+                  intWrkInd = 'S';
+                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
+               } else if (intWrkCnt == cobjTypeShft[w].barend) {
+                  intWrkInd = 'E';
+                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
+               } else if (intWrkCnt == cobjTypeShft[w].barstr + 1) {
+                  intWrkInd = 'B';
+                  intWrkStr = cobjTypeShft[w].barstr + 1;
+                  intWrkEnd = cobjTypeShft[w].barend - 1;
+                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
+               }
+               break;
+            }
+         }
+
+         if (intWrkInd == 'N') {
+
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
-            objCell.className = 'clsLabelBB';
+            objCell.style.fontSize = '8pt';
+            objCell.style.backgroundColor = '#f7f7f7';
+            objCell.style.color = '#000000';
+            objCell.style.borderRight = '#c7c7c7 1px solid';
             objCell.style.paddingLeft = '2px';
             objCell.style.paddingRight = '2px';
             objCell.style.whiteSpace = 'nowrap';
-         objRow = objPscType.insertRow(-1);
-         objRow.setAttribute('ptyidx',i);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.width = '100%';
-         objCell.style.fontSize = '8pt';
-         objCell.style.backgroundColor = '#ffffc0';
-         objCell.style.color = '#000000';
-         objCell.style.border = '#708090 1px solid';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objInput = document.createElement('input');
-         objInput.type = 'checkbox';
-         objInput.value = '';
-         objInput.id = 'WEKPTY_'+i;
-         objInput.onfocus = function() {setSelect(this);};
-         objInput.onclick = function() {doWeekPtypClick(this);};
-         objInput.checked = false;
-         objCell.appendChild(objInput);
-         objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
-         objRow = objPscType.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objTable = document.createElement('table');
-         objTable.id = 'WEKPTYDATA_'+i;
-         objTable.className = 'clsPanel';
-         objTable.align = 'center';
-         objTable.cellSpacing = '0';
-         objTable.style.display = 'none';
-         objCell.appendChild(objTable);
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.whiteSpace = 'nowrap';
-         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx);
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         doWeekLconLoad(objCell,i);
+
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.style.fontSize = '8pt';
+            objCell.style.backgroundColor = '#f7f7f7';
+            objCell.style.color = '#000000';
+            objCell.style.borderRight = '#c7c7c7 1px solid';
+            objCell.style.padding = '0px';
+            objCell.style.whiteSpace = 'nowrap';
+
+         } else {
+
+            if (intWrkInd == 'S') {
+
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.style.fontSize = '8pt';
+               objCell.style.backgroundColor = '#04aa04';
+               objCell.style.color = '#000000';
+               objCell.style.borderTop = '#000000 1px solid';
+               objCell.style.paddingLeft = '2px';
+               objCell.style.paddingRight = '2px';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell.title = strWrkNam;
+
+            } else if (intWrkInd == 'E') {
+
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.style.fontSize = '8pt';
+               objCell.style.backgroundColor = '#BC0000';
+               objCell.style.color = '#000000';
+               objCell.style.borderBottom = '#000000 1px solid';
+               objCell.style.paddingLeft = '2px';
+               objCell.style.paddingRight = '2px';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell.title = strWrkNam;
+
+            } else if (intWrkInd == 'B') {
+
+               objCell = objRow.insertCell(-1);
+               objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'center';
+               objCell.style.fontSize = '8pt';
+               objCell.style.backgroundColor = '#c0ffc0';
+               objCell.style.color = '#000000';
+               objCell.style.border = 'none';
+               objCell.style.paddingLeft = '2px';
+               objCell.style.paddingRight = '2px';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell.title = strWrkNam;
+
+            }
+
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.style.fontSize = '8pt';
+            objCell.style.backgroundColor = 'transparent';
+            objCell.style.color = '#000000';
+            objCell.style.border = '#c7c7c7 1px solid';
+            objCell.style.padding = '0px';
+            objCell.style.height = '100%';
+            objCell.style.whiteSpace = 'nowrap';
+
+            objTable = document.createElement('table');
+            objTable.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
+            objTable.className = 'clsPanel';
+            objTable.align = 'center';
+            objTable.cellSpacing = '0';
+            objTable.style.border = 'none';
+            objTable.style.padding = '0px';
+            objTable.style.height = '100%';
+            objCell.appendChild(objTable);
+
+
+            var objActRow = objTable.insertRow(-1);
+
+            objCell = objActRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.style.fontSize = '8pt';
+            objCell.style.fontWeight = 'bold';
+            objCell.style.backgroundColor = 'transparent';
+            objCell.style.color = '#000000';
+            objCell.style.border = 'none';
+            objCell.style.padding = '0px';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.appendChild(document.createTextNode('START WEEK'));
+
+         }
+
       }
+
    }
 
 
    function doTypeBack() {
-      cobjTypeData = null;
-      cobjTypeSmod = null;
-      cobjTypePtyp = null;
-      var objPscType = document.getElementById('TYP_PscType');
-      for (var i=objPscType.rows.length-1;i>=0;i--) {
-         objPscType.deleteRow(i);
+      cobjTypeDate.length = 0;
+      cobjTypeShft.length = 0;
+      cobjTypeLine.length = 0;
+      var objTypHead = document.getElementById('tabHeadType');
+      var objTypBody = document.getElementById('tabBodyType');
+      for (var i=objTypHead.rows.length-1;i>=0;i--) {
+         objTypHead.deleteRow(i);
+      }
+      for (var i=objTypBody.rows.length-1;i>=0;i--) {
+         objTypBody.deleteRow(i);
       }
       displayScreen('dspWeeks');
    }
-   function doTypeDelete() {
+
+
+
+
+
+   function doTypeActvDelete() {
       if (cobTypeCell == null) {
          return;
       }
@@ -1648,8 +1775,8 @@ cobjTypeShft
          window.setTimeout('requestFormDelete(\''+strCode+'\');',10);
       }
    }
-   function doTypeUpdate() {
-      if (cobTypeCell == null) {
+   function doTypeActvUpdate() {
+      if (cobjTypeCell == null) {
          return;
       }
       if (cstrTypeType == '*EVNT') {
@@ -2416,25 +2543,38 @@ cobjTypeShft
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailBack();">&nbsp;Back&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddWeek();">&nbsp;Add Week&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doDetailAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
       <tr height=100%>
          <td align=center colspan=1 nowrap><nobr>
-            <div style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
-               <table id="UPD_Table" class="clsPanel" style="background-color:#ffffff;border-collapse:collapse;border-style:none;" align=left cellspacing="0" cellpadding="0"></table>
-            </div>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center width=100% colspan=1 nowrap><nobr>
+                     <div id="conHeadType" style="width:100%;overflow:hidden;background-color:#40414c;border:#40414c 1px solid;">
+                     <table class="clsPanel" id="tabHeadType" style="background-color:#f7f7f7;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center width=100% colspan=1 nowrap><nobr>
+                     <div id="conBodyType" style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
+                     <table class="clsPanel" id="tabBodyType" style="background-color:transparent;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
          </nobr></td>
       </tr>
    </table>
