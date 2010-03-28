@@ -1641,7 +1641,6 @@ sub PaintFunction()%>
             }
 
             objCell = objRow.insertCell(-1);
-            objCell.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'top';
@@ -1653,10 +1652,9 @@ sub PaintFunction()%>
             objCell.style.padding = '0px';
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
-            objCell.onclick = function() {doTypeSelect(this);};
-            objCell.setAttribute('tabidx',2 + (k * 2) + 1);
 
             objTable = document.createElement('table');
+            objTable.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
             objTable.align = 'center';
             objTable.vAlign = 'center';
             objTable.style.fontSize = '8pt';
@@ -1667,11 +1665,12 @@ sub PaintFunction()%>
             objTable.cellSpacing = '2px';
             objTable.style.padding = '2px';
             objTable.style.width = '100%';
+            objTable.setAttribute('tabidx',2 + (k * 2) + 1);
             objCell.appendChild(objTable);
 
 
             var objWrkRow = objTable.insertRow(-1);
-            var objWrkCell = objRow.insertCell(-1);
+            var objWrkCell = objWrkRow.insertCell(-1);
             objWrkCell.colSpan = 1;
             objWrkCell.align = 'left';
             objWrkCell.vAlign = 'center';
@@ -1681,8 +1680,9 @@ sub PaintFunction()%>
             objWrkCell.style.backgroundColor = '#ffffe0';
             objWrkCell.style.color = '#000000';
             objWrkCell.style.border = '#c7c7c7 1px solid';
-            objWrkCell.style.padding = '2px';
+            objWrkCell.style.padding = '0px';
             objWrkCell.style.whiteSpace = 'nowrap';
+            objWrkCell.onclick = function() {doTypeSelect(this);};
             objWrkCell.appendChild(document.createTextNode('+'));
 
 
@@ -1693,38 +1693,12 @@ sub PaintFunction()%>
    }
 
 
-   function doTypePaintAlign() {
-      var objTypHead = document.getElementById('tabHeadType');
-      var objTypBody = document.getElementById('tabBodyType');
-      objTypHead.style.tableLayout = 'auto';
-      objTypBody.style.tableLayout = 'auto';
-      var objHeadRows = objTypHead.rows;
-      var objHeadCells = objTypHead.rows(0).cells;
-      var objBodyCells = objTypBody.rows(0).cells;
-      if (objBodyCells.length == objHeadCells.length-1) {
-         for (var i=0;i<objHeadCells.length-1;i++) {
-            if (objHeadCells[i].offsetWidth > objBodyCells[i].offsetWidth) {
-               objBodyCells[i].style.width = objHeadCells[i].offsetWidth;
-               objHeadCells[i].style.width = objHeadCells[i].offsetWidth;
-            } else {
-               objHeadCells[i].style.width = objBodyCells[i].offsetWidth;
-               objBodyCells[i].style.width = objBodyCells[i].offsetWidth;
-            }
-         
-         }
-      }
-      objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
-      objTypHead.style.tableLayout = 'fixed';
-      objTypBody.style.tableLayout = 'fixed';
-   }
-
-
    function doTypeSelect(objSelect) {
       if (cobjTypeCell != null) {
-         cobjTypeCell.childNodes[0].style.border = 'transparent 2px solid';
+         cobjTypeCell.childNodes[0].style.backgroundColor = '#ffffe0';
       }
       cobjTypeCell = objSelect;
-      cobjTypeCell.childNodes[0].style.border = '#0000C0 2px solid';
+      cobjTypeCell.childNodes[0].style.backgroundColor = '#ffffc0';
    }
 
 
@@ -1810,7 +1784,7 @@ sub PaintFunction()%>
       }
       if (!processForm()) {return;}
 
-            var objRow = cobjTypeCell.childNodes[0].insertRow(-1);
+            var objRow = cobjTypeCell.parent.insertRow(-1);
             var objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'left';
@@ -1824,6 +1798,7 @@ sub PaintFunction()%>
             objCell.style.padding = '2px';
             objCell.style.width = '100%';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.onclick = function() {doTypeSelect(this);};
             objCell.appendChild(document.createTextNode('Activity descriptive text'));
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
@@ -1834,11 +1809,8 @@ sub PaintFunction()%>
 
             var objTypHead = document.getElementById('tabHeadType');
             var objTypBody = document.getElementById('tabBodyType');
-            objTypHead.rows(0).cells[cobjTypeCell.getAttribute('tabidx')].style.width = cobjTypeCell.childNodes[0].offsetWidth + 2;
-            objTypBody.rows(0).cells[cobjTypeCell.getAttribute('tabidx')].style.width = cobjTypeCell.childNodes[0].offsetWidth + 2;
-
-
-         //   doTypePaintAlign();
+            objTypHead.rows(0).cells[cobjTypeCell.parent.getAttribute('tabidx')].style.width = cobjTypeCell.parent.offsetWidth + 2;
+            objTypBody.rows(0).cells[cobjTypeCell.parent.getAttribute('tabidx')].style.width = cobjTypeCell.parent.offsetWidth + 2;
 
       return;
 
