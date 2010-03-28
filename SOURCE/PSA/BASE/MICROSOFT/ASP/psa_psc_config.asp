@@ -1349,23 +1349,6 @@ sub PaintFunction()%>
          doTypePaint();
       }
    }
-   function doTypeSelect(objSelect) {
-      if (cobTypeCell != null) {
-         if (cobjTypeCell.className == 'clsFloCntx') {
-            cobjTypeCell.className = 'clsFloCntl';
-         } else if (cobjTypeCell.className == 'clsFloNodx') {
-            cobjTypeCell.className = 'clsFloNode';
-         }
-      }
-      cobjTypeCell = objSelect;
-      cintTypeIndx = objSelect.getAttribute('schidx');
-      cstrTypeType = objSelect.getAttribute('schtyp');
-      if (cobjTypeCell.className == 'clsFloCntl') {
-         cobjTypeCell.className = 'clsFloCntx';
-      } else if (cobjTypeCell.className == 'clsFloNode') {
-         cobjTypeCell.className = 'clsFloNodx';
-      }
-   }
    function doTypePaint() {
       var objTable;
       var objRow;
@@ -1508,10 +1491,10 @@ sub PaintFunction()%>
             objCell.style.fontSize = '8pt';
             if (bolStrDay == true) {
                objCell.style.fontWeight = 'bold';
-               objCell.style.backgroundColor = '#ffffc0';
+               objCell.style.backgroundColor = '#c0c0ff';
             } else {
                objCell.style.fontWeight = 'normal';
-               objCell.style.backgroundColor = '#ffffe0';
+               objCell.style.backgroundColor = '#dddfff';
             }
             objCell.style.color = '#000000';
             objCell.style.border = '#000000 1px solid';
@@ -1555,8 +1538,8 @@ sub PaintFunction()%>
 
    function doTypePaintTime(objRow, strTime, strMins, intWrkCnt) {
 
-      var objTable;
       var objCell;
+      var objTable;
       var strWrkInd;
       var intWrkStr;
       var intWrkEnd;
@@ -1572,7 +1555,7 @@ sub PaintFunction()%>
       } else {
          objCell.style.fontWeight = 'normal';
       }
-      objCell.style.backgroundColor = '#ffffe0';
+      objCell.style.backgroundColor = '#dddfff';
       objCell.style.color = '#000000';
       objCell.style.border = '#000000 1px solid';
       objCell.style.paddingLeft = '2px';
@@ -1588,14 +1571,8 @@ sub PaintFunction()%>
                intWrkInd = 'X';
                if (intWrkCnt == cobjTypeShft[w].barstr) {
                   intWrkInd = 'S';
-                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
-               } else if (intWrkCnt == cobjTypeShft[w].barend) {
-                  intWrkInd = 'E';
-                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
-               } else if (intWrkCnt == cobjTypeShft[w].barstr + 1) {
-                  intWrkInd = 'B';
-                  intWrkStr = cobjTypeShft[w].barstr + 1;
-                  intWrkEnd = cobjTypeShft[w].barend - 1;
+                  intWrkStr = cobjTypeShft[w].barstr;
+                  intWrkEnd = cobjTypeShft[w].barend;
                   strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
                }
                break;
@@ -1632,55 +1609,43 @@ sub PaintFunction()%>
             if (intWrkInd == 'S') {
 
                objCell = objRow.insertCell(-1);
+               objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.vAlign = 'center';
                objCell.style.fontSize = '8pt';
                objCell.style.backgroundColor = '#04aa04';
                objCell.style.color = '#000000';
-               objCell.style.borderTop = '#000000 1px solid';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
+               objCell.style.borderTop = '#c7c7c7 1px solid';
+               objCell.style.borderBottom = '#c7c7c7 1px solid';
+               objCell.style.padding = '0px';
+               objCell.style.height = '100%';
                objCell.style.whiteSpace = 'nowrap';
-               objCell.title = strWrkNam;
 
-            } else if (intWrkInd == 'E') {
-
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.style.fontSize = '8pt';
-               objCell.style.backgroundColor = '#BC0000';
-               objCell.style.color = '#000000';
-               objCell.style.borderBottom = '#000000 1px solid';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell.title = strWrkNam;
-
-            } else if (intWrkInd == 'B') {
-
-               objCell = objRow.insertCell(-1);
-               objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.vAlign = 'center';
-               objCell.style.fontSize = '8pt';
-               objCell.style.backgroundColor = '#c0ffc0';
-               objCell.style.color = '#000000';
-               objCell.style.border = 'none';
-               objCell.style.paddingLeft = '2px';
-               objCell.style.paddingRight = '2px';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell.title = strWrkNam;
+               objDiv = document.createElement('div');
+               objDiv.align = 'center';
+               objDiv.vAlign = 'center';
+               objDiv.style.fontSize = '8pt';
+               objDiv.style.fontWeight = 'normal';
+               objDiv.style.backgroundColor = '#c0ffc0';
+               objDiv.style.color = '#000000';
+               objDiv.style.border = '#04aa04 2px solid';
+               objDiv.style.paddingLeft = '2px';
+               objDiv.style.paddingRight = '2px';
+               objDiv.style.height = '100%';
+               objDiv.style.width = '100%';
+               objDiv.innerHTML = '&nbsp;';
+               objDiv.title = strWrkNam;
+               objCell.appendChild(objDiv);
 
             }
 
             objCell = objRow.insertCell(-1);
+            objCell.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
             objCell.colSpan = 1;
             objCell.align = 'center';
-            objCell.vAlign = 'center';
+            objCell.vAlign = 'top';
+            objCell.style.cursor = 'pointer';
             objCell.style.fontSize = '8pt';
             objCell.style.backgroundColor = 'transparent';
             objCell.style.color = '#000000';
@@ -1688,38 +1653,80 @@ sub PaintFunction()%>
             objCell.style.padding = '0px';
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.onclick = function() {doTypeSelect(this);};
+            objCell.setAttribute('tabidx',2 + (k * 2) + 1);
 
             objTable = document.createElement('table');
-            objTable.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
-            objTable.className = 'clsPanel';
             objTable.align = 'center';
-            objTable.cellSpacing = '0';
-            objTable.style.border = 'none';
-            objTable.style.padding = '0px';
-            objTable.style.height = '100%';
+            objTable.vAlign = 'center';
+            objTable.style.fontSize = '8pt';
+            objTable.style.fontWeight = 'normal';
+            objTable.style.backgroundColor = 'transparent';
+            objTable.style.color = '#000000';
+            objTable.style.border = 'transparent 2px solid';
+            objTable.cellSpacing = '2px';
+            objTable.style.padding = '2px';
+            objTable.style.width = '100%';
             objCell.appendChild(objTable);
 
 
-            var objActRow = objTable.insertRow(-1);
+            var objWrkRow = objTable.insertRow(-1);
+            var objWrkCell = objRow.insertCell(-1);
+            objWrkCell.colSpan = 1;
+            objWrkCell.align = 'left';
+            objWrkCell.vAlign = 'center';
+            objWrkCell.style.cursor = 'pointer';
+            objWrkCell.style.fontSize = '10pt';
+            objWrkCell.style.fontWeight = 'bold';
+            objWrkCell.style.backgroundColor = '#ffffe0';
+            objWrkCell.style.color = '#000000';
+            objWrkCell.style.border = '#c7c7c7 1px solid';
+            objWrkCell.style.padding = '2px';
+            objWrkCell.style.whiteSpace = 'nowrap';
+            objWrkCell.appendChild(document.createTextNode('+'));
 
-            objCell = objActRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.style.fontSize = '8pt';
-            objCell.style.fontWeight = 'bold';
-            objCell.style.backgroundColor = 'transparent';
-            objCell.style.color = '#000000';
-            objCell.style.border = 'none';
-            objCell.style.padding = '0px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.appendChild(document.createTextNode('START WEEK'));
 
          }
 
       }
 
    }
+
+
+   function doTypePaintAlign() {
+      var objTypHead = document.getElementById('tabHeadType');
+      var objTypBody = document.getElementById('tabBodyType');
+      objTypHead.style.tableLayout = 'auto';
+      objTypBody.style.tableLayout = 'auto';
+      var objHeadRows = objTypHead.rows;
+      var objHeadCells = objTypHead.rows(0).cells;
+      var objBodyCells = objTypBody.rows(0).cells;
+      if (objBodyCells.length == objHeadCells.length-1) {
+         for (var i=0;i<objHeadCells.length-1;i++) {
+            if (objHeadCells[i].offsetWidth > objBodyCells[i].offsetWidth) {
+               objBodyCells[i].style.width = objHeadCells[i].offsetWidth;
+               objHeadCells[i].style.width = objHeadCells[i].offsetWidth;
+            } else {
+               objHeadCells[i].style.width = objBodyCells[i].offsetWidth;
+               objBodyCells[i].style.width = objBodyCells[i].offsetWidth;
+            }
+         
+         }
+      }
+      objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
+      objTypHead.style.tableLayout = 'fixed';
+      objTypBody.style.tableLayout = 'fixed';
+   }
+
+
+   function doTypeSelect(objSelect) {
+      if (cobjTypeCell != null) {
+         cobjTypeCell.childNodes[0].style.border = 'transparent 2px solid';
+      }
+      cobjTypeCell = objSelect;
+      cobjTypeCell.childNodes[0].style.border = '#0000C0 2px solid';
+   }
+
 
 
    function doTypeBack() {
@@ -1798,10 +1805,43 @@ sub PaintFunction()%>
       }
    }
    function doTypeAddEvnt() {
-      if (cobTypeCell == null) {
+      if (cobjTypeCell == null) {
          return;
       }
       if (!processForm()) {return;}
+
+            var objRow = cobjTypeCell.childNodes[0].insertRow(-1);
+            var objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'left';
+            objCell.vAlign = 'center';
+            objCell.style.cursor = 'pointer';
+            objCell.style.fontSize = '8pt';
+            objCell.style.fontWeight = 'normal';
+            objCell.style.backgroundColor = '#ffffe0';
+            objCell.style.color = '#000000';
+            objCell.style.border = '#c7c7c7 1px solid';
+            objCell.style.padding = '2px';
+            objCell.style.width = '100%';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.appendChild(document.createTextNode('Activity descriptive text'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
+
+            var objTypHead = document.getElementById('tabHeadType');
+            var objTypBody = document.getElementById('tabBodyType');
+            objTypHead.rows(0).cells[cobjTypeCell.getAttribute('tabidx')].style.width = cobjTypeCell.childNodes[0].offsetWidth + 2;
+            objTypBody.rows(0).cells[cobjTypeCell.getAttribute('tabidx')].style.width = cobjTypeCell.childNodes[0].offsetWidth + 2;
+
+
+         //   doTypePaintAlign();
+
+      return;
+
       doActivityStart(document.body);
       window.setTimeout('requestEvntAdd();',10);
    }
