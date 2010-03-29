@@ -1270,6 +1270,9 @@ sub PaintFunction()%>
    var cobjTypeCell;
    var cintTypeIndx;
    var cstrTypeType;
+   var cstrTypeSind;
+   var cintTypeHsiz = new Array();
+   var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
    var cobjTypeShft = new Array();
    var cobjTypeLine = new Array();
@@ -1356,6 +1359,7 @@ sub PaintFunction()%>
       var strTime;
       var intBarCnt;
       var intWrkCnt;
+      var intPntCnt;
       var bolStrDay;
 
      // for (var i=0;i<cobjTypeLine.length;i++) {
@@ -1373,6 +1377,9 @@ sub PaintFunction()%>
 
      // }
 
+      cstrTypeSind = 'N';
+      cintTypeHsiz.length = 0;
+      cintTypeBsiz.length = 0;
       var objTypHead = document.getElementById('tabHeadType');
       var objTypBody = document.getElementById('tabBodyType');
       objTypHead.style.tableLayout = 'auto';
@@ -1464,11 +1471,12 @@ sub PaintFunction()%>
       objCell.style.border = 'none';
       objCell.style.paddingLeft = '4px';
       objCell.style.paddingRight = '4px';
+      objCell.style.width = 16;
       objCell.style.whiteSpace = 'nowrap';
       objCell.innerHTML = '&nbsp;';
 
       intWrkCnt = 0;
-
+      intPntCnt = objTypHead.rows(0).cells.length - 1;
       for (var i=0;i<cobjTypeDate.length;i++) {
 
          bolStrDay = true;
@@ -1504,39 +1512,44 @@ sub PaintFunction()%>
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode(cobjTypeDate[i].daycde));
             bolStrDay = false;
-            doTypePaintTime(objRow, strTime, '00', intWrkCnt);
+            doTypePaintTime(objRow, strTime, '00', intWrkCnt, intPntCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '15', intWrkCnt);
+            doTypePaintTime(objRow, strTime, '15', intWrkCnt, intPntCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '30', intWrkCnt);
+            doTypePaintTime(objRow, strTime, '30', intWrkCnt, intPntCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '45', intWrkCnt);
+            doTypePaintTime(objRow, strTime, '45', intWrkCnt, intPntCnt);
 
          }
 
       }
 
-      if (objTypBody.rows.length == 0) {
-         setScrollable('HeadType','BodyType','horizontal');
-         objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
-         objTypHead.style.tableLayout = 'auto';
-         objTypBody.style.tableLayout = 'auto';
-      } else {
-         setScrollable('HeadType','BodyType','horizontal');
-         objTypHead.rows(0).cells[objTypHead.rows(0).cells.length-1].style.width = 16;
-         objTypHead.style.tableLayout = 'fixed';
-         objTypBody.style.tableLayout = 'fixed';
+      var objHeadCells = objTypHead.rows(0).cells;
+      var objBodyCells = objTypBody.rows(0).cells;
+      for (i=0;i<objHeadCells.length-1;i++) {
+         if (objHeadCells[i].offsetWidth > objBodyCells[i].offsetWidth) {
+            objBodyCells[i].style.width = objHeadCells[i].offsetWidth;
+            objHeadCells[i].style.width = objHeadCells[i].offsetWidth;
+         } else {
+            objHeadCells[i].style.width = objBodyCells[i].offsetWidth;
+            objBodyCells[i].style.width = objBodyCells[i].offsetWidth;
+         }
+         cintTypeHsiz[i] = objHeadCells[i].offsetWidth;
+         cintTypeBsiz[i] = objBodyCells[i].offsetWidth;
       }
+      addScrollSync(document.getElementById('conHeadType'),document.getElementById('conBodyType'),'horizontal');
+      objTypHead.style.tableLayout = 'fixed';
+      objTypBody.style.tableLayout = 'fixed';
 
    }
 
-   function doTypePaintTime(objRow, strTime, strMins, intWrkCnt) {
+   function doTypePaintTime(objRow, strTime, strMins, intWrkCnt, intPntCnt) {
 
       var objCell;
       var objTable;
@@ -1544,6 +1557,13 @@ sub PaintFunction()%>
       var intWrkStr;
       var intWrkEnd;
       var strWrkNam;
+      var intPntIdx;
+      var intPntOff;
+      var objPntAry = new Array(intPntCnt);
+      intPntOff = 0;
+      if (strMins != '00') {
+         intPntOff++;
+      }
 
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
@@ -1581,6 +1601,8 @@ sub PaintFunction()%>
 
          if (intWrkInd == 'N') {
 
+            objRow.setAttribute('inpind','N');
+
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1605,6 +1627,8 @@ sub PaintFunction()%>
             objCell.style.whiteSpace = 'nowrap';
 
          } else {
+
+            objRow.setAttribute('inpind','Y');
 
             if (intWrkInd == 'S') {
 
@@ -1638,13 +1662,19 @@ sub PaintFunction()%>
                objDiv.title = strWrkNam;
                objCell.appendChild(objDiv);
 
+            } else {
+
+               intPntOff++;
+
             }
+
+            intPntIdx = 2 + (k * 2) + 1;
+            objPntAry[intPntIdx] = intPntOff;
 
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'top';
-            objCell.style.cursor = 'pointer';
             objCell.style.fontSize = '8pt';
             objCell.style.backgroundColor = 'transparent';
             objCell.style.color = '#000000';
@@ -1652,10 +1682,11 @@ sub PaintFunction()%>
             objCell.style.padding = '0px';
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.setAttribute('pntidx',intPntIdx);
 
             objTable = document.createElement('table');
             objTable.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
-            objTable.align = 'center';
+            objTable.align = 'left';
             objTable.vAlign = 'center';
             objTable.style.fontSize = '8pt';
             objTable.style.fontWeight = 'normal';
@@ -1664,44 +1695,79 @@ sub PaintFunction()%>
             objTable.style.border = 'transparent 2px solid';
             objTable.cellSpacing = '2px';
             objTable.style.padding = '2px';
-            objTable.style.width = '100%';
-            objTable.setAttribute('tabidx',2 + (k * 2) + 1);
             objCell.appendChild(objTable);
 
-
-            var objWrkRow = objTable.insertRow(-1);
-            var objWrkCell = objWrkRow.insertCell(-1);
-            objWrkCell.colSpan = 1;
-            objWrkCell.align = 'left';
-            objWrkCell.vAlign = 'center';
-            objWrkCell.style.cursor = 'pointer';
-            objWrkCell.style.fontSize = '10pt';
-            objWrkCell.style.fontWeight = 'bold';
-            objWrkCell.style.backgroundColor = '#ffffe0';
-            objWrkCell.style.color = '#000000';
-            objWrkCell.style.border = '#c7c7c7 1px solid';
-            objWrkCell.style.padding = '0px';
-            objWrkCell.style.whiteSpace = 'nowrap';
-            objWrkCell.onclick = function() {doTypeSelect(this);};
-            objWrkCell.appendChild(document.createTextNode('+'));
-
+            if (intWrkInd == 'S' && cstrTypeSind == 'N') {
+               var objWrkRow = objTable.insertRow(-1);
+               var objWrkCell = objWrkRow.insertCell(-1);
+               objWrkCell.colSpan = 1;
+               objWrkCell.align = 'left';
+               objWrkCell.vAlign = 'center';
+               objWrkCell.style.cursor = 'pointer';
+               objWrkCell.style.fontSize = '10pt';
+               objWrkCell.style.fontWeight = 'bold';
+               objWrkCell.style.backgroundColor = '#ffffe0';
+               objWrkCell.style.color = '#000000';
+               objWrkCell.style.border = '#c7c7c7 1px solid';
+               objWrkCell.style.paddingLeft = '4px';
+               objWrkCell.style.paddingRight = '4px';
+               objWrkCell.style.whiteSpace = 'nowrap';
+               objWrkCell.onclick = function() {doTypeSelect(this);};
+               objWrkCell.appendChild(document.createTextNode('+'));
+               objWrkCell.setAttribute('delind','N');
+            }
 
          }
 
       }
 
+      objRow.setAttribute('pntary',objPntAry);
+
+      cstrTypeSind = intWrkInd;
+
    }
 
+   function doTypePaintSize(intPntIdx, intColWid) {
+
+      var objTypHead = document.getElementById('tabHeadType');
+      var objTypBody = document.getElementById('tabBodyType');
+      if (intColWid == -1) {
+         cintTypeBsiz[intPntIdx] = 0;
+         var objArry;
+         var intIndx;
+         var intWork;
+         for (var i=0;i<objTypBody.rows.length;i++) {
+            if (objTypBody.rows(i).getAttribute('inpind') == 'Y') {
+               objArry = objTypBody.rows(i).getAttribute('pntary');
+               intIndx = intPntIdx - objArry[intPntIdx];
+               intWork = objTypBody.rows(i).cells[intIndx].childNodes[0].offsetWidth;
+               if (intWork > cintTypeBsiz[intPntIdx]) {
+                  cintTypeBsiz[intPntIdx] = intWork;
+               }
+            }
+         }
+      } else {
+         if (intColWid > cintTypeBsiz[intPntIdx]) {
+            cintTypeBsiz[intPntIdx] = intColWid;
+         }
+      }
+      if (cintTypeHsiz[intPntIdx] > cintTypeBsiz[intPntIdx]) {
+         objTypHead.rows(0).cells[intPntIdx].style.width = cintTypeHsiz[intPntIdx];
+         objTypBody.rows(0).cells[intPntIdx].style.width = cintTypeHsiz[intPntIdx];
+      } else {
+         objTypHead.rows(0).cells[intPntIdx].style.width = cintTypeBsiz[intPntIdx];
+         objTypBody.rows(0).cells[intPntIdx].style.width = cintTypeBsiz[intPntIdx];
+      }
+
+   }
 
    function doTypeSelect(objSelect) {
       if (cobjTypeCell != null) {
-         cobjTypeCell.childNodes[0].style.backgroundColor = '#ffffe0';
+         cobjTypeCell.style.backgroundColor = '#ffffe0';
       }
       cobjTypeCell = objSelect;
-      cobjTypeCell.childNodes[0].style.backgroundColor = '#ffffc0';
+      cobjTypeCell.style.backgroundColor = '#ffff80';
    }
-
-
 
    function doTypeBack() {
       cobjTypeDate.length = 0;
@@ -1723,6 +1789,28 @@ sub PaintFunction()%>
 
 
    function doTypeActvDelete() {
+
+      if (cobjTypeCell == null) {
+         return;
+      }
+      if (cobjTypeCell.getAttribute('delind') == 'N') {
+         return;
+      }
+      if (!processForm()) {return;}
+
+            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
+            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
+            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
+            objTable.deleteRow(intRowIdx);
+            doTypePaintSize(intPntIdx, -1);
+            cobjTypeCell = null;
+
+      return;
+
+
+
+
+
       if (cobTypeCell == null) {
          return;
       }
@@ -1784,7 +1872,12 @@ sub PaintFunction()%>
       }
       if (!processForm()) {return;}
 
-            var objRow = cobjTypeCell.parent.insertRow(-1);
+
+
+            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
+            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
+            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
+            var objRow = objTable.insertRow(intRowIdx + 1);
             var objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'left';
@@ -1796,21 +1889,14 @@ sub PaintFunction()%>
             objCell.style.color = '#000000';
             objCell.style.border = '#c7c7c7 1px solid';
             objCell.style.padding = '2px';
-            objCell.style.width = '100%';
             objCell.style.whiteSpace = 'nowrap';
             objCell.onclick = function() {doTypeSelect(this);};
-            objCell.appendChild(document.createTextNode('Activity descriptive text'));
+            objCell.setAttribute('delind','Y');
+            objCell.appendChild(document.createTextNode('Event descriptive text - MATERIAL CHANGE'));
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
 
-            var objTypHead = document.getElementById('tabHeadType');
-            var objTypBody = document.getElementById('tabBodyType');
-            objTypHead.rows(0).cells[cobjTypeCell.parent.getAttribute('tabidx')].style.width = cobjTypeCell.parent.offsetWidth + 2;
-            objTypBody.rows(0).cells[cobjTypeCell.parent.getAttribute('tabidx')].style.width = cobjTypeCell.parent.offsetWidth + 2;
+            doTypePaintSize(intPntIdx, objTable.offsetWidth);
 
       return;
 
@@ -1818,7 +1904,41 @@ sub PaintFunction()%>
       window.setTimeout('requestEvntAdd();',10);
    }
    function doTypeAddFill() {
+      if (cobjTypeCell == null) {
+         return;
+      }
       if (!processForm()) {return;}
+
+
+            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
+            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
+            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
+            var objRow = objTable.insertRow(intRowIdx + 1);
+            var objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'left';
+            objCell.vAlign = 'center';
+            objCell.style.cursor = 'pointer';
+            objCell.style.fontSize = '8pt';
+            objCell.style.fontWeight = 'normal';
+            objCell.style.backgroundColor = '#ffffe0';
+            objCell.style.color = '#000000';
+            objCell.style.border = '#c7c7c7 1px solid';
+            objCell.style.padding = '2px';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell.onclick = function() {doTypeSelect(this);};
+            objCell.setAttribute('delind','Y');
+            objCell.appendChild(document.createTextNode('Filling activity descriptive text'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
+
+            doTypePaintSize(intPntIdx, objTable.offsetWidth);
+
+      return;
       doActivityStart(document.body);
       window.setTimeout('requestFillAdd();',10);
    }
