@@ -541,7 +541,6 @@ create or replace package body psa_app.psa_psc_function as
       var_output varchar2(2000 char);
       var_mars_week number;
       var_req_code varchar2(32);
-      var_smo_code varchar2(32);
       var_wrk_code varchar2(32);
       var_fil_name varchar2(800);
 
@@ -580,7 +579,6 @@ create or replace package body psa_app.psa_psc_function as
 
       cursor csr_week_old is
          select t01.psw_psc_week,
-                t01.psw_smo_code,
                 t01.psw_req_code,
                 t01.psw_upd_user,
                 t01.psw_upd_date
@@ -644,20 +642,12 @@ create or replace package body psa_app.psa_psc_function as
           order by t01.cmd_cmo_code asc;
       rcd_cmod csr_cmod%rowtype;
 
-      cursor csr_shft is
-         select to_char(t01.sms_smo_seqn) as sms_smo_seqn,
-                nvl((select pss_cmo_code from psa_psc_shft where pss_psc_code = var_psc_code and pss_psc_week = to_char(var_mars_week,'fm0000000') and pss_smo_seqn = t01.sms_smo_seqn and pss_shf_code = t01.sms_shf_code),'*NONE') as pss_cmo_code
-           from psa_smo_shift t01
-          where t01.sms_smo_code = var_smo_code
-          order by t01.sms_smo_seqn asc;
-      rcd_shft csr_shft%rowtype;
-
       cursor csr_lcon is
          select t01.lde_lin_code,
                 t01.lde_lin_name,
                 t02.lco_con_code,
                 t02.lco_con_name,
-                nvl((select '1' from psa_psc_line where psl_psc_code = var_psc_code and psl_psc_week = to_char(var_mars_week,'fm0000000') and psl_prd_type = t01.lde_prd_type and psl_lin_code = t01.lde_lin_code and psl_con_code = t02.lco_con_code),'0') as lco_used
+                nvl((select psl_smo_code from psa_psc_line where psl_psc_code = var_psc_code and psl_psc_week = to_char(var_mars_week,'fm0000000') and psl_prd_type = t01.lde_prd_type and psl_lin_code = t01.lde_lin_code and psl_con_code = t02.lco_con_code),'*NONE') as smo_code
            from psa_lin_defn t01,
                 psa_lin_config t02
           where t01.lde_lin_code = t02.lco_lin_code
@@ -667,6 +657,14 @@ create or replace package body psa_app.psa_psc_function as
           order by t01.lde_lin_code asc,
                    t02.lco_con_code asc;
       rcd_lcon csr_lcon%rowtype;
+
+      cursor csr_shft is
+         select to_char(t01.sms_smo_seqn) as sms_smo_seqn,
+                nvl((select pss_cmo_code from psa_psc_shft where pss_psc_code = var_psc_code and pss_psc_week = to_char(var_mars_week,'fm0000000') and pss_prd_type = rcd_ptyp.pty_prd_type and pss_lin_code = rcd_lcon.lde_lin_code and pss_con_code = rcd_lcon.lco_con_code and pss_smo_seqn = t01.sms_smo_seqn and pss_shf_code = t01.sms_shf_code),'*NONE') as pss_cmo_code
+           from psa_smo_shift t01
+          where t01.sms_smo_code = rcd_lcon.smo_code
+          order by t01.sms_smo_seqn asc;
+      rcd_shft csr_shft%rowtype;
 
       cursor csr_fill is
          select t01.lfi_fil_code
@@ -774,7 +772,6 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          close csr_week_max;
          var_req_code := '*NONE';
-         var_smo_code := '*NONE';
       else
          open csr_week_old;
          fetch csr_week_old into rcd_week_old;
@@ -783,7 +780,6 @@ create or replace package body psa_app.psa_psc_function as
          else
             var_mars_week := to_number(rcd_week_old.psw_psc_week);
             var_req_code := rcd_week_old.psw_req_code;
-            var_smo_code := rcd_week_old.psw_smo_code;
          end if;
          close csr_week_old;
       end if;
@@ -816,8 +812,7 @@ create or replace package body psa_app.psa_psc_function as
             var_wek_code := rcd_week.wek_code;
             pipe row(psa_xml_object('<WEKDFN WEKCDE="'||psa_to_xml(rcd_week.wek_code)||'"'||
                                            ' WEKNAM="'||psa_to_xml(rcd_week.wek_name)||'"'||
-                                           ' REQCDE="'||psa_to_xml(var_req_code)||'"'||
-                                           ' SMOCDE="'||psa_to_xml(var_smo_code)||'"/>'));
+                                           ' REQCDE="'||psa_to_xml(var_req_code)||'"/>'));
          end if;
          pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_week.day_code)||'"'||
                                         ' DAYNAM="'||psa_to_xml(rcd_week.day_name)||'"/>'));
@@ -892,22 +887,6 @@ create or replace package body psa_app.psa_psc_function as
          close csr_cmod;
 
          /*-*/
-         /* Pipe the shift link data XML when required
-         /*-*/
-         if rcd_ptyp.pty_used = '1' then
-            open csr_shft;
-            loop
-               fetch csr_shft into rcd_shft;
-               if csr_shft%notfound then
-                  exit;
-               end if;
-               pipe row(psa_xml_object('<SHFLNK SMOSEQ="'||psa_to_xml(rcd_shft.sms_smo_seqn)||'"'||
-                                              ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"/>'));
-            end loop;
-            close csr_shft;
-         end if;
-
-         /*-*/
          /* Pipe the line configuration data XML
          /*-*/
          open csr_lcon;
@@ -944,8 +923,24 @@ create or replace package body psa_app.psa_psc_function as
                                            ' LINNAM="'||psa_to_xml(rcd_lcon.lde_lin_name)||'"'||
                                            ' LCOCDE="'||psa_to_xml(rcd_lcon.lco_con_code)||'"'||
                                            ' LCONAM="'||psa_to_xml(rcd_lcon.lco_con_name)||'"'||
-                                           ' LCOUSD="'||psa_to_xml(rcd_lcon.lco_used)||'"'||
+                                           ' SMOCDE="'||psa_to_xml(rcd_lcon.smo_code)||'"'||
                                            ' FILNAM="'||psa_to_xml(var_fil_name)||'"/>'));
+
+            /*-*/
+            /* Pipe the shift link data XML when required
+            /*-*/
+            if rcd_lcon.smo_code != '*NONE' then
+               open csr_shft;
+               loop
+                  fetch csr_shft into rcd_shft;
+                  if csr_shft%notfound then
+                     exit;
+                  end if;
+                  pipe row(psa_xml_object('<SHFLNK SMOSEQ="'||psa_to_xml(rcd_shft.sms_smo_seqn)||'"'||
+                                                 ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"/>'));
+               end loop;
+               close csr_shft;
+            end if;
 
          end loop;
          close csr_lcon;
@@ -1001,6 +996,7 @@ create or replace package body psa_app.psa_psc_function as
       var_pty_code varchar2(32);
       var_output varchar2(2000 char);
       var_fil_name varchar2(800);
+      var_daycnt integer;
 
       /*-*/
       /* Local cursors
@@ -1010,7 +1006,7 @@ create or replace package body psa_app.psa_psc_function as
                 nvl(t02.pty_prd_name,'*UNKNOWN') as pty_prd_name
            from psa_psc_prod t01,
                 psa_prd_type t02
-          where t01.psp_psc_code = t02.pty_prd_type(+)
+          where t01.psp_prd_type = t02.pty_prd_type(+)
             and t01.psp_psc_code = var_psc_code
             and t01.psp_psc_week = var_wek_code
             and t01.psp_prd_type = var_pty_code;
@@ -1020,25 +1016,9 @@ create or replace package body psa_app.psa_psc_function as
          select to_char(t01.calendar_date,'yyyy/mm/dd') as day_code,
                 to_char(t01.calendar_date,'dy') as day_name
            from mars_date t01
-          where t01.mars_week = to_number(var_wek_code)
+          where t01.mars_week >= to_number(var_wek_code)
           order by t01.calendar_date asc;
       rcd_date csr_date%rowtype;
-
-      cursor csr_shft is
-         select to_char(t01.pss_smo_seqn) as pss_smo_seqn,
-                t01.pss_shf_code,
-                nvl(t02.sde_shf_name,'*UNKNOWN') as sde_shf_name,
-                to_char(t01.pss_shf_start,'fm9990') as pss_shf_start,
-                to_char(t01.pss_shf_duration) as pss_shf_duration,
-                t01.pss_cmo_code
-           from psa_psc_shft t01,
-                psa_shf_defn t02
-          where t01.pss_shf_code = t02.sde_shf_code(+)
-            and t01.pss_psc_code = rcd_retrieve.psp_psc_code
-            and t01.pss_psc_week = rcd_retrieve.psp_psc_week
-            and t01.pss_prd_type = rcd_retrieve.psp_prd_type
-          order by t01.pss_smo_seqn asc;
-      rcd_shft csr_shft%rowtype;
 
       cursor csr_line is
          select t01.psl_lin_code,
@@ -1057,6 +1037,24 @@ create or replace package body psa_app.psa_psc_function as
           order by t01.psl_lin_code asc,
                    t01.psl_con_code asc;
       rcd_line csr_line%rowtype;
+
+      cursor csr_shft is
+         select to_char(t01.pss_smo_seqn) as pss_smo_seqn,
+                t01.pss_shf_code,
+                nvl(t02.sde_shf_name,'*UNKNOWN') as sde_shf_name,
+                to_char(t01.pss_shf_start,'fm9990') as pss_shf_start,
+                to_char(t01.pss_shf_duration) as pss_shf_duration,
+                t01.pss_cmo_code
+           from psa_psc_shft t01,
+                psa_shf_defn t02
+          where t01.pss_shf_code = t02.sde_shf_code(+)
+            and t01.pss_psc_code = rcd_retrieve.psp_psc_code
+            and t01.pss_psc_week = rcd_retrieve.psp_psc_week
+            and t01.pss_prd_type = rcd_retrieve.psp_prd_type
+            and t01.pss_lin_code = rcd_line.psl_lin_code
+            and t01.pss_con_code = rcd_line.psl_con_code
+          order by t01.pss_smo_seqn asc;
+      rcd_shft csr_shft%rowtype;
 
       cursor csr_fill is
          select t01.lfi_fil_code
@@ -1131,39 +1129,27 @@ create or replace package body psa_app.psa_psc_function as
       /* Pipe the production type data XML
       /*-*/
       pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_retrieve.psp_prd_type)||'"'||
-                                     ' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"/>'));
+                                     ' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"'||
+                                     ' WEKNAM="'||psa_to_xml('Y'||substr(var_wek_code,1,4)||' P'||substr(var_wek_code,5,2)||' W'||substr(var_wek_code,7,1))||'"/>'));
 
       /*-*/
       /* Pipe the date data XML
       /*-*/
+      var_daycnt := 0;
       open csr_date;
       loop
          fetch csr_date into rcd_date;
          if csr_date%notfound then
             exit;
          end if;
+         if var_daycnt >= 8 then
+            exit;
+         end if;
+         var_daycnt := var_daycnt + 1;
          pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_date.day_code)||'"'||
                                         ' DAYNAM="'||psa_to_xml(rcd_date.day_name)||'"/>'));
       end loop;
       close csr_date;
-
-      /*-*/
-      /* Pipe the shift data XML when required
-      /*-*/
-      open csr_shft;
-      loop
-         fetch csr_shft into rcd_shft;
-         if csr_shft%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<SHFDFN SMOSEQ="'||psa_to_xml(rcd_shft.pss_smo_seqn)||'"'||
-                                        ' SHFCDE="'||psa_to_xml(rcd_shft.pss_shf_code)||'"'||
-                                        ' SHFNAM="'||psa_to_xml(rcd_shft.sde_shf_name)||'"'||
-                                        ' SHFSTR="'||psa_to_xml(rcd_shft.pss_shf_start)||'"'||
-                                        ' SHFDUR="'||psa_to_xml(rcd_shft.pss_shf_duration)||'"'||
-                                        ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"/>'));
-      end loop;
-      close csr_shft;
 
       /*-*/
       /* Pipe the line configuration data XML
@@ -1203,6 +1189,24 @@ create or replace package body psa_app.psa_psc_function as
                                         ' LCOCDE="'||psa_to_xml(rcd_line.psl_con_code)||'"'||
                                         ' LCONAM="'||psa_to_xml(rcd_line.lco_con_name)||'"'||
                                         ' FILNAM="'||psa_to_xml(var_fil_name)||'"/>'));
+
+         /*-*/
+         /* Pipe the shift data XML when required
+         /*-*/
+         open csr_shft;
+         loop
+            fetch csr_shft into rcd_shft;
+            if csr_shft%notfound then
+               exit;
+            end if;
+            pipe row(psa_xml_object('<SHFDFN SMOSEQ="'||psa_to_xml(rcd_shft.pss_smo_seqn)||'"'||
+                                           ' SHFCDE="'||psa_to_xml(rcd_shft.pss_shf_code)||'"'||
+                                           ' SHFNAM="'||psa_to_xml(rcd_shft.sde_shf_name)||'"'||
+                                           ' SHFSTR="'||psa_to_xml(rcd_shft.pss_shf_start)||'"'||
+                                           ' SHFDUR="'||psa_to_xml(rcd_shft.pss_shf_duration)||'"'||
+                                           ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"/>'));
+         end loop;
+         close csr_shft;
 
       end loop;
       close csr_line;
@@ -1409,10 +1413,10 @@ create or replace package body psa_app.psa_psc_function as
       obj_psa_request xmlDom.domNode;
       obj_pty_list xmlDom.domNodeList;
       obj_pty_node xmlDom.domNode;
-      obj_shf_list xmlDom.domNodeList;
-      obj_shf_node xmlDom.domNode;
       obj_lco_list xmlDom.domNodeList;
       obj_lco_node xmlDom.domNode;
+      obj_shf_list xmlDom.domNodeList;
+      obj_shf_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
@@ -1421,11 +1425,12 @@ create or replace package body psa_app.psa_psc_function as
       var_cmo_code varchar2(32);
       var_lin_code varchar2(32);
       var_con_code varchar2(32);
+      var_smo_code varchar2(32);
       rcd_psa_psc_week psa_psc_week%rowtype;
       rcd_psa_psc_prod psa_psc_prod%rowtype;
+      rcd_psa_psc_line psa_psc_line%rowtype;
       rcd_psa_psc_shft psa_psc_shft%rowtype;
       rcd_psa_psc_reso psa_psc_reso%rowtype;
-      rcd_psa_psc_line psa_psc_line%rowtype;
 
       /*-*/
       /* Local cursors
@@ -1444,17 +1449,17 @@ create or replace package body psa_app.psa_psc_function as
           where t01.rhe_req_code = rcd_psa_psc_week.psw_req_code;
       rcd_reqh csr_reqh%rowtype;
 
-      cursor csr_smod is
-         select t01.*
-           from psa_smo_defn t01
-          where t01.smd_smo_code = rcd_psa_psc_week.psw_smo_code;
-      rcd_smod csr_smod%rowtype;
-
       cursor csr_ptyp is
          select t01.*
            from psa_prd_type t01
           where t01.pty_prd_type = var_pty_code;
       rcd_ptyp csr_ptyp%rowtype;
+
+      cursor csr_smod is
+         select t01.*
+           from psa_smo_defn t01
+          where t01.smd_smo_code = var_smo_code;
+      rcd_smod csr_smod%rowtype;
 
       cursor csr_cmod is
          select t01.*
@@ -1503,7 +1508,6 @@ create or replace package body psa_app.psa_psc_function as
       end if;
       rcd_psa_psc_week.psw_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
       rcd_psa_psc_week.psw_psc_week := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
-      rcd_psa_psc_week.psw_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SMOCDE')));
       rcd_psa_psc_week.psw_req_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@REQCDE'));
       rcd_psa_psc_week.psw_upd_user := upper(par_user);
       rcd_psa_psc_week.psw_upd_date := sysdate;
@@ -1546,12 +1550,9 @@ create or replace package body psa_app.psa_psc_function as
       if rcd_psa_psc_week.psw_psc_week is null then
          psa_gen_function.add_mesg_data('Production schedule week must be supplied');
       end if;
-      if rcd_psa_psc_week.psw_smo_code is null then
-         psa_gen_function.add_mesg_data('Shift model must be supplied');
-      end if;
-      if rcd_psa_psc_week.psw_req_code is null then
-         psa_gen_function.add_mesg_data('Production requirements must be supplied');
-      end if;
+    --  if rcd_psa_psc_week.psw_req_code is null then
+    --     psa_gen_function.add_mesg_data('Production requirements must be supplied');
+    --  end if;
       if rcd_psa_psc_week.psw_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
       end if;
@@ -1575,20 +1576,6 @@ create or replace package body psa_app.psa_psc_function as
       else
          if var_action = '*CRTWEK' and rcd_reqh.rhe_req_status != '*LOADED' then
             psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') must be status *LOADED to create a production schedule week');
-         end if;
-      end if;
-      var_found := false;
-      open csr_smod;
-      fetch csr_smod into rcd_smod;
-      if csr_smod%found then
-         var_found := true;
-      end if;
-      close csr_smod;
-      if var_found = false then
-         psa_gen_function.add_mesg_data('Shift model ('||rcd_psa_psc_week.psw_smo_code||') does not exist');
-      else
-         if var_action = '*CRTWEK' and rcd_smod.smd_smo_status != '1' then
-            psa_gen_function.add_mesg_data('Shift model ('||rcd_psa_psc_week.psw_smo_code||') must be status active to create a production schedule week');
          end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -1617,33 +1604,12 @@ create or replace package body psa_app.psa_psc_function as
                psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') must be status active to create a production schedule week');
             end if;
          end if;
-         obj_shf_list := xslProcessor.selectNodes(obj_pty_node,'PSCSHF');
-         for idy in 0..xmlDom.getLength(obj_shf_list)-1 loop
-            obj_shf_node := xmlDom.item(obj_shf_list,idy);
-            var_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
-            var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
-            if var_cmo_code != '*NONE' then
-               var_found := false;
-               open csr_cmod;
-               fetch csr_cmod into rcd_cmod;
-               if csr_cmod%found then
-                  var_found := true;
-               end if;
-               close csr_cmod;
-               if var_found = false then
-                  psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') does not exist');
-               else
-                  if var_action = '*CRTWEK' and rcd_cmod.cmd_cmo_status != '1' then
-                     psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active to create a production schedule week');
-                  end if;
-               end if;
-            end if;
-         end loop;
          obj_lco_list := xslProcessor.selectNodes(obj_pty_node,'PSCLCO');
          for idy in 0..xmlDom.getLength(obj_lco_list)-1 loop
             obj_lco_node := xmlDom.item(obj_lco_list,idy);
             var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LINCDE')));
             var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LCOCDE')));
+            var_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@SMOCDE')));
             var_found := false;
             open csr_lcon;
             fetch csr_lcon into rcd_lcon;
@@ -1658,6 +1624,41 @@ create or replace package body psa_app.psa_psc_function as
                   psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') must be status active to create a production schedule week');
                end if;
             end if;
+            open csr_smod;
+            fetch csr_smod into rcd_smod;
+            if csr_smod%found then
+               var_found := true;
+            end if;
+            close csr_smod;
+            if var_found = false then
+               psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') does not exist');
+            else
+               if var_action = '*CRTWEK' and rcd_smod.smd_smo_status != '1' then
+                  psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') must be status active to create a production schedule week');
+               end if;
+            end if;
+            obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
+            for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
+               obj_shf_node := xmlDom.item(obj_shf_list,idz);
+               var_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
+               var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
+               if var_cmo_code != '*NONE' then
+                  var_found := false;
+                  open csr_cmod;
+                  fetch csr_cmod into rcd_cmod;
+                  if csr_cmod%found then
+                     var_found := true;
+                  end if;
+                  close csr_cmod;
+                  if var_found = false then
+                     psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') does not exist');
+                  else
+                     if var_action = '*CRTWEK' and rcd_cmod.cmd_cmo_status != '1' then
+                        psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active to create a production schedule week');
+                     end if;
+                  end if;
+               end if;
+            end loop;
          end loop;
       end loop;
       if psa_gen_function.get_mesg_count != 0 then
@@ -1671,8 +1672,7 @@ create or replace package body psa_app.psa_psc_function as
       if var_action = '*UPDWEK' then
          var_confirm := 'updated';
          update psa_psc_week
-            set psw_smo_code = rcd_psa_psc_week.psw_smo_code,
-                psw_req_code = rcd_psa_psc_week.psw_req_code,
+            set psw_req_code = rcd_psa_psc_week.psw_req_code,
                 psw_upd_user = rcd_psa_psc_week.psw_upd_user,
                 psw_upd_date = rcd_psa_psc_week.psw_upd_date
           where psw_psc_code = rcd_psa_psc_week.psw_psc_code
@@ -1707,40 +1707,6 @@ create or replace package body psa_app.psa_psc_function as
          insert into psa_psc_prod values rcd_psa_psc_prod;
 
          /*-*/
-         /* Retrieve and insert the shift data
-         /*-*/
-         obj_shf_list := xslProcessor.selectNodes(obj_pty_node,'PSCSHF');
-         for idy in 0..xmlDom.getLength(obj_shf_list)-1 loop
-            obj_shf_node := xmlDom.item(obj_shf_list,idy);
-            rcd_psa_psc_shft.pss_psc_code := rcd_psa_psc_week.psw_psc_code;
-            rcd_psa_psc_shft.pss_psc_week := rcd_psa_psc_week.psw_psc_week;
-            rcd_psa_psc_shft.pss_prd_type := rcd_psa_psc_prod.psp_prd_type;
-            rcd_psa_psc_shft.pss_smo_seqn := idy + 1;
-            rcd_psa_psc_shft.pss_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
-            rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
-            rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
-            rcd_psa_psc_shft.pss_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
-            insert into psa_psc_shft values rcd_psa_psc_shft;
-            if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
-               open csr_reso;
-               loop
-                  fetch csr_reso into rcd_reso;
-                  if csr_reso%notfound then
-                     exit;
-                  end if;
-                  rcd_psa_psc_reso.psr_psc_code := rcd_psa_psc_week.psw_psc_code;
-                  rcd_psa_psc_reso.psr_psc_week := rcd_psa_psc_week.psw_psc_week;
-                  rcd_psa_psc_reso.psr_prd_type := rcd_psa_psc_prod.psp_prd_type;
-                  rcd_psa_psc_reso.psr_smo_seqn := rcd_psa_psc_shft.pss_smo_seqn;
-                  rcd_psa_psc_reso.psr_res_code := rcd_reso.cmr_res_code;
-                  rcd_psa_psc_reso.psr_res_qnty := rcd_reso.cmr_res_qnty;
-                  insert into psa_psc_reso values rcd_psa_psc_reso;
-               end loop;
-               close csr_reso;
-            end if;
-         end loop;
-
-         /*-*/
          /* Retrieve and insert the line configuration data
          /*-*/
          obj_lco_list := xslProcessor.selectNodes(obj_pty_node,'PSCLCO');
@@ -1751,7 +1717,47 @@ create or replace package body psa_app.psa_psc_function as
             rcd_psa_psc_line.psl_prd_type := rcd_psa_psc_prod.psp_prd_type;
             rcd_psa_psc_line.psl_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LINCDE')));
             rcd_psa_psc_line.psl_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LCOCDE')));
+            rcd_psa_psc_line.psl_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@SMOCDE')));
             insert into psa_psc_line values rcd_psa_psc_line;
+
+            /*-*/
+            /* Retrieve and insert the shift data
+            /*-*/
+            obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
+            for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
+               obj_shf_node := xmlDom.item(obj_shf_list,idz);
+               rcd_psa_psc_shft.pss_psc_code := rcd_psa_psc_week.psw_psc_code;
+               rcd_psa_psc_shft.pss_psc_week := rcd_psa_psc_week.psw_psc_week;
+               rcd_psa_psc_shft.pss_prd_type := rcd_psa_psc_prod.psp_prd_type;
+               rcd_psa_psc_shft.pss_lin_code := rcd_psa_psc_line.psl_lin_code;
+               rcd_psa_psc_shft.pss_con_code := rcd_psa_psc_line.psl_con_code;
+               rcd_psa_psc_shft.pss_smo_seqn := idy + 1;
+               rcd_psa_psc_shft.pss_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
+               rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
+               rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
+               rcd_psa_psc_shft.pss_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
+               insert into psa_psc_shft values rcd_psa_psc_shft;
+               if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
+                  open csr_reso;
+                  loop
+                     fetch csr_reso into rcd_reso;
+                     if csr_reso%notfound then
+                        exit;
+                     end if;
+                     rcd_psa_psc_reso.psr_psc_code := rcd_psa_psc_week.psw_psc_code;
+                     rcd_psa_psc_reso.psr_psc_week := rcd_psa_psc_week.psw_psc_week;
+                     rcd_psa_psc_reso.psr_prd_type := rcd_psa_psc_prod.psp_prd_type;
+                     rcd_psa_psc_reso.psr_lin_code := rcd_psa_psc_shft.pss_lin_code;
+                     rcd_psa_psc_reso.psr_con_code := rcd_psa_psc_shft.pss_con_code;
+                     rcd_psa_psc_reso.psr_smo_seqn := rcd_psa_psc_shft.pss_smo_seqn;
+                     rcd_psa_psc_reso.psr_res_code := rcd_reso.cmr_res_code;
+                     rcd_psa_psc_reso.psr_res_qnty := rcd_reso.cmr_res_qnty;
+                     insert into psa_psc_reso values rcd_psa_psc_reso;
+                  end loop;
+                  close csr_reso;
+               end if;
+            end loop;
+
          end loop;
 
       end loop;
