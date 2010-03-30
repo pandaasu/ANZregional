@@ -1550,9 +1550,9 @@ create or replace package body psa_app.psa_psc_function as
       if rcd_psa_psc_week.psw_psc_week is null then
          psa_gen_function.add_mesg_data('Production schedule week must be supplied');
       end if;
-    --  if rcd_psa_psc_week.psw_req_code is null then
-    --     psa_gen_function.add_mesg_data('Production requirements must be supplied');
-    --  end if;
+      if rcd_psa_psc_week.psw_req_code is null then
+         psa_gen_function.add_mesg_data('Production requirements must be supplied');
+      end if;
       if rcd_psa_psc_week.psw_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
       end if;
@@ -1731,7 +1731,7 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_shft.pss_prd_type := rcd_psa_psc_prod.psp_prd_type;
                rcd_psa_psc_shft.pss_lin_code := rcd_psa_psc_line.psl_lin_code;
                rcd_psa_psc_shft.pss_con_code := rcd_psa_psc_line.psl_con_code;
-               rcd_psa_psc_shft.pss_smo_seqn := idy + 1;
+               rcd_psa_psc_shft.pss_smo_seqn := idz + 1;
                rcd_psa_psc_shft.pss_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
                rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
                rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
