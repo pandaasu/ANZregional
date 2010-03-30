@@ -537,9 +537,6 @@ sub PaintFunction()%>
       this.wekcde = '';
       this.weknam = '';
       this.reqcde = '*NONE';
-      this.smocde = '*NONE';
-      this.reqidx = 0;
-      this.smoidx = 0;
       this.dayary = new Array();
    }
    function clsWeekDayd() {
@@ -562,24 +559,24 @@ sub PaintFunction()%>
       this.ptynam = '';
       this.ptyusd = '0';
       this.cmoary = new Array();
-      this.shfary = new Array();
       this.lcoary = new Array();
    }
    function clsWeekCmod() {
       this.cmocde = '';
       this.cmonam = '';
    }
-   function clsWeekPshf() {
-      this.smoseq = '';
-      this.cmocde = '';
-   }
    function clsWeekLcod() {
       this.lincde = '';
       this.linnam = '';
       this.lcocde = '';
       this.lconam = '';
-      this.lcousd = '0';
+      this.smocde = '*NONE';
       this.filnam = '';
+      this.shfary = new Array();
+   }
+   function clsWeekPshf() {
+      this.smoseq = '';
+      this.cmocde = '';
    }
    function requestWeekList() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
@@ -763,14 +760,11 @@ sub PaintFunction()%>
          cobjWeekSmod = new Array();
          cobjWeekPtyp = new Array();
          var objArray;
+         var objChild;
          var objPscPreq = document.getElementById('WEK_PscPreq');
          objPscPreq.options.length = 0;
          objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
          objPscPreq.selectedIndex = 0;
-         var objPscSmod = document.getElementById('WEK_PscSmod');
-         objPscSmod.options.length = 0;
-         objPscSmod.options[0] = new Option('** Select Shift Model **','*NONE');
-         objPscSmod.selectedIndex = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'WEKDFN') {
                cstrWeekCode = objElements[i].getAttribute('WEKCDE');
@@ -778,7 +772,6 @@ sub PaintFunction()%>
                cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
                cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
                cobjWeekData.reqcde = objElements[i].getAttribute('REQCDE');
-               cobjWeekData.smocde = objElements[i].getAttribute('SMOCDE');
             } else if (objElements[i].nodeName == 'DAYDFN') {
                objArray = cobjWeekData.dayary;
                objArray[objArray.length] = new clsWeekDayd();
@@ -791,8 +784,6 @@ sub PaintFunction()%>
                cobjWeekSmod[cobjWeekSmod.length] = new clsWeekSmod();
                cobjWeekSmod[cobjWeekSmod.length-1].smocde = objElements[i].getAttribute('SMOCDE');
                cobjWeekSmod[cobjWeekSmod.length-1].smonam = objElements[i].getAttribute('SMONAM');
-               objPscSmod.options[objPscSmod.options.length] = new Option('('+objElements[i].getAttribute('SMOCDE')+') '+objElements[i].getAttribute('SMONAM'),objElements[i].getAttribute('SMOCDE'));
-               objPscSmod.options[objPscSmod.options.length-1].setAttribute('smoidx',cobjWeekSmod.length-1);
             } else if (objElements[i].nodeName == 'SHFDFN') {
                objArray = cobjWeekSmod[cobjWeekSmod.length-1].shfary;
                objArray[objArray.length] = new clsWeekShfd();
@@ -810,11 +801,6 @@ sub PaintFunction()%>
                objArray[objArray.length] = new clsWeekCmod();
                objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
                objArray[objArray.length-1].cmonam = objElements[i].getAttribute('CMONAM');
-            } else if (objElements[i].nodeName == 'SHFLNK') {
-               objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].shfary;
-               objArray[objArray.length] = new clsWeekPshf();
-               objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
-               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             } else if (objElements[i].nodeName == 'LCODFN') {
                objArray = cobjWeekPtyp[cobjWeekPtyp.length-1].lcoary;
                objArray[objArray.length] = new clsWeekLcod();
@@ -822,8 +808,13 @@ sub PaintFunction()%>
                objArray[objArray.length-1].linnam = objElements[i].getAttribute('LINNAM');
                objArray[objArray.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
                objArray[objArray.length-1].lconam = objElements[i].getAttribute('LCONAM');
-               objArray[objArray.length-1].lcousd = objElements[i].getAttribute('LCOUSD');
+               objArray[objArray.length-1].smocde = objElements[i].getAttribute('SMOCDE');
                objArray[objArray.length-1].filnam = objElements[i].getAttribute('FILNAM');
+            } else if (objElements[i].nodeName == 'SHFLNK') {
+               objChild = objArray[objArray.length-1].shfary;
+               objChild[objChild.length] = new clsWeekPshf();
+               objChild[objChild.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
+               objChild[objChild.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             }
          }
          for (var i=0;i<objPscPreq.length;i++) {
@@ -832,181 +823,19 @@ sub PaintFunction()%>
                break;
             }
          }
-         for (var i=0;i<objPscSmod.length;i++) {
-            if (objPscSmod.options[i].value == cobjWeekData.smocde) {
-               objPscSmod.options[i].selected = true;
-               break;
-            }
-         }
          document.getElementById('WEK_PscPreq').focus();
-         doWeekSmodChange(objPscSmod,true);
+         doWeekPaint();
       }
    }
-   function doWeekCancel() {
-      if (checkChange() == false) {return;}
-      cobjWeekData = null;
-      cobjWeekSmod = null;
-      cobjWeekPtyp = null;
+   function doWeekPaint() {
       var objPscType = document.getElementById('WEK_PscType');
       for (var i=objPscType.rows.length-1;i>=0;i--) {
          objPscType.deleteRow(i);
-      }
-      displayScreen('dspWeeks');
-   }
-   function doWeekAccept() {
-      if (!processForm()) {return;}
-      var objShfAry;
-      var objLcoAry;
-      var objElePtyp;
-      var objEleShft;
-      var objEleLine;
-      var bolPtypFound;
-      var bolShftFound;
-      var bolLineFound;
-      var objPscPreq = document.getElementById('WEK_PscPreq');
-      var objPscSmod = document.getElementById('WEK_PscSmod');
-      var strMessage = '';
-      if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Production requirements must be selected';
-      }
-      if (objPscSmod.selectedIndex == -1 || objPscSmod.options[objPscSmod.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Shift model must be selected';
-      } else {
-         bolPtypFound = false;
-         for (var i=0;i<cobjWeekPtyp.length;i++) {
-            objElePtyp = document.getElementById('WEKPTY_'+i);
-            if (objElePtyp.checked == true) {
-               bolPtypFound = true;
-               bolShftFound = false;
-               objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
-               for (var j=0;j<objShfAry.length;j++) {
-                  objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
-                  if (objEleShft.selectedIndex != -1 && objEleShft.options[objEleShft.selectedIndex].value != '*NONE') {
-                     bolShftFound = true;
-                  }
-               }
-               if (bolShftFound == false) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'At least one shift must have a crew model selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
-               }
-               bolLineFound = false;
-               objLcoAry = cobjWeekPtyp[i].lcoary;
-               for (var j=0;j<objLcoAry.length;j++) {
-                  objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
-                  if (objEleLine.checked == true) {
-                     bolLineFound = true;
-                  }
-               }
-               if (bolLineFound == false) {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + 'At least one line configuration must be selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
-               }
-            }
-         }
-         if (bolPtypFound == false) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'At least one production type (Filling, Packing or Forming must be selected) for for the week';
-         }
-      }
-      if (strMessage != '') {
-         alert(strMessage);
-         return;
-      }
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      if (cstrWeekMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
-      } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
-      }
-      strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
-      strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
-      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
-      strXML = strXML+' SMOCDE="'+fixXML(objPscSmod.options[objPscSmod.selectedIndex].value)+'">';
-      for (var i=0;i<cobjWeekPtyp.length;i++) {
-         objElePtyp = document.getElementById('WEKPTY_'+i);
-         if (objElePtyp.checked == true) {
-            strXML = strXML+'<PSCPTY PTYCDE="'+fixXML(cobjWeekPtyp[i].ptycde)+'">';
-            objShfAry = cobjWeekSmod[cobjWeekData.smoidx].shfary;
-            for (var j=0;j<objShfAry.length;j++) {
-               objEleShft = document.getElementById('WEKPTYCMODDATA_'+i+'_'+j);
-               if (objEleShft.selectedIndex == -1) {
-                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" SHFSTR="'+fixXML(objShfAry[j].shfstr)+'" SHFDUR="'+fixXML(objShfAry[j].shfdur)+'" CMOCDE="'+fixXML('*NONE')+'"/>';
-               } else {
-                  strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[j].shfcde)+'" SHFSTR="'+fixXML(objShfAry[j].shfstr)+'" SHFDUR="'+fixXML(objShfAry[j].shfdur)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
-               }
-            }
-            objLcoAry = cobjWeekPtyp[i].lcoary;
-            for (var j=0;j<objLcoAry.length;j++) {
-               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
-               if (objEleLine.checked == true) {
-                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+'"/>';
-               }
-            }
-            strXML = strXML+'</PSCPTY>';
-         }
-      }
-      strXML = strXML+'</PSA_REQUEST>';
-      doActivityStart(document.body);
-      window.setTimeout('requestWeekAccept(\''+strXML+'\');',10);
-   }
-   function requestWeekAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_week_update.asp',function(strResponse) {checkWeekAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkWeekAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
-         }
-         cobjWeekData = null;
-         cobjWeekSmod = null;
-         cobjWeekPtyp = null;
-         var objPscType = document.getElementById('WEK_PscType');
-         for (var i=objPscType.rows.length-1;i>=0;i--) {
-            objPscType.deleteRow(i);
-         }
-         doWeekRefresh();
-      }
-   }
-   function doWeekSmodChange(objSelect, bolLoad) {
-      if (objSelect.selectedIndex == -1) {
-         return;
-      }
-      var objPscType = document.getElementById('WEK_PscType');
-      for (var i=objPscType.rows.length-1;i>=0;i--) {
-         objPscType.deleteRow(i);
-      }
-      cobjWeekData.smoidx = objSelect.options[objSelect.selectedIndex].getAttribute('smoidx');
-      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
-         return;
       }
       var objTable;
       var objRow;
       var objCell;
       var objInput;
-      var objSelect;
       for (var i=0;i<cobjWeekPtyp.length;i++) {
          objRow = objPscType.insertRow(-1);
          objCell = objRow.insertCell(-1);
@@ -1041,7 +870,7 @@ sub PaintFunction()%>
          objInput.checked = false;
          objCell.appendChild(objInput);
          objCell.appendChild(document.createTextNode(cobjWeekPtyp[i].ptynam));
-         if (bolLoad == true && cobjWeekPtyp[i].ptyusd == '1') {
+         if (cobjWeekPtyp[i].ptyusd == '1') {
             objInput.checked = true;
          }
          objRow = objPscType.insertRow(-1);
@@ -1065,9 +894,73 @@ sub PaintFunction()%>
          objCell.colSpan = 1;
          objCell.align = 'center';
          objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
+         objCell.className = 'clsLabelBB';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
-         doWeekSmodLoad(objCell,i,cobjWeekData.smoidx,bolLoad);
+         doWeekLconLoad(objCell,i);
+         doWeekPtypClick(objInput);
+      }
+   function doWeekLconLoad(objParent, intPtyIdx) {
+      var objTable = document.createElement('table');
+      var objRow;
+      var objCell;
+      var objSelect;
+      var objLcoAry;
+      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
+      objTable.className = 'clsPanel';
+      objTable.align = 'center';
+      objTable.cellSpacing = '0';
+      objParent.appendChild(objTable);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#efefef';
+      objCell.style.color = '#000000';
+      objCell.style.border = '#708090 1px solid';
+      objCell.style.paddingLeft = '2px';
+      objCell.style.paddingRight = '2px';
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.appendChild(document.createTextNode('Line Configurations'));
+      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
+      for (var i=0;i<objLcoAry.length;i++) {
+         objRow = objTable.insertRow(-1);
+         objRow.setAttribute('ptyidx',intPtyIdx);
+         objRow.setAttribute('lcoidx',i);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'left';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBN';
+         objCell.style.fontSize = '8pt';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         objSelect = document.createElement('select');
+         objSelect.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
+         objSelect.className = 'clsInputNN';
+         objSelect.style.fontSize = '8pt';
+         objSelect.onChange = function() {doWeekSmodChange(this,false);};
+         objSelect.selectedIndex = -1;
+         objSelect.options[0] = new Option('** Select Shift Model **','*NONE');
+         objSelect.options[0].selected = true;
+         for (var j=0;j<cobjWeekSmod.length;j++) {
+            objSelect.options[objSelect.options.length] = new Option('('+cobjWeekSmod[j].smocde+') '+cobjWeekSmod[j].smonam,cobjWeekSmod[j].smocde);
+            objSelect.options[objSelect.options.length-1].setAttribute('smoidx',j);
+            if (objLcoAry[i].smocde == cobjWeekSmod[j].smocde) {
+               objSelect.options[objSelect.options.length-1].selected = true;
+            }
+         }
+         objCell.appendChild(objInput);
+         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+         }
          objRow = objTable.insertRow(-1);
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
@@ -1077,14 +970,20 @@ sub PaintFunction()%>
          objCell.style.paddingLeft = '2px';
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
-         doWeekLconLoad(objCell,i,bolLoad);
-         if (bolLoad == true) {
-            doWeekPtypClick(objInput);
-         }
+         objTable = document.createElement('table');
+         objTable.id = 'WEKPTYLCONSMOD_'+intPtyIdx+'_'+i;
+         objTable.className = 'clsPanel';
+         objTable.align = 'center';
+         objTable.cellSpacing = '0';
+         objTable.style.display = 'none';
+         doWeekSmodChange(this,true);
       }
    }
-   function doWeekSmodLoad(objParent, intPtyIdx, intSmoIdx, bolLoad) {
-      var objTable = document.createElement('table');
+   function doWeekSmodChange(objSelect, bolLoad) {
+      if (objSelect.selectedIndex == -1) {
+         return;
+      }
+      var objTable;
       var objRow;
       var objCell;
       var objSelect;
@@ -1097,11 +996,15 @@ sub PaintFunction()%>
       var intStrTim;
       var intDurMin;
       var strDayNam;
-      objTable.id = 'WEKPTYCMOD_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
+      intPtyIdx = objSelect.parentNode.parentNode.getAttribute('ptyidx');
+      intLcoIdx = objSelect.parentNode.parentNode.getAttribute('lcoidx');
+      objTable = document.getElementById('WEKPTYLCONSMOD_'+intPtyIdx+'_'+intLcoIdx);
+      for (var i=objTable.rows.length-1;i>=0;i--) {
+         objTable.deleteRow(i);
+      }
+      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
+         return;
+      }
       objRow = objTable.insertRow(-1);
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
@@ -1129,7 +1032,7 @@ sub PaintFunction()%>
       objCell.style.paddingRight = '2px';
       objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode('Crew Model'));
-      objWrkAry = cobjWeekPtyp[intPtyIdx].shfary;
+      objWrkAry = cobjWeekPtyp[intPtyIdx].lcoary[intLcoIdx].shfary;
       objShfAry = cobjWeekSmod[intSmoIdx].shfary;
       for (var i=0;i<objShfAry.length;i++) {
          intStrTim = objShfAry[i].shfstr;
@@ -1180,7 +1083,7 @@ sub PaintFunction()%>
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
          objSelect = document.createElement('select');
-         objSelect.id = 'WEKPTYCMODDATA_'+intPtyIdx+'_'+i;
+         objSelect.id = 'WEKPTYLCONCMOD_'+intPtyIdx+'_'+intLcoIdx+'_'+i;
          objSelect.className = 'clsInputNN';
          objSelect.style.fontSize = '8pt';
          objSelect.selectedIndex = -1;
@@ -1196,60 +1099,146 @@ sub PaintFunction()%>
          objCell.appendChild(objSelect);
       }
    }
-   function doWeekLconLoad(objParent, intPtyIdx, bolLoad) {
-      var objTable = document.createElement('table');
-      var objRow;
-      var objCell;
-      var objInput;
+   function doWeekCancel() {
+      if (checkChange() == false) {return;}
+      cobjWeekData = null;
+      cobjWeekSmod = null;
+      cobjWeekPtyp = null;
+      var objPscType = document.getElementById('WEK_PscType');
+      for (var i=objPscType.rows.length-1;i>=0;i--) {
+         objPscType.deleteRow(i);
+      }
+      displayScreen('dspWeeks');
+   }
+   function doWeekAccept() {
+      if (!processForm()) {return;}
+      var objShfAry;
       var objLcoAry;
-      objTable.id = 'WEKPTYLCON_'+intPtyIdx;
-      objTable.className = 'clsPanel';
-      objTable.align = 'center';
-      objTable.cellSpacing = '0';
-      objParent.appendChild(objTable);
-      objRow = objTable.insertRow(-1);
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#efefef';
-      objCell.style.color = '#000000';
-      objCell.style.border = '#708090 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Line Configurations'));
-      objLcoAry = cobjWeekPtyp[intPtyIdx].lcoary;
-      for (var i=0;i<objLcoAry.length;i++) {
-         objRow = objTable.insertRow(-1);
-         objRow.setAttribute('ptyidx',intPtyIdx);
-         objRow.setAttribute('lcoidx',i);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBN';
-         objCell.style.fontSize = '8pt';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objInput = document.createElement('input');
-         objInput.type = 'checkbox';
-         objInput.value = '';
-         objInput.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
-         objInput.onfocus = function() {setSelect(this);};
-         objInput.checked = false;
-         objCell.appendChild(objInput);
-         if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
-         } else {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+      var objElePtyp;
+      var objEleLine;
+      var objEleShft;
+      var bolPtypFound;
+      var bolLineFound;
+      var bolShftFound;
+      var objPscPreq = document.getElementById('WEK_PscPreq');
+      var strMessage = '';
+      if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Production requirements must be selected';
+      }
+      bolPtypFound = false;
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objElePtyp = document.getElementById('WEKPTY_'+i);
+         if (objElePtyp.checked == true) {
+            bolPtypFound = true;
+            bolLineFound = false;
+            objLcoAry = cobjWeekPtyp[i].lcoary;
+            for (var j=0;j<objLcoAry.length;j++) {
+               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+               if (objEleLine.selectedIndex != -1 && objEleLine.options[objEleLine.selectedIndex].value != '*NONE') {
+                  bolLineFound = true;
+                  bolShftFound = false;
+                  objShfAry = cobjWeekSmod[objEleLine.options[objEleLine.selectedIndex].getAttribute('smoidx')].shfary;
+                  for (var k=0;k<objShfAry.length;k++) {
+                     objEleShft = document.getElementById('WEKPTYLCONCMOD_'+i+'_'+j+'_'+k);
+                     if (objEleShft.selectedIndex != -1 && objEleShft.options[objEleShft.selectedIndex].value != '*NONE') {
+                        bolShftFound = true;
+                     }
+                  }
+                  if (bolShftFound == false) {
+                     if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                     strMessage = strMessage + 'At least one shift must have a crew model selected for the selected production type ('+cobjWeekPtyp[i].ptynam+') and line ('+objLcoAry[j].linnam+' / '+objLcoAry[j].lconam+')';
+                  }
+               }
+            }
+            if (bolLineFound == false) {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + 'At least one line configuration must be selected for the selected production type ('+cobjWeekPtyp[i].ptynam+')';
+            }
          }
-         if (bolLoad == true && objLcoAry[i].lcousd == '1') {
-            objInput.checked = true;
+      }
+      if (bolPtypFound == false) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'At least one production type (Filling, Packing or Forming must be selected) for for the week';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      if (cstrWeekMode == '*UPD') {
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
+      } else {
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
+      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
+      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
+      for (var i=0;i<cobjWeekPtyp.length;i++) {
+         objElePtyp = document.getElementById('WEKPTY_'+i);
+         if (objElePtyp.checked == true) {
+            strXML = strXML+'<PSCPTY PTYCDE="'+fixXML(cobjWeekPtyp[i].ptycde)+'">';
+            objLcoAry = cobjWeekPtyp[i].lcoary;
+            for (var j=0;j<objLcoAry.length;j++) {
+               objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
+               if (objEleLine.selectedIndex != -1 && objEleLine.options[objEleLine.selectedIndex].value != '*NONE') {
+                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+' SMOCDE="'+fixXML(objEleLine.options[objEleLine.selectedIndex].value)+'">';
+                  objShfAry = cobjWeekSmod[objEleLine.options[objEleLine.selectedIndex].getAttribute('smoidx')].shfary;
+                  for (var k=0;k<objShfAry.length;k++) {
+                     objEleShft = document.getElementById('WEKPTYLCONCMOD_'+i+'_'+j+'_'+k);
+                     if (objEleShft.selectedIndex == -1) {
+                        strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[k].shfcde)+'" SHFSTR="'+fixXML(objShfAry[k].shfstr)+'" SHFDUR="'+fixXML(objShfAry[k].shfdur)+'" CMOCDE="'+fixXML('*NONE')+'"/>';
+                     } else {
+                        strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[k].shfcde)+'" SHFSTR="'+fixXML(objShfAry[k].shfstr)+'" SHFDUR="'+fixXML(objShfAry[k].shfdur)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
+                     }
+                  }
+                  strXML = strXML+'<PSCLCO/>';
+               }
+            }
+            strXML = strXML+'</PSCPTY>';
          }
+      }
+      strXML = strXML+'</PSA_REQUEST>';
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekAccept(\''+strXML+'\');',10);
+   }
+   function requestWeekAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_week_update.asp',function(strResponse) {checkWeekAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkWeekAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         cobjWeekData = null;
+         cobjWeekSmod = null;
+         cobjWeekPtyp = null;
+         var objPscType = document.getElementById('WEK_PscType');
+         for (var i=objPscType.rows.length-1;i>=0;i--) {
+            objPscType.deleteRow(i);
+         }
+         doWeekRefresh();
       }
    }
    function doWeekPtypClick(objCheck) {
@@ -1274,11 +1263,20 @@ sub PaintFunction()%>
    var cintTypeHsiz = new Array();
    var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
-   var cobjTypeShft = new Array();
    var cobjTypeLine = new Array();
    function clsTypeDate() {
       this.daycde = '';
       this.daynam = '';
+   }
+   function clsTypeLine() {
+      this.lincde = '';
+      this.linnam = '';
+      this.lcocde = '';
+      this.lconam = '';
+      this.filnam = '';
+      this.wrkind = 'N';
+      this.shfary = new Array();
+      this.actary = new Array();
    }
    function clsTypeShft() {
       this.shfcde = '';
@@ -1289,13 +1287,22 @@ sub PaintFunction()%>
       this.barstr = 0;
       this.barend = 0;
    }
-   function clsTypeLine() {
-      this.lincde = '';
-      this.linnam = '';
-      this.lcocde = '';
-      this.lconam = '';
-      this.filnam = '';
-      this.actary = new Array();
+   function clsTypeActv() {
+      this.actcde = '';
+      this.acttxt = '';
+      this.acttyp = '';
+      this.actinw = '';
+      this.acttiw = '';
+      this.strdte = '';
+      this.strtim = '';
+      this.enddte = '';
+      this.endtim = '';
+      this.durmin = 0;
+      this.durbar = 0;
+      this.strbar = 0;
+      this.endbar = 0;
+      this.matcde = '';
+      this.mattxt = '';
    }
    function requestTypeLoad(strCode) {
       cstrTypeCode = strCode;
@@ -1325,6 +1332,9 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspType');
+         cobjTypeDate.length = 0;
+         cobjTypeLine.length = 0;
+         var objArray;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                document.getElementById('hedType').innerText = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
@@ -1332,14 +1342,6 @@ sub PaintFunction()%>
                cobjTypeDate[cobjTypeDate.length] = new clsTypeDate();
                cobjTypeDate[cobjTypeDate.length-1].daycde = objElements[i].getAttribute('DAYCDE');
                cobjTypeDate[cobjTypeDate.length-1].daynam = objElements[i].getAttribute('DAYNAM');
-            } else if (objElements[i].nodeName == 'SHFDFN') {
-               cobjTypeShft[cobjTypeShft.length] = new clsTypeShft();
-               cobjTypeShft[cobjTypeShft.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
-               cobjTypeShft[cobjTypeShft.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
-               cobjTypeShft[cobjTypeShft.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
-               cobjTypeShft[cobjTypeShft.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
-               cobjTypeShft[cobjTypeShft.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
-               cobjTypeShft[cobjTypeShft.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             } else if (objElements[i].nodeName == 'LINDFN') {
                cobjTypeLine[cobjTypeLine.length] = new clsTypeLine();
                cobjTypeLine[cobjTypeLine.length-1].lincde = objElements[i].getAttribute('LINCDE');
@@ -1347,12 +1349,22 @@ sub PaintFunction()%>
                cobjTypeLine[cobjTypeLine.length-1].lcocde = objElements[i].getAttribute('LCOCDE');
                cobjTypeLine[cobjTypeLine.length-1].lconam = objElements[i].getAttribute('LCONAM');
                cobjTypeLine[cobjTypeLine.length-1].filnam = objElements[i].getAttribute('FILNAM');
+            } else if (objElements[i].nodeName == 'SHFDFN') {
+               objArray = cobjTypeLine[cobjTypeLine.length-1].shfary;
+               objArray[objArray.length] = new clsTypeShft();
+               objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
+               objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
+               objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
+               objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
+               objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
+               objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             }
          }
          doTypePaint();
       }
    }
    function doTypePaint() {
+      var objShift;
       var objTable;
       var objRow;
       var objCell;
@@ -1362,22 +1374,20 @@ sub PaintFunction()%>
       var intPntCnt;
       var bolStrDay;
 
-     // for (var i=0;i<cobjTypeLine.length;i++) {
-
-         for (var j=0;j<cobjTypeShft.length;j++) {
-            intBarCnt = (cobjTypeShft[j].shfdur / 60) * 4;
+      for (var i=0;i<cobjTypeLine.length;i++) {
+         objShift = cobjTypeLine[i].shfary;
+         for (var j=0;j<objShift.length;j++) {
+            intBarCnt = (objShift[j].shfdur / 60) * 4;
             if (j == 0) {
-               cobjTypeShft[j].barstr = ((Math.floor(cobjTypeShft[j].shfstr / 100) + ((cobjTypeShft[j].shfstr % 100) / 60)) * 4) + 1;
-               cobjTypeShft[j].barend = cobjTypeShft[j].barstr + intBarCnt - 1;
+               objShift[j].barstr = ((Math.floor(objShift[j].shfstr / 100) + ((objShift[j].shfstr % 100) / 60)) * 4) + 1;
+               objShift[j].barend = objShift[j].barstr + intBarCnt - 1;
             } else {
-               cobjTypeShft[j].barstr = cobjTypeShft[j-1].barend + 1;
-               cobjTypeShft[j].barend = cobjTypeShft[j].barstr + intBarCnt - 1;
+               objShift[j].barstr = objShift[j-1].barend + 1;
+               objShift[j].barend = objShift[j].barstr + intBarCnt - 1;
             }
          }
+      }
 
-     // }
-
-      cstrTypeSind = 'N';
       cintTypeHsiz.length = 0;
       cintTypeBsiz.length = 0;
       var objTypHead = document.getElementById('tabHeadType');
@@ -1551,6 +1561,7 @@ sub PaintFunction()%>
 
    function doTypePaintTime(objRow, strTime, strMins, intWrkCnt, intPntCnt) {
 
+      var objShift;
       var objCell;
       var objTable;
       var strWrkInd;
@@ -1564,6 +1575,8 @@ sub PaintFunction()%>
       if (strMins != '00') {
          intPntOff++;
       }
+
+      objRow.setAttribute('rowtim',strTime+':'+strMins);
 
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
@@ -1585,21 +1598,23 @@ sub PaintFunction()%>
 
       for (var k=0;k<cobjTypeLine.length;k++) {
 
-         intWrkInd = 'N';
-         for (var w=0;w<cobjTypeShft.length;w++) {
-            if (cobjTypeShft[w].cmocde != '*NONE' && (intWrkCnt >= cobjTypeShft[w].barstr && intWrkCnt <= cobjTypeShft[w].barend)) {
-               intWrkInd = 'X';
-               if (intWrkCnt == cobjTypeShft[w].barstr) {
-                  intWrkInd = 'S';
-                  intWrkStr = cobjTypeShft[w].barstr;
-                  intWrkEnd = cobjTypeShft[w].barend;
-                  strWrkNam = '('+cobjTypeShft[w].shfcde+') '+cobjTypeShft[w].shfnam;
+         strWrkInd = 'N';
+
+         objShift = cobjTypeLine[k].shfary;
+         for (var w=0;w<objShift.length;w++) {
+            if (objShift[w].cmocde != '*NONE' && (intWrkCnt >= objShift[w].barstr && intWrkCnt <= objShift[w].barend)) {
+               strWrkInd = 'X';
+               if (intWrkCnt == objShift[w].barstr) {
+                  strWrkInd = 'S';
+                  intWrkStr = objShift[w].barstr;
+                  intWrkEnd = objShift[w].barend;
+                  strWrkNam = '('+objShift[w].shfcde+') '+objShift[w].shfnam;
                }
                break;
             }
          }
 
-         if (intWrkInd == 'N') {
+         if (strWrkInd == 'N') {
 
             objRow.setAttribute('inpind','N');
 
@@ -1630,7 +1645,7 @@ sub PaintFunction()%>
 
             objRow.setAttribute('inpind','Y');
 
-            if (intWrkInd == 'S') {
+            if (strWrkInd == 'S') {
 
                objCell = objRow.insertCell(-1);
                objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
@@ -1682,6 +1697,7 @@ sub PaintFunction()%>
             objCell.style.padding = '0px';
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.setAttribute('linidx',k);
             objCell.setAttribute('pntidx',intPntIdx);
 
             objTable = document.createElement('table');
@@ -1697,7 +1713,7 @@ sub PaintFunction()%>
             objTable.style.padding = '2px';
             objCell.appendChild(objTable);
 
-            if (intWrkInd == 'S' && cstrTypeSind == 'N') {
+            if (strWrkInd == 'S' && cobjTypeLine[k].wrkind == 'N') {
                var objWrkRow = objTable.insertRow(-1);
                var objWrkCell = objWrkRow.insertCell(-1);
                objWrkCell.colSpan = 1;
@@ -1715,15 +1731,16 @@ sub PaintFunction()%>
                objWrkCell.onclick = function() {doTypeSelect(this);};
                objWrkCell.appendChild(document.createTextNode('+'));
                objWrkCell.setAttribute('delind','N');
+               objWrkCell.setAttribute('actidx','S');
             }
 
          }
 
+         cobjTypeLine[k].wrkind = strWrkInd;
+
       }
 
       objRow.setAttribute('pntary',objPntAry);
-
-      cstrTypeSind = intWrkInd;
 
    }
 
@@ -1771,7 +1788,6 @@ sub PaintFunction()%>
 
    function doTypeBack() {
       cobjTypeDate.length = 0;
-      cobjTypeShft.length = 0;
       cobjTypeLine.length = 0;
       var objTypHead = document.getElementById('tabHeadType');
       var objTypBody = document.getElementById('tabBodyType');
@@ -1809,7 +1825,8 @@ sub PaintFunction()%>
 
 
 
-
+/////// delete 1 array element at index ==>  array.splice(index,1)
+/////// add 1 array element at index ==>  array.splice(index,0,element)
 
       if (cobTypeCell == null) {
          return;
@@ -1872,11 +1889,34 @@ sub PaintFunction()%>
       }
       if (!processForm()) {return;}
 
+         var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode;
+         var intLinIdx = objTime.getAttribute('linidx');
+         var intPntIdx = objTime.getAttribute('pntidx');
+         var intActIdx = cobjTypeCell.getAttribute('actidx');
+         var objTypeLine = cobjTypeLine[intLinIdx];
+         var objTypeActv = cobjTypeLine[intLinIdx].actary;
 
+         var objNewActv = new clsTypeActv();
+         objNewActv.actcde = '111';
+         objNewActv.acttxt = 'STARTUP - Startup time';
+         objNewActv.acttyp = '*TIME';
+         objNewActv.actinw = '';
+         objNewActv.acttiw = '';
+         objNewActv.strdte = '';
+         objNewActv.strtim = '';
+         objNewActv.enddte = '';
+         objNewActv.endtim = '';
+         objNewActv.durmin = 30;
+         objNewActv.durbar = 0;
+         objNewActv.strbar = 0;
+         objNewActv.endbar = 0;
+         objNewActv.matcde = '';
+         objNewActv.mattxt = '';
+         objTypeActv.splice(intActIdx+1,0,objNewActv)
 
             var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
             var intRowIdx = cobjTypeCell.parentNode.rowIndex;
-            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
+          //  var intPntIdx = objTable.parentNode.getAttribute('pntidx');
             var objRow = objTable.insertRow(intRowIdx + 1);
             var objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
@@ -1892,11 +1932,17 @@ sub PaintFunction()%>
             objCell.style.whiteSpace = 'nowrap';
             objCell.onclick = function() {doTypeSelect(this);};
             objCell.setAttribute('delind','Y');
+            objCell.setAttribute('actidx','08:15');
             objCell.appendChild(document.createTextNode('Event descriptive text - MATERIAL CHANGE'));
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
 
             doTypePaintSize(intPntIdx, objTable.offsetWidth);
+
+
+
+
+
 
       return;
 
@@ -2638,12 +2684,6 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Requirements:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="WEK_PscPreq"></select>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Shift Model:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="WEK_PscSmod" onChange="doWeekSmodChange(this,false);"></select>
          </nobr></td>
       </tr>
       <tr>
