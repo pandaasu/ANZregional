@@ -23,7 +23,8 @@ create table psa.psa_psc_line
     psl_psc_week                    varchar2(7)                   not null,
     psl_prd_type                    varchar2(32)                  not null,
     psl_lin_code                    varchar2(32)                  not null,
-    psl_con_code                    varchar2(32)                  not null);
+    psl_con_code                    varchar2(32)                  not null,
+    psl_smo_code                    varchar2(32)                  not null);
 
 /**/
 /* Comments
@@ -34,6 +35,7 @@ comment on column psa.psa_psc_line.psl_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_line.psl_prd_type is 'Production type code';
 comment on column psa.psa_psc_line.psl_lin_code is 'Line code';
 comment on column psa.psa_psc_line.psl_con_code is 'Line configuration code';
+comment on column psa.psa_psc_line.psl_smo_code is 'Shift model code';
 
 /**/
 /* Primary Key Constraint
