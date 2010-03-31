@@ -8,7 +8,7 @@ create or replace package pt_app.tagsys_fctry_intfc as
 
   Description 
   ----------- 
-  This package is used for PETCARE - Bathurst and Wodonga only 
+  This package is used for PETCARE Wodonga only 
 
   create_pllt - will perform a Goods receipt of either a pallet or process 
   cancel_pllt - will reverse a process qty 
@@ -30,7 +30,8 @@ create or replace package pt_app.tagsys_fctry_intfc as
   2006/01   Jeff Phillipson Created 
   2008/10   Trevor Keon     Updated layout and create_pllt to use matl instead
                             of matl_vw for performance reasons
-
+  2010/03   G.Brooder       Remove Bathurst AU30 - BTH is now ICS.
+                            Comment Wodonga AU20 IPAL processing CR58468.
 *******************************************************************************/
 
   /*-*/
@@ -558,14 +559,16 @@ create or replace package body pt_app.tagsys_fctry_intfc as
                    
         begin
           /*-*/
-          /* only for Plant codes Cannery and Bathurst 
+          /* only for Wodonga Cannery
           /*-*/
-          if i_plant_code = 'AU20'  OR  i_plant_code = 'AU30' then
+
+          /***** CR58468 ***** IPAL sends no longer required for AU20
+          if i_plant_code = 'AU20' then
             /*-*/
             /* send the FDS file to Tolas
             /* this file is based on plant and will be assigned to a different queue for the 2 Plant Codes
             /* defined in the If statement
-            /*-*/
+            /*-*
             tolas_fds_send
             (
               v_result,
@@ -594,10 +597,11 @@ create or replace package body pt_app.tagsys_fctry_intfc as
               to_char(lpad(v_seq,8,'0'))
             );
           end if;
+          /***** CR58468 *****/
                                  
                     
           /*-*/
-          /* the LDTS file is sent to the same queue for all plants
+          /* the LTDS file is sent to the same queue for all plants
           /* for Petcare
           /*-*/
           tolas_ltds_send
@@ -1129,10 +1133,9 @@ create or replace package body pt_app.tagsys_fctry_intfc as
       /*-*/
       begin
         /*-*/
-        /* only for Plant codes Cannery and Bathurst 
+        /* only for Wodonga Cannery 
         /*-*/
-        if r_plt.plant_code = 'AU20'  OR  r_plt.plant_code = 'AU30' then
-              
+        if r_plt.plant_code = 'AU20' then
           /*-*/
           /* get a sequence number for the Tolas interface
           /*-*/
