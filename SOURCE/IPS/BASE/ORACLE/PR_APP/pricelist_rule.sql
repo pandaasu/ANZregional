@@ -126,5 +126,5 @@ end pricelist_rule;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym pricelist_rule for dw_app.pricelist_rule;
+create or replace public synonym pricelist_rule for pr_app.pricelist_rule;
 grant execute on pricelist_rule to public;

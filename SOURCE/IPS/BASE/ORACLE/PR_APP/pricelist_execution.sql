@@ -454,5 +454,5 @@ end pricelist_execution;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym pricelist_execution for dw_app.pricelist_execution;
+create or replace public synonym pricelist_execution for pr_app.pricelist_execution;
 grant execute on pricelist_execution to public;

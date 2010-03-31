@@ -226,3 +226,10 @@ CREATE OR REPLACE PACKAGE BODY        pricelist_initial AS
   END;
 END pricelist_initial; 
 /
+
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym pricelist_initial for pr_app.pricelist_initial;
+grant execute on pricelist_initial to public;

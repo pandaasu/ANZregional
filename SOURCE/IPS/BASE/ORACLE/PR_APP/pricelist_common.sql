@@ -467,3 +467,10 @@ CREATE OR REPLACE PACKAGE BODY        pricelist_common AS
   END add_rule_type;
 END pricelist_common; 
 /
+
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym pricelist_common for pr_app.pricelist_common;
+grant execute on pricelist_common to public;

@@ -112,5 +112,5 @@ end pricelist_material;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym pricelist_material for dw_app.pricelist_material;
+create or replace public synonym pricelist_material for pr_app.pricelist_material;
 grant execute on pricelist_material to public;
