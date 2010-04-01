@@ -24,7 +24,6 @@ create table vds.vds_doc_data
    (vdd_query                                    varchar2(30 char)                   not null,
     vdd_row                                      number                              not null,
     vdd_table                                    varchar2(30 char)                   not null,
-    vdd_key                                      varchar2(30 char)                   not null,
     vdd_data                                     varchar2(4000 char)                 not null);
 
 /**/
@@ -34,7 +33,6 @@ comment on table vds.vds_doc_data is 'Validation Document Data';
 comment on column vds.vds_doc_data.vdd_query is 'Query code';
 comment on column vds.vds_doc_data.vdd_row is 'Row number';
 comment on column vds.vds_doc_data.vdd_table is 'Table code';
-comment on column vds.vds_doc_data.vdd_key is 'Row key';
 comment on column vds.vds_doc_data.vdd_data is 'Row data';
 
 /**/
