@@ -4,6 +4,7 @@
 # AUTHOR  : Steve Gregan
 # DATE    : 31-Mar-2010
 # PARAMS  : 1 - CONFIG ID (VDS configuration id)
+#           2 - REPLACE FLAG (Full data replacement)
 #
 # ---------------------------------------------------------------------------
 #            F U N C T I O N A L     O V E R V I E W
@@ -31,7 +32,6 @@ LINUX_OS="Linux"
 # --------------------------------------------------------------------------
 setup_config()
 {
-
     export PATH="/usr/local/bin:/usr/contrib/bin:/usr/bin:/bin:/etc"
     SCRIPT_PATH=`dirname ${1}`
     if [[ -z $SCRIPT_PATH ]] ; then
@@ -40,24 +40,18 @@ setup_config()
     if [[ ! -d $SCRIPT_PATH ]] ; then
         error_exit "ERROR: Provided path [${SCRIPT_PATH}] is not a valid directory"
     fi
-    
     cd $SCRIPT_PATH
     CONFIG_PATH="${SCRIPT_PATH}/../config"
-    
     CONFIG_FILE="${CONFIG_PATH}/ics_loader.config"
     validate_file "${CONFIG_FILE}"
-    
     VDS_CFG="${CONFIG_PATH}/vds_interface_config.xml"
     validate_file "${VDS_CFG}"
-    
     read_variable "ICS_CLASS_PATH"
     read_variable "JAVA_PATH"
     read_variable "SHLIB_PATH"
-
     if [[ -z $CURRENT_OS ]] ; then
         CURRENT_OS=`uname`
     fi
-    
 }
 
 # --------------------------------------------------------------------------
@@ -72,9 +66,7 @@ setup_config()
 read_variable()
 {
     VARIABLE_INT=$1
-    
     eval $VARIABLE_INT=`grep "^${VARIABLE_INT}" < ${CONFIG_FILE} | awk '{print $2}'`
-    
     # Validate variables from config file
     if [[ -z $VARIABLE_INT ]] ; then
         error_exit "ERROR: ${VARIABLE_INT} entry not found in [${CONFIG_FILE}]"
@@ -93,7 +85,6 @@ read_variable()
 validate_file()
 {
     FILE_INT=$1
-    
     if [[ ! -a $FILE_INT ]] ; then
         error_exit "ERROR: File not found [${FILE_INT}]"
     elif [[ ! -s $FILE_INT ]] ; then
@@ -115,11 +106,11 @@ validate_file()
 # --------------------------------------------------------------------------
 check_params()
 {
-    if [[ -z $INT_ID ]] ; then
-        error_exit "ERROR: Interface ID Parameter not specified"
-    fi
     if [[ -z $CFG_ID ]] ; then
         error_exit "ERROR: Configuration ID Parameter not specified"
+    fi
+    if [[ -z $REP_FLG ]] ; then
+        REP_FLG="N"
     fi
 }
 
@@ -153,8 +144,7 @@ do_extract()
     else
         error_exit "ERROR: Specified O/S [${CURRENT_OS}] is not supported"
     fi
-    
-    ${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.vds.cSapVdsExtract -identifier ${INT_ID} -configuration ${CFG_ID}
+    ${JAVA_PATH} -Xmx512m -cp ${SHLIB_PATH}:${ICS_CLASS_PATH}:${SHLIB_PATH}/marsap.jar:${SHLIB_PATH}/classes12.jar:${SHLIB_PATH}/sapjco.jar com.isi.vds.cSapVdsExtract -identifier ${CFG_ID} -configuration ${VDS_CFG} -replace ${REP_FLG}
     rc=$?
     if [[ $rc -ne 0 ]] ; then
         error_exit "ERROR: Call to ${JAVA_PATH} - com.isi.vds.cSapVdsExtract Failed - Return Code [${rc}]"
@@ -165,8 +155,8 @@ do_extract()
 # MAIN
 # ---------------------------------------------------------------------------
 
-INT_ID=${1}
-CFG_ID=${2}
+CFG_ID=${1}
+REP_FLG=${2}
 setup_config $0
 check_params
 do_extract
