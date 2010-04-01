@@ -46,7 +46,7 @@ alter table vds.vds_doc_list
 /**/
 /* Authority
 /**/
-grant select, insert, update, delete on ods.vds_doc_list to vds_app;
+grant select, insert, update, delete on vds.vds_doc_list to vds_app;
 grant select on vds.vds_doc_list to public;
 
 /**/
