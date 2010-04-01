@@ -26,6 +26,7 @@ create or replace package vds_app.vds_extract as
    /* Public declarations
    /**/
    procedure update_list(par_type in varchar2, par_list in varchar2);
+   function create_buffer(par_sql in varchar2) return clob;
 
 end vds_extract;
 /
@@ -141,12 +142,77 @@ create or replace package body vds_app.vds_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - Update List - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Update List - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end update_list;
+
+   /********************************************/
+   /* This procedure defines the create buffer */
+   /********************************************/
+   function create_buffer(par_sql in varchar2) return clob is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      lobReference clob;
+      type typ_list is ref cursor;
+      csr_list typ_list;
+      var_code varchar2(128 char);
+      var_count number;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Create the buffer
+      /*-*/
+      dbms_lob.createtemporary(lobReference,true);
+
+      /*-*/
+      /* Execute the list query to the buffer
+      /*-*/
+      var_count := 0;
+      begin
+         open csr_list for par_sql;
+      exception
+         when others then
+            raise_application_error(-20000, 'List query failed - ' || substr(SQLERRM, 1, 1024));
+      end;
+      loop
+         fetch csr_list into var_code;
+         if csr_list%notfound then
+            exit;
+         end if;
+         if var_count >= 200 then
+            dbms_lob.writeappend(lobReference, 1, utl_tcp.CRLF);
+            var_count := 0;
+         end if;
+         if var_count > 0 then
+            dbms_lob.writeappend(lobReference, 1, ',');
+         end if;
+         dbms_lob.writeappend(lobReference, length(rtrim(var_code)), rtrim(var_code));
+         var_count := var_count + 1;
+      end loop;
+      close csr_list;
+      if var_count > 0 then
+         dbms_lob.writeappend(lobReference, 1, utl_tcp.CRLF);
+         var_count := 0;
+      end if;
+
+      /*-*/
+      /* Return the data buffer
+      /*-*/
+      return lobReference;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_buffer;
 
 end vds_extract;
 /  
