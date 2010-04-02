@@ -25,10 +25,12 @@ create or replace package vds_app.vds_extract as
    /**/
    /* Public declarations
    /**/
+   procedure clear_list(par_query in varchar2);
    procedure update_list(par_query in varchar2, par_list in varchar2);
-   procedure update_query(par_query in varchar2);
+   procedure start_query(par_query in varchar2);
    procedure update_meta(par_query in varchar2, par_meta in varchar2);
    procedure update_data(par_query in varchar2, par_data in varchar2);
+   procedure final_query(par_query in varchar2);
    function create_buffer(par_sql in varchar2) return clob;
 
 end vds_extract;
@@ -51,6 +53,57 @@ create or replace package body vds_app.vds_extract as
  --  rcd_vds_doc_query vds_doc_query%rowtype;
    rcd_vds_doc_meta vds_doc_meta%rowtype;
    rcd_vds_doc_data vds_doc_data%rowtype;
+
+   /**************************************************/
+   /* This procedure performs the clear list routine */
+   /**************************************************/
+   procedure clear_list(par_query in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(30);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the query document list
+      /*-*/
+      var_query := upper(par_query);
+      delete from vds_doc_list where vdl_query = var_query;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Clear List - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear_list;
 
    /***************************************************/
    /* This procedure performs the update list routine */
@@ -160,9 +213,9 @@ create or replace package body vds_app.vds_extract as
    end update_list;
 
    /****************************************************/
-   /* This procedure performs the update query routine */
+   /* This procedure performs the start query routine */
    /****************************************************/
-   procedure update_query(par_query in varchar2) is
+   procedure start_query(par_query in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -206,12 +259,12 @@ create or replace package body vds_app.vds_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Update Query - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Start Query - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end update_query;
+   end start_query;
 
    /***************************************************/
    /* This procedure performs the update meta routine */
@@ -353,6 +406,76 @@ create or replace package body vds_app.vds_extract as
    /* End routine */
    /*-------------*/
    end update_data;
+
+   /****************************************************/
+   /* This procedure performs the final query routine */
+   /****************************************************/
+   procedure final_query(par_query in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(30);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Finalise the query document data
+      /*-*/
+      var_query := upper(par_query);
+    --  vds_builder.execute(var_query);
+
+      /*-*/
+      /* Update the query document list
+      /*-*/
+      update vds_doc_list
+         set vdl_status = '*ACTIVE'
+       where vdl_query = var_query
+         and vdl_status = '*CHANGED';
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Delete the query document meta and data
+      /*-*/
+     -- delete from vds_doc_meta where vdm_query = var_query;
+     -- delete from vds_doc_data where vdd_query = var_query;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Final Query - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end final_query;
 
    /********************************************/
    /* This procedure defines the create buffer */
