@@ -18,6 +18,7 @@
  2006/06   Steve Gregan   Included classification message deletion in classification loop
  2006/12   Steve Gregan   Included classification search logic and emailing logic
  2007/01   Steve Gregan   Changed rule execution logic to array processing
+ 2010/03   Steve Gregan   Fix the email purging
 
 *******************************************************************************/
 
@@ -131,7 +132,7 @@ create or replace package body vds_validation as
       open csr_group;
       fetch csr_group into rcd_group;
       if csr_group%notfound then
-         raise_application_error(-20000, 'Group parameter (' || par_group || ') does not exist in SAP_VAL_GRP table');
+         raise_application_error(-20000, 'Group parameter (' || par_group || ') does not exist in VDS_VAL_GRP table');
       end if;
 
       /*-*/
@@ -308,7 +309,21 @@ create or replace package body vds_validation as
          delete from vds_val_mes
           where vam_execution != con_single_code
             and vam_group = rcd_group.vag_group
-            and vam_version = con_purge_version;
+            and vam_version >= con_purge_version;
+         commit;
+
+         /*-*/
+         /* Purge message emails
+         /*-*/
+         delete from vds_val_mes_ema
+          where (vme_execution,
+                 vme_code,
+                 vme_class,
+                 vme_sequence) not in (select vam_execution,
+                                              vam_code,
+                                              vam_class,
+                                              vam_sequence
+                                         from vds_val_mes);
          commit;
 
          /*-*/
