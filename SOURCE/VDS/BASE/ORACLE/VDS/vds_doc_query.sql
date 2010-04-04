@@ -20,40 +20,32 @@
 /**/
 /* Table creation
 /**/
-create table vds_query
+create table vds.vds_doc_query
    (vdq_query                                    varchar2(30 char)                   not null,
-    vqu_meta_ifac                                varchar2(30 char)                   null,
-    vqu_meta_time                                varchar2(14 char)                   null,
-    vqu_meta_date                                date                                null,
-    vqu_data_ifac                                varchar2(30 char)                   null,
-    vqu_data_time                                varchar2(14 char)                   null,
-    vqu_data_date                                date                                null,
-    vqu_view_date                                date                                null);
+    vdq_load_proc                                varchar2(128 char)                  not null,
+    vdq_meta_date                                date                                null,
+    vdq_data_date                                date                                null);
 
 /**/
 /* Comments
 /**/
-comment on table vds_doc_query is 'Validation Document Query';
-comment on column vds_doc_query.vqu_query is 'Query code';
-comment on column vds_doc_query.vqu_meta_ifac is 'Query meta interface name';
-comment on column vds_doc_query.vqu_meta_time is 'Query meta interface timestamp';
-comment on column vds_doc_query.vqu_meta_date is 'Query meta update date';
-comment on column vds_doc_query.vqu_data_ifac is 'Query data interface name';
-comment on column vds_doc_query.vqu_data_time is 'Query data interface timestamp';
-comment on column vds_doc_query.vqu_data_date is 'Query data update date';
-comment on column vds_doc_query.vqu_view_date is 'Query view generation date';
+comment on table vds.vds_doc_query is 'Validation Document Query';
+comment on column vds.vds_doc_query.vdq_query is 'Query code';
+comment on column vds.vds_doc_query.vdq_load_proc is 'Query load procedure';
+comment on column vds.vds_doc_query.vdq_meta_date is 'Query meta rebuild date';
+comment on column vds.vds_doc_query.vdq_data_date is 'Query data update date';
 
 /**/
 /* Primary Key Constraint
 /**/
-alter table vds_doc_query
-   add constraint vds_doc_query_pk primary key (vqu_query);
+alter table vds.vds_doc_query
+   add constraint vds_doc_query_pk primary key (vdq_query);
 
 /**/
 /* Authority
 /**/
-grant select, insert, update, delete on vds_doc_query to vds_app;
-grant select on vds_doc_query to public;
+grant select, insert, update, delete on vds.vds_doc_query to vds_app;
+grant select on vds.vds_doc_query to public;
 
 /**/
 /* Synonym
