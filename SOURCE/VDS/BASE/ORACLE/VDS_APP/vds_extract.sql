@@ -29,9 +29,10 @@ create or replace package vds_app.vds_extract as
    procedure update_list(par_query in varchar2, par_list in varchar2);
    procedure start_query(par_query in varchar2);
    procedure update_meta(par_query in varchar2, par_meta in varchar2);
-   procedure update_data(par_query in varchar2, par_data in varchar2);
+   procedure update_data(par_query in varchar2, par_link in varchar2, par_data in varchar2);
    procedure final_query(par_query in varchar2);
    function create_buffer(par_sql in varchar2) return clob;
+   procedure generate_views(par_query in varchar2);
 
 end vds_extract;
 /
@@ -50,7 +51,7 @@ create or replace package body vds_app.vds_extract as
    /*-*/
    /* Private definitions
    /*-*/
- --  rcd_vds_doc_query vds_doc_query%rowtype;
+   rcd_vds_doc_query vds_doc_query%rowtype;
    rcd_vds_doc_meta vds_doc_meta%rowtype;
    rcd_vds_doc_data vds_doc_data%rowtype;
 
@@ -344,7 +345,7 @@ create or replace package body vds_app.vds_extract as
    /***************************************************/
    /* This procedure performs the update data routine */
    /***************************************************/
-   procedure update_data(par_query in varchar2, par_data in varchar2) is
+   procedure update_data(par_query in varchar2, par_link in varchar2, par_data in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -365,7 +366,7 @@ create or replace package body vds_app.vds_extract as
       rcd_vds_doc_data.vdd_query := var_query;
       rcd_vds_doc_data.vdd_row := rcd_vds_doc_data.vdd_row + 1;
       rcd_vds_doc_data.vdd_table := trim(substr(var_data,1,30));
-      rcd_vds_doc_data.vdd_data := trim(substr(var_data,31,4000));
+      rcd_vds_doc_data.vdd_data := trim(substr(var_data,61,4000));
       insert into vds_doc_data
          (vdd_query,
           vdd_row,
@@ -426,7 +427,7 @@ create or replace package body vds_app.vds_extract as
       /* Finalise the query document data
       /*-*/
       var_query := upper(par_query);
-    --  vds_builder.execute(var_query);
+    --  vds.vds_builder.execute(var_query);
 
       /*-*/
       /* Update the query document list
@@ -541,6 +542,163 @@ create or replace package body vds_app.vds_extract as
    /* End routine */
    /*-------------*/
    end create_buffer;
+
+   /******************************************************/
+   /* This procedure performs the generate views routine */
+   /******************************************************/
+   procedure generate_views(par_query in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_sav_query varchar2(30);
+      var_sav_table varchar2(30);
+      var_view_name varchar2(30);
+      var_columns boolean;
+      var_view_source varchar2(32767);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_vds_meta is 
+         select t01.*
+           from vds_doc_meta t01
+          where t01.vdm_query = upper(par_query)
+          order by t01.vdm_table asc,
+                   t01.vdm_offset asc;
+      rcd_vds_meta csr_vds_meta%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the query meta data
+      /*-*/
+      var_sav_query := null;
+      var_sav_table := null;
+      open csr_vds_meta;
+      loop
+         fetch csr_vds_meta into rcd_vds_meta;
+         if csr_vds_meta%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Change of table
+         /*-*/
+         if var_sav_table is null or var_sav_table != rcd_vds_meta.vdm_table then
+
+            /*-*/
+            /* Create the previous view when required
+            /*-*/
+            if not(var_sav_table is null) then
+
+               /*-*/
+               /* Finalise the view source
+               /*-*/
+               var_view_source := var_view_source || ' from vds_doc_data t01';
+               var_view_source := var_view_source || ' where t01.vdd_query = ''' || var_sav_query || '''';
+               var_view_source := var_view_source || ' and t01.vdd_table = ''' || var_sav_table || '''';
+
+               /*-*/
+               /* Creates the view
+               /*-*/
+               execute immediate var_view_source;
+               execute immediate 'grant select on vds_app.' || lower(var_view_name) || ' to public with grant option';
+
+            end if;
+
+            /*-*/
+            /* Reset the control data
+            /*-*/
+            var_sav_query := rcd_vds_meta.vdm_query;
+            var_sav_table := rcd_vds_meta.vdm_table;
+            var_view_name := 'view_'||var_sav_query || '_' || replace(var_sav_table,'/',null);
+            var_columns := false;
+
+            /*-*/
+            /* Start the view source
+            /*-*/
+            var_view_source := 'create or replace force view vds_app.' || lower(var_view_name) || ' as select';
+
+         end if;
+
+         /*-*/
+         /* Append the column to the view source
+         /*-*/
+         if var_columns = true then
+            var_view_source := var_view_source || ',';
+         end if;
+         var_columns := true;
+         if upper(rcd_vds_meta.vdm_type) = 'F' then
+            var_view_source := var_view_source || ' to_number(replace(nvl(trim(substr(t01.vdd_data,' || to_char(rcd_vds_meta.vdm_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vdm_length,'fm99990') || ')),''0''),'','',null)) as ' || rcd_vds_meta.vdm_column;
+         elsif upper(rcd_vds_meta.vdm_type) = 'N' or upper(rcd_vds_meta.vdm_type) = 'P' then
+            var_view_source := var_view_source || ' to_number(replace(nvl(trim(substr(t01.vdd_data,' || to_char(rcd_vds_meta.vdm_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vdm_length,'fm99990') || ')),''0''),'','',null)) as ' || rcd_vds_meta.vdm_column;
+         else
+            var_view_source := var_view_source || ' rtrim(substr(t01.vdd_data,' || to_char(rcd_vds_meta.vdm_offset+1,'fm99990') || ',' || to_char(rcd_vds_meta.vdm_length,'fm99990') || ')) as ' || rcd_vds_meta.vdm_column;
+         end if;
+
+      end loop;
+      close csr_vds_meta;
+
+      /*-*/
+      /* Create the last view when required
+      /*-*/
+      if not(var_sav_table is null) then
+
+         /*-*/
+         /* Finalise the view source
+         /*-*/
+         var_view_source := var_view_source || ' from vds_doc_data t01';
+         var_view_source := var_view_source || ' where t01.vdd_query = ''' || var_sav_query || '''';
+         var_view_source := var_view_source || ' and t01.vdd_table = ''' || var_sav_table || '''';
+
+         /*-*/
+         /* Creates the view
+         /*-*/
+         execute immediate var_view_source;
+         execute immediate 'grant select on vds_app.' || lower(var_view_name) || ' to public with grant option';
+
+      end if;
+
+      /*-*/
+      /* Update the query view date
+      /*-*/
+      update vds_doc_query
+         set vdq_meta_date = sysdate
+       where vdq_query = upper(par_query);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Generate Views - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end generate_views;
 
 end vds_extract;
 /
