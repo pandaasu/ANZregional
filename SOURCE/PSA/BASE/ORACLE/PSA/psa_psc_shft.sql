@@ -28,7 +28,8 @@ create table psa.psa_psc_shft
     pss_shf_code                    varchar2(32)                  not null,
     pss_shf_start                   number                        not null,
     pss_shf_duration                number                        not null,
-    pss_cmo_code                    varchar2(32)                  not null);
+    pss_cmo_code                    varchar2(32)                  not null,
+    pss_win_flag                    varchar2(1)                   not null);
 
 /**/
 /* Comments
@@ -44,6 +45,7 @@ comment on column psa.psa_psc_shft.pss_shf_code is 'Shift code';
 comment on column psa.psa_psc_shft.pss_shf_start is 'Shift start time HH24:MI';
 comment on column psa.psa_psc_shft.pss_shf_duration is 'Shift duration minutes';
 comment on column psa.psa_psc_shft.pss_cmo_code is 'Crew model code';
+comment on column psa.psa_psc_shft.pss_win_flag is 'Window flag (0=none, 1=start, 2=child)';
 
 /**/
 /* Primary Key Constraint
