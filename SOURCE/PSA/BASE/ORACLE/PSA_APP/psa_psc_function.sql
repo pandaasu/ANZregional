@@ -1044,7 +1044,8 @@ create or replace package body psa_app.psa_psc_function as
                 nvl(t02.sde_shf_name,'*UNKNOWN') as sde_shf_name,
                 to_char(t01.pss_shf_start,'fm9990') as pss_shf_start,
                 to_char(t01.pss_shf_duration) as pss_shf_duration,
-                t01.pss_cmo_code
+                t01.pss_cmo_code,
+                t01.pss_win_flag
            from psa_psc_shft t01,
                 psa_shf_defn t02
           where t01.pss_shf_code = t02.sde_shf_code(+)
@@ -1204,7 +1205,8 @@ create or replace package body psa_app.psa_psc_function as
                                            ' SHFNAM="'||psa_to_xml(rcd_shft.sde_shf_name)||'"'||
                                            ' SHFSTR="'||psa_to_xml(rcd_shft.pss_shf_start)||'"'||
                                            ' SHFDUR="'||psa_to_xml(rcd_shft.pss_shf_duration)||'"'||
-                                           ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"/>'));
+                                           ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"'||
+                                           ' WINFLG="'||psa_to_xml(rcd_shft.pss_win_flag)||'"/>'));
          end loop;
          close csr_shft;
 
@@ -1426,6 +1428,7 @@ create or replace package body psa_app.psa_psc_function as
       var_lin_code varchar2(32);
       var_con_code varchar2(32);
       var_smo_code varchar2(32);
+      var_win_code varchar2(32);
       rcd_psa_psc_week psa_psc_week%rowtype;
       rcd_psa_psc_prod psa_psc_prod%rowtype;
       rcd_psa_psc_line psa_psc_line%rowtype;
@@ -1723,6 +1726,7 @@ create or replace package body psa_app.psa_psc_function as
             /*-*/
             /* Retrieve and insert the shift data
             /*-*/
+            var_win_code := '*NONE';
             obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
             for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
                obj_shf_node := xmlDom.item(obj_shf_list,idz);
@@ -1736,6 +1740,15 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
                rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
                rcd_psa_psc_shft.pss_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
+               rcd_psa_psc_shft.pss_win_flag := '0';
+               if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
+                  if var_win_code = '*NONE' then
+                     rcd_psa_psc_shft.pss_win_flag := '1';
+                  else
+                     rcd_psa_psc_shft.pss_win_flag := '2';
+                  end if;
+               end if;
+               var_win_code := rcd_psa_psc_shft.pss_cmo_code;
                insert into psa_psc_shft values rcd_psa_psc_shft;
                if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
                   open csr_reso;
@@ -1764,6 +1777,7 @@ create or replace package body psa_app.psa_psc_function as
 
       /*-*/
       /* Update any orphaned production type events
+      /* each event must belong to a shift flagged as a window
       /*-*/
    --   update from psa_psc_edet
    --      set pse_prd_type = '*NONE'
