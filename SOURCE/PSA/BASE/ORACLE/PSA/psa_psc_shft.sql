@@ -26,10 +26,13 @@ create table psa.psa_psc_shft
     pss_con_code                    varchar2(32)                  not null,
     pss_smo_seqn                    number                        not null,
     pss_shf_code                    varchar2(32)                  not null,
+    pss_shf_date                    date                          not null,
     pss_shf_start                   number                        not null,
     pss_shf_duration                number                        not null,
     pss_cmo_code                    varchar2(32)                  not null,
-    pss_win_flag                    varchar2(1)                   not null);
+    pss_win_flag                    varchar2(1)                   not null,
+    pss_str_bar                     number                        not null,
+    pss_end_bar                     number                        not null);
 
 /**/
 /* Comments
@@ -42,10 +45,13 @@ comment on column psa.psa_psc_shft.pss_lin_code is 'Line code';
 comment on column psa.psa_psc_shft.pss_con_code is 'Line configuration code';
 comment on column psa.psa_psc_shft.pss_smo_seqn is 'Shift model sequence';
 comment on column psa.psa_psc_shft.pss_shf_code is 'Shift code';
+comment on column psa.psa_psc_shft.pss_shf_date is 'Shift start date YYYY/MM/DD';
 comment on column psa.psa_psc_shft.pss_shf_start is 'Shift start time HH24:MI';
 comment on column psa.psa_psc_shft.pss_shf_duration is 'Shift duration minutes';
 comment on column psa.psa_psc_shft.pss_cmo_code is 'Crew model code';
 comment on column psa.psa_psc_shft.pss_win_flag is 'Window flag (0=none, 1=start, 2=child)';
+comment on column psa.psa_psc_shft.pss_str_bar is 'Shift start model bar';
+comment on column psa.psa_psc_shft.pss_end_bar is 'Shift end model bar';
 
 /**/
 /* Primary Key Constraint
