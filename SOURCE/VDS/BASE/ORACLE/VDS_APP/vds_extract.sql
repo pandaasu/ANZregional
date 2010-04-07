@@ -31,7 +31,7 @@ create or replace package vds_app.vds_extract as
    procedure update_meta(par_query in varchar2, par_meta in varchar2);
    procedure final_meta(par_query in varchar2);
    procedure start_data(par_query in varchar2);
-   procedure update_data(par_query in varchar2, par_link in varchar2, par_data in varchar2);
+   procedure update_data(par_query in varchar2, par_data in varchar2);
    procedure final_data(par_query in varchar2);
    function create_buffer(par_sql in varchar2) return clob;
 
@@ -509,7 +509,7 @@ create or replace package body vds_app.vds_extract as
    /***************************************************/
    /* This procedure performs the update data routine */
    /***************************************************/
-   procedure update_data(par_query in varchar2, par_link in varchar2, par_data in varchar2) is
+   procedure update_data(par_query in varchar2, par_data in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -530,7 +530,7 @@ create or replace package body vds_app.vds_extract as
       rcd_vds_doc_data.vdd_query := var_query;
       rcd_vds_doc_data.vdd_row := rcd_vds_doc_data.vdd_row + 1;
       rcd_vds_doc_data.vdd_table := trim(substr(var_data,1,30));
-      rcd_vds_doc_data.vdd_data := trim(substr(var_data,61,4000));
+      rcd_vds_doc_data.vdd_data := trim(substr(var_data,31,4000));
       insert into vds_doc_data
          (vdd_query,
           vdd_row,
@@ -615,7 +615,7 @@ create or replace package body vds_app.vds_extract as
       /*-*/
       /* Load the table data
       /*-*/
-      execute immediate rcd_vds_query.vdq_load_proc||'.load';
+      execute immediate 'begin ' || rcd_vds_query.vdq_load_proc || '.load; end;';
 
       /*-*/
       /* Update the query document list

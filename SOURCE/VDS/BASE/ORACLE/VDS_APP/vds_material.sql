@@ -58,49 +58,49 @@ create or replace package body vds_app.vds_material as
       /*-*/
       /* Delete the existing data
       /*-*/
-      delete from vds.material_mara where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_mara where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_marm where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_marm where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_makt where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_makt where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_marc where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_marc where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_mvke where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_mvke where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_mmoe where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_mmoe where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_mbew where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_mbew where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_mard where (matnr) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_mard where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_inob where (objek) in (select matnr from vds_app.view_material_mara);
+      delete from vds.matl_inob where (objek) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.material_ausp where (to_number(objek)) in (select cuobj from vds_app.view_material_inob where (objek) in (select matnr from vds_app.view_material_mara));
+      delete from vds.matl_ausp where (to_number(objek)) in (select cuobj from vds_app.view_matl_inob where (objek) in (select matnr from vds_app.view_matl_mara));
       commit;
 
       /*-*/
       /* Insert the replacement data
       /*-*/
-      insert into vds.material_mara select t01.* from vds_app.view_material_mara t01;
+      insert into vds.matl_mara select t01.* from vds_app.view_matl_mara t01;
       commit;
-      insert into vds.material_marm select t01.* from vds_app.view_material_marm t01;
+      insert into vds.matl_marm select t01.* from vds_app.view_matl_marm t01;
       commit;
-      insert into vds.material_makt select t01.* from vds_app.view_material_makt t01;
+      insert into vds.matl_makt select t01.* from vds_app.view_matl_makt t01;
       commit;
-      insert into vds.material_marc select t01.* from vds_app.view_material_marc t01;
+      insert into vds.matl_marc select t01.* from vds_app.view_matl_marc t01;
       commit;
-      insert into vds.material_mvke select t01.* from vds_app.view_material_mvke t01;
+      insert into vds.matl_mvke select t01.* from vds_app.view_matl_mvke t01;
       commit;
-      insert into vds.material_mmoe select t01.* from vds_app.view_material_mmoe t01;
+      insert into vds.matl_mmoe select t01.* from vds_app.view_matl_mmoe t01;
       commit;
-      insert into vds.material_mbew select t01.* from vds_app.view_material_mbew t01;
+      insert into vds.matl_mbew select t01.* from vds_app.view_matl_mbew t01;
       commit;
-      insert into vds.material_mard select t01.* from vds_app.view_material_mard t01;
+      insert into vds.matl_mard select t01.* from vds_app.view_matl_mard t01;
       commit;
-      insert into vds.material_inob select t01.* from vds_app.view_material_inob t01;
+      insert into vds.matl_inob select t01.* from vds_app.view_matl_inob t01;
       commit;
-      insert into vds.material_ausp select t01.* from vds_app.view_material_ausp t01;
+      insert into vds.matl_ausp select t01.* from vds_app.view_matl_ausp t01;
       commit;
 
    /*-------------------*/
