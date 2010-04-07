@@ -20,7 +20,7 @@
                MARA_Filter="MTART in ('FERT','VERP','ZREP','ROH','ERSA')"
                MARC_Filter="WERKS LIKE 'CA%'"
                MVKE_Filter="VKORG in ('121')"
-               VDS_Query="MATERIAL"
+               VDS_Query="MATL"
                VDS_MARA_Columns="MATNR, LAEDA, AENAM, LVORM, MTART, MEINS, BRGEW, NTGEW, GEWEI, VOLUM, VOLEH, RAUBE, SPART, EAN11, NUMTP, LAENG, BREIT, HOEHE, MEABM, XCHPF, PMATA, MSTAE, MSTAV, MSTDE, MSTDV, MHDHB, ZZISINT, ZZISMCU, ZZISRSU, ZZISTDU, ZZISSFP, ZZREPMATNR, MHDRZ, EKWSL, TRAGR, MAGRV, BEGRU, MATKL, VABME, BSTME, IPRKZ, MTPOS_MARA, QMPUR, ZEIAR, ZEINR, TAKLV"
                VDS_MARM_Columns="MATNR, MEINH, UMREZ, UMREN, EAN11, NUMTP, LAENG, BREIT, HOEHE, MEABM, VOLUM, VOLEH, BRGEW, GEWEI, ZZPCITEM, ZZREFMATNR"
                VDS_MAKT_Columns="MATNR, SPRAS, MAKTX, MAKTG"
@@ -31,7 +31,7 @@
                VDS_MARD_Columns="MATNR, LGORT, LGPBE"
                VDS_INOB_Columns="KLART, OBTAB, OBJEK, CUOBJ"
                VDS_AUSP_Columns="OBJEK, ATINN, ATWRT, ATFLV"
-               Logging="/ics/test/work/vds_material_extract.txt"/>
+               Logging="/ics/test/java/vds_material_extract.txt"/>
 
     <interface identifier="SAPVDSEXT#23"
                description="Production - SAP GRD Server Customer Extract"
@@ -47,12 +47,12 @@
                VdsPassword="vdsnorth"
                KNB1_Filter="BUKRS in ('121')"
                KNVV_Filter="VKORG = '121' AND VTWEG = '10' AND SPART = '51'"
-               VDS_Query="CUSTOMER"
+               VDS_Query="CUST"
                VDS_KNA1_Columns="KTOKD, KUNNR, LAND1, LZONE, REGIO, TXJCD, NAME1"
                VDS_KNB1_Columns="KUNNR, AKONT, BUKRS, FDGRV, GUZTE, XZVER, ZUAWA, ZWELS, LOCKB, ZTERM, BUSAB"
                VDS_KNVI_Columns="KUNNR, TAXKD"
                VDS_KNVV_Columns="KUNNR, ANTLF, KALKS, KONDA, KZAZU, KZTLF, PLTYP, SPART, VERSG, VKORG, VTWEG, VWERK, KTGRD, ZTERM, AGREL, BOKRE, VKGRP"
-               Logging="/ics/test/work/vds_customer_extract.txt"/>
+               Logging="/ics/test/java/vds_customer_extract.txt"/>
 
     <interface identifier="SAPVDSEXT#24"
                description="Production - SAP GRD Server Vendor Extract"
@@ -68,14 +68,14 @@
                VdsPassword="vdsnorth"
                LFB1_Filter="BUKRS in ('121')"
                LFM1_Filter="EKORG &gt;= '0441' AND EKORG &lt;= '0459'"
-               VDS_Query="VENDOR"
+               VDS_Query="VEND"
                VDS_LFA1_Columns="KTOKK, LIFNR, LAND1, LZONE, REGIO, TXJCD, NAME1"
                VDS_LFB1_Columns="LIFNR, AKONT, BUKRS, FDGRV, INTAD, REPRF, ZTERM, ZUAWA, ZWELS, TOGRR"
                VDS_LFBK_Columns="LIFNR, BANKN"
                VDS_LFM1_Columns="LIFNR, ZTERM"
                VDS_LFM2_Columns="LIFNR, BSTAE, EKORG, KZAUT, WAERS, WEBRE"
                VDS_WYT3_Columns="LIFNR, PARVW"
-               Logging="/ics/test/work/vds_vendor_extract.txt"/>
+               Logging="/ics/test/java/vds_vendor_extract.txt"/>
 
     <interface identifier="SAPVDSREF#01"
                description="SAP GRD Server to VDS Reference Interface"
