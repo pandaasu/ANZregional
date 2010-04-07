@@ -786,9 +786,9 @@ create or replace package body psa_app.psa_psc_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
-      if var_mars_week < rcd_week_now.mars_week then
-         psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') MARS week ('||to_char(var_mars_week,'fm0000000')||') is in the past - unable to update');
-      end if;
+   ----   if var_mars_week < rcd_week_now.mars_week then
+   ----      psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') MARS week ('||to_char(var_mars_week,'fm0000000')||') is in the past - unable to update');
+   ----   end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -996,7 +996,6 @@ create or replace package body psa_app.psa_psc_function as
       var_pty_code varchar2(32);
       var_output varchar2(2000 char);
       var_fil_name varchar2(800);
-      var_daycnt integer;
 
       /*-*/
       /* Local cursors
@@ -1013,11 +1012,12 @@ create or replace package body psa_app.psa_psc_function as
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_date is
-         select to_char(t01.calendar_date,'yyyy/mm/dd') as day_code,
-                to_char(t01.calendar_date,'dy') as day_name
-           from mars_date t01
-          where t01.mars_week >= to_number(var_wek_code)
-          order by t01.calendar_date asc;
+         select to_char(t01.psd_day_date,'yyyy/mm/dd') as psd_day_date,
+                t01.psd_day_name as psd_day_name
+           from psa_psc_date t01
+          where t01.psd_psc_code = rcd_retrieve.psp_psc_code
+            and t01.psd_psc_week = rcd_retrieve.psp_psc_week
+          order by t01.psd_day_date asc;
       rcd_date csr_date%rowtype;
 
       cursor csr_line is
@@ -1042,10 +1042,13 @@ create or replace package body psa_app.psa_psc_function as
          select to_char(t01.pss_smo_seqn) as pss_smo_seqn,
                 t01.pss_shf_code,
                 nvl(t02.sde_shf_name,'*UNKNOWN') as sde_shf_name,
+                to_char(t01.pss_shf_date,'yyyy/mm/dd') as pss_shf_date,
                 to_char(t01.pss_shf_start,'fm9990') as pss_shf_start,
                 to_char(t01.pss_shf_duration) as pss_shf_duration,
                 t01.pss_cmo_code,
-                t01.pss_win_flag
+                t01.pss_win_flag,
+                to_char(t01.pss_str_bar) as pss_str_bar,
+                to_char(t01.pss_end_bar) as pss_end_bar
            from psa_psc_shft t01,
                 psa_shf_defn t02
           where t01.pss_shf_code = t02.sde_shf_code(+)
@@ -1136,19 +1139,14 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Pipe the date data XML
       /*-*/
-      var_daycnt := 0;
       open csr_date;
       loop
          fetch csr_date into rcd_date;
          if csr_date%notfound then
             exit;
          end if;
-         if var_daycnt >= 8 then
-            exit;
-         end if;
-         var_daycnt := var_daycnt + 1;
-         pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_date.day_code)||'"'||
-                                        ' DAYNAM="'||psa_to_xml(rcd_date.day_name)||'"/>'));
+         pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_date.psd_day_date)||'"'||
+                                        ' DAYNAM="'||psa_to_xml(rcd_date.psd_day_name)||'"/>'));
       end loop;
       close csr_date;
 
@@ -1203,10 +1201,13 @@ create or replace package body psa_app.psa_psc_function as
             pipe row(psa_xml_object('<SHFDFN SMOSEQ="'||psa_to_xml(rcd_shft.pss_smo_seqn)||'"'||
                                            ' SHFCDE="'||psa_to_xml(rcd_shft.pss_shf_code)||'"'||
                                            ' SHFNAM="'||psa_to_xml(rcd_shft.sde_shf_name)||'"'||
+                                           ' SHFDTE="'||psa_to_xml(rcd_shft.pss_shf_date)||'"'||
                                            ' SHFSTR="'||psa_to_xml(rcd_shft.pss_shf_start)||'"'||
                                            ' SHFDUR="'||psa_to_xml(rcd_shft.pss_shf_duration)||'"'||
                                            ' CMOCDE="'||psa_to_xml(rcd_shft.pss_cmo_code)||'"'||
-                                           ' WINFLG="'||psa_to_xml(rcd_shft.pss_win_flag)||'"/>'));
+                                           ' WINFLG="'||psa_to_xml(rcd_shft.pss_win_flag)||'"'||
+                                           ' STRBAR="'||psa_to_xml(rcd_shft.pss_str_bar)||'"'||
+                                           ' ENDBAR="'||psa_to_xml(rcd_shft.pss_end_bar)||'"/>'));
          end loop;
          close csr_shft;
 
@@ -1429,7 +1430,12 @@ create or replace package body psa_app.psa_psc_function as
       var_con_code varchar2(32);
       var_smo_code varchar2(32);
       var_win_code varchar2(32);
+      var_day_indx integer;
+      var_day_date date;
+      var_wrk_date date;
+      var_bar_numb integer;
       rcd_psa_psc_week psa_psc_week%rowtype;
+      rcd_psa_psc_date psa_psc_date%rowtype;
       rcd_psa_psc_prod psa_psc_prod%rowtype;
       rcd_psa_psc_line psa_psc_line%rowtype;
       rcd_psa_psc_shft psa_psc_shft%rowtype;
@@ -1483,6 +1489,14 @@ create or replace package body psa_app.psa_psc_function as
           where t01.cmr_cmo_code = rcd_psa_psc_shft.pss_cmo_code
           order by t01.cmr_res_code asc;
       rcd_reso csr_reso%rowtype;
+
+      cursor csr_date is
+         select t01.calendar_date as day_date,
+                to_char(t01.calendar_date,'dy') as day_name
+           from mars_date t01
+          where t01.mars_week >= to_number(rcd_psa_psc_week.psw_psc_week)
+          order by t01.calendar_date asc;
+      rcd_date csr_date%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1680,6 +1694,7 @@ create or replace package body psa_app.psa_psc_function as
                 psw_upd_date = rcd_psa_psc_week.psw_upd_date
           where psw_psc_code = rcd_psa_psc_week.psw_psc_code
             and psw_psc_code = rcd_psa_psc_week.psw_psc_code;
+         delete from psa_psc_date where psd_psc_code = rcd_psa_psc_week.psw_psc_code and psd_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_line where psl_psc_code = rcd_psa_psc_week.psw_psc_code and psl_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_reso where psr_psc_code = rcd_psa_psc_week.psw_psc_code and psr_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_shft where pss_psc_code = rcd_psa_psc_week.psw_psc_code and pss_psc_week = rcd_psa_psc_week.psw_psc_week;
@@ -1695,6 +1710,34 @@ create or replace package body psa_app.psa_psc_function as
                return;
          end;
       end if;
+
+      /*-*/
+      /* Retrieve and insert the production date data
+      /*-*/
+      var_day_indx := 0;
+      var_day_date := null;
+      var_wrk_date := null;
+      open csr_date;
+      loop
+         fetch csr_date into rcd_date;
+         if csr_date%notfound then
+            exit;
+         end if;
+         if var_day_indx >= 8 then
+            exit;
+         end if;
+         var_day_indx := var_day_indx + 1;
+         rcd_psa_psc_date.psd_psc_code := rcd_psa_psc_week.psw_psc_code;
+         rcd_psa_psc_date.psd_psc_week := rcd_psa_psc_week.psw_psc_week;
+         rcd_psa_psc_date.psd_day_date := trunc(rcd_date.day_date);
+         rcd_psa_psc_date.psd_day_name := rcd_date.day_name;
+         insert into psa_psc_date values rcd_psa_psc_date;
+         if var_day_indx = 1 then
+            var_day_date := rcd_psa_psc_date.psd_day_date;
+            var_wrk_date := rcd_psa_psc_date.psd_day_date;
+         end if;
+      end loop;
+      close csr_date;
 
       /*-*/
       /* Retrieve and insert the production type data
@@ -1737,6 +1780,7 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_shft.pss_con_code := rcd_psa_psc_line.psl_con_code;
                rcd_psa_psc_shft.pss_smo_seqn := idz + 1;
                rcd_psa_psc_shft.pss_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
+               rcd_psa_psc_shft.pss_shf_date := var_day_date;
                rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
                rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
                rcd_psa_psc_shft.pss_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
@@ -1749,7 +1793,17 @@ create or replace package body psa_app.psa_psc_function as
                   end if;
                end if;
                var_win_code := rcd_psa_psc_shft.pss_cmo_code;
+               var_bar_numb := (rcd_psa_psc_shft.pss_shf_duration / 60) * 4;
+               if idz = 0 then
+                  rcd_psa_psc_shft.pss_str_bar := ((trunc(rcd_psa_psc_shft.pss_shf_start / 100) + (mod(rcd_psa_psc_shft.pss_shf_start,100) / 60)) * 4) + 1;
+                  rcd_psa_psc_shft.pss_end_bar := rcd_psa_psc_shft.pss_str_bar + var_bar_numb - 1;
+               else
+                  rcd_psa_psc_shft.pss_str_bar := rcd_psa_psc_shft.pss_end_bar + 1;
+                  rcd_psa_psc_shft.pss_end_bar := rcd_psa_psc_shft.pss_str_bar + var_bar_numb - 1;
+               end if;
                insert into psa_psc_shft values rcd_psa_psc_shft;
+               var_wrk_date := round(var_wrk_date,'MI') + (rcd_psa_psc_shft.pss_shf_duration / 60 / 24);
+               var_day_date := trunc(var_wrk_date);
                if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
                   open csr_reso;
                   loop
