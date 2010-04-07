@@ -27,12 +27,13 @@ create or replace package vds_app.vds_extract as
    /**/
    procedure clear_list(par_query in varchar2);
    procedure update_list(par_query in varchar2, par_list in varchar2);
-   procedure start_query(par_query in varchar2);
+   procedure start_meta(par_query in varchar2);
    procedure update_meta(par_query in varchar2, par_meta in varchar2);
+   procedure final_meta(par_query in varchar2);
+   procedure start_data(par_query in varchar2);
    procedure update_data(par_query in varchar2, par_link in varchar2, par_data in varchar2);
-   procedure final_query(par_query in varchar2);
+   procedure final_data(par_query in varchar2);
    function create_buffer(par_sql in varchar2) return clob;
-   procedure generate_views(par_query in varchar2);
 
 end vds_extract;
 /
@@ -51,6 +52,7 @@ create or replace package body vds_app.vds_extract as
    /*-*/
    /* Private definitions
    /*-*/
+   procedure generate_views(par_query in varchar2);
    rcd_vds_doc_query vds_doc_query%rowtype;
    rcd_vds_doc_meta vds_doc_meta%rowtype;
    rcd_vds_doc_data vds_doc_data%rowtype;
@@ -214,14 +216,24 @@ create or replace package body vds_app.vds_extract as
    end update_list;
 
    /****************************************************/
-   /* This procedure performs the start query routine */
+   /* This procedure performs the start meta routine */
    /****************************************************/
-   procedure start_query(par_query in varchar2) is
+   procedure start_meta(par_query in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_query varchar2(30);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_vds_query is 
+         select t01.*
+           from vds_doc_query t01
+          where t01.vdq_query = var_query;
+      rcd_vds_query csr_vds_query%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -229,13 +241,25 @@ create or replace package body vds_app.vds_extract as
    begin
 
       /*-*/
-      /* Clear the query document data
+      /* Validate the parameters
       /*-*/
       var_query := upper(par_query);
+      var_found := false;
+      open csr_vds_query;
+      fetch csr_vds_query into rcd_vds_query;
+      if csr_vds_query%found then
+         var_found := true;
+      end if;
+      close csr_vds_query;
+      if var_found = false then
+         raise_application_error(-20000, 'VDS document query (' || var_query || ') does not exist in VDS_DOC_QUERY table');
+      end if;
+
+      /*-*/
+      /* Clear the query document data
+      /*-*/
       delete from vds_doc_meta where vdm_query = var_query;
-      delete from vds_doc_data where vdd_query = var_query;
       rcd_vds_doc_meta.vdm_row := 0;
-      rcd_vds_doc_data.vdd_row := 0;
 
       /*-*/
       /* Commit the database
@@ -260,12 +284,12 @@ create or replace package body vds_app.vds_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Start Query - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Start Meta - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end start_query;
+   end start_meta;
 
    /***************************************************/
    /* This procedure performs the update meta routine */
@@ -342,6 +366,146 @@ create or replace package body vds_app.vds_extract as
    /*-------------*/
    end update_meta;
 
+   /**************************************************/
+   /* This procedure performs the final meta routine */
+   /**************************************************/
+   procedure final_meta(par_query in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(30);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Finalise the query document data
+      /*-*/
+      var_query := upper(par_query);
+      generate_views(var_query);
+      vds.vds_builder.execute(var_query);
+
+      /*-*/
+      /* Update the query meta date
+      /*-*/
+      update vds_doc_query
+         set vdq_meta_date = sysdate
+       where vdq_query = var_query;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Final Meta - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end final_meta;
+
+   /**************************************************/
+   /* This procedure performs the start data routine */
+   /**************************************************/
+   procedure start_data(par_query in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_query varchar2(30);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_vds_query is 
+         select t01.*
+           from vds_doc_query t01
+          where t01.vdq_query = var_query;
+      rcd_vds_query csr_vds_query%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Validate the parameters
+      /*-*/
+      var_query := upper(par_query);
+      var_found := false;
+      open csr_vds_query;
+      fetch csr_vds_query into rcd_vds_query;
+      if csr_vds_query%found then
+         var_found := true;
+      end if;
+      close csr_vds_query;
+      if var_found = false then
+         raise_application_error(-20000, 'VDS document query (' || var_query || ') does not exist in VDS_DOC_QUERY table');
+      end if;
+
+      /*-*/
+      /* Clear the query document data
+      /*-*/
+      delete from vds_doc_data where vdd_query = var_query;
+      rcd_vds_doc_data.vdd_row := 0;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Start Data - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end start_data;
+
    /***************************************************/
    /* This procedure performs the update data routine */
    /***************************************************/
@@ -408,15 +572,25 @@ create or replace package body vds_app.vds_extract as
    /*-------------*/
    end update_data;
 
-   /****************************************************/
-   /* This procedure performs the final query routine */
-   /****************************************************/
-   procedure final_query(par_query in varchar2) is
+   /**************************************************/
+   /* This procedure performs the final data routine */
+   /**************************************************/
+   procedure final_data(par_query in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_query varchar2(30);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_vds_query is 
+         select t01.*
+           from vds_doc_query t01
+          where t01.vdq_query = var_query;
+      rcd_vds_query csr_vds_query%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -424,10 +598,24 @@ create or replace package body vds_app.vds_extract as
    begin
 
       /*-*/
-      /* Finalise the query document data
+      /* Validate the parameters
       /*-*/
       var_query := upper(par_query);
-    --  vds.vds_builder.execute(var_query);
+      var_found := false;
+      open csr_vds_query;
+      fetch csr_vds_query into rcd_vds_query;
+      if csr_vds_query%found then
+         var_found := true;
+      end if;
+      close csr_vds_query;
+      if var_found = false then
+         raise_application_error(-20000, 'VDS document query (' || var_query || ') does not exist in VDS_DOC_QUERY table');
+      end if;
+
+      /*-*/
+      /* Load the table data
+      /*-*/
+      execute immediate rcd_vds_query.vdq_load_proc||'.load';
 
       /*-*/
       /* Update the query document list
@@ -438,15 +626,21 @@ create or replace package body vds_app.vds_extract as
          and vdl_status = '*CHANGED';
 
       /*-*/
+      /* Update the query meta date
+      /*-*/
+      update vds_doc_query
+         set vdq_data_date = sysdate
+       where vdq_query = var_query;
+
+      /*-*/
       /* Commit the database
       /*-*/
       commit;
 
       /*-*/
-      /* Delete the query document meta and data
+      /* Delete the query document data
       /*-*/
-     -- delete from vds_doc_meta where vdm_query = var_query;
-     -- delete from vds_doc_data where vdd_query = var_query;
+      delete from vds_doc_data where vdd_query = var_query;
 
       /*-*/
       /* Commit the database
@@ -471,12 +665,12 @@ create or replace package body vds_app.vds_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Final Query - ' || substr(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_EXTRACT - Final Data - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end final_query;
+   end final_data;
 
    /********************************************/
    /* This procedure defines the create buffer */
