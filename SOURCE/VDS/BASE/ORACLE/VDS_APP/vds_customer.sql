@@ -58,25 +58,25 @@ create or replace package body vds_app.vds_customer as
       /*-*/
       /* Delete the existing data
       /*-*/
-      delete from vds.customer_kna1 where (kunnr) in (select kunnr from vds_app.view_customer_kna1);
+      delete from vds.cust_kna1 where (kunnr) in (select kunnr from vds_app.view_cust_kna1);
       commit;
-      delete from vds.customer_knb1 where (kunnr) in (select kunnr from vds_app.view_customer_kna1);
+      delete from vds.cust_knb1 where (kunnr) in (select kunnr from vds_app.view_cust_kna1);
       commit;
-      delete from vds.customer_knvi where (kunnr) in (select kunnr from vds_app.view_customer_kna1);
+      delete from vds.cust_knvi where (kunnr) in (select kunnr from vds_app.view_cust_kna1);
       commit;
-      delete from vds.customer_knvv where (kunnr) in (select kunnr from vds_app.view_customer_kna1);
+      delete from vds.cust_knvv where (kunnr) in (select kunnr from vds_app.view_cust_kna1);
       commit;
 
       /*-*/
       /* Insert the replacement data
       /*-*/
-      insert into vds.customer_kna1 select t01.* from vds_app.view_customer_kna1 t01;
+      insert into vds.cust_kna1 select t01.* from vds_app.view_cust_kna1 t01;
       commit;
-      insert into vds.customer_knb1 select t01.* from vds_app.view_customer_knb1 t01;
+      insert into vds.cust_knb1 select t01.* from vds_app.view_cust_knb1 t01;
       commit;
-      insert into vds.customer_knvi select t01.* from vds_app.view_customer_knvi t01;
+      insert into vds.cust_knvi select t01.* from vds_app.view_cust_knvi t01;
       commit;
-      insert into vds.customer_knvv select t01.* from vds_app.view_customer_knvv t01;
+      insert into vds.cust_knvv select t01.* from vds_app.view_cust_knvv t01;
       commit;
 
    /*-------------------*/

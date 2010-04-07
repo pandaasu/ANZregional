@@ -56,40 +56,35 @@ create or replace package body vds_app.vds_vendor as
    begin
 
       /*-*/
-      /* Initialise the routine
-      /*-*/
-      var_query := upper(par_query);
-
-      /*-*/
       /* Delete the existing data
       /*-*/
-      delete from vds.vendor_lfa1 where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_lfa1 where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
-      delete from vds.vendor_lfb1 where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_lfb1 where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
-      delete from vds.vendor_lfbk where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_lfbk where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
-      delete from vds.vendor_lfm1 where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_lfm1 where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
-      delete from vds.vendor_lfm2 where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_lfm2 where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
-      delete from vds.vendor_wyt3 where (matnr) in (select lifnr from vds_app.view_vendor_lfa1);
+      delete from vds.vend_wyt3 where (lifnr) in (select lifnr from vds_app.view_vend_lfa1);
       commit;
 
       /*-*/
       /* Insert the replacement data
       /*-*/
-      insert into vds.vendor_lfa1 select t01.* from vds_app.view_vendor_lfa1 t01;
+      insert into vds.vend_lfa1 select t01.* from vds_app.view_vend_lfa1 t01;
       commit;
-      insert into vds.vendor_lfb1 select t01.* from vds_app.view_vendor_lfb1 t01;
+      insert into vds.vend_lfb1 select t01.* from vds_app.view_vend_lfb1 t01;
       commit;
-      insert into vds.vendor_lfbk select t01.* from vds_app.view_vendor_lfbk t01;
+      insert into vds.vend_lfbk select t01.* from vds_app.view_vend_lfbk t01;
       commit;
-      insert into vds.vendor_lfm1 select t01.* from vds_app.view_vendor_lfm1 t01;
+      insert into vds.vend_lfm1 select t01.* from vds_app.view_vend_lfm1 t01;
       commit;
-      insert into vds.vendor_lfm2 select t01.* from vds_app.view_vendor_lfm2 t01;
+      insert into vds.vend_lfm2 select t01.* from vds_app.view_vend_lfm2 t01;
       commit;
-      insert into vds.vendor_wyt3 select t01.* from vds_app.view_vendor_wyt3 t01;
+      insert into vds.vend_wyt3 select t01.* from vds_app.view_vend_wyt3 t01;
       commit;
 
    /*-------------------*/
