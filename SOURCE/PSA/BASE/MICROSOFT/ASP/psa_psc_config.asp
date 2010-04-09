@@ -646,15 +646,15 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.className = 'clsLabelFN';
-               if (objElements[i].getAttribute('SLTSTS') == '0') {
-                  objCell.innerHTML = '&nbsp;';
-               } else {
+         //      if (objElements[i].getAttribute('SLTSTS') == '0') {
+         //         objCell.innerHTML = '&nbsp;';
+         //      } else {
                   if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
                      objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
                   } else {
                      objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
                   }
-               }
+         //      }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -901,8 +901,10 @@ sub PaintFunction()%>
          doWeekLconLoad(objCell,i);
          doWeekPtypClick(objInput);
       }
+   }
    function doWeekLconLoad(objParent, intPtyIdx) {
       var objTable = document.createElement('table');
+      var objWork;
       var objRow;
       var objCell;
       var objSelect;
@@ -937,6 +939,7 @@ sub PaintFunction()%>
          objCell.vAlign = 'center';
          objCell.className = 'clsLabelBN';
          objCell.style.fontSize = '8pt';
+         objCell.style.fontWeight = 'bold';
          objCell.style.paddingLeft = '2px';
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
@@ -944,9 +947,9 @@ sub PaintFunction()%>
          objSelect.id = 'WEKPTYLCONDATA_'+intPtyIdx+'_'+i;
          objSelect.className = 'clsInputNN';
          objSelect.style.fontSize = '8pt';
-         objSelect.onChange = function() {doWeekSmodChange(this,false);};
+         objSelect.onchange = function() {doWeekSmodChange(this,false);};
          objSelect.selectedIndex = -1;
-         objSelect.options[0] = new Option('** Select Shift Model **','*NONE');
+         objSelect.options[0] = new Option('** NONE **','*NONE');
          objSelect.options[0].selected = true;
          for (var j=0;j<cobjWeekSmod.length;j++) {
             objSelect.options[objSelect.options.length] = new Option('('+cobjWeekSmod[j].smocde+') '+cobjWeekSmod[j].smonam,cobjWeekSmod[j].smocde);
@@ -955,11 +958,11 @@ sub PaintFunction()%>
                objSelect.options[objSelect.options.length-1].selected = true;
             }
          }
-         objCell.appendChild(objInput);
+         objCell.appendChild(objSelect);
          if (objLcoAry[i].filnam != '' && objLcoAry[i].filnam != null) {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
+            objCell.appendChild(document.createTextNode(' - ('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam+' - '+objLcoAry[i].filnam));
          } else {
-            objCell.appendChild(document.createTextNode('('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
+            objCell.appendChild(document.createTextNode(' - ('+objLcoAry[i].lincde+') '+objLcoAry[i].linnam+' - ('+objLcoAry[i].lcocde+') '+objLcoAry[i].lconam));
          }
          objRow = objTable.insertRow(-1);
          objCell = objRow.insertCell(-1);
@@ -970,19 +973,17 @@ sub PaintFunction()%>
          objCell.style.paddingLeft = '2px';
          objCell.style.paddingRight = '2px';
          objCell.style.whiteSpace = 'nowrap';
-         objTable = document.createElement('table');
-         objTable.id = 'WEKPTYLCONSMOD_'+intPtyIdx+'_'+i;
-         objTable.className = 'clsPanel';
-         objTable.align = 'center';
-         objTable.cellSpacing = '0';
-         objTable.style.display = 'none';
-         doWeekSmodChange(this,true);
+         objWork = document.createElement('table');
+         objWork.id = 'WEKPTYLCONSMOD_'+intPtyIdx+'_'+i;
+         objWork.className = 'clsPanel';
+         objWork.align = 'center';
+         objWork.cellSpacing = '0';
+         objWork.style.display = 'none';
+         objCell.appendChild(objWork);
+         doWeekSmodChange(objSelect,true);
       }
    }
    function doWeekSmodChange(objSelect, bolLoad) {
-      if (objSelect.selectedIndex == -1) {
-         return;
-      }
       var objTable;
       var objRow;
       var objCell;
@@ -999,11 +1000,11 @@ sub PaintFunction()%>
       intPtyIdx = objSelect.parentNode.parentNode.getAttribute('ptyidx');
       intLcoIdx = objSelect.parentNode.parentNode.getAttribute('lcoidx');
       objTable = document.getElementById('WEKPTYLCONSMOD_'+intPtyIdx+'_'+intLcoIdx);
-      for (var i=objTable.rows.length-1;i>=0;i--) {
-         objTable.deleteRow(i);
-      }
-      if (objSelect.options[objSelect.selectedIndex].value == '*NONE') {
+      if (objSelect.selectedIndex == -1 || objSelect.options[objSelect.selectedIndex].value == '*NONE') {
+         objTable.style.display = 'none';
          return;
+      } else {
+         objTable.style.display = 'block';
       }
       objRow = objTable.insertRow(-1);
       objCell = objRow.insertCell(-1);
@@ -1033,7 +1034,7 @@ sub PaintFunction()%>
       objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode('Crew Model'));
       objWrkAry = cobjWeekPtyp[intPtyIdx].lcoary[intLcoIdx].shfary;
-      objShfAry = cobjWeekSmod[intSmoIdx].shfary;
+      objShfAry = cobjWeekSmod[objSelect.options[objSelect.selectedIndex].getAttribute('smoidx')].shfary;
       for (var i=0;i<objShfAry.length;i++) {
          intStrTim = objShfAry[i].shfstr;
          intDurMin = objShfAry[i].shfdur;
@@ -1173,7 +1174,7 @@ sub PaintFunction()%>
       }
       strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
-      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'"';
+      strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'">';
       for (var i=0;i<cobjWeekPtyp.length;i++) {
          objElePtyp = document.getElementById('WEKPTY_'+i);
          if (objElePtyp.checked == true) {
@@ -1182,7 +1183,7 @@ sub PaintFunction()%>
             for (var j=0;j<objLcoAry.length;j++) {
                objEleLine = document.getElementById('WEKPTYLCONDATA_'+i+'_'+j);
                if (objEleLine.selectedIndex != -1 && objEleLine.options[objEleLine.selectedIndex].value != '*NONE') {
-                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+' SMOCDE="'+fixXML(objEleLine.options[objEleLine.selectedIndex].value)+'">';
+                  strXML = strXML+'<PSCLCO LINCDE="'+fixXML(objLcoAry[j].lincde)+'" LCOCDE="'+fixXML(objLcoAry[j].lcocde)+'" SMOCDE="'+fixXML(objEleLine.options[objEleLine.selectedIndex].value)+'">';
                   objShfAry = cobjWeekSmod[objEleLine.options[objEleLine.selectedIndex].getAttribute('smoidx')].shfary;
                   for (var k=0;k<objShfAry.length;k++) {
                      objEleShft = document.getElementById('WEKPTYLCONCMOD_'+i+'_'+j+'_'+k);
@@ -1192,7 +1193,7 @@ sub PaintFunction()%>
                         strXML = strXML+'<PSCSHF SHFCDE="'+fixXML(objShfAry[k].shfcde)+'" SHFSTR="'+fixXML(objShfAry[k].shfstr)+'" SHFDUR="'+fixXML(objShfAry[k].shfdur)+'" CMOCDE="'+fixXML(objEleShft.options[objEleShft.selectedIndex].value)+'"/>';
                      }
                   }
-                  strXML = strXML+'<PSCLCO/>';
+                  strXML = strXML+'</PSCLCO>';
                }
             }
             strXML = strXML+'</PSCPTY>';
@@ -1253,6 +1254,10 @@ sub PaintFunction()%>
    ////////////////////
    // Type Functions //
    ////////////////////
+   var cobjTico = new Image();
+   var cobjPico = new Image();
+   cobjTico.src = 'timIcon.png';
+   cobjPico.src = 'prdIcon.png';
    var cstrTypeProd;
    var cstrTypeWeek;
    var cstrTypeCode;
@@ -1260,6 +1265,7 @@ sub PaintFunction()%>
    var cintTypeIndx;
    var cstrTypeType;
    var cstrTypeSind;
+   var cstrTypeTind;
    var cintTypeHsiz = new Array();
    var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
@@ -1274,33 +1280,43 @@ sub PaintFunction()%>
       this.lcocde = '';
       this.lconam = '';
       this.filnam = '';
-      this.wrkind = 'N';
+      this.pntcol = 0;
       this.shfary = new Array();
       this.actary = new Array();
    }
    function clsTypeShft() {
       this.shfcde = '';
       this.shfnam = '';
+      this.shfdte = '';
       this.shfstr = '';
       this.shfdur = '';
       this.cmocde = '';
+      this.winflg = '';
       this.barstr = 0;
       this.barend = 0;
+      this.winidx = -1;
+      this.windur = 0;
+      this.winend = 0;
+      this.winary = new Array();
+      this.pntary = new Array();
+   }
+   function clsTypePant(intRowIdx,intColIdx,intBarIdx) {
+      this.pntrow = intRowIdx;
+      this.pntcol = intColIdx;
+      this.pntbar = intBarIdx;
    }
    function clsTypeActv() {
       this.actcde = '';
       this.acttxt = '';
       this.acttyp = '';
-      this.actinw = '';
-      this.acttiw = '';
+      this.actusd = '0';
       this.strdte = '';
       this.strtim = '';
       this.enddte = '';
       this.endtim = '';
       this.durmin = 0;
-      this.durbar = 0;
-      this.strbar = 0;
-      this.endbar = 0;
+      this.barstr = 0;
+      this.barend = 0;
       this.matcde = '';
       this.mattxt = '';
    }
@@ -1309,6 +1325,7 @@ sub PaintFunction()%>
       cobjTypeCell = null;
       cintTypeIndx = -1;
       cstrTypeType = '*NONE';
+      cstrTypeTind = '0';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -1355,35 +1372,46 @@ sub PaintFunction()%>
                objArray[objArray.length-1].smoseq = objElements[i].getAttribute('SMOSEQ');
                objArray[objArray.length-1].shfcde = objElements[i].getAttribute('SHFCDE');
                objArray[objArray.length-1].shfnam = objElements[i].getAttribute('SHFNAM');
+               objArray[objArray.length-1].shfdte = objElements[i].getAttribute('SHFDTE');
                objArray[objArray.length-1].shfstr = objElements[i].getAttribute('SHFSTR');
                objArray[objArray.length-1].shfdur = objElements[i].getAttribute('SHFDUR');
                objArray[objArray.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
+               objArray[objArray.length-1].winflg = objElements[i].getAttribute('WINFLG');
+               objArray[objArray.length-1].barstr = objElements[i].getAttribute('STRBAR');
+               objArray[objArray.length-1].barend = objElements[i].getAttribute('ENDBAR');
             }
          }
          doTypePaint();
+         document.getElementById('datTypePreq').style.display = 'block';
+         doTypePreqPaint();
+         document.getElementById('datTypePreq').style.display = 'none';
       }
    }
    function doTypePaint() {
-      var objShift;
+      var objShfAry;
       var objTable;
       var objRow;
       var objCell;
       var strTime;
+      var intWinIdx;
       var intBarCnt;
       var intWrkCnt;
       var intPntCnt;
       var bolStrDay;
 
       for (var i=0;i<cobjTypeLine.length;i++) {
-         objShift = cobjTypeLine[i].shfary;
-         for (var j=0;j<objShift.length;j++) {
-            intBarCnt = (objShift[j].shfdur / 60) * 4;
-            if (j == 0) {
-               objShift[j].barstr = ((Math.floor(objShift[j].shfstr / 100) + ((objShift[j].shfstr % 100) / 60)) * 4) + 1;
-               objShift[j].barend = objShift[j].barstr + intBarCnt - 1;
-            } else {
-               objShift[j].barstr = objShift[j-1].barend + 1;
-               objShift[j].barend = objShift[j].barstr + intBarCnt - 1;
+         intWinIdx = -1;
+         objShfAry = cobjTypeLine[i].shfary;
+         for (var j=0;j<objShfAry.length;j++) {
+            if (objShfAry[j].winflg == '1') {
+               objShfAry[j].winidx = j;
+               intWinIdx = j;
+               objShfAry[intWinIdx].windur = objShfAry[j].shfdur;
+               objShfAry[intWinIdx].winend = objShfAry[j].barend;
+            } else if (objShfAry[j].winflg == '2') {
+               objShfAry[j].winidx = intWinIdx;
+               objShfAry[intWinIdx].windur = objShfAry[intWinIdx].windur + objShfAry[j].shfdur;
+               objShfAry[intWinIdx].winend = objShfAry[j].barend;
             }
          }
       }
@@ -1467,6 +1495,7 @@ sub PaintFunction()%>
          } else {
             objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
          }
+         cobjTypeLine[i].pntcol = objCell.cellIndex;
 
       }
 
@@ -1486,7 +1515,6 @@ sub PaintFunction()%>
       objCell.innerHTML = '&nbsp;';
 
       intWrkCnt = 0;
-      intPntCnt = objTypHead.rows(0).cells.length - 1;
       for (var i=0;i<cobjTypeDate.length;i++) {
 
          bolStrDay = true;
@@ -1522,19 +1550,19 @@ sub PaintFunction()%>
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode(cobjTypeDate[i].daycde));
             bolStrDay = false;
-            doTypePaintTime(objRow, strTime, '00', intWrkCnt, intPntCnt);
+            doTypePaintTime(objRow, strTime, '00', intWrkCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '15', intWrkCnt, intPntCnt);
+            doTypePaintTime(objRow, strTime, '15', intWrkCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '30', intWrkCnt, intPntCnt);
+            doTypePaintTime(objRow, strTime, '30', intWrkCnt);
 
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
-            doTypePaintTime(objRow, strTime, '45', intWrkCnt, intPntCnt);
+            doTypePaintTime(objRow, strTime, '45', intWrkCnt);
 
          }
 
@@ -1559,25 +1587,29 @@ sub PaintFunction()%>
 
    }
 
-   function doTypePaintTime(objRow, strTime, strMins, intWrkCnt, intPntCnt) {
+   function doTypePaintTime(objRow, strTime, strMins, intWrkCnt) {
 
-      var objShift;
+      var objShfAry;
+      var objShfObj;
       var objCell;
       var objTable;
+      var objTabRow;
+      var objTabCell;
+      var objTabDiv;
+      var intLinIdx;
+      var intShfIdx;
       var strWrkInd;
       var intWrkStr;
       var intWrkEnd;
       var strWrkNam;
-      var intPntIdx;
-      var intPntOff;
-      var objPntAry = new Array(intPntCnt);
-      intPntOff = 0;
-      if (strMins != '00') {
-         intPntOff++;
+      var intWinIdx;
+      var intRowIdx = intWrkCnt - 1;
+      var intColIdx = -1;
+      if (strMins == '00') {
+         intColIdx++;
       }
 
-      objRow.setAttribute('rowtim',strTime+':'+strMins);
-
+      intColIdx++;
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
@@ -1598,17 +1630,22 @@ sub PaintFunction()%>
 
       for (var k=0;k<cobjTypeLine.length;k++) {
 
+         intLinIdx = k;
+         intShfIdx = -1;
+         intWinIdx = -1;
          strWrkInd = 'N';
-
-         objShift = cobjTypeLine[k].shfary;
-         for (var w=0;w<objShift.length;w++) {
-            if (objShift[w].cmocde != '*NONE' && (intWrkCnt >= objShift[w].barstr && intWrkCnt <= objShift[w].barend)) {
+         objShfAry = cobjTypeLine[k].shfary;
+         for (var w=0;w<objShfAry.length;w++) {
+            if (objShfAry[w].cmocde != '*NONE' && (intWrkCnt >= objShfAry[w].barstr && intWrkCnt <= objShfAry[w].barend)) {
+               intShfIdx = w;
+               objShfObj = objShfAry[w];
+               intWinIdx = objShfObj.winidx;
                strWrkInd = 'X';
-               if (intWrkCnt == objShift[w].barstr) {
+               if (intWrkCnt == objShfObj.barstr) {
                   strWrkInd = 'S';
-                  intWrkStr = objShift[w].barstr;
-                  intWrkEnd = objShift[w].barend;
-                  strWrkNam = '('+objShift[w].shfcde+') '+objShift[w].shfnam;
+                  intWrkStr = objShfObj.barstr;
+                  intWrkEnd = objShfObj.barend;
+                  strWrkNam = '('+objShfObj.shfcde+') '+objShfObj.shfnam;
                }
                break;
             }
@@ -1616,8 +1653,7 @@ sub PaintFunction()%>
 
          if (strWrkInd == 'N') {
 
-            objRow.setAttribute('inpind','N');
-
+            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1630,6 +1666,7 @@ sub PaintFunction()%>
             objCell.style.paddingRight = '2px';
             objCell.style.whiteSpace = 'nowrap';
 
+            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1643,10 +1680,9 @@ sub PaintFunction()%>
 
          } else {
 
-            objRow.setAttribute('inpind','Y');
-
             if (strWrkInd == 'S') {
 
+               intColIdx++;
                objCell = objRow.insertCell(-1);
                objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
                objCell.colSpan = 1;
@@ -1677,15 +1713,9 @@ sub PaintFunction()%>
                objDiv.title = strWrkNam;
                objCell.appendChild(objDiv);
 
-            } else {
-
-               intPntOff++;
-
             }
 
-            intPntIdx = 2 + (k * 2) + 1;
-            objPntAry[intPntIdx] = intPntOff;
-
+            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1697,11 +1727,15 @@ sub PaintFunction()%>
             objCell.style.padding = '0px';
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
-            objCell.setAttribute('linidx',k);
-            objCell.setAttribute('pntidx',intPntIdx);
+            objCell.setAttribute('linidx',intLinIdx);
+            objCell.setAttribute('shfidx',intShfIdx);
+            objCell.setAttribute('winidx',intWinIdx);
+            objCell.setAttribute('baridx',intWrkCnt);
+
+            objShfObj.pntary[objShfObj.pntary.length] = new clsTypePant(intRowIdx,intColIdx,intWrkCnt);
 
             objTable = document.createElement('table');
-            objTable.id = 'TYPACT_'+intWrkCnt+'_'+k+'_'+strMins;
+            objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
             objTable.align = 'left';
             objTable.vAlign = 'center';
             objTable.style.fontSize = '8pt';
@@ -1709,63 +1743,276 @@ sub PaintFunction()%>
             objTable.style.backgroundColor = 'transparent';
             objTable.style.color = '#000000';
             objTable.style.border = 'transparent 2px solid';
-            objTable.cellSpacing = '2px';
             objTable.style.padding = '2px';
+            objTable.style.height = '100%';
+            objTable.cellSpacing = '2px';
             objCell.appendChild(objTable);
 
-            if (strWrkInd == 'S' && cobjTypeLine[k].wrkind == 'N') {
-               var objWrkRow = objTable.insertRow(-1);
-               var objWrkCell = objWrkRow.insertCell(-1);
-               objWrkCell.colSpan = 1;
-               objWrkCell.align = 'left';
-               objWrkCell.vAlign = 'center';
-               objWrkCell.style.cursor = 'pointer';
-               objWrkCell.style.fontSize = '10pt';
-               objWrkCell.style.fontWeight = 'bold';
-               objWrkCell.style.backgroundColor = '#ffffe0';
-               objWrkCell.style.color = '#000000';
-               objWrkCell.style.border = '#c7c7c7 1px solid';
-               objWrkCell.style.paddingLeft = '4px';
-               objWrkCell.style.paddingRight = '4px';
-               objWrkCell.style.whiteSpace = 'nowrap';
-               objWrkCell.onclick = function() {doTypeSelect(this);};
-               objWrkCell.appendChild(document.createTextNode('+'));
-               objWrkCell.setAttribute('delind','N');
-               objWrkCell.setAttribute('actidx','S');
+            if (strWrkInd == 'S' && objShfObj.winflg == '1') {
+
+               objTabRow = objTable.insertRow(-1);
+               objTabCell = objTabRow.insertCell(-1);
+               objTabCell.colSpan = 1;
+               objTabCell.align = 'left';
+               objTabCell.vAlign = 'top';
+               objTabCell.style.fontSize = '8pt';
+               objTabCell.style.fontWeight = 'normal';
+               objTabCell.style.backgroundColor = 'transparent';
+               objTabCell.style.color = '#000000';
+               objTabCell.style.border = 'none';
+               objTabCell.style.padding = '0px';
+               objTabCell.style.whiteSpace = 'nowrap';
+
+               objTabDiv = document.createElement('div');
+               objTabDiv.align = 'left';
+               objTabDiv.vAlign = 'top';
+               objTabDiv.style.cursor = 'pointer';
+               objTabDiv.style.fontSize = '10pt';
+               objTabDiv.style.fontWeight = 'bold';
+               objTabDiv.style.backgroundColor = '#ffd9ff';
+               objTabDiv.style.color = '#000000';
+               objTabDiv.style.border = '#c7c7c7 1px solid';
+               objTabDiv.style.paddingLeft = '4px';
+               objTabDiv.style.paddingRight = '4px';
+               objTabDiv.style.whiteSpace = 'nowrap';
+               objTabDiv.style.width = '1%';
+               objTabDiv.setAttribute('delind','N');
+               objTabDiv.setAttribute('acttyp','+');
+               objTabDiv.setAttribute('actidx',0);
+               objTabDiv.onclick = function() {doTypeSelect(this);};
+               objTabDiv.appendChild(document.createTextNode('+'));
+               objTabCell.appendChild(objTabDiv);
+
             }
 
          }
 
-         cobjTypeLine[k].wrkind = strWrkInd;
-
       }
-
-      objRow.setAttribute('pntary',objPntAry);
 
    }
 
-   function doTypePaintSize(intPntIdx, intColWid) {
 
+   function doTypeRepaint(intLinIdx, intWinIdx) {
+
+      //
+      // definitions
+      //
+      var objTypBody = document.getElementById('tabBodyType');
+      var objActAry = cobjTypeLine[intLinIdx].actary;
+      var objShfAry = cobjTypeLine[intLinIdx].shfary;
+      var objWinAry = objShfAry[intWinIdx].winary;
+      var intShfIdx;
+      var objPntAry;
+      var objTable;
+      var objRow;
+      var objCell;
+      var objDiv;
+      var objImg;
+      var objWork;
+
+      //
+      // delete the existing paint activity rows for the shift window
+      //
+      for (var i=0;i<objShfAry.length;i++) {
+         if (objShfAry[i].winidx == intWinIdx) {
+            objPntAry = objShfAry[i].pntary;
+            for (var j=0;j<objPntAry.length;j++) {
+               objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objPntAry[j].pntbar);
+               for (var k=objTable.rows.length-1;k>=0;k--) {
+                  objTable.deleteRow(k);
+               }
+            }
+         }
+      }
+
+      //
+      // paint the activities for the shift window
+      //
+      intShfIdx = intWinIdx;
+      objPntAry = objShfAry[intShfIdx].pntary;
+      objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objPntAry[0].pntbar);
+      objRow = objTable.insertRow(-1);
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'left';
+      objCell.vAlign = 'top';
+      objCell.style.fontSize = '8pt';
+      objCell.style.fontWeight = 'normal';
+      objCell.style.backgroundColor = 'transparent';
+      objCell.style.color = '#000000';
+      objCell.style.border = 'none';
+      objCell.style.padding = '0px';
+      objCell.style.whiteSpace = 'nowrap';
+      objDiv = document.createElement('div');
+      objDiv.align = 'left';
+      objDiv.vAlign = 'top';
+      objDiv.style.cursor = 'pointer';
+      objDiv.style.fontSize = '10pt';
+      objDiv.style.fontWeight = 'bold';
+      objDiv.style.backgroundColor = '#ffd9ff';
+      objDiv.style.color = '#000000';
+      objDiv.style.border = '#c7c7c7 1px solid';
+      objDiv.style.paddingLeft = '4px';
+      objDiv.style.paddingRight = '4px';
+      objDiv.style.whiteSpace = 'nowrap';
+      objDiv.style.width = '1%';
+      objDiv.setAttribute('delind','N');
+      objDiv.setAttribute('acttyp','+');
+      objDiv.setAttribute('actidx',0);
+      objDiv.onclick = function() {doTypeSelect(this);};
+      objDiv.appendChild(document.createTextNode('+'));
+      objCell.appendChild(objDiv);
+
+var xxxWork = 29;
+
+      for (var i=0;i<objWinAry.length;i++) {
+         objWork = objActAry[objWinAry[i]];
+         objWork.barstr = xxxWork;
+         xxxWork = xxxWork + 9;
+         objWork.barend = xxxWork;
+         for (var j=objWork.barstr;j<=objWork.barend;j++) {
+            objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+j);
+            objRow = objTable.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            if (j == objWork.barstr) {
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'top';
+               objCell.style.fontSize = '8pt';
+               objCell.style.fontWeight = 'normal';
+               objCell.style.backgroundColor = 'transparent';
+               objCell.style.color = '#000000';
+               objCell.style.border = 'none';
+               objCell.style.padding = '0px';
+               objCell.style.height = '100%';
+               objCell.style.whiteSpace = 'nowrap';
+               objDiv = document.createElement('div');
+               objDiv.align = 'left';
+               objDiv.vAlign = 'top';
+               objDiv.style.fontSize = '8pt';
+               objDiv.style.fontWeight = 'normal';
+               if (objWork.acttyp == 'T') {
+                  objDiv.style.backgroundColor = '#dddfff';
+               } else {
+                  objDiv.style.backgroundColor = '#ffffe0';
+               }
+               objDiv.style.color = '#000000';
+               objDiv.style.border = '#c7c7c7 1px solid';
+               objDiv.style.whiteSpace = 'nowrap';
+               objDiv.style.width = '1%';
+               objDiv.style.height = '100%';
+               objDiv.style.cursor = 'pointer';
+               objDiv.style.padding = '2px';
+               objDiv.onclick = function() {doTypeSelect(this);};
+               objDiv.setAttribute('delind','Y');
+               objDiv.setAttribute('acttyp',objWork.acttyp);
+               objDiv.setAttribute('actidx',i);
+               objDiv.appendChild(document.createTextNode(objWork.acttxt));
+               objDiv.appendChild(document.createElement('br'));
+               if (objWork.acttyp == 'T') {
+                  objDiv.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
+               } else {
+                  objDiv.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
+                  objDiv.appendChild(document.createElement('br'));
+                  objDiv.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
+                  objDiv.appendChild(document.createElement('br'));
+                  objDiv.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
+               }
+               objCell.appendChild(objDiv);
+            } else if (j == objWork.barend) {
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'top';
+               objCell.style.fontSize = '8pt';
+               objCell.style.fontWeight = 'normal';
+               objCell.style.backgroundColor = 'transparent';
+               objCell.style.color = '#000000';
+               objCell.style.border = 'none';
+               objCell.style.padding = '0px';
+               objCell.style.whiteSpace = 'nowrap';
+               objImg = document.createElement('img');
+               if (objWork.acttyp == 'T') {
+                  objImg.src = cobjTico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '15px';
+               } else {
+                  objImg.src = cobjPico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '23px';
+               }
+               objImg.align = 'absmiddle';
+               objCell.appendChild(objImg);
+               objCell.appendChild(document.createTextNode(' '));
+               objDiv = document.createElement('div');
+               objDiv.align = 'left';
+               objDiv.vAlign = 'top';
+               objDiv.style.display = 'inline';
+               objDiv.style.fontSize = '8pt';
+               objDiv.style.fontWeight = 'normal';
+               if (objWork.acttyp == 'T') {
+                  objDiv.style.backgroundColor = '#dddfff';
+               } else {
+                  objDiv.style.backgroundColor = '#ffffe0';
+               }
+               objDiv.style.color = '#000000';
+               objDiv.style.border = '#c7c7c7 1px solid';
+               objDiv.style.whiteSpace = 'nowrap';
+               objDiv.style.width = '1%';
+               objDiv.style.padding = '2px';
+
+               objDiv.appendChild(document.createTextNode('End (10:30) '+objWork.acttxt));
+               objCell.appendChild(objDiv);
+            } else {
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'top';
+               objCell.style.fontSize = '8pt';
+               objCell.style.fontWeight = 'normal';
+               objCell.style.backgroundColor = 'transparent';
+               objCell.style.color = '#000000';
+               objCell.style.border = 'none';
+               objCell.style.padding = '0px';
+               objCell.style.whiteSpace = 'nowrap';
+               objImg = document.createElement('img');
+               if (objWork.acttyp == 'T') {
+                  objImg.src = cobjTico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '15px';
+               } else {
+                  objImg.src = cobjPico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '23px';
+               }
+               objImg.align = 'absmiddle';
+               objCell.appendChild(objImg);
+            }
+         }
+      }
+
+      //
+      // resize the line column
+      //
+      doTypeReSize(intLinIdx);
+
+   }
+
+   function doTypeReSize(intLinIdx) {
       var objTypHead = document.getElementById('tabHeadType');
       var objTypBody = document.getElementById('tabBodyType');
-      if (intColWid == -1) {
-         cintTypeBsiz[intPntIdx] = 0;
-         var objArry;
-         var intIndx;
-         var intWork;
-         for (var i=0;i<objTypBody.rows.length;i++) {
-            if (objTypBody.rows(i).getAttribute('inpind') == 'Y') {
-               objArry = objTypBody.rows(i).getAttribute('pntary');
-               intIndx = intPntIdx - objArry[intPntIdx];
-               intWork = objTypBody.rows(i).cells[intIndx].childNodes[0].offsetWidth;
+      var intPntIdx = cobjTypeLine[intLinIdx].pntcol;
+      var objShfAry = cobjTypeLine[intLinIdx].shfary;
+      var objPntAry;
+      var intWork;
+      cintTypeBsiz[intPntIdx] = 0;
+      for (var i=0;i<objShfAry.length;i++) {
+         if (objShfAry[i].cmocde != '*NONE') {
+            objPntAry = objShfAry[i].pntary;
+            for (var j=0;j<objPntAry.length;j++) {
+               intWork = objTypBody.rows(objPntAry[j].pntrow).cells[objPntAry[j].pntcol].childNodes[0].offsetWidth;
                if (intWork > cintTypeBsiz[intPntIdx]) {
                   cintTypeBsiz[intPntIdx] = intWork;
                }
             }
-         }
-      } else {
-         if (intColWid > cintTypeBsiz[intPntIdx]) {
-            cintTypeBsiz[intPntIdx] = intColWid;
          }
       }
       if (cintTypeHsiz[intPntIdx] > cintTypeBsiz[intPntIdx]) {
@@ -1775,15 +2022,26 @@ sub PaintFunction()%>
          objTypHead.rows(0).cells[intPntIdx].style.width = cintTypeBsiz[intPntIdx];
          objTypBody.rows(0).cells[intPntIdx].style.width = cintTypeBsiz[intPntIdx];
       }
-
    }
 
    function doTypeSelect(objSelect) {
       if (cobjTypeCell != null) {
-         cobjTypeCell.style.backgroundColor = '#ffffe0';
+         if (cobjTypeCell.getAttribute('acttyp') == '+') {
+            cobjTypeCell.style.backgroundColor = '#ffd9ff';
+         } else if (cobjTypeCell.getAttribute('acttyp') == 'T') {
+            cobjTypeCell.style.backgroundColor = '#dddfff';
+         } else {
+            cobjTypeCell.style.backgroundColor = '#ffffe0';
+         }
       }
       cobjTypeCell = objSelect;
-      cobjTypeCell.style.backgroundColor = '#ffff80';
+      if (cobjTypeCell.getAttribute('acttyp') == '+') {
+         cobjTypeCell.style.backgroundColor = '#fe9fff';
+      } else if (cobjTypeCell.getAttribute('acttyp') == 'T') {
+         cobjTypeCell.style.backgroundColor = '#c0c0ff';
+      } else {
+         cobjTypeCell.style.backgroundColor = '#ffff80';
+      }
    }
 
    function doTypeBack() {
@@ -1801,9 +2059,6 @@ sub PaintFunction()%>
    }
 
 
-
-
-
    function doTypeActvDelete() {
 
       if (cobjTypeCell == null) {
@@ -1814,19 +2069,39 @@ sub PaintFunction()%>
       }
       if (!processForm()) {return;}
 
-            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
-            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
-            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
-            objTable.deleteRow(intRowIdx);
-            doTypePaintSize(intPntIdx, -1);
-            cobjTypeCell = null;
+         var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
+         var intLinIdx = objTime.getAttribute('linidx');
+         var intWinIdx = objTime.getAttribute('winidx');
+         var intActIdx = cobjTypeCell.getAttribute('actidx');
+         var objActAry = cobjTypeLine[intLinIdx].actary;
+         var objWinAry = cobjTypeLine[intLinIdx].shfary[intWinIdx].winary;
+         var objTable = cobjTypeCell.parentNode.parentNode.parentNode.parentNode;
+         var intRowIdx = cobjTypeCell.parentNode.parentNode.rowIndex;
+         objTable.deleteRow(intRowIdx);
+         cobjTypeCell = null;
+
+         var objWork = objActAry[objWinAry[intActIdx]];
+         objWork.actusd = '0';
+         objWork.strdte = '';
+         objWork.strtim = '';
+         objWork.enddte = '';
+         objWork.endtim = '';
+         objWork.durmin = 138;
+         objWork.barstr = 0;
+         objWork.barend = 0;
+         objWork.matcde = '';
+         objWork.mattxt = '';
+         objWinAry.splice(intActIdx,1);
+
+         //
+         // repaint the line shift window
+         //
+         doTypeRepaint(intLinIdx, intWinIdx);
+
 
       return;
 
 
-
-/////// delete 1 array element at index ==>  array.splice(index,1)
-/////// add 1 array element at index ==>  array.splice(index,0,element)
 
       if (cobTypeCell == null) {
          return;
@@ -1889,59 +2164,34 @@ sub PaintFunction()%>
       }
       if (!processForm()) {return;}
 
-         var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode;
+         var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
          var intLinIdx = objTime.getAttribute('linidx');
-         var intPntIdx = objTime.getAttribute('pntidx');
+         var intWinIdx = objTime.getAttribute('winidx');
          var intActIdx = cobjTypeCell.getAttribute('actidx');
-         var objTypeLine = cobjTypeLine[intLinIdx];
-         var objTypeActv = cobjTypeLine[intLinIdx].actary;
+         var objActAry = cobjTypeLine[intLinIdx].actary;
+         var objWinAry = cobjTypeLine[intLinIdx].shfary[intWinIdx].winary;
 
-         var objNewActv = new clsTypeActv();
-         objNewActv.actcde = '111';
-         objNewActv.acttxt = 'STARTUP - Startup time';
-         objNewActv.acttyp = '*TIME';
-         objNewActv.actinw = '';
-         objNewActv.acttiw = '';
-         objNewActv.strdte = '';
-         objNewActv.strtim = '';
-         objNewActv.enddte = '';
-         objNewActv.endtim = '';
-         objNewActv.durmin = 30;
-         objNewActv.durbar = 0;
-         objNewActv.strbar = 0;
-         objNewActv.endbar = 0;
-         objNewActv.matcde = '';
-         objNewActv.mattxt = '';
-         objTypeActv.splice(intActIdx+1,0,objNewActv)
+         var objWork = new clsTypeActv();
+         objWork.actcde = '111';
+         objWork.acttxt = 'Time activity';
+         objWork.acttyp = 'T';
+         objWork.actusd = '1';
+         objWork.strdte = '';
+         objWork.strtim = '';
+         objWork.enddte = '';
+         objWork.endtim = '';
+         objWork.durmin = 138;
+         objWork.barstr = 0;
+         objWork.barend = 0;
+         objWork.matcde = '';
+         objWork.mattxt = '';
+         objActAry[objActAry.length] = objWork;
+         objWinAry.splice(intActIdx+1,0,objActAry.length-1);
 
-            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
-            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
-          //  var intPntIdx = objTable.parentNode.getAttribute('pntidx');
-            var objRow = objTable.insertRow(intRowIdx + 1);
-            var objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'left';
-            objCell.vAlign = 'center';
-            objCell.style.cursor = 'pointer';
-            objCell.style.fontSize = '8pt';
-            objCell.style.fontWeight = 'normal';
-            objCell.style.backgroundColor = '#ffffe0';
-            objCell.style.color = '#000000';
-            objCell.style.border = '#c7c7c7 1px solid';
-            objCell.style.padding = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.onclick = function() {doTypeSelect(this);};
-            objCell.setAttribute('delind','Y');
-            objCell.setAttribute('actidx','08:15');
-            objCell.appendChild(document.createTextNode('Event descriptive text - MATERIAL CHANGE'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
-
-            doTypePaintSize(intPntIdx, objTable.offsetWidth);
-
-
-
-
+         //
+         // repaint the line shift window
+         //
+         doTypeRepaint(intLinIdx, intWinIdx);
 
 
       return;
@@ -1956,33 +2206,34 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
 
 
-            var objTable = cobjTypeCell.parentNode.parentNode.parentNode;
-            var intRowIdx = cobjTypeCell.parentNode.rowIndex;
-            var intPntIdx = objTable.parentNode.getAttribute('pntidx');
-            var objRow = objTable.insertRow(intRowIdx + 1);
-            var objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'left';
-            objCell.vAlign = 'center';
-            objCell.style.cursor = 'pointer';
-            objCell.style.fontSize = '8pt';
-            objCell.style.fontWeight = 'normal';
-            objCell.style.backgroundColor = '#ffffe0';
-            objCell.style.color = '#000000';
-            objCell.style.border = '#c7c7c7 1px solid';
-            objCell.style.padding = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.onclick = function() {doTypeSelect(this);};
-            objCell.setAttribute('delind','Y');
-            objCell.appendChild(document.createTextNode('Filling activity descriptive text'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
-            objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
+         var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
+         var intLinIdx = objTime.getAttribute('linidx');
+         var intWinIdx = objTime.getAttribute('winidx');
+         var intActIdx = cobjTypeCell.getAttribute('actidx');
+         var objActAry = cobjTypeLine[intLinIdx].actary;
+         var objWinAry = cobjTypeLine[intLinIdx].shfary[intWinIdx].winary;
 
-            doTypePaintSize(intPntIdx, objTable.offsetWidth);
+         var objWork = new clsTypeActv();
+         objWork.actcde = '111';
+         objWork.acttxt = 'Filling activity descriptive text';
+         objWork.acttyp = 'P';
+         objWork.actusd = '1';
+         objWork.strdte = '';
+         objWork.strtim = '';
+         objWork.enddte = '';
+         objWork.endtim = '';
+         objWork.durmin = 138;
+         objWork.barstr = 0;
+         objWork.barend = 0;
+         objWork.matcde = '';
+         objWork.mattxt = '';
+         objActAry[objActAry.length] = objWork;
+         objWinAry.splice(intActIdx+1,0,objActAry.length-1);
+
+         //
+         // repaint the line shift window
+         //
+         doTypeRepaint(intLinIdx, intWinIdx);
 
       return;
       doActivityStart(document.body);
@@ -1998,6 +2249,138 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestFormAdd();',10);
    }
+
+   function doTypeToggle() {
+      if (cstrTypeTind == '0') {
+         cstrTypeTind = '1';
+         document.getElementById('datTypeTime').style.height = '50%';
+         document.getElementById('datTypePreq').style.display = 'block';
+      } else {
+         cstrTypeTind = '0';
+         document.getElementById('datTypeTime').style.height = '100%';
+         document.getElementById('datTypePreq').style.display = 'none';
+      }
+   }
+
+
+
+   function doTypePreqPaint() {
+
+      var objRow;
+      var objCell;
+
+
+    //  cintTypeHsiz.length = 0;
+    //  cintTypeBsiz.length = 0;
+      var objTypHead = document.getElementById('tabHeadPreq');
+      var objTypBody = document.getElementById('tabBodyPreq');
+      objTypHead.style.tableLayout = 'auto';
+      objTypBody.style.tableLayout = 'auto';
+      for (var i=objTypHead.rows.length-1;i>=0;i--) {
+         objTypHead.deleteRow(i);
+      }
+      for (var i=objTypBody.rows.length-1;i>=0;i--) {
+         objTypBody.deleteRow(i);
+      }
+
+      objRow = objTypHead.insertRow(-1);
+
+      for (var i=0;i<cobjTypeLine.length;i++) {
+
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.vAlign = 'center';
+         objCell.className = 'clsLabelBB';
+         objCell.style.fontSize = '8pt';
+         objCell.style.fontWeight = 'bold';
+         objCell.style.backgroundColor = '#40414c';
+         objCell.style.color = '#ffffff';
+         objCell.style.border = '#c0c0c0 1px solid';
+         objCell.style.paddingLeft = '2px';
+         objCell.style.paddingRight = '2px';
+         objCell.style.whiteSpace = 'nowrap';
+         if (cobjTypeLine[i].filnam != '' && cobjTypeLine[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam+' - '+cobjTypeLine[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
+         }
+
+      }
+
+      objCell = objRow.insertCell(-1);
+      objCell.colSpan = 1;
+      objCell.align = 'center';
+      objCell.vAlign = 'center';
+      objCell.className = 'clsLabelBB';
+      objCell.style.fontSize = '8pt';
+      objCell.style.backgroundColor = '#40414c';
+      objCell.style.color = '#000000';
+      objCell.style.border = 'none';
+      objCell.style.paddingLeft = '4px';
+      objCell.style.paddingRight = '4px';
+      objCell.style.width = 16;
+      objCell.style.whiteSpace = 'nowrap';
+      objCell.innerHTML = '&nbsp;';
+
+
+      for (var t=0;t<6;t++) {
+
+      objRow = objTypBody.insertRow(-1);
+
+      for (var i=0;i<cobjTypeLine.length;i++) {
+
+            var objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'left';
+            objCell.vAlign = 'center';
+            objCell.style.cursor = 'pointer';
+            objCell.style.fontSize = '8pt';
+            objCell.style.fontWeight = 'normal';
+            objCell.style.backgroundColor = '#ffffe0';
+            objCell.style.color = '#000000';
+            objCell.style.border = '#c7c7c7 1px solid';
+            objCell.style.padding = '2px';
+            objCell.style.whiteSpace = 'nowrap';
+       //     objCell.onclick = function() {doTypeSelect(this);};
+       //     objCell.setAttribute('delind','Y');
+       //     objCell.setAttribute('acttyp','P');
+            objCell.appendChild(document.createTextNode('Production activity descriptive text'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Start (08:15) End (10:30) Duration (2 hrs 15 mins)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('Requested (0) Scheduled(300)'));
+            objCell.appendChild(document.createElement('br'));
+            objCell.appendChild(document.createTextNode('**WARNING** Component (22222222) component description - requirement (1000) inventory (800) shortfall (200)'));
+
+      }
+
+      }
+
+
+
+
+      var objHeadCells = objTypHead.rows(0).cells;
+      var objBodyCells = objTypBody.rows(0).cells;
+      for (i=0;i<objHeadCells.length-1;i++) {
+         if (objHeadCells[i].offsetWidth > objBodyCells[i].offsetWidth) {
+            objBodyCells[i].style.width = objHeadCells[i].offsetWidth;
+            objHeadCells[i].style.width = objHeadCells[i].offsetWidth;
+         } else {
+            objHeadCells[i].style.width = objBodyCells[i].offsetWidth;
+            objBodyCells[i].style.width = objBodyCells[i].offsetWidth;
+         }
+       //  cintTypeHsiz[i] = objHeadCells[i].offsetWidth;
+       //  cintTypeBsiz[i] = objBodyCells[i].offsetWidth;
+      }
+      addScrollSync(document.getElementById('conHeadPreq'),document.getElementById('conBodyPreq'),'horizontal');
+      objTypHead.style.tableLayout = 'fixed';
+      objTypBody.style.tableLayout = 'fixed';
+
+   }
+
+
+
 
    /////////////////////
    // Event Functions //
@@ -2718,17 +3101,17 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddFill();">&nbsp;Add Filling&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddPack();">&nbsp;Add Packing&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddForm();">&nbsp;Add Forming&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddEvnt();">&nbsp;Add Activity&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddFill();">&nbsp;Add Production&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeToggle();">&nbsp;Show/Hide Requirements&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
-      <tr height=100%>
+      <tr id="datTypeTime" height=100%>
          <td align=center colspan=1 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
                <tr>
@@ -2745,6 +3128,42 @@ sub PaintFunction()%>
                      <table class="clsPanel" id="tabBodyType" style="background-color:transparent;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0"></table>
                      </div>
                   </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr id="datTypePreq" style="display:none;visibility:visible" height=50%>
+         <td align=center colspan=1 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+
+               <tr>
+                  <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
+                     <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqAdd();">&nbsp;Add Requirement&nbsp;</a></nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+
+               <tr>
+                  <tr>
+                     <td align=center width=100% colspan=1 nowrap><nobr>
+                        <div id="conHeadPreq" style="width:100%;overflow:hidden;background-color:#40414c;border:#40414c 1px solid;">
+                        <table class="clsPanel" id="tabHeadPreq" style="background-color:#f7f7f7;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0">
+                        </table>
+                        </div>
+                     </nobr></td>
+                  </tr>
+                  <tr height=100%>
+                     <td align=center width=100% colspan=1 nowrap><nobr>
+                        <div id="conBodyPreq" style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
+                        <table class="clsPanel" id="tabBodyPreq" style="background-color:transparent;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="2"></table>
+                        </div>
+                     </nobr></td>
+                  </tr>
                </tr>
             </table>
          </nobr></td>
