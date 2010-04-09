@@ -31,6 +31,7 @@ create or replace package psa_app.psa_psc_function as
    function retrieve_week return psa_xml_type pipelined;
    function retrieve_type return psa_xml_type pipelined;
    procedure update_week(par_user in varchar2);
+   procedure update_type(par_user in varchar2);
    procedure delete_data;
 
 end psa_psc_function;
@@ -1431,6 +1432,717 @@ create or replace package body psa_app.psa_psc_function as
       var_smo_code varchar2(32);
       var_win_code varchar2(32);
       var_day_indx integer;
+      var_sav_date date;
+      var_day_date date;
+      var_wrk_date date;
+      var_bar_numb integer;
+      rcd_psa_psc_week psa_psc_week%rowtype;
+      rcd_psa_psc_date psa_psc_date%rowtype;
+      rcd_psa_psc_prod psa_psc_prod%rowtype;
+      rcd_psa_psc_line psa_psc_line%rowtype;
+      rcd_psa_psc_shft psa_psc_shft%rowtype;
+      rcd_psa_psc_reso psa_psc_reso%rowtype;
+      rcd_psa_psc_actv psa_psc_actv%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_psc_week t01
+          where t01.psw_psc_code = rcd_psa_psc_week.psw_psc_code
+            and t01.psw_psc_week = rcd_psa_psc_week.psw_psc_week
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_reqh is
+         select t01.*
+           from psa_req_header t01
+          where t01.rhe_req_code = rcd_psa_psc_week.psw_req_code;
+      rcd_reqh csr_reqh%rowtype;
+
+      cursor csr_reqd is
+         select t01.*
+           from psa_req_detail t01
+          where t01.rde_req_code = rcd_psa_psc_week.psw_req_code
+            and t01.rde_mat_emsg is null;
+      rcd_reqd csr_reqd%rowtype;
+
+      cursor csr_ptyp is
+         select t01.*
+           from psa_prd_type t01
+          where t01.pty_prd_type = var_pty_code;
+      rcd_ptyp csr_ptyp%rowtype;
+
+      cursor csr_smod is
+         select t01.*
+           from psa_smo_defn t01
+          where t01.smd_smo_code = var_smo_code;
+      rcd_smod csr_smod%rowtype;
+
+      cursor csr_cmod is
+         select t01.*
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_code = var_cmo_code;
+      rcd_cmod csr_cmod%rowtype;
+
+      cursor csr_lcon is
+         select t01.*
+           from psa_lin_config t01
+          where t01.lco_lin_code = var_lin_code
+            and t01.lco_con_code = var_con_code;
+      rcd_lcon csr_lcon%rowtype;
+
+      cursor csr_reso is
+         select t01.*
+           from psa_cmo_resource t01
+          where t01.cmr_cmo_code = rcd_psa_psc_shft.pss_cmo_code
+          order by t01.cmr_res_code asc;
+      rcd_reso csr_reso%rowtype;
+
+      cursor csr_date is
+         select t01.calendar_date as day_date,
+                to_char(t01.calendar_date,'dy') as day_name
+           from mars_date t01
+          where t01.mars_week >= to_number(rcd_psa_psc_week.psw_psc_week)
+          order by t01.calendar_date asc;
+      rcd_date csr_date%rowtype;
+
+      cursor csr_mlin is
+         select t01.*,
+                t02.rrd_rra_units,
+                t03.*
+           from psa_mat_line t01,
+                psa_rra_defn t02,
+                psa_psc_line t03
+          where t01.mli_rra_code = t02.rrd_rra_code
+            and t01.mli_mat_code = rcd_reqd.rde_mat_code
+            and t01.mli_prd_type = var_pty_code
+            and t01.psl_lin_code = var_pty_code
+            and t01.psl_con_code = var_pty_code
+
+            and t03.psl_psc_code = rcd_psa_psc_week.psw_psc_code
+            and t03.psl_psc_week = rcd_psa_psc_week.psw_psc_week
+
+
+
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_mlin is table of csr_mlin%rowtype index by binary_integer;
+      tbl_mlin typ_mlin;
+      type typ_plin is table of csr_plin%rowtype index by binary_integer;
+      tbl_plin typ_plin;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      if var_action != '*UPDWEK' and var_action != '*CRTWEK' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      rcd_psa_psc_week.psw_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      rcd_psa_psc_week.psw_psc_week := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      rcd_psa_psc_week.psw_req_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@REQCDE'));
+      rcd_psa_psc_week.psw_upd_user := upper(par_user);
+      rcd_psa_psc_week.psw_upd_date := sysdate;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the existing production schedule week when required
+      /*-*/
+      if var_action = '*UPDWEK' then
+         var_found := false;
+         begin
+            open csr_retrieve;
+            fetch csr_retrieve into rcd_retrieve;
+            if csr_retrieve%found then
+               var_found := true;
+            end if;
+            close csr_retrieve;
+         exception
+            when others then
+               var_found := true;
+                psa_gen_function.add_mesg_data('Production schedule week ('||rcd_psa_psc_week.psw_psc_code||' / '||rcd_psa_psc_week.psw_psc_week||') is currently locked');
+         end;
+         if var_found = false then
+            psa_gen_function.add_mesg_data('Production schedule week ('||rcd_psa_psc_week.psw_psc_code||' / '||rcd_psa_psc_week.psw_psc_week||') does not exist');
+         end if;
+         if psa_gen_function.get_mesg_count != 0 then
+            rollback;
+            return;
+         end if;
+      end if;
+
+      /*-*/
+      /* Validate the input
+      /*-*/
+      if rcd_psa_psc_week.psw_psc_code is null then
+         psa_gen_function.add_mesg_data('Production schedule code must be supplied');
+      end if;
+      if rcd_psa_psc_week.psw_psc_week is null then
+         psa_gen_function.add_mesg_data('Production schedule week must be supplied');
+      end if;
+      if rcd_psa_psc_week.psw_req_code is null then
+         psa_gen_function.add_mesg_data('Production requirements must be supplied');
+      end if;
+      if rcd_psa_psc_week.psw_upd_user is null then
+         psa_gen_function.add_mesg_data('Update user must be supplied');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the parent relationships
+      /*-*/
+      var_found := false;
+      open csr_reqh;
+      fetch csr_reqh into rcd_reqh;
+      if csr_reqh%found then
+         var_found := true;
+      end if;
+      close csr_reqh;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') does not exist');
+      else
+         if var_action = '*CRTWEK' and rcd_reqh.rhe_req_status != '*LOADED' then
+            psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') must be status *LOADED to create a production schedule week');
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the child relationships
+      /*-*/
+      obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/PSCPTY');
+      for idx in 0..xmlDom.getLength(obj_pty_list)-1 loop
+         obj_pty_node := xmlDom.item(obj_pty_list,idx);
+         var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
+         var_found := false;
+         open csr_ptyp;
+         fetch csr_ptyp into rcd_ptyp;
+         if csr_ptyp%found then
+            var_found := true;
+         end if;
+         close csr_ptyp;
+         if var_found = false then
+            psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') does not exist');
+         else
+            if var_action = '*CRTWEK' and rcd_ptyp.pty_prd_status != '1' then
+               psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') must be status active to create a production schedule week');
+            end if;
+         end if;
+         obj_lco_list := xslProcessor.selectNodes(obj_pty_node,'PSCLCO');
+         for idy in 0..xmlDom.getLength(obj_lco_list)-1 loop
+            obj_lco_node := xmlDom.item(obj_lco_list,idy);
+            var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LINCDE')));
+            var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LCOCDE')));
+            var_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@SMOCDE')));
+            var_found := false;
+            open csr_lcon;
+            fetch csr_lcon into rcd_lcon;
+            if csr_lcon%found then
+               var_found := true;
+            end if;
+            close csr_lcon;
+            if var_found = false then
+               psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') does not exist');
+            else
+               if var_action = '*CRTWEK' and rcd_lcon.lco_con_status != '1' then
+                  psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') must be status active to create a production schedule week');
+               end if;
+            end if;
+            open csr_smod;
+            fetch csr_smod into rcd_smod;
+            if csr_smod%found then
+               var_found := true;
+            end if;
+            close csr_smod;
+            if var_found = false then
+               psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') does not exist');
+            else
+               if var_action = '*CRTWEK' and rcd_smod.smd_smo_status != '1' then
+                  psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') must be status active to create a production schedule week');
+               end if;
+            end if;
+            obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
+            for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
+               obj_shf_node := xmlDom.item(obj_shf_list,idz);
+               var_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
+               var_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
+               if var_cmo_code != '*NONE' then
+                  var_found := false;
+                  open csr_cmod;
+                  fetch csr_cmod into rcd_cmod;
+                  if csr_cmod%found then
+                     var_found := true;
+                  end if;
+                  close csr_cmod;
+                  if var_found = false then
+                     psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') does not exist');
+                  else
+                     if var_action = '*CRTWEK' and rcd_cmod.cmd_cmo_status != '1' then
+                        psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active to create a production schedule week');
+                     end if;
+                  end if;
+               end if;
+            end loop;
+         end loop;
+      end loop;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Process the production schedule definition
+      /*-*/
+      if var_action = '*UPDWEK' then
+         var_confirm := 'updated';
+         update psa_psc_week
+            set psw_req_code = rcd_psa_psc_week.psw_req_code,
+                psw_upd_user = rcd_psa_psc_week.psw_upd_user,
+                psw_upd_date = rcd_psa_psc_week.psw_upd_date
+          where psw_psc_code = rcd_psa_psc_week.psw_psc_code
+            and psw_psc_code = rcd_psa_psc_week.psw_psc_code;
+         delete from psa_psc_date where psd_psc_code = rcd_psa_psc_week.psw_psc_code and psd_psc_week = rcd_psa_psc_week.psw_psc_week;
+         delete from psa_psc_line where psl_psc_code = rcd_psa_psc_week.psw_psc_code and psl_psc_week = rcd_psa_psc_week.psw_psc_week;
+         delete from psa_psc_reso where psr_psc_code = rcd_psa_psc_week.psw_psc_code and psr_psc_week = rcd_psa_psc_week.psw_psc_week;
+         delete from psa_psc_shft where pss_psc_code = rcd_psa_psc_week.psw_psc_code and pss_psc_week = rcd_psa_psc_week.psw_psc_week;
+         delete from psa_psc_prod where psp_psc_code = rcd_psa_psc_week.psw_psc_code and psp_psc_week = rcd_psa_psc_week.psw_psc_week;
+      elsif var_action = '*CRTWEK' then
+         var_confirm := 'created';
+         begin
+            insert into psa_psc_week values rcd_psa_psc_week;
+         exception
+            when dup_val_on_index then
+               psa_gen_function.add_mesg_data('Production schedule code ('||rcd_psa_psc_week.psw_psc_code||' / '||rcd_psa_psc_week.psw_psc_week||') already exists - unable to create');
+               rollback;
+               return;
+         end;
+      end if;
+
+      /*-*/
+      /* Retrieve and insert the production date data
+      /*-*/
+      var_day_indx := 0;
+      var_sav_date := null;
+      var_day_date := null;
+      var_wrk_date := null;
+      open csr_date;
+      loop
+         fetch csr_date into rcd_date;
+         if csr_date%notfound then
+            exit;
+         end if;
+         if var_day_indx >= 8 then
+            exit;
+         end if;
+         var_day_indx := var_day_indx + 1;
+         rcd_psa_psc_date.psd_psc_code := rcd_psa_psc_week.psw_psc_code;
+         rcd_psa_psc_date.psd_psc_week := rcd_psa_psc_week.psw_psc_week;
+         rcd_psa_psc_date.psd_day_date := trunc(rcd_date.day_date);
+         rcd_psa_psc_date.psd_day_name := rcd_date.day_name;
+         insert into psa_psc_date values rcd_psa_psc_date;
+         if var_day_indx = 1 then
+            var_sav_date := rcd_psa_psc_date.psd_day_date;
+            var_day_date := rcd_psa_psc_date.psd_day_date;
+            var_wrk_date := rcd_psa_psc_date.psd_day_date;
+         end if;
+      end loop;
+      close csr_date;
+
+      /*-*/
+      /* Retrieve and insert the production type data
+      /*-*/
+      obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/PSCPTY');
+      for idx in 0..xmlDom.getLength(obj_pty_list)-1 loop
+         obj_pty_node := xmlDom.item(obj_pty_list,idx);
+         rcd_psa_psc_prod.psp_psc_code := rcd_psa_psc_week.psw_psc_code;
+         rcd_psa_psc_prod.psp_psc_week := rcd_psa_psc_week.psw_psc_week;
+         rcd_psa_psc_prod.psp_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
+         rcd_psa_psc_prod.psp_upd_user := rcd_psa_psc_week.psw_upd_user;
+         rcd_psa_psc_prod.psp_upd_date := rcd_psa_psc_week.psw_upd_date;
+         insert into psa_psc_prod values rcd_psa_psc_prod;
+
+         /*-*/
+         /* Retrieve and insert the line configuration data
+         /*-*/
+         obj_lco_list := xslProcessor.selectNodes(obj_pty_node,'PSCLCO');
+         for idy in 0..xmlDom.getLength(obj_lco_list)-1 loop
+            obj_lco_node := xmlDom.item(obj_lco_list,idy);
+            rcd_psa_psc_line.psl_psc_code := rcd_psa_psc_week.psw_psc_code;
+            rcd_psa_psc_line.psl_psc_week := rcd_psa_psc_week.psw_psc_week;
+            rcd_psa_psc_line.psl_prd_type := rcd_psa_psc_prod.psp_prd_type;
+            rcd_psa_psc_line.psl_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LINCDE')));
+            rcd_psa_psc_line.psl_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@LCOCDE')));
+            rcd_psa_psc_line.psl_smo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lco_node,'@SMOCDE')));
+            insert into psa_psc_line values rcd_psa_psc_line;
+
+            /*-*/
+            /* Retrieve and insert the shift data
+            /*-*/
+            var_day_date := var_sav_date;
+            var_wrk_date := var_sav_date;
+            var_win_code := '*NONE';
+            obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
+            for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
+               obj_shf_node := xmlDom.item(obj_shf_list,idz);
+               rcd_psa_psc_shft.pss_psc_code := rcd_psa_psc_week.psw_psc_code;
+               rcd_psa_psc_shft.pss_psc_week := rcd_psa_psc_week.psw_psc_week;
+               rcd_psa_psc_shft.pss_prd_type := rcd_psa_psc_prod.psp_prd_type;
+               rcd_psa_psc_shft.pss_lin_code := rcd_psa_psc_line.psl_lin_code;
+               rcd_psa_psc_shft.pss_con_code := rcd_psa_psc_line.psl_con_code;
+               rcd_psa_psc_shft.pss_smo_seqn := idz + 1;
+               rcd_psa_psc_shft.pss_shf_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@SHFCDE')));
+               rcd_psa_psc_shft.pss_shf_date := var_day_date;
+               rcd_psa_psc_shft.pss_shf_start := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFSTR'));
+               rcd_psa_psc_shft.pss_shf_duration := psa_to_number(xslProcessor.valueOf(obj_shf_node,'@SHFDUR'));
+               rcd_psa_psc_shft.pss_cmo_code := upper(psa_from_xml(xslProcessor.valueOf(obj_shf_node,'@CMOCDE')));
+               rcd_psa_psc_shft.pss_win_flag := '0';
+               if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
+                  if var_win_code = '*NONE' then
+                     rcd_psa_psc_shft.pss_win_flag := '1';
+                  else
+                     rcd_psa_psc_shft.pss_win_flag := '2';
+                  end if;
+               end if;
+               var_win_code := rcd_psa_psc_shft.pss_cmo_code;
+               var_bar_numb := (rcd_psa_psc_shft.pss_shf_duration / 60) * 4;
+               if idz = 0 then
+                  rcd_psa_psc_shft.pss_str_bar := ((trunc(rcd_psa_psc_shft.pss_shf_start / 100) + (mod(rcd_psa_psc_shft.pss_shf_start,100) / 60)) * 4) + 1;
+                  rcd_psa_psc_shft.pss_end_bar := rcd_psa_psc_shft.pss_str_bar + var_bar_numb - 1;
+               else
+                  rcd_psa_psc_shft.pss_str_bar := rcd_psa_psc_shft.pss_end_bar + 1;
+                  rcd_psa_psc_shft.pss_end_bar := rcd_psa_psc_shft.pss_str_bar + var_bar_numb - 1;
+               end if;
+               insert into psa_psc_shft values rcd_psa_psc_shft;
+               var_wrk_date := round(var_wrk_date,'MI') + (rcd_psa_psc_shft.pss_shf_duration / 60 / 24);
+               var_day_date := trunc(var_wrk_date);
+               if rcd_psa_psc_shft.pss_cmo_code != '*NONE' then
+                  open csr_reso;
+                  loop
+                     fetch csr_reso into rcd_reso;
+                     if csr_reso%notfound then
+                        exit;
+                     end if;
+                     rcd_psa_psc_reso.psr_psc_code := rcd_psa_psc_week.psw_psc_code;
+                     rcd_psa_psc_reso.psr_psc_week := rcd_psa_psc_week.psw_psc_week;
+                     rcd_psa_psc_reso.psr_prd_type := rcd_psa_psc_prod.psp_prd_type;
+                     rcd_psa_psc_reso.psr_lin_code := rcd_psa_psc_shft.pss_lin_code;
+                     rcd_psa_psc_reso.psr_con_code := rcd_psa_psc_shft.pss_con_code;
+                     rcd_psa_psc_reso.psr_smo_seqn := rcd_psa_psc_shft.pss_smo_seqn;
+                     rcd_psa_psc_reso.psr_res_code := rcd_reso.cmr_res_code;
+                     rcd_psa_psc_reso.psr_res_qnty := rcd_reso.cmr_res_qnty;
+                     insert into psa_psc_reso values rcd_psa_psc_reso;
+                  end loop;
+                  close csr_reso;
+               end if;
+            end loop;
+
+         end loop;
+
+      end loop;
+
+      /*-*/
+      /* Retrieve and load the production requirements when required
+      /*-*/
+      if var_action = '*CRTWEK' or (var_action = '*UPDWEK' and rcd_retrieve.psw_req_code != rcd_psa_psc_week.psw_req_code) then
+         delete from psa_psc_actv where psa_psc_code = rcd_psa_psc_week.psw_psc_code and psa_psc_week = rcd_psa_psc_week.psw_psc_week;
+
+
+check for default line
+
+            var_lin_code := null;
+            var_con_code := null;
+            tbl_plin.delete;
+            open csr_plin;
+            fetch csr_plin bulk collect into tbl_plin;
+            close csr_plin;
+            for idx in 1..tbl_plin.count loop
+               if tbl_plin(idx).psl_lin_code = '1' and tbl_plin(idx).psl_con_code then
+                  var_lin_code := tbl_plin(idx).psl_lin_code;
+                  var_con_code := tbl_plin(idx).psl_con_code;
+               end if;
+            end loop;
+
+
+         open csr_reqd;
+         loop
+            fetch csr_reqd into rcd_reqd;
+            if csr_reqd%notfound then
+               exit;
+            end if;
+
+
+            tbl_mlin.delete;
+            open csr_mlin;
+            fetch csr_mlin bulk collect into tbl_mlin;
+            close csr_mlin;
+            for idx in 1..tbl_mlin.count loop
+               if tbl_mlin(idx).mli_dft_flag = '1' then
+                  var_fil_name := tbl_mlin(idx).lfi_fil_code;
+               end if;
+            end loop;
+
+
+create table psa.psa_psc_line
+   (psl_psc_code                    varchar2(32)                  not null,
+    psl_psc_week                    varchar2(7)                   not null,
+    psl_prd_type                    varchar2(32)                  not null,
+    psl_lin_code                    varchar2(32)                  not null,
+    psl_con_code                    varchar2(32)                  not null,
+    psl_smo_code                    varchar2(32)                  not null);
+
+
+create table psa.psa_mat_line
+   (mli_mat_code                    varchar2(32)                  not null,
+    mli_prd_type                    varchar2(32)                  not null,
+    mli_lin_code                    varchar2(32)                  not null,
+    mli_con_code                    varchar2(32)                  not null,
+    mli_dft_flag                    varchar2(1)                   not null,
+    mli_rra_code                    varchar2(32)                  not null,
+    mli_rra_efficiency              number                        not null,
+    mli_rra_wastage                 number                        not null);
+
+comment on column psa.psa_mat_line.mli_mat_code is 'Material code';
+comment on column psa.psa_mat_line.mli_prd_type is 'Production type code';
+comment on column psa.psa_mat_line.mli_lin_code is 'Line code';
+comment on column psa.psa_mat_line.mli_con_code is 'Line configuration code';
+comment on column psa.psa_mat_line.mli_dft_flag is 'Line configuration code';
+comment on column psa.psa_mat_line.mli_rra_code is 'Default flag 0(no) or 1(yes)';
+comment on column psa.psa_mat_line.mli_rra_efficiency is 'Run rate efficiency percentage';
+comment on column psa.psa_mat_line.mli_rra_wastage is 'Run rate wastage percentage';
+
+o	Schedule week
+o	Production type
+o	Schedule identifier
+o	Schedule type
+o	Line code
+o	Line configuration code
+o	Schedule start time
+o	Schedule end time
+o	Schedule duration = run rate units per minute * run rate efficiency percentage
+o	Material code
+o	Defined run rate code
+o	Defined run rate value
+o	Defined run rate efficiency percentage
+o	Defined run rate wastage percentage
+o	Actual run rate value
+o	Actual run rate efficiency percentage
+o	Actual run rate wastage percentage
+o	Requirement pallets
+o	Requirement cases
+o	Requirement pouches – cases * units per case
+o	Requirement mixes – pouches / yield
+o	Requirement tonnage –cases * material net weight
+o	Calculated pallets
+o	Calculated cases – requirement cases + (requirement cases * wastage %)
+o	Calculated pouches – cases * units per case
+o	Calculated mixes – pouches / yield
+o	Calculated tonnage –cases * material net weight
+o	Scheduled pallets
+o	Scheduled cases – user input – defaults to calculated
+o	Scheduled pouches – cases * units per case
+o	Scheduled mixes – pouches / yield
+o	Scheduled tonnage –cases * material net weight
+o	Actual pallets
+o	Actual pallets
+o	Actual cases
+o	Actual pouches
+o	Actual tonnage –cases * material net weight
+o	Variance pallets
+o	Variance pallets – scheduled to actual
+o	Variance cases – scheduled to actual
+o	Variance pouches – scheduled to actual
+o	Variance tonnage – scheduled to actual
+
+
+shift summary
+
+o	Schedule code
+o	Schedule week
+o	Production type
+o	Schedule identifier
+o	Schedule shift code
+o	Schedule start time
+o	Schedule end time
+o	Schedule duration
+o	Scheduled pallets
+o	Scheduled cases
+o	Scheduled pouches
+o	Scheduled mixes
+o	Scheduled tonnage
+o	Actual pallets
+o	Actual cases
+o	Actual pouches
+o	Actual tonnage
+o	Variance pallets
+o	Variance cases
+o	Variance pouches
+o	Variance tonnage
+
+
+
+            rcd_psa_psc_actv.psa_psc_code := rcd_psa_psc_week.psw_psc_code;
+            rcd_psa_psc_actv.psa_psc_week := rcd_psa_psc_week.psw_psc_week;
+            rcd_psa_psc_actv.psa_prd_type := rcd_psa_psc_prod.psp_prd_type;
+            rcd_psa_psc_actv.psa_act_code := 9999;
+            rcd_psa_psc_actv.psa_act_type := 'P';
+            rcd_psa_psc_actv.psa_act_used := '0';
+            rcd_psa_psc_actv.psa_dur_mins := 0;
+            rcd_psa_psc_actv.psa_str_week := 0;
+            rcd_psa_psc_actv.psa_end_week := 0;
+            rcd_psa_psc_actv.psa_str_barn := 0;
+            rcd_psa_psc_actv.psa_end_barn := 0;
+            rcd_psa_psc_actv.psa_str_date := 0;
+            rcd_psa_psc_actv.psa_str_time := 0;
+            rcd_psa_psc_actv.psa_end_date := 0;
+            rcd_psa_psc_actv.psa_end_time := 0;
+            rcd_psa_psc_actv.psa_lin_code := tbl_mlin(idx).mli_lin_code;
+            rcd_psa_psc_actv.psa_con_code := tbl_mlin(idx).mli_con_code;
+            rcd_psa_psc_actv.psa_dft_flag := tbl_mlin(idx).mli_dft_flag;
+            rcd_psa_psc_actv.psa_rra_code := tbl_mlin(idx).mli_rra_code;
+            rcd_psa_psc_actv.psa_act_rra_units := tbl_mlin(idx).rrd_rra_units;
+            rcd_psa_psc_actv.psa_rra_efficiency := tbl_mlin(idx).mli_rra_efficiency;
+            rcd_psa_psc_actv.psa_rra_wastage := tbl_mlin(idx).mli_rra_wastage;
+            rcd_psa_psc_actv.psa_mat_code := rcd_reqd.rde_mat_code;
+            rcd_psa_psc_actv.psa_req_qnty := rcd_reqd.rde_mat_qnty;
+            rcd_psa_psc_actv.psa_sch_qnty := rcd_reqd.rde_mat_qnty;
+            rcd_psa_psc_actv.psa_act_qnty := 0;
+
+            rcd_psa_psc_actv.psa_act_rra_units := tbl_mlin(idx).rrd_rra_units;
+            rcd_psa_psc_actv.psa_act_rra_efficiency := tbl_mlin(idx).mli_rra_efficiency;
+            rcd_psa_psc_actv.psa_act_rra_wastage := tbl_mlin(idx).mli_rra_wastage;
+
+            insert into psa_psc_actv values rcd_psa_psc_actv;
+
+         end loop;
+         close csr_reqd;
+      else
+
+         /*-*/
+         /* Update any orphaned production type events
+         /* each event must belong to a shift flagged as a window
+         /*-*/
+      --   update from psa_psc_actv
+      --      set pss_act_used = '0'
+      --    where pse_psc_code = rcd_psa_psc_week.psw_psc_code
+      --      and pse_psc_week = rcd_psa_psc_week.psw_psc_week
+      --      and psa_act_type = 'P'
+      --      and not(pse_prd_type in (select psp_prd_type
+      --                                 from psa_psc_prod
+      --                                where pse_psp_code = rcd_psa_psc_week.psw_psc_code
+      --                                  and pse_psp_week = rcd_psa_psc_week.psw_psc_week));
+
+      --   delete from psa_psc_actv
+      --    where pse_psc_code = rcd_psa_psc_week.psw_psc_code
+      --      and pse_psc_week = rcd_psa_psc_week.psw_psc_week
+      --      and psa_act_type = 'T'
+      --      and not(pse_prd_type in (select psp_prd_type
+      --                                 from psa_psc_prod
+      --                                where pse_psp_code = rcd_psa_psc_week.psw_psc_code
+      --                                  and pse_psp_week = rcd_psa_psc_week.psw_psc_week));
+
+      end if;
+
+
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* Send the confirm message
+      /*-*/
+      psa_gen_function.set_cfrm_data('Production schedule week ('||rcd_psa_psc_week.psw_psc_code||' / '||rcd_psa_psc_week.psw_psc_week||') successfully '||var_confirm);
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - UPDATE_WEEK - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_week;
+
+   /***************************************************/
+   /* This procedure performs the update type routine */
+   /***************************************************/
+   procedure update_type(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      obj_pty_list xmlDom.domNodeList;
+      obj_pty_node xmlDom.domNode;
+      obj_lco_list xmlDom.domNodeList;
+      obj_lco_node xmlDom.domNode;
+      obj_shf_list xmlDom.domNodeList;
+      obj_shf_node xmlDom.domNode;
+      var_action varchar2(32);
+      var_confirm varchar2(32);
+      var_found boolean;
+      var_pty_code varchar2(32);
+      var_shf_code varchar2(32);
+      var_cmo_code varchar2(32);
+      var_lin_code varchar2(32);
+      var_con_code varchar2(32);
+      var_smo_code varchar2(32);
+      var_win_code varchar2(32);
+      var_day_indx integer;
+      var_sav_date date;
       var_day_date date;
       var_wrk_date date;
       var_bar_numb integer;
@@ -1715,6 +2427,7 @@ create or replace package body psa_app.psa_psc_function as
       /* Retrieve and insert the production date data
       /*-*/
       var_day_indx := 0;
+      var_sav_date := null;
       var_day_date := null;
       var_wrk_date := null;
       open csr_date;
@@ -1733,6 +2446,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_psa_psc_date.psd_day_name := rcd_date.day_name;
          insert into psa_psc_date values rcd_psa_psc_date;
          if var_day_indx = 1 then
+            var_sav_date := rcd_psa_psc_date.psd_day_date;
             var_day_date := rcd_psa_psc_date.psd_day_date;
             var_wrk_date := rcd_psa_psc_date.psd_day_date;
          end if;
@@ -1769,6 +2483,8 @@ create or replace package body psa_app.psa_psc_function as
             /*-*/
             /* Retrieve and insert the shift data
             /*-*/
+            var_day_date := var_sav_date;
+            var_wrk_date := var_sav_date;
             var_win_code := '*NONE';
             obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
             for idz in 0..xmlDom.getLength(obj_shf_list)-1 loop
@@ -1875,12 +2591,12 @@ create or replace package body psa_app.psa_psc_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - UPDATE_WEEK - ' || substr(SQLERRM, 1, 1536));
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - UPDATE_TYPE - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end update_week;
+   end update_type;
 
    /***************************************************/
    /* This procedure performs the delete data routine */
