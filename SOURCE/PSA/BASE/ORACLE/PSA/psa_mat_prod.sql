@@ -41,7 +41,7 @@ comment on column psa.psa_mat_prod.mpr_sch_priority is 'Production schedule prio
 comment on column psa.psa_mat_prod.mpr_dft_line is 'Default production line';
 comment on column psa.psa_mat_prod.mpr_cas_pallet is 'Cases per pallet';
 comment on column psa.psa_mat_prod.mpr_bch_quantity is 'Batch/lot quantity';
-comment on column psa.psa_mat_prod.mpr_yld_percent is 'Yieald percentage';
+comment on column psa.psa_mat_prod.mpr_yld_percent is 'Yield percentage';
 comment on column psa.psa_mat_prod.mpr_yld_value is 'Yield value';
 comment on column psa.psa_mat_prod.mpr_pck_percent is 'Pack weight percentage';
 comment on column psa.psa_mat_prod.mpr_pck_weight is 'Pack weight';
