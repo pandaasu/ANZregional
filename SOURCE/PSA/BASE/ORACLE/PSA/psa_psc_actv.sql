@@ -19,21 +19,19 @@
 /* Table creation
 /**/
 create table psa.psa_psc_actv
-   (psa_psc_code                    varchar2(32)                  not null,
+   (psa_act_code                    number                        not null,
+    psa_psc_code                    varchar2(32)                  not null,
     psa_psc_week                    varchar2(7)                   not null,
     psa_prd_type                    varchar2(32)                  not null,
-    psa_act_code                    number                        not null,
     psa_act_text                    varchar2(128 char)            not null,
     psa_act_type                    varchar2(1)                   not null,
     psa_act_used                    varchar2(1)                   not null,
     psa_str_week                    varchar2(7)                   not null,
     psa_end_week                    varchar2(7)                   not null,
-    psa_str_barn                    number                        not null,
-    psa_end_barn                    number                        not null,
-    psa_str_date                    date                          not null,
-    psa_str_time                    number                        not null,
-    psa_end_date                    date                          not null,
-    psa_end_time                    number                        not null,
+    psa_str_barn                    number                        null,
+    psa_end_barn                    number                        null,
+    psa_str_time                    date                          null,
+    psa_end_time                    date                          null,
     psa_mat_code                    varchar2(32)                  null,
     psa_mat_gro_weight              number                        null,
     psa_mat_net_weight              number                        null,
@@ -92,16 +90,23 @@ create table psa.psa_psc_actv
 /* Comments
 /**/
 comment on table psa.psa_psc_actv is 'Production Schedule Activity Table';
+comment on column psa.psa_psc_actv.psa_act_code is 'Activity code';
 comment on column psa.psa_psc_actv.psa_psc_code is 'Schedule code';
 comment on column psa.psa_psc_actv.psa_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_actv.psa_prd_type is 'Production type code';
-comment on column psa.psa_psc_actv.psa_act_code is 'Activity code';
+
 
 /**/
 /* Primary Key Constraint
 /**/
 alter table psa.psa_psc_actv
-   add constraint psa_psc_actv_pk primary key (psa_psc_code, psa_psc_week, psa_prd_type, psa_act_code);
+   add constraint psa_psc_actv_pk primary key (psa_act_code);
+
+/**/
+/* Indexes
+/**/
+create index psa_psc_actv_ix01 on psa.psa_psc_actv
+   (psa_psc_code, psa_psc_week, psa_prd_type, psa_act_code);
 
 /**/
 /* Authority
