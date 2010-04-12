@@ -28,6 +28,7 @@ create table psa.psa_psc_actv
     psa_act_used                    varchar2(1)                   not null,
     psa_str_week                    varchar2(7)                   null,
     psa_end_week                    varchar2(7)                   null,
+    psa_win_code                    varchar2(32)                  null,
     psa_str_smos                    number                        null,
     psa_end_smos                    number                        null,
     psa_str_time                    date                          null,
