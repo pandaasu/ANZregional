@@ -46,6 +46,7 @@ create table psa.psa_psc_actv
     psa_mat_pck_percent             number                        null,
     psa_mat_pck_weight              number                        null,
     psa_mat_bch_weight              number                        null,
+    psa_mat_req_qty                 number                        null,
     psa_lin_code                    varchar2(32)                  null,
     psa_con_code                    varchar2(32)                  null,
     psa_dft_flag                    varchar2(1)                   null,
