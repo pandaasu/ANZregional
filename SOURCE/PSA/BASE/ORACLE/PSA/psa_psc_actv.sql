@@ -36,6 +36,7 @@ create table psa.psa_psc_actv
     psa_end_time                    date                          null,
     psa_str_barn                    number                        null,
     psa_end_barn                    number                        null,
+    psa_dur_mins                    number                        null,
     psa_mat_code                    varchar2(32)                  null,
     psa_mat_name                    varchar2(120 char)            null,
     psa_mat_type                    varchar2(10)                  null,
