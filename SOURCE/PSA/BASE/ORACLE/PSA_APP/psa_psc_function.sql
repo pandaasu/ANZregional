@@ -30,8 +30,11 @@ create or replace package psa_app.psa_psc_function as
    function retrieve_data return psa_xml_type pipelined;
    function retrieve_week return psa_xml_type pipelined;
    function retrieve_type return psa_xml_type pipelined;
+   function retrieve_activity return psa_xml_type pipelined;
    procedure update_week(par_user in varchar2);
+   procedure update_activity(par_user in varchar2);
    procedure delete_data;
+   procedure delete_activity(par_user in varchar2);
 
 end psa_psc_function;
 /
@@ -46,6 +49,16 @@ create or replace package body psa_app.psa_psc_function as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*-*/
+   /* Private declarations
+   /*-*/
+   procedure align_activity(par_psc_code in varchar2,
+                            par_psc_week in varchar2,
+                            par_prd_type in varchar2,
+                            par_lin_code in varchar2,
+                            par_con_code in varchar2,
+                            par_win_code in varchar2);
 
    /***************************************************/
    /* This procedure performs the select list routine */
@@ -1066,10 +1079,11 @@ create or replace package body psa_app.psa_psc_function as
          select to_char(t01.psa_act_code) as psa_act_code,
                 t01.psa_act_text,
                 t01.psa_act_type,
-                t01.psa_act_used,
+                t01.psa_win_code,
+                to_char(t01.psa_win_seqn) as psa_win_seqn,
+                t01.psa_win_flow,
                 t01.psa_str_week,
                 t01.psa_end_week,
-                t01.psa_win_code,
                 to_char(t01.psa_str_smos) as psa_str_smos,
                 to_char(t01.psa_end_smos) as psa_end_smos,
                 to_char(t01.psa_str_time,'yyyymmdd') as psa_str_timd,
@@ -1078,7 +1092,9 @@ create or replace package body psa_app.psa_psc_function as
                 to_char(t01.psa_end_time,'hh24mi') as psa_end_timt,
                 to_char(t01.psa_str_barn) as psa_str_barn,
                 to_char(t01.psa_end_barn) as psa_end_barn,
+                to_char(t01.psa_dur_mins) as psa_dur_mins,
                 t01.psa_mat_code,
+                t01.psa_mat_name,
                 nvl(t01.psa_lin_code,'*NONE') as psa_lin_code,
                 nvl(t01.psa_con_code,'*NONE') as psa_con_code,
                 nvl(t01.psa_dft_flag,'0') as psa_dft_flag,
@@ -1107,27 +1123,17 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_lin_code = rcd_line.psl_lin_code
             and t01.psa_con_code = rcd_line.psl_con_code
             and t01.psa_win_code = rcd_shft.pss_win_code
-          order by t01.psa_str_week asc,
-                   t01.psa_str_barn asc;
+          order by t01.psa_win_seqn asc;
       rcd_sact csr_sact%rowtype;
 
       cursor csr_actv is
          select to_char(t01.psa_act_code) as psa_act_code,
                 t01.psa_act_text,
                 t01.psa_act_type,
-                t01.psa_act_used,
-                t01.psa_str_week,
-                t01.psa_end_week,
                 t01.psa_win_code,
-                to_char(t01.psa_str_smos) as psa_str_smos,
-                to_char(t01.psa_end_smos) as psa_end_smos,
-                to_char(t01.psa_str_time,'yyyymmdd') as psa_str_timd,
-                to_char(t01.psa_str_time,'hh24mi') as psa_str_timt,
-                to_char(t01.psa_end_time,'yyyymmdd') as psa_end_timd,
-                to_char(t01.psa_end_time,'hh24mi') as psa_end_timt,
-                to_char(t01.psa_str_barn) as psa_str_barn,
-                to_char(t01.psa_end_barn) as psa_end_barn,
+                to_char(t01.psa_dur_mins) as psa_dur_mins,
                 t01.psa_mat_code,
+                t01.psa_mat_name,
                 nvl(t01.psa_lin_code,'*NONE') as psa_lin_code,
                 nvl(t01.psa_con_code,'*NONE') as psa_con_code,
                 nvl(t01.psa_dft_flag,'0') as psa_dft_flag,
@@ -1153,10 +1159,11 @@ create or replace package body psa_app.psa_psc_function as
           where t01.psa_psc_code = rcd_retrieve.psp_psc_code
             and t01.psa_psc_week = rcd_retrieve.psp_psc_week
             and t01.psa_prd_type = rcd_retrieve.psp_prd_type
+            and t01.psa_act_type = 'P'
             and t01.psa_win_code = '*NONE'
           order by t01.psa_lin_code asc,
                    t01.psa_con_code asc,
-                   t01.psa_act_code asc;
+                   t01.psa_mat_code asc;
       rcd_actv csr_actv%rowtype;
 
       cursor csr_fill is
@@ -1320,43 +1327,46 @@ create or replace package body psa_app.psa_psc_function as
                   if csr_sact%notfound then
                      exit;
                   end if;
-                  pipe row(psa_xml_object('<WINACT ACTCDE="'||psa_to_xml(rcd_actv.psa_act_code)||'"'||
-                                                 ' ACTTXT="'||psa_to_xml(rcd_actv.psa_act_text)||'"'||
-                                                 ' ACTTYP="'||psa_to_xml(rcd_actv.psa_act_type)||'"'||
-                                                 ' ACTUSD="'||psa_to_xml(rcd_actv.psa_act_used)||'"'||
-                                                 ' STRWEK="'||psa_to_xml(rcd_actv.psa_str_week)||'"'||
-                                                 ' ENDWEK="'||psa_to_xml(rcd_actv.psa_end_week)||'"'||
-                                                 ' WINCDE="'||psa_to_xml(rcd_actv.psa_win_code)||'"'||
-                                                 ' STRSMS="'||psa_to_xml(rcd_actv.psa_str_smos)||'"'||
-                                                 ' ENDSMS="'||psa_to_xml(rcd_actv.psa_end_smos)||'"'||
-                                                 ' STRDAT="'||psa_to_xml(rcd_actv.psa_str_timd)||'"'||
-                                                 ' STRTIM="'||psa_to_xml(rcd_actv.psa_str_timt)||'"'||
-                                                 ' ENDDAT="'||psa_to_xml(rcd_actv.psa_end_timd)||'"'||
-                                                 ' ENDTIM="'||psa_to_xml(rcd_actv.psa_end_timt)||'"'||
-                                                 ' STRBAR="'||psa_to_xml(rcd_actv.psa_str_barn)||'"'||
-                                                 ' ENDBAR="'||psa_to_xml(rcd_actv.psa_end_barn)||'"'||
-                                                 ' MATCDE="'||psa_to_xml(rcd_actv.psa_mat_code)||'"'||
-                                                 ' LINCDE="'||psa_to_xml(rcd_actv.psa_lin_code)||'"'||
-                                                 ' CONCDE="'||psa_to_xml(rcd_actv.psa_con_code)||'"'||
-                                                 ' DFTFLG="'||psa_to_xml(rcd_actv.psa_dft_flag)||'"'||
-                                                 ' REQPLT="'||psa_to_xml(rcd_actv.psa_req_plt_qty)||'"'||
-                                                 ' REQCAS="'||psa_to_xml(rcd_actv.psa_req_cas_qty)||'"'||
-                                                 ' REQPCH="'||psa_to_xml(rcd_actv.psa_req_pch_qty)||'"'||
-                                                 ' REQMIX="'||psa_to_xml(rcd_actv.psa_req_mix_qty)||'"'||
-                                                 ' REQTON="'||psa_to_xml(rcd_actv.psa_req_ton_qty)||'"'||
-                                                 ' REQDUR="'||psa_to_xml(rcd_actv.psa_req_dur_min)||'"'||
-                                                 ' CALPLT="'||psa_to_xml(rcd_actv.psa_cal_plt_qty)||'"'||
-                                                 ' CALCAS="'||psa_to_xml(rcd_actv.psa_cal_cas_qty)||'"'||
-                                                 ' CALPCH="'||psa_to_xml(rcd_actv.psa_cal_pch_qty)||'"'||
-                                                 ' CALMIX="'||psa_to_xml(rcd_actv.psa_cal_mix_qty)||'"'||
-                                                 ' CALTON="'||psa_to_xml(rcd_actv.psa_cal_ton_qty)||'"'||
-                                                 ' CALDUR="'||psa_to_xml(rcd_actv.psa_cal_dur_min)||'"'||
-                                                 ' SCHPLT="'||psa_to_xml(rcd_actv.psa_sch_plt_qty)||'"'||
-                                                 ' SCHCAS="'||psa_to_xml(rcd_actv.psa_sch_cas_qty)||'"'||
-                                                 ' SCHPCH="'||psa_to_xml(rcd_actv.psa_sch_pch_qty)||'"'||
-                                                 ' SCHMIX="'||psa_to_xml(rcd_actv.psa_sch_mix_qty)||'"'||
-                                                 ' SCHTON="'||psa_to_xml(rcd_actv.psa_sch_ton_qty)||'"'||
-                                                 ' SCHDUR="'||psa_to_xml(rcd_actv.psa_sch_dur_min)||'"/>'));
+                  pipe row(psa_xml_object('<WINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
+                                                 ' ACTTXT="'||psa_to_xml(rcd_sact.psa_act_text)||'"'||
+                                                 ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
+                                                 ' WINCDE="'||psa_to_xml(rcd_sact.psa_win_code)||'"'||
+                                                 ' WINSEQ="'||psa_to_xml(rcd_sact.psa_win_seqn)||'"'||
+                                                 ' WINFLW="'||psa_to_xml(rcd_sact.psa_win_flow)||'"'||
+                                                 ' STRWEK="'||psa_to_xml(rcd_sact.psa_str_week)||'"'||
+                                                 ' ENDWEK="'||psa_to_xml(rcd_sact.psa_end_week)||'"'||
+                                                 ' STRSMS="'||psa_to_xml(rcd_sact.psa_str_smos)||'"'||
+                                                 ' ENDSMS="'||psa_to_xml(rcd_sact.psa_end_smos)||'"'||
+                                                 ' STRDAT="'||psa_to_xml(rcd_sact.psa_str_timd)||'"'||
+                                                 ' STRTIM="'||psa_to_xml(rcd_sact.psa_str_timt)||'"'||
+                                                 ' ENDDAT="'||psa_to_xml(rcd_sact.psa_end_timd)||'"'||
+                                                 ' ENDTIM="'||psa_to_xml(rcd_sact.psa_end_timt)||'"'||
+                                                 ' STRBAR="'||psa_to_xml(rcd_sact.psa_str_barn)||'"'||
+                                                 ' ENDBAR="'||psa_to_xml(rcd_sact.psa_end_barn)||'"'||
+                                                 ' DURMIN="'||psa_to_xml(rcd_sact.psa_dur_mins)||'"'||
+                                                 ' MATCDE="'||psa_to_xml(rcd_sact.psa_mat_code)||'"'||
+                                                 ' MATNAM="'||psa_to_xml(rcd_sact.psa_mat_name)||'"'||
+                                                 ' LINCDE="'||psa_to_xml(rcd_sact.psa_lin_code)||'"'||
+                                                 ' CONCDE="'||psa_to_xml(rcd_sact.psa_con_code)||'"'||
+                                                 ' DFTFLG="'||psa_to_xml(rcd_sact.psa_dft_flag)||'"'||
+                                                 ' REQPLT="'||psa_to_xml(rcd_sact.psa_req_plt_qty)||'"'||
+                                                 ' REQCAS="'||psa_to_xml(rcd_sact.psa_req_cas_qty)||'"'||
+                                                 ' REQPCH="'||psa_to_xml(rcd_sact.psa_req_pch_qty)||'"'||
+                                                 ' REQMIX="'||psa_to_xml(rcd_sact.psa_req_mix_qty)||'"'||
+                                                 ' REQTON="'||psa_to_xml(rcd_sact.psa_req_ton_qty)||'"'||
+                                                 ' REQDUR="'||psa_to_xml(rcd_sact.psa_req_dur_min)||'"'||
+                                                 ' CALPLT="'||psa_to_xml(rcd_sact.psa_cal_plt_qty)||'"'||
+                                                 ' CALCAS="'||psa_to_xml(rcd_sact.psa_cal_cas_qty)||'"'||
+                                                 ' CALPCH="'||psa_to_xml(rcd_sact.psa_cal_pch_qty)||'"'||
+                                                 ' CALMIX="'||psa_to_xml(rcd_sact.psa_cal_mix_qty)||'"'||
+                                                 ' CALTON="'||psa_to_xml(rcd_sact.psa_cal_ton_qty)||'"'||
+                                                 ' CALDUR="'||psa_to_xml(rcd_sact.psa_cal_dur_min)||'"'||
+                                                 ' SCHPLT="'||psa_to_xml(rcd_sact.psa_sch_plt_qty)||'"'||
+                                                 ' SCHCAS="'||psa_to_xml(rcd_sact.psa_sch_cas_qty)||'"'||
+                                                 ' SCHPCH="'||psa_to_xml(rcd_sact.psa_sch_pch_qty)||'"'||
+                                                 ' SCHMIX="'||psa_to_xml(rcd_sact.psa_sch_mix_qty)||'"'||
+                                                 ' SCHTON="'||psa_to_xml(rcd_sact.psa_sch_ton_qty)||'"'||
+                                                 ' SCHDUR="'||psa_to_xml(rcd_sact.psa_sch_dur_min)||'"/>'));
                end loop;
                close csr_sact;
             end if;
@@ -1379,19 +1389,10 @@ create or replace package body psa_app.psa_psc_function as
          pipe row(psa_xml_object('<ACTDFN ACTCDE="'||psa_to_xml(rcd_actv.psa_act_code)||'"'||
                                         ' ACTTXT="'||psa_to_xml(rcd_actv.psa_act_text)||'"'||
                                         ' ACTTYP="'||psa_to_xml(rcd_actv.psa_act_type)||'"'||
-                                        ' ACTUSD="'||psa_to_xml(rcd_actv.psa_act_used)||'"'||
-                                        ' STRWEK="'||psa_to_xml(rcd_actv.psa_str_week)||'"'||
-                                        ' ENDWEK="'||psa_to_xml(rcd_actv.psa_end_week)||'"'||
                                         ' WINCDE="'||psa_to_xml(rcd_actv.psa_win_code)||'"'||
-                                        ' STRSMS="'||psa_to_xml(rcd_actv.psa_str_smos)||'"'||
-                                        ' ENDSMS="'||psa_to_xml(rcd_actv.psa_end_smos)||'"'||
-                                        ' STRDAT="'||psa_to_xml(rcd_actv.psa_str_timd)||'"'||
-                                        ' STRTIM="'||psa_to_xml(rcd_actv.psa_str_timt)||'"'||
-                                        ' ENDDAT="'||psa_to_xml(rcd_actv.psa_end_timd)||'"'||
-                                        ' ENDTIM="'||psa_to_xml(rcd_actv.psa_end_timt)||'"'||
-                                        ' STRBAR="'||psa_to_xml(rcd_actv.psa_str_barn)||'"'||
-                                        ' ENDBAR="'||psa_to_xml(rcd_actv.psa_end_barn)||'"'||
+                                        ' DURMIN="'||psa_to_xml(rcd_actv.psa_dur_mins)||'"'||
                                         ' MATCDE="'||psa_to_xml(rcd_actv.psa_mat_code)||'"'||
+                                        ' MATNAM="'||psa_to_xml(rcd_actv.psa_mat_name)||'"'||
                                         ' LINCDE="'||psa_to_xml(rcd_actv.psa_lin_code)||'"'||
                                         ' CONCDE="'||psa_to_xml(rcd_actv.psa_con_code)||'"'||
                                         ' DFTFLG="'||psa_to_xml(rcd_actv.psa_dft_flag)||'"'||
@@ -1445,6 +1446,204 @@ create or replace package body psa_app.psa_psc_function as
    /* End routine */
    /*-------------*/
    end retrieve_type;
+
+   /*********************************************************/
+   /* This procedure performs the retrieve activity routine */
+   /*********************************************************/
+   function retrieve_activity return psa_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_pty_code varchar2(32);
+      var_lin_code varchar2(32);
+      var_con_code varchar2(32);
+      var_win_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_sact is
+         select to_char(t01.psa_act_code) as psa_act_code,
+                t01.psa_act_text,
+                t01.psa_act_type,
+                t01.psa_win_code,
+                to_char(t01.psa_win_seqn) as psa_win_seqn,
+                t01.psa_win_flow,
+                t01.psa_str_week,
+                t01.psa_end_week,
+                to_char(t01.psa_str_smos) as psa_str_smos,
+                to_char(t01.psa_end_smos) as psa_end_smos,
+                to_char(t01.psa_str_time,'yyyymmdd') as psa_str_timd,
+                to_char(t01.psa_str_time,'hh24mi') as psa_str_timt,
+                to_char(t01.psa_end_time,'yyyymmdd') as psa_end_timd,
+                to_char(t01.psa_end_time,'hh24mi') as psa_end_timt,
+                to_char(t01.psa_str_barn) as psa_str_barn,
+                to_char(t01.psa_end_barn) as psa_end_barn,
+                to_char(t01.psa_dur_mins) as psa_dur_mins,
+                t01.psa_mat_code,
+                t01.psa_mat_name,
+                nvl(t01.psa_lin_code,'*NONE') as psa_lin_code,
+                nvl(t01.psa_con_code,'*NONE') as psa_con_code,
+                nvl(t01.psa_dft_flag,'0') as psa_dft_flag,
+                to_char(t01.psa_req_plt_qty) as psa_req_plt_qty,
+                to_char(t01.psa_req_cas_qty) as psa_req_cas_qty,
+                to_char(t01.psa_req_pch_qty) as psa_req_pch_qty,
+                to_char(t01.psa_req_mix_qty) as psa_req_mix_qty,
+                to_char(t01.psa_req_ton_qty) as psa_req_ton_qty,
+                to_char(t01.psa_req_dur_min) as psa_req_dur_min,
+                to_char(t01.psa_cal_plt_qty) as psa_cal_plt_qty,
+                to_char(t01.psa_cal_cas_qty) as psa_cal_cas_qty,
+                to_char(t01.psa_cal_pch_qty) as psa_cal_pch_qty,
+                to_char(t01.psa_cal_mix_qty) as psa_cal_mix_qty,
+                to_char(t01.psa_cal_ton_qty) as psa_cal_ton_qty,
+                to_char(t01.psa_cal_dur_min) as psa_cal_dur_min,
+                to_char(t01.psa_sch_plt_qty) as psa_sch_plt_qty,
+                to_char(t01.psa_sch_cas_qty) as psa_sch_cas_qty,
+                to_char(t01.psa_sch_pch_qty) as psa_sch_pch_qty,
+                to_char(t01.psa_sch_mix_qty) as psa_sch_mix_qty,
+                to_char(t01.psa_sch_ton_qty) as psa_sch_ton_qty,
+                to_char(t01.psa_sch_dur_min) as psa_sch_dur_min
+           from psa_psc_actv t01
+          where t01.psa_psc_code = var_psc_code
+            and t01.psa_psc_week = var_wek_code
+            and t01.psa_prd_type = var_pty_code
+            and t01.psa_lin_code = var_lin_code
+            and t01.psa_con_code = var_con_code
+            and t01.psa_win_code = var_win_code
+          order by t01.psa_win_seqn asc;
+      rcd_sact csr_sact%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
+      var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
+      var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CONCDE')));
+      var_win_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WINCDE'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*GETACT' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the shift window activity data XML
+      /*-*/
+      open csr_sact;
+      loop
+         fetch csr_sact into rcd_sact;
+         if csr_sact%notfound then
+            exit;
+         end if;
+         pipe row(psa_xml_object('<WINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
+                                        ' ACTTXT="'||psa_to_xml(rcd_sact.psa_act_text)||'"'||
+                                        ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
+                                        ' WINCDE="'||psa_to_xml(rcd_sact.psa_win_code)||'"'||
+                                        ' WINSEQ="'||psa_to_xml(rcd_sact.psa_win_seqn)||'"'||
+                                        ' WINFLW="'||psa_to_xml(rcd_sact.psa_win_flow)||'"'||
+                                        ' STRWEK="'||psa_to_xml(rcd_sact.psa_str_week)||'"'||
+                                        ' ENDWEK="'||psa_to_xml(rcd_sact.psa_end_week)||'"'||
+                                        ' STRSMS="'||psa_to_xml(rcd_sact.psa_str_smos)||'"'||
+                                        ' ENDSMS="'||psa_to_xml(rcd_sact.psa_end_smos)||'"'||
+                                        ' STRDAT="'||psa_to_xml(rcd_sact.psa_str_timd)||'"'||
+                                        ' STRTIM="'||psa_to_xml(rcd_sact.psa_str_timt)||'"'||
+                                        ' ENDDAT="'||psa_to_xml(rcd_sact.psa_end_timd)||'"'||
+                                        ' ENDTIM="'||psa_to_xml(rcd_sact.psa_end_timt)||'"'||
+                                        ' STRBAR="'||psa_to_xml(rcd_sact.psa_str_barn)||'"'||
+                                        ' ENDBAR="'||psa_to_xml(rcd_sact.psa_end_barn)||'"'||
+                                        ' DURMIN="'||psa_to_xml(rcd_sact.psa_dur_mins)||'"'||
+                                        ' MATCDE="'||psa_to_xml(rcd_sact.psa_mat_code)||'"'||
+                                        ' MATNAM="'||psa_to_xml(rcd_sact.psa_mat_name)||'"'||
+                                        ' LINCDE="'||psa_to_xml(rcd_sact.psa_lin_code)||'"'||
+                                        ' CONCDE="'||psa_to_xml(rcd_sact.psa_con_code)||'"'||
+                                        ' DFTFLG="'||psa_to_xml(rcd_sact.psa_dft_flag)||'"'||
+                                        ' REQPLT="'||psa_to_xml(rcd_sact.psa_req_plt_qty)||'"'||
+                                        ' REQCAS="'||psa_to_xml(rcd_sact.psa_req_cas_qty)||'"'||
+                                        ' REQPCH="'||psa_to_xml(rcd_sact.psa_req_pch_qty)||'"'||
+                                        ' REQMIX="'||psa_to_xml(rcd_sact.psa_req_mix_qty)||'"'||
+                                        ' REQTON="'||psa_to_xml(rcd_sact.psa_req_ton_qty)||'"'||
+                                        ' REQDUR="'||psa_to_xml(rcd_sact.psa_req_dur_min)||'"'||
+                                        ' CALPLT="'||psa_to_xml(rcd_sact.psa_cal_plt_qty)||'"'||
+                                        ' CALCAS="'||psa_to_xml(rcd_sact.psa_cal_cas_qty)||'"'||
+                                        ' CALPCH="'||psa_to_xml(rcd_sact.psa_cal_pch_qty)||'"'||
+                                        ' CALMIX="'||psa_to_xml(rcd_sact.psa_cal_mix_qty)||'"'||
+                                        ' CALTON="'||psa_to_xml(rcd_sact.psa_cal_ton_qty)||'"'||
+                                        ' CALDUR="'||psa_to_xml(rcd_sact.psa_cal_dur_min)||'"'||
+                                        ' SCHPLT="'||psa_to_xml(rcd_sact.psa_sch_plt_qty)||'"'||
+                                        ' SCHCAS="'||psa_to_xml(rcd_sact.psa_sch_cas_qty)||'"'||
+                                        ' SCHPCH="'||psa_to_xml(rcd_sact.psa_sch_pch_qty)||'"'||
+                                        ' SCHMIX="'||psa_to_xml(rcd_sact.psa_sch_mix_qty)||'"'||
+                                        ' SCHTON="'||psa_to_xml(rcd_sact.psa_sch_ton_qty)||'"'||
+                                        ' SCHDUR="'||psa_to_xml(rcd_sact.psa_sch_dur_min)||'"/>'));
+      end loop;
+      close csr_sact;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(psa_xml_object('</PSA_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_ACTIVITY - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_activity;
 
    /***************************************************/
    /* This procedure performs the update data routine */
@@ -2197,17 +2396,23 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_actv.psa_prd_type := rcd_reqd.mpr_prd_type;
                rcd_psa_psc_actv.psa_act_text := 'Production';
                rcd_psa_psc_actv.psa_act_type := 'P';
-               rcd_psa_psc_actv.psa_act_used := '0';
+               rcd_psa_psc_actv.psa_win_code := '*NONE';
+               rcd_psa_psc_actv.psa_win_seqn := null;
+               rcd_psa_psc_actv.psa_win_flow := null;
                rcd_psa_psc_actv.psa_str_week := null;
                rcd_psa_psc_actv.psa_end_week := null;
-               rcd_psa_psc_actv.psa_win_code := '*NONE';
                rcd_psa_psc_actv.psa_str_smos := null;
                rcd_psa_psc_actv.psa_end_smos := null;
                rcd_psa_psc_actv.psa_str_time := null;
                rcd_psa_psc_actv.psa_end_time := null;
                rcd_psa_psc_actv.psa_str_barn := null;
                rcd_psa_psc_actv.psa_end_barn := null;
+               rcd_psa_psc_actv.psa_dur_mins := null;
                rcd_psa_psc_actv.psa_mat_code := rcd_reqd.mde_mat_code;
+               rcd_psa_psc_actv.psa_mat_name := rcd_reqd.mde_mat_name;
+               rcd_psa_psc_actv.psa_mat_type := rcd_reqd.mde_mat_type;
+               rcd_psa_psc_actv.psa_mat_usage := rcd_reqd.mde_mat_usage;
+               rcd_psa_psc_actv.psa_mat_uom := rcd_reqd.mde_mat_uom;
                rcd_psa_psc_actv.psa_mat_gro_weight := rcd_reqd.mde_gro_weight;
                rcd_psa_psc_actv.psa_mat_net_weight := rcd_reqd.mde_net_weight;
                rcd_psa_psc_actv.psa_mat_unt_case := rcd_reqd.mde_unt_case;
@@ -2363,8 +2568,10 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_actv.psa_var_mix_qty := 0;
                rcd_psa_psc_actv.psa_var_ton_qty := 0;
                rcd_psa_psc_actv.psa_var_dur_min := 0;
+               rcd_psa_psc_actv.psa_dur_mins := rcd_psa_psc_actv.psa_cal_dur_min;
                update psa_psc_actv
-                  set psa_lin_code = rcd_psa_psc_actv.psa_lin_code,
+                  set psa_dur_mins = rcd_psa_psc_actv.psa_dur_mins,
+                      psa_lin_code = rcd_psa_psc_actv.psa_lin_code,
                       psa_con_code = rcd_psa_psc_actv.psa_con_code,
                       psa_dft_flag = rcd_psa_psc_actv.psa_dft_flag,
                       psa_rra_code = rcd_psa_psc_actv.psa_rra_code,
@@ -2447,7 +2654,18 @@ create or replace package body psa_app.psa_psc_function as
          /* Update any orphaned production activities for the scheduled week
          /*-*/
          update psa_psc_actv
-            set psa_act_used = '0'
+            set psa_win_code = '*NONE',
+                psa_win_seqn = null,
+                psa_win_flow = null,
+                psa_str_week = null,
+                psa_end_week = null,
+                psa_str_smos = null,
+                psa_end_smos = null,
+                psa_str_time = null,
+                psa_end_time = null,
+                psa_str_barn = null,
+                psa_end_barn = null,
+                psa_dur_mins = psa_cal_dur_min
           where psa_psc_code = rcd_psa_psc_week.psw_psc_code
             and psa_psc_week = rcd_psa_psc_week.psw_psc_week
             and psa_act_type = 'P'
@@ -2460,7 +2678,18 @@ create or replace package body psa_app.psa_psc_function as
          /* Update any orphaned shift model production activities for the scheduled week
          /*-*/
          update psa_psc_actv
-            set psa_act_used = '0'
+            set psa_win_code = '*NONE',
+                psa_win_seqn = null,
+                psa_win_flow = null,
+                psa_str_week = null,
+                psa_end_week = null,
+                psa_str_smos = null,
+                psa_end_smos = null,
+                psa_str_time = null,
+                psa_end_time = null,
+                psa_str_barn = null,
+                psa_end_barn = null,
+                psa_dur_mins = psa_cal_dur_min
           where psa_psc_code = rcd_psa_psc_week.psw_psc_code
             and psa_psc_week = rcd_psa_psc_week.psw_psc_week
             and psa_act_type = 'P'
@@ -2511,7 +2740,332 @@ create or replace package body psa_app.psa_psc_function as
    /*-------------*/
    end update_week;
 
+   /*******************************************************/
+   /* This procedure performs the update activity routine */
+   /*******************************************************/
+   procedure update_activity(par_user in varchar2) is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_confirm varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_pty_code varchar2(32);
+      var_lin_code varchar2(32);
+      var_con_code varchar2(32);
+      var_win_code varchar2(32);
+      var_act_code number;
+      var_act_text varchar2(128 char);
+      var_act_type varchar2(1);
+      var_win_seqn number;
+      var_act_valu number;
+      var_upd_user varchar2(30);
+      var_upd_date date;
+      rcd_psa_psc_actv psa_psc_actv%rowtype;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_psc_prod t01
+          where t01.psp_psc_code = var_psc_code
+            and t01.psp_psc_week = var_wek_code
+            and t01.psp_prd_type = var_pty_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_actv is
+         select t01.*
+           from psa_psc_actv t01
+          where t01.psa_act_code = var_act_code;
+      rcd_actv csr_actv%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      if var_action != '*UPDACT' and var_action != '*CRTACT' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
+      var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
+      var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CONCDE')));
+      var_win_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WINCDE')));
+      var_act_code := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@ACTCDE'));
+      var_act_text := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ACTTXT'));
+      var_act_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@ACTTYP'));
+      var_win_seqn := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@WINSEQ'));
+      var_act_valu := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@ACTVAL'));
+      var_upd_user := upper(par_user);
+      var_upd_date := sysdate;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the production schedule week type
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            psa_gen_function.add_mesg_data('Production schedule week production type ('||var_psc_code||' / '||var_wek_code||' / '||var_pty_code||') is currently locked');
+      end;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule week production type ('||var_psc_code||' / '||var_wek_code||' / '||var_pty_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the production schedule activity when required
+      /*-*/
+      if var_action = '*UPDACT' then
+         var_found := false;
+         open csr_actv;
+         fetch csr_actv into rcd_actv;
+         if csr_actv%found then
+            var_found := true;
+         end if;
+         close csr_actv;
+         if var_found = false then
+            psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
+         end if;
+         if psa_gen_function.get_mesg_count != 0 then
+            rollback;
+            return;
+         end if;
+      end if;
+
+      /*-*/
+      /* Update the production schedule data
+      /*-*/
+      update psa_psc_prod
+         set psp_upd_user = var_upd_user,
+             psp_upd_date = var_upd_date
+       where psp_psc_code = var_psc_code
+         and psp_psc_week = var_wek_code
+         and psp_prd_type = var_pty_code;
+
+      if var_act_type = 'P' then
+
+         if var_pty_code = '*FILL' then
+            rcd_psa_psc_actv.psa_sch_plt_qty := 0;
+            rcd_psa_psc_actv.psa_sch_cas_qty := var_act_valu;
+            rcd_psa_psc_actv.psa_sch_pch_qty := round(rcd_psa_psc_actv.psa_sch_cas_qty * rcd_actv.psa_mat_unt_case, 0);
+            rcd_psa_psc_actv.psa_sch_mix_qty := round(rcd_psa_psc_actv.psa_sch_pch_qty / nvl(rcd_actv.psa_mat_yld_value,1), 0);
+            rcd_psa_psc_actv.psa_sch_ton_qty := round(rcd_psa_psc_actv.psa_sch_cas_qty * rcd_actv.psa_mat_net_weight, 3);
+            rcd_psa_psc_actv.psa_sch_dur_min := round(rcd_psa_psc_actv.psa_sch_cas_qty / (rcd_actv.psa_def_rra_unt * (rcd_actv.psa_def_rra_eff / 100)), 0);
+         elsif var_pty_code  = '*PACK' then
+            rcd_psa_psc_actv.psa_sch_plt_qty := var_act_valu;
+            rcd_psa_psc_actv.psa_sch_cas_qty := 0;
+            rcd_psa_psc_actv.psa_sch_pch_qty := 0;
+            rcd_psa_psc_actv.psa_sch_mix_qty := 0;
+            rcd_psa_psc_actv.psa_sch_ton_qty := 0;
+            rcd_psa_psc_actv.psa_sch_dur_min := round(rcd_psa_psc_actv.psa_sch_plt_qty / (rcd_actv.psa_def_rra_unt * (rcd_actv.psa_def_rra_eff / 100)), 0);
+         elsif var_pty_code = '*FORM' then
+            rcd_psa_psc_actv.psa_sch_plt_qty := 0;
+            rcd_psa_psc_actv.psa_sch_cas_qty := 0;
+            rcd_psa_psc_actv.psa_sch_pch_qty := var_act_valu;
+            rcd_psa_psc_actv.psa_sch_mix_qty := 0;
+            rcd_psa_psc_actv.psa_sch_ton_qty := 0;
+            rcd_psa_psc_actv.psa_sch_dur_min := round(rcd_psa_psc_actv.psa_sch_pch_qty / (rcd_actv.psa_def_rra_unt * (rcd_actv.psa_def_rra_eff / 100)), 0);
+         end if;
+         rcd_psa_psc_actv.psa_dur_mins := rcd_psa_psc_actv.psa_sch_dur_min;
+
+         if var_action = '*UPDACT' then
+            update psa_psc_actv
+               set psa_dur_mins = rcd_psa_psc_actv.psa_dur_mins,
+                   psa_sch_plt_qty = rcd_psa_psc_actv.psa_sch_plt_qty,
+                   psa_sch_cas_qty = rcd_psa_psc_actv.psa_sch_cas_qty,
+                   psa_sch_pch_qty = rcd_psa_psc_actv.psa_sch_pch_qty,
+                   psa_sch_mix_qty = rcd_psa_psc_actv.psa_sch_mix_qty,
+                   psa_sch_ton_qty = rcd_psa_psc_actv.psa_sch_ton_qty,
+                   psa_sch_dur_min = rcd_psa_psc_actv.psa_sch_dur_min
+             where psa_act_code = var_act_code;
+         elsif var_action = '*CRTDEF' then
+            update psa_psc_actv
+               set psa_dur_mins = rcd_psa_psc_actv.psa_dur_mins,
+                   psa_win_code = var_win_code,
+                   psa_win_seqn = var_win_seqn + .10,
+                   psa_sch_plt_qty = rcd_psa_psc_actv.psa_sch_plt_qty,
+                   psa_sch_cas_qty = rcd_psa_psc_actv.psa_sch_cas_qty,
+                   psa_sch_pch_qty = rcd_psa_psc_actv.psa_sch_pch_qty,
+                   psa_sch_mix_qty = rcd_psa_psc_actv.psa_sch_mix_qty,
+                   psa_sch_ton_qty = rcd_psa_psc_actv.psa_sch_ton_qty,
+                   psa_sch_dur_min = rcd_psa_psc_actv.psa_sch_dur_min
+             where psa_act_code = var_act_code;
+         end if;
+
+      elsif var_act_type = 'T' then
+
+         rcd_psa_psc_actv.psa_dur_mins := var_act_valu;
+
+         if var_action = '*UPDACT' then
+            update psa_psc_actv
+               set psa_dur_mins = rcd_psa_psc_actv.psa_dur_mins
+             where psa_act_code = var_act_code;
+         elsif var_action = '*CRTDEF' then
+            select psa_act_sequence.nextval into rcd_psa_psc_actv.psa_act_code from dual;
+            rcd_psa_psc_actv.psa_psc_code := var_psc_code;
+            rcd_psa_psc_actv.psa_psc_week := var_wek_code;
+            rcd_psa_psc_actv.psa_prd_type := var_pty_code;
+            rcd_psa_psc_actv.psa_act_text := 'Time';
+            rcd_psa_psc_actv.psa_act_type := 'T';
+            rcd_psa_psc_actv.psa_win_code := var_win_code;
+            rcd_psa_psc_actv.psa_win_seqn := var_win_seqn + .10;
+            rcd_psa_psc_actv.psa_win_flow := '0';
+            rcd_psa_psc_actv.psa_str_week := null;
+            rcd_psa_psc_actv.psa_end_week := null;
+            rcd_psa_psc_actv.psa_str_smos := null;
+            rcd_psa_psc_actv.psa_end_smos := null;
+            rcd_psa_psc_actv.psa_str_time := null;
+            rcd_psa_psc_actv.psa_end_time := null;
+            rcd_psa_psc_actv.psa_str_barn := null;
+            rcd_psa_psc_actv.psa_end_barn := null;
+            rcd_psa_psc_actv.psa_dur_mins := rcd_psa_psc_actv.psa_dur_mins;
+            rcd_psa_psc_actv.psa_mat_code := null;
+            rcd_psa_psc_actv.psa_mat_name := null;
+            rcd_psa_psc_actv.psa_mat_type := null;
+            rcd_psa_psc_actv.psa_mat_usage := null;
+            rcd_psa_psc_actv.psa_mat_uom := null;
+            rcd_psa_psc_actv.psa_mat_gro_weight := null;
+            rcd_psa_psc_actv.psa_mat_net_weight := null;
+            rcd_psa_psc_actv.psa_mat_unt_case := null;
+            rcd_psa_psc_actv.psa_mat_sch_priority := null;
+            rcd_psa_psc_actv.psa_mat_cas_pallet := null;
+            rcd_psa_psc_actv.psa_mat_bch_quantity := null;
+            rcd_psa_psc_actv.psa_mat_yld_percent := null;
+            rcd_psa_psc_actv.psa_mat_yld_value := null;
+            rcd_psa_psc_actv.psa_mat_pck_percent := null;
+            rcd_psa_psc_actv.psa_mat_pck_weight := null;
+            rcd_psa_psc_actv.psa_mat_bch_weight := null;
+            rcd_psa_psc_actv.psa_mat_req_qty := null;
+            rcd_psa_psc_actv.psa_lin_code := null;
+            rcd_psa_psc_actv.psa_con_code := null;
+            rcd_psa_psc_actv.psa_dft_flag := null;
+            rcd_psa_psc_actv.psa_rra_code := null;
+            rcd_psa_psc_actv.psa_def_rra_unt := null;
+            rcd_psa_psc_actv.psa_def_rra_eff := null;
+            rcd_psa_psc_actv.psa_def_rra_was := null;
+            rcd_psa_psc_actv.psa_act_rra_unt := null;
+            rcd_psa_psc_actv.psa_act_rra_eff := null;
+            rcd_psa_psc_actv.psa_act_rra_was := null;
+            rcd_psa_psc_actv.psa_req_plt_qty := null;
+            rcd_psa_psc_actv.psa_req_cas_qty := null;
+            rcd_psa_psc_actv.psa_req_pch_qty := null;
+            rcd_psa_psc_actv.psa_req_mix_qty := null;
+            rcd_psa_psc_actv.psa_req_ton_qty := null;
+            rcd_psa_psc_actv.psa_req_dur_min := null;
+            rcd_psa_psc_actv.psa_cal_plt_qty := null;
+            rcd_psa_psc_actv.psa_cal_cas_qty := null;
+            rcd_psa_psc_actv.psa_cal_pch_qty := null;
+            rcd_psa_psc_actv.psa_cal_mix_qty := null;
+            rcd_psa_psc_actv.psa_cal_ton_qty := null;
+            rcd_psa_psc_actv.psa_cal_dur_min := null;
+            rcd_psa_psc_actv.psa_sch_plt_qty := null;
+            rcd_psa_psc_actv.psa_sch_cas_qty := null;
+            rcd_psa_psc_actv.psa_sch_pch_qty := null;
+            rcd_psa_psc_actv.psa_sch_mix_qty := null;
+            rcd_psa_psc_actv.psa_sch_ton_qty := null;
+            rcd_psa_psc_actv.psa_sch_dur_min := null;
+            rcd_psa_psc_actv.psa_act_plt_qty := null;
+            rcd_psa_psc_actv.psa_act_cas_qty := null;
+            rcd_psa_psc_actv.psa_act_pch_qty := null;
+            rcd_psa_psc_actv.psa_act_mix_qty := null;
+            rcd_psa_psc_actv.psa_act_ton_qty := null;
+            rcd_psa_psc_actv.psa_act_dur_min := null;
+            rcd_psa_psc_actv.psa_var_plt_qty := null;
+            rcd_psa_psc_actv.psa_var_cas_qty := null;
+            rcd_psa_psc_actv.psa_var_pch_qty := null;
+            rcd_psa_psc_actv.psa_var_mix_qty := null;
+            rcd_psa_psc_actv.psa_var_ton_qty := null;
+            rcd_psa_psc_actv.psa_var_dur_min := null;
+            insert into psa_psc_actv values rcd_psa_psc_actv;
+         end if;
+
+      end if;
+
+      /*-*/
+      /* Free the XML document
+      /*-*/
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Align the shift window activities
+      /*-*/
+      align_activity(var_psc_code,
+                     var_wek_code,
+                     var_pty_code,
+                     var_lin_code,
+                     var_con_code,
+                     var_win_code);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - UPDATE_ACTIVITY - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_activity;
 
    /***************************************************/
    /* This procedure performs the delete data routine */
@@ -2595,12 +3149,13 @@ create or replace package body psa_app.psa_psc_function as
       /* Process the production schedule data
       /*-*/
       var_confirm := 'deleted';
-      delete from psa_psc_hedr where psh_psc_code = var_psc_code;
-      delete from psa_psc_line where psl_psc_code = var_psc_code;
-      delete from psa_psc_prod where psp_psc_code = var_psc_code;
+      delete from psa_psc_actv where psa_psc_code = var_psc_code;
       delete from psa_psc_reso where psr_psc_code = var_psc_code;
       delete from psa_psc_shft where pss_psc_code = var_psc_code;
+      delete from psa_psc_line where psl_psc_code = var_psc_code;
+      delete from psa_psc_prod where psp_psc_code = var_psc_code;
       delete from psa_psc_week where psw_psc_code = var_psc_code;
+      delete from psa_psc_hedr where psh_psc_code = var_psc_code;
 
       /*-*/
       /* Commit the database
@@ -2636,6 +3191,328 @@ create or replace package body psa_app.psa_psc_function as
    /* End routine */
    /*-------------*/
    end delete_data;
+
+   /*******************************************************/
+   /* This procedure performs the delete activity routine */
+   /*******************************************************/
+   procedure delete_activity(par_user in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_pty_code varchar2(32);
+      var_win_code varchar2(32);
+      var_act_code number;
+      var_upd_user varchar2(30);
+      var_upd_date date;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_psc_prod t01
+          where t01.psp_psc_code = var_psc_code
+            and t01.psp_psc_week = var_wek_code
+            and t01.psp_prd_type = var_pty_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_actv is
+         select t01.*
+           from psa_psc_actv t01
+          where t01.psa_act_code = var_act_code;
+      rcd_actv csr_actv%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      if var_action != '*DLTACT' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
+      var_act_code := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@ACTCDE'));
+      var_upd_user := upper(par_user);
+      var_upd_date := sysdate;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve and lock the production schedule week type
+      /*-*/
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            psa_gen_function.add_mesg_data('Production schedule week production type ('||var_psc_code||' / '||var_wek_code||' / '||var_pty_code||') is currently locked');
+      end;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule week production type ('||var_psc_code||' / '||var_wek_code||' / '||var_pty_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the production schedule activity
+      /*-*/
+      var_found := false;
+      open csr_actv;
+      fetch csr_actv into rcd_actv;
+      if csr_actv%found then
+         var_found := true;
+      end if;
+      close csr_actv;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
+      /* Update the production schedule data
+      /*-*/
+      update psa_psc_prod
+         set psp_upd_user = var_upd_user,
+             psp_upd_date = var_upd_date
+       where psp_psc_code = var_psc_code
+         and psp_psc_week = var_wek_code
+         and psp_prd_type = var_pty_code;
+
+      if rcd_actv.psa_act_type = 'P' then
+
+         update psa_psc_actv
+            set psa_win_code = '*NONE',
+                psa_win_seqn = null,
+                psa_win_flow = null,
+                psa_str_week = null,
+                psa_end_week = null,
+                psa_str_smos = null,
+                psa_end_smos = null,
+                psa_str_time = null,
+                psa_end_time = null,
+                psa_str_barn = null,
+                psa_end_barn = null,
+                psa_dur_mins = psa_cal_dur_min
+             where psa_act_code = var_act_code;
+
+      elsif rcd_actv.psa_act_type = 'T' then
+
+         delete from psa_psc_actv where psa_act_code = var_act_code;
+
+      end if;
+
+      /*-*/
+      /* Align the shift window activities
+      /*-*/
+      align_activity(rcd_actv.psa_psc_code,
+                     rcd_actv.psa_psc_week,
+                     rcd_actv.psa_prd_type,
+                     rcd_actv.psa_lin_code,
+                     rcd_actv.psa_con_code,
+                     rcd_actv.psa_win_code);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - DELETE_ACTIVITY - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end delete_activity;
+
+   /******************************************************/
+   /* This procedure performs the align activity routin */
+   /*******************************************************/
+   procedure align_activity(par_psc_code in varchar2,
+                            par_psc_week in varchar2,
+                            par_prd_type in varchar2,
+                            par_lin_code in varchar2,
+                            par_con_code in varchar2,
+                            par_win_code in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_win_seqn number;
+      var_win_flow varchar2(1);
+      var_str_time date;
+      var_end_time date;
+      var_min_time date;
+      var_str_barn number;
+      var_end_barn number;
+      var_min_barn number;
+      var_max_barn number;
+      var_str_smos number;
+      var_end_smos number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_sact is
+         select t01.*
+           from psa_psc_actv t01
+          where t01.psa_psc_code = par_psc_code
+            and t01.psa_psc_week = par_psc_week
+            and t01.psa_prd_type = par_prd_type
+            and t01.psa_lin_code = par_lin_code
+            and t01.psa_con_code = par_con_code
+            and t01.psa_win_code = par_win_code
+          order by t01.psa_win_seqn asc;
+      rcd_sact csr_sact%rowtype;
+
+      cursor csr_shft is
+         select t01.*,
+                to_date(to_char(t01.pss_shf_date,'yyyymmdd')||to_char(t01.pss_shf_start,'fm0000'),'yyyymmddhh24mi') as str_date
+           from psa_psc_shft t01
+          where t01.pss_psc_code = par_psc_code
+            and t01.pss_psc_week = par_psc_week
+            and t01.pss_prd_type = par_prd_type
+            and t01.pss_lin_code = par_lin_code
+            and t01.pss_con_code = par_con_code
+            and t01.pss_win_code = par_win_code
+          order by t01.pss_smo_seqn asc;
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_shft is table of csr_shft%rowtype index by binary_integer;
+      tbl_shft typ_shft;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the shift window data
+      /*-*/
+      tbl_shft.delete;
+      open csr_shft;
+      fetch csr_shft bulk collect into tbl_shft;
+      close csr_shft;
+
+      /*-*/
+      /* Realign the shift window activities
+      /*-*/
+      var_win_seqn := 0;
+      var_min_time := tbl_shft(1).str_date;
+      var_str_time := tbl_shft(1).str_date;
+      var_end_time := tbl_shft(1).str_date;
+      var_min_barn := tbl_shft(1).pss_str_bar;
+      var_str_barn := tbl_shft(1).pss_str_bar;
+      var_end_barn := tbl_shft(1).pss_str_bar;
+      var_max_barn := tbl_shft(tbl_shft.count).pss_end_bar;
+      open csr_sact;
+      loop
+         fetch csr_sact into rcd_sact;
+         if csr_sact%notfound then
+            exit;
+         end if;
+         var_win_seqn := var_win_seqn + 1;
+         var_end_time := var_str_time + (rcd_sact.psa_dur_mins / 1440);
+         var_end_barn := var_min_barn + trunc(((var_end_time - var_min_time) * 1440) / 15);
+         var_win_flow := '0';
+         if var_end_barn > var_max_barn then
+            var_end_barn := var_max_barn;
+            var_win_flow := '1';
+         end if;
+         var_str_smos := 0;
+         var_end_smos := 0;
+         for idx in 1..tbl_shft.count loop
+            if tbl_shft(idx).pss_str_bar <= var_str_barn and tbl_shft(idx).pss_end_bar >= var_str_barn then
+               var_str_smos := tbl_shft(idx).pss_smo_seqn;
+               exit;
+            end if;
+         end loop;
+         for idx in 1..tbl_shft.count loop
+            if tbl_shft(idx).pss_str_bar <= var_end_barn and tbl_shft(idx).pss_end_bar >= var_end_barn then
+               var_end_smos := tbl_shft(idx).pss_smo_seqn;
+               exit;
+            end if;
+         end loop;
+         update psa_psc_actv
+            set psa_win_seqn = var_win_seqn,
+                psa_win_flow = var_win_flow,
+                psa_str_smos = var_str_smos,
+                psa_end_smos = var_end_smos,
+                psa_str_time = var_str_time,
+                psa_end_time = var_end_time,
+                psa_str_barn = var_str_barn,
+                psa_end_barn = var_end_barn
+          where psa_act_code = rcd_sact.psa_act_code;
+         var_str_time := var_end_time + (1 / 1440);
+         var_str_barn := var_min_barn + trunc(((var_str_time - var_min_time) * 1440) / 15);
+         if var_str_barn > var_max_barn then
+            var_str_barn := var_max_barn;
+         end if;
+      end loop;
+      close csr_sact;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end align_activity;
 
 end psa_psc_function;
 /
