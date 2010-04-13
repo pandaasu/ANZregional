@@ -25,10 +25,11 @@ create table psa.psa_psc_actv
     psa_prd_type                    varchar2(32)                  not null,
     psa_act_text                    varchar2(128 char)            not null,
     psa_act_type                    varchar2(1)                   not null,
-    psa_act_used                    varchar2(1)                   not null,
+    psa_win_code                    varchar2(32)                  not null,
+    psa_win_seqn                    number                        null,
+    psa_win_flow                    varchar2(1)                   null,
     psa_str_week                    varchar2(7)                   null,
     psa_end_week                    varchar2(7)                   null,
-    psa_win_code                    varchar2(32)                  null,
     psa_str_smos                    number                        null,
     psa_end_smos                    number                        null,
     psa_str_time                    date                          null,
@@ -114,6 +115,8 @@ alter table psa.psa_psc_actv
 /**/
 create index psa_psc_actv_ix01 on psa.psa_psc_actv
    (psa_psc_code, psa_psc_week, psa_prd_type, psa_act_code);
+create index psa_psc_actv_ix02 on psa.psa_psc_actv
+   (psa_psc_code, psa_psc_week, psa_prd_type, psa_lin_code, psa_con_code, psa_win_code, psa_win_seqn);
 
 /**/
 /* Authority
