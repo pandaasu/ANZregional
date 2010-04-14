@@ -16,6 +16,7 @@ CREATE OR REPLACE PACKAGE pmx_cdw_cust_prc IS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   30/01/2007 Cynthia Ennis        Created this procedure.
+  1.1   03/06/2009 Anna Every           Changed call to lics_outbound_loader
   1.2   19/10/2009 Steve Gregan         Added create log
                                         Modified extract to include additional data
 
@@ -94,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY         pmx_cdw_cust_prc IS
     i_pmx_div_code VARCHAR2) IS
 
     -- COLLECTION TYPE DECLARATIONS
-    TYPE tbl_customer IS TABLE OF VARCHAR2(220)
+    TYPE tbl_customer IS TABLE OF VARCHAR2(512)
       INDEX BY BINARY_INTEGER;
     rcd_customer tbl_customer;
 
@@ -216,15 +217,15 @@ CREATE OR REPLACE PACKAGE BODY         pmx_cdw_cust_prc IS
         || LPAD(v_sap_cust_code, 10, '0')   -- Customer Code
         || rv_customer.promoted   -- Promoted Flag
         || RPAD(rv_customer.accmgrkey, 38)   -- Account Manager Key
-        || LPAD(nvl(rv_customer.majorref, rpad(' ',10)), 10, '0')
-        || LPAD(nvl(rv_customer.midref, rpad(' ',10)), 10, '0')
-        || LPAD(nvl(rv_customer.minorref, rpad(' ',10)), 10, '0')
-        || LPAD(nvl(rv_customer.maincode, rpad(' ',10)), 10, '0')
-        || RPAD(rv_customer.custlevel,2)
-        || LPAD(nvl(rv_customer.parentkacc, rpad(' ',10)), 10, '0')
-        || LPAD(nvl(rv_customer.kaccxref, rpad(' ',10)), 10, '0')
-        || RPAD(rv_customer.glcode, 15)
-        || RPAD(nvl(rv_customer.channelkey,' '), 38);
+        || LPAD(nvl(trim(rv_customer.majorref), rpad(' ',10)), 10, '0')
+        || LPAD(nvl(trim(rv_customer.midref), rpad(' ',10)), 10, '0')
+        || LPAD(nvl(trim(rv_customer.minorref), rpad(' ',10)), 10, '0')
+        || LPAD(nvl(trim(rv_customer.maincode), rpad(' ',10)), 10, '0')
+        || RPAD(nvl(trim(rv_customer.custlevel),' '),2)
+        || LPAD(nvl(trim(rv_customer.parentkacc), rpad(' ',10)), 10, '0')
+        || LPAD(nvl(trim(rv_customer.kaccxref), rpad(' ',10)), 10, '0')
+        || RPAD(nvl(trim(rv_customer.glcode),' '), 15)
+        || RPAD(nvl(rv_customer.channelkey,'0'), 38);
 
       -- Avoid using excessive amounts of memory for the array by flushing to file regularly,
       -- releasing the memory as we go.
