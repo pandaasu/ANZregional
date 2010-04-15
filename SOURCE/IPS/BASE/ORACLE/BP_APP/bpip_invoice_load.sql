@@ -167,7 +167,7 @@ CREATE OR REPLACE package body BP_APP.bpip_invoice_load as
          rcd_load_bpip_batch.batch_id := null;
          rcd_load_bpip_batch.batch_type_code := 'INVOICES';
          rcd_load_bpip_batch.company := lics_inbound_utility.get_variable('COMPANY');
-         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('PERIOD'),8,4)||substr(lics_inbound_utility.get_variable('PERIOD'),4,2);
+         rcd_load_bpip_batch.period := substr(lics_inbound_utility.get_variable('PERIOD'),8,4)||substr(lics_inbound_utility.get_variable('PERIOD'),5,2);
          rcd_load_bpip_batch.dataentity := 'ACTUALS';
          rcd_load_bpip_batch.status := 'LOADED';
          rcd_load_bpip_batch.loaded_by := 259; /* For ID in testing */
