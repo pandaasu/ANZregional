@@ -22,9 +22,9 @@ create or replace package vds_app.vds_extract as
 
 *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    procedure clear_list(par_query in varchar2);
    procedure update_list(par_query in varchar2, par_list in varchar2);
    procedure start_meta(par_query in varchar2);
@@ -66,6 +66,16 @@ create or replace package body vds_app.vds_extract as
       /* Local definitions
       /*-*/
       var_query varchar2(30);
+      var_found boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_vds_query is 
+         select t01.*
+           from vds_doc_query t01
+          where t01.vdq_query = var_query;
+      rcd_vds_query csr_vds_query%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -73,9 +83,28 @@ create or replace package body vds_app.vds_extract as
    begin
 
       /*-*/
-      /* Clear the query document list
+      /* Validate the parameters
       /*-*/
       var_query := upper(par_query);
+      var_found := false;
+      open csr_vds_query;
+      fetch csr_vds_query into rcd_vds_query;
+      if csr_vds_query%found then
+         var_found := true;
+      end if;
+      close csr_vds_query;
+      if var_found = false then
+         raise_application_error(-20000, 'VDS document query (' || var_query || ') does not exist in VDS_DOC_QUERY table');
+      end if;
+
+      /*-*/
+      /* Clear the table data
+      /*-*/
+      execute immediate 'begin ' || rcd_vds_query.vdq_load_proc || '.clear; end;';
+
+      /*-*/
+      /* Clear the query document list
+      /*-*/
       delete from vds_doc_list where vdl_query = var_query;
 
       /*-*/
@@ -88,9 +117,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -195,9 +224,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -271,9 +300,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -346,9 +375,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -400,19 +429,14 @@ create or replace package body vds_app.vds_extract as
       /*-*/
       commit;
 
-      /*-*/
-      /* Commit the database
-      /*-*/
-      commit;
-
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -486,9 +510,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -552,9 +576,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -652,9 +676,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -874,9 +898,9 @@ create or replace package body vds_app.vds_extract as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/

@@ -26,9 +26,10 @@ create or replace package vds_app.vds_material as
 /* Package Header */
 /******************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
+   procedure clear;
    procedure load;
 
 end vds_material;
@@ -44,6 +45,65 @@ create or replace package body vds_app.vds_material as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*********************************************/
+   /* This procedure performs the clear routine */
+   /*********************************************/
+   procedure clear is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Delete the existing data
+      /*-*/
+      delete from vds.matl_mara;
+      commit;
+      delete from vds.matl_marm;
+      commit;
+      delete from vds.matl_makt;
+      commit;
+      delete from vds.matl_marc;
+      commit;
+      delete from vds.matl_mvke;
+      commit;
+      delete from vds.matl_mmoe;
+      commit;
+      delete from vds.matl_mbew;
+      commit;
+      delete from vds.matl_mard;
+      commit;
+      delete from vds.matl_inob;
+      commit;
+      delete from vds.matl_ausp;
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_MATERIAL - clear - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear;
 
    /********************************************/
    /* This procedure performs the load routine */
@@ -108,9 +168,9 @@ create or replace package body vds_app.vds_material as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/

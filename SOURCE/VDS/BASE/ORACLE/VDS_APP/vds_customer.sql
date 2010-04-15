@@ -26,9 +26,10 @@ create or replace package vds_app.vds_customer as
 /* Package Header */
 /******************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
+   procedure clear;
    procedure load;
 
 end vds_customer;
@@ -44,6 +45,53 @@ create or replace package body vds_app.vds_customer as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*********************************************/
+   /* This procedure performs the clear routine */
+   /*********************************************/
+   procedure clear is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Delete the existing data
+      /*-*/
+      delete from vds.cust_kna1;
+      commit;
+      delete from vds.cust_knb1;
+      commit;
+      delete from vds.cust_knvi;
+      commit;
+      delete from vds.cust_knvv;
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_CUSTOMER - clear - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear;
 
    /********************************************/
    /* This procedure performs the load routine */
@@ -84,9 +132,9 @@ create or replace package body vds_app.vds_customer as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/

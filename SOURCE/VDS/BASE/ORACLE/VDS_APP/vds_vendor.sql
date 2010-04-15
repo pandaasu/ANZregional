@@ -26,9 +26,10 @@ create or replace package vds_app.vds_vendor as
 /* Package Header */
 /******************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
+   procedure clear;
    procedure load;
 
 end vds_vendor;
@@ -44,6 +45,57 @@ create or replace package body vds_app.vds_vendor as
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*********************************************/
+   /* This procedure performs the clear routine */
+   /*********************************************/
+   procedure clear is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Delete the existing data
+      /*-*/
+      delete from vds.vend_lfa1;
+      commit;
+      delete from vds.vend_lfb1;
+      commit;
+      delete from vds.vend_lfbk;
+      commit;
+      delete from vds.vend_lfm1;
+      commit;
+      delete from vds.vend_lfm2;
+      commit;
+      delete from vds.vend_wyt3;
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - Validation Data Store - VDS_VENDOR - clear - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end clear;
 
    /********************************************/
    /* This procedure performs the load routine */
@@ -92,9 +144,9 @@ create or replace package body vds_app.vds_vendor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
