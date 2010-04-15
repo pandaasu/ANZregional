@@ -79,6 +79,10 @@ create or replace package body vds_app.vds_material as
       commit;
       delete from vds.matl_ausp;
       commit;
+      delete from vds.matl_mlgn;
+      commit;
+      delete from vds.matl_mlan;
+      commit;
 
    /*-------------------*/
    /* Exception handler */
@@ -138,6 +142,10 @@ create or replace package body vds_app.vds_material as
       commit;
       delete from vds.matl_ausp where (to_number(objek)) in (select cuobj from vds_app.view_matl_inob where (objek) in (select matnr from vds_app.view_matl_mara));
       commit;
+      delete from vds.matl_mlgn where (matnr) in (select matnr from vds_app.view_matl_mlgn);
+      commit;
+      delete from vds.matl_mlan where (matnr) in (select matnr from vds_app.view_matl_mlan);
+      commit;
 
       /*-*/
       /* Insert the replacement data
@@ -161,6 +169,10 @@ create or replace package body vds_app.vds_material as
       insert into vds.matl_inob select t01.* from vds_app.view_matl_inob t01;
       commit;
       insert into vds.matl_ausp select t01.* from vds_app.view_matl_ausp t01;
+      commit;
+      insert into vds.matl_mlgn select t01.* from vds_app.view_matl_mlgn t01;
+      commit;
+      insert into vds.matl_mlan select t01.* from vds_app.view_matl_mlan t01;
       commit;
 
    /*-------------------*/
