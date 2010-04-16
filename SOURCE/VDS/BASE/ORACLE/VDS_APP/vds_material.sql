@@ -142,9 +142,9 @@ create or replace package body vds_app.vds_material as
       commit;
       delete from vds.matl_ausp where (to_number(objek)) in (select cuobj from vds_app.view_matl_inob where (objek) in (select matnr from vds_app.view_matl_mara));
       commit;
-      delete from vds.matl_mlgn where (matnr) in (select matnr from vds_app.view_matl_mlgn);
+      delete from vds.matl_mlgn where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
-      delete from vds.matl_mlan where (matnr) in (select matnr from vds_app.view_matl_mlan);
+      delete from vds.matl_mlan where (matnr) in (select matnr from vds_app.view_matl_mara);
       commit;
 
       /*-*/
