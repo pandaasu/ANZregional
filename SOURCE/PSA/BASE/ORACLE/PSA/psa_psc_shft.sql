@@ -30,11 +30,12 @@ create table psa.psa_psc_shft
     pss_shf_start                   number                        not null,
     pss_shf_duration                number                        not null,
     pss_cmo_code                    varchar2(32)                  not null,
-    pss_win_code                    varchar2(32)                  not null,
-    pss_win_type                    varchar2(1)                   not null,
-    pss_win_flag                    varchar2(1)                   not null,
     pss_str_bar                     number                        not null,
-    pss_end_bar                     number                        not null);
+    pss_end_bar                     number                        not null,
+    pss_win_code                    varchar2(32)                  not null,
+    pss_win_type                    varchar2(1)                   null,
+    pss_win_stim                    date                          null,
+    pss_win_etim                    date                          null);
 
 /**/
 /* Comments
@@ -51,11 +52,12 @@ comment on column psa.psa_psc_shft.pss_shf_date is 'Shift start date YYYY/MM/DD'
 comment on column psa.psa_psc_shft.pss_shf_start is 'Shift start time HH24:MI';
 comment on column psa.psa_psc_shft.pss_shf_duration is 'Shift duration minutes';
 comment on column psa.psa_psc_shft.pss_cmo_code is 'Crew model code';
-comment on column psa.psa_psc_shft.pss_win_code is 'Window code (spans one or more shifts)';
-comment on column psa.psa_psc_shft.pss_win_type is 'Window type (0=none, 1=parent, 2=child)';
-comment on column psa.psa_psc_shft.pss_win_flag is 'Window flag (0=none, 1=start, 2=continuation)';
 comment on column psa.psa_psc_shft.pss_str_bar is 'Shift start model bar';
 comment on column psa.psa_psc_shft.pss_end_bar is 'Shift end model bar';
+comment on column psa.psa_psc_shft.pss_win_code is 'Window code (spans one or more shifts)';
+comment on column psa.psa_psc_shft.pss_win_type is 'Window type (0=none, 1=parent, 2=child)';
+comment on column psa.psa_psc_shft.pss_win_stim is 'Window start time YYYYMMDDHH24MI';
+comment on column psa.psa_psc_shft.pss_win_etim is 'Window end time YYYYMMDDHH24MI';
 
 /**/
 /* Primary Key Constraint
