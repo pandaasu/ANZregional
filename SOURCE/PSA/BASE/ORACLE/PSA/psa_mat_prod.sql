@@ -22,6 +22,7 @@ create table psa.psa_mat_prod
    (mpr_mat_code                    varchar2(32)                  not null,
     mpr_prd_type                    varchar2(32)                  not null,
     mpr_sch_priority                number                        null,
+    mpr_req_flag                    varchar2(1)                   null,
     mpr_dft_line                    varchar2(32)                  null,
     mpr_cas_pallet                  number                        null,
     mpr_bch_quantity                number                        null,
@@ -38,6 +39,7 @@ comment on table psa.psa_mat_prod is 'Material Production Table';
 comment on column psa.psa_mat_prod.mpr_mat_code is 'Material code';
 comment on column psa.psa_mat_prod.mpr_prd_type is 'Production type code';
 comment on column psa.psa_mat_prod.mpr_sch_priority is 'Production schedule priority';
+comment on column psa.psa_mat_prod.mpr_req_flag is 'Requirements flag 0(no) or 1(yes)';
 comment on column psa.psa_mat_prod.mpr_dft_line is 'Default production line';
 comment on column psa.psa_mat_prod.mpr_cas_pallet is 'Cases per pallet';
 comment on column psa.psa_mat_prod.mpr_bch_quantity is 'Batch/lot quantity';
