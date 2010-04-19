@@ -263,6 +263,7 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
                   rcd_psa_mat_prod.mpr_prd_type := '*FILL';
                   rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_req_flag := '1';
                   rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
                   rcd_psa_mat_prod.mpr_cas_pallet := 0;
                   rcd_psa_mat_prod.mpr_bch_quantity := 0;
@@ -276,6 +277,7 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
                   rcd_psa_mat_prod.mpr_prd_type := '*PACK';
                   rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_req_flag := '1';
                   rcd_psa_mat_prod.mpr_dft_line := null;
                   if rcd_bds_data.lde_prd_type = '*PACK' then
                      rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
@@ -293,6 +295,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
                rcd_psa_mat_prod.mpr_prd_type := '*FILL';
                rcd_psa_mat_prod.mpr_sch_priority := 1;
+               rcd_psa_mat_prod.mpr_req_flag := '1';
                rcd_psa_mat_prod.mpr_dft_line := null;
                if rcd_bds_data.lde_prd_type = '*FILL' then
                   rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
@@ -309,6 +312,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
                rcd_psa_mat_prod.mpr_prd_type := '*FORM';
                rcd_psa_mat_prod.mpr_sch_priority := 1;
+               rcd_psa_mat_prod.mpr_req_flag := '1';
                rcd_psa_mat_prod.mpr_dft_line := null;
                if rcd_bds_data.lde_prd_type = '*FORM' then
                   rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
@@ -406,6 +410,7 @@ create or replace package body psa_app.psa_mat_function as
                   end if;
 
                   rcd_psa_mat_prod.mpr_sch_priority := rcd_psa_prod.mpr_sch_priority;
+                  rcd_psa_mat_prod.mpr_req_flag := rcd_psa_prod.mpr_req_flag;
                   rcd_psa_mat_prod.mpr_dft_line := rcd_psa_prod.mpr_dft_line;
                   if rcd_psa_prod.mpr_prd_type = rcd_bds_data.lde_prd_type and rcd_bds_data.lli_lin_code is not null then
                      rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
@@ -429,6 +434,7 @@ create or replace package body psa_app.psa_mat_function as
 
                   update psa_mat_prod
                      set mpr_sch_priority = rcd_psa_mat_prod.mpr_sch_priority,
+                         mpr_req_flag = rcd_psa_mat_prod.mpr_req_flag,
                          mpr_dft_line = rcd_psa_mat_prod.mpr_dft_line,
                          mpr_cas_pallet = rcd_psa_mat_prod.mpr_cas_pallet,
                          mpr_bch_quantity = rcd_psa_mat_prod.mpr_bch_quantity,
@@ -720,6 +726,7 @@ create or replace package body psa_app.psa_mat_function as
          select t01.mpr_prd_type,
                 nvl(upper(t02.pty_prd_name),'*UNKNOWN') as pty_prd_name,
                 to_char(nvl(t01.mpr_sch_priority,1)) as mpr_sch_priority,
+                decode(t01.mpr_req_flag,'1','Yes','No') as mpr_req_flag,
                 nvl(t01.mpr_dft_line,'*NONE') as mpr_dft_line,
                 to_char(nvl(t01.mpr_cas_pallet,0)) as mpr_cas_pallet,
                 to_char(nvl(t01.mpr_bch_quantity,0)) as mpr_bch_quantity,
@@ -841,6 +848,7 @@ create or replace package body psa_app.psa_mat_function as
             if rcd_prod.mpr_prd_type = '*FILL' then
                pipe row('<tr><td align=center colspan=14></td></tr>');
                var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Requirements:</font> '||rcd_prod.mpr_req_flag;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Case Quantity:</font> '||rcd_prod.mpr_bch_quantity;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Yield %:</font> '||rcd_prod. mpr_yld_percent;
@@ -1187,6 +1195,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.pty_prd_name,
                 nvl(t02.mpr_mat_code,'*NONE') as mpr_mat_code,
                 to_char(nvl(t02.mpr_sch_priority,1)) as mpr_sch_priority,
+                nvl(t02.mpr_req_flag,'0') as mpr_req_flag,
                 nvl(t02.mpr_dft_line,'*NONE') as mpr_dft_line,
                 to_char(nvl(t02.mpr_cas_pallet,0)) as mpr_cas_pallet,
                 to_char(nvl(t02.mpr_bch_quantity,0)) as mpr_bch_quantity,
@@ -1345,6 +1354,7 @@ create or replace package body psa_app.psa_mat_function as
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"';
          var_output := var_output||' MPRMAT="'||psa_to_xml(rcd_prod.mpr_mat_code)||'"';
          var_output := var_output||' MPRSCH="'||psa_to_xml(rcd_prod.mpr_sch_priority)||'"';
+         var_output := var_output||' MPRREQ="'||psa_to_xml(rcd_prod.mpr_req_flag)||'"';
          var_output := var_output||' MPRLIN="'||psa_to_xml(rcd_prod.mpr_dft_line)||'"';
          var_output := var_output||' MPRCPL="'||psa_to_xml(rcd_prod.mpr_cas_pallet)||'"';
          var_output := var_output||' MPRBQY="'||psa_to_xml(rcd_prod.mpr_bch_quantity)||'"';
@@ -1456,8 +1466,10 @@ create or replace package body psa_app.psa_mat_function as
       var_bolPack boolean;
       var_bolForm boolean;
       var_bolComp boolean;
+      var_bolRflg boolean;
       var_pty_code varchar2(32);
       var_pty_flag varchar2(1);
+      var_pty_rflg varchar2(1);
       var_lin_code varchar2(32);
       var_con_code varchar2(32);
       var_com_code varchar2(32);
@@ -1577,6 +1589,7 @@ create or replace package body psa_app.psa_mat_function as
       var_bolPack := false;
       var_bolForm := false;
       var_bolComp := false;
+      var_bolRflg := false;
       if (rcd_retrieve.mde_mat_usage = 'TDU' or
           rcd_retrieve.mde_mat_usage = 'MPO' or
           rcd_retrieve.mde_mat_usage = 'PCH') then
@@ -1584,6 +1597,7 @@ create or replace package body psa_app.psa_mat_function as
          for idx in 0..xmlDom.getLength(obj_pty_list)-1 loop
             obj_pty_node := xmlDom.item(obj_pty_list,idx);
             var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
+            var_pty_rflg := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
             if var_pty_code = '*FILL' then
                var_bolFill := true;
             elsif var_pty_code = '*PACK' then
@@ -1609,6 +1623,12 @@ create or replace package body psa_app.psa_mat_function as
             end if;
             close csr_type;
             if var_pty_flag = '1' then
+               if var_pty_rflg = '1' then
+                  if var_bolRflg = true then
+                     psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') must only have one production type flagged for requirements');
+                  end if;
+                  var_bolRflg := true;
+               end if;
                obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
                for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
                   obj_lin_node := xmlDom.item(obj_lin_list,idy);
@@ -1655,6 +1675,9 @@ create or replace package body psa_app.psa_mat_function as
             if var_bolForm = true then
                psa_gen_function.add_mesg_data('TDU material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Forming data');
             end if;
+            if var_bolRflg = false then
+               psa_gen_function.add_mesg_data('TDU material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling or Packing selected for requirements');
+            end if;
          elsif rcd_retrieve.mde_mat_usage = 'MPO' then
             if var_bolFill = false then
                psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling data');
@@ -1662,12 +1685,18 @@ create or replace package body psa_app.psa_mat_function as
             if var_bolPack = true or var_bolForm = true then
                psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Packing or Forming data');
             end if;
+            if var_bolRflg = false then
+               psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling selected for requirements');
+            end if;
          elsif rcd_retrieve.mde_mat_usage = 'PCH' then
             if var_bolForm = false then
                psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must have Forming data');
             end if;
             if var_bolFill = true or var_bolPack = true then
                psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Filling or Packing data');
+            end if;
+            if var_bolRflg = false then
+               psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Forming selected for requirements');
             end if;
          end if;
       end if;
@@ -1702,6 +1731,7 @@ create or replace package body psa_app.psa_mat_function as
             rcd_psa_mat_prod.mpr_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
             if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
                rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := 0;
                rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
@@ -1712,6 +1742,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
             elsif rcd_psa_mat_prod.mpr_prd_type = '*PACK' then
                rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRCPL'));
                rcd_psa_mat_prod.mpr_bch_quantity := 0;
@@ -1722,6 +1753,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_bch_weight := 0;
             elsif rcd_psa_mat_prod.mpr_prd_type = '*FORM' then
                rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := 0;
                rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
