@@ -508,8 +508,8 @@ create or replace package body psa_app.psa_rra_function as
                psa_gen_function.add_mesg_data('Run rate efficiency must be in range 0 to 100');
             end if;
          else
-            if rcd_psa_rra_defn.rrd_rra_efficiency != 0 then
-               psa_gen_function.add_mesg_data('Run rate efficiency must be 0');
+            if rcd_psa_rra_defn.rrd_rra_efficiency != 100 then
+               psa_gen_function.add_mesg_data('Run rate efficiency must be 100');
             end if;
          end if;
          if rcd_prdtype.pty_prd_run_wastage = '1' then

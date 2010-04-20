@@ -1193,6 +1193,8 @@ create or replace package body psa_app.psa_mat_function as
       cursor csr_prod is
          select t01.pty_prd_type,
                 t01.pty_prd_name,
+                t01.pty_prd_run_efficiency,
+                t01.pty_prd_run_wastage,
                 nvl(t02.mpr_mat_code,'*NONE') as mpr_mat_code,
                 to_char(nvl(t02.mpr_sch_priority,1)) as mpr_sch_priority,
                 nvl(t02.mpr_req_flag,'0') as mpr_req_flag,
@@ -1764,6 +1766,13 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_bch_weight := 0;
             end if;
             insert into psa_mat_prod values rcd_psa_mat_prod;
+            open csr_type;
+            fetch csr_type into rcd_type;
+            if csr_type%notfound then
+               rcd_type.pty_prd_run_efficiency := '0';
+               rcd_type.pty_prd_run_wastage := '0';
+            end if;
+            close csr_type;
             obj_lin_list := xslProcessor.selectNodes(obj_pty_node,'MATLIN');
             for idy in 0..xmlDom.getLength(obj_lin_list)-1 loop
                obj_lin_node := xmlDom.item(obj_lin_list,idy);
@@ -1773,11 +1782,14 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_line.mli_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCOCDE')));
                rcd_psa_mat_line.mli_dft_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCODFT')));
                rcd_psa_mat_line.mli_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCORRA')));
-               if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
+               if rcd_type.pty_prd_run_efficiency = '1' then
                   rcd_psa_mat_line.mli_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOEFF'));
-                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOWAS'));
                else
                   rcd_psa_mat_line.mli_rra_efficiency := 100;
+               end if;
+               if rcd_type.pty_prd_run_wastage = '1' then
+                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOWAS'));
+               else
                   rcd_psa_mat_line.mli_rra_wastage := 0;
                end if;
                insert into psa_mat_line values rcd_psa_mat_line;
