@@ -1327,7 +1327,7 @@ sub PaintFunction()%>
       this.chgflg = '';
       this.chgtxt = '';
       this.wincde = '';
-      this.winseq = 0;
+      this.winseq = '';
       this.winflw = '';
       this.strtim = '';
       this.chgtim = '';
@@ -1927,9 +1927,9 @@ sub PaintFunction()%>
       //
       for (var i=0;i<objActAry.length;i++) {
          objWork = objActAry[i];
-         for (var j=objWork.strbar;j<=objWork.endbar;j++) {
+         for (var j=objWork.strbar-0;j<=objWork.endbar-0;j++) {
             objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+j);
-            if (j == objWork.strbar) {
+            if (j == objWork.strbar-0) {
                objRow = objTable.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -1968,11 +1968,11 @@ sub PaintFunction()%>
                if (objWork.acttyp == 'T') {
                   objDiv.appendChild(document.createTextNode(objWork.acttxt));
                   objDiv.appendChild(document.createElement('br'));
-                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.durmin+' mins)'));
+                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.actdmi+')'));
                } else {
                   objDiv.appendChild(document.createTextNode('Material ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
-                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.durmin+' mins)'));
+                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.actdmi+')'));
                   objDiv.appendChild(document.createElement('br'));
                   if (cstrTypeCode == '*FILL') {
                      objDiv.appendChild(document.createTextNode('Cases Requested ('+objWork.reqcas+') Calculated ('+objWork.calcas+') Scheduled('+objWork.schcas+')'));
@@ -1984,7 +1984,7 @@ sub PaintFunction()%>
                }
                objCell.appendChild(objDiv);
             }
-            if (j == objWork.endbar) {
+            if (j == objWork.endbar-0) {
                objRow = objTable.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -2029,7 +2029,7 @@ sub PaintFunction()%>
                objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+') '+objWork.acttxt));
                objCell.appendChild(objDiv);
             }
-            if (j != objWork.strbar && j != objWork.endbar) {
+            if (j != objWork.strbar-0 && j != objWork.endbar-0) {
                objRow = objTable.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -2198,7 +2198,7 @@ sub PaintFunction()%>
       cstrTypeRcde = '0';
       cstrTypeRtxt = 'Time event - STARTUP, WASHDOWN, ETC';
       cstrTypeRtyp = 'T';
-      cstrTypeRval = '20';
+      cstrTypeRval = '600';
       cobjTypeCell = null;
       doActivityStart(document.body);
       window.setTimeout('requestActvAdd();',10);
@@ -2225,8 +2225,8 @@ sub PaintFunction()%>
       }
       cintTypeRidx = cobjTypePreqCell.getAttribute('reqidx');
       cstrTypeRcde = cobjTypePreq[cintTypeRidx].actcde;
-      cstrTypeRtxt = cobjTypePreq[cintTypeRidx].acttxt;
-      cstrTypeRtyp = cobjTypePreq[cintTypeRidx].acttyp;
+      cstrTypeRtxt = '';
+      cstrTypeRtyp = 'P';
       cstrTypeRval = '4500';
       cobjTypeCell = null;
       cobjTypePreqCell = null;
@@ -2383,8 +2383,7 @@ sub PaintFunction()%>
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
-      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
-      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"/>';
+      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_actv_retrieve.asp',function(strResponse) {checkActvLoad(strResponse);},false,streamXML(strXML));
    }
    function checkActvLoad(strResponse) {
