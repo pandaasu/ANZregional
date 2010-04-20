@@ -3522,7 +3522,7 @@ create or replace package body psa_app.psa_psc_function as
          if csr_preq%notfound then
             exit;
          end if;
-         ptbl_data(ptbl_data.count+1) := '<ACTDFN ACTCDE="'||psa_to_xml(rcd_preq.psa_act_code)||'"'||
+         ptbl_data(ptbl_data.count+1) := '<REQDFN ACTCDE="'||psa_to_xml(rcd_preq.psa_act_code)||'"'||
                                                 ' MATCDE="'||psa_to_xml(rcd_preq.psa_mat_code)||'"'||
                                                 ' MATNAM="'||psa_to_xml(rcd_preq.psa_mat_name)||'"'||
                                                 ' LINCDE="'||psa_to_xml(rcd_preq.psa_sch_lin_code)||'"'||
@@ -3664,7 +3664,7 @@ create or replace package body psa_app.psa_psc_function as
          if rcd_sact.psa_act_type = 'P' then
             if rcd_sact.psa_chg_flag = '1' then
                var_chg_barn := trunc(((rcd_sact.psa_act_chg_time - var_min_time) * 1440) / 15) + 1;
-               ptbl_data(ptbl_data.count+1) := '<WINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
+               ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                       ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
                                                       ' ACTTXT="'||psa_to_xml(rcd_sact.psa_act_text)||'"'||
                                                       ' CHGFLG="'||psa_to_xml(rcd_sact.psa_chg_flag)||'"'||
@@ -3695,7 +3695,7 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTMIX="'||psa_to_xml(rcd_sact.psa_mat_act_mix_qty)||'"'||
                                                       ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"/>';
             else
-               ptbl_data(ptbl_data.count+1) := '<WINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
+               ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                       ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
                                                       ' ACTTXT="'||psa_to_xml(rcd_sact.psa_act_text)||'"'||
                                                       ' CHGFLG="'||psa_to_xml(rcd_sact.psa_chg_flag)||'"'||
@@ -3722,7 +3722,7 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"/>';
             end if;
          elsif rcd_sact.psa_act_type = 'T' then
-            ptbl_data(ptbl_data.count+1) := '<WINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
+            ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                    ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
                                                    ' ACTTXT="'||psa_to_xml(rcd_sact.psa_act_text)||'"'||
                                                    ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
