@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the production schedule activity delete
    '//
-   call objProcedure.Execute("psa_app.psa_psc_function.delete_activity('" & GetUser() & "')")
+   call objProcedure.Execute("psa_app.psa_psc_function.delete_schedule('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

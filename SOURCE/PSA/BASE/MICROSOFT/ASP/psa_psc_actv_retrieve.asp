@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the producton schedule activity
    '//
-   strStatement = "select xml_text from table(psa_app.psa_psc_function.retrieve_activity)"
+   strStatement = "select xml_text from table(psa_app.psa_psc_function.retrieve_schedule)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

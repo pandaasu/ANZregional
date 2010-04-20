@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the production schedule activity update
    '//
-   call objProcedure.Execute("psa_app.psa_psc_function.update_activity('" & GetUser() & "')")
+   call objProcedure.Execute("psa_app.psa_psc_function.update_schedule('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

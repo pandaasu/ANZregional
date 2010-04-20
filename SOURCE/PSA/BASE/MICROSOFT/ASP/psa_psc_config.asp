@@ -1293,7 +1293,7 @@ sub PaintFunction()%>
    var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
    var cobjTypeLine = new Array();
-   var cobjTypeActv = new Array();
+   var cobjTypePreq = new Array();
    function clsTypeDate() {
       this.daycde = '';
       this.daynam = '';
@@ -1306,6 +1306,7 @@ sub PaintFunction()%>
       this.filnam = '';
       this.pntcol = 0;
       this.shfary = new Array();
+      this.actary = new Array();
    }
    function clsTypeShft() {
       this.shfcde = '';
@@ -1316,66 +1317,48 @@ sub PaintFunction()%>
       this.cmocde = '';
       this.wincde = '';
       this.wintyp = '';
-      this.winflg = '';
       this.barstr = 0;
       this.barend = 0;
-      this.winidx = -1;
-      this.winary = new Array();
-      this.pntary = new Array();
    }
-   function clsTypeWact() {
+   function clsTypeActv() {
       this.actcde = '';
-      this.acttxt = '';
       this.acttyp = '';
+      this.acttxt = '';
+      this.chgflg = '';
+      this.chgtxt = '';
       this.wincde = '';
       this.winseq = 0;
       this.winflw = '';
-      this.strwek = '';
-      this.endwek = '';
-      this.strsms = 0;
-      this.endsms = 0;
-      this.strdat = '';
       this.strtim = '';
-      this.enddat = '';
+      this.chgtim = '';
       this.endtim = '';
       this.strbar = 0;
+      this.chgbar = 0;
       this.endbar = 0;
-      this.durmin = 0;
+      this.schdmi = '';
+      this.actdmi = '';
+      this.schcmi = '';
+      this.actcmi = '';
       this.matcde = '';
       this.matnam = '';
-      this.lincde = '';
-      this.concde = '';
-      this.dftflg = '';
-      this.reqplt = 0;
-      this.reqcas = 0;
-      this.reqpch = 0;
-      this.reqmix = 0;
-      this.reqton = 0;
-      this.reqdur = 0;
-      this.calplt = 0;
-      this.calcas = 0;
-      this.calpch = 0;
-      this.calmix = 0;
-      this.calton = 0;
-      this.caldur = 0;
       this.schplt = 0;
       this.schcas = 0;
       this.schpch = 0;
       this.schmix = 0;
       this.schton = 0;
-      this.schdur = 0;
+      this.actplt = 0;
+      this.actcas = 0;
+      this.actpch = 0;
+      this.actmix = 0;
+      this.actton = 0;
    }
    function clsTypePant(intRowIdx,intColIdx,intBarIdx) {
       this.pntrow = intRowIdx;
       this.pntcol = intColIdx;
       this.pntbar = intBarIdx;
    }
-   function clsTypeActv() {
+   function clsTypePreq() {
       this.actcde = '';
-      this.acttxt = '';
-      this.acttyp = '';
-      this.wincde = '';
-      this.durmin = 0;
       this.matcde = '';
       this.matnam = '';
       this.lincde = '';
@@ -1386,19 +1369,16 @@ sub PaintFunction()%>
       this.reqpch = 0;
       this.reqmix = 0;
       this.reqton = 0;
-      this.reqdur = 0;
       this.calplt = 0;
       this.calcas = 0;
       this.calpch = 0;
       this.calmix = 0;
       this.calton = 0;
-      this.caldur = 0;
       this.schplt = 0;
       this.schcas = 0;
       this.schpch = 0;
       this.schmix = 0;
       this.schton = 0;
-      this.schdur = 0;
    }
    function requestTypeLoad(strCode) {
       cstrTypeCode = strCode;
@@ -1431,9 +1411,9 @@ sub PaintFunction()%>
          displayScreen('dspType');
          cobjTypeDate.length = 0;
          cobjTypeLine.length = 0;
-         cobjTypeActv.length = 0;
+         cobjTypePreq.length = 0;
          var objShfAry;
-         var objWinAry;
+         var objActAry;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                document.getElementById('hedType').innerText = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
@@ -1460,82 +1440,64 @@ sub PaintFunction()%>
                objShfAry[objShfAry.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
                objShfAry[objShfAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
                objShfAry[objShfAry.length-1].wintyp = objElements[i].getAttribute('WINTYP');
-               objShfAry[objShfAry.length-1].winflg = objElements[i].getAttribute('WINFLG');
                objShfAry[objShfAry.length-1].barstr = objElements[i].getAttribute('STRBAR');
                objShfAry[objShfAry.length-1].barend = objElements[i].getAttribute('ENDBAR');
-            } else if (objElements[i].nodeName == 'WINACT') {
-               objWinAry = objShfAry[objShfAry.length-1].winary;
-               objWinAry[objWinAry.length] = new clsTypeWact();
-               objWinAry[objWinAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               objWinAry[objWinAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
-               objWinAry[objWinAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objWinAry[objWinAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               objWinAry[objWinAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
-               objWinAry[objWinAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
-               objWinAry[objWinAry.length-1].strwek = objElements[i].getAttribute('STRWEK');
-               objWinAry[objWinAry.length-1].endwek = objElements[i].getAttribute('ENDWEK');
-               objWinAry[objWinAry.length-1].strsms = objElements[i].getAttribute('STRSMS');
-               objWinAry[objWinAry.length-1].endsms = objElements[i].getAttribute('ENDSMS');
-               objWinAry[objWinAry.length-1].strdat = objElements[i].getAttribute('STRDAT');
-               objWinAry[objWinAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
-               objWinAry[objWinAry.length-1].enddat = objElements[i].getAttribute('ENDDAT');
-               objWinAry[objWinAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
-               objWinAry[objWinAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
-               objWinAry[objWinAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
-               objWinAry[objWinAry.length-1].durmin = objElements[i].getAttribute('DURMIN');
-               objWinAry[objWinAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               objWinAry[objWinAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               objWinAry[objWinAry.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               objWinAry[objWinAry.length-1].concde = objElements[i].getAttribute('CONCDE');
-               objWinAry[objWinAry.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
-               objWinAry[objWinAry.length-1].reqplt = objElements[i].getAttribute('REQPLT');
-               objWinAry[objWinAry.length-1].reqcas = objElements[i].getAttribute('REQCAS');
-               objWinAry[objWinAry.length-1].reqpch = objElements[i].getAttribute('REQPCH');
-               objWinAry[objWinAry.length-1].reqmix = objElements[i].getAttribute('REQMIX');
-               objWinAry[objWinAry.length-1].reqton = objElements[i].getAttribute('REQTON');
-               objWinAry[objWinAry.length-1].reqdur = objElements[i].getAttribute('REQDUR');
-               objWinAry[objWinAry.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               objWinAry[objWinAry.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               objWinAry[objWinAry.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               objWinAry[objWinAry.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               objWinAry[objWinAry.length-1].calton = objElements[i].getAttribute('CALTON');
-               objWinAry[objWinAry.length-1].caldur = objElements[i].getAttribute('CALDUR');
-               objWinAry[objWinAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               objWinAry[objWinAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               objWinAry[objWinAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               objWinAry[objWinAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               objWinAry[objWinAry.length-1].schton = objElements[i].getAttribute('SCHTON');
-               objWinAry[objWinAry.length-1].schdur = objElements[i].getAttribute('SCHDUR');
-            } else if (objElements[i].nodeName == 'ACTDFN') {
-               cobjTypeActv[cobjTypeActv.length] = new clsTypeActv();
-               cobjTypeActv[cobjTypeActv.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               cobjTypeActv[cobjTypeActv.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
-               cobjTypeActv[cobjTypeActv.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               cobjTypeActv[cobjTypeActv.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               cobjTypeActv[cobjTypeActv.length-1].durmin = objElements[i].getAttribute('DURMIN');
-               cobjTypeActv[cobjTypeActv.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               cobjTypeActv[cobjTypeActv.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               cobjTypeActv[cobjTypeActv.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               cobjTypeActv[cobjTypeActv.length-1].concde = objElements[i].getAttribute('CONCDE');
-               cobjTypeActv[cobjTypeActv.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
-               cobjTypeActv[cobjTypeActv.length-1].reqplt = objElements[i].getAttribute('REQPLT');
-               cobjTypeActv[cobjTypeActv.length-1].reqcas = objElements[i].getAttribute('REQCAS');
-               cobjTypeActv[cobjTypeActv.length-1].reqpch = objElements[i].getAttribute('REQPCH');
-               cobjTypeActv[cobjTypeActv.length-1].reqmix = objElements[i].getAttribute('REQMIX');
-               cobjTypeActv[cobjTypeActv.length-1].reqton = objElements[i].getAttribute('REQTON');
-               cobjTypeActv[cobjTypeActv.length-1].reqdur = objElements[i].getAttribute('REQDUR');
-               cobjTypeActv[cobjTypeActv.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               cobjTypeActv[cobjTypeActv.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               cobjTypeActv[cobjTypeActv.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               cobjTypeActv[cobjTypeActv.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               cobjTypeActv[cobjTypeActv.length-1].calton = objElements[i].getAttribute('CALTON');
-               cobjTypeActv[cobjTypeActv.length-1].caldur = objElements[i].getAttribute('CALDUR');
-               cobjTypeActv[cobjTypeActv.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               cobjTypeActv[cobjTypeActv.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               cobjTypeActv[cobjTypeActv.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               cobjTypeActv[cobjTypeActv.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               cobjTypeActv[cobjTypeActv.length-1].schton = objElements[i].getAttribute('SCHTON');
-               cobjTypeActv[cobjTypeActv.length-1].schdur = objElements[i].getAttribute('SCHDUR');
+            } else if (objElements[i].nodeName == 'LINACT') {
+               objActAry = cobjTypeLine[cobjTypeLine.length-1].actary;
+               objActAry[objActAry.length] = new clsTypeActv();
+               objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
+               objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
+               objActAry[objActAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
+               objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
+               objActAry[objActAry.length-1].chgtxt = objElements[i].getAttribute('CHGTXT');
+               objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
+               objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
+               objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
+               objActAry[objActAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
+               objActAry[objActAry.length-1].chgtim = objElements[i].getAttribute('CHGTIM');
+               objActAry[objActAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
+               objActAry[objActAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
+               objActAry[objActAry.length-1].chgbar = objElements[i].getAttribute('CHGBAR');
+               objActAry[objActAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
+               objActAry[objActAry.length-1].schdmi = objElements[i].getAttribute('SCHDMI');
+               objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
+               objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
+               objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
+               objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
+               objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
+               objActAry[objActAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
+               objActAry[objActAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
+               objActAry[objActAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
+               objActAry[objActAry.length-1].schton = objElements[i].getAttribute('SCHTON');
+               objActAry[objActAry.length-1].actplt = objElements[i].getAttribute('ACTPLT');
+               objActAry[objActAry.length-1].actcas = objElements[i].getAttribute('ACTCAS');
+               objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
+               objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
+               objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+            } else if (objElements[i].nodeName == 'REQDFN') {
+               cobjTypePreq[cobjTypePreq.length] = new clsTypePreq();
+               cobjTypePreq[cobjTypePreq.length-1].actcde = objElements[i].getAttribute('ACTCDE');
+               cobjTypePreq[cobjTypePreq.length-1].matcde = objElements[i].getAttribute('MATCDE');
+               cobjTypePreq[cobjTypePreq.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               cobjTypePreq[cobjTypePreq.length-1].lincde = objElements[i].getAttribute('LINCDE');
+               cobjTypePreq[cobjTypePreq.length-1].concde = objElements[i].getAttribute('CONCDE');
+               cobjTypePreq[cobjTypePreq.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
+               cobjTypePreq[cobjTypePreq.length-1].reqplt = objElements[i].getAttribute('REQPLT');
+               cobjTypePreq[cobjTypePreq.length-1].reqcas = objElements[i].getAttribute('REQCAS');
+               cobjTypePreq[cobjTypePreq.length-1].reqpch = objElements[i].getAttribute('REQPCH');
+               cobjTypePreq[cobjTypePreq.length-1].reqmix = objElements[i].getAttribute('REQMIX');
+               cobjTypePreq[cobjTypePreq.length-1].reqton = objElements[i].getAttribute('REQTON');
+               cobjTypePreq[cobjTypePreq.length-1].calplt = objElements[i].getAttribute('CALPLT');
+               cobjTypePreq[cobjTypePreq.length-1].calcas = objElements[i].getAttribute('CALCAS');
+               cobjTypePreq[cobjTypePreq.length-1].calpch = objElements[i].getAttribute('CALPCH');
+               cobjTypePreq[cobjTypePreq.length-1].calmix = objElements[i].getAttribute('CALMIX');
+               cobjTypePreq[cobjTypePreq.length-1].calton = objElements[i].getAttribute('CALTON');
+               cobjTypePreq[cobjTypePreq.length-1].schplt = objElements[i].getAttribute('SCHPLT');
+               cobjTypePreq[cobjTypePreq.length-1].schcas = objElements[i].getAttribute('SCHCAS');
+               cobjTypePreq[cobjTypePreq.length-1].schpch = objElements[i].getAttribute('SCHPCH');
+               cobjTypePreq[cobjTypePreq.length-1].schmix = objElements[i].getAttribute('SCHMIX');
+               cobjTypePreq[cobjTypePreq.length-1].schton = objElements[i].getAttribute('SCHTON');
             }
          }
          doTypeSchdPaint();
@@ -1551,24 +1513,8 @@ sub PaintFunction()%>
       var objRow;
       var objCell;
       var strTime;
-      var intWinIdx;
-      var intBarCnt;
       var intWrkCnt;
-      var intPntCnt;
       var bolStrDay;
-
-      for (var i=0;i<cobjTypeLine.length;i++) {
-         intWinIdx = -1;
-         objShfAry = cobjTypeLine[i].shfary;
-         for (var j=0;j<objShfAry.length;j++) {
-            if (objShfAry[j].wintyp == '1') {
-               objShfAry[j].winidx = j;
-               intWinIdx = j;
-            } else if (objShfAry[j].wintyp == '2') {
-               objShfAry[j].winidx = intWinIdx;
-            }
-         }
-      }
 
       cintTypeHsiz.length = 0;
       cintTypeBsiz.length = 0;
@@ -1744,26 +1690,17 @@ sub PaintFunction()%>
    function doTypeSchdPaintTime(objRow, strTime, strMins, intWrkCnt) {
 
       var objShfAry;
-      var objShfObj;
       var objCell;
       var objTable;
       var objTabRow;
       var objTabCell;
       var objTabDiv;
       var intLinIdx;
-      var intShfIdx;
       var strWrkInd;
       var intWrkStr;
       var intWrkEnd;
       var strWrkNam;
-      var intWinIdx;
-      var intRowIdx = intWrkCnt - 1;
-      var intColIdx = -1;
-      if (strMins == '00') {
-         intColIdx++;
-      }
 
-      intColIdx++;
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
@@ -1785,21 +1722,16 @@ sub PaintFunction()%>
       for (var k=0;k<cobjTypeLine.length;k++) {
 
          intLinIdx = k;
-         intShfIdx = -1;
-         intWinIdx = -1;
          strWrkInd = 'N';
          objShfAry = cobjTypeLine[k].shfary;
          for (var w=0;w<objShfAry.length;w++) {
             if (objShfAry[w].cmocde != '*NONE' && (intWrkCnt >= objShfAry[w].barstr && intWrkCnt <= objShfAry[w].barend)) {
-               intShfIdx = w;
-               objShfObj = objShfAry[w];
-               intWinIdx = objShfObj.winidx;
                strWrkInd = 'X';
-               if (intWrkCnt == objShfObj.barstr) {
+               if (intWrkCnt == objShfAry[w].barstr) {
                   strWrkInd = 'S';
-                  intWrkStr = objShfObj.barstr;
-                  intWrkEnd = objShfObj.barend;
-                  strWrkNam = '('+objShfObj.shfcde+') '+objShfObj.shfnam;
+                  intWrkStr = objShfAry[w].barstr;
+                  intWrkEnd = objShfAry[w].barend;
+                  strWrkNam = '('+objShfAry[w].shfcde+') '+objShfAry[w].shfnam;
                }
                break;
             }
@@ -1807,7 +1739,6 @@ sub PaintFunction()%>
 
          if (strWrkInd == 'N') {
 
-            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1820,23 +1751,38 @@ sub PaintFunction()%>
             objCell.style.paddingRight = '2px';
             objCell.style.whiteSpace = 'nowrap';
 
-            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
-            objCell.vAlign = 'center';
+            objCell.vAlign = 'top';
             objCell.style.fontSize = '8pt';
             objCell.style.backgroundColor = '#f7f7f7';
             objCell.style.color = '#000000';
-            objCell.style.borderRight = '#c7c7c7 1px solid';
+            objCell.style.border = '#c7c7c7 1px solid';
             objCell.style.padding = '0px';
+            objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
+            objCell.setAttribute('linidx',intLinIdx);
+            objCell.setAttribute('baridx',intWrkCnt);
+
+            objTable = document.createElement('table');
+            objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
+            objTable.align = 'left';
+            objTable.vAlign = 'center';
+            objTable.style.fontSize = '8pt';
+            objTable.style.fontWeight = 'normal';
+            objTable.style.backgroundColor = 'transparent';
+            objTable.style.color = '#000000';
+            objTable.style.border = 'transparent 2px solid';
+            objTable.style.padding = '2px';
+            objTable.style.height = '100%';
+            objTable.cellSpacing = '2px';
+            objCell.appendChild(objTable);
 
          } else {
 
             if (strWrkInd == 'S') {
 
-               intColIdx++;
                objCell = objRow.insertCell(-1);
                objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
                objCell.colSpan = 1;
@@ -1869,7 +1815,6 @@ sub PaintFunction()%>
 
             }
 
-            intColIdx++;
             objCell = objRow.insertCell(-1);
             objCell.colSpan = 1;
             objCell.align = 'center';
@@ -1882,11 +1827,7 @@ sub PaintFunction()%>
             objCell.style.height = '100%';
             objCell.style.whiteSpace = 'nowrap';
             objCell.setAttribute('linidx',intLinIdx);
-            objCell.setAttribute('shfidx',intShfIdx);
-            objCell.setAttribute('winidx',intWinIdx);
             objCell.setAttribute('baridx',intWrkCnt);
-
-            objShfObj.pntary[objShfObj.pntary.length] = new clsTypePant(intRowIdx,intColIdx,intWrkCnt);
 
             objTable = document.createElement('table');
             objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
@@ -1910,31 +1851,19 @@ sub PaintFunction()%>
 
    function doTypeSchdPaintActv() {
       for (var i=0;i<cobjTypeLine.length;i++) {
-         intLinIdx = i;
-         intShfIdx = -1;
-         intWinIdx = -1;
-         strWrkInd = 'N';
-         objShfAry = cobjTypeLine[i].shfary;
-         for (var j=0;j<objShfAry.length;j++) {
-            if (objShfAry[j].wintyp == '1') {
-               doTypeWindPaint(i, j)
-            }
-         }
+         doTypeWindPaint(i)
       }
    }
 
 
-   function doTypeWindPaint(intLinIdx, intWinIdx) {
+   function doTypeWindPaint(intLinIdx) {
 
       //
       // definitions
       //
       var objTypBody = document.getElementById('tabBodyType');
-      var objActAry = cobjTypeLine[intLinIdx].actary;
       var objShfAry = cobjTypeLine[intLinIdx].shfary;
-      var objWinAry = objShfAry[intWinIdx].winary;
-      var intShfIdx;
-      var objPntAry;
+      var objActAry = cobjTypeLine[intLinIdx].actary;
       var objTable;
       var objRow;
       var objCell;
@@ -1943,64 +1872,61 @@ sub PaintFunction()%>
       var objWork;
 
       //
-      // delete the existing paint activity rows for the shift window
+      // delete the existing paint activity rows for the line window
       //
-      for (var i=0;i<objShfAry.length;i++) {
-         if (objShfAry[i].winidx == intWinIdx) {
-            objPntAry = objShfAry[i].pntary;
-            for (var j=0;j<objPntAry.length;j++) {
-               objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objPntAry[j].pntbar);
-               for (var k=objTable.rows.length-1;k>=0;k--) {
-                  objTable.deleteRow(k);
-               }
-            }
+      for (var i=1;i<=768;i++) {
+         objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+i);
+         for (var j=objTable.rows.length-1;j>=0;j--) {
+            objTable.deleteRow(j);
          }
       }
 
       //
-      // paint the shift window start when required
+      // paint the line window start when required
       //
-      intShfIdx = intWinIdx;
-      if (objShfAry[intShfIdx].winflg == '1') {
-         objPntAry = objShfAry[intShfIdx].pntary;
-         objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objPntAry[0].pntbar);
-         objRow = objTable.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.vAlign = 'top';
-         objCell.style.fontSize = '8pt';
-         objCell.style.fontWeight = 'normal';
-         objCell.style.backgroundColor = 'transparent';
-         objCell.style.color = '#000000';
-         objCell.style.border = 'none';
-         objCell.style.padding = '0px';
-         objCell.style.whiteSpace = 'nowrap';
-         objDiv = document.createElement('div');
-         objDiv.align = 'left';
-         objDiv.vAlign = 'top';
-         objDiv.style.cursor = 'pointer';
-         objDiv.style.fontSize = '10pt';
-         objDiv.style.fontWeight = 'bold';
-         objDiv.style.backgroundColor = '#ffd9ff';
-         objDiv.style.color = '#000000';
-         objDiv.style.border = '#c7c7c7 1px solid';
-         objDiv.style.paddingLeft = '4px';
-         objDiv.style.paddingRight = '4px';
-         objDiv.style.whiteSpace = 'nowrap';
-         objDiv.style.width = '1%';
-         objDiv.setAttribute('acttyp','+');
-         objDiv.setAttribute('actidx',-1);
-         objDiv.onclick = function() {doTypeSelect(this);};
-         objDiv.appendChild(document.createTextNode('+'));
-         objCell.appendChild(objDiv);
+      for (var i=0;i<objShfAry.length;i++) {
+         if (objShfAry[i].wintyp == '1') {
+            objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objShfAry[i].barstr);
+            objRow = objTable.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'left';
+            objCell.vAlign = 'top';
+            objCell.style.fontSize = '8pt';
+            objCell.style.fontWeight = 'normal';
+            objCell.style.backgroundColor = 'transparent';
+            objCell.style.color = '#000000';
+            objCell.style.border = 'none';
+            objCell.style.padding = '0px';
+            objCell.style.whiteSpace = 'nowrap';
+            objDiv = document.createElement('div');
+            objDiv.align = 'left';
+            objDiv.vAlign = 'top';
+            objDiv.style.cursor = 'pointer';
+            objDiv.style.fontSize = '10pt';
+            objDiv.style.fontWeight = 'bold';
+            objDiv.style.backgroundColor = '#ffd9ff';
+            objDiv.style.color = '#000000';
+            objDiv.style.border = '#c7c7c7 1px solid';
+            objDiv.style.paddingLeft = '4px';
+            objDiv.style.paddingRight = '4px';
+            objDiv.style.whiteSpace = 'nowrap';
+            objDiv.style.width = '1%';
+            objDiv.setAttribute('actidx',-1);
+            objDiv.setAttribute('wincde',objShfAry[i].wincde);
+            objDiv.setAttribute('actcde','');
+            objDiv.setAttribute('acttyp','+');
+            objDiv.onclick = function() {doTypeSelect(this);};
+            objDiv.appendChild(document.createTextNode('+'));
+            objCell.appendChild(objDiv);
+         }
       }
 
       //
-      // paint the shift window activities
+      // paint the line activities
       //
-      for (var i=0;i<objWinAry.length;i++) {
-         objWork = objWinAry[i];
+      for (var i=0;i<objActAry.length;i++) {
+         objWork = objActAry[i];
          for (var j=objWork.strbar;j<=objWork.endbar;j++) {
             objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+j);
             if (j == objWork.strbar) {
@@ -2035,9 +1961,10 @@ sub PaintFunction()%>
                objDiv.style.cursor = 'pointer';
                objDiv.style.padding = '2px';
                objDiv.onclick = function() {doTypeSelect(this);};
+               objDiv.setAttribute('actidx',i);
+               objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);
                objDiv.setAttribute('acttyp',objWork.acttyp);
-               objDiv.setAttribute('actidx',i);
                if (objWork.acttyp == 'T') {
                   objDiv.appendChild(document.createTextNode(objWork.acttxt));
                   objDiv.appendChild(document.createElement('br'));
@@ -2142,19 +2069,12 @@ sub PaintFunction()%>
       var objTypHead = document.getElementById('tabHeadType');
       var objTypBody = document.getElementById('tabBodyType');
       var intPntIdx = cobjTypeLine[intLinIdx].pntcol;
-      var objShfAry = cobjTypeLine[intLinIdx].shfary;
-      var objPntAry;
       var intWork;
       cintTypeBsiz[intPntIdx] = 0;
-      for (var i=0;i<objShfAry.length;i++) {
-         if (objShfAry[i].cmocde != '*NONE') {
-            objPntAry = objShfAry[i].pntary;
-            for (var j=0;j<objPntAry.length;j++) {
-               intWork = objTypBody.rows(objPntAry[j].pntrow).cells[objPntAry[j].pntcol].childNodes[0].offsetWidth;
-               if (intWork > cintTypeBsiz[intPntIdx]) {
-                  cintTypeBsiz[intPntIdx] = intWork;
-               }
-            }
+      for (var i=1;i<=768;i++) {
+         intWork = document.getElementById('TABBAR_'+intLinIdx+'_'+i).offsetWidth;
+         if (intWork > cintTypeBsiz[intPntIdx]) {
+            cintTypeBsiz[intPntIdx] = intWork;
          }
       }
       if (cintTypeHsiz[intPntIdx] > cintTypeBsiz[intPntIdx]) {
@@ -2215,13 +2135,12 @@ sub PaintFunction()%>
       }
       var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
       cintTypeLidx = objTime.getAttribute('linidx');
-      cintTypeWidx = objTime.getAttribute('winidx');
       cintTypeAidx = cobjTypeCell.getAttribute('actidx');
-      cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
-      cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cstrTypeWcde = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].wincde;
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
       cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
+      cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
+      cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
       cobjTypeCell = null;
       doActivityStart(document.body);
       window.setTimeout('requestActvDelete();',10);
@@ -2233,13 +2152,12 @@ sub PaintFunction()%>
       }
       var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
       cintTypeLidx = objTime.getAttribute('linidx');
-      cintTypeWidx = objTime.getAttribute('winidx');
       cintTypeAidx = cobjTypeCell.getAttribute('actidx');
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
       cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cstrTypeWcde = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].wincde;
       if (cstrTypeType == '*EVNT') {
          if (!processForm()) {return;}
          doActivityStart(document.body);
@@ -2265,15 +2183,16 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
       cintTypeLidx = objTime.getAttribute('linidx');
-      cintTypeWidx = objTime.getAttribute('winidx');
       cintTypeAidx = cobjTypeCell.getAttribute('actidx');
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
+      cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
+      cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cstrTypeWcde = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].wincde;
       if (cintTypeAidx == -1) {
          cstrTypeWseq = '0';
       } else {
-         cstrTypeWseq = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].winary[cintTypeAidx].winseq;
+         cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       }
       cintTypeRidx = cobjTypeCell.getAttribute('actidx');
       cstrTypeRcde = '0';
@@ -2293,20 +2212,21 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
       cintTypeLidx = objTime.getAttribute('linidx');
-      cintTypeWidx = objTime.getAttribute('winidx');
       cintTypeAidx = cobjTypeCell.getAttribute('actidx');
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
+      cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
+      cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cstrTypeWcde = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].wincde;
       if (cintTypeAidx == -1) {
          cstrTypeWseq = '0';
       } else {
-         cstrTypeWseq = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].winary[cintTypeAidx].winseq;
+         cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       }
       cintTypeRidx = cobjTypePreqCell.getAttribute('reqidx');
-      cstrTypeRcde = cobjTypeActv[cintTypeRidx].actcde;
-      cstrTypeRtxt = cobjTypeActv[cintTypeRidx].acttxt;
-      cstrTypeRtyp = cobjTypeActv[cintTypeRidx].acttyp;
+      cstrTypeRcde = cobjTypePreq[cintTypeRidx].actcde;
+      cstrTypeRtxt = cobjTypePreq[cintTypeRidx].acttxt;
+      cstrTypeRtyp = cobjTypePreq[cintTypeRidx].acttyp;
       cstrTypeRval = '4500';
       cobjTypeCell = null;
       cobjTypePreqCell = null;
@@ -2392,7 +2312,7 @@ sub PaintFunction()%>
       objCell.innerHTML = '&nbsp;';
 
 
-      for (var i=0;i<cobjTypeActv.length;i++) {
+      for (var i=0;i<cobjTypePreq.length;i++) {
 
             objRow = objTypBody.insertRow(-1);
             var objCell = objRow.insertCell(-1);
@@ -2409,21 +2329,21 @@ sub PaintFunction()%>
             objCell.style.whiteSpace = 'nowrap';
             objCell.onclick = function() {doTypeActvSelect(this);};
             objCell.setAttribute('reqidx',i);
-            objCell.appendChild(document.createTextNode('Material ('+cobjTypeActv[i].matcde+') '+cobjTypeActv[i].matnam));
+            objCell.appendChild(document.createTextNode('Material ('+cobjTypePreq[i].matcde+') '+cobjTypePreq[i].matnam));
             objCell.appendChild(document.createElement('br'));
-            objCell.appendChild(document.createTextNode('Line ('+cobjTypeActv[i].lincde+') '+cobjTypeActv[i].concde));
+            objCell.appendChild(document.createTextNode('Line ('+cobjTypePreq[i].lincde+') '+cobjTypePreq[i].concde));
             objCell.appendChild(document.createElement('br'));
             if (cstrTypeCode == '*FILL') {
-               objCell.appendChild(document.createTextNode('Cases Requested ('+cobjTypeActv[i].reqcas+') Calculated ('+cobjTypeActv[i].calcas+') Scheduled('+cobjTypeActv[i].schcas+')'));
+               objCell.appendChild(document.createTextNode('Cases Requested ('+cobjTypePreq[i].reqcas+') Calculated ('+cobjTypePreq[i].calcas+') Scheduled('+cobjTypePreq[i].schcas+')'));
             } else if (cstrTypeCode == '*PACK') {
-               objCell.appendChild(document.createTextNode('Pallets Requested ('+cobjTypeActv[i].reqplt+') Calculated ('+cobjTypeActv[i].calplt+') Scheduled('+cobjTypeActv[i].schplt+')'));
+               objCell.appendChild(document.createTextNode('Pallets Requested ('+cobjTypePreq[i].reqplt+') Calculated ('+cobjTypePreq[i].calplt+') Scheduled('+cobjTypePreq[i].schplt+')'));
             } else if (cstrTypeCode == '*FORM') {
-               objCell.appendChild(document.createTextNode('Pouches Requested ('+cobjTypeActv[i].reqpch+') Calculated ('+cobjTypeActv[i].calpch+') Scheduled('+cobjTypeActv[i].schpch+')'));
+               objCell.appendChild(document.createTextNode('Pouches Requested ('+cobjTypePreq[i].reqpch+') Calculated ('+cobjTypePreq[i].calpch+') Scheduled('+cobjTypePreq[i].schpch+')'));
             }
 
       }
 
-      if (cobjTypeActv.length > 0) {
+      if (cobjTypePreq.length > 0) {
       var objHeadCells = objTypHead.rows(0).cells;
       var objBodyCells = objTypBody.rows(0).cells;
       for (i=0;i<objHeadCells.length-1;i++) {
@@ -2458,7 +2378,7 @@ sub PaintFunction()%>
    ////////////////////////
    function requestActvLoad() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*GETACT"';
+      strXML = strXML+' <PSA_REQUEST ACTION="*RTVSCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -2487,85 +2407,68 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspType');
-         var objWinAry = cobjTypeLine[cintTypeLidx].shfary[cintTypeWidx].winary;
-         objWinAry.length = 0;
-         cobjTypeActv.length = 0;
+         var objActAry = cobjTypeLine[cintTypeLidx].actary;
+         objActAry.length = 0;
+         cobjTypePreq.length = 0;
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'WINACT') {
-               objWinAry[objWinAry.length] = new clsTypeWact();
-               objWinAry[objWinAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               objWinAry[objWinAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
-               objWinAry[objWinAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objWinAry[objWinAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               objWinAry[objWinAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
-               objWinAry[objWinAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
-               objWinAry[objWinAry.length-1].strwek = objElements[i].getAttribute('STRWEK');
-               objWinAry[objWinAry.length-1].endwek = objElements[i].getAttribute('ENDWEK');
-               objWinAry[objWinAry.length-1].strsms = objElements[i].getAttribute('STRSMS');
-               objWinAry[objWinAry.length-1].endsms = objElements[i].getAttribute('ENDSMS');
-               objWinAry[objWinAry.length-1].strdat = objElements[i].getAttribute('STRDAT');
-               objWinAry[objWinAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
-               objWinAry[objWinAry.length-1].enddat = objElements[i].getAttribute('ENDDAT');
-               objWinAry[objWinAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
-               objWinAry[objWinAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
-               objWinAry[objWinAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
-               objWinAry[objWinAry.length-1].durmin = objElements[i].getAttribute('DURMIN');
-               objWinAry[objWinAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               objWinAry[objWinAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               objWinAry[objWinAry.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               objWinAry[objWinAry.length-1].concde = objElements[i].getAttribute('CONCDE');
-               objWinAry[objWinAry.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
-               objWinAry[objWinAry.length-1].reqplt = objElements[i].getAttribute('REQPLT');
-               objWinAry[objWinAry.length-1].reqcas = objElements[i].getAttribute('REQCAS');
-               objWinAry[objWinAry.length-1].reqpch = objElements[i].getAttribute('REQPCH');
-               objWinAry[objWinAry.length-1].reqmix = objElements[i].getAttribute('REQMIX');
-               objWinAry[objWinAry.length-1].reqton = objElements[i].getAttribute('REQTON');
-               objWinAry[objWinAry.length-1].reqdur = objElements[i].getAttribute('REQDUR');
-               objWinAry[objWinAry.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               objWinAry[objWinAry.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               objWinAry[objWinAry.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               objWinAry[objWinAry.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               objWinAry[objWinAry.length-1].calton = objElements[i].getAttribute('CALTON');
-               objWinAry[objWinAry.length-1].caldur = objElements[i].getAttribute('CALDUR');
-               objWinAry[objWinAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               objWinAry[objWinAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               objWinAry[objWinAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               objWinAry[objWinAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               objWinAry[objWinAry.length-1].schton = objElements[i].getAttribute('SCHTON');
-               objWinAry[objWinAry.length-1].schdur = objElements[i].getAttribute('SCHDUR');
-            } else if (objElements[i].nodeName == 'ACTDFN') {
-               cobjTypeActv[cobjTypeActv.length] = new clsTypeActv();
-               cobjTypeActv[cobjTypeActv.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               cobjTypeActv[cobjTypeActv.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
-               cobjTypeActv[cobjTypeActv.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               cobjTypeActv[cobjTypeActv.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               cobjTypeActv[cobjTypeActv.length-1].durmin = objElements[i].getAttribute('DURMIN');
-               cobjTypeActv[cobjTypeActv.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               cobjTypeActv[cobjTypeActv.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               cobjTypeActv[cobjTypeActv.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               cobjTypeActv[cobjTypeActv.length-1].concde = objElements[i].getAttribute('CONCDE');
-               cobjTypeActv[cobjTypeActv.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
-               cobjTypeActv[cobjTypeActv.length-1].reqplt = objElements[i].getAttribute('REQPLT');
-               cobjTypeActv[cobjTypeActv.length-1].reqcas = objElements[i].getAttribute('REQCAS');
-               cobjTypeActv[cobjTypeActv.length-1].reqpch = objElements[i].getAttribute('REQPCH');
-               cobjTypeActv[cobjTypeActv.length-1].reqmix = objElements[i].getAttribute('REQMIX');
-               cobjTypeActv[cobjTypeActv.length-1].reqton = objElements[i].getAttribute('REQTON');
-               cobjTypeActv[cobjTypeActv.length-1].reqdur = objElements[i].getAttribute('REQDUR');
-               cobjTypeActv[cobjTypeActv.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               cobjTypeActv[cobjTypeActv.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               cobjTypeActv[cobjTypeActv.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               cobjTypeActv[cobjTypeActv.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               cobjTypeActv[cobjTypeActv.length-1].calton = objElements[i].getAttribute('CALTON');
-               cobjTypeActv[cobjTypeActv.length-1].caldur = objElements[i].getAttribute('CALDUR');
-               cobjTypeActv[cobjTypeActv.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               cobjTypeActv[cobjTypeActv.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               cobjTypeActv[cobjTypeActv.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               cobjTypeActv[cobjTypeActv.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               cobjTypeActv[cobjTypeActv.length-1].schton = objElements[i].getAttribute('SCHTON');
-               cobjTypeActv[cobjTypeActv.length-1].schdur = objElements[i].getAttribute('SCHDUR');
+            if (objElements[i].nodeName == 'LINACT') {
+               objActAry[objActAry.length] = new clsTypeActv();
+               objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
+               objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
+               objActAry[objActAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
+               objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
+               objActAry[objActAry.length-1].chgtxt = objElements[i].getAttribute('CHGTXT');
+               objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
+               objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
+               objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
+               objActAry[objActAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
+               objActAry[objActAry.length-1].chgtim = objElements[i].getAttribute('CHGTIM');
+               objActAry[objActAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
+               objActAry[objActAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
+               objActAry[objActAry.length-1].chgbar = objElements[i].getAttribute('CHGBAR');
+               objActAry[objActAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
+               objActAry[objActAry.length-1].schdmi = objElements[i].getAttribute('SCHDMI');
+               objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
+               objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
+               objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
+               objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
+               objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
+               objActAry[objActAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
+               objActAry[objActAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
+               objActAry[objActAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
+               objActAry[objActAry.length-1].schton = objElements[i].getAttribute('SCHTON');
+               objActAry[objActAry.length-1].actplt = objElements[i].getAttribute('ACTPLT');
+               objActAry[objActAry.length-1].actcas = objElements[i].getAttribute('ACTCAS');
+               objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
+               objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
+               objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+            } else if (objElements[i].nodeName == 'REQDFN') {
+               cobjTypePreq[cobjTypePreq.length] = new clsTypePreq();
+               cobjTypePreq[cobjTypePreq.length-1].actcde = objElements[i].getAttribute('ACTCDE');
+               cobjTypePreq[cobjTypePreq.length-1].matcde = objElements[i].getAttribute('MATCDE');
+               cobjTypePreq[cobjTypePreq.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               cobjTypePreq[cobjTypePreq.length-1].lincde = objElements[i].getAttribute('LINCDE');
+               cobjTypePreq[cobjTypePreq.length-1].concde = objElements[i].getAttribute('CONCDE');
+               cobjTypePreq[cobjTypePreq.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
+               cobjTypePreq[cobjTypePreq.length-1].reqplt = objElements[i].getAttribute('REQPLT');
+               cobjTypePreq[cobjTypePreq.length-1].reqcas = objElements[i].getAttribute('REQCAS');
+               cobjTypePreq[cobjTypePreq.length-1].reqpch = objElements[i].getAttribute('REQPCH');
+               cobjTypePreq[cobjTypePreq.length-1].reqmix = objElements[i].getAttribute('REQMIX');
+               cobjTypePreq[cobjTypePreq.length-1].reqton = objElements[i].getAttribute('REQTON');
+               cobjTypePreq[cobjTypePreq.length-1].calplt = objElements[i].getAttribute('CALPLT');
+               cobjTypePreq[cobjTypePreq.length-1].calcas = objElements[i].getAttribute('CALCAS');
+               cobjTypePreq[cobjTypePreq.length-1].calpch = objElements[i].getAttribute('CALPCH');
+               cobjTypePreq[cobjTypePreq.length-1].calmix = objElements[i].getAttribute('CALMIX');
+               cobjTypePreq[cobjTypePreq.length-1].calton = objElements[i].getAttribute('CALTON');
+               cobjTypePreq[cobjTypePreq.length-1].schplt = objElements[i].getAttribute('SCHPLT');
+               cobjTypePreq[cobjTypePreq.length-1].schcas = objElements[i].getAttribute('SCHCAS');
+               cobjTypePreq[cobjTypePreq.length-1].schpch = objElements[i].getAttribute('SCHPCH');
+               cobjTypePreq[cobjTypePreq.length-1].schmix = objElements[i].getAttribute('SCHMIX');
+               cobjTypePreq[cobjTypePreq.length-1].schton = objElements[i].getAttribute('SCHTON');
             }
          }
-         doTypeWindPaint(cintTypeLidx, cintTypeWidx);
+         doTypeWindPaint(cintTypeLidx);
          if (cstrTypeTind == '0') {
             document.getElementById('datTypePreq').style.display = 'block';
          }
