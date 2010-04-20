@@ -1382,7 +1382,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Load the requirements XML when required
       /*-*/
-      if var_action != '*RTVSCH' then
+      if var_action = '*RTVSCH' then
          load_requirement(var_psc_code,
                           var_wek_code,
                           var_pty_code);
@@ -2598,7 +2598,6 @@ create or replace package body psa_app.psa_psc_function as
             rollback;
             return;
          end if;
-         var_win_seqn := rcd_actv.psa_sch_win_seqn;
       end if;
 
       /*-*/
@@ -2637,13 +2636,13 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          rcd_psa_psc_actv.psa_sch_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
 
-         rcd_psa_psc_actv.psa_act_lin_code := rcd_psa_psc_actv.psa_sch_lin_code;
-         rcd_psa_psc_actv.psa_act_con_code := rcd_psa_psc_actv.psa_sch_con_code;
-         rcd_psa_psc_actv.psa_act_dft_flag := rcd_psa_psc_actv.psa_sch_dft_flag;
-         rcd_psa_psc_actv.psa_act_rra_code := rcd_psa_psc_actv.psa_sch_rra_code;
-         rcd_psa_psc_actv.psa_act_rra_unit := rcd_psa_psc_actv.psa_sch_rra_unit;
-         rcd_psa_psc_actv.psa_act_rra_effp := rcd_psa_psc_actv.psa_sch_rra_effp;
-         rcd_psa_psc_actv.psa_act_rra_wasp := rcd_psa_psc_actv.psa_sch_rra_wasp;
+         rcd_psa_psc_actv.psa_act_lin_code := rcd_actv.psa_sch_lin_code;
+         rcd_psa_psc_actv.psa_act_con_code := rcd_actv.psa_sch_con_code;
+         rcd_psa_psc_actv.psa_act_dft_flag := rcd_actv.psa_sch_dft_flag;
+         rcd_psa_psc_actv.psa_act_rra_code := rcd_actv.psa_sch_rra_code;
+         rcd_psa_psc_actv.psa_act_rra_unit := rcd_actv.psa_sch_rra_unit;
+         rcd_psa_psc_actv.psa_act_rra_effp := rcd_actv.psa_sch_rra_effp;
+         rcd_psa_psc_actv.psa_act_rra_wasp := rcd_actv.psa_sch_rra_wasp;
 
          rcd_psa_psc_actv.psa_mat_act_plt_qty := rcd_psa_psc_actv.psa_mat_sch_plt_qty;
          rcd_psa_psc_actv.psa_mat_act_cas_qty := rcd_psa_psc_actv.psa_mat_sch_cas_qty;
@@ -2651,7 +2650,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_psa_psc_actv.psa_mat_act_mix_qty := rcd_psa_psc_actv.psa_mat_sch_mix_qty;
          rcd_psa_psc_actv.psa_mat_act_ton_qty := rcd_psa_psc_actv.psa_mat_sch_ton_qty;
          rcd_psa_psc_actv.psa_mat_act_dur_min := rcd_psa_psc_actv.psa_mat_sch_dur_min;
-         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
+         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_act_dur_min;
          rcd_psa_psc_actv.psa_act_chg_mins := 30;
 
          if var_action = '*UPDACT' then
@@ -2713,7 +2712,7 @@ create or replace package body psa_app.psa_psc_function as
       elsif var_act_type = 'T' then
 
          rcd_psa_psc_actv.psa_sch_dur_mins := var_act_valu;
-         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
+         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_sch_dur_mins;
 
          if var_action = '*UPDACT' then
             update psa_psc_actv
