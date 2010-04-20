@@ -340,10 +340,18 @@ create or replace package body psa_app.psa_mat_function as
             /*-*/
             /* Update inactive/deleted materials (*ADD)
             /*-*/
-            if rcd_bds_data.mde_mat_status = '*INACTIVE' or rcd_bds_data.mde_mat_status = '*DEL' then
+            if rcd_bds_data.mde_mat_status = '*INACTIVE' then
 
                var_upd_flag := true;
                rcd_psa_mat_defn.mde_mat_status := '*ADD';
+
+            /*-*/
+            /* Update inactive/deleted materials (*CHG)
+            /*-*/
+            elsif rcd_bds_data.mde_mat_status = '*DEL' then
+
+               var_upd_flag := true;
+               rcd_psa_mat_defn.mde_mat_status := '*CHG';
 
             /*-*/
             /* Update active/changed/added materials (*CHG)

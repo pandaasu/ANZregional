@@ -1691,7 +1691,7 @@ create or replace package body psa_app.psa_psc_function as
                 t02.mde_unt_case,
                 t03.mpr_prd_type,
                 t03.mpr_sch_priority,
-                t03.mpr_cas_pallet,
+                decode(t03.mpr_cas_pallet,0,1) as mpr_cas_pallet,
                 t03.mpr_bch_quantity,
                 t03.mpr_yld_percent,
                 t03.mpr_yld_value,
@@ -1705,6 +1705,7 @@ create or replace package body psa_app.psa_psc_function as
             and t02.mde_mat_code = t03.mpr_mat_code
             and t01.rde_req_code = rcd_psa_psc_week.psw_req_code
        ----     and t01.rde_mat_emsg is null
+                and t02.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
                 and t03.mpr_req_flag = '1'
           order by t02.mde_mat_code asc,
                    t03.mpr_prd_type asc;
@@ -1758,6 +1759,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.pss_prd_type = rcd_psa_psc_prod.psp_prd_type
             and t01.pss_lin_code = rcd_psa_psc_line.psl_lin_code
             and t01.pss_con_code = rcd_psa_psc_line.psl_con_code
+            and t01.pss_win_code != '*NONE'
           group by t01.pss_win_code;
       rcd_wind csr_wind%rowtype;
 
@@ -3612,6 +3614,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = par_prd_type
             and t01.psa_act_lin_code = par_lin_code
             and t01.psa_act_con_code = par_con_code
+            and t01.psa_act_win_code != '*NONE'
             and ((t01.psa_act_str_time >= var_min_time and t01.psa_act_str_time < var_max_time) or
                  (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time))
           order by t01.psa_act_str_time asc;
@@ -3771,6 +3774,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = par_prd_type
             and t01.psa_sch_lin_code = par_lin_code
             and t01.psa_sch_con_code = par_con_code
+            and t01.psa_sch_win_code != '*NONE'
             and (t01.psa_sch_win_code < par_win_code or
                  (t01.psa_sch_win_code = par_win_code and t01.psa_sch_win_seqn <= par_win_seqn))
           order by t01.psa_sch_win_code desc,
@@ -3790,6 +3794,7 @@ create or replace package body psa_app.psa_psc_function as
                     and t01.pss_prd_type = par_prd_type
                     and t01.pss_lin_code = par_lin_code
                     and t01.pss_con_code = par_con_code
+                    and t01.pss_win_code != '*NONE'
                     and t01.pss_win_code >= par_win_code
                     and t01.pss_win_type = '1') t02
           where t01.psa_sch_win_code = t02.pss_win_code(+)
@@ -3797,6 +3802,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = par_prd_type
             and t01.psa_sch_lin_code = par_lin_code
             and t01.psa_sch_con_code = par_con_code
+            and t01.psa_sch_win_code != '*NONE'
             and (t01.psa_sch_win_code > par_win_code or
                  (t01.psa_sch_win_code = par_win_code and t01.psa_sch_win_seqn > par_win_seqn))
           order by t01.psa_sch_win_code asc,
@@ -3905,6 +3911,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = par_prd_type
             and t01.psa_act_lin_code = par_lin_code
             and t01.psa_act_con_code = par_con_code
+            and t01.psa_act_win_code != '*NONE'
             and (t01.psa_act_win_code < par_win_code or
                  (t01.psa_act_win_code = par_win_code and t01.psa_act_win_seqn <= par_win_seqn))
           order by t01.psa_act_win_code desc,
@@ -3924,6 +3931,7 @@ create or replace package body psa_app.psa_psc_function as
                     and t01.pss_prd_type = par_prd_type
                     and t01.pss_lin_code = par_lin_code
                     and t01.pss_con_code = par_con_code
+                    and t01.pss_win_code != '*NONE'
                     and t01.pss_win_code >= par_win_code
                     and t01.pss_win_type = '1') t02
           where t01.psa_act_win_code = t02.pss_win_code(+)
@@ -3931,6 +3939,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = par_prd_type
             and t01.psa_act_lin_code = par_lin_code
             and t01.psa_act_con_code = par_con_code
+            and t01.psa_act_win_code != '*NONE'
             and (t01.psa_act_win_code > par_win_code or
                  (t01.psa_act_win_code = par_win_code and t01.psa_act_win_seqn > par_win_seqn))
           order by t01.psa_act_win_code asc,
