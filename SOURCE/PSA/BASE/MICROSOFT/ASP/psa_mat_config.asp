@@ -520,6 +520,12 @@ sub PaintFunction()%>
          objFillPrdLine.selectedIndex = 0;
          objPackPrdLine.selectedIndex = 0;
          objFormPrdLine.selectedIndex = 0;
+         var objFillReqFlag = document.getElementById('FILL_ReqFlag');
+         var objPackReqFlag = document.getElementById('PACK_ReqFlag');
+         var objFormReqFlag = document.getElementById('FORM_ReqFlag');
+         objFillReqFlag.selectedIndex = 0;
+         objPackReqFlag.selectedIndex = 0;
+         objFormReqFlag.selectedIndex = 0;
          var objFillLinList = document.getElementById('FILL_LinList');
          for (var i=objFillLinList.rows.length-1;i>1;i--) {
             objFillLinList.deleteRow(i);
@@ -587,6 +593,9 @@ sub PaintFunction()%>
                   }
                   cstrFillLinCode = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('FILL_DftLine').innerHTML = objElements[i].getAttribute('MPRLIN');
+                  if (objElements[i].getAttribute('MPRREQ') == '1') {
+                     objFillReqFlag.selectedIndex = 1;
+                  }
                   document.getElementById('FILL_SchPrty').value = objElements[i].getAttribute('MPRSCH');
                   document.getElementById('FILL_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FILL_YldPcnt').value = objElements[i].getAttribute('MPRYPC');
@@ -613,6 +622,10 @@ sub PaintFunction()%>
                   }
                   cstrPackLinCode = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('PACK_DftLine').innerHTML = objElements[i].getAttribute('MPRLIN');
+                  if (objElements[i].getAttribute('MPRREQ') == '1') {
+                     objPackReqFlag.selectedIndex = 1;
+                  }
+                  document.getElementById('PACK_SchPrty').value = objElements[i].getAttribute('MPRSCH');
                   document.getElementById('PACK_CasPalt').value = objElements[i].getAttribute('MPRCPL');
                   document.getElementById('PACK_ComMatl').value = '';
                   document.getElementById('PACK_ComQnty').value = '';
@@ -625,6 +638,10 @@ sub PaintFunction()%>
                   document.getElementById('FORM_Data').style.display = 'block';
                   cstrFormLinCode = objElements[i].getAttribute('MPRLIN');
                   document.getElementById('FORM_DftLine').innerHTML = objElements[i].getAttribute('MPRLIN');
+                  if (objElements[i].getAttribute('MPRREQ') == '1') {
+                     objFormReqFlag.selectedIndex = 1;
+                  }
+                  document.getElementById('FORM_SchPrty').value = objElements[i].getAttribute('MPRSCH');
                   document.getElementById('FORM_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FORM_ComMatl').value = '';
                   document.getElementById('FORM_ComQnty').value = '';
@@ -952,6 +969,9 @@ sub PaintFunction()%>
       var objFillPrdLine = document.getElementById('FILL_PrdLine');
       var objPackPrdLine = document.getElementById('PACK_PrdLine');
       var objFormPrdLine = document.getElementById('FORM_PrdLine');
+      var objFillReqFlag = document.getElementById('FILL_ReqFlag');
+      var objPackReqFlag = document.getElementById('PACK_ReqFlag');
+      var objFormReqFlag = document.getElementById('FORM_ReqFlag');
       var objFillLinList = document.getElementById('FILL_LinList');
       var objPackLinList = document.getElementById('PACK_LinList');
       var objFormLinList = document.getElementById('FORM_LinList');
@@ -997,7 +1017,7 @@ sub PaintFunction()%>
             bolLinFound = false;
             for (var i=0;i<objFillLinList.rows.length;i++) {
                objRow = objFillLinList.rows[i];
-               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                   intRowCnt = objRow.getAttribute('lincnt');
                   if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1019,7 +1039,7 @@ sub PaintFunction()%>
                bolLinFound = false;
                for (var i=0;i<objFillLinList.rows.length;i++) {
                   objRow = objFillLinList.rows[i];
-                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                      intRowCnt = objRow.getAttribute('lincnt');
                      if (objRow.getAttribute('lincde') == objFillPrdLine.options[objFillPrdLine.selectedIndex].value) {
                         if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1054,7 +1074,7 @@ sub PaintFunction()%>
          objLines.length = 0;
          for (var i=0;i<objFillLinList.rows.length;i++) {
             objRow = objFillLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   bolLinFound = false;
@@ -1137,7 +1157,7 @@ sub PaintFunction()%>
             bolLinFound = false;
             for (var i=0;i<objPackLinList.rows.length;i++) {
                objRow = objPackLinList.rows[i];
-               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                   intRowCnt = objRow.getAttribute('lincnt');
                   if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1159,7 +1179,7 @@ sub PaintFunction()%>
                bolLinFound = false;
                for (var i=0;i<objPackLinList.rows.length;i++) {
                   objRow = objPackLinList.rows[i];
-                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                      intRowCnt = objRow.getAttribute('lincnt');
                      if (objRow.getAttribute('lincde') == objPackPrdLine.options[objPackPrdLine.selectedIndex].value) {
                         if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1186,7 +1206,7 @@ sub PaintFunction()%>
          objLines.length = 0;
          for (var i=0;i<objPackLinList.rows.length;i++) {
             objRow = objPackLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   bolLinFound = false;
@@ -1295,7 +1315,7 @@ sub PaintFunction()%>
             bolLinFound = false;
             for (var i=0;i<objFormLinList.rows.length;i++) {
                objRow = objFormLinList.rows[i];
-               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+               if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                   intRowCnt = objRow.getAttribute('lincnt');
                   if (objRow.getAttribute('lincde') == cstrDefineLine) {
                      if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1317,7 +1337,7 @@ sub PaintFunction()%>
                bolLinFound = false;
                for (var i=0;i<objFormLinList.rows.length;i++) {
                   objRow = objFormLinList.rows[i];
-                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+                  if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                      intRowCnt = objRow.getAttribute('lincnt');
                      if (objRow.getAttribute('lincde') == objFormPrdLine.options[objFormPrdLine.selectedIndex].value) {
                         if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
@@ -1344,7 +1364,7 @@ sub PaintFunction()%>
          objLines.length = 0;
          for (var i=0;i<objFormLinList.rows.length;i++) {
             objRow = objFormLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   bolLinFound = false;
@@ -1427,13 +1447,14 @@ sub PaintFunction()%>
          } else {
             strXML = strXML+' MPRLIN="'+fixXML(objFillPrdLine.options[objFillPrdLine.selectedIndex].value)+'"';
          }
+         strXML = strXML+' MPRREQ="'+fixXML(objFillReqFlag.options[objFillReqFlag.selectedIndex].value)+'"';
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FILL_SchPrty').value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FILL_BchQnty').value)+'"';
          strXML = strXML+' MPRYPC="'+fixXML(document.getElementById('FILL_YldPcnt').value)+'"';
          strXML = strXML+' MPRRPC="'+fixXML(document.getElementById('FILL_PckPcnt').value)+'">';
          for (var i=0;i<objFillLinList.rows.length;i++) {
             objRow = objFillLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   objSelect = document.getElementById('LCORRA_'+intRowCnt);
@@ -1474,11 +1495,12 @@ sub PaintFunction()%>
          } else {
             strXML = strXML+' MPRLIN="'+fixXML(objPackPrdLine.options[objPackPrdLine.selectedIndex].value)+'"';
          }
+         strXML = strXML+' MPRREQ="'+fixXML(objPackReqFlag.options[objPackReqFlag.selectedIndex].value)+'"';
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('PACK_SchPrty').value)+'"';
          strXML = strXML+' MPRCPL="'+fixXML(document.getElementById('PACK_CasPalt').value)+'">';
          for (var i=0;i<objPackLinList.rows.length;i++) {
             objRow = objPackLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   objSelect = document.getElementById('LCORRA_'+intRowCnt);
@@ -1517,11 +1539,12 @@ sub PaintFunction()%>
          } else {
             strXML = strXML+' MPRLIN="'+fixXML(objFormPrdLine.options[objFormPrdLine.selectedIndex].value)+'"';
          }
+         strXML = strXML+' MPRREQ="'+fixXML(objFormReqFlag.options[objFormReqFlag.selectedIndex].value)+'"';
          strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FORM_SchPrty').value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FORM_BchQnty').value)+'">';
          for (var i=0;i<objFormLinList.rows.length;i++) {
             objRow = objFormLinList.rows[i];
-            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '') {
+            if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
                intRowCnt = objRow.getAttribute('lincnt');
                if (document.getElementById('LCOCHK_'+intRowCnt).checked == true) {
                   objSelect = document.getElementById('LCORRA_'+intRowCnt);
@@ -2024,9 +2047,10 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=6 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Filling Line</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Batch Case Quantity</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Yield Percentage</nobr></td>
@@ -2035,6 +2059,7 @@ sub PaintFunction()%>
                         <tr>
                            <td id="FILL_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FILL_PrdLine"></select></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FILL_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_BchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_YldPcnt" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,2,false);"></nobr></td>
@@ -2117,15 +2142,17 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=4 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Packing Line</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Cases Per Pallet</nobr></td>
                         </tr>
                         <tr>
                            <td id="PACK_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PACK_PrdLine"></select></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PACK_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="PACK_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="PACK_CasPalt" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
@@ -2185,15 +2212,17 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=4 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Forming Line</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Batch Lot Quantity</nobr></td>
                         </tr>
                         <tr>
                            <td id="FORM_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FORM_PrdLine"></select></nobr></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FORM_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FORM_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FORM_BchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
