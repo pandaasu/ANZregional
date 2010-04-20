@@ -61,8 +61,7 @@ create or replace package body psa_app.psa_psc_function as
                            par_psc_week in varchar2,
                            par_prd_type in varchar2,
                            par_lin_code in varchar2,
-                           par_con_code in varchar2,
-                           par_win_code in varchar2);
+                           par_con_code in varchar2);
    procedure align_schedule(par_psc_code in varchar2,
                             par_psc_week in varchar2,
                             par_prd_type in varchar2,
@@ -1372,8 +1371,8 @@ create or replace package body psa_app.psa_psc_function as
       /* Load the schedule XML
       /*-*/
       load_schedule(var_psc_code,
-                    var_psc_week,
-                    var_prd_type,
+                    var_wek_code,
+                    var_pty_code,
                     var_lin_code,
                     var_con_code);
       for idx in 1..ptbl_data.count loop
@@ -1385,8 +1384,8 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       if var_action != '*RTVSCH' then
          load_requirement(var_psc_code,
-                          var_psc_week,
-                          var_prd_type);
+                          var_wek_code,
+                          var_pty_code);
          for idx in 1..ptbl_data.count loop
             pipe row(psa_xml_object(ptbl_data(idx)));
          end loop;
@@ -2372,9 +2371,9 @@ create or replace package body psa_app.psa_psc_function as
           where psa_psc_code = rcd_psa_psc_week.psw_psc_code
             and psa_psc_week = rcd_psa_psc_week.psw_psc_week
             and psa_act_type = 'T'
-            and not((psa_lin_code,
-                     psa_con_code,
-                     pss_sch_win_code) in (select pss_lin_code,
+            and not((psa_sch_lin_code,
+                     psa_sch_con_code,
+                     psa_sch_win_code) in (select pss_lin_code,
                                                   pss_con_code,
                                                   pss_win_code
                                              from psa_psc_shft
@@ -2415,9 +2414,9 @@ create or replace package body psa_app.psa_psc_function as
           where psa_psc_code = rcd_psa_psc_week.psw_psc_code
             and psa_psc_week = rcd_psa_psc_week.psw_psc_week
             and psa_act_type = 'P'
-            and not((psa_lin_code,
-                     psa_con_code,
-                     pss_sch_win_code) in (select pss_lin_code,
+            and not((psa_sch_lin_code,
+                     psa_sch_con_code,
+                     psa_sch_win_code) in (select pss_lin_code,
                                                   pss_con_code,
                                                   pss_win_code
                                              from psa_psc_shft
@@ -2650,8 +2649,8 @@ create or replace package body psa_app.psa_psc_function as
          rcd_psa_psc_actv.psa_mat_act_mix_qty := rcd_psa_psc_actv.psa_mat_sch_mix_qty;
          rcd_psa_psc_actv.psa_mat_act_ton_qty := rcd_psa_psc_actv.psa_mat_sch_ton_qty;
          rcd_psa_psc_actv.psa_mat_act_dur_min := rcd_psa_psc_actv.psa_mat_sch_dur_min;
-         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_act_dur_min;
-         rcd_psa_psc_actv.psa_act_chg_mins := rcd_psa_psc_actv.psa_mat_sch_chg_mins;
+         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
+         rcd_psa_psc_actv.psa_act_chg_mins := 30;
 
          if var_action = '*UPDACT' then
             update psa_psc_actv
@@ -2712,7 +2711,7 @@ create or replace package body psa_app.psa_psc_function as
       elsif var_act_type = 'T' then
 
          rcd_psa_psc_actv.psa_sch_dur_mins := var_act_valu;
-         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_mins;
+         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
 
          if var_action = '*UPDACT' then
             update psa_psc_actv
@@ -3047,7 +3046,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_psa_psc_actv.psa_act_rra_effp := rcd_psa_psc_actv.psa_sch_rra_effp;
          rcd_psa_psc_actv.psa_act_rra_wasp := rcd_psa_psc_actv.psa_sch_rra_wasp;
 
-         rcd_psa_psc_actv.psa_act_chg_mins := xxxxxxxxxxxxx;
+      ---   rcd_psa_psc_actv.psa_act_chg_mins := xxxxxxxxxxxxx;
 
          update psa_psc_actv
             set psa_act_lin_code = rcd_psa_psc_actv.psa_act_lin_code,
@@ -3069,7 +3068,7 @@ create or replace package body psa_app.psa_psc_function as
 
       elsif var_act_type = 'T' then
 
-         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_mins;
+         rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_sch_dur_min;
 
          update psa_psc_actv
             set psa_act_dur_mins = rcd_psa_psc_actv.psa_act_dur_mins
@@ -3090,7 +3089,8 @@ create or replace package body psa_app.psa_psc_function as
                    var_pty_code,
                    var_lin_code,
                    var_con_code,
-                   var_win_code);
+                   var_win_code,
+                   var_win_seqn);
 
       /*-*/
       /* Commit the database
@@ -3471,25 +3471,25 @@ create or replace package body psa_app.psa_psc_function as
                 nvl(t01.psa_sch_lin_code,'*NONE') as psa_sch_lin_code,
                 nvl(t01.psa_sch_con_code,'*NONE') as psa_sch_con_code,
                 nvl(t01.psa_sch_dft_flag,'0') as psa_sch_dft_flag,
-                to_char(t01.psa_req_plt_qty) as psa_req_plt_qty,
-                to_char(t01.psa_req_cas_qty) as psa_req_cas_qty,
-                to_char(t01.psa_req_pch_qty) as psa_req_pch_qty,
-                to_char(t01.psa_req_mix_qty) as psa_req_mix_qty,
-                to_char(t01.psa_req_ton_qty) as psa_req_ton_qty,
-                to_char(t01.psa_cal_plt_qty) as psa_cal_plt_qty,
-                to_char(t01.psa_cal_cas_qty) as psa_cal_cas_qty,
-                to_char(t01.psa_cal_pch_qty) as psa_cal_pch_qty,
-                to_char(t01.psa_cal_mix_qty) as psa_cal_mix_qty,
-                to_char(t01.psa_cal_ton_qty) as psa_cal_ton_qty,
-                to_char(t01.psa_sch_plt_qty) as psa_sch_plt_qty,
-                to_char(t01.psa_sch_cas_qty) as psa_sch_cas_qty,
-                to_char(t01.psa_sch_pch_qty) as psa_sch_pch_qty,
-                to_char(t01.psa_sch_mix_qty) as psa_sch_mix_qty,
-                to_char(t01.psa_sch_ton_qty) as psa_sch_ton_qty
+                to_char(t01.psa_mat_req_plt_qty) as psa_mat_req_plt_qty,
+                to_char(t01.psa_mat_req_cas_qty) as psa_mat_req_cas_qty,
+                to_char(t01.psa_mat_req_pch_qty) as psa_mat_req_pch_qty,
+                to_char(t01.psa_mat_req_mix_qty) as psa_mat_req_mix_qty,
+                to_char(t01.psa_mat_req_ton_qty) as psa_mat_req_ton_qty,
+                to_char(t01.psa_mat_cal_plt_qty) as psa_mat_cal_plt_qty,
+                to_char(t01.psa_mat_cal_cas_qty) as psa_mat_cal_cas_qty,
+                to_char(t01.psa_mat_cal_pch_qty) as psa_mat_cal_pch_qty,
+                to_char(t01.psa_mat_cal_mix_qty) as psa_mat_cal_mix_qty,
+                to_char(t01.psa_mat_cal_ton_qty) as psa_mat_cal_ton_qty,
+                to_char(t01.psa_mat_sch_plt_qty) as psa_mat_sch_plt_qty,
+                to_char(t01.psa_mat_sch_cas_qty) as psa_mat_sch_cas_qty,
+                to_char(t01.psa_mat_sch_pch_qty) as psa_mat_sch_pch_qty,
+                to_char(t01.psa_mat_sch_mix_qty) as psa_mat_sch_mix_qty,
+                to_char(t01.psa_mat_sch_ton_qty) as psa_mat_sch_ton_qty
            from psa_psc_actv t01
           where t01.psa_psc_code = par_psc_code
-            and t01.psa_psc_week = par_wek_code
-            and t01.psa_prd_type = par_pty_code
+            and t01.psa_psc_week = par_psc_week
+            and t01.psa_prd_type = par_prd_type
             and t01.psa_act_type = 'P'
             and t01.psa_sch_win_code = '*NONE'
           order by t01.psa_sch_lin_code asc,
@@ -3526,21 +3526,21 @@ create or replace package body psa_app.psa_psc_function as
                                                 ' LINCDE="'||psa_to_xml(rcd_preq.psa_sch_lin_code)||'"'||
                                                 ' CONCDE="'||psa_to_xml(rcd_preq.psa_sch_con_code)||'"'||
                                                 ' DFTFLG="'||psa_to_xml(rcd_preq.psa_sch_dft_flag)||'"'||
-                                                ' REQPLT="'||psa_to_xml(rcd_preq.psa_req_plt_qty)||'"'||
-                                                ' REQCAS="'||psa_to_xml(rcd_preq.psa_req_cas_qty)||'"'||
-                                                ' REQPCH="'||psa_to_xml(rcd_preq.psa_req_pch_qty)||'"'||
-                                                ' REQMIX="'||psa_to_xml(rcd_preq.psa_req_mix_qty)||'"'||
-                                                ' REQTON="'||psa_to_xml(rcd_preq.psa_req_ton_qty)||'"'||
-                                                ' CALPLT="'||psa_to_xml(rcd_preq.psa_cal_plt_qty)||'"'||
-                                                ' CALCAS="'||psa_to_xml(rcd_preq.psa_cal_cas_qty)||'"'||
-                                                ' CALPCH="'||psa_to_xml(rcd_preq.psa_cal_pch_qty)||'"'||
-                                                ' CALMIX="'||psa_to_xml(rcd_preq.psa_cal_mix_qty)||'"'||
-                                                ' CALTON="'||psa_to_xml(rcd_preq.psa_cal_ton_qty)||'"'||
-                                                ' SCHPLT="'||psa_to_xml(rcd_preq.psa_sch_plt_qty)||'"'||
-                                                ' SCHCAS="'||psa_to_xml(rcd_preq.psa_sch_cas_qty)||'"'||
-                                                ' SCHPCH="'||psa_to_xml(rcd_preq.psa_sch_pch_qty)||'"'||
-                                                ' SCHMIX="'||psa_to_xml(rcd_preq.psa_sch_mix_qty)||'"'||
-                                                ' SCHTON="'||psa_to_xml(rcd_preq.psa_sch_ton_qty)||'"/>';
+                                                ' REQPLT="'||psa_to_xml(rcd_preq.psa_mat_req_plt_qty)||'"'||
+                                                ' REQCAS="'||psa_to_xml(rcd_preq.psa_mat_req_cas_qty)||'"'||
+                                                ' REQPCH="'||psa_to_xml(rcd_preq.psa_mat_req_pch_qty)||'"'||
+                                                ' REQMIX="'||psa_to_xml(rcd_preq.psa_mat_req_mix_qty)||'"'||
+                                                ' REQTON="'||psa_to_xml(rcd_preq.psa_mat_req_ton_qty)||'"'||
+                                                ' CALPLT="'||psa_to_xml(rcd_preq.psa_mat_cal_plt_qty)||'"'||
+                                                ' CALCAS="'||psa_to_xml(rcd_preq.psa_mat_cal_cas_qty)||'"'||
+                                                ' CALPCH="'||psa_to_xml(rcd_preq.psa_mat_cal_pch_qty)||'"'||
+                                                ' CALMIX="'||psa_to_xml(rcd_preq.psa_mat_cal_mix_qty)||'"'||
+                                                ' CALTON="'||psa_to_xml(rcd_preq.psa_mat_cal_ton_qty)||'"'||
+                                                ' SCHPLT="'||psa_to_xml(rcd_preq.psa_mat_sch_plt_qty)||'"'||
+                                                ' SCHCAS="'||psa_to_xml(rcd_preq.psa_mat_sch_cas_qty)||'"'||
+                                                ' SCHPCH="'||psa_to_xml(rcd_preq.psa_mat_sch_pch_qty)||'"'||
+                                                ' SCHMIX="'||psa_to_xml(rcd_preq.psa_mat_sch_mix_qty)||'"'||
+                                                ' SCHTON="'||psa_to_xml(rcd_preq.psa_mat_sch_ton_qty)||'"/>';
       end loop;
       close csr_preq;
 
@@ -3587,29 +3587,29 @@ create or replace package body psa_app.psa_psc_function as
                 t01.psa_act_win_code,
                 to_char(t01.psa_act_win_seqn) as psa_act_win_seqn,
                 t01.psa_act_win_flow,
-                to_char(t01.psa_act_str_time,'hh24:mi') as psa_act_str_time,
-                to_char(t01.psa_act_chg_time,'hh24:mi') as psa_act_chg_time,
-                to_char(t01.psa_act_end_time,'hh24:mi') as psa_act_end_time,
+                t01.psa_act_str_time,
+                t01.psa_act_chg_time,
+                t01.psa_act_end_time,
                 to_char(trunc(t01.psa_sch_dur_mins/60))||' hrs '||to_char(mod(t01.psa_sch_dur_mins,60))||' min' as psa_sch_dur_mins,
                 to_char(trunc(t01.psa_act_dur_mins/60))||' hrs '||to_char(mod(t01.psa_act_dur_mins,60))||' min' as psa_act_dur_mins,
                 to_char(trunc(t01.psa_sch_chg_mins/60))||' hrs '||to_char(mod(t01.psa_sch_chg_mins,60))||' min' as psa_sch_chg_mins,
                 to_char(trunc(t01.psa_act_chg_mins/60))||' hrs '||to_char(mod(t01.psa_act_chg_mins,60))||' min' as psa_act_chg_mins,
                 t01.psa_mat_code,
                 t01.psa_mat_name,
-                to_char(t01.psa_mat_sch_plt_qty) as psa_sch_plt_qty,
-                to_char(t01.psa_mat_sch_cas_qty) as psa_sch_cas_qty,
-                to_char(t01.psa_mat_sch_pch_qty) as psa_sch_pch_qty,
-                to_char(t01.psa_mat_sch_mix_qty) as psa_sch_mix_qty,
-                to_char(t01.psa_mat_sch_ton_qty) as psa_sch_ton_qty,
-                to_char(t01.psa_mat_act_plt_qty) as psa_act_plt_qty,
-                to_char(t01.psa_mat_act_cas_qty) as psa_act_cas_qty,
-                to_char(t01.psa_mat_act_pch_qty) as psa_act_pch_qty,
-                to_char(t01.psa_mat_act_mix_qty) as psa_act_mix_qty,
-                to_char(t01.psa_mat_act_ton_qty) as psa_act_ton_qty
+                to_char(t01.psa_mat_sch_plt_qty) as psa_mat_sch_plt_qty,
+                to_char(t01.psa_mat_sch_cas_qty) as psa_mat_sch_cas_qty,
+                to_char(t01.psa_mat_sch_pch_qty) as psa_mat_sch_pch_qty,
+                to_char(t01.psa_mat_sch_mix_qty) as psa_mat_sch_mix_qty,
+                to_char(t01.psa_mat_sch_ton_qty) as psa_mat_sch_ton_qty,
+                to_char(t01.psa_mat_act_plt_qty) as psa_mat_act_plt_qty,
+                to_char(t01.psa_mat_act_cas_qty) as psa_mat_act_cas_qty,
+                to_char(t01.psa_mat_act_pch_qty) as psa_mat_act_pch_qty,
+                to_char(t01.psa_mat_act_mix_qty) as psa_mat_act_mix_qty,
+                to_char(t01.psa_mat_act_ton_qty) as psa_mat_act_ton_qty
            from psa_psc_actv t01
           where t01.psa_psc_code = par_psc_code
-            and t01.psa_psc_week = par_wek_code
-            and t01.psa_prd_type = par_pty_code
+            and t01.psa_psc_week = par_psc_week
+            and t01.psa_prd_type = par_prd_type
             and t01.psa_act_lin_code = par_lin_code
             and t01.psa_act_con_code = par_con_code
             and ((t01.psa_act_str_time >= var_min_time and t01.psa_act_str_time < var_max_time) or
@@ -3669,9 +3669,9 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
                                                       ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                       ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
-                                                      ' STRTIM="'||psa_to_xml(rcd_sact.psa_act_str_time)||'"'||
-                                                      ' CHGTIM="'||psa_to_xml(rcd_sact.psa_act_chg_time)||'"'||
-                                                      ' ENDTIM="'||psa_to_xml(rcd_sact.psa_act_end_time)||'"'||
+                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
+                                                      ' CHGTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_chg_time,'hh24:mi'))||'"'||
+                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
                                                       ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                       ' CHGBAR="'||psa_to_xml(to_char(var_chg_barn))||'"'||
                                                       ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
@@ -3699,8 +3699,8 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
                                                       ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                       ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
-                                                      ' STRTIM="'||psa_to_xml(rcd_sact.psa_act_str_time)||'"'||
-                                                      ' ENDTIM="'||psa_to_xml(rcd_sact.psa_act_end_time)||'"'||
+                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
+                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
                                                       ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                       ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
                                                       ' SCHDMI="'||psa_to_xml(rcd_sact.psa_sch_dur_mins)||'"'||
@@ -3725,12 +3725,12 @@ create or replace package body psa_app.psa_psc_function as
                                                    ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
                                                    ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                    ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
-                                                   ' STRTIM="'||psa_to_xml(rcd_sact.psa_act_str_time)||'"'||
-                                                   ' ENDTIM="'||psa_to_xml(rcd_sact.psa_act_end_time)||'"'||
+                                                   ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
+                                                   ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
                                                    ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                    ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
                                                    ' SCHDMI="'||psa_to_xml(rcd_sact.psa_sch_dur_mins)||'"'||
-                                                   ' ACTDMI="'||psa_to_xml(rcd_sact.psa_act_dur_mins)||'"/>;
+                                                   ' ACTDMI="'||psa_to_xml(rcd_sact.psa_act_dur_mins)||'"/>';
          end if;
       end loop;
       close csr_sact;
@@ -3839,7 +3839,7 @@ create or replace package body psa_app.psa_psc_function as
             var_win_seqn := 0;
             if rcd_sact.pss_win_stim >= var_str_time then
                var_str_time := rcd_sact.pss_win_stim;
-            emd if;
+            end if;
          end if;
          var_win_seqn := var_win_seqn + 1;
          if rcd_sact.psa_act_type = 'P' then
@@ -3917,7 +3917,8 @@ create or replace package body psa_app.psa_psc_function as
                 t02.pss_win_etim
            from psa_psc_actv t01,
                 (select t01.pss_win_code,
-                        t01.pss_win_stim
+                        t01.pss_win_stim,
+                        t01.pss_win_etim
                    from psa_psc_shft t01
                   where t01.pss_psc_code = par_psc_code
                     and t01.pss_prd_type = par_prd_type
@@ -3970,9 +3971,9 @@ create or replace package body psa_app.psa_psc_function as
          if rcd_sact.psa_act_win_code != var_win_code then
             var_win_code := rcd_sact.psa_act_win_code;
             var_win_seqn := 0;
-            if rcd_sact.win_str_time >= var_str_time then
+            if rcd_sact.pss_win_stim >= var_str_time then
                var_str_time := rcd_sact.pss_win_stim;
-            emd if;
+            end if;
          end if;
          var_win_seqn := var_win_seqn + 1;
          if rcd_sact.psa_act_type = 'P' then
