@@ -2010,7 +2010,7 @@ create or replace package body psa_app.psa_psc_function as
                 t02.mde_unt_case,
                 t03.mpr_prd_type,
                 t03.mpr_sch_priority,
-                decode(t03.mpr_cas_pallet,0,1) as mpr_cas_pallet,
+                t03.mpr_cas_pallet,
                 t03.mpr_bch_quantity,
                 t03.mpr_yld_percent,
                 t03.mpr_yld_value,
@@ -3339,7 +3339,8 @@ create or replace package body psa_app.psa_psc_function as
 
       if var_action = '*UPDACT' then
          update psa_psc_actv
-            set psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
+            set psa_chg_flag = rcd_psa_psc_actv.psa_chg_flag,
+                psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
                 psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
                 psa_mat_sch_plt_qty = rcd_psa_psc_actv.psa_mat_sch_plt_qty,
                 psa_mat_sch_cas_qty = rcd_psa_psc_actv.psa_mat_sch_cas_qty,
@@ -3365,7 +3366,8 @@ create or replace package body psa_app.psa_psc_function as
           where psa_act_code = var_act_code;
       elsif var_action = '*SLTACT' then
          update psa_psc_actv
-            set psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
+            set psa_chg_flag = rcd_psa_psc_actv.psa_chg_flag,
+                psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
                 psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
                 psa_sch_win_code = var_win_code,
                 psa_sch_win_seqn = var_win_seqn + .10,
