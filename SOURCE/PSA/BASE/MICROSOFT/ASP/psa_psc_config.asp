@@ -1987,19 +1987,25 @@ sub PaintFunction()%>
                   objDiv.appendChild(document.createElement('br'));
                   if (objWork.actent == '0') {
                      if (cstrTypeCode == '*FILL') {
-                        objDiv.appendChild(document.createTextNode('Cases Scheduled ('+objWork.schcas+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
                      } else if (cstrTypeCode == '*PACK') {
-                        objDiv.appendChild(document.createTextNode('Pallets Scheduled ('+objWork.schplt+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                      } else if (cstrTypeCode == '*FORM') {
-                        objDiv.appendChild(document.createTextNode('Pouches Scheduled ('+objWork.schpch+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                      }
                   } else {
                      if (cstrTypeCode == '*FILL') {
-                        objDiv.appendChild(document.createTextNode('Cases Scheduled ('+objWork.schcas+') Actual ('+objWork.actcas+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
                      } else if (cstrTypeCode == '*PACK') {
-                        objDiv.appendChild(document.createTextNode('Pallets Scheduled ('+objWork.schplt+') Actual ('+objWork.actplt+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                      } else if (cstrTypeCode == '*FORM') {
-                        objDiv.appendChild(document.createTextNode('Pouches Scheduled ('+objWork.schpch+') Actual ('+objWork.actpch+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.schpch+')'));
                      }
                   }
                }
@@ -2214,13 +2220,13 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestTypeLoad();',10);
    }
-
-
    function doTypeActvDelete() {
       if (cobjTypeCell == null) {
+         alert('Activity must be selected for deletion');
          return;
       }
       if (cobjTypeCell.getAttribute('acttyp') == '+') {
+         alert('Unable to delete shift window marker');
          return;
       }
       if (!processForm()) {return;}
@@ -2235,12 +2241,16 @@ sub PaintFunction()%>
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cobjTypeCell = null;
       doActivityStart(document.body);
       window.setTimeout('requestActvDelete();',10);
    }
    function doTypeActvUpdate() {
       if (cobjTypeCell == null) {
+         alert('Activity must be selected for update');
+         return;
+      }
+      if (cobjTypeCell.getAttribute('acttyp') == '+') {
+         alert('Unable to update shift window marker');
          return;
       }
       if (!processForm()) {return;}
@@ -2252,23 +2262,23 @@ sub PaintFunction()%>
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      cobjTypeCell = null;
       if (cstrTypeAtyp == 'T') {
          doActivityStart(document.body);
          window.setTimeout('requestTimeUpdate();',10);
-      } else if (cstrTypeProd == '*FILL') {
+      } else if (cstrTypeCode == '*FILL') {
          doActivityStart(document.body);
          window.setTimeout('requestFillUpdate();',10);
-      } else if (cstrTypeProd == '*PACK') {
+      } else if (cstrTypeCode == '*PACK') {
          doActivityStart(document.body);
          window.setTimeout('requestPackUpdate();',10);
-      } else if (cstrTypeProd == '*FORM') {
+      } else if (cstrTypeCode == '*FORM') {
          doActivityStart(document.body);
          window.setTimeout('requestFormUpdate();',10);
       }
    }
    function doTypeAddTime() {
       if (cobjTypeCell == null) {
+         alert('Activity must be selected for add time after');
          return;
       }
       if (!processForm()) {return;}
@@ -2285,16 +2295,12 @@ sub PaintFunction()%>
       } else {
          cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       }
-      cobjTypeCell = null;
       doActivityStart(document.body);
       window.setTimeout('requestTimeAdd();',10);
    }
-
-
-
-
-   function doTypeAddFill() {
-      if (cobjTypeCell == null || cobjTypePreqCell == null) {
+   function doTypeAddProd() {
+      if (cobjTypeCell == null) {
+         alert('Activity must be selected for add production after');
          return;
       }
       if (!processForm()) {return;}
@@ -2302,8 +2308,8 @@ sub PaintFunction()%>
       cintTypeLidx = objTime.getAttribute('linidx');
       cintTypeAidx = cobjTypeCell.getAttribute('actidx');
       cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
-      cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
-      cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
+      cstrTypeAcde = '0';
+      cstrTypeAtyp = 'P';
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
       if (cintTypeAidx == -1) {
@@ -2311,29 +2317,51 @@ sub PaintFunction()%>
       } else {
          cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       }
-      cintTypeRidx = cobjTypePreqCell.getAttribute('reqidx');
-      cstrTypeRcde = cobjTypePreq[cintTypeRidx].actcde;
-      cstrTypeRtxt = '';
-      cstrTypeRtyp = 'P';
-      cstrTypeRval = '4500';
-      cobjTypeCell = null;
-      cobjTypePreqCell = null;
-      doActivityStart(document.body);
-      window.setTimeout('requestActvAdd();',10);
+      if (cstrTypeCode == '*FILL') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFillAdd();',10);
+      } else if (cstrTypeCode == '*PACK') {
+         doActivityStart(document.body);
+         window.setTimeout('requestPackAdd();',10);
+      } else if (cstrTypeCode == '*FORM') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFormAdd();',10);
+      }
    }
-
-
-   function doTypeAddPack() {
+   function doTypeSelectPreq() {
+      if (cobjTypeCell == null) {
+         alert('Activity must be selected for select requirement after');
+         return;
+      }
+      if (cobjTypePreqCell == null) {
+         alert('Requirement must be selected for select requirement');
+         return;
+      }
       if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestPackAdd();',10);
+      var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
+      cintTypeLidx = objTime.getAttribute('linidx');
+      cintTypeAidx = cobjTypeCell.getAttribute('actidx');
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
+      cstrTypeAcde = cobjTypePreq[cobjTypePreqCell.getAttribute('reqidx')].actcde;
+      cstrTypeAtyp = 'P';
+      cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
+      cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
+      if (cintTypeAidx == -1) {
+         cstrTypeWseq = '0';
+      } else {
+         cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
+      }
+      if (cstrTypeCode == '*FILL') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFillSelect();',10);
+      } else if (cstrTypeCode == '*PACK') {
+         doActivityStart(document.body);
+         window.setTimeout('requestPackSelect();',10);
+      } else if (cstrTypeCode == '*FORM') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFormSelect();',10);
+      }
    }
-   function doTypeAddForm() {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestFormAdd();',10);
-   }
-
    function doTypeToggle() {
       if (cstrTypeTind == '0') {
          cstrTypeTind = '1';
@@ -2354,51 +2382,11 @@ sub PaintFunction()%>
       var objCell;
 
 
-    //  cintTypeHsiz.length = 0;
-    //  cintTypeBsiz.length = 0;
-      var objTypHead = document.getElementById('tabHeadPreq');
       var objTypBody = document.getElementById('tabBodyPreq');
-      objTypHead.style.tableLayout = 'auto';
       objTypBody.style.tableLayout = 'auto';
-      for (var i=objTypHead.rows.length-1;i>=0;i--) {
-         objTypHead.deleteRow(i);
-      }
       for (var i=objTypBody.rows.length-1;i>=0;i--) {
          objTypBody.deleteRow(i);
       }
-
-      objRow = objTypHead.insertRow(-1);
-
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.fontWeight = 'bold';
-      objCell.style.backgroundColor = '#40414c';
-      objCell.style.color = '#ffffff';
-      objCell.style.border = '#c0c0c0 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.appendChild(document.createTextNode('Production Requirements'));
-
-      objCell = objRow.insertCell(-1);
-      objCell.colSpan = 1;
-      objCell.align = 'center';
-      objCell.vAlign = 'center';
-      objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#40414c';
-      objCell.style.color = '#000000';
-      objCell.style.border = 'none';
-      objCell.style.paddingLeft = '4px';
-      objCell.style.paddingRight = '4px';
-      objCell.style.width = 16;
-      objCell.style.whiteSpace = 'nowrap';
-      objCell.innerHTML = '&nbsp;';
-
 
       for (var i=0;i<cobjTypePreq.length;i++) {
 
@@ -2422,33 +2410,20 @@ sub PaintFunction()%>
             objCell.appendChild(document.createTextNode('Line ('+cobjTypePreq[i].lincde+') '+cobjTypePreq[i].concde));
             objCell.appendChild(document.createElement('br'));
             if (cstrTypeCode == '*FILL') {
-               objCell.appendChild(document.createTextNode('Cases Requested ('+cobjTypePreq[i].reqcas+') Calculated ('+cobjTypePreq[i].calcas+') Scheduled('+cobjTypePreq[i].schcas+')'));
+               objCell.appendChild(document.createTextNode('Cases Requested ('+cobjTypePreq[i].reqcas+') Calculated ('+cobjTypePreq[i].calcas+')'));
+               objCell.appendChild(document.createElement('br'));
+               objCell.appendChild(document.createTextNode('Pouches Requested ('+cobjTypePreq[i].reqpch+') Calculated ('+cobjTypePreq[i].calpch+')'));
+               objCell.appendChild(document.createElement('br'));
+               objCell.appendChild(document.createTextNode('Mixes Requested ('+cobjTypePreq[i].reqmix+') Calculated ('+cobjTypePreq[i].calmix+')'));
             } else if (cstrTypeCode == '*PACK') {
-               objCell.appendChild(document.createTextNode('Pallets Requested ('+cobjTypePreq[i].reqplt+') Calculated ('+cobjTypePreq[i].calplt+') Scheduled('+cobjTypePreq[i].schplt+')'));
+               objCell.appendChild(document.createTextNode('Cases Requested ('+cobjTypePreq[i].reqcas+') Calculated ('+cobjTypePreq[i].calcas+')'));
+               objCell.appendChild(document.createElement('br'));
+               objCell.appendChild(document.createTextNode('Pallets Requested ('+cobjTypePreq[i].reqplt+') Calculated ('+cobjTypePreq[i].calplt+')'));
             } else if (cstrTypeCode == '*FORM') {
-               objCell.appendChild(document.createTextNode('Pouches Requested ('+cobjTypePreq[i].reqpch+') Calculated ('+cobjTypePreq[i].calpch+') Scheduled('+cobjTypePreq[i].schpch+')'));
+               objCell.appendChild(document.createTextNode('Pouches Requested ('+cobjTypePreq[i].reqpch+') Calculated ('+cobjTypePreq[i].calpch+')'));
             }
 
       }
-
-      if (cobjTypePreq.length > 0) {
-      var objHeadCells = objTypHead.rows(0).cells;
-      var objBodyCells = objTypBody.rows(0).cells;
-      for (i=0;i<objHeadCells.length-1;i++) {
-         if (objHeadCells[i].offsetWidth > objBodyCells[i].offsetWidth) {
-            objBodyCells[i].style.width = objHeadCells[i].offsetWidth;
-            objHeadCells[i].style.width = objHeadCells[i].offsetWidth;
-         } else {
-            objHeadCells[i].style.width = objBodyCells[i].offsetWidth;
-            objBodyCells[i].style.width = objBodyCells[i].offsetWidth;
-         }
-       //  cintTypeHsiz[i] = objHeadCells[i].offsetWidth;
-       //  cintTypeBsiz[i] = objBodyCells[i].offsetWidth;
-      }
-      addScrollSync(document.getElementById('conHeadPreq'),document.getElementById('conBodyPreq'),'horizontal');
-      objTypHead.style.tableLayout = 'fixed';
-      objTypBody.style.tableLayout = 'fixed';
-     }
 
    }
 
@@ -2554,6 +2529,8 @@ sub PaintFunction()%>
                cobjTypePreq[cobjTypePreq.length-1].schton = objElements[i].getAttribute('SCHTON');
             }
          }
+         cobjTypeCell = null;
+         cobjTypePreqCell = null;
          doTypeWindPaint(cintTypeLidx);
          if (cstrTypeTind == '0') {
             document.getElementById('datTypePreq').style.display = 'block';
@@ -2604,7 +2581,7 @@ sub PaintFunction()%>
    ////////////////////
    var cstrTimeMode;
    function requestTimeAdd() {
-      cstrTimeMode = '*ADD';
+      cstrTimeMode = '*CRT';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_time_retrieve.asp',function(strResponse) {checkTimeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -2632,12 +2609,12 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspTime');
          if (cstrTimeMode == '*UPD') {
             cobjScreens[6].hedtxt = 'Update Time Activity';
          } else if (cstrTimeMode == '*CRT') {
             cobjScreens[6].hedtxt = 'Create Time Activity';
          }
+         displayScreen('dspTime');
          var strSacCode = '';
          var objSacCode = document.getElementById('TIM_SacCode');
          objSacCode.options.length = 0;
@@ -2706,7 +2683,6 @@ sub PaintFunction()%>
       doPostRequest('<%=strBase%>psa_psc_time_update.asp',function(strResponse) {checkTimeAccept(strResponse);},false,streamXML(strXML));
    }
    function checkTimeAccept(strResponse) {
-      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          doActivityStop();
          alert(strResponse);
@@ -2736,24 +2712,20 @@ sub PaintFunction()%>
    // Filling Functions //
    ///////////////////////
    var cstrFillMode;
-   var cstrFillCode;
    function requestFillAdd() {
-      cstrFillMode = '*ADD';
-      cstrFillCode = '';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_fill_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+      cstrFillMode = '*CRT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestFillUpdate(strCode) {
+   function requestFillUpdate() {
       cstrFillMode = '*UPD';
-      cstrFillCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_fill_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestFillDelete(strCode) {
-      cstrFillMode = '*DLT';
-      cstrFillCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFillCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_fill_delete.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
+   function requestFillSelect() {
+      cstrFillMode = '*SLT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SLTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFillLoad(strResponse);},false,streamXML(strXML));
    }
    function checkFillLoad(strResponse) {
       doActivityStop();
@@ -2774,69 +2746,107 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         if (cstrDefineMode == '*DLT') {
-            doDetailRefresh();
-            return;
-         } else if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Production Schedule';
-            document.getElementById('addFill').style.display = 'none';
-            document.getElementById('updFill').style.display = 'block';
-         } else if (cstrDefineMode == '*CRT') {
-            cobjScreens[2].hedtxt = 'Create Production Schedule';
-            document.getElementById('addFill').style.display = 'block';
-            document.getElementById('updFill').style.display = 'none';
+         if (cstrFillMode == '*UPD') {
+            cobjScreens[7].hedtxt = 'Update Filling Activity';
+          ////  document.getElementById('addFill').style.display = 'none';
+          ////  document.getElementById('updFill').style.display = 'block';
+         } else if (cstrFillMode == '*SLT') {
+            cobjScreens[7].hedtxt = 'Select Filling Activity';
+          ////  document.getElementById('addFill').style.display = 'block';
+          ////  document.getElementById('updFill').style.display = 'none';
+         } else if (cstrFillMode == '*CRT') {
+            cobjScreens[7].hedtxt = 'Create Filling Activity';
+          ////  document.getElementById('addFill').style.display = 'block';
+          ////  document.getElementById('updFill').style.display = 'none';
          }
          displayScreen('dspFill');
-         document.getElementById('EVT_MatCode').value = '';
+         var strChgFlag = '';
+         var objChgFlag = document.getElementById('FIL_ChgFlag');
+         document.getElementById('FIL_MatData').innerHTML = '';
+         document.getElementById('FIL_ReqData').innerHTML = '';
+         document.getElementById('FIL_CalData').innerHTML = '';
+         document.getElementById('FIL_SchQnty').value = '0';
+         document.getElementById('FIL_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'EVTDFN') {
-               if (cstrFillMode == '*UPD') {
-                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
-               } else {
-                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
-               }
-               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            if (objElements[i].nodeName == 'ACTDFN') {
+               document.getElementById('FIL_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('FIL_ReqData').innerHTML = '<p><bold>Requested Cases</bold> ('+objElements[i].getAttribute('REQCAS')+') <bold>Pouches</bold> ('+objElements[i].getAttribute('REQPCH')+') <bold>Mixes</bold> ('+objElements[i].getAttribute('REQMIX')+') <bold>Tonnes</bold> ('+objElements[i].getAttribute('REQTON')+')</p>';
+               document.getElementById('FIL_CalData').innerHTML = '<p><bold>Calculated Cases</bold> ('+objElements[i].getAttribute('CALCAS')+') <bold>Pouches</bold> ('+objElements[i].getAttribute('CALPCH')+') <bold>Mixes</bold> ('+objElements[i].getAttribute('CALMIX')+') <bold>Tonnes</bold> ('+objElements[i].getAttribute('CALTON')+')</p>';
+               document.getElementById('FIL_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+               strChgFlag = objElements[i].getAttribute('CHGFLG');
+               document.getElementById('FIL_ChgMins').value = objElements[i].getAttribute('CHGMIN');
             }
          }
-         if (cstrFillMode == '*UPD') {
-            document.getElementById('EVT_EvtName').focus();
-         } else {
-            document.getElementById('EVT_EvtCode').focus();
+         objChgFlag.selectedIndex = -1;
+         for (var i=0;i<objChgFlag.length;i++) {
+            if (objChgFlag.options[i].value == strChgFlag) {
+               objChgFlag.options[i].selected = true;
+               break;
+            }
          }
+         document.getElementById('FIL_SchQnty').focus();
       }
    }
    function doFillCancel() {
       if (checkChange() == false) {return;}
-      displayScreen('dspDetail');
+      displayScreen('dspType');
    }
    function doFillAccept() {
       if (!processForm()) {return;}
-      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var objChgFlag = document.getElementById('FIL_ChgFlag');
+      var strMessage = '';
+      if (document.getElementById('FIL_SchQnty').value == '' || document.getElementById('FIL_SchQnty').value <= '0') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Scheduled cases must be greater than zero';
+      }
+      if (objChgFlag.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Material change time must be selected';
+      }
+      if (objChgFlag.options[objChgFlag.selectedIndex].value == '0') {
+         if (document.getElementById('FIL_ChgMins').value != '' && document.getElementById('FIL_ChgMins').value != '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be zero';
+         }
+      } else {
+         if (document.getElementById('FIL_ChgMins').value == '' || document.getElementById('FIL_ChgMins').value <= '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be greater than zero';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
       if (cstrFillMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+      } else if (cstrFillMode == '*SLT') {
+         strXML = strXML+' <PSA_REQUEST ACTION="*SLTACT"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
       }
-      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
-      if (objEvtCode.selectedIndex == -1) {
-         strXML = strXML+' EVTCDE=""';
-      } else {
-         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
-      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
+      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
+      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
+      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
+      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
+      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
+      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      strXML = strXML+' SCHQTY="'+fixXML(document.getElementById('FIL_SchQnty').value)+'"';
+      strXML = strXML+' CHGFLG="'+fixXML(objChgFlag.options[objChgFlag.selectedIndex].value)+'"';
+      strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('FIL_ChgMins').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestFillAccept(\''+strXML+'\');',10);
    }
    function requestFillAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_fill_update.asp',function(strResponse) {checkFillAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_psc_prod_update.asp',function(strResponse) {checkFillAccept(strResponse);},false,streamXML(strXML));
    }
    function checkFillAccept(strResponse) {
-      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
+         doActivityStop();
          alert(strResponse);
       } else {
          if (strResponse.length > 3) {
@@ -2851,16 +2861,12 @@ sub PaintFunction()%>
                }
             }
             if (strMessage != '') {
+               doActivityStop();
                alert(strMessage);
                return;
             }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
          }
-         doDetailRefresh();
+         requestActvLoad();
       }
    }
 
@@ -2868,24 +2874,20 @@ sub PaintFunction()%>
    // Packing Functions //
    ///////////////////////
    var cstrPackMode;
-   var cstrPackCode;
    function requestPackAdd() {
-      cstrPackMode = '*ADD';
-      cstrPackCode = '';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_pack_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+      cstrPackMode = '*CRT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestPackUpdate(strCode) {
+   function requestPackUpdate() {
       cstrPackMode = '*UPD';
-      cstrPackCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_pack_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestPackDelete(strCode) {
-      cstrPackMode = '*DLT';
-      cstrPackCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrPackCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_pack_delete.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
+   function requestPackSelect() {
+      cstrPackMode = '*SLT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SLTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkPackLoad(strResponse);},false,streamXML(strXML));
    }
    function checkPackLoad(strResponse) {
       doActivityStop();
@@ -2906,69 +2908,107 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         if (cstrDefineMode == '*DLT') {
-            doDetailRefresh();
-            return;
-         } else if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Production Schedule';
-            document.getElementById('addPack').style.display = 'none';
-            document.getElementById('updPack').style.display = 'block';
-         } else if (cstrDefineMode == '*CRT') {
-            cobjScreens[2].hedtxt = 'Create Production Schedule';
-            document.getElementById('addPack').style.display = 'block';
-            document.getElementById('updPack').style.display = 'none';
+         if (cstrPackMode == '*UPD') {
+            cobjScreens[8].hedtxt = 'Update Packing Activity';
+          ////  document.getElementById('addPack').style.display = 'none';
+          ////  document.getElementById('updPack').style.display = 'block';
+         } else if (cstrPackMode == '*SLT') {
+            cobjScreens[8].hedtxt = 'Select Packing Activity';
+          ////  document.getElementById('addPack').style.display = 'block';
+          ////  document.getElementById('updPack').style.display = 'none';
+         } else if (cstrPackMode == '*CRT') {
+            cobjScreens[8].hedtxt = 'Create Packing Activity';
+          ////  document.getElementById('addPack').style.display = 'block';
+          ////  document.getElementById('updPack').style.display = 'none';
          }
          displayScreen('dspPack');
-         document.getElementById('EVT_MatCode').value = '';
+         var strChgFlag = '';
+         var objChgFlag = document.getElementById('PAC_ChgFlag');
+         document.getElementById('PAC_MatData').innerHTML = '';
+         document.getElementById('PAC_ReqData').innerHTML = '';
+         document.getElementById('PAC_CalData').innerHTML = '';
+         document.getElementById('PAC_SchQnty').value = '0';
+         document.getElementById('PAC_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'EVTDFN') {
-               if (cstrPackMode == '*UPD') {
-                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
-               } else {
-                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
-               }
-               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            if (objElements[i].nodeName == 'ACTDFN') {
+               document.getElementById('PAC_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('PAC_ReqData').innerHTML = '<p><bold>Requested Cases</bold> ('+objElements[i].getAttribute('REQCAS')+') <bold>Pallets</bold> ('+objElements[i].getAttribute('REQPLT')+')</p>';
+               document.getElementById('PAC_CalData').innerHTML = '<p><bold>Calculated Cases</bold> ('+objElements[i].getAttribute('CALCAS')+') <bold>Pallets</bold> ('+objElements[i].getAttribute('CALPLT')+')</p>';
+               document.getElementById('PAC_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+               strChgFlag = objElements[i].getAttribute('CHGFLG');
+               document.getElementById('PAC_ChgMins').value = objElements[i].getAttribute('CHGMIN');
             }
          }
-         if (cstrPackMode == '*UPD') {
-            document.getElementById('EVT_EvtName').focus();
-         } else {
-            document.getElementById('EVT_EvtCode').focus();
+         objChgFlag.selectedIndex = -1;
+         for (var i=0;i<objChgFlag.length;i++) {
+            if (objChgFlag.options[i].value == strChgFlag) {
+               objChgFlag.options[i].selected = true;
+               break;
+            }
          }
+         document.getElementById('PAC_SchQnty').focus();
       }
    }
    function doPackCancel() {
       if (checkChange() == false) {return;}
-      displayScreen('dspDetail');
+      displayScreen('dspType');
    }
    function doPackAccept() {
       if (!processForm()) {return;}
-      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var objChgFlag = document.getElementById('PAC_ChgFlag');
+      var strMessage = '';
+      if (document.getElementById('PAC_SchQnty').value == '' || document.getElementById('PAC_SchQnty').value <= '0') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Scheduled cases must be greater than zero';
+      }
+      if (objChgFlag.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Material change time must be selected';
+      }
+      if (objChgFlag.options[objChgFlag.selectedIndex].value == '0') {
+         if (document.getElementById('PAC_ChgMins').value != '' && document.getElementById('PAC_ChgMins').value != '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be zero';
+         }
+      } else {
+         if (document.getElementById('PAC_ChgMins').value == '' || document.getElementById('PAC_ChgMins').value <= '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be greater than zero';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
       if (cstrPackMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+      } else if (cstrPackMode == '*SLT') {
+         strXML = strXML+' <PSA_REQUEST ACTION="*SLTACT"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
       }
-      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
-      if (objEvtCode.selectedIndex == -1) {
-         strXML = strXML+' EVTCDE=""';
-      } else {
-         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
-      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
+      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
+      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
+      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
+      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
+      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
+      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      strXML = strXML+' SCHQTY="'+fixXML(document.getElementById('PAC_SchQnty').value)+'"';
+      strXML = strXML+' CHGFLG="'+fixXML(objChgFlag.options[objChgFlag.selectedIndex].value)+'"';
+      strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('PAC_ChgMins').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestPackAccept(\''+strXML+'\');',10);
    }
    function requestPackAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_pack_update.asp',function(strResponse) {checkPackAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_psc_prod_update.asp',function(strResponse) {checkPackAccept(strResponse);},false,streamXML(strXML));
    }
    function checkPackAccept(strResponse) {
-      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
+         doActivityStop();
          alert(strResponse);
       } else {
          if (strResponse.length > 3) {
@@ -2983,16 +3023,12 @@ sub PaintFunction()%>
                }
             }
             if (strMessage != '') {
+               doActivityStop();
                alert(strMessage);
                return;
             }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
          }
-         doDetailRefresh();
+         requestActvLoad();
       }
    }
 
@@ -3000,24 +3036,20 @@ sub PaintFunction()%>
    // Forming Functions //
    ///////////////////////
    var cstrFormMode;
-   var cstrFormCode;
    function requestFormAdd() {
-      cstrFormMode = '*ADD';
-      cstrFormCode = '';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_form_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+      cstrFormMode = '*CRT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestFormUpdate(strCode) {
+   function requestFormUpdate() {
       cstrFormMode = '*UPD';
-      cstrFormCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_form_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
    }
-   function requestFormDelete(strCode) {
-      cstrFormMode = '*DLT';
-      cstrFormCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrFormCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_form_delete.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
+   function requestFormSelect() {
+      cstrFormMode = '*SLT';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SLTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_prod_retrieve.asp',function(strResponse) {checkFormLoad(strResponse);},false,streamXML(strXML));
    }
    function checkFormLoad(strResponse) {
       doActivityStop();
@@ -3038,69 +3070,107 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         if (cstrDefineMode == '*DLT') {
-            doDetailRefresh();
-            return;
-         } else if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Production Schedule';
-            document.getElementById('addForm').style.display = 'none';
-            document.getElementById('updForm').style.display = 'block';
-         } else if (cstrDefineMode == '*CRT') {
-            cobjScreens[2].hedtxt = 'Create Production Schedule';
-            document.getElementById('addForm').style.display = 'block';
-            document.getElementById('updForm').style.display = 'none';
+         if (cstrFormMode == '*UPD') {
+            cobjScreens[9].hedtxt = 'Update Forming Activity';
+          ////  document.getElementById('addForm').style.display = 'none';
+          ////  document.getElementById('updForm').style.display = 'block';
+         } else if (cstrFormMode == '*SLT') {
+            cobjScreens[9].hedtxt = 'Select Forming Activity';
+          ////  document.getElementById('addForm').style.display = 'block';
+          ////  document.getElementById('updForm').style.display = 'none';
+         } else if (cstrFormMode == '*CRT') {
+            cobjScreens[9].hedtxt = 'Create Forming Activity';
+          ////  document.getElementById('addForm').style.display = 'block';
+          ////  document.getElementById('updForm').style.display = 'none';
          }
          displayScreen('dspForm');
-         document.getElementById('EVT_MatCode').value = '';
+         var strChgFlag = '';
+         var objChgFlag = document.getElementById('PAC_ChgFlag');
+         document.getElementById('FOR_MatData').innerHTML = '';
+         document.getElementById('FOR_ReqData').innerHTML = '';
+         document.getElementById('FOR_CalData').innerHTML = '';
+         document.getElementById('FOR_SchQnty').value = '0';
+         document.getElementById('FOR_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'EVTDFN') {
-               if (cstrFormMode == '*UPD') {
-                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
-               } else {
-                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
-               }
-               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
+            if (objElements[i].nodeName == 'ACTDFN') {
+               document.getElementById('FOR_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('FOR_ReqData').innerHTML = '<p><bold>Requested Pouches</bold> ('+objElements[i].getAttribute('REQPCH')+')</p>';
+               document.getElementById('FOR_CalData').innerHTML = '<p><bold>Calculated Pouches</bold> ('+objElements[i].getAttribute('CALPCH')+')</p>';
+               document.getElementById('FOR_SchQnty').value = objElements[i].getAttribute('SCHPCH');
+               strChgFlag = objElements[i].getAttribute('CHGFLG');
+               document.getElementById('FOR_ChgMins').value = objElements[i].getAttribute('CHGMIN');
             }
          }
-         if (cstrFormMode == '*UPD') {
-            document.getElementById('EVT_EvtName').focus();
-         } else {
-            document.getElementById('EVT_EvtCode').focus();
+         objChgFlag.selectedIndex = -1;
+         for (var i=0;i<objChgFlag.length;i++) {
+            if (objChgFlag.options[i].value == strChgFlag) {
+               objChgFlag.options[i].selected = true;
+               break;
+            }
          }
+         document.getElementById('FOR_SchQnty').focus();
       }
    }
    function doFormCancel() {
       if (checkChange() == false) {return;}
-      displayScreen('dspDetail');
+      displayScreen('dspType');
    }
    function doFormAccept() {
       if (!processForm()) {return;}
-      var objEvtCode = document.getElementById('EVT_EvtCode');
+      var objChgFlag = document.getElementById('FOR_ChgFlag');
+      var strMessage = '';
+      if (document.getElementById('FOR_SchQnty').value == '' || document.getElementById('FOR_SchQnty').value <= '0') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Scheduled cases must be greater than zero';
+      }
+      if (objChgFlag.selectedIndex == -1) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Material change time must be selected';
+      }
+      if (objChgFlag.options[objChgFlag.selectedIndex].value == '0') {
+         if (document.getElementById('FOR_ChgMins').value != '' && document.getElementById('FOR_ChgMins').value != '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be zero';
+         }
+      } else {
+         if (document.getElementById('FOR_ChgMins').value == '' || document.getElementById('FOR_ChgMins').value <= '0') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Material change minutes must be greater than zero';
+         }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
       if (cstrFormMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+      } else if (cstrFormMode == '*SLT') {
+         strXML = strXML+' <PSA_REQUEST ACTION="*SLTACT"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTACT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
       }
-      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
-      if (objEvtCode.selectedIndex == -1) {
-         strXML = strXML+' EVTCDE=""';
-      } else {
-         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
-      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
+      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
+      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
+      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
+      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
+      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
+      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      strXML = strXML+' SCHQTY="'+fixXML(document.getElementById('FOR_SchQnty').value)+'"';
+      strXML = strXML+' CHGFLG="'+fixXML(objChgFlag.options[objChgFlag.selectedIndex].value)+'"';
+      strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('FOR_ChgMins').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestFormAccept(\''+strXML+'\');',10);
    }
    function requestFormAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_form_update.asp',function(strResponse) {checkFormAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>psa_psc_prod_update.asp',function(strResponse) {checkFormAccept(strResponse);},false,streamXML(strXML));
    }
    function checkFormAccept(strResponse) {
-      doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
+         doActivityStop();
          alert(strResponse);
       } else {
          if (strResponse.length > 3) {
@@ -3115,16 +3185,12 @@ sub PaintFunction()%>
                }
             }
             if (strMessage != '') {
+               doActivityStop();
                alert(strMessage);
                return;
             }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
          }
-         doDetailRefresh();
+         requestActvLoad();
       }
    }
 
@@ -3316,14 +3382,15 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=7 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=8 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddTime();">&nbsp;Add Time&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddFill();">&nbsp;Add Production&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddProd();">&nbsp;Add Production&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSelectPreq();">&nbsp;Select Requirement&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeToggle();">&nbsp;Show/Hide Requirements&nbsp;</a></nobr></td>
                </tr>
             </table>
@@ -3351,33 +3418,12 @@ sub PaintFunction()%>
          </nobr></td>
          <td id="datTypePreq" align=center width=25% colspan=1 nowrap><nobr>
             <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
-               <tr>
-                  <td class="clsLabelBB" align=left colspan=1 nowrap><nobr>
-                     <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
-                        <tr>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                           <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypePreqAdd();">&nbsp;Add Requirement&nbsp;</a></nobr></td>
-                        </tr>
-                     </table>
+               <tr height=100%>
+                  <td align=center width=100% colspan=1 nowrap><nobr>
+                     <div id="conBodyPreq" style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
+                     <table class="clsPanel" id="tabBodyPreq" style="background-color:transparent;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="2"></table>
+                     </div>
                   </nobr></td>
-               </tr>
-               <tr>
-                  <tr>
-                     <td align=center width=100% colspan=1 nowrap><nobr>
-                        <div id="conHeadPreq" style="width:100%;overflow:hidden;background-color:#40414c;border:#40414c 1px solid;">
-                        <table class="clsPanel" id="tabHeadPreq" style="background-color:#f7f7f7;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="0">
-                        </table>
-                        </div>
-                     </nobr></td>
-                  </tr>
-                  <tr height=100%>
-                     <td align=center width=100% colspan=1 nowrap><nobr>
-                        <div id="conBodyPreq" style="width:100%;height:100%;overflow:scroll;background-color:#ffffff;border:#40414c 1px solid;">
-                        <table class="clsPanel" id="tabBodyPreq" style="background-color:transparent;border-collapse:collapse;border:none;" align=left cols=1 cellpadding="0" cellspacing="2"></table>
-                        </div>
-                     </nobr></td>
-                  </tr>
                </tr>
             </table>
          </nobr></td>
@@ -3389,7 +3435,7 @@ sub PaintFunction()%>
          <td id="hedTime" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Create Scheduled Time Activity</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Time Activity:&nbsp;</nobr></td>
@@ -3419,109 +3465,190 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspFill" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+   <table id="dspFill" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedFill" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Filling Activity</nobr></td>
+         <td id="hedFill" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Create Filling Activity</nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="FIL_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="FIL_MatCode"></select>
-         </nobr></td>
-      </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+         <td id="FIL_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="FIL_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="FIL_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Cases:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FIL_SchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="FIL_ChgFlag">
+               <option value="0">No
+               <option value="1">Yes
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Minutes:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FIL_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspPack" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+   <table id="dspPack" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedPack" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Packing Activity</nobr></td>
+         <td id="hedPack" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Production Schedule Maintenance - Packing Activity</nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PAC_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="PAC_MatCode"></select>
-         </nobr></td>
-      </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+         <td id="PAC_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="PAC_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="PAC_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Cases:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAC_SchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="PAC_ChgFlag">
+               <option value="0">No
+               <option value="1">Yes
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Minutes:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PAC_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspForm" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+   <table id="dspForm" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedForm" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Forming Activity</nobr></td>
+         <td id="hedForm" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Production Schedule Maintenance - Forming Activity</nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Time:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="FOR_StrTime" size="6" maxlength="6" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="FOR_MatCode"></select>
-         </nobr></td>
-      </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+         <td id="FOR_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="FOR_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td id="FOR_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Pouches:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FOR_SchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Time:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="FOR_ChgFlag">
+               <option value="0">No
+               <option value="1">Yes
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Minutes:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="FOR_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormingCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormingAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
