@@ -3,11 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PSA (Production Scheduling Application)            //
-'// Script  : psa_psc_actv_update.asp                            //
+'// Script  : psa_psc_prod_retrieve.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : December 2009                                      //
 '// Text    : This script implements the production schedule     //
-'//           activity update functionality                      //
+'//           production retrieve functionality                  //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -78,18 +78,19 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the production schedule activity update
-   '//
-   call objProcedure.Execute("psa_app.psa_psc_function.update_schedule('" & GetUser() & "')")
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-
-   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the producton schedule production
+   '//
+   strStatement = "select xml_text from table(psa_app.psa_psc_function.retrieve_production)"
+   strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
+   if strReturn <> "*OK" then
+      exit sub
+   end if
 
    '//
    '// Retrieve any messages
@@ -111,6 +112,11 @@ sub ProcessRequest()
       for intIndex = 0 to objSelection.ListCount("MESSAGE") - 1
          call Response.Write(objSelection.ListValue01("MESSAGE",intIndex))
       next
+      if objSelection.ListCount("MESSAGE") = 0 then
+         for intIndex = 0 to objSelection.ListCount("RESPONSE") - 1
+            call Response.Write(objSelection.ListValue01("RESPONSE",intIndex))
+         next
+      end if
    end if
 
 end sub%>

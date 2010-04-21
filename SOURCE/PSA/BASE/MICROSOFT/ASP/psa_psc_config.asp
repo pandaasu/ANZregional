@@ -130,7 +130,7 @@ sub PaintFunction()%>
       cobjScreens[3] = new clsScreen('dspWeeks','hedWeeks');
       cobjScreens[4] = new clsScreen('dspWeekd','hedWeekd');
       cobjScreens[5] = new clsScreen('dspType','hedType');
-      cobjScreens[6] = new clsScreen('dspEvnt','hedEvnt');
+      cobjScreens[6] = new clsScreen('dspTime','hedTime');
       cobjScreens[7] = new clsScreen('dspFill','hedFill');
       cobjScreens[8] = new clsScreen('dspPack','hedPack');
       cobjScreens[9] = new clsScreen('dspForm','hedForm');
@@ -140,7 +140,7 @@ sub PaintFunction()%>
       cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Week Selection';
       cobjScreens[4].hedtxt = 'Production Schedule Maintenance - Week Definition';
       cobjScreens[5].hedtxt = 'Production Schedule Maintenance';
-      cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Event Activity';
+      cobjScreens[6].hedtxt = 'Production Schedule Maintenance - Time Activity';
       cobjScreens[7].hedtxt = 'Production Schedule Maintenance - Filling Activity';
       cobjScreens[8].hedtxt = 'Production Schedule Maintenance - Packing Activity';
       cobjScreens[9].hedtxt = 'Production Schedule Maintenance - Forming Activity';
@@ -711,8 +711,9 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       cstrTypeProd = cstrWeekProd;
       cstrTypeWeek = strWeek;
+      cstrTypeCode = strCode;
       doActivityStart(document.body);
-      window.setTimeout('requestTypeLoad(\''+strCode+'\');',10);
+      window.setTimeout('requestTypeLoad();',10);
    }
    function doWeekRefresh() {
       if (!processForm()) {return;}
@@ -1323,9 +1324,7 @@ sub PaintFunction()%>
    function clsTypeActv() {
       this.actcde = '';
       this.acttyp = '';
-      this.acttxt = '';
       this.chgflg = '';
-      this.chgtxt = '';
       this.wincde = '';
       this.winseq = '';
       this.winflw = '';
@@ -1339,6 +1338,7 @@ sub PaintFunction()%>
       this.actdmi = '';
       this.schcmi = '';
       this.actcmi = '';
+      this.actent = '';
       this.matcde = '';
       this.matnam = '';
       this.schplt = 0;
@@ -1351,11 +1351,6 @@ sub PaintFunction()%>
       this.actpch = 0;
       this.actmix = 0;
       this.actton = 0;
-   }
-   function clsTypePant(intRowIdx,intColIdx,intBarIdx) {
-      this.pntrow = intRowIdx;
-      this.pntcol = intColIdx;
-      this.pntbar = intBarIdx;
    }
    function clsTypePreq() {
       this.actcde = '';
@@ -1380,8 +1375,7 @@ sub PaintFunction()%>
       this.schmix = 0;
       this.schton = 0;
    }
-   function requestTypeLoad(strCode) {
-      cstrTypeCode = strCode;
+   function requestTypeLoad() {
       cobjTypeCell = null;
       cintTypeIndx = -1;
       cstrTypeType = '*NONE';
@@ -1447,9 +1441,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length] = new clsTypeActv();
                objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
                objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objActAry[objActAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
                objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
-               objActAry[objActAry.length-1].chgtxt = objElements[i].getAttribute('CHGTXT');
                objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
                objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
                objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
@@ -1463,6 +1455,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
                objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
                objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
+               objActAry[objActAry.length-1].actent = objElements[i].getAttribute('ACTENT');
                objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
                objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
                objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
@@ -1870,6 +1863,9 @@ sub PaintFunction()%>
       var objDiv;
       var objImg;
       var objWork;
+      var intStrBar;
+      var intEndBar;
+      var intChgBar;
 
       //
       // delete the existing paint activity rows for the line window
@@ -1927,9 +1923,14 @@ sub PaintFunction()%>
       //
       for (var i=0;i<objActAry.length;i++) {
          objWork = objActAry[i];
-         for (var j=objWork.strbar-0;j<=objWork.endbar-0;j++) {
+         intStrBar = objWork.strbar-0;
+         intEndBar = objWork.endbar-0;
+         if (objWork.chgflg == '1') {
+            intChgBar = objWork.chgbar-0;
+         }
+         for (var j=intStrBar;j<=intEndBar;j++) {
             objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+j);
-            if (j == objWork.strbar-0) {
+            if (j == intStrBar) {
                objRow = objTable.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -1954,37 +1955,57 @@ sub PaintFunction()%>
                   objDiv.style.backgroundColor = '#ffffe0';
                }
                objDiv.style.color = '#000000';
-               objDiv.style.border = '#c7c7c7 1px solid';
+               if (objWork.winflw == '0') {
+                  objDiv.style.border = '#000000 2px solid';
+               } else {
+                  objDiv.style.border = '#c00000 2px solid';
+               }
                objDiv.style.whiteSpace = 'nowrap';
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
-               objDiv.style.cursor = 'pointer';
                objDiv.style.padding = '2px';
-               objDiv.onclick = function() {doTypeSelect(this);};
+               if (objWork.actent == '0') {
+                  objDiv.style.cursor = 'pointer';
+                  objDiv.onclick = function() {doTypeSelect(this);};
+               }
                objDiv.setAttribute('actidx',i);
                objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);
                objDiv.setAttribute('acttyp',objWork.acttyp);
                if (objWork.acttyp == 'T') {
-                  objDiv.appendChild(document.createTextNode(objWork.acttxt));
+                  objDiv.appendChild(document.createTextNode('Activity ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
                   objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.actdmi+')'));
                } else {
                   objDiv.appendChild(document.createTextNode('Material ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
-                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.actdmi+')'));
+                  if (objWork.chgflg == '0') {
+                     objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Production ('+objWork.actdmi+')'));
+                  } else {
+                     objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Production ('+objWork.actdmi+') Change ('+objWork.actcmi+')'));
+                  }
                   objDiv.appendChild(document.createElement('br'));
-                  if (cstrTypeCode == '*FILL') {
-                     objDiv.appendChild(document.createTextNode('Cases Requested ('+objWork.reqcas+') Calculated ('+objWork.calcas+') Scheduled('+objWork.schcas+')'));
-                  } else if (cstrTypeCode == '*PACK') {
-                     objDiv.appendChild(document.createTextNode('Pallets Requested ('+objWork.reqplt+') Calculated ('+objWork.calplt+') Scheduled('+objWork.schplt+')'));
-                  } else if (cstrTypeCode == '*FORM') {
-                     objDiv.appendChild(document.createTextNode('Pouches Requested ('+objWork.reqpch+') Calculated ('+objWork.calpch+') Scheduled('+objWork.schpch+')'));
+                  if (objWork.actent == '0') {
+                     if (cstrTypeCode == '*FILL') {
+                        objDiv.appendChild(document.createTextNode('Cases Scheduled ('+objWork.schcas+')'));
+                     } else if (cstrTypeCode == '*PACK') {
+                        objDiv.appendChild(document.createTextNode('Pallets Scheduled ('+objWork.schplt+')'));
+                     } else if (cstrTypeCode == '*FORM') {
+                        objDiv.appendChild(document.createTextNode('Pouches Scheduled ('+objWork.schpch+')'));
+                     }
+                  } else {
+                     if (cstrTypeCode == '*FILL') {
+                        objDiv.appendChild(document.createTextNode('Cases Scheduled ('+objWork.schcas+') Actual ('+objWork.actcas+')'));
+                     } else if (cstrTypeCode == '*PACK') {
+                        objDiv.appendChild(document.createTextNode('Pallets Scheduled ('+objWork.schplt+') Actual ('+objWork.actplt+')'));
+                     } else if (cstrTypeCode == '*FORM') {
+                        objDiv.appendChild(document.createTextNode('Pouches Scheduled ('+objWork.schpch+') Actual ('+objWork.actpch+')'));
+                     }
                   }
                }
                objCell.appendChild(objDiv);
             }
-            if (j == objWork.endbar-0) {
+            if (j == intEndBar) {
                objRow = objTable.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -2022,39 +2043,107 @@ sub PaintFunction()%>
                   objDiv.style.backgroundColor = '#ffffe0';
                }
                objDiv.style.color = '#000000';
-               objDiv.style.border = '#c7c7c7 1px solid';
+               if (objWork.winflw == '0') {
+                  objDiv.style.border = '#c7c7c7 1px solid';
+               } else {
+                  objDiv.style.border = '#c00000 2px solid';
+               }
                objDiv.style.whiteSpace = 'nowrap';
                objDiv.style.width = '1%';
                objDiv.style.padding = '2px';
-               objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+') '+objWork.acttxt));
+               objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+')'));
                objCell.appendChild(objDiv);
             }
-            if (j != objWork.strbar-0 && j != objWork.endbar-0) {
-               objRow = objTable.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.vAlign = 'top';
-               objCell.style.fontSize = '8pt';
-               objCell.style.fontWeight = 'normal';
-               objCell.style.backgroundColor = 'transparent';
-               objCell.style.color = '#000000';
-               objCell.style.border = 'none';
-               objCell.style.padding = '0px';
-               objCell.style.whiteSpace = 'nowrap';
-               objImg = document.createElement('img');
-               if (objWork.acttyp == 'T') {
-                  objImg.src = cobjTico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '15px';
-               } else {
+            if (objWork.acttyp == 'T' || (objWork.acttyp == 'P' && objWork.chgflg == '0')) {
+               if (j != intStrBar && j != intEndBar) {
+                  objRow = objTable.insertRow(-1);
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.vAlign = 'top';
+                  objCell.style.fontSize = '8pt';
+                  objCell.style.fontWeight = 'normal';
+                  objCell.style.backgroundColor = 'transparent';
+                  objCell.style.color = '#000000';
+                  objCell.style.border = 'none';
+                  objCell.style.padding = '0px';
+                  objCell.style.whiteSpace = 'nowrap';
+                  objImg = document.createElement('img');
+                  if (objWork.acttyp == 'T') {
+                     objImg.src = cobjTico.src;
+                     objImg.style.height = '15px';
+                     objImg.style.width = '15px';
+                  } else {
+                     objImg.src = cobjPico.src;
+                     objImg.style.height = '15px';
+                     objImg.style.width = '23px';
+                  }
+                  objImg.align = 'absmiddle';
+                  objCell.appendChild(objImg);
+               }
+            } else {
+               if (j == intChgBar) {
+                  objRow = objTable.insertRow(-1);
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.vAlign = 'top';
+                  objCell.style.fontSize = '8pt';
+                  objCell.style.fontWeight = 'normal';
+                  objCell.style.backgroundColor = 'transparent';
+                  objCell.style.color = '#000000';
+                  objCell.style.border = 'none';
+                  objCell.style.padding = '0px';
+                  objCell.style.height = '100%';
+                  objCell.style.whiteSpace = 'nowrap';
+                  objImg = document.createElement('img');
                   objImg.src = cobjPico.src;
                   objImg.style.height = '15px';
                   objImg.style.width = '23px';
+                  objImg.align = 'absmiddle';
+                  objCell.appendChild(objImg);
+                  objCell.appendChild(document.createTextNode(' '));
+                  objDiv = document.createElement('div');
+                  objDiv.align = 'left';
+                  objDiv.vAlign = 'top';
+                  objDiv.style.display = 'inline';
+                  objDiv.style.fontSize = '8pt';
+                  objDiv.style.fontWeight = 'normal';
+                  objDiv.style.backgroundColor = '#ffffe0';
+                  objDiv.style.color = '#000000';
+                  if (objWork.winflw == '0') {
+                     objDiv.style.border = '#c7c7c7 1px solid';
+                  } else {
+                     objDiv.style.border = '#c00000 2px solid';
+                  }
+                  objDiv.style.whiteSpace = 'nowrap';
+                  objDiv.style.width = '1%';
+                  objDiv.style.padding = '2px';
+                  objDiv.appendChild(document.createTextNode('Material change ('+objWork.chgtim+')'));
+                  objCell.appendChild(objDiv);
                }
-               objImg.align = 'absmiddle';
-               objCell.appendChild(objImg);
+               if (j != intStrBar && j != intChgBar && j != intEndBar) {
+                  objRow = objTable.insertRow(-1);
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.vAlign = 'top';
+                  objCell.style.fontSize = '8pt';
+                  objCell.style.fontWeight = 'normal';
+                  objCell.style.backgroundColor = 'transparent';
+                  objCell.style.color = '#000000';
+                  objCell.style.border = 'none';
+                  objCell.style.padding = '0px';
+                  objCell.style.whiteSpace = 'nowrap';
+                  objImg = document.createElement('img');
+                  objImg.src = cobjPico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '23px';
+                  objImg.align = 'absmiddle';
+                  objCell.appendChild(objImg);
+               }
             }
+
          }
       }
 
@@ -2121,6 +2210,11 @@ sub PaintFunction()%>
       displayScreen('dspWeeks');
    }
 
+   function doTypeRefresh() {
+      doActivityStart(document.body);
+      window.setTimeout('requestTypeLoad();',10);
+   }
+
 
    function doTypeActvDelete() {
       if (cobjTypeCell == null) {
@@ -2145,38 +2239,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestActvDelete();',10);
    }
-
    function doTypeActvUpdate() {
-      if (cobjTypeCell == null) {
-         return;
-      }
-      var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
-      cintTypeLidx = objTime.getAttribute('linidx');
-      cintTypeAidx = cobjTypeCell.getAttribute('actidx');
-      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
-      cstrTypeAcde = cobjTypeCell.getAttribute('actcde')
-      cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
-      cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
-      cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
-      if (cstrTypeType == '*EVNT') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestEvntUpdate(\''+strCode+'\');',10);
-      } else if (cstrTypeType == '*FILL') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestFillUpdate(\''+strCode+'\');',10);
-      } else if (cstrTypeType == '*PACK') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestPackUpdate(\''+strCode+'\');',10);
-      } else if (cstrTypeType == '*FORM') {
-         if (!processForm()) {return;}
-         doActivityStart(document.body);
-         window.setTimeout('requestFormUpdate(\''+strCode+'\');',10);
-      }
-   }
-   function doTypeAddEvnt() {
       if (cobjTypeCell == null) {
          return;
       }
@@ -2189,20 +2252,45 @@ sub PaintFunction()%>
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
+      cobjTypeCell = null;
+      if (cstrTypeAtyp == 'T') {
+         doActivityStart(document.body);
+         window.setTimeout('requestTimeUpdate();',10);
+      } else if (cstrTypeProd == '*FILL') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFillUpdate();',10);
+      } else if (cstrTypeProd == '*PACK') {
+         doActivityStart(document.body);
+         window.setTimeout('requestPackUpdate();',10);
+      } else if (cstrTypeProd == '*FORM') {
+         doActivityStart(document.body);
+         window.setTimeout('requestFormUpdate();',10);
+      }
+   }
+   function doTypeAddTime() {
+      if (cobjTypeCell == null) {
+         return;
+      }
+      if (!processForm()) {return;}
+      var objTime = cobjTypeCell.parentNode.parentNode.parentNode.parentNode.parentNode;
+      cintTypeLidx = objTime.getAttribute('linidx');
+      cintTypeAidx = cobjTypeCell.getAttribute('actidx');
+      cstrTypeWcde = cobjTypeCell.getAttribute('wincde');
+      cstrTypeAcde = '0'
+      cstrTypeAtyp = 'T';
+      cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
+      cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
       if (cintTypeAidx == -1) {
          cstrTypeWseq = '0';
       } else {
          cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       }
-      cintTypeRidx = cobjTypeCell.getAttribute('actidx');
-      cstrTypeRcde = '0';
-      cstrTypeRtxt = 'Time event - STARTUP, WASHDOWN, ETC';
-      cstrTypeRtyp = 'T';
-      cstrTypeRval = '600';
       cobjTypeCell = null;
       doActivityStart(document.body);
-      window.setTimeout('requestActvAdd();',10);
+      window.setTimeout('requestTimeAdd();',10);
    }
+
+
 
 
    function doTypeAddFill() {
@@ -2414,9 +2502,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length] = new clsTypeActv();
                objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
                objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objActAry[objActAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
                objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
-               objActAry[objActAry.length-1].chgtxt = objElements[i].getAttribute('CHGTXT');
                objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
                objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
                objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
@@ -2430,6 +2516,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
                objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
                objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
+               objActAry[objActAry.length-1].actent = objElements[i].getAttribute('ACTENT');
                objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
                objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
                objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
@@ -2486,39 +2573,139 @@ sub PaintFunction()%>
       strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_actv_delete.asp',function(strResponse) {checkActvResponse(strResponse);},false,streamXML(strXML));
    }
-   function requestActvAdd() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
-      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
-      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
-      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
-      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
-      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
-      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
-      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeRcde)+'"';
-      strXML = strXML+' ACTTXT="'+fixXML(cstrTypeRtxt)+'"';
-      strXML = strXML+' ACTTYP="'+fixXML(cstrTypeRtyp)+'"';
-      strXML = strXML+' ACTVAL="'+fixXML(cstrTypeRval)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_actv_update.asp',function(strResponse) {checkActvResponse(strResponse);},false,streamXML(strXML));
-   }
-   function requestActvUpdate() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
-      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
-      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
-      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
-      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
-      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
-      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
-      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeRcde)+'"';
-      strXML = strXML+' ACTTXT="'+fixXML(cstrTypeRtxt)+'"';
-      strXML = strXML+' ACTTYP="'+fixXML(cstrTypeRtyp)+'"';
-      strXML = strXML+' ACTVAL="'+fixXML(cstrTypeRval)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_actv_update.asp',function(strResponse) {checkActvResponse(strResponse);},false,streamXML(strXML));
-   }
    function checkActvResponse(strResponse) {
+      if (strResponse.substring(0,3) != '*OK') {
+         doActivityStop();
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               doActivityStop();
+               alert(strMessage);
+               return;
+            }
+         }
+         requestActvLoad();
+      }
+   }
+
+   ////////////////////
+   // Time Functions //
+   ////////////////////
+   var cstrTimeMode;
+   function requestTimeAdd() {
+      cstrTimeMode = '*ADD';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_time_retrieve.asp',function(strResponse) {checkTimeLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestTimeUpdate() {
+      cstrTimeMode = '*UPD';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_time_retrieve.asp',function(strResponse) {checkTimeLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkTimeLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspTime');
+         if (cstrTimeMode == '*UPD') {
+            cobjScreens[6].hedtxt = 'Update Time Activity';
+         } else if (cstrTimeMode == '*CRT') {
+            cobjScreens[6].hedtxt = 'Create Time Activity';
+         }
+         var strSacCode = '';
+         var objSacCode = document.getElementById('TIM_SacCode');
+         objSacCode.options.length = 0;
+         objSacCode.options[0] = new Option('** Select Time Activity **','*NONE');
+         objSacCode.selectedIndex = 0;
+         document.getElementById('TIM_DurMins').value = '0';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ACTDFN') {
+               strSacCode = objElements[i].getAttribute('SACCDE');
+               document.getElementById('TIM_DurMins').value = objElements[i].getAttribute('DURMIN');
+            } else if (objElements[i].nodeName == 'SACDFN') {
+               objSacCode.options[objSacCode.options.length] = new Option(objElements[i].getAttribute('SACNAM'),objElements[i].getAttribute('SACCDE'));
+            }
+         }
+         objSacCode.selectedIndex = -1;
+         for (var i=0;i<objSacCode.length;i++) {
+            if (objSacCode.options[i].value == strSacCode) {
+               objSacCode.options[i].selected = true;
+               break;
+            }
+         }
+         document.getElementById('TIM_SacCode').focus();
+      }
+   }
+   function doTimeCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspType');
+   }
+   function doTimeAccept() {
+      if (!processForm()) {return;}
+      var objSacCode = document.getElementById('TIM_SacCode');
+      var strMessage = '';
+      if (objSacCode.selectedIndex == -1 || objSacCode.options[objSacCode.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Time activity must be selected';
+      }
+      if (document.getElementById('TIM_DurMins').value == '' || document.getElementById('TIM_DurMins').value <= '0') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Duration minutes must be greater than zero';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      if (cstrTimeMode == '*UPD') {
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+      } else {
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
+      }
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
+      strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
+      strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
+      strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
+      strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"';
+      strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
+      strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
+      strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      strXML = strXML+' SACCDE="'+fixXML(objSacCode.options[objSacCode.selectedIndex].value)+'"';
+      strXML = strXML+' DURMIN="'+fixXML(document.getElementById('TIM_DurMins').value)+'"';
+      strXML = strXML+'/>';
+      doActivityStart(document.body);
+      window.setTimeout('requestTimeAccept(\''+strXML+'\');',10);
+   }
+   function requestTimeAccept(strXML) {
+      doPostRequest('<%=strBase%>psa_psc_time_update.asp',function(strResponse) {checkTimeAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkTimeAccept(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          doActivityStop();
@@ -2540,193 +2727,8 @@ sub PaintFunction()%>
                alert(strMessage);
                return;
             }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
          }
          requestActvLoad();
-      }
-   }
-
-   /////////////////////
-   // Event Functions //
-   /////////////////////
-   var cstrEvntMode;
-   var cstrEvntCode;
-
-   function requestEvntAdd() {
-      cstrEvntMode = '*ADD';
-      cstrEvntCode = '';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_evnt_retrieve.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestEvntUpdate(strCode) {
-      cstrEvntMode = '*UPD';
-      cstrEvntCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_evnt_retrieve.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestEvntDelete(strCode) {
-      cstrEvntMode = '*DLT';
-      cstrEvntCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTACT" PSCCDE="'+fixXML(cstrDetailCode)+'" ACTCDE="'+fixXML(cstrEvntCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_evnt_delete.asp',function(strResponse) {checkEvntLoad(strResponse);},false,streamXML(strXML));
-   }
-   function checkEvntLoad(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-         if (objDocument == null) {return;}
-         var strMessage = '';
-         var objElements = objDocument.documentElement.childNodes;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'ERROR') {
-               if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-            }
-         }
-         if (strMessage != '') {
-            alert(strMessage);
-            return;
-         }
-         if (cstrDefineMode == '*DLT') {
-            var objWinAry = cobjTypeLine[cintEvntLidx].shfary[cstrEvntWidx].winary;
-            objWinAry.splice(cintEvntAidx,1);
-            doTypeWindPaint(cintEvntLidx, cstrEvntWidx);
-            return;
-         } else if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Activity';
-            document.getElementById('addEvnt').style.display = 'none';
-            document.getElementById('updEvnt').style.display = 'block';
-         } else if (cstrDefineMode == '*CRT') {
-            cobjScreens[2].hedtxt = 'Create Activity';
-            document.getElementById('addEvnt').style.display = 'block';
-            document.getElementById('updEvnt').style.display = 'none';
-         }
-         displayScreen('dspEvnt');
-         document.getElementById('EVT_MatCode').value = '';
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'EVTDFN') {
-               if (cstrEvntMode == '*UPD') {
-                  document.getElementById('EVT_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('EVTCDE')+'</p>';
-               } else {
-                  document.getElementById('EVT_EvtCode').value = objElements[i].getAttribute('EVTCDE');
-               }
-               document.getElementById('EVT_EvtName').value = objElements[i].getAttribute('EVTNAM');
-            }
-         }
-         if (cstrEvntMode == '*UPD') {
-            document.getElementById('EVT_EvtName').focus();
-         } else {
-            document.getElementById('EVT_EvtCode').focus();
-         }
-      }
-   }
-   function doEvntCancel() {
-      if (checkChange() == false) {return;}
-      displayScreen('dspType');
-   }
-   function doEvntAccept() {
-      if (!processForm()) {return;}
-      var objEvtCode = document.getElementById('EVT_EvtCode');
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
-      if (cstrEvntMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDEVT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
-      } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTEVT"';
-         strXML = strXML+' PSCCDE="'+fixXML(cstrDetailCode)+'"';
-      }
-      strXML = strXML+' PSCNAM="'+fixXML(document.getElementById('DEF_PscName').value)+'"';
-      if (objEvtCode.selectedIndex == -1) {
-         strXML = strXML+' EVTCDE=""';
-      } else {
-         strXML = strXML+' EVTCDE="'+fixXML(objEvtCode.options[objEvtCode.selectedIndex].value)+'"';
-      }
-      strXML = strXML+'/>';
-      doActivityStart(document.body);
-      window.setTimeout('requestEvntAccept(\''+strXML+'\');',10);
-   }
-   function requestEvntAccept(strXML) {
-      doPostRequest('<%=strBase%>psa_psc_evnt_update.asp',function(strResponse) {checkEvntAccept(strResponse);},false,streamXML(strXML));
-   }
-   function checkEvntAccept(strResponse) {
-      doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         if (strResponse.length > 3) {
-            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
-            if (objDocument == null) {return;}
-            var strMessage = '';
-            var objElements = objDocument.documentElement.childNodes;
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'ERROR') {
-                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
-               }
-            }
-            if (strMessage != '') {
-               alert(strMessage);
-               return;
-            }
-            for (var i=0;i<objElements.length;i++) {
-               if (objElements[i].nodeName == 'CONFIRM') {
-                  alert(objElements[i].getAttribute('CONTXT'));
-               }
-            }
-         }
-         var objWinAry = cobjTypeLine[cintEvntLidx].shfary[cstrEvntWidx].winary;
-         objWinAry.length = 0;
-         for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'WINACT') {
-               objWinAry[objWinAry.length] = new clsTypeWact();
-               objWinAry[objWinAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               objWinAry[objWinAry.length-1].acttxt = objElements[i].getAttribute('ACTTXT');
-               objWinAry[objWinAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objWinAry[objWinAry.length-1].actusd = objElements[i].getAttribute('ACTUSD');
-               objWinAry[objWinAry.length-1].strwek = objElements[i].getAttribute('STRWEK');
-               objWinAry[objWinAry.length-1].endwek = objElements[i].getAttribute('ENDWEK');
-               objWinAry[objWinAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               objWinAry[objWinAry.length-1].strsms = objElements[i].getAttribute('STRSMS');
-               objWinAry[objWinAry.length-1].endsms = objElements[i].getAttribute('ENDSMS');
-               objWinAry[objWinAry.length-1].strdat = objElements[i].getAttribute('STRDAT');
-               objWinAry[objWinAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
-               objWinAry[objWinAry.length-1].enddat = objElements[i].getAttribute('ENDDAT');
-               objWinAry[objWinAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
-               objWinAry[objWinAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
-               objWinAry[objWinAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
-               objWinAry[objWinAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               objWinAry[objWinAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               objWinAry[objWinAry.length-1].lincde = objElements[i].getAttribute('LINCDE');
-               objWinAry[objWinAry.length-1].concde = objElements[i].getAttribute('CONCDE');
-               objWinAry[objWinAry.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
-               objWinAry[objWinAry.length-1].reqplt = objElements[i].getAttribute('REQPLT');
-               objWinAry[objWinAry.length-1].reqcas = objElements[i].getAttribute('REQCAS');
-               objWinAry[objWinAry.length-1].reqpch = objElements[i].getAttribute('REQPCH');
-               objWinAry[objWinAry.length-1].reqmix = objElements[i].getAttribute('REQMIX');
-               objWinAry[objWinAry.length-1].reqton = objElements[i].getAttribute('REQTON');
-               objWinAry[objWinAry.length-1].reqdur = objElements[i].getAttribute('REQDUR');
-               objWinAry[objWinAry.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               objWinAry[objWinAry.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               objWinAry[objWinAry.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               objWinAry[objWinAry.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               objWinAry[objWinAry.length-1].calton = objElements[i].getAttribute('CALTON');
-               objWinAry[objWinAry.length-1].caldur = objElements[i].getAttribute('CALDUR');
-               objWinAry[objWinAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               objWinAry[objWinAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               objWinAry[objWinAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               objWinAry[objWinAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               objWinAry[objWinAry.length-1].schton = objElements[i].getAttribute('SCHTON');
-               objWinAry[objWinAry.length-1].schdur = objElements[i].getAttribute('SCHDUR');
-            }
-         }
-         doTypeWindPaint(cintEvntLidx, cstrEvntWidx);
       }
    }
 
@@ -3320,7 +3322,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeActvUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddEvnt();">&nbsp;Add Event&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddTime();">&nbsp;Add Time&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeAddFill();">&nbsp;Add Production&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeToggle();">&nbsp;Show/Hide Requirements&nbsp;</a></nobr></td>
                </tr>
@@ -3381,18 +3383,24 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspEvnt" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+   <table id="dspTime" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
       <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedEvnt" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Event Activity</nobr></td>
+         <td id="hedTime" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Create Scheduled Time Activity</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Activity:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Time Activity:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="EVT_ActCode"></select>
+            <select class="clsInputBN" id="TIM_SacCode"></select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Duration Minutes:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="TIM_DurMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -3403,9 +3411,9 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doEventCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doEventAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
