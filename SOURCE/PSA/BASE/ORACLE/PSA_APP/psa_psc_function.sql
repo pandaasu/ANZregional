@@ -3340,6 +3340,7 @@ create or replace package body psa_app.psa_psc_function as
       if var_action = '*UPDACT' then
          update psa_psc_actv
             set psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
+                psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
                 psa_mat_sch_plt_qty = rcd_psa_psc_actv.psa_mat_sch_plt_qty,
                 psa_mat_sch_cas_qty = rcd_psa_psc_actv.psa_mat_sch_cas_qty,
                 psa_mat_sch_pch_qty = rcd_psa_psc_actv.psa_mat_sch_pch_qty,
@@ -3365,6 +3366,7 @@ create or replace package body psa_app.psa_psc_function as
       elsif var_action = '*SLTACT' then
          update psa_psc_actv
             set psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
+                psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
                 psa_sch_win_code = var_win_code,
                 psa_sch_win_seqn = var_win_seqn + .10,
                 psa_mat_sch_plt_qty = rcd_psa_psc_actv.psa_mat_sch_plt_qty,
