@@ -24,9 +24,7 @@ create table psa.psa_psc_actv
     psa_psc_week                    varchar2(7)                   not null,
     psa_prd_type                    varchar2(32)                  not null,
     psa_act_type                    varchar2(1)                   not null,
-    psa_act_text                    varchar2(128 char)            null,
     psa_chg_flag                    varchar2(1)                   null,
-    psa_chg_text                    varchar2(128 char)            null,
     psa_sch_lin_code                varchar2(32)                  null,
     psa_sch_con_code                varchar2(32)                  null,
     psa_sch_dft_flag                varchar2(1)                   null,
@@ -62,6 +60,8 @@ create table psa.psa_psc_actv
     psa_var_chg_mins                number                        null,
     psa_var_dur_text                varchar2(2000 char)           null,
     psa_var_chg_text                varchar2(2000 char)           null,
+    psa_sac_code                    varchar2(32)                  null,
+    psa_sac_name                    varchar2(120 char)            null,
     psa_mat_code                    varchar2(32)                  null,
     psa_mat_name                    varchar2(120 char)            null,
     psa_mat_type                    varchar2(10)                  null,
@@ -119,9 +119,7 @@ comment on column psa.psa_psc_actv.psa_psc_code is 'Schedule code';
 comment on column psa.psa_psc_actv.psa_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_actv.psa_prd_type is 'Production type code';
 comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';
-comment on column psa.psa_psc_actv.psa_act_text is 'Activity text';
 comment on column psa.psa_psc_actv.psa_chg_flag is 'Activity production change event flag (0=no or 1=yes)';
-comment on column psa.psa_psc_actv.psa_chg_text is 'Activity production change text';
 comment on column psa.psa_psc_actv.psa_sch_lin_code is 'Scheduled line code';
 comment on column psa.psa_psc_actv.psa_sch_con_code is 'Scheduled line configuration code';
 comment on column psa.psa_psc_actv.psa_sch_dft_flag is 'Scheduled default line flag';
@@ -157,6 +155,8 @@ comment on column psa.psa_psc_actv.psa_var_dur_mins is 'Variance duration in min
 comment on column psa.psa_psc_actv.psa_var_chg_mins is 'Variance change in minutes';
 comment on column psa.psa_psc_actv.psa_var_dur_text is 'Variance duration text';
 comment on column psa.psa_psc_actv.psa_var_chg_text is 'Variance change text';
+comment on column psa.psa_psc_actv.psa_sac_code is 'Schedule activity code';
+comment on column psa.psa_psc_actv.psa_sac_name is 'Schedule activity name';
 comment on column psa.psa_psc_actv.psa_mat_code is 'Material code';
 comment on column psa.psa_psc_actv.psa_mat_name is 'Material name';
 comment on column psa.psa_psc_actv.psa_mat_type is 'Material type';
