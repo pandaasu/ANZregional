@@ -2609,13 +2609,13 @@ create or replace package body psa_app.psa_psc_function as
                   rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
                elsif rcd_pact.psa_prd_type = '*PACK' then
                   rcd_psa_psc_actv.psa_mat_req_cas_qty := rcd_pact.psa_mat_req_qty;
-                  rcd_psa_psc_actv.psa_mat_req_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty / rcd_psa_psc_actv.psa_mat_cas_pallet);
+                  rcd_psa_psc_actv.psa_mat_req_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty / rcd_pact.psa_mat_cas_pallet);
                   rcd_psa_psc_actv.psa_mat_req_pch_qty := 0;
                   rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
                   rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
                   rcd_psa_psc_actv.psa_mat_req_dur_min := round((rcd_psa_psc_actv.psa_mat_req_cas_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100))) * 60, 0);
                   rcd_psa_psc_actv.psa_mat_cal_cas_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty + (rcd_psa_psc_actv.psa_mat_req_cas_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)));
-                  rcd_psa_psc_actv.psa_mat_cal_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty / rcd_psa_psc_actv.psa_mat_cas_pallet);
+                  rcd_psa_psc_actv.psa_mat_cal_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty / rcd_pact.psa_mat_cas_pallet);
                   rcd_psa_psc_actv.psa_mat_cal_pch_qty := 0;
                   rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
                   rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
