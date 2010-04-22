@@ -3298,7 +3298,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_psa_psc_actv.psa_mat_sch_dur_min := round(rcd_psa_psc_actv.psa_mat_sch_cas_qty / (rcd_actv.psa_sch_rra_unit * (rcd_actv.psa_sch_rra_effp / 100)), 0);
       elsif var_pty_code  = '*PACK' then
          rcd_psa_psc_actv.psa_mat_sch_cas_qty := var_sch_qnty;
-         rcd_psa_psc_actv.psa_mat_sch_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_sch_cas_qty / rcd_psa_psc_actv.psa_mat_cas_pallet);
+         rcd_psa_psc_actv.psa_mat_sch_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_sch_cas_qty / rcd_actv.psa_mat_cas_pallet);
          rcd_psa_psc_actv.psa_mat_sch_pch_qty := 0;
          rcd_psa_psc_actv.psa_mat_sch_mix_qty := 0;
          rcd_psa_psc_actv.psa_mat_sch_ton_qty := 0;
