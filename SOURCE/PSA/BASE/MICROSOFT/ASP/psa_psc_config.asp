@@ -1287,6 +1287,8 @@ sub PaintFunction()%>
    var cstrTypeRtyp;
    var cstrTypeRval;
 
+   var cstrTypeHead;
+
 
    var cobjTypePreqCell;
 
@@ -1410,7 +1412,8 @@ sub PaintFunction()%>
          var objActAry;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
-               document.getElementById('hedType').innerText = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
+               cstrTypeHead = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
+               document.getElementById('hedType').innerText = cstrTypeHead;
             } else if (objElements[i].nodeName == 'DAYDFN') {
                cobjTypeDate[cobjTypeDate.length] = new clsTypeDate();
                cobjTypeDate[cobjTypeDate.length-1].daycde = objElements[i].getAttribute('DAYCDE');
@@ -2262,6 +2265,7 @@ sub PaintFunction()%>
       cstrTypeAtyp = cobjTypeCell.getAttribute('acttyp');
       cstrTypeLcde = cobjTypeLine[cintTypeLidx].lincde;
       cstrTypeCcde = cobjTypeLine[cintTypeLidx].lcocde;
+      cstrTypeWseq = cobjTypeLine[cintTypeLidx].actary[cintTypeAidx].winseq;
       if (cstrTypeAtyp == 'T') {
          doActivityStart(document.body);
          window.setTimeout('requestTimeUpdate();',10);
@@ -2469,6 +2473,7 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspType');
+         document.getElementById('hedType').innerText = cstrTypeHead;
          var objActAry = cobjTypeLine[cintTypeLidx].actary;
          objActAry.length = 0;
          cobjTypePreq.length = 0;
@@ -2642,6 +2647,7 @@ sub PaintFunction()%>
    function doTimeCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspType');
+      document.getElementById('hedType').innerText = cstrTypeHead;
    }
    function doTimeAccept() {
       if (!processForm()) {return;}
@@ -2769,9 +2775,9 @@ sub PaintFunction()%>
          document.getElementById('FIL_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'ACTDFN') {
-               document.getElementById('FIL_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
-               document.getElementById('FIL_ReqData').innerHTML = '<p><bold>Requested Cases</bold> ('+objElements[i].getAttribute('REQCAS')+') <bold>Pouches</bold> ('+objElements[i].getAttribute('REQPCH')+') <bold>Mixes</bold> ('+objElements[i].getAttribute('REQMIX')+') <bold>Tonnes</bold> ('+objElements[i].getAttribute('REQTON')+')</p>';
-               document.getElementById('FIL_CalData').innerHTML = '<p><bold>Calculated Cases</bold> ('+objElements[i].getAttribute('CALCAS')+') <bold>Pouches</bold> ('+objElements[i].getAttribute('CALPCH')+') <bold>Mixes</bold> ('+objElements[i].getAttribute('CALMIX')+') <bold>Tonnes</bold> ('+objElements[i].getAttribute('CALTON')+')</p>';
+               document.getElementById('FIL_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('FIL_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Cases</font> ('+objElements[i].getAttribute('REQCAS')+') <font style="FONT-WEIGHT:bold">Pouches</font> ('+objElements[i].getAttribute('REQPCH')+') <font style="FONT-WEIGHT:bold">Mixes</font> ('+objElements[i].getAttribute('REQMIX')+') <font style="FONT-WEIGHT:bold">Tonnes</font> ('+objElements[i].getAttribute('REQTON')+')</p>';
+               document.getElementById('FIL_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Cases</font> ('+objElements[i].getAttribute('CALCAS')+') <font style="FONT-WEIGHT:bold">Pouches</font> ('+objElements[i].getAttribute('CALPCH')+') <font style="FONT-WEIGHT:bold">Mixes</font> ('+objElements[i].getAttribute('CALMIX')+') <font style="FONT-WEIGHT:bold">Tonnes</font> ('+objElements[i].getAttribute('CALTON')+')</p>';
                document.getElementById('FIL_SchQnty').value = objElements[i].getAttribute('SCHCAS');
                strChgFlag = objElements[i].getAttribute('CHGFLG');
                document.getElementById('FIL_ChgMins').value = objElements[i].getAttribute('CHGMIN');
@@ -2790,6 +2796,7 @@ sub PaintFunction()%>
    function doFillCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspType');
+      document.getElementById('hedType').innerText = cstrTypeHead;
    }
    function doFillAccept() {
       if (!processForm()) {return;}
@@ -2931,9 +2938,9 @@ sub PaintFunction()%>
          document.getElementById('PAC_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'ACTDFN') {
-               document.getElementById('PAC_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
-               document.getElementById('PAC_ReqData').innerHTML = '<p><bold>Requested Cases</bold> ('+objElements[i].getAttribute('REQCAS')+') <bold>Pallets</bold> ('+objElements[i].getAttribute('REQPLT')+')</p>';
-               document.getElementById('PAC_CalData').innerHTML = '<p><bold>Calculated Cases</bold> ('+objElements[i].getAttribute('CALCAS')+') <bold>Pallets</bold> ('+objElements[i].getAttribute('CALPLT')+')</p>';
+               document.getElementById('PAC_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('PAC_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Cases</font> ('+objElements[i].getAttribute('REQCAS')+') <font style="FONT-WEIGHT:bold">Pallets</font> ('+objElements[i].getAttribute('REQPLT')+')</p>';
+               document.getElementById('PAC_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Cases</font> ('+objElements[i].getAttribute('CALCAS')+') <font style="FONT-WEIGHT:bold">Pallets</font> ('+objElements[i].getAttribute('CALPLT')+')</p>';
                document.getElementById('PAC_SchQnty').value = objElements[i].getAttribute('SCHCAS');
                strChgFlag = objElements[i].getAttribute('CHGFLG');
                document.getElementById('PAC_ChgMins').value = objElements[i].getAttribute('CHGMIN');
@@ -2952,6 +2959,7 @@ sub PaintFunction()%>
    function doPackCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspType');
+      document.getElementById('hedType').innerText = cstrTypeHead;
    }
    function doPackAccept() {
       if (!processForm()) {return;}
@@ -3093,9 +3101,9 @@ sub PaintFunction()%>
          document.getElementById('FOR_ChgMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'ACTDFN') {
-               document.getElementById('FOR_MatData').innerHTML = '<p><bold>Material:</bold> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
-               document.getElementById('FOR_ReqData').innerHTML = '<p><bold>Requested Pouches</bold> ('+objElements[i].getAttribute('REQPCH')+')</p>';
-               document.getElementById('FOR_CalData').innerHTML = '<p><bold>Calculated Pouches</bold> ('+objElements[i].getAttribute('CALPCH')+')</p>';
+               document.getElementById('FOR_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
+               document.getElementById('FOR_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Pouches</font> ('+objElements[i].getAttribute('REQPCH')+')</p>';
+               document.getElementById('FOR_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Pouches</font> ('+objElements[i].getAttribute('CALPCH')+')</p>';
                document.getElementById('FOR_SchQnty').value = objElements[i].getAttribute('SCHPCH');
                strChgFlag = objElements[i].getAttribute('CHGFLG');
                document.getElementById('FOR_ChgMins').value = objElements[i].getAttribute('CHGMIN');
@@ -3114,6 +3122,7 @@ sub PaintFunction()%>
    function doFormCancel() {
       if (checkChange() == false) {return;}
       displayScreen('dspType');
+      document.getElementById('hedType').innerText = cstrTypeHead;
    }
    function doFormAccept() {
       if (!processForm()) {return;}
@@ -3465,33 +3474,32 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspFill" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
+   <table id="dspFill" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedFill" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Create Filling Activity</nobr></td>
+         <td id="hedFill" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Create Filling Activity</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FIL_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FIL_MatData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FIL_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FIL_ReqData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FIL_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FIL_CalData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -3513,11 +3521,12 @@ sub PaintFunction()%>
             <input class="clsInputNN" type="text" name="FIL_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFillCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -3528,33 +3537,32 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspPack" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
+   <table id="dspPack" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedPack" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Production Schedule Maintenance - Packing Activity</nobr></td>
+         <td id="hedPack" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Packing Activity</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="PAC_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PAC_MatData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="PAC_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PAC_ReqData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="PAC_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="PAC_CalData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -3576,11 +3584,12 @@ sub PaintFunction()%>
             <input class="clsInputNN" type="text" name="PAC_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPackCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -3591,33 +3600,32 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspForm" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellspacing=1 cellpadding=0>
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=1 cellpadding="0" cellspacing="0">
+   <table id="dspForm" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedForm" class="clsFunction" align=center valign=center colspan=1 nowrap><nobr>Production Schedule Maintenance - Forming Activity</nobr></td>
+         <td id="hedForm" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Production Schedule Maintenance - Forming Activity</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FOR_MatData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FOR_MatData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FOR_ReqData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FOR_ReqData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="FOR_CalData" class="clsLabelBN" align=center valign=center colspan=1 nowrap><nobr></nobr></td>
+         <td id="FOR_CalData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Pouches:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -3639,11 +3647,12 @@ sub PaintFunction()%>
             <input class="clsInputNN" type="text" name="FOR_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
+      </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFormCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
