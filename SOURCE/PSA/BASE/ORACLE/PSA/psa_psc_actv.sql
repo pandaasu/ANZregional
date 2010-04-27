@@ -24,6 +24,8 @@ create table psa.psa_psc_actv
     psa_psc_week                    varchar2(7)                   not null,
     psa_prd_type                    varchar2(32)                  not null,
     psa_act_type                    varchar2(1)                   not null,
+    psa_upd_user                    varchar2(30)                  not null,
+    psa_upd_date                    date                          not null,
     psa_chg_flag                    varchar2(1)                   null,
     psa_sch_lin_code                varchar2(32)                  null,
     psa_sch_con_code                varchar2(32)                  null,
@@ -118,7 +120,9 @@ comment on column psa.psa_psc_actv.psa_act_code is 'Activity code';
 comment on column psa.psa_psc_actv.psa_psc_code is 'Schedule code';
 comment on column psa.psa_psc_actv.psa_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_actv.psa_prd_type is 'Production type code';
-comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';
+comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';v
+comment on column psa.psa_psc_actv.psa_upd_user is 'Last updated user';
+comment on column psa.psa_psc_actv.psa_upd_date is 'Last updated date';
 comment on column psa.psa_psc_actv.psa_chg_flag is 'Activity production change event flag (0=no or 1=yes)';
 comment on column psa.psa_psc_actv.psa_sch_lin_code is 'Scheduled line code';
 comment on column psa.psa_psc_actv.psa_sch_con_code is 'Scheduled line configuration code';
