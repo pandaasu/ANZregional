@@ -601,6 +601,10 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
+         var objPscType = document.getElementById('WEK_PscType');
+         for (var i=objPscType.rows.length-1;i>=0;i--) {
+            objPscType.deleteRow(i);
+         }
          displayScreen('dspWeeks');
          var objTabHead = document.getElementById('tabHeadWeeks');
          var objTabBody = document.getElementById('tabBodyWeeks');
@@ -662,7 +666,7 @@ sub PaintFunction()%>
                if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
                   objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTTXT')+'&nbsp;';
                } else {
-                  objCell.innerHTML = '&nbsp;&nbsp;-&nbsp;'+objElements[i].getAttribute('SLTTXT')+'&nbsp;';
+                  objCell.innerHTML = '&nbsp;&nbsp;*&nbsp;'+objElements[i].getAttribute('SLTTXT')+'&nbsp;';
                }
                if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
                   objCell.className = 'clsLabelFB';
@@ -1005,6 +1009,9 @@ sub PaintFunction()%>
       intPtyIdx = objSelect.parentNode.parentNode.getAttribute('ptyidx');
       intLcoIdx = objSelect.parentNode.parentNode.getAttribute('lcoidx');
       objTable = document.getElementById('WEKPTYLCONSMOD_'+intPtyIdx+'_'+intLcoIdx);
+      for (var i=objTable.rows.length-1;i>=0;i--) {
+         objTable.deleteRow(i);
+      }
       if (objSelect.selectedIndex == -1 || objSelect.options[objSelect.selectedIndex].value == '*NONE') {
          objTable.style.display = 'none';
          return;
@@ -1240,10 +1247,6 @@ sub PaintFunction()%>
          cobjWeekData = null;
          cobjWeekSmod = null;
          cobjWeekPtyp = null;
-         var objPscType = document.getElementById('WEK_PscType');
-         for (var i=objPscType.rows.length-1;i>=0;i--) {
-            objPscType.deleteRow(i);
-         }
          doWeekRefresh();
       }
    }
@@ -1541,6 +1544,24 @@ sub PaintFunction()%>
 
 
    function doTypeLineSelect(objSelect) {
+      if (cobjTypeSchdCell != null) {
+         if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
+            cobjTypeSchdCell.style.backgroundColor = '#ffd9ff';
+         } else if (cobjTypeSchdCell.getAttribute('acttyp') == 'T') {
+            cobjTypeSchdCell.style.backgroundColor = '#dddfff';
+         } else {
+            cobjTypeSchdCell.style.backgroundColor = '#ffffe0';
+         }
+         cobjTypeSchdCell = null;
+      }
+      if (cobjTypeUactCell != null) {
+         if (cobjTypeUactCell.getAttribute('acttyp') == 'T') {
+            cobjTypeUactCell.style.backgroundColor = '#dddfff';
+         } else {
+            cobjTypeUactCell.style.backgroundColor = '#ffffe0';
+         }
+         cobjTypeUactCell = null;
+      }
       if (cobjTypeLineCell != null) {
          cobjTypeLineCell.style.backgroundColor = '#40414c';
       }
@@ -1550,7 +1571,7 @@ sub PaintFunction()%>
    function doTypeLineAdd() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestLineAdd();',10);
+      window.setTimeout('requestLineCreate();',10);
    }
    function doTypeLineUpdate() {
       if (cobjTypeLineCell == null) {
@@ -1577,10 +1598,11 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestLineDelete();',10);
    }
-
-
-
    function doTypeSchdSelect(objSelect) {
+      if (cobjTypeLineCell != null) {
+         cobjTypeLineCell.style.backgroundColor = '#40414c';
+         cobjTypeLineCell = null;
+      }
       if (cobjTypeSchdCell != null) {
          if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
             cobjTypeSchdCell.style.backgroundColor = '#ffd9ff';
@@ -2382,6 +2404,10 @@ sub PaintFunction()%>
    }
 
    function doTypeUactSelect(objSelect) {
+      if (cobjTypeLineCell != null) {
+         cobjTypeLineCell.style.backgroundColor = '#40414c';
+         cobjTypeLineCell = null;
+      }
       if (cobjTypeUactCell != null) {
          if (cobjTypeUactCell.getAttribute('acttyp') == 'T') {
             cobjTypeUactCell.style.backgroundColor = '#dddfff';
@@ -2623,12 +2649,12 @@ sub PaintFunction()%>
             document.getElementById('addLine').style.display = 'none';
             document.getElementById('updLine').style.display = 'block';
          } else if (cstrLineMode == '*CRT') {
-            cobjScreens[6].hedtxt = 'Create Line Configuration';
+            cobjScreens[6].hedtxt = 'Add Line Configuration';
             document.getElementById('addLine').style.display = 'block';
             document.getElementById('updLine').style.display = 'none';
          }
          displayScreen('dspLine');
-         cintLineIndx = 0;
+         cintLineIndx = -1;
          cobjLineLcod.length = 0;
          cobjLineSmod.length = 0;
          cobjLineCmod.length = 0;
@@ -2671,6 +2697,7 @@ sub PaintFunction()%>
                cobjLineLcod[cobjLineLcod.length-1].smocde = objElements[i].getAttribute('SMOCDE');
                cobjLineLcod[cobjLineLcod.length-1].filnam = objElements[i].getAttribute('FILNAM');
                if (cstrLineMode == '*UPD') {
+                  cintLineIndx = 0;
                   strSmoCode = objElements[i].getAttribute('SMOCDE');
                   if (objElements[i].getAttribute('FILNAM') != '' && objElements[i].getAttribute('FILNAM') != null) {
                      document.getElementById('LIN_UpdLine').innerHTML = '<p>'+'('+objElements[i].getAttribute('LINCDE')+') '+objElements[i].getAttribute('LINNAM')+' - ('+objElements[i].getAttribute('LCOCDE')+') '+objElements[i].getAttribute('LCONAM')+' - '+objElements[i].getAttribute('FILNAM')+'</p>';
@@ -2706,7 +2733,7 @@ sub PaintFunction()%>
       }
    }
    function doLineLconChange(objLinLst) {
-      cintLineIndx = objLinLst.selectedIndex;
+      cintLineIndx = objLinLst.selectedIndex-1;
       var objSmoList = document.getElementById('LIN_SmoList');
       objSmoList.selectedIndex = 0;
       doLineSmodChange(objSmoList,false);
@@ -2727,7 +2754,10 @@ sub PaintFunction()%>
       for (var i=objLinData.rows.length-1;i>=0;i--) {
          objLinData.deleteRow(i);
       }
-      if (objSmoLst.selectedIndex == -1 || objSmoLst.options[objSmoLst.selectedIndex].value == '*NONE') {
+      if (cintLineIndx < 0) {
+         objLinData.style.display = 'none';
+         return;
+      } else if (objSmoLst.selectedIndex == -1 || objSmoLst.options[objSmoLst.selectedIndex].value == '*NONE') {
          objLinData.style.display = 'none';
          return;
       } else {
@@ -2827,6 +2857,8 @@ sub PaintFunction()%>
       }
    }
    function doLineCancel() {
+      cobjTypeLineCell.style.backgroundColor = '#40414c';
+      cobjTypeLineCell = null;
       cobjLineLcod.length = 0;
       cobjLineSmod.length = 0;
       cobjLineCmod.length = 0;
@@ -2871,13 +2903,13 @@ sub PaintFunction()%>
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      if (cstrWeekMode == '*UPD') {
+      if (cstrLineMode == '*UPD') {
          strXML = strXML+'<PSA_REQUEST ACTION="*UPDLIN"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
          strXML = strXML+' LINCDE="'+fixXML(cobjLineLcod[0].lincde)+'"';
-         strXML = strXML+' LCOCDE="'+fixXML(cobjLineLcod[0].lcocde)+'"';
+         strXML = strXML+' CONCDE="'+fixXML(cobjLineLcod[0].lcocde)+'"';
          strXML = strXML+' SMOCDE="'+fixXML(cobjLineSmod[objSmoList.selectedIndex-1].smocde)+'">';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTLIN"';
@@ -2886,7 +2918,7 @@ sub PaintFunction()%>
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
          strXML = strXML+' LINCDE="'+fixXML(cobjLineLcod[objLinList.selectedIndex-1].lincde)+'"';
-         strXML = strXML+' LCOCDE="'+fixXML(cobjLineLcod[objlinList.selectedIndex-1].lcocde)+'"';
+         strXML = strXML+' CONCDE="'+fixXML(cobjLineLcod[objLinList.selectedIndex-1].lcocde)+'"';
          strXML = strXML+' SMOCDE="'+fixXML(cobjLineSmod[objSmoList.selectedIndex-1].smocde)+'">';
       }
       objShfAry = cobjLineSmod[objSmoList.selectedIndex-1].shfary;
