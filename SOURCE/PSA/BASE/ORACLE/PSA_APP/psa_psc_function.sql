@@ -2458,7 +2458,6 @@ create or replace package body psa_app.psa_psc_function as
            from psa_psc_actv t01
           where t01.psa_psc_code = rcd_psa_psc_week.psw_psc_code
             and t01.psa_psc_week = rcd_psa_psc_week.psw_psc_week
-            and t01.psa_act_type = 'P'
           order by t01.psa_mat_code asc,
                    t01.psa_prd_type asc,
                    t01.psa_act_code asc;
@@ -2600,8 +2599,8 @@ create or replace package body psa_app.psa_psc_function as
       if var_found = false then
          psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') does not exist');
       else
-         if var_action = '*CRTWEK' and rcd_reqh.rhe_req_status != '*LOADED' then
-            psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') must be status *LOADED to create a production schedule week');
+         if rcd_reqh.rhe_req_status != '*LOADED' then
+            psa_gen_function.add_mesg_data('Production requirements ('||rcd_psa_psc_week.psw_req_code||') must be status *LOADED');
          end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -2626,8 +2625,8 @@ create or replace package body psa_app.psa_psc_function as
          if var_found = false then
             psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') does not exist');
          else
-            if var_action = '*CRTWEK' and rcd_ptyp.pty_prd_status != '1' then
-               psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') must be status active to create a production schedule week');
+            if rcd_ptyp.pty_prd_status != '1' then
+               psa_gen_function.add_mesg_data('Production type ('||var_pty_code||') must be status active');
             end if;
          end if;
          obj_lco_list := xslProcessor.selectNodes(obj_pty_node,'PSCLCO');
@@ -2646,8 +2645,8 @@ create or replace package body psa_app.psa_psc_function as
             if var_found = false then
                psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') does not exist');
             else
-               if var_action = '*CRTWEK' and rcd_lcon.lco_con_status != '1' then
-                  psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') must be status active to create a production schedule week');
+               if rcd_lcon.lco_con_status != '1' then
+                  psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') must be status active');
                end if;
             end if;
             open csr_smod;
@@ -2659,8 +2658,8 @@ create or replace package body psa_app.psa_psc_function as
             if var_found = false then
                psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') does not exist');
             else
-               if var_action = '*CRTWEK' and rcd_smod.smd_smo_status != '1' then
-                  psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') must be status active to create a production schedule week');
+               if rcd_smod.smd_smo_status != '1' then
+                  psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') must be status active');
                end if;
             end if;
             obj_shf_list := xslProcessor.selectNodes(obj_lco_node,'PSCSHF');
@@ -2679,8 +2678,8 @@ create or replace package body psa_app.psa_psc_function as
                   if var_found = false then
                      psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') does not exist');
                   else
-                     if var_action = '*CRTWEK' and rcd_cmod.cmd_cmo_status != '1' then
-                        psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active to create a production schedule week');
+                     if rcd_cmod.cmd_cmo_status != '1' then
+                        psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active');
                      end if;
                   end if;
                end if;
@@ -2703,6 +2702,7 @@ create or replace package body psa_app.psa_psc_function as
                 psw_upd_date = rcd_psa_psc_week.psw_upd_date
           where psw_psc_code = rcd_psa_psc_week.psw_psc_code
             and psw_psc_code = rcd_psa_psc_week.psw_psc_code;
+         delete from psa_psc_actv where psa_psc_code = rcd_psa_psc_week.psw_psc_code and psa_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_date where psd_psc_code = rcd_psa_psc_week.psw_psc_code and psd_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_line where psl_psc_code = rcd_psa_psc_week.psw_psc_code and psl_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_reso where psr_psc_code = rcd_psa_psc_week.psw_psc_code and psr_psc_week = rcd_psa_psc_week.psw_psc_week;
@@ -2873,347 +2873,256 @@ create or replace package body psa_app.psa_psc_function as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
-      /* Retrieve and load the production requirements when required
+      /* Load the production activities for the scheduled week from the requirements
       /*-*/
-    ----  if var_action = '*CRTWEK' or (var_action = '*UPDWEK' and rcd_retrieve.psw_req_code != rcd_psa_psc_week.psw_req_code) then
-      if var_action = '*CRTWEK' or var_action = '*UPDWEK' then
+      var_mat_code := '*NONE';
+      open csr_reqd;
+      loop
+         fetch csr_reqd into rcd_reqd;
+         if csr_reqd%notfound then
+            exit;
+         end if;
+         if rcd_reqd.mde_mat_code != var_mat_code then
+            var_mat_code := rcd_reqd.mde_mat_code;
+            select psa_act_sequence.nextval into rcd_psa_psc_actv.psa_act_code from dual;
+            rcd_psa_psc_actv.psa_psc_code := rcd_psa_psc_week.psw_psc_code;
+            rcd_psa_psc_actv.psa_psc_week := rcd_psa_psc_week.psw_psc_week;
+            rcd_psa_psc_actv.psa_prd_type := rcd_reqd.mpr_prd_type;
+            rcd_psa_psc_actv.psa_act_type := 'P';
+            rcd_psa_psc_actv.psa_upd_user := var_upd_user;
+            rcd_psa_psc_actv.psa_upd_date := var_upd_date;
+            rcd_psa_psc_actv.psa_chg_flag := '0';
+            rcd_psa_psc_actv.psa_sch_lin_code := null;
+            rcd_psa_psc_actv.psa_sch_con_code := null;
+            rcd_psa_psc_actv.psa_sch_dft_flag := null;
+            rcd_psa_psc_actv.psa_sch_rra_code := null;
+            rcd_psa_psc_actv.psa_sch_rra_unit := null;
+            rcd_psa_psc_actv.psa_sch_rra_effp := null;
+            rcd_psa_psc_actv.psa_sch_rra_wasp := null;
+            rcd_psa_psc_actv.psa_sch_win_code := '*NONE';
+            rcd_psa_psc_actv.psa_sch_win_seqn := null;
+            rcd_psa_psc_actv.psa_sch_win_flow := null;
+            rcd_psa_psc_actv.psa_sch_str_time := null;
+            rcd_psa_psc_actv.psa_sch_chg_time := null;
+            rcd_psa_psc_actv.psa_sch_end_time := null;
+            rcd_psa_psc_actv.psa_sch_dur_mins := 0;
+            rcd_psa_psc_actv.psa_sch_chg_mins := 0;
+            rcd_psa_psc_actv.psa_act_ent_flag := '0';
+            rcd_psa_psc_actv.psa_act_lin_code := null;
+            rcd_psa_psc_actv.psa_act_con_code := null;
+            rcd_psa_psc_actv.psa_act_dft_flag := null;
+            rcd_psa_psc_actv.psa_act_rra_code := null;
+            rcd_psa_psc_actv.psa_act_rra_unit := null;
+            rcd_psa_psc_actv.psa_act_rra_effp := null;
+            rcd_psa_psc_actv.psa_act_rra_wasp := null;
+            rcd_psa_psc_actv.psa_act_win_code := '*NONE';
+            rcd_psa_psc_actv.psa_act_win_seqn := null;
+            rcd_psa_psc_actv.psa_act_win_flow := null;
+            rcd_psa_psc_actv.psa_act_str_time := null;
+            rcd_psa_psc_actv.psa_act_chg_time := null;
+            rcd_psa_psc_actv.psa_act_end_time := null;
+            rcd_psa_psc_actv.psa_act_dur_mins := 0;
+            rcd_psa_psc_actv.psa_act_chg_mins := 0;
+            rcd_psa_psc_actv.psa_var_dur_mins := 0;
+            rcd_psa_psc_actv.psa_var_chg_mins := 0;
+            rcd_psa_psc_actv.psa_var_dur_text := null;
+            rcd_psa_psc_actv.psa_var_chg_text := null;
+            rcd_psa_psc_actv.psa_sac_code := null;
+            rcd_psa_psc_actv.psa_sac_name := null;
+            rcd_psa_psc_actv.psa_mat_code := rcd_reqd.mde_mat_code;
+            rcd_psa_psc_actv.psa_mat_name := rcd_reqd.mde_mat_name;
+            rcd_psa_psc_actv.psa_mat_type := rcd_reqd.mde_mat_type;
+            rcd_psa_psc_actv.psa_mat_usage := rcd_reqd.mde_mat_usage;
+            rcd_psa_psc_actv.psa_mat_uom := rcd_reqd.mde_mat_uom;
+            rcd_psa_psc_actv.psa_mat_gro_weight := rcd_reqd.mde_gro_weight;
+            rcd_psa_psc_actv.psa_mat_net_weight := rcd_reqd.mde_net_weight;
+            rcd_psa_psc_actv.psa_mat_unt_case := rcd_reqd.mde_unt_case;
+            rcd_psa_psc_actv.psa_mat_sch_priority := rcd_reqd.mpr_sch_priority;
+            rcd_psa_psc_actv.psa_mat_cas_pallet := rcd_reqd.mpr_cas_pallet;
+            rcd_psa_psc_actv.psa_mat_bch_quantity := rcd_reqd.mpr_bch_quantity;
+            rcd_psa_psc_actv.psa_mat_yld_percent := rcd_reqd.mpr_yld_percent;
+            rcd_psa_psc_actv.psa_mat_yld_value := rcd_reqd.mpr_yld_value;
+            rcd_psa_psc_actv.psa_mat_pck_percent := rcd_reqd.mpr_pck_percent;
+            rcd_psa_psc_actv.psa_mat_pck_weight := rcd_reqd.mpr_pck_weight;
+            rcd_psa_psc_actv.psa_mat_bch_weight := rcd_reqd.mpr_bch_weight;
+            rcd_psa_psc_actv.psa_mat_req_qty := rcd_reqd.rde_mat_qnty;
+            rcd_psa_psc_actv.psa_mat_req_plt_qty := 0;
+            rcd_psa_psc_actv.psa_mat_req_cas_qty := 0;
+            rcd_psa_psc_actv.psa_mat_req_pch_qty := 0;
+            rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
+            rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
+            rcd_psa_psc_actv.psa_mat_req_dur_min := 0;
+            rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
+            rcd_psa_psc_actv.psa_mat_cal_cas_qty := 0;
+            rcd_psa_psc_actv.psa_mat_cal_pch_qty := 0;
+            rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
+            rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
+            rcd_psa_psc_actv.psa_mat_cal_dur_min := 0;
+            rcd_psa_psc_actv.psa_mat_sch_plt_qty := 0;
+            rcd_psa_psc_actv.psa_mat_sch_cas_qty := 0;
+            rcd_psa_psc_actv.psa_mat_sch_pch_qty := 0;
+            rcd_psa_psc_actv.psa_mat_sch_mix_qty := 0;
+            rcd_psa_psc_actv.psa_mat_sch_ton_qty := 0;
+            rcd_psa_psc_actv.psa_mat_sch_dur_min := 0;
+            rcd_psa_psc_actv.psa_mat_act_plt_qty := 0;
+            rcd_psa_psc_actv.psa_mat_act_cas_qty := 0;
+            rcd_psa_psc_actv.psa_mat_act_pch_qty := 0;
+            rcd_psa_psc_actv.psa_mat_act_mix_qty := 0;
+            rcd_psa_psc_actv.psa_mat_act_ton_qty := 0;
+            rcd_psa_psc_actv.psa_mat_act_dur_min := 0;
+            rcd_psa_psc_actv.psa_mat_var_plt_qty := 0;
+            rcd_psa_psc_actv.psa_mat_var_cas_qty := 0;
+            rcd_psa_psc_actv.psa_mat_var_pch_qty := 0;
+            rcd_psa_psc_actv.psa_mat_var_mix_qty := 0;
+            rcd_psa_psc_actv.psa_mat_var_ton_qty := 0;
+            rcd_psa_psc_actv.psa_mat_var_dur_min := 0;
+            insert into psa_psc_actv values rcd_psa_psc_actv;
+         end if;
+      end loop;
+      close csr_reqd;
 
-         /*-*/
-         /* Delete any existing production activities for the scheduled week
-         /*-*/
-         if var_action = '*UPDWEK' then
-            delete from psa_psc_actv
-             where psa_psc_code = rcd_psa_psc_week.psw_psc_code
-               and psa_psc_week = rcd_psa_psc_week.psw_psc_week;
+      /*-*/
+      /* Assign the production activities to production schedule week lines where possible
+      /*-*/
+      open csr_pact;
+      loop
+         fetch csr_pact into rcd_pact;
+         if csr_pact%notfound then
+            exit;
          end if;
 
          /*-*/
-         /* Load the production activities for the scheduled week from the requirements
+         /* Find the schedule production line
+         /* **note** 1. Use the default line configuration when available
+         /*          2. Use the first material line configuration that is avialable
          /*-*/
-         var_mat_code := '*NONE';
-         open csr_reqd;
-         loop
-            fetch csr_reqd into rcd_reqd;
-            if csr_reqd%notfound then
-               exit;
-            end if;
-            if rcd_reqd.mde_mat_code != var_mat_code then
-               var_mat_code := rcd_reqd.mde_mat_code;
-               select psa_act_sequence.nextval into rcd_psa_psc_actv.psa_act_code from dual;
-               rcd_psa_psc_actv.psa_psc_code := rcd_psa_psc_week.psw_psc_code;
-               rcd_psa_psc_actv.psa_psc_week := rcd_psa_psc_week.psw_psc_week;
-               rcd_psa_psc_actv.psa_prd_type := rcd_reqd.mpr_prd_type;
-               rcd_psa_psc_actv.psa_act_type := 'P';
-               rcd_psa_psc_actv.psa_upd_user := var_upd_user;
-               rcd_psa_psc_actv.psa_upd_date := var_upd_date;
-               rcd_psa_psc_actv.psa_chg_flag := '0';
-               rcd_psa_psc_actv.psa_sch_lin_code := null;
-               rcd_psa_psc_actv.psa_sch_con_code := null;
-               rcd_psa_psc_actv.psa_sch_dft_flag := null;
-               rcd_psa_psc_actv.psa_sch_rra_code := null;
-               rcd_psa_psc_actv.psa_sch_rra_unit := null;
-               rcd_psa_psc_actv.psa_sch_rra_effp := null;
-               rcd_psa_psc_actv.psa_sch_rra_wasp := null;
-               rcd_psa_psc_actv.psa_sch_win_code := '*NONE';
-               rcd_psa_psc_actv.psa_sch_win_seqn := null;
-               rcd_psa_psc_actv.psa_sch_win_flow := null;
-               rcd_psa_psc_actv.psa_sch_str_time := null;
-               rcd_psa_psc_actv.psa_sch_chg_time := null;
-               rcd_psa_psc_actv.psa_sch_end_time := null;
-               rcd_psa_psc_actv.psa_sch_dur_mins := 0;
-               rcd_psa_psc_actv.psa_sch_chg_mins := 0;
-               rcd_psa_psc_actv.psa_act_ent_flag := '0';
-               rcd_psa_psc_actv.psa_act_lin_code := null;
-               rcd_psa_psc_actv.psa_act_con_code := null;
-               rcd_psa_psc_actv.psa_act_dft_flag := null;
-               rcd_psa_psc_actv.psa_act_rra_code := null;
-               rcd_psa_psc_actv.psa_act_rra_unit := null;
-               rcd_psa_psc_actv.psa_act_rra_effp := null;
-               rcd_psa_psc_actv.psa_act_rra_wasp := null;
-               rcd_psa_psc_actv.psa_act_win_code := '*NONE';
-               rcd_psa_psc_actv.psa_act_win_seqn := null;
-               rcd_psa_psc_actv.psa_act_win_flow := null;
-               rcd_psa_psc_actv.psa_act_str_time := null;
-               rcd_psa_psc_actv.psa_act_chg_time := null;
-               rcd_psa_psc_actv.psa_act_end_time := null;
-               rcd_psa_psc_actv.psa_act_dur_mins := 0;
-               rcd_psa_psc_actv.psa_act_chg_mins := 0;
-               rcd_psa_psc_actv.psa_var_dur_mins := 0;
-               rcd_psa_psc_actv.psa_var_chg_mins := 0;
-               rcd_psa_psc_actv.psa_var_dur_text := null;
-               rcd_psa_psc_actv.psa_var_chg_text := null;
-               rcd_psa_psc_actv.psa_sac_code := null;
-               rcd_psa_psc_actv.psa_sac_name := null;
-               rcd_psa_psc_actv.psa_mat_code := rcd_reqd.mde_mat_code;
-               rcd_psa_psc_actv.psa_mat_name := rcd_reqd.mde_mat_name;
-               rcd_psa_psc_actv.psa_mat_type := rcd_reqd.mde_mat_type;
-               rcd_psa_psc_actv.psa_mat_usage := rcd_reqd.mde_mat_usage;
-               rcd_psa_psc_actv.psa_mat_uom := rcd_reqd.mde_mat_uom;
-               rcd_psa_psc_actv.psa_mat_gro_weight := rcd_reqd.mde_gro_weight;
-               rcd_psa_psc_actv.psa_mat_net_weight := rcd_reqd.mde_net_weight;
-               rcd_psa_psc_actv.psa_mat_unt_case := rcd_reqd.mde_unt_case;
-               rcd_psa_psc_actv.psa_mat_sch_priority := rcd_reqd.mpr_sch_priority;
-               rcd_psa_psc_actv.psa_mat_cas_pallet := rcd_reqd.mpr_cas_pallet;
-               rcd_psa_psc_actv.psa_mat_bch_quantity := rcd_reqd.mpr_bch_quantity;
-               rcd_psa_psc_actv.psa_mat_yld_percent := rcd_reqd.mpr_yld_percent;
-               rcd_psa_psc_actv.psa_mat_yld_value := rcd_reqd.mpr_yld_value;
-               rcd_psa_psc_actv.psa_mat_pck_percent := rcd_reqd.mpr_pck_percent;
-               rcd_psa_psc_actv.psa_mat_pck_weight := rcd_reqd.mpr_pck_weight;
-               rcd_psa_psc_actv.psa_mat_bch_weight := rcd_reqd.mpr_bch_weight;
-               rcd_psa_psc_actv.psa_mat_req_qty := rcd_reqd.rde_mat_qnty;
+         open csr_mlin;
+         fetch csr_mlin into rcd_mlin;
+         if csr_mlin%found then
+            rcd_psa_psc_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
+            rcd_psa_psc_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
+            rcd_psa_psc_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_psa_psc_actv.psa_sch_rra_code := rcd_mlin.mli_rra_code;
+            rcd_psa_psc_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_psa_psc_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_psa_psc_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
+            if rcd_pact.psa_prd_type = '*FILL' then
                rcd_psa_psc_actv.psa_mat_req_plt_qty := 0;
-               rcd_psa_psc_actv.psa_mat_req_cas_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_cas_qty := rcd_pact.psa_mat_req_qty;
+               rcd_psa_psc_actv.psa_mat_req_pch_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty * rcd_pact.psa_mat_unt_case);
+               rcd_psa_psc_actv.psa_mat_req_mix_qty := ceil(rcd_psa_psc_actv.psa_mat_req_pch_qty / nvl(rcd_pact.psa_mat_yld_value,1));
+               rcd_psa_psc_actv.psa_mat_req_ton_qty := round((rcd_psa_psc_actv.psa_mat_req_cas_qty * rcd_pact.psa_mat_net_weight) / 1000, 3);
+               rcd_psa_psc_actv.psa_mat_req_dur_min := round(rcd_psa_psc_actv.psa_mat_req_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
+               rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
+               rcd_psa_psc_actv.psa_mat_cal_cas_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty + (rcd_psa_psc_actv.psa_mat_req_cas_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)));
+               rcd_psa_psc_actv.psa_mat_cal_pch_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty * rcd_pact.psa_mat_unt_case);
+               rcd_psa_psc_actv.psa_mat_cal_mix_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_pch_qty / nvl(rcd_pact.psa_mat_yld_value,1));
+               rcd_psa_psc_actv.psa_mat_cal_ton_qty := round((rcd_psa_psc_actv.psa_mat_cal_cas_qty * rcd_pact.psa_mat_net_weight) / 1000, 3);
+               rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
+            elsif rcd_pact.psa_prd_type = '*PACK' then
+               rcd_psa_psc_actv.psa_mat_req_cas_qty := rcd_pact.psa_mat_req_qty;
+               rcd_psa_psc_actv.psa_mat_req_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty / rcd_pact.psa_mat_cas_pallet);
                rcd_psa_psc_actv.psa_mat_req_pch_qty := 0;
                rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
                rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
-               rcd_psa_psc_actv.psa_mat_req_dur_min := 0;
-               rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
-               rcd_psa_psc_actv.psa_mat_cal_cas_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_dur_min := round((rcd_psa_psc_actv.psa_mat_req_cas_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100))) * 60, 0);
+               rcd_psa_psc_actv.psa_mat_cal_cas_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty + (rcd_psa_psc_actv.psa_mat_req_cas_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)));
+               rcd_psa_psc_actv.psa_mat_cal_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty / rcd_pact.psa_mat_cas_pallet);
                rcd_psa_psc_actv.psa_mat_cal_pch_qty := 0;
                rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
                rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
-               rcd_psa_psc_actv.psa_mat_cal_dur_min := 0;
-               rcd_psa_psc_actv.psa_mat_sch_plt_qty := 0;
-               rcd_psa_psc_actv.psa_mat_sch_cas_qty := 0;
-               rcd_psa_psc_actv.psa_mat_sch_pch_qty := 0;
-               rcd_psa_psc_actv.psa_mat_sch_mix_qty := 0;
-               rcd_psa_psc_actv.psa_mat_sch_ton_qty := 0;
-               rcd_psa_psc_actv.psa_mat_sch_dur_min := 0;
-               rcd_psa_psc_actv.psa_mat_act_plt_qty := 0;
-               rcd_psa_psc_actv.psa_mat_act_cas_qty := 0;
-               rcd_psa_psc_actv.psa_mat_act_pch_qty := 0;
-               rcd_psa_psc_actv.psa_mat_act_mix_qty := 0;
-               rcd_psa_psc_actv.psa_mat_act_ton_qty := 0;
-               rcd_psa_psc_actv.psa_mat_act_dur_min := 0;
-               rcd_psa_psc_actv.psa_mat_var_plt_qty := 0;
-               rcd_psa_psc_actv.psa_mat_var_cas_qty := 0;
-               rcd_psa_psc_actv.psa_mat_var_pch_qty := 0;
-               rcd_psa_psc_actv.psa_mat_var_mix_qty := 0;
-               rcd_psa_psc_actv.psa_mat_var_ton_qty := 0;
-               rcd_psa_psc_actv.psa_mat_var_dur_min := 0;
-               insert into psa_psc_actv values rcd_psa_psc_actv;
+               rcd_psa_psc_actv.psa_mat_cal_dur_min := round((rcd_psa_psc_actv.psa_mat_cal_cas_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100))) * 60, 0);
+            elsif rcd_pact.psa_prd_type = '*FORM' then
+               rcd_psa_psc_actv.psa_mat_req_plt_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_cas_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_pch_qty := rcd_pact.psa_mat_req_qty;
+               rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
+               rcd_psa_psc_actv.psa_mat_req_dur_min := round(rcd_psa_psc_actv.psa_mat_req_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
+               rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
+               rcd_psa_psc_actv.psa_mat_cal_cas_qty := 0;
+               rcd_psa_psc_actv.psa_mat_cal_pch_qty := round(rcd_psa_psc_actv.psa_mat_req_pch_qty + (rcd_psa_psc_actv.psa_mat_req_pch_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)), 0);
+               rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
+               rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
+               rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
             end if;
-         end loop;
-         close csr_reqd;
-
-         /*-*/
-         /* Assign the production activities to production schedule week lines where possible
-         /*-*/
-         open csr_pact;
-         loop
-            fetch csr_pact into rcd_pact;
-            if csr_pact%notfound then
-               exit;
+            rcd_psa_psc_actv.psa_mat_sch_plt_qty := rcd_psa_psc_actv.psa_mat_cal_plt_qty;
+            rcd_psa_psc_actv.psa_mat_sch_cas_qty := rcd_psa_psc_actv.psa_mat_cal_cas_qty;
+            rcd_psa_psc_actv.psa_mat_sch_pch_qty := rcd_psa_psc_actv.psa_mat_cal_pch_qty;
+            rcd_psa_psc_actv.psa_mat_sch_mix_qty := rcd_psa_psc_actv.psa_mat_cal_mix_qty;
+            rcd_psa_psc_actv.psa_mat_sch_ton_qty := rcd_psa_psc_actv.psa_mat_cal_ton_qty;
+            rcd_psa_psc_actv.psa_mat_sch_dur_min := rcd_psa_psc_actv.psa_mat_cal_dur_min;
+            rcd_psa_psc_actv.psa_sch_dur_mins := rcd_psa_psc_actv.psa_mat_cal_dur_min;
+            rcd_psa_psc_actv.psa_sch_chg_mins := 0;
+            if rcd_mlin.lde_lin_events = '1' then
+               rcd_psa_psc_actv.psa_chg_flag := '1';
+               rcd_psa_psc_actv.psa_sch_chg_mins := 30;
             end if;
+            rcd_psa_psc_actv.psa_act_lin_code := rcd_psa_psc_actv.psa_sch_lin_code;
+            rcd_psa_psc_actv.psa_act_con_code := rcd_psa_psc_actv.psa_sch_con_code;
+            rcd_psa_psc_actv.psa_act_dft_flag := rcd_psa_psc_actv.psa_sch_dft_flag;
+            rcd_psa_psc_actv.psa_act_rra_code := rcd_psa_psc_actv.psa_sch_rra_code;
+            rcd_psa_psc_actv.psa_act_rra_unit := rcd_psa_psc_actv.psa_sch_rra_unit;
+            rcd_psa_psc_actv.psa_act_rra_effp := rcd_psa_psc_actv.psa_sch_rra_effp;
+            rcd_psa_psc_actv.psa_act_rra_wasp := rcd_psa_psc_actv.psa_sch_rra_wasp;
+            rcd_psa_psc_actv.psa_mat_act_plt_qty := rcd_psa_psc_actv.psa_mat_sch_plt_qty;
+            rcd_psa_psc_actv.psa_mat_act_cas_qty := rcd_psa_psc_actv.psa_mat_sch_cas_qty;
+            rcd_psa_psc_actv.psa_mat_act_pch_qty := rcd_psa_psc_actv.psa_mat_sch_pch_qty;
+            rcd_psa_psc_actv.psa_mat_act_mix_qty := rcd_psa_psc_actv.psa_mat_sch_mix_qty;
+            rcd_psa_psc_actv.psa_mat_act_ton_qty := rcd_psa_psc_actv.psa_mat_sch_ton_qty;
+            rcd_psa_psc_actv.psa_mat_act_dur_min := rcd_psa_psc_actv.psa_mat_sch_dur_min;
+            rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_act_dur_min;
+            rcd_psa_psc_actv.psa_act_chg_mins := rcd_psa_psc_actv.psa_sch_chg_mins;
+            update psa_psc_actv
+               set psa_chg_flag = rcd_psa_psc_actv.psa_chg_flag,
+                   psa_sch_lin_code = rcd_psa_psc_actv.psa_sch_lin_code,
+                   psa_sch_con_code = rcd_psa_psc_actv.psa_sch_con_code,
+                   psa_sch_dft_flag = rcd_psa_psc_actv.psa_sch_dft_flag,
+                   psa_sch_rra_code = rcd_psa_psc_actv.psa_sch_rra_code,
+                   psa_sch_rra_unit = rcd_psa_psc_actv.psa_sch_rra_unit,
+                   psa_sch_rra_effp = rcd_psa_psc_actv.psa_sch_rra_effp,
+                   psa_sch_rra_wasp = rcd_psa_psc_actv.psa_sch_rra_wasp,
+                   psa_mat_req_plt_qty = rcd_psa_psc_actv.psa_mat_req_plt_qty,
+                   psa_mat_req_cas_qty = rcd_psa_psc_actv.psa_mat_req_cas_qty,
+                   psa_mat_req_pch_qty = rcd_psa_psc_actv.psa_mat_req_pch_qty,
+                   psa_mat_req_mix_qty = rcd_psa_psc_actv.psa_mat_req_mix_qty,
+                   psa_mat_req_ton_qty = rcd_psa_psc_actv.psa_mat_req_ton_qty,
+                   psa_mat_req_dur_min = rcd_psa_psc_actv.psa_mat_req_dur_min,
+                   psa_mat_cal_plt_qty = rcd_psa_psc_actv.psa_mat_cal_plt_qty,
+                   psa_mat_cal_cas_qty = rcd_psa_psc_actv.psa_mat_cal_cas_qty,
+                   psa_mat_cal_pch_qty = rcd_psa_psc_actv.psa_mat_cal_pch_qty,
+                   psa_mat_cal_mix_qty = rcd_psa_psc_actv.psa_mat_cal_mix_qty,
+                   psa_mat_cal_ton_qty = rcd_psa_psc_actv.psa_mat_cal_ton_qty,
+                   psa_mat_cal_dur_min = rcd_psa_psc_actv.psa_mat_cal_dur_min,
+                   psa_mat_sch_plt_qty = rcd_psa_psc_actv.psa_mat_sch_plt_qty,
+                   psa_mat_sch_cas_qty = rcd_psa_psc_actv.psa_mat_sch_cas_qty,
+                   psa_mat_sch_pch_qty = rcd_psa_psc_actv.psa_mat_sch_pch_qty,
+                   psa_mat_sch_mix_qty = rcd_psa_psc_actv.psa_mat_sch_mix_qty,
+                   psa_mat_sch_ton_qty = rcd_psa_psc_actv.psa_mat_sch_ton_qty,
+                   psa_mat_sch_dur_min = rcd_psa_psc_actv.psa_mat_sch_dur_min,
+                   psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
+                   psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
+                   psa_act_lin_code = rcd_psa_psc_actv.psa_act_lin_code,
+                   psa_act_con_code = rcd_psa_psc_actv.psa_act_con_code,
+                   psa_act_dft_flag = rcd_psa_psc_actv.psa_act_dft_flag,
+                   psa_act_rra_code = rcd_psa_psc_actv.psa_act_rra_code,
+                   psa_act_rra_unit = rcd_psa_psc_actv.psa_act_rra_unit,
+                   psa_act_rra_effp = rcd_psa_psc_actv.psa_act_rra_effp,
+                   psa_act_rra_wasp = rcd_psa_psc_actv.psa_act_rra_wasp,
+                   psa_mat_act_plt_qty = rcd_psa_psc_actv.psa_mat_act_plt_qty,
+                   psa_mat_act_cas_qty = rcd_psa_psc_actv.psa_mat_act_cas_qty,
+                   psa_mat_act_pch_qty = rcd_psa_psc_actv.psa_mat_act_pch_qty,
+                   psa_mat_act_mix_qty = rcd_psa_psc_actv.psa_mat_act_mix_qty,
+                   psa_mat_act_ton_qty = rcd_psa_psc_actv.psa_mat_act_ton_qty,
+                   psa_mat_act_dur_min = rcd_psa_psc_actv.psa_mat_act_dur_min,
+                   psa_act_dur_mins = rcd_psa_psc_actv.psa_act_dur_mins,
+                   psa_act_chg_mins = rcd_psa_psc_actv.psa_act_chg_mins
+             where psa_act_code = rcd_pact.psa_act_code;
+         end if;
+         close csr_mlin;
 
-            /*-*/
-            /* Find the schedule production line
-            /* **note** 1. Use the default line configuration when available
-            /*          2. Use the first material line configuration that is avialable
-            /*-*/
-            open csr_mlin;
-            fetch csr_mlin into rcd_mlin;
-            if csr_mlin%found then
-               rcd_psa_psc_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
-               rcd_psa_psc_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
-               rcd_psa_psc_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
-               rcd_psa_psc_actv.psa_sch_rra_code := rcd_mlin.mli_rra_code;
-               rcd_psa_psc_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
-               rcd_psa_psc_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_psa_psc_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
-               if rcd_pact.psa_prd_type = '*FILL' then
-                  rcd_psa_psc_actv.psa_mat_req_plt_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_cas_qty := rcd_pact.psa_mat_req_qty;
-                  rcd_psa_psc_actv.psa_mat_req_pch_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty * rcd_pact.psa_mat_unt_case);
-                  rcd_psa_psc_actv.psa_mat_req_mix_qty := ceil(rcd_psa_psc_actv.psa_mat_req_pch_qty / nvl(rcd_pact.psa_mat_yld_value,1));
-                  rcd_psa_psc_actv.psa_mat_req_ton_qty := round((rcd_psa_psc_actv.psa_mat_req_cas_qty * rcd_pact.psa_mat_net_weight) / 1000, 3);
-                  rcd_psa_psc_actv.psa_mat_req_dur_min := round(rcd_psa_psc_actv.psa_mat_req_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
-                  rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_cas_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty + (rcd_psa_psc_actv.psa_mat_req_cas_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)));
-                  rcd_psa_psc_actv.psa_mat_cal_pch_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty * rcd_pact.psa_mat_unt_case);
-                  rcd_psa_psc_actv.psa_mat_cal_mix_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_pch_qty / nvl(rcd_pact.psa_mat_yld_value,1));
-                  rcd_psa_psc_actv.psa_mat_cal_ton_qty := round((rcd_psa_psc_actv.psa_mat_cal_cas_qty * rcd_pact.psa_mat_net_weight) / 1000, 3);
-                  rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
-               elsif rcd_pact.psa_prd_type = '*PACK' then
-                  rcd_psa_psc_actv.psa_mat_req_cas_qty := rcd_pact.psa_mat_req_qty;
-                  rcd_psa_psc_actv.psa_mat_req_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty / rcd_pact.psa_mat_cas_pallet);
-                  rcd_psa_psc_actv.psa_mat_req_pch_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_dur_min := round((rcd_psa_psc_actv.psa_mat_req_cas_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100))) * 60, 0);
-                  rcd_psa_psc_actv.psa_mat_cal_cas_qty := ceil(rcd_psa_psc_actv.psa_mat_req_cas_qty + (rcd_psa_psc_actv.psa_mat_req_cas_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)));
-                  rcd_psa_psc_actv.psa_mat_cal_plt_qty := ceil(rcd_psa_psc_actv.psa_mat_cal_cas_qty / rcd_pact.psa_mat_cas_pallet);
-                  rcd_psa_psc_actv.psa_mat_cal_pch_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_dur_min := round((rcd_psa_psc_actv.psa_mat_cal_cas_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100))) * 60, 0);
-               elsif rcd_pact.psa_prd_type = '*FORM' then
-                  rcd_psa_psc_actv.psa_mat_req_plt_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_cas_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_pch_qty := rcd_pact.psa_mat_req_qty;
-                  rcd_psa_psc_actv.psa_mat_req_mix_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_ton_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_req_dur_min := round(rcd_psa_psc_actv.psa_mat_req_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
-                  rcd_psa_psc_actv.psa_mat_cal_plt_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_cas_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_pch_qty := round(rcd_psa_psc_actv.psa_mat_req_pch_qty + (rcd_psa_psc_actv.psa_mat_req_pch_qty * (rcd_psa_psc_actv.psa_sch_rra_wasp / 100)), 0);
-                  rcd_psa_psc_actv.psa_mat_cal_mix_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
-                  rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
-               end if;
-               rcd_psa_psc_actv.psa_mat_sch_plt_qty := rcd_psa_psc_actv.psa_mat_cal_plt_qty;
-               rcd_psa_psc_actv.psa_mat_sch_cas_qty := rcd_psa_psc_actv.psa_mat_cal_cas_qty;
-               rcd_psa_psc_actv.psa_mat_sch_pch_qty := rcd_psa_psc_actv.psa_mat_cal_pch_qty;
-               rcd_psa_psc_actv.psa_mat_sch_mix_qty := rcd_psa_psc_actv.psa_mat_cal_mix_qty;
-               rcd_psa_psc_actv.psa_mat_sch_ton_qty := rcd_psa_psc_actv.psa_mat_cal_ton_qty;
-               rcd_psa_psc_actv.psa_mat_sch_dur_min := rcd_psa_psc_actv.psa_mat_cal_dur_min;
-               rcd_psa_psc_actv.psa_sch_dur_mins := rcd_psa_psc_actv.psa_mat_cal_dur_min;
-               rcd_psa_psc_actv.psa_sch_chg_mins := 0;
-               if rcd_mlin.lde_lin_events = '1' then
-                  rcd_psa_psc_actv.psa_chg_flag := '1';
-                  rcd_psa_psc_actv.psa_sch_chg_mins := 30;
-               end if;
-               rcd_psa_psc_actv.psa_act_lin_code := rcd_psa_psc_actv.psa_sch_lin_code;
-               rcd_psa_psc_actv.psa_act_con_code := rcd_psa_psc_actv.psa_sch_con_code;
-               rcd_psa_psc_actv.psa_act_dft_flag := rcd_psa_psc_actv.psa_sch_dft_flag;
-               rcd_psa_psc_actv.psa_act_rra_code := rcd_psa_psc_actv.psa_sch_rra_code;
-               rcd_psa_psc_actv.psa_act_rra_unit := rcd_psa_psc_actv.psa_sch_rra_unit;
-               rcd_psa_psc_actv.psa_act_rra_effp := rcd_psa_psc_actv.psa_sch_rra_effp;
-               rcd_psa_psc_actv.psa_act_rra_wasp := rcd_psa_psc_actv.psa_sch_rra_wasp;
-               rcd_psa_psc_actv.psa_mat_act_plt_qty := rcd_psa_psc_actv.psa_mat_sch_plt_qty;
-               rcd_psa_psc_actv.psa_mat_act_cas_qty := rcd_psa_psc_actv.psa_mat_sch_cas_qty;
-               rcd_psa_psc_actv.psa_mat_act_pch_qty := rcd_psa_psc_actv.psa_mat_sch_pch_qty;
-               rcd_psa_psc_actv.psa_mat_act_mix_qty := rcd_psa_psc_actv.psa_mat_sch_mix_qty;
-               rcd_psa_psc_actv.psa_mat_act_ton_qty := rcd_psa_psc_actv.psa_mat_sch_ton_qty;
-               rcd_psa_psc_actv.psa_mat_act_dur_min := rcd_psa_psc_actv.psa_mat_sch_dur_min;
-               rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_act_dur_min;
-               rcd_psa_psc_actv.psa_act_chg_mins := rcd_psa_psc_actv.psa_sch_chg_mins;
-               update psa_psc_actv
-                  set psa_chg_flag = rcd_psa_psc_actv.psa_chg_flag,
-                      psa_sch_lin_code = rcd_psa_psc_actv.psa_sch_lin_code,
-                      psa_sch_con_code = rcd_psa_psc_actv.psa_sch_con_code,
-                      psa_sch_dft_flag = rcd_psa_psc_actv.psa_sch_dft_flag,
-                      psa_sch_rra_code = rcd_psa_psc_actv.psa_sch_rra_code,
-                      psa_sch_rra_unit = rcd_psa_psc_actv.psa_sch_rra_unit,
-                      psa_sch_rra_effp = rcd_psa_psc_actv.psa_sch_rra_effp,
-                      psa_sch_rra_wasp = rcd_psa_psc_actv.psa_sch_rra_wasp,
-                      psa_mat_req_plt_qty = rcd_psa_psc_actv.psa_mat_req_plt_qty,
-                      psa_mat_req_cas_qty = rcd_psa_psc_actv.psa_mat_req_cas_qty,
-                      psa_mat_req_pch_qty = rcd_psa_psc_actv.psa_mat_req_pch_qty,
-                      psa_mat_req_mix_qty = rcd_psa_psc_actv.psa_mat_req_mix_qty,
-                      psa_mat_req_ton_qty = rcd_psa_psc_actv.psa_mat_req_ton_qty,
-                      psa_mat_req_dur_min = rcd_psa_psc_actv.psa_mat_req_dur_min,
-                      psa_mat_cal_plt_qty = rcd_psa_psc_actv.psa_mat_cal_plt_qty,
-                      psa_mat_cal_cas_qty = rcd_psa_psc_actv.psa_mat_cal_cas_qty,
-                      psa_mat_cal_pch_qty = rcd_psa_psc_actv.psa_mat_cal_pch_qty,
-                      psa_mat_cal_mix_qty = rcd_psa_psc_actv.psa_mat_cal_mix_qty,
-                      psa_mat_cal_ton_qty = rcd_psa_psc_actv.psa_mat_cal_ton_qty,
-                      psa_mat_cal_dur_min = rcd_psa_psc_actv.psa_mat_cal_dur_min,
-                      psa_mat_sch_plt_qty = rcd_psa_psc_actv.psa_mat_sch_plt_qty,
-                      psa_mat_sch_cas_qty = rcd_psa_psc_actv.psa_mat_sch_cas_qty,
-                      psa_mat_sch_pch_qty = rcd_psa_psc_actv.psa_mat_sch_pch_qty,
-                      psa_mat_sch_mix_qty = rcd_psa_psc_actv.psa_mat_sch_mix_qty,
-                      psa_mat_sch_ton_qty = rcd_psa_psc_actv.psa_mat_sch_ton_qty,
-                      psa_mat_sch_dur_min = rcd_psa_psc_actv.psa_mat_sch_dur_min,
-                      psa_sch_dur_mins = rcd_psa_psc_actv.psa_sch_dur_mins,
-                      psa_sch_chg_mins = rcd_psa_psc_actv.psa_sch_chg_mins,
-                      psa_act_lin_code = rcd_psa_psc_actv.psa_act_lin_code,
-                      psa_act_con_code = rcd_psa_psc_actv.psa_act_con_code,
-                      psa_act_dft_flag = rcd_psa_psc_actv.psa_act_dft_flag,
-                      psa_act_rra_code = rcd_psa_psc_actv.psa_act_rra_code,
-                      psa_act_rra_unit = rcd_psa_psc_actv.psa_act_rra_unit,
-                      psa_act_rra_effp = rcd_psa_psc_actv.psa_act_rra_effp,
-                      psa_act_rra_wasp = rcd_psa_psc_actv.psa_act_rra_wasp,
-                      psa_mat_act_plt_qty = rcd_psa_psc_actv.psa_mat_act_plt_qty,
-                      psa_mat_act_cas_qty = rcd_psa_psc_actv.psa_mat_act_cas_qty,
-                      psa_mat_act_pch_qty = rcd_psa_psc_actv.psa_mat_act_pch_qty,
-                      psa_mat_act_mix_qty = rcd_psa_psc_actv.psa_mat_act_mix_qty,
-                      psa_mat_act_ton_qty = rcd_psa_psc_actv.psa_mat_act_ton_qty,
-                      psa_mat_act_dur_min = rcd_psa_psc_actv.psa_mat_act_dur_min,
-                      psa_act_dur_mins = rcd_psa_psc_actv.psa_act_dur_mins,
-                      psa_act_chg_mins = rcd_psa_psc_actv.psa_act_chg_mins
-                where psa_act_code = rcd_pact.psa_act_code;
-            end if;
-            close csr_mlin;
-
-         end loop;
-         close csr_pact;
-
-      else
-
-         /*-*/
-         /* Delete any orphaned production type time activities for the scheduled week
-         /*-*/
-         delete from psa_psc_actv
-          where psa_psc_code = rcd_psa_psc_week.psw_psc_code
-            and psa_psc_week = rcd_psa_psc_week.psw_psc_week
-            and psa_act_type = 'T'
-            and not(psa_prd_type in (select psp_prd_type
-                                       from psa_psc_prod
-                                      where psp_psc_code = rcd_psa_psc_week.psw_psc_code
-                                        and psp_psc_week = rcd_psa_psc_week.psw_psc_week));
-
-         /*-*/
-         /* Delete any orphaned shift model time activities for the scheduled week
-         /*-*/
-         delete from psa_psc_actv
-          where psa_psc_code = rcd_psa_psc_week.psw_psc_code
-            and psa_psc_week = rcd_psa_psc_week.psw_psc_week
-            and psa_act_type = 'T'
-            and not((psa_sch_lin_code,
-                     psa_sch_con_code,
-                     psa_sch_win_code) in (select pss_lin_code,
-                                                  pss_con_code,
-                                                  pss_win_code
-                                             from psa_psc_shft
-                                            where pss_psc_code = rcd_psa_psc_week.psw_psc_code
-                                              and pss_psc_week = rcd_psa_psc_week.psw_psc_week
-                                              and pss_win_code != '*NONE'));
-
-         /*-*/
-         /* Update any orphaned production activities for the scheduled week
-         /*-*/
-         update psa_psc_actv
-            set psa_sch_win_code = '*NONE',
-                psa_sch_win_seqn = null,
-                psa_sch_win_flow = null,
-                psa_sch_str_time = null,
-                psa_sch_chg_time = null,
-                psa_sch_end_time = null,
-                psa_sch_dur_mins = psa_mat_cal_dur_min
-          where psa_psc_code = rcd_psa_psc_week.psw_psc_code
-            and psa_psc_week = rcd_psa_psc_week.psw_psc_week
-            and psa_act_type = 'P'
-            and not(psa_prd_type in (select psp_prd_type
-                                       from psa_psc_prod
-                                      where psp_psc_code = rcd_psa_psc_week.psw_psc_code
-                                        and psp_psc_week = rcd_psa_psc_week.psw_psc_week));
-
-         /*-*/
-         /* Update any orphaned shift model production activities for the scheduled week
-         /*-*/
-         update psa_psc_actv
-            set psa_sch_win_code = '*NONE',
-                psa_sch_win_seqn = null,
-                psa_sch_win_flow = null,
-                psa_sch_str_time = null,
-                psa_sch_chg_time = null,
-                psa_sch_end_time = null,
-                psa_sch_dur_mins = psa_mat_cal_dur_min
-          where psa_psc_code = rcd_psa_psc_week.psw_psc_code
-            and psa_psc_week = rcd_psa_psc_week.psw_psc_week
-            and psa_act_type = 'P'
-            and not((psa_sch_lin_code,
-                     psa_sch_con_code,
-                     psa_sch_win_code) in (select pss_lin_code,
-                                                  pss_con_code,
-                                                  pss_win_code
-                                             from psa_psc_shft
-                                            where pss_psc_code = rcd_psa_psc_week.psw_psc_code
-                                              and pss_psc_week = rcd_psa_psc_week.psw_psc_week
-                                              and pss_win_code != '*NONE'));
-
-      end if;
+      end loop;
+      close csr_pact;
 
       /*-*/
       /* Commit the database
