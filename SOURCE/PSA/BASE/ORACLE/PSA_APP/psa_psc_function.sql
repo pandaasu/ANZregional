@@ -3509,12 +3509,12 @@ create or replace package body psa_app.psa_psc_function as
             rollback;
             return;
          end if;
-         delete from psa_psc_reso where psr_psc_code = rcd_psa_psc_line.psl_smo_code
+         delete from psa_psc_reso where psr_psc_code = rcd_psa_psc_line.psl_psc_code
                                     and psr_psc_week = rcd_psa_psc_line.psl_psc_week
                                     and psr_prd_type = rcd_psa_psc_line.psl_prd_type
                                     and psr_lin_code = rcd_psa_psc_line.psl_lin_code
                                     and psr_con_code = rcd_psa_psc_line.psl_con_code;
-         delete from psa_psc_shft where pss_psc_code = rcd_psa_psc_line.psl_smo_code
+         delete from psa_psc_shft where pss_psc_code = rcd_psa_psc_line.psl_psc_code
                                     and pss_psc_week = rcd_psa_psc_line.psl_psc_week
                                     and pss_prd_type = rcd_psa_psc_line.psl_prd_type
                                     and pss_lin_code = rcd_psa_psc_line.psl_lin_code
