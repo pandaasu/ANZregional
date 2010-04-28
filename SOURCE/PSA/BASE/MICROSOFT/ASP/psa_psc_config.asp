@@ -1389,10 +1389,17 @@ sub PaintFunction()%>
       this.schdur = 0;
    }
    function requestTypeLoad() {
+      cobjTypeLineCell = null;
       cobjTypeSchdCell = null;
-      cintTypeIndx = -1;
-      cstrTypeType = '*NONE';
+      cobjTypeUactCell = null;
       cstrTypeTind = '0';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
+   }
+   function requestTypeReload() {
+      cobjTypeLineCell = null;
+      cobjTypeSchdCell = null;
+      cobjTypeUactCell = null;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -1519,6 +1526,13 @@ sub PaintFunction()%>
          document.getElementById('datTypeUact').style.display = 'block';
          doTypeUactPaint();
          document.getElementById('datTypeUact').style.display = 'none';
+         if (cstrTypeTind == '1') {
+            document.getElementById('datTypeSchd').style.width = '75%';
+            document.getElementById('datTypeUact').style.display = 'block';
+         } else {
+            document.getElementById('datTypeSchd').style.width = '100%';
+            document.getElementById('datTypeUact').style.display = 'none';
+         }
       }
    }
 
@@ -2148,58 +2162,6 @@ sub PaintFunction()%>
                }
                objCell.appendChild(objDiv);
             }
-            if (j == intEndBar) {
-               objRow = objTable.insertRow(-1);
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.vAlign = 'top';
-               objCell.style.fontSize = '8pt';
-               objCell.style.fontWeight = 'normal';
-               objCell.style.backgroundColor = 'transparent';
-               objCell.style.color = '#000000';
-               objCell.style.border = 'none';
-               objCell.style.padding = '0px';
-               objCell.style.whiteSpace = 'nowrap';
-               objImg = document.createElement('img');
-               if (objWork.acttyp == 'T') {
-                  objImg.src = cobjTico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '15px';
-               } else {
-                  objImg.src = cobjPico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '23px';
-               }
-               objImg.align = 'absmiddle';
-               objCell.appendChild(objImg);
-               objCell.appendChild(document.createTextNode(' '));
-               objDiv = document.createElement('div');
-               objDiv.align = 'left';
-               objDiv.vAlign = 'top';
-               objDiv.style.display = 'inline';
-               objDiv.style.fontSize = '8pt';
-               objDiv.style.fontWeight = 'normal';
-               if (objWork.acttyp == 'T') {
-                  objDiv.style.backgroundColor = '#dddfff';
-               } else {
-                  objDiv.style.backgroundColor = '#ffffe0';
-               }
-               objDiv.style.color = '#000000';
-               if (objWork.winflw == '0') {
-                  objDiv.style.border = '#c7c7c7 1px solid';
-               } else {
-                  objDiv.style.border = '#c000c0 3px solid';
-                  if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 3px solid';
-                  }
-               }
-               objDiv.style.whiteSpace = 'nowrap';
-               objDiv.style.width = '1%';
-               objDiv.style.padding = '2px';
-               objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+')'));
-               objCell.appendChild(objDiv);
-            }
             if (objWork.acttyp == 'T' || (objWork.acttyp == 'P' && objWork.chgflg == '0')) {
                if (j != intStrBar && j != intEndBar) {
                   objRow = objTable.insertRow(-1);
@@ -2292,7 +2254,58 @@ sub PaintFunction()%>
                   objCell.appendChild(objImg);
                }
             }
-
+            if (j == intEndBar) {
+               objRow = objTable.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.vAlign = 'top';
+               objCell.style.fontSize = '8pt';
+               objCell.style.fontWeight = 'normal';
+               objCell.style.backgroundColor = 'transparent';
+               objCell.style.color = '#000000';
+               objCell.style.border = 'none';
+               objCell.style.padding = '0px';
+               objCell.style.whiteSpace = 'nowrap';
+               objImg = document.createElement('img');
+               if (objWork.acttyp == 'T') {
+                  objImg.src = cobjTico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '15px';
+               } else {
+                  objImg.src = cobjPico.src;
+                  objImg.style.height = '15px';
+                  objImg.style.width = '23px';
+               }
+               objImg.align = 'absmiddle';
+               objCell.appendChild(objImg);
+               objCell.appendChild(document.createTextNode(' '));
+               objDiv = document.createElement('div');
+               objDiv.align = 'left';
+               objDiv.vAlign = 'top';
+               objDiv.style.display = 'inline';
+               objDiv.style.fontSize = '8pt';
+               objDiv.style.fontWeight = 'normal';
+               if (objWork.acttyp == 'T') {
+                  objDiv.style.backgroundColor = '#dddfff';
+               } else {
+                  objDiv.style.backgroundColor = '#ffffe0';
+               }
+               objDiv.style.color = '#000000';
+               if (objWork.winflw == '0') {
+                  objDiv.style.border = '#c7c7c7 1px solid';
+               } else {
+                  objDiv.style.border = '#c000c0 3px solid';
+                  if (objWork.wekflw == '1') {
+                     objDiv.style.border = '#c00000 3px solid';
+                  }
+               }
+               objDiv.style.whiteSpace = 'nowrap';
+               objDiv.style.width = '1%';
+               objDiv.style.padding = '2px';
+               objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+')'));
+               objCell.appendChild(objDiv);
+            }
          }
       }
 
@@ -2329,7 +2342,7 @@ sub PaintFunction()%>
 
    function doTypeSchdRefresh() {
       doActivityStart(document.body);
-      window.setTimeout('requestTypeLoad();',10);
+      window.setTimeout('requestTypeReload();',10);
    }
    function doTypeSchdUpdate() {
       if (cobjTypeSchdCell == null) {
@@ -2609,7 +2622,7 @@ sub PaintFunction()%>
       doPostRequest('<%=strBase%>psa_psc_line_retrieve.asp',function(strResponse) {checkLineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestLineDelete() {
-      cstrLineMode = '*UPD';
+      cstrLineMode = '*DLT';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTLIN"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
@@ -2639,7 +2652,7 @@ sub PaintFunction()%>
             return;
          }
          if (cstrLineMode == '*DLT') {
-            requestTypeLoad();
+            requestTypeReload();
             return;
          } else {
             doActivityStop();
@@ -2857,8 +2870,10 @@ sub PaintFunction()%>
       }
    }
    function doLineCancel() {
-      cobjTypeLineCell.style.backgroundColor = '#40414c';
-      cobjTypeLineCell = null;
+      if (cobjTypeLineCell != null) {
+         cobjTypeLineCell.style.backgroundColor = '#40414c';
+         cobjTypeLineCell = null;
+      }
       cobjLineLcod.length = 0;
       cobjLineSmod.length = 0;
       cobjLineCmod.length = 0;
@@ -2913,7 +2928,6 @@ sub PaintFunction()%>
          strXML = strXML+' SMOCDE="'+fixXML(cobjLineSmod[objSmoList.selectedIndex-1].smocde)+'">';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTLIN"';
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDLIN"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -2962,7 +2976,7 @@ sub PaintFunction()%>
          cobjLineLcod.length = 0;
          cobjLineSmod.length = 0;
          cobjLineCmod.length = 0;
-         requestTypeLoad();
+         requestTypeReload();
       }
    }
 
