@@ -5249,7 +5249,7 @@ create or replace package body psa_app.psa_psc_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
-      if var_action != '*DLTACT' then
+      if var_action != '*DLTLIN' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
