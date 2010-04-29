@@ -2882,6 +2882,7 @@ sub PaintFunction()%>
       cobjLineSmod.length = 0;
       cobjLineCmod.length = 0;
       displayScreen('dspType');
+      document.getElementById('hedType').innerText = cstrTypeHead;
    }
    function doLineAccept() {
       if (!processForm()) {return;}
@@ -2899,6 +2900,10 @@ sub PaintFunction()%>
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Line configuration must be selected';
          }
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
       }
       if (objSmoList.selectedIndex == -1 || objSmoList.options[objSmoList.selectedIndex].value == '*NONE') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
