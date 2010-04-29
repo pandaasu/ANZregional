@@ -2636,6 +2636,10 @@ sub PaintFunction()%>
          doActivityStop();
          alert(strResponse);
       } else {
+         if (strResponse.length <= 3) {
+            requestTypeReload();
+            return;
+         }
          var objDocument = loadXML(strResponse.substring(3,strResponse.length));
          if (objDocument == null) {return;}
          var strMessage = '';
