@@ -727,9 +727,11 @@ public final class cSapVds23 implements iSapVdsExtract {
                }
                objSapSingleQuery = new cSapSingleQuery(cobjSapConnection);
                objSapSingleQuery.execute("KNA1", "KNA1", cstrVdsKNA1Columns, (String[])objKUNNR.get(i),0,0);
-               objSapSingleQuery.execute("KNB1", "KNB1", cstrVdsKNB1Columns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("KNVI", "KNVI", cstrVdsKNVIColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("KNVV", "KNVV", cstrVdsKNVVColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+               if (objSapSingleQuery.getResultSet().getRowCount("KNA1") != 0) {
+                  objSapSingleQuery.execute("KNB1", "KNB1", cstrVdsKNB1Columns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("KNVI", "KNVI", cstrVdsKNVIColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("KNVV", "KNVV", cstrVdsKNVVColumns, objSapSingleQuery.getResultSet().getOrConditions("KNA1","KUNNR = '<KEYVALUE>KUNNR</KEYVALUE>'"),0,0);
+               }
                if (cstrLogging != null) {
                   cobjPrintWriter.println();
                   cobjPrintWriter.print("======> Start SAP disconnect: " + Calendar.getInstance().getTime()); 

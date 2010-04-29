@@ -738,11 +738,13 @@ public final class cSapVds24 implements iSapVdsExtract {
                }
                objSapSingleQuery = new cSapSingleQuery(cobjSapConnection);
                objSapSingleQuery.execute("LFA1", "LFA1", cstrVdsLFA1Columns, (String[])objLIFNR.get(i),0,0);
-               objSapSingleQuery.execute("LFB1", "LFB1", cstrVdsLFB1Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("LFBK", "LFBK", cstrVdsLFBKColumns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("LFM1", "LFM1", cstrVdsLFM1Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("LFM2", "LFM2", cstrVdsLFM2Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("WYT3", "WYT3", cstrVdsWYT3Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+               if (objSapSingleQuery.getResultSet().getRowCount("LFA1") != 0) {
+                  objSapSingleQuery.execute("LFB1", "LFB1", cstrVdsLFB1Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("LFBK", "LFBK", cstrVdsLFBKColumns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("LFM1", "LFM1", cstrVdsLFM1Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("LFM2", "LFM2", cstrVdsLFM2Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("WYT3", "WYT3", cstrVdsWYT3Columns, objSapSingleQuery.getResultSet().getOrConditions("LFA1","LIFNR = '<KEYVALUE>LIFNR</KEYVALUE>'"),0,0);
+               }
                if (cstrLogging != null) {
                   cobjPrintWriter.println();
                   cobjPrintWriter.print("======> Start SAP disconnect: " + Calendar.getInstance().getTime()); 

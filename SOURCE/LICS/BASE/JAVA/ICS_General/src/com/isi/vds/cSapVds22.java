@@ -786,17 +786,21 @@ public final class cSapVds22 implements iSapVdsExtract {
                }
                objSapSingleQuery = new cSapSingleQuery(cobjSapConnection);
                objSapSingleQuery.execute("MARA", "MARA", cstrVdsMARAColumns, (String[])objMATNR.get(i),0,0);
-               objSapSingleQuery.execute("MARM", "MARM", cstrVdsMARMColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MAKT", "MAKT", cstrVdsMAKTColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MARC", "MARC", cstrVdsMARCColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MVKE", "MVKE", cstrVdsMVKEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MMOE", "/MARS/MDMOEDATA", cstrVdsMMOEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MBEW", "MBEW", cstrVdsMBEWColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MARD", "MARD", cstrVdsMARDColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("INOB", "INOB", cstrVdsINOBColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","OBJEK = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("AUSP", "AUSP", cstrVdsAUSPColumns, objSapSingleQuery.getResultSet().getOrConditions("INOB","OBJEK = '<KEYVALUE>CUOBJ</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MLGN", "MLGN", cstrVdsMLGNColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
-               objSapSingleQuery.execute("MLAN", "MLAN", cstrVdsMLANColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+               if (objSapSingleQuery.getResultSet().getRowCount("MARA") != 0) {
+                  objSapSingleQuery.execute("MARM", "MARM", cstrVdsMARMColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MAKT", "MAKT", cstrVdsMAKTColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MARC", "MARC", cstrVdsMARCColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MVKE", "MVKE", cstrVdsMVKEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MMOE", "/MARS/MDMOEDATA", cstrVdsMMOEColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MBEW", "MBEW", cstrVdsMBEWColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MARD", "MARD", cstrVdsMARDColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("INOB", "INOB", cstrVdsINOBColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","OBJEK = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  if (objSapSingleQuery.getResultSet().getRowCount("INOB") != 0) {
+                     objSapSingleQuery.execute("AUSP", "AUSP", cstrVdsAUSPColumns, objSapSingleQuery.getResultSet().getOrConditions("INOB","OBJEK = '<KEYVALUE>CUOBJ</KEYVALUE>'"),0,0);
+                  }
+                  objSapSingleQuery.execute("MLGN", "MLGN", cstrVdsMLGNColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+                  objSapSingleQuery.execute("MLAN", "MLAN", cstrVdsMLANColumns, objSapSingleQuery.getResultSet().getOrConditions("MARA","MATNR = '<KEYVALUE>MATNR</KEYVALUE>'"),0,0);
+               }
                if (cstrLogging != null) {
                   cobjPrintWriter.println();
                   cobjPrintWriter.print("======> Start SAP disconnect: " + Calendar.getInstance().getTime()); 
