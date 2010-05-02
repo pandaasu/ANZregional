@@ -38,3 +38,5 @@ Please create the following a new database on [server name] ...
       grant execute on dbms_lock to lics_app;
 
    - Please compile lics_db_trigger using SYS.
+
+   - please grant create public synonym rights to LICS
