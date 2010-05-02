@@ -25,7 +25,7 @@ create or replace package psa_app.psa_parameter as
    /*-*/
    system_code constant varchar2(10) := 'PSA';
    system_unit constant varchar2(10) := 'WANGANUI';
-   system_environment constant varchar2(20) := 'TEST';
+   system_environment constant varchar2(20) := 'PROD';
 
 end psa_parameter;
 /  
