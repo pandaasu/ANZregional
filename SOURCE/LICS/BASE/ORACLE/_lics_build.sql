@@ -80,6 +80,7 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_str_event.sql;
 @^tab_path\lics_str_header.sql;
 @^tab_path\lics_str_task.sql;
+@^tab_path\lics_str_parameter.sql;
 @^tab_path\lics_stream_sequence.sql;
 @^tab_path\lics_temp.sql;
 @^tab_path\lics_triggered.sql;
