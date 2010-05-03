@@ -30,6 +30,7 @@ create or replace package psa_app.psa_psc_function as
    function retrieve_data return psa_xml_type pipelined;
    function retrieve_week return psa_xml_type pipelined;
    function retrieve_type return psa_xml_type pipelined;
+   function retrieve_pulse return psa_xml_type pipelined;
    function retrieve_line return psa_xml_type pipelined;
    function retrieve_activity return psa_xml_type pipelined;
    function retrieve_time return psa_xml_type pipelined;
@@ -80,6 +81,10 @@ create or replace package body psa_app.psa_psc_function as
                           par_lin_code in varchar2,
                           par_con_code in varchar2,
                           par_win_code in varchar2);
+   procedure align_schedule_stock(par_psc_code in varchar2,
+                                  par_psc_week in varchar2); 
+   procedure align_actual_stock(par_psc_code in varchar2,
+                                par_psc_week in varchar2);
 
    /*-*/
    /* Private definitions
@@ -87,6 +92,12 @@ create or replace package body psa_app.psa_psc_function as
    con_max_bar constant number := 768;
    type ptyp_data is table of varchar2(2000 char) index by binary_integer;
    ptbl_data ptyp_data;
+   type prcd_invm is record (plt_qty number,cas_qty number,pch_qty number,ton_qty number);
+   type ptyp_invm is table of number index by varchar2(32);
+   type prcd_invd is record (invdat date,matary ptyp_invm);
+   type ptyp_invd is table of prcd_invd index by binary_integer;
+   ptbl_sinv ptyp_invd;
+   ptbl_ainv ptyp_invd;
 
    /***************************************************/
    /* This procedure performs the select list routine */
@@ -1047,6 +1058,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
+                nvl(t01.psp_upd_date,'yyyymmddhh24miss') as pul_value,
                 nvl(t02.pty_prd_name,'*UNKNOWN') as pty_prd_name
            from psa_psc_prod t01,
                 psa_prd_type t02
@@ -1220,6 +1232,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       pipe row(psa_xml_object('<PTYDFN PTYCDE="'||psa_to_xml(rcd_retrieve.psp_prd_type)||'"'||
                                      ' PTYNAM="'||psa_to_xml(rcd_retrieve.pty_prd_name)||'"'||
+                                     ' PULVAL="'||psa_to_xml(rcd_retrieve.pul_value)||'"'||
                                      ' WEKNAM="'||psa_to_xml('Y'||substr(var_wek_code,1,4)||' P'||substr(var_wek_code,5,2)||' W'||substr(var_wek_code,7,1))||'"/>'));
 
       /*-*/
@@ -1427,6 +1440,127 @@ create or replace package body psa_app.psa_psc_function as
    /* End routine */
    /*-------------*/
    end retrieve_type;
+
+   /******************************************************/
+   /* This procedure performs the retrieve pulse routine */
+   /******************************************************/
+   function retrieve_pulse return psa_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_pty_code varchar2(32);
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*,
+                nvl(t01.psp_upd_date,'yyyymmddhh24miss') as pul_value
+           from psa_psc_prod t01
+          where t01.psp_psc_code = var_psc_code
+            and t01.psp_psc_week = var_wek_code
+            and t01.psp_prd_type = var_pty_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      var_pty_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE')));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*GETPUL' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing production schedule type
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule week production type ('||var_psc_code||' / '||var_wek_code||' / '||var_pty_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the production type data XML
+      /*-*/
+      pipe row(psa_xml_object('<PTYPUL PULVAL="'||psa_to_xml(rcd_retrieve.pul_value)||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(psa_xml_object('</PSA_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_PULSE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_pulse;
 
    /*****************************************************/
    /* This procedure performs the retrieve line routine */
@@ -2363,6 +2497,7 @@ create or replace package body psa_app.psa_psc_function as
       rcd_psa_psc_shft psa_psc_shft%rowtype;
       rcd_psa_psc_reso psa_psc_reso%rowtype;
       rcd_psa_psc_actv psa_psc_actv%rowtype;
+      rcd_psa_psc_invt psa_psc_invt%rowtype;
 
       /*-*/
       /* Local cursors
@@ -2446,7 +2581,7 @@ create or replace package body psa_app.psa_psc_function as
           where t01.rde_mat_code = t02.mde_mat_code
             and t02.mde_mat_code = t03.mpr_mat_code
             and t01.rde_req_code = rcd_psa_psc_week.psw_req_code
-       ----     and t01.rde_mat_emsg is null
+            and t01.rde_mat_emsg is null
                 and t02.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
                 and t03.mpr_req_flag = '1'
           order by t02.mde_mat_code asc,
@@ -2489,6 +2624,15 @@ create or replace package body psa_app.psa_psc_function as
                    t01.mli_lin_code asc,
                    t01.mli_con_code asc;
       rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_mcom is
+         select t01.mco_com_code,
+                mco_com_quantity
+           from psa_mat_com t01
+          where t01.mco_mat_code = rcd_pact.psa_mat_code
+            and t01.mco_prd_type = rcd_pact.psa_prd_type
+          order by t01.mco_com_code asc;
+      rcd_mcom csr_mcom%rowtype;
 
       cursor csr_wind is
          select t01.pss_win_code,
@@ -2702,6 +2846,7 @@ create or replace package body psa_app.psa_psc_function as
                 psw_upd_date = rcd_psa_psc_week.psw_upd_date
           where psw_psc_code = rcd_psa_psc_week.psw_psc_code
             and psw_psc_code = rcd_psa_psc_week.psw_psc_code;
+         delete from psa_psc_invt where psi_act_code in (select psa_act_code from psa_psc_actv where psa_psc_code = rcd_psa_psc_week.psw_psc_code and psa_psc_week = rcd_psa_psc_week.psw_psc_week);
          delete from psa_psc_actv where psa_psc_code = rcd_psa_psc_week.psw_psc_code and psa_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_date where psd_psc_code = rcd_psa_psc_week.psw_psc_code and psd_psc_week = rcd_psa_psc_week.psw_psc_week;
          delete from psa_psc_line where psl_psc_code = rcd_psa_psc_week.psw_psc_code and psl_psc_week = rcd_psa_psc_week.psw_psc_week;
@@ -2999,6 +3144,10 @@ create or replace package body psa_app.psa_psc_function as
          open csr_mlin;
          fetch csr_mlin into rcd_mlin;
          if csr_mlin%found then
+
+            /*-*/
+            /* Update the schedule production activity
+            /*-*/
             rcd_psa_psc_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
             rcd_psa_psc_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
             rcd_psa_psc_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
@@ -3046,11 +3195,25 @@ create or replace package body psa_app.psa_psc_function as
                rcd_psa_psc_actv.psa_mat_cal_ton_qty := 0;
                rcd_psa_psc_actv.psa_mat_cal_dur_min := round(rcd_psa_psc_actv.psa_mat_cal_pch_qty / (rcd_psa_psc_actv.psa_sch_rra_unit * (rcd_psa_psc_actv.psa_sch_rra_effp / 100)), 0);
             end if;
+--------------s
+            rcd_psa_psc_actv.psa_mat_cal_plt_was := rcd_psa_psc_actv.psa_mat_cal_plt_qty - rcd_psa_psc_actv.psa_mat_req_plt_qty;
+            rcd_psa_psc_actv.psa_mat_cal_cas_was := rcd_psa_psc_actv.psa_mat_cal_cas_qty - rcd_psa_psc_actv.psa_mat_req_cas_qty;
+            rcd_psa_psc_actv.psa_mat_cal_pch_was := rcd_psa_psc_actv.psa_mat_cal_pch_qty - rcd_psa_psc_actv.psa_mat_req_pch_qty;
+            rcd_psa_psc_actv.psa_mat_cal_mix_was := rcd_psa_psc_actv.psa_mat_cal_mix_qty - rcd_psa_psc_actv.psa_mat_req_mix_qty;
+            rcd_psa_psc_actv.psa_mat_cal_ton_was := rcd_psa_psc_actv.psa_mat_cal_ton_qty - rcd_psa_psc_actv.psa_mat_req_ton_qty;
+--------------e
             rcd_psa_psc_actv.psa_mat_sch_plt_qty := rcd_psa_psc_actv.psa_mat_cal_plt_qty;
             rcd_psa_psc_actv.psa_mat_sch_cas_qty := rcd_psa_psc_actv.psa_mat_cal_cas_qty;
             rcd_psa_psc_actv.psa_mat_sch_pch_qty := rcd_psa_psc_actv.psa_mat_cal_pch_qty;
             rcd_psa_psc_actv.psa_mat_sch_mix_qty := rcd_psa_psc_actv.psa_mat_cal_mix_qty;
             rcd_psa_psc_actv.psa_mat_sch_ton_qty := rcd_psa_psc_actv.psa_mat_cal_ton_qty;
+------------s
+            rcd_psa_psc_actv.psa_mat_sch_plt_was := rcd_psa_psc_actv.psa_mat_cal_plt_was;
+            rcd_psa_psc_actv.psa_mat_sch_cas_was := rcd_psa_psc_actv.psa_mat_cal_cas_was;
+            rcd_psa_psc_actv.psa_mat_sch_pch_was := rcd_psa_psc_actv.psa_mat_cal_pch_was;
+            rcd_psa_psc_actv.psa_mat_sch_mix_was := rcd_psa_psc_actv.psa_mat_cal_mix_was;
+            rcd_psa_psc_actv.psa_mat_sch_ton_was := rcd_psa_psc_actv.psa_mat_cal_ton_was;
+----------e
             rcd_psa_psc_actv.psa_mat_sch_dur_min := rcd_psa_psc_actv.psa_mat_cal_dur_min;
             rcd_psa_psc_actv.psa_sch_dur_mins := rcd_psa_psc_actv.psa_mat_cal_dur_min;
             rcd_psa_psc_actv.psa_sch_chg_mins := 0;
@@ -3070,6 +3233,14 @@ create or replace package body psa_app.psa_psc_function as
             rcd_psa_psc_actv.psa_mat_act_pch_qty := rcd_psa_psc_actv.psa_mat_sch_pch_qty;
             rcd_psa_psc_actv.psa_mat_act_mix_qty := rcd_psa_psc_actv.psa_mat_sch_mix_qty;
             rcd_psa_psc_actv.psa_mat_act_ton_qty := rcd_psa_psc_actv.psa_mat_sch_ton_qty;
+------------s
+            rcd_psa_psc_actv.psa_mat_act_plt_was := rcd_psa_psc_actv.psa_mat_sch_plt_was;
+            rcd_psa_psc_actv.psa_mat_act_cas_was := rcd_psa_psc_actv.psa_mat_sch_cas_was;
+            rcd_psa_psc_actv.psa_mat_act_pch_was := rcd_psa_psc_actv.psa_mat_sch_pch_was;
+            rcd_psa_psc_actv.psa_mat_act_mix_was := rcd_psa_psc_actv.psa_mat_sch_mix_was;
+            rcd_psa_psc_actv.psa_mat_act_ton_was := rcd_psa_psc_actv.psa_mat_sch_ton_was;
+---------------e
+
             rcd_psa_psc_actv.psa_mat_act_dur_min := rcd_psa_psc_actv.psa_mat_sch_dur_min;
             rcd_psa_psc_actv.psa_act_dur_mins := rcd_psa_psc_actv.psa_mat_act_dur_min;
             rcd_psa_psc_actv.psa_act_chg_mins := rcd_psa_psc_actv.psa_sch_chg_mins;
@@ -3118,6 +3289,27 @@ create or replace package body psa_app.psa_psc_function as
                    psa_act_dur_mins = rcd_psa_psc_actv.psa_act_dur_mins,
                    psa_act_chg_mins = rcd_psa_psc_actv.psa_act_chg_mins
              where psa_act_code = rcd_pact.psa_act_code;
+
+            /*-*/
+            /* Insert the activity inventory requirements
+            /*-*/
+            open csr_mcom;
+            fetch csr_mcom into rcd_mcom;
+            if csr_mcom%found then
+               rcd_psa_psc_invt.psi_act_code := rcd_pact.psa_act_code;
+               rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_mat_code;
+               if rcd_pact.psa_prd_type = '*FILL' then
+                  rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+               elsif rcd_pact.psa_prd_type = '*PACK' then
+                  rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+               elsif rcd_pact.psa_prd_type = '*FORM' then
+                  rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_pch_qty);
+               end if;
+               rcd_psa_psc_invt.psi_avl_qty := 0;
+               insert into psa_psc_invt values rcd_psa_psc_invt;
+            end loop;
+            close csr_mcom;
+
          end if;
          close csr_mlin;
 
@@ -3198,6 +3390,7 @@ create or replace package body psa_app.psa_psc_function as
       rcd_psa_psc_shft psa_psc_shft%rowtype;
       rcd_psa_psc_reso psa_psc_reso%rowtype;
       rcd_psa_psc_actv psa_psc_actv%rowtype;
+      rcd_psa_psc_invt psa_psc_invt%rowtype;
 
       /*-*/
       /* Local cursors
@@ -3296,6 +3489,15 @@ create or replace package body psa_app.psa_psc_function as
                    t01.mli_lin_code asc,
                    t01.mli_con_code asc;
       rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_mcom is
+         select t01.mco_com_code,
+                mco_com_quantity
+           from psa_mat_com t01
+          where t01.mco_mat_code = rcd_uact.psa_mat_code
+            and t01.mco_prd_type = rcd_uact.psa_prd_type
+          order by t01.mco_com_code asc;
+      rcd_mcom csr_mcom%rowtype;
 
       cursor csr_sact is
          select t01.*
@@ -3651,6 +3853,10 @@ create or replace package body psa_app.psa_psc_function as
             open csr_mlin;
             fetch csr_mlin into rcd_mlin;
             if csr_mlin%found then
+
+               /*-*/
+               /* Update the schedule production activity
+               /*-*/
                rcd_psa_psc_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
                rcd_psa_psc_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
                rcd_psa_psc_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
@@ -3770,6 +3976,27 @@ create or replace package body psa_app.psa_psc_function as
                       psa_act_dur_mins = rcd_psa_psc_actv.psa_act_dur_mins,
                       psa_act_chg_mins = rcd_psa_psc_actv.psa_act_chg_mins
                 where psa_act_code = rcd_uact.psa_act_code;
+
+               /*-*/
+               /* Insert the activity inventory requirements
+               /*-*/
+               open csr_mcom;
+               fetch csr_mcom into rcd_mcom;
+               if csr_mcom%found then
+                  rcd_psa_psc_invt.psi_act_code := rcd_uact.psa_act_code;
+                  rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_mat_code;
+                  if rcd_uact.psa_prd_type = '*FILL' then
+                     rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+                  elsif rcd_uact.psa_prd_type = '*PACK' then
+                     rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+                  elsif rcd_uact.psa_prd_type = '*FORM' then
+                     rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_pch_qty);
+                  end if;
+                  rcd_psa_psc_invt.psi_avl_qty := 0;
+                  insert into psa_psc_invt values rcd_psa_psc_invt;
+               end loop;
+               close csr_mcom;
+
             end if;
             close csr_mlin;
 
@@ -3838,6 +4065,11 @@ create or replace package body psa_app.psa_psc_function as
          end loop;
 
          /*-*/
+         /* Align the scheduled stock forward from this week
+         /*-*/
+         align_schedule_stock(rcd_psa_psc_line.psl_psc_code, rcd_psa_psc_line.psl_psc_week);
+
+         /*-*/
          /* Reset the shift window sequences
          /*-*/
          for idx in 1..tbl_wact.count loop
@@ -3890,6 +4122,11 @@ create or replace package body psa_app.psa_psc_function as
                          rcd_psa_psc_line.psl_con_code,
                          tbl_wact(idx).win_code);
          end loop;
+
+         /*-*/
+         /* Align the actual stock forward from this week
+         /*-*/
+         align_actual_stock(rcd_psa_psc_line.psl_psc_code, rcd_psa_psc_line.psl_psc_week);
 
       end if;
 
@@ -4238,6 +4475,11 @@ create or replace package body psa_app.psa_psc_function as
                      var_win_code);
 
       /*-*/
+      /* Align the scheduled stock forward from this week
+      /*-*/
+      align_schedule_stock(var_psc_code, var_wek_code);
+
+      /*-*/
       /* Align the shift window actual activities
       /*-*/
       align_actual(var_psc_code,
@@ -4245,6 +4487,11 @@ create or replace package body psa_app.psa_psc_function as
                    var_lin_code,
                    var_con_code,
                    var_win_code);
+
+      /*-*/
+      /* Align the actual stock forward from this week
+      /*-*/
+      align_actual_stock(var_psc_code, var_wek_code);
 
       /*-*/
       /* Commit the database
@@ -4306,6 +4553,7 @@ create or replace package body psa_app.psa_psc_function as
       var_upd_user varchar2(30);
       var_upd_date date;
       rcd_psa_psc_actv psa_psc_actv%rowtype;
+      rcd_psa_psc_invt psa_psc_invt%rowtype;
 
       /*-*/
       /* Local cursors
@@ -4370,6 +4618,15 @@ create or replace package body psa_app.psa_psc_function as
             and t01.mli_lin_code = var_lin_code
             and t01.mli_con_code = var_con_code;
       rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_mcom is
+         select t01.mco_com_code,
+                mco_com_quantity
+           from psa_mat_com t01
+          where t01.mco_mat_code = rcd_psa_psc_actv.psa_mat_code
+            and t01.mco_prd_type = var_pty_code
+          order by t01.mco_com_code asc;
+      rcd_mcom csr_mcom%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -4467,6 +4724,8 @@ create or replace package body psa_app.psa_psc_function as
             rollback;
             return;
          end if;
+         rcd_psa_psc_actv.psa_act_code := rcd_actv.psa_act_code;
+         rcd_psa_psc_actv.psa_mat_code := rcd_actv.psa_mat_code;
       end if;
 
       /*-*/
@@ -4580,6 +4839,7 @@ create or replace package body psa_app.psa_psc_function as
                 psa_mat_act_ton_qty = rcd_psa_psc_actv.psa_mat_act_ton_qty,
                 psa_mat_act_dur_min = rcd_psa_psc_actv.psa_mat_act_dur_min
           where psa_act_code = var_act_code;
+         delete from psa_psc_actv where psi_act_code = var_act_code;
       elsif var_action = '*CRTACT' then
          select psa_act_sequence.nextval into rcd_psa_psc_actv.psa_act_code from dual;
          rcd_psa_psc_actv.psa_psc_code := var_psc_code;
@@ -4757,6 +5017,26 @@ create or replace package body psa_app.psa_psc_function as
       end if;
 
       /*-*/
+      /* Insert the activity inventory requirements
+      /*-*/
+      open csr_mcom;
+      fetch csr_mcom into rcd_mcom;
+      if csr_mcom%found then
+         rcd_psa_psc_invt.psi_act_code := rcd_psa_psc_actv.psa_act_code;
+         rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_mat_code;
+         if rcd_uact.psa_prd_type = '*FILL' then
+            rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+         elsif rcd_uact.psa_prd_type = '*PACK' then
+            rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+         elsif rcd_uact.psa_prd_type = '*FORM' then
+            rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_pch_qty);
+         end if;
+         rcd_psa_psc_invt.psi_avl_qty := 0;
+         insert into psa_psc_invt values rcd_psa_psc_invt;
+      end loop;
+      close csr_mcom;
+
+      /*-*/
       /* Free the XML document
       /*-*/
       xmlDom.freeDocument(obj_xml_document);
@@ -4771,6 +5051,11 @@ create or replace package body psa_app.psa_psc_function as
                      var_win_code);
 
       /*-*/
+      /* Align the scheduled stock forward from this week
+      /*-*/
+      align_schedule_stock(var_psc_code, var_wek_code);
+
+      /*-*/
       /* Align the shift window actual activities
       /*-*/
       align_actual(var_psc_code,
@@ -4778,6 +5063,11 @@ create or replace package body psa_app.psa_psc_function as
                    var_lin_code,
                    var_con_code,
                    var_win_code);
+
+      /*-*/
+      /* Align the actual stock forward from this week
+      /*-*/
+      align_actual_stock(var_psc_code, var_wek_code);
 
       /*-*/
       /* Commit the database
@@ -5043,6 +5333,11 @@ create or replace package body psa_app.psa_psc_function as
                    var_win_code);
 
       /*-*/
+      /* Align the actual stock forward from this week
+      /*-*/
+      align_actual_stock(var_psc_code, var_wek_code);
+
+      /*-*/
       /* Commit the database
       /*-*/
       commit;
@@ -5154,6 +5449,7 @@ create or replace package body psa_app.psa_psc_function as
       /* Process the production schedule data
       /*-*/
       var_confirm := 'deleted';
+      delete from psa_psc_invt where psi_act_code in (select psa_act_code from psa_psc_actv where psa_psc_code = var_psc_code);
       delete from psa_psc_actv where psa_psc_code = var_psc_code;
       delete from psa_psc_reso where psr_psc_code = var_psc_code;
       delete from psa_psc_shft where pss_psc_code = var_psc_code;
@@ -5487,6 +5783,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Delete the production schedule activity
       /*-*/
+      delete from psa_psc_invt where psi_act_code = var_act_code;
       delete from psa_psc_actv where psa_act_code = var_act_code;
 
       /*-*/
@@ -5579,6 +5876,15 @@ create or replace package body psa_app.psa_psc_function as
             and t01.mli_lin_code = var_lin_code
             and t01.mli_con_code = var_con_code;
       rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_mcom is
+         select t01.mco_com_code,
+                mco_com_quantity
+           from psa_mat_com t01
+          where t01.mco_mat_code = rcd_actv.psa_mat_code
+            and t01.mco_prd_type = rcd_actv.psa_prd_type
+          order by t01.mco_com_code asc;
+      rcd_mcom csr_mcom%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -5813,6 +6119,28 @@ create or replace package body psa_app.psa_psc_function as
                    psa_act_win_seqn = var_win_seqn + .10
              where psa_act_code = rcd_actv.psa_act_code;
          end if;
+
+         /*-*/
+         /* Reload the activity inventory requirements
+         /*-*/
+         delete from psa_psc_invt where psi_act_code = rcd_actv.psa_act_code;
+         open csr_mcom;
+         fetch csr_mcom into rcd_mcom;
+         if csr_mcom%found then
+            rcd_psa_psc_invt.psi_act_code := rcd_actv.psa_act_code;
+            rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_mat_code;
+            if rcd_uact.psa_prd_type = '*FILL' then
+               rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+            elsif rcd_uact.psa_prd_type = '*PACK' then
+               rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_cas_qty);
+            elsif rcd_uact.psa_prd_type = '*FORM' then
+               rcd_psa_psc_invt.psi_req_qty := (rcd_mcom.mco_com_quantity * rcd_psa_psc_actv.psa_mat_sch_pch_qty);
+            end if;
+            rcd_psa_psc_invt.psi_avl_qty := 0;
+            insert into psa_psc_invt values rcd_psa_psc_invt;
+         end loop;
+         close csr_mcom;
+
       end if;
 
       /*-*/
@@ -5830,6 +6158,11 @@ create or replace package body psa_app.psa_psc_function as
                      var_win_code);
 
       /*-*/
+      /* Align the scheduled stock forward from this week
+      /*-*/
+      align_schedule_stock(var_psc_code, var_wek_code);
+
+      /*-*/
       /* Align the shift window actual activities
       /*-*/
       align_actual(var_psc_code,
@@ -5837,6 +6170,11 @@ create or replace package body psa_app.psa_psc_function as
                    var_lin_code,
                    var_con_code,
                    var_win_code);
+
+      /*-*/
+      /* Align the actual stock forward from this week
+      /*-*/
+      align_actual_stock(var_psc_code, var_wek_code);
 
       /*-*/
       /* Commit the database
@@ -6028,6 +6366,11 @@ create or replace package body psa_app.psa_psc_function as
                      rcd_actv.psa_sch_win_code);
 
       /*-*/
+      /* Align the scheduled stock forward from this week
+      /*-*/
+      align_schedule_stock(rcd_actv.psa_psc_code, rcd_actv.psa_psc_week);
+
+      /*-*/
       /* Align the shift window actual activities
       /*-*/
       align_actual(rcd_actv.psa_psc_code,
@@ -6035,6 +6378,11 @@ create or replace package body psa_app.psa_psc_function as
                    rcd_actv.psa_act_lin_code,
                    rcd_actv.psa_act_con_code,
                    rcd_actv.psa_act_win_code);
+
+      /*-*/
+      /* Align the actual stock forward from this week
+      /*-*/
+      align_actual_stock(rcd_actv.psa_psc_code, rcd_actv.psa_psc_week);
 
       /*-*/
       /* Commit the database
@@ -6248,6 +6596,19 @@ create or replace package body psa_app.psa_psc_function as
           order by t01.psa_act_str_time asc;
       rcd_sact csr_sact%rowtype;
 
+      cursor csr_sivt is
+         select t01.psi_mat_code,
+                t02.mde_mat_name,
+                to_char(t01.psi_req_qnty) as psi_req_qnty,
+                to_char(t01.psi_avl_qnty) as psi_avl_qnty,
+                to_char(t01.psi_avl_qnty-t01.psi_req_qnty) as psi_sho_qnty
+           from psa_psc_invt t01,
+                psa_mat_defn t02
+          where t01.psi_mat_code = t02.mde_mat_code
+            and t01.psi_act_code = rcd_sact.psa_act_code
+          order by t01.psi_mat_code asc;
+      rcd_sivt csr_sivt%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -6354,6 +6715,19 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTMIX="'||psa_to_xml(rcd_sact.psa_mat_act_mix_qty)||'"'||
                                                       ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"/>';
             end if;
+            open csr_sivt;
+            loop
+               fetch csr_sivt into rcd_sivt;
+               if csr_sivt%notfound then
+                  exit;
+               end if;
+               ptbl_data(ptbl_data.count+1) := '<LININV MATCDE="'||psa_to_xml(rcd_sivt.psi_mat_code)||'"'||
+                                                      ' MATNAM="'||psa_to_xml(rcd_sivt.mde_mat_name)||'"'||
+                                                      ' REQQTY="'||psa_to_xml(rcd_sivt.psi_req_qnty)||'"'||
+                                                      ' AVLQTY="'||psa_to_xml(rcd_sivt.psi_avl_qnty)||'"'||
+                                                      ' SHOQTY="'||psa_to_xml(rcd_sivt.psi_sho_qnty)||'"/>';
+            end loop;
+            close csr_sivt;
          elsif rcd_sact.psa_act_type = 'T' then
             ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                    ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
@@ -6650,6 +7024,356 @@ create or replace package body psa_app.psa_psc_function as
    /* End routine */
    /*-------------*/
    end align_actual;
+
+   /************************************************************/
+   /* This procedure performs the align schedule stock routine */
+   /************************************************************/
+   procedure align_schedule_stock(par_psc_code in varchar2,
+                                  par_psc_week in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_min_date date;
+      var_str_date date;
+      var_stk_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_date is
+         select min(trunc(t01.psd_day_date)) as min_day_date
+           from psa_psc_date t01
+          where t01.psd_psc_code = par_psc_code
+            and t01.psd_psc_week = par_psc_week;
+      rcd_date csr_date%rowtype;
+
+      cursor csr_stak is
+         select t01.std_stk_code,
+                to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') as sth_stk_time,
+                t02.std_mat_code,
+                t02.std_mat_qnty
+           from psa_stk_header t01,
+                psa_stk_detail t02
+          where t01.std_stk_code = t02.sth_stk_code
+          order by t01.std_stk_code desc,
+                   t02.std_mat_code asc;
+      rcd_stak csr_stak%rowtype;
+
+      cursor csr_sact is
+         select t01.*,
+                decode(t01.psa_chg_flag,'1',t01.psa_sch_chg_time,t01.psa_sch_end_time) as psa_prd_time,
+                nvl(t02.psi_mat_code,'*NONE') as psi_mat_code,
+                nvl(t02.psi_req_qnty,0) as psi_req_qnty
+           from psa_psc_actv t01,
+                psa_psc_comp t02
+          where t01.psa_act_code = t02.psc_act_code(+)
+            and t01.psa_psc_code = par_psc_code
+            and t01.psa_act_type = 'P'
+            and t01.psa_sch_win_code != '*NONE'
+            and t01.psa_sch_str_date >= var_str_date
+          order by t01.psa_sch_str_date asc;
+      rcd_sact csr_sact%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the schedule inventory
+      /*-*/
+      ptbl_sinv.delete;
+
+      /*-*/
+      /* Retrieve the week boundaries
+      /*-*/
+      var_min_date := null;
+      open csr_date;
+      fetch csr_date into rcd_date;
+      if csr_date%found then
+         var_min_date := rcd_date.min_day_date;
+      end if;
+      close csr_date;
+
+      /*-*/
+      /* Retrieve the relevant stocktake data
+      /*-*/
+      var_str_date := to_date('20000101','yyyymmdd');
+      var_stk_code := '*FIRST';
+      open csr_stak;
+      loop
+         fetch csr_stak into rcd_stak;
+         if csr_stak%notfound then
+            exit;
+         end if;
+         if rcd_stak.std_stk_code != var_stk_code then
+            if var_stk_code = '*EXIT' then
+               exit;
+            end if;
+            if rcd_stak.sth_stk_time < var_min_date then
+               var_str_date := rcd_stak.sth_stk_time;
+               var_stk_code := '*EXIT';
+            else
+               var_stk_code := rcd_stak.std_stk_code;
+            end if;
+            ptbl_sinv(ptbl_sinv.count+1).invdat := rcd_stak.sth_stk_time;
+            ptbl_sinv(ptbl_sinv.count).matary.delete;
+         end if;
+         ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+      end loop;
+      close csr_stak;
+      ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
+      ptbl_sinv(ptbl_sinv.count).matary.delete;
+
+      /*-*/
+      /* Update the schedule production activity inventory data
+      /*-*/
+      var_act_code := -1;
+      open csr_sact;
+      loop
+         fetch csr_sact into rcd_sact;
+         if csr_sact%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Update the schedule activity inventory comsumption when required
+         /* **note** consumption is based on activity start time
+         /*-*/
+         if rcd_sact.psi_mat_code != '*NONE' then
+            for idx in 1..ptbl_sinv.count loop
+               if ptbl_sinv(idx).invdat <= rcd_sact.psa_sch_str_time then
+                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
+                     update psa_psc_invt
+                        set psi_avl_qnty = 0
+                      where psi_act_code = rcd_sact.psa_act_code
+                        and psi_mat_code = rcd_sact.psi_mat_code;
+                     ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) := rcd_sact.psi_req_qnty * -1;
+                  else
+                     update psa_psc_invt
+                        set psi_avl_qnty = ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code)
+                      where psi_act_code = rcd_sact.psa_act_code
+                        and psi_mat_code = rcd_sact.psi_mat_code;
+                     ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) - rcd_sact.psi_req_qnty;
+                  end if;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         /*-*/
+         /* Update the schedule activity inventory production when required
+         /* **note** production is based on activity end time
+         /*-*/
+         if rcd_sact.psa_act_code != var_act_code then
+            var_act_code := rcd_sact.psa_act_code;
+            for idx in 1..ptbl_sinv.count loop
+               if ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
+                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
+                     if rcd_sact.psa_prd_type = '*FILL' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_sch_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*PACK' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_sch_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*FORM' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_sch_pch_qty;
+                     end if;
+                  else
+                     if rcd_sact.psa_prd_type = '*FILL' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_sch_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*PACK' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_sch_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*FORM' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_sch_pch_qty;
+                     end if;
+                  end if;
+                  exit;
+              end if;
+            end loop;
+         end if;
+
+      end loop;
+      close csr_sact;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end align_schedule_stock;
+
+    /*********************************************************/
+   /* This procedure performs the align actual stock routine */
+   /**********************************************************/
+   procedure align_actual_stock(par_psc_code in varchar2,
+                                par_psc_week in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_min_date date;
+      var_str_date date;
+      var_stk_code varchar2(32);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_date is
+         select min(trunc(t01.psd_day_date)) as min_day_date
+           from psa_psc_date t01
+          where t01.psd_psc_code = par_psc_code
+            and t01.psd_psc_week = par_psc_week;
+      rcd_date csr_date%rowtype;
+
+      cursor csr_stak is
+         select t01.std_stk_code,
+                to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') as sth_stk_time,
+                t02.std_mat_code,
+                t02.std_mat_qnty
+           from psa_stk_header t01,
+                psa_stk_detail t02
+          where t01.std_stk_code = t02.sth_stk_code
+          order by t01.std_stk_code desc,
+                   t02.std_mat_code asc;
+      rcd_stak csr_stak%rowtype;
+
+      cursor csr_sact is
+         select t01.*,
+                decode(t01.psa_chg_flag,'1',t01.psa_act_chg_time,t01.psa_act_end_time) as psa_prd_time,
+                nvl(t02.psi_mat_code,'*NONE') as psi_mat_code,
+                nvl(t02.psi_req_qnty,0) as psi_req_qnty
+           from psa_psc_actv t01,
+                psa_psc_comp t02
+          where t01.psa_act_code = t02.psc_act_code(+)
+            and t01.psa_psc_code = par_psc_code
+            and t01.psa_act_type = 'P'
+            and t01.psa_act_win_code != '*NONE'
+            and t01.psa_act_str_date >= var_str_date
+          order by t01.psa_act_str_date asc;
+      rcd_sact csr_sact%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Clear the schedule inventory
+      /*-*/
+      ptbl_sinv.delete;
+
+      /*-*/
+      /* Retrieve the week boundaries
+      /*-*/
+      var_min_date := null;
+      open csr_date;
+      fetch csr_date into rcd_date;
+      if csr_date%found then
+         var_min_date := rcd_date.min_day_date;
+      end if;
+      close csr_date;
+
+      /*-*/
+      /* Retrieve the relevant stocktake data
+      /*-*/
+      var_str_date := to_date('20000101','yyyymmdd');
+      var_stk_code := '*FIRST';
+      open csr_stak;
+      loop
+         fetch csr_stak into rcd_stak;
+         if csr_stak%notfound then
+            exit;
+         end if;
+         if rcd_stak.std_stk_code != var_stk_code then
+            if var_stk_code = '*EXIT' then
+               exit;
+            end if;
+            if rcd_stak.sth_stk_time < var_min_date then
+               var_str_date := rcd_stak.sth_stk_time;
+               var_stk_code := '*EXIT';
+            else
+               var_stk_code := rcd_stak.std_stk_code;
+            end if;
+            ptbl_sinv(ptbl_sinv.count+1).invdat := rcd_stak.sth_stk_time;
+            ptbl_sinv(ptbl_sinv.count).matary.delete;
+         end if;
+         ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+      end loop;
+      close csr_stak;
+      ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
+      ptbl_sinv(ptbl_sinv.count).matary.delete;
+
+      /*-*/
+      /* Update the actual production activity inventory data
+      /*-*/
+      var_act_code := -1;
+      open csr_sact;
+      loop
+         fetch csr_sact into rcd_sact;
+         if csr_sact%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Update the actual activity inventory comsumption when required
+         /* **note** consumption is based on activity start time
+         /*-*/
+         if rcd_sact.psi_mat_code != '*NONE' then
+            for idx in 1..ptbl_sinv.count loop
+               if ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
+                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
+                     update psa_psc_invt
+                        set psi_avl_qnty = 0
+                      where psi_act_code = rcd_sact.psa_act_code
+                        and psi_mat_code = rcd_sact.psi_mat_code;
+                     ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) := rcd_sact.psi_req_qnty * -1;
+                  else
+                     update psa_psc_invt
+                        set psi_avl_qnty = ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code)
+                      where psi_act_code = rcd_sact.psa_act_code
+                        and psi_mat_code = rcd_sact.psi_mat_code;
+                     ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psi_mat_code) - rcd_sact.psi_req_qnty;
+                  end if;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         /*-*/
+         /* Update the actual activity inventory production when required
+         /* **note** production is based on activity end time
+         /*-*/
+         if rcd_sact.psa_act_code != var_act_code then
+            var_act_code := rcd_sact.psa_act_code;
+            for idx in 1..ptbl_sinv.count loop
+               if ptbl_sinv(idx).invdat <= rcd_sact.psa_act_end_time then
+                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
+                     if rcd_sact.psa_prd_type = '*FILL' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_act_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*PACK' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_act_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*FORM' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_act_pch_qty;
+                     end if;
+                  else
+                     if rcd_sact.psa_prd_type = '*FILL' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_act_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*PACK' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_act_cas_qty;
+                     elsif rcd_sact.psa_prd_type = '*FORM' then
+                        ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary.(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_act_pch_qty;
+                     end if;
+                  end if;
+                  exit;
+              end if;
+            end loop;
+         end if;
+
+      end loop;
+      close csr_sact;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end align_actual_stock;
 
 end psa_psc_function;
 /
