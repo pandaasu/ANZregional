@@ -20,22 +20,21 @@
 /**/
 create table psa.psa_psc_invt
    (psi_act_code                    number                        not null,
-    psi_psc_code                    varchar2(32)                  not null,
-    psi_psc_week                    varchar2(7)                   not null,
     psi_mat_code                    varchar2(32)                  not null,
-    psi_inv_type                    varchar2(1)                   not null,
-    psi_inv_qnty                    number                        not null);
+    psi_mov_type                    varchar2(1)                   not null,
+    psi_mov_qnty                    number                        not null,
+    psi_avl_qnty                    number                        not null);
 
 /**/
 /* Comments
 /**/
 comment on table psa.psa_psc_invt is 'Production Schedule Inventory Table';
 comment on column psa.psa_psc_invt.psi_act_code is 'Activity code';
-comment on column psa.psa_psc_invt.psi_psc_code is 'Schedule code';
-comment on column psa.psa_psc_invt.psi_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_invt.psi_mat_code is 'Material code';
-comment on column psa.psa_psc_invt.psi_inv_type is 'Inventory movement type (P=production or C=consumption)';
-comment on column psa.psa_psc_invt.psi_inv_qnty is 'Inventory movement quantity';
+comment on column psa.psa_psc_invt.psi_mov_type is 'Inventory movement type (P=production or C=consumption)';
+comment on column psa.psa_psc_invt.psi_mov_qnty is 'Inventory movement quantity';
+comment on column psa.psa_psc_invt.psi_avl_qnty is 'Inventory available quantity';
+
 
 /**/
 /* Primary Key Constraint
