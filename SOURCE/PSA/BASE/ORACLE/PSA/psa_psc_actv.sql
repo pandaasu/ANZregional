@@ -50,6 +50,9 @@ create table psa.psa_psc_actv
     psa_act_rra_unit                number                        null,
     psa_act_rra_effp                number                        null,
     psa_act_rra_wasp                number                        null,
+    psa_act_cal_unit                number                        null,
+    psa_act_cal_effp                number                        null,
+    psa_act_cal_wasp                number                        null,
     psa_act_win_code                varchar2(32)                  null,
     psa_act_win_seqn                number                        null,
     psa_act_win_flow                varchar2(1)                   null,
@@ -80,6 +83,7 @@ create table psa.psa_psc_actv
     psa_mat_pck_percent             number                        null,
     psa_mat_pck_weight              number                        null,
     psa_mat_bch_weight              number                        null,
+    psa_mat_sap_qty                 number                        null,
     psa_mat_req_qty                 number                        null,
     psa_mat_req_plt_qty             number                        null,
     psa_mat_req_cas_qty             number                        null,
@@ -87,29 +91,49 @@ create table psa.psa_psc_actv
     psa_mat_req_mix_qty             number                        null,
     psa_mat_req_ton_qty             number                        null,
     psa_mat_req_dur_min             number                        null,
-    psa_mat_cal_plt_qty             number                        null,
-    psa_mat_cal_cas_qty             number                        null,
-    psa_mat_cal_pch_qty             number                        null,
-    psa_mat_cal_mix_qty             number                        null,
-    psa_mat_cal_ton_qty             number                        null,
-    psa_mat_cal_dur_min             number                        null,
+    psa_mat_sch_qty                 number                        null,
+    psa_mat_sch_was                 number                        null,
     psa_mat_sch_plt_qty             number                        null,
     psa_mat_sch_cas_qty             number                        null,
     psa_mat_sch_pch_qty             number                        null,
     psa_mat_sch_mix_qty             number                        null,
     psa_mat_sch_ton_qty             number                        null,
+    psa_mat_sch_plt_was             number                        null,
+    psa_mat_sch_cas_was             number                        null,
+    psa_mat_sch_pch_was             number                        null,
+    psa_mat_sch_mix_was             number                        null,
+    psa_mat_sch_ton_was             number                        null,
     psa_mat_sch_dur_min             number                        null,
+    psa_mat_act_qty                 number                        null,
+    psa_mat_act_was                 number                        null,
+    psa_mat_act_miq                 number                        null,
+    psa_mat_act_miw                 number                        null,
     psa_mat_act_plt_qty             number                        null,
     psa_mat_act_cas_qty             number                        null,
     psa_mat_act_pch_qty             number                        null,
     psa_mat_act_mix_qty             number                        null,
     psa_mat_act_ton_qty             number                        null,
+    psa_mat_act_plt_was             number                        null,
+    psa_mat_act_cas_was             number                        null,
+    psa_mat_act_pch_was             number                        null,
+    psa_mat_act_mix_was             number                        null,
+    psa_mat_act_ton_was             number                        null,
     psa_mat_act_dur_min             number                        null,
+    psa_mat_inv_qty                 number                        null,
+    psa_mat_inv_plt_qty             number                        null,
+    psa_mat_inv_cas_qty             number                        null,
+    psa_mat_inv_pch_qty             number                        null,
+    psa_mat_inv_ton_qty             number                        null,
     psa_mat_var_plt_qty             number                        null,
     psa_mat_var_cas_qty             number                        null,
     psa_mat_var_pch_qty             number                        null,
     psa_mat_var_mix_qty             number                        null,
     psa_mat_var_ton_qty             number                        null,
+    psa_mat_var_plt_was             number                        null,
+    psa_mat_var_cas_was             number                        null,
+    psa_mat_var_pch_was             number                        null,
+    psa_mat_var_mix_was             number                        null,
+    psa_mat_var_ton_was             number                        null,
     psa_mat_var_dur_min             number                        null);
 
 /**/
@@ -120,7 +144,7 @@ comment on column psa.psa_psc_actv.psa_act_code is 'Activity code';
 comment on column psa.psa_psc_actv.psa_psc_code is 'Schedule code';
 comment on column psa.psa_psc_actv.psa_psc_week is 'Schedule MARS week';
 comment on column psa.psa_psc_actv.psa_prd_type is 'Production type code';
-comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';v
+comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';
 comment on column psa.psa_psc_actv.psa_upd_user is 'Last updated user';
 comment on column psa.psa_psc_actv.psa_upd_date is 'Last updated date';
 comment on column psa.psa_psc_actv.psa_chg_flag is 'Activity production change event flag (0=no or 1=yes)';
@@ -147,6 +171,9 @@ comment on column psa.psa_psc_actv.psa_act_rra_code is 'Actual run rate code';
 comment on column psa.psa_psc_actv.psa_act_rra_unit is 'Actual run rate units';
 comment on column psa.psa_psc_actv.psa_act_rra_effp is 'Actual run rate efficiency percentage';
 comment on column psa.psa_psc_actv.psa_act_rra_wasp is 'Actual run rate wastage percentage';
+comment on column psa.psa_psc_actv.psa_act_cal_unit is 'Actual calculated units';
+comment on column psa.psa_psc_actv.psa_act_cal_effp is 'Actual calculated efficiency percentage';
+comment on column psa.psa_psc_actv.psa_act_cal_wasp is 'Actual calculated wastage percentage';
 comment on column psa.psa_psc_actv.psa_act_win_code is 'Actual shift window code';
 comment on column psa.psa_psc_actv.psa_act_win_seqn is 'Actual shift window sequence';
 comment on column psa.psa_psc_actv.psa_act_win_flow is 'Actual shift window overflow (0=no or 1=yes)';
@@ -177,6 +204,7 @@ comment on column psa.psa_psc_actv.psa_mat_yld_value is 'Material yield value';
 comment on column psa.psa_psc_actv.psa_mat_pck_percent is 'Material pack weight percentage';
 comment on column psa.psa_psc_actv.psa_mat_pck_weight is 'Material pack weight';
 comment on column psa.psa_psc_actv.psa_mat_bch_weight is 'Material batch weight';
+comment on column psa.psa_psc_actv.psa_mat_sap_qty is 'Material production SAP quantity';
 comment on column psa.psa_psc_actv.psa_mat_req_qty is 'Material production requirement quantity';
 comment on column psa.psa_psc_actv.psa_mat_req_plt_qty is 'Material production requirement pallet quantity';
 comment on column psa.psa_psc_actv.psa_mat_req_cas_qty is 'Material production requirement case quantity';
@@ -184,29 +212,49 @@ comment on column psa.psa_psc_actv.psa_mat_req_pch_qty is 'Material production r
 comment on column psa.psa_psc_actv.psa_mat_req_mix_qty is 'Material production requirement mix quantity';
 comment on column psa.psa_psc_actv.psa_mat_req_ton_qty is 'Material production requirement tonne quantity';
 comment on column psa.psa_psc_actv.psa_mat_req_dur_min is 'Material production requirement duration in minutes';
-comment on column psa.psa_psc_actv.psa_mat_cal_plt_qty is 'Material calculated pallet quantity';
-comment on column psa.psa_psc_actv.psa_mat_cal_cas_qty is 'Material calculated case quantity';
-comment on column psa.psa_psc_actv.psa_mat_cal_pch_qty is 'Material calculated pouch quantity';
-comment on column psa.psa_psc_actv.psa_mat_cal_mix_qty is 'Material calculated mix quantity';
-comment on column psa.psa_psc_actv.psa_mat_cal_ton_qty is 'Material calculated tonne quantity';
-comment on column psa.psa_psc_actv.psa_mat_cal_dur_min is 'Material calculated duration in minutes';
+comment on column psa.psa_psc_actv.psa_mat_sch_qty is 'Material scheduled quantity ';
+comment on column psa.psa_psc_actv.psa_mat_sch_was is 'Material scheduled wastage';
 comment on column psa.psa_psc_actv.psa_mat_sch_plt_qty is 'Material scheduled pallet quantity';
 comment on column psa.psa_psc_actv.psa_mat_sch_cas_qty is 'Material scheduled case quantity';
 comment on column psa.psa_psc_actv.psa_mat_sch_pch_qty is 'Material scheduled pouch quantity';
 comment on column psa.psa_psc_actv.psa_mat_sch_mix_qty is 'Material scheduled mix quantity';
 comment on column psa.psa_psc_actv.psa_mat_sch_ton_qty is 'Material scheduled tonne quantity';
+comment on column psa.psa_psc_actv.psa_mat_sch_plt_was is 'Material scheduled pallet wastage';
+comment on column psa.psa_psc_actv.psa_mat_sch_cas_was is 'Material scheduled case wastage';
+comment on column psa.psa_psc_actv.psa_mat_sch_pch_was is 'Material scheduled pouch wastage';
+comment on column psa.psa_psc_actv.psa_mat_sch_mix_was is 'Material scheduled mix wastage';
+comment on column psa.psa_psc_actv.psa_mat_sch_ton_was is 'Material scheduled tonne wastage';
 comment on column psa.psa_psc_actv.psa_mat_sch_dur_min is 'Material scheduled duration in minutes';
+comment on column psa.psa_psc_actv.psa_mat_act_qty is 'Material actual quantity - includes wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_was is 'Material actual wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_miq is 'Material actual mixes quantity - includes wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_miw is 'Material actual mixes wastage';
 comment on column psa.psa_psc_actv.psa_mat_act_plt_qty is 'Material actual pallet quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_cas_qty is 'Material actual case quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_pch_qty is 'Material actual pouch quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_mix_qty is 'Material actual mix quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_ton_qty is 'Material actual tonne quantity';
+comment on column psa.psa_psc_actv.psa_mat_act_plt_was is 'Material actual pallet wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_cas_was is 'Material actual case wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_pch_was is 'Material actual pouch wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_mix_was is 'Material actual mix wastage';
+comment on column psa.psa_psc_actv.psa_mat_act_ton_was is 'Material actual tonne wastage';
 comment on column psa.psa_psc_actv.psa_mat_act_dur_min is 'Material actual duration in minutes';
+comment on column psa.psa_psc_actv.psa_mat_inv_qty is 'Material inventory quantity';
+comment on column psa.psa_psc_actv.psa_mat_inv_plt_qty is 'Material inventory pallet quantity';
+comment on column psa.psa_psc_actv.psa_mat_inv_cas_qty is 'Material inventory case quantity';
+comment on column psa.psa_psc_actv.psa_mat_inv_pch_qty is 'Material inventory pouch quantity';
+comment on column psa.psa_psc_actv.psa_mat_inv_ton_qty is 'Material inventory tonne quantity';
 comment on column psa.psa_psc_actv.psa_mat_var_plt_qty is 'Material variance pallet quantity';
 comment on column psa.psa_psc_actv.psa_mat_var_cas_qty is 'Material variance case quantity';
 comment on column psa.psa_psc_actv.psa_mat_var_pch_qty is 'Material variance pouch quantity';
 comment on column psa.psa_psc_actv.psa_mat_var_mix_qty is 'Material variance mix quantity';
 comment on column psa.psa_psc_actv.psa_mat_var_ton_qty is 'Material variance tonne quantity';
+comment on column psa.psa_psc_actv.psa_mat_var_plt_was is 'Material variance pallet wastage';
+comment on column psa.psa_psc_actv.psa_mat_var_cas_was is 'Material variance case wastage';
+comment on column psa.psa_psc_actv.psa_mat_var_pch_was is 'Material variance pouch wastage';
+comment on column psa.psa_psc_actv.psa_mat_var_mix_was is 'Material variance mix wastage';
+comment on column psa.psa_psc_actv.psa_mat_var_ton_was is 'Material variance tonne wastage';
 comment on column psa.psa_psc_actv.psa_mat_var_dur_min is 'Material variance duration in minutes';
 
 /**/
