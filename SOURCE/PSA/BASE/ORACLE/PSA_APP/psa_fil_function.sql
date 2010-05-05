@@ -150,7 +150,7 @@ create or replace package body psa_app.psa_fil_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW FILCDE="'||to_char(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW FILCDE="'||psa_to_xml(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -159,14 +159,14 @@ create or replace package body psa_app.psa_fil_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW FILCDE="'||to_char(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW FILCDE="'||psa_to_xml(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW FILCDE="'||to_char(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW FILCDE="'||psa_to_xml(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -176,14 +176,14 @@ create or replace package body psa_app.psa_fil_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW FILCDE="'||to_char(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW FILCDE="'||psa_to_xml(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW FILCDE="'||to_char(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW FILCDE="'||psa_to_xml(tbl_list(idx).fde_fil_code)||'" FILNAM="'||psa_to_xml(tbl_list(idx).fde_fil_name)||'" FILSTS="'||psa_to_xml(tbl_list(idx).fde_fil_status)||'"/>'));
             end loop;
          end if;
       end if;
