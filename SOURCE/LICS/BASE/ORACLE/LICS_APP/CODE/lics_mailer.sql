@@ -31,7 +31,7 @@ create or replace package lics_mailer as
    1. PAR_File ('file name', null)
   
       Part to be created in email body.
-      File name ('filename.ext') - max length 64 characters (null = text in body)
+      File name ('filename.ext') - max length 128 characters (null = text in body)
 
   PROCEDURE: APPEND_DATA 
 
@@ -98,6 +98,7 @@ create or replace package lics_mailer as
  2006/01   Linden Glen    Created
  2006/12   Steve Gregan   Changed to handle multiple part emails
  2008/01   Steve Gregan   Changed to handle character sets
+ 2010/05   Steve Gregan   Changed to handle 128 character file names
 
 *******************************************************************************/
 
@@ -154,7 +155,7 @@ create or replace package body lics_mailer as
    var_subject varchar2(512);
    var_smtp_host varchar2(128);
    var_smtp_port number;
-   type rcd_part is record(part_file varchar2(64 char), part_dsix number, part_deix number);
+   type rcd_part is record(part_file varchar2(128 char), part_dsix number, part_deix number);
    type typ_part is table of rcd_part index by binary_integer;
    type typ_data is table of varchar2(4000 char) index by binary_integer;
    tbl_part typ_part;
@@ -340,8 +341,8 @@ create or replace package body lics_mailer as
       /* Validate the part file
       /*-*/
       if not(par_file is null) then
-         if length(par_file) > 64 then
-            raise_application_error(-20000, 'Maximum file name length of 64 characters exceeded');
+         if length(par_file) > 128 then
+            raise_application_error(-20000, 'Maximum file name length of 128 characters exceeded');
          end if;
       end if;
 
