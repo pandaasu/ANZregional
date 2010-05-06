@@ -1262,6 +1262,9 @@ sub PaintFunction()%>
    ////////////////////
    // Type Functions //
    ////////////////////
+   var cbolTypePulse;
+   var cstrTypePulse;
+   var cintTypePulse;
    var cobjTico = new Image();
    var cobjPico = new Image();
    cobjTico.src = 'timIcon.png';
@@ -1392,6 +1395,7 @@ sub PaintFunction()%>
       cobjTypeLineCell = null;
       cobjTypeSchdCell = null;
       cobjTypeUactCell = null;
+      cbolTypePulse = false;
       cstrTypeTind = '0';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
@@ -1400,6 +1404,8 @@ sub PaintFunction()%>
       cobjTypeLineCell = null;
       cobjTypeSchdCell = null;
       cobjTypeUactCell = null;
+      cbolTypePulse = false;
+      window.clearTimeout(cintTypePulse);
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -1433,6 +1439,7 @@ sub PaintFunction()%>
          var objActAry;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
+               cstrTypePulse = objElements[i].getAttribute('PULVAL');
                cstrTypeHead = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
                document.getElementById('hedType').innerText = cstrTypeHead;
             } else if (objElements[i].nodeName == 'DAYDFN') {
@@ -1533,11 +1540,56 @@ sub PaintFunction()%>
             document.getElementById('datTypeSchd').style.width = '100%';
             document.getElementById('datTypeUact').style.display = 'none';
          }
+         document.getElementById('typPulse').style.backgroundColor = '#b0e0e6';
+      }
+      if (cbolTypePulse == false) {
+         cbolTypePulse = true;
+         cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
       }
    }
-
-
+   function doTypePulseRequest() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETPUL" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_pulse_retrieve.asp',function(strResponse) {checkPulseLoad(strResponse);},true,streamXML(strXML));
+   }
+   function checkPulseLoad(strResponse) {
+      if (cbolTypePulse == false) {
+         return;
+      }
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+         } else {
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'PTYPUL') {
+                  if (cstrTypePulse != objElements[i].getAttribute('PULVAL')) {
+                     cstrTypePulse = objElements[i].getAttribute('PULVAL');
+                     document.getElementById('typPulse').style.backgroundColor = '#e8baba';
+                  } else {
+                     document.getElementById('typPulse').style.backgroundColor = '#b0e0e6';
+                  }
+               }
+            }
+         }
+      }
+      if (cbolTypePulse == true) {
+         cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
+      }
+   }
    function doTypeBack() {
+      cbolTypePulse = false;
+      window.clearTimeout(cintTypePulse);
       cobjTypeDate.length = 0;
       cobjTypeLine.length = 0;
       cobjTypeUact.length = 0;
@@ -1554,6 +1606,12 @@ sub PaintFunction()%>
          objUacBody.deleteRow(i);
       }
       displayScreen('dspWeeks');
+   }
+
+   function doTypeStckUpdate() {
+      if (!processForm()) {return;}
+      //doActivityStart(document.body);
+      //window.setTimeout('requestStckUpdate();',10);
    }
 
 
@@ -3786,14 +3844,16 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=15 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=17 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Stock&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeStckUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Line&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineAdd();">&nbsp;Add&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                  <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Schedule&nbsp;</nobr></td>
+                  <td id="typPulse" class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Schedule&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdTime();">&nbsp;Add Time&nbsp;</a></nobr></td>
