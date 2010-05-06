@@ -21,7 +21,7 @@
 create table psa.psa_psc_enty
    (pse_act_code                    number                        not null,
     pse_ent_time                    date                          not null,
-    pse_ent_text                    varchar2(128 char)            not null,
+    pse_ent_text                    varchar2(256 char)            not null,
     pse_ent_qnty                    number                        not null,
     pse_ent_wast                    number                        not null);
 

@@ -61,10 +61,9 @@ create table psa.psa_psc_actv
     psa_act_end_time                date                          null,
     psa_act_dur_mins                number                        null,
     psa_act_chg_mins                number                        null,
+    psa_act_com_text                varchar2(256 char)            null,
     psa_var_dur_mins                number                        null,
     psa_var_chg_mins                number                        null,
-    psa_var_dur_text                varchar2(2000 char)           null,
-    psa_var_chg_text                varchar2(2000 char)           null,
     psa_sac_code                    varchar2(32)                  null,
     psa_sac_name                    varchar2(120 char)            null,
     psa_mat_code                    varchar2(32)                  null,
@@ -106,8 +105,6 @@ create table psa.psa_psc_actv
     psa_mat_sch_dur_min             number                        null,
     psa_mat_act_qty                 number                        null,
     psa_mat_act_was                 number                        null,
-    psa_mat_act_miq                 number                        null,
-    psa_mat_act_miw                 number                        null,
     psa_mat_act_plt_qty             number                        null,
     psa_mat_act_cas_qty             number                        null,
     psa_mat_act_pch_qty             number                        null,
@@ -182,10 +179,9 @@ comment on column psa.psa_psc_actv.psa_act_chg_time is 'Actual change time';
 comment on column psa.psa_psc_actv.psa_act_end_time is 'Actual end time';
 comment on column psa.psa_psc_actv.psa_act_dur_mins is 'Actual duration in minutes';
 comment on column psa.psa_psc_actv.psa_act_chg_mins is 'Actual change in minutes';
+comment on column psa.psa_psc_actv.psa_act_com_text is 'Actual comment text';
 comment on column psa.psa_psc_actv.psa_var_dur_mins is 'Variance duration in minutes';
 comment on column psa.psa_psc_actv.psa_var_chg_mins is 'Variance change in minutes';
-comment on column psa.psa_psc_actv.psa_var_dur_text is 'Variance duration text';
-comment on column psa.psa_psc_actv.psa_var_chg_text is 'Variance change text';
 comment on column psa.psa_psc_actv.psa_sac_code is 'Schedule activity code';
 comment on column psa.psa_psc_actv.psa_sac_name is 'Schedule activity name';
 comment on column psa.psa_psc_actv.psa_mat_code is 'Material code';
@@ -227,8 +223,6 @@ comment on column psa.psa_psc_actv.psa_mat_sch_ton_was is 'Material scheduled to
 comment on column psa.psa_psc_actv.psa_mat_sch_dur_min is 'Material scheduled duration in minutes';
 comment on column psa.psa_psc_actv.psa_mat_act_qty is 'Material actual quantity - includes wastage';
 comment on column psa.psa_psc_actv.psa_mat_act_was is 'Material actual wastage';
-comment on column psa.psa_psc_actv.psa_mat_act_miq is 'Material actual mixes quantity - includes wastage';
-comment on column psa.psa_psc_actv.psa_mat_act_miw is 'Material actual mixes wastage';
 comment on column psa.psa_psc_actv.psa_mat_act_plt_qty is 'Material actual pallet quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_cas_qty is 'Material actual case quantity';
 comment on column psa.psa_psc_actv.psa_mat_act_pch_qty is 'Material actual pouch quantity';
