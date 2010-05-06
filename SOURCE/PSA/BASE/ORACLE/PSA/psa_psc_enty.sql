@@ -21,8 +21,8 @@
 create table psa.psa_psc_enty
    (pse_act_code                    number                        not null,
     pse_ent_time                    date                          not null,
-    psa_ent_qnty                    number                        not null,
-    psa_ent_wast                    number                        not null);
+    pse_ent_qnty                    number                        not null,
+    pse_ent_wast                    number                        not null);
 
 /**/
 /* Comments
@@ -30,7 +30,7 @@ create table psa.psa_psc_enty
 comment on table psa.psa_psc_enty is 'Production Schedule Entry Table';
 comment on column psa.psa_psc_enty.pse_act_code is 'Activity code';
 comment on column psa.psa_psc_enty.pse_ent_time is 'Entry time';
-comment on column psa.psa_psc_enty.psa_ent_qnty is 'Entry quantity';
+comment on column psa.psa_psc_enty.pse_ent_qnty is 'Entry quantity';
 comment on column psa.psa_psc_enty.pse_ent_wast is 'Entry wastage';
 
 /**/
