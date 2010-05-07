@@ -137,9 +137,9 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Production Schedule Selection';
       cobjScreens[2].hedtxt = 'Production Schedule Definition';
-      cobjScreens[3].hedtxt = 'Production Schedule Maintenance - Week Selection';
-      cobjScreens[4].hedtxt = 'Production Schedule Maintenance - Week Definition';
-      cobjScreens[5].hedtxt = 'Production Schedule Maintenance';
+      cobjScreens[3].hedtxt = 'Week Selection';
+      cobjScreens[4].hedtxt = 'Week Definition';
+      cobjScreens[5].hedtxt = 'Schedule Maintenance';
       cobjScreens[6].hedtxt = 'Line Maintenance';
       cobjScreens[7].hedtxt = 'Time Activity';
       cobjScreens[8].hedtxt = 'Create Production Activity';
@@ -295,12 +295,6 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Status&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
          objCell.innerHTML = '&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
@@ -316,7 +310,11 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
+               if (objElements[i].getAttribute('PSCCDE') == '*MASTER') {
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
+               } else {
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
+               }
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -331,28 +329,22 @@ sub PaintFunction()%>
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PSCNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PSCSTS')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
             }
          }
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = 4;
+            objCell.colSpan = 3;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[3].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[3].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -467,7 +459,7 @@ sub PaintFunction()%>
          if (cstrDefineMode == '*UPD') {
             document.getElementById('DEF_PscName').focus();
          } else {
-            document.getElementById('DEF_pscCode').focus();
+            document.getElementById('DEF_PscCode').focus();
          }
       }
    }
@@ -605,6 +597,7 @@ sub PaintFunction()%>
          for (var i=objPscType.rows.length-1;i>=0;i--) {
             objPscType.deleteRow(i);
          }
+         cobjScreens[3].hedtxt = 'Production Week Selection - '+cstrWeekProd;
          displayScreen('dspWeeks');
          var objTabHead = document.getElementById('tabHeadWeeks');
          var objTabBody = document.getElementById('tabBodyWeeks');
@@ -760,9 +753,9 @@ sub PaintFunction()%>
             return;
          }
          if (cstrWeekMode == '*UPD') {
-            cobjScreens[4].hedtxt = 'Update Production Schedule Week';
+            cobjScreens[4].hedtxt = 'Update Production Week - '+cstrWeekProd;
          } else if (cstrWeekMode == '*CRT') {
-            cobjScreens[4].hedtxt = 'Create Production Schedule Week';
+            cobjScreens[4].hedtxt = 'Create Production Week - '+cstrWeekProd;
          }
          displayScreen('dspWeekd');
          cobjWeekData = new clsWeekData();
@@ -1306,11 +1299,16 @@ sub PaintFunction()%>
    var cintTypeHsiz = new Array();
    var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
+   var cobjTypeStck = new Array();
    var cobjTypeLine = new Array();
    var cobjTypeUact = new Array();
    function clsTypeDate() {
       this.daycde = '';
       this.daynam = '';
+   }
+   function clsTypeStck() {
+      this.stknam = '';
+      this.stkbar = '0';
    }
    function clsTypeLine() {
       this.lincde = '';
@@ -1374,16 +1372,12 @@ sub PaintFunction()%>
       this.lincde = '';
       this.concde = '';
       this.dftflg = '';
+      this.sapqty = 0;
       this.reqplt = 0;
       this.reqcas = 0;
       this.reqpch = 0;
       this.reqmix = 0;
       this.reqton = 0;
-      this.calplt = 0;
-      this.calcas = 0;
-      this.calpch = 0;
-      this.calmix = 0;
-      this.calton = 0;
       this.schplt = 0;
       this.schcas = 0;
       this.schpch = 0;
@@ -1433,6 +1427,7 @@ sub PaintFunction()%>
          cobjTypeSchdCell = null;
          cobjTypeUactCell = null;
          cobjTypeDate.length = 0;
+         cobjTypeStck.length = 0;
          cobjTypeLine.length = 0;
          cobjTypeUact.length = 0;
          var objShfAry;
@@ -1440,12 +1435,16 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                cstrTypePulse = objElements[i].getAttribute('PULVAL');
-               cstrTypeHead = cobjScreens[5].hedtxt+' - '+objElements[i].getAttribute('PTYNAM')+' - '+objElements[i].getAttribute('WEKNAM');
+               cstrTypeHead = 'Schedule Maintenance - '+cstrTypeProd+' - '+objElements[i].getAttribute('WEKNAM')+' - '+objElements[i].getAttribute('PTYNAM');
                document.getElementById('hedType').innerText = cstrTypeHead;
             } else if (objElements[i].nodeName == 'DAYDFN') {
                cobjTypeDate[cobjTypeDate.length] = new clsTypeDate();
                cobjTypeDate[cobjTypeDate.length-1].daycde = objElements[i].getAttribute('DAYCDE');
                cobjTypeDate[cobjTypeDate.length-1].daynam = objElements[i].getAttribute('DAYNAM');
+            } else if (objElements[i].nodeName == 'STKDFN') {
+               cobjTypeStck[cobjTypeStck.length] = new clsTypeStck();
+               cobjTypeStck[cobjTypeStck.length-1].stknam = objElements[i].getAttribute('STKNAM');
+               cobjTypeStck[cobjTypeStck.length-1].stkbar = objElements[i].getAttribute('STKBAR');
             } else if (objElements[i].nodeName == 'LINDFN') {
                cobjTypeLine[cobjTypeLine.length] = new clsTypeLine();
                cobjTypeLine[cobjTypeLine.length-1].lincde = objElements[i].getAttribute('LINCDE');
@@ -1510,16 +1509,12 @@ sub PaintFunction()%>
                cobjTypeUact[cobjTypeUact.length-1].lincde = objElements[i].getAttribute('LINCDE');
                cobjTypeUact[cobjTypeUact.length-1].concde = objElements[i].getAttribute('CONCDE');
                cobjTypeUact[cobjTypeUact.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
+               cobjTypeUact[cobjTypeUact.length-1].sapqty = objElements[i].getAttribute('SAPQTY');
                cobjTypeUact[cobjTypeUact.length-1].reqplt = objElements[i].getAttribute('REQPLT');
                cobjTypeUact[cobjTypeUact.length-1].reqcas = objElements[i].getAttribute('REQCAS');
                cobjTypeUact[cobjTypeUact.length-1].reqpch = objElements[i].getAttribute('REQPCH');
                cobjTypeUact[cobjTypeUact.length-1].reqmix = objElements[i].getAttribute('REQMIX');
                cobjTypeUact[cobjTypeUact.length-1].reqton = objElements[i].getAttribute('REQTON');
-               cobjTypeUact[cobjTypeUact.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               cobjTypeUact[cobjTypeUact.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               cobjTypeUact[cobjTypeUact.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               cobjTypeUact[cobjTypeUact.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               cobjTypeUact[cobjTypeUact.length-1].calton = objElements[i].getAttribute('CALTON');
                cobjTypeUact[cobjTypeUact.length-1].schplt = objElements[i].getAttribute('SCHPLT');
                cobjTypeUact[cobjTypeUact.length-1].schcas = objElements[i].getAttribute('SCHCAS');
                cobjTypeUact[cobjTypeUact.length-1].schpch = objElements[i].getAttribute('SCHPCH');
@@ -1574,7 +1569,6 @@ sub PaintFunction()%>
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'PTYPUL') {
                   if (cstrTypePulse != objElements[i].getAttribute('PULVAL')) {
-                     cstrTypePulse = objElements[i].getAttribute('PULVAL');
                      document.getElementById('typPulse').style.backgroundColor = '#e8baba';
                   } else {
                      document.getElementById('typPulse').style.backgroundColor = '#b0e0e6';
@@ -1591,6 +1585,7 @@ sub PaintFunction()%>
       cbolTypePulse = false;
       window.clearTimeout(cintTypePulse);
       cobjTypeDate.length = 0;
+      cobjTypeStck.length = 0;
       cobjTypeLine.length = 0;
       cobjTypeUact.length = 0;
       var objSchHead = document.getElementById('tabHeadSchd');
@@ -1900,6 +1895,16 @@ sub PaintFunction()%>
       var intWrkEnd;
       var strWrkNam;
 
+      strWrkNam = '';
+      for (var s=0;s<cobjTypeStck.length;s++) {
+         if ((cobjTypeStck[s].stkbar-0) == intWrkCnt) {
+            if (strWrkNam != '') {
+               strWrkNam = strWrkNam+' AND ';
+            }
+            strWrkNam = strWrkNam+cobjTypeStck[s].stknam;
+         }
+      }
+
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
@@ -1910,7 +1915,13 @@ sub PaintFunction()%>
       } else {
          objCell.style.fontWeight = 'normal';
       }
-      objCell.style.backgroundColor = '#dddfff';
+      if (strWrkNam == '') {
+         objCell.style.backgroundColor = '#dddfff';
+      } else {
+         objCell.style.backgroundColor = '#c0c000';
+         objCell.style.cursor = 'pointer';
+         objCell.title = strWrkNam;
+      }
       objCell.style.color = '#000000';
       objCell.style.border = '#000000 1px solid';
       objCell.style.paddingLeft = '2px';
@@ -2008,6 +2019,7 @@ sub PaintFunction()%>
                objDiv.style.paddingRight = '2px';
                objDiv.style.height = '100%';
                objDiv.style.width = '100%';
+               objDiv.style.cursor = 'pointer';
                objDiv.innerHTML = '&nbsp;';
                objDiv.title = strWrkNam;
                objCell.appendChild(objDiv);
@@ -2607,17 +2619,17 @@ sub PaintFunction()%>
             objCell.appendChild(document.createTextNode('Line ('+objWork.lincde+') '+objWork.concde));
             objCell.appendChild(document.createElement('br'));
             if (cstrTypeCode == '*FILL') {
-               objCell.appendChild(document.createTextNode('Cases Requested ('+objWork.reqcas+') Calculated ('+objWork.calcas+') Scheduled ('+objWork.schcas+')'));
+               objCell.appendChild(document.createTextNode('Cases SAP('+objWork.sapqty+') Requested('+objWork.reqcas+') Scheduled('+objWork.schcas+')'));
                objCell.appendChild(document.createElement('br'));
-               objCell.appendChild(document.createTextNode('Pouches Requested ('+objWork.reqpch+') Calculated ('+objWork.calpch+') Scheduled ('+objWork.schpch+')'));
+               objCell.appendChild(document.createTextNode('Pouches Requested('+objWork.reqpch+') Scheduled('+objWork.schpch+')'));
                objCell.appendChild(document.createElement('br'));
-               objCell.appendChild(document.createTextNode('Mixes Requested ('+objWork.reqmix+') Calculated ('+objWork.calmix+') Scheduled ('+objWork.schmix+')'));
+               objCell.appendChild(document.createTextNode('Mixes Requested('+objWork.reqmix+') Scheduled('+objWork.schmix+')'));
             } else if (cstrTypeCode == '*PACK') {
-               objCell.appendChild(document.createTextNode('Cases Requested ('+objWork.reqcas+') Calculated ('+objWork.calcas+') Scheduled ('+objWork.schcas+')'));
+               objCell.appendChild(document.createTextNode('Cases SAP('+objWork.sapqty+') Requested('+objWork.reqcas+') Scheduled('+objWork.schcas+')'));
                objCell.appendChild(document.createElement('br'));
-               objCell.appendChild(document.createTextNode('Pallets Requested ('+objWork.reqplt+') Calculated ('+objWork.calplt+') Scheduled ('+objWork.schplt+')'));
+               objCell.appendChild(document.createTextNode('Pallets Requested('+objWork.reqplt+') Scheduled('+objWork.schplt+')'));
             } else if (cstrTypeCode == '*FORM') {
-               objCell.appendChild(document.createTextNode('Pouches Requested ('+objWork.reqpch+') Calculated ('+objWork.calpch+') Scheduled ('+objWork.schpch+')'));
+               objCell.appendChild(document.createTextNode('Pouches SAP('+objWork.sapqty+') Requested('+objWork.reqpch+') Scheduled('+objWork.schpch+')'));
             }
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode('Scheduled Duration ('+objWork.schdur+')'));
@@ -3095,38 +3107,42 @@ sub PaintFunction()%>
          }
          cobjTypeUact.length = 0;
          for (var i=0;i<objElements.length;i++) {
-            if (cstrActvMode == '*RTVSCH' && objElements[i].nodeName == 'LINACT') {
-               objActAry[objActAry.length] = new clsTypeActv();
-               objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
-               objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
-               objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
-               objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
-               objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
-               objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
-               objActAry[objActAry.length-1].wekflw = objElements[i].getAttribute('WEKFLW');
-               objActAry[objActAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
-               objActAry[objActAry.length-1].chgtim = objElements[i].getAttribute('CHGTIM');
-               objActAry[objActAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
-               objActAry[objActAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
-               objActAry[objActAry.length-1].chgbar = objElements[i].getAttribute('CHGBAR');
-               objActAry[objActAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
-               objActAry[objActAry.length-1].schdmi = objElements[i].getAttribute('SCHDMI');
-               objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
-               objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
-               objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
-               objActAry[objActAry.length-1].actent = objElements[i].getAttribute('ACTENT');
-               objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
-               objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
-               objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
-               objActAry[objActAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
-               objActAry[objActAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
-               objActAry[objActAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
-               objActAry[objActAry.length-1].schton = objElements[i].getAttribute('SCHTON');
-               objActAry[objActAry.length-1].actplt = objElements[i].getAttribute('ACTPLT');
-               objActAry[objActAry.length-1].actcas = objElements[i].getAttribute('ACTCAS');
-               objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
-               objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
-               objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+            if (objElements[i].nodeName == 'PTYDFN') {
+               cstrTypePulse = objElements[i].getAttribute('PULVAL');
+            } else if (objElements[i].nodeName == 'LINACT') {
+               if (cstrActvMode == '*RTVSCH') {
+                  objActAry[objActAry.length] = new clsTypeActv();
+                  objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
+                  objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
+                  objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
+                  objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
+                  objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
+                  objActAry[objActAry.length-1].winflw = objElements[i].getAttribute('WINFLW');
+                  objActAry[objActAry.length-1].wekflw = objElements[i].getAttribute('WEKFLW');
+                  objActAry[objActAry.length-1].strtim = objElements[i].getAttribute('STRTIM');
+                  objActAry[objActAry.length-1].chgtim = objElements[i].getAttribute('CHGTIM');
+                  objActAry[objActAry.length-1].endtim = objElements[i].getAttribute('ENDTIM');
+                  objActAry[objActAry.length-1].strbar = objElements[i].getAttribute('STRBAR');
+                  objActAry[objActAry.length-1].chgbar = objElements[i].getAttribute('CHGBAR');
+                  objActAry[objActAry.length-1].endbar = objElements[i].getAttribute('ENDBAR');
+                  objActAry[objActAry.length-1].schdmi = objElements[i].getAttribute('SCHDMI');
+                  objActAry[objActAry.length-1].actdmi = objElements[i].getAttribute('ACTDMI');
+                  objActAry[objActAry.length-1].schcmi = objElements[i].getAttribute('SCHCMI');
+                  objActAry[objActAry.length-1].actcmi = objElements[i].getAttribute('ACTCMI');
+                  objActAry[objActAry.length-1].actent = objElements[i].getAttribute('ACTENT');
+                  objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
+                  objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+                  objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
+                  objActAry[objActAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
+                  objActAry[objActAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
+                  objActAry[objActAry.length-1].schmix = objElements[i].getAttribute('SCHMIX');
+                  objActAry[objActAry.length-1].schton = objElements[i].getAttribute('SCHTON');
+                  objActAry[objActAry.length-1].actplt = objElements[i].getAttribute('ACTPLT');
+                  objActAry[objActAry.length-1].actcas = objElements[i].getAttribute('ACTCAS');
+                  objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
+                  objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
+                  objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+               }
             } else if (objElements[i].nodeName == 'UNSACT') {
                cobjTypeUact[cobjTypeUact.length] = new clsTypeUact();
                cobjTypeUact[cobjTypeUact.length-1].actcde = objElements[i].getAttribute('ACTCDE');
@@ -3136,16 +3152,12 @@ sub PaintFunction()%>
                cobjTypeUact[cobjTypeUact.length-1].lincde = objElements[i].getAttribute('LINCDE');
                cobjTypeUact[cobjTypeUact.length-1].concde = objElements[i].getAttribute('CONCDE');
                cobjTypeUact[cobjTypeUact.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
+               cobjTypeUact[cobjTypeUact.length-1].sapqty = objElements[i].getAttribute('SAPQTY');
                cobjTypeUact[cobjTypeUact.length-1].reqplt = objElements[i].getAttribute('REQPLT');
                cobjTypeUact[cobjTypeUact.length-1].reqcas = objElements[i].getAttribute('REQCAS');
                cobjTypeUact[cobjTypeUact.length-1].reqpch = objElements[i].getAttribute('REQPCH');
                cobjTypeUact[cobjTypeUact.length-1].reqmix = objElements[i].getAttribute('REQMIX');
                cobjTypeUact[cobjTypeUact.length-1].reqton = objElements[i].getAttribute('REQTON');
-               cobjTypeUact[cobjTypeUact.length-1].calplt = objElements[i].getAttribute('CALPLT');
-               cobjTypeUact[cobjTypeUact.length-1].calcas = objElements[i].getAttribute('CALCAS');
-               cobjTypeUact[cobjTypeUact.length-1].calpch = objElements[i].getAttribute('CALPCH');
-               cobjTypeUact[cobjTypeUact.length-1].calmix = objElements[i].getAttribute('CALMIX');
-               cobjTypeUact[cobjTypeUact.length-1].calton = objElements[i].getAttribute('CALTON');
                cobjTypeUact[cobjTypeUact.length-1].schplt = objElements[i].getAttribute('SCHPLT');
                cobjTypeUact[cobjTypeUact.length-1].schcas = objElements[i].getAttribute('SCHCAS');
                cobjTypeUact[cobjTypeUact.length-1].schpch = objElements[i].getAttribute('SCHPCH');
@@ -3404,57 +3416,54 @@ sub PaintFunction()%>
          if (cstrProdMode == '*UPD') {
             if (cstrTypeCode == '*FILL') {
                cobjScreens[9].hedtxt = 'Update Filling Activity';
-               document.getElementById('wrkUProd').innerHTML = '&nbsp;Scheduled Cases:&nbsp;';
+               document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*PACK') {
                cobjScreens[9].hedtxt = 'Update Packing Activity';
-               document.getElementById('wrkUProd').innerHTML = '&nbsp;Scheduled Cases:&nbsp;';
+               document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*FORM') {
                cobjScreens[9].hedtxt = 'Update Forming Activity';
-               document.getElementById('wrkUProd').innerHTML = '&nbsp;Scheduled Pouches:&nbsp;';
+               document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Pouches:&nbsp;';
             }
             displayScreen('dspUProd');
          } else if (cstrProdMode == '*CRT') {
             if (cstrTypeCode == '*FILL') {
                cobjScreens[8].hedtxt = 'Create Filling Activity';
-               document.getElementById('wrkCProd').innerHTML = '&nbsp;Scheduled Cases:&nbsp;';
+               document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*PACK') {
                cobjScreens[8].hedtxt = 'Create Packing Activity';
-               document.getElementById('wrkCProd').innerHTML = '&nbsp;Scheduled Cases:&nbsp;';
+               document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*FORM') {
                cobjScreens[8].hedtxt = 'Create Forming Activity';
-               document.getElementById('wrkCProd').innerHTML = '&nbsp;Scheduled Pouches:&nbsp;';
+               document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Pouches:&nbsp;';
             }
             displayScreen('dspCProd');
          }
          var objMatData;
-         var strCalFlag = '';
-         var objCalFlag;
          var strChgFlag = '';
-         var objChgFlag;
          if (cstrProdMode == '*UPD') {
             objChgFlag = document.getElementById('UPRD_ChgFlag');
             document.getElementById('UPRD_MatData').innerHTML = '';
             document.getElementById('UPRD_ReqData').innerHTML = '';
-            document.getElementById('UPRD_CalData').innerHTML = '';
-            document.getElementById('UPRD_SchQnty').value = '0';
+            document.getElementById('UPRD_SchData').innerHTML = '';
+            document.getElementById('UPRD_ReqQnty').value = '0';
             document.getElementById('UPRD_ChgMins').value = '0';
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'ACTDFN') {
                   if (cstrTypeCode == '*FILL') {
                      document.getElementById('UPRD_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
                      document.getElementById('UPRD_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Cases</font> ('+objElements[i].getAttribute('REQCAS')+') <font style="FONT-WEIGHT:bold">Pouches</font> ('+objElements[i].getAttribute('REQPCH')+') <font style="FONT-WEIGHT:bold">Mixes</font> ('+objElements[i].getAttribute('REQMIX')+') <font style="FONT-WEIGHT:bold">Tonnes</font> ('+objElements[i].getAttribute('REQTON')+')</p>';
-                     document.getElementById('UPRD_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Cases</font> ('+objElements[i].getAttribute('CALCAS')+') <font style="FONT-WEIGHT:bold">Pouches</font> ('+objElements[i].getAttribute('CALPCH')+') <font style="FONT-WEIGHT:bold">Mixes</font> ('+objElements[i].getAttribute('CALMIX')+') <font style="FONT-WEIGHT:bold">Tonnes</font> ('+objElements[i].getAttribute('CALTON')+')</p>';
-                     document.getElementById('UPRD_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+                     document.getElementById('UPRD_SchData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Scheduled Cases</font> ('+objElements[i].getAttribute('SCHCAS')+') <font style="FONT-WEIGHT:bold">Pouches</font> ('+objElements[i].getAttribute('SCHPCH')+') <font style="FONT-WEIGHT:bold">Mixes</font> ('+objElements[i].getAttribute('SCHMIX')+') <font style="FONT-WEIGHT:bold">Tonnes</font> ('+objElements[i].getAttribute('SCHTON')+')</p>';
+                     document.getElementById('UPRD_ReqQnty').value = objElements[i].getAttribute('REQCAS');
                   } else if (cstrTypeCode == '*PACK') {
                      document.getElementById('UPRD_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
                      document.getElementById('UPRD_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Cases</font> ('+objElements[i].getAttribute('REQCAS')+') <font style="FONT-WEIGHT:bold">Pallets</font> ('+objElements[i].getAttribute('REQPLT')+')</p>';
-                     document.getElementById('UPRD_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Cases</font> ('+objElements[i].getAttribute('CALCAS')+') <font style="FONT-WEIGHT:bold">Pallets</font> ('+objElements[i].getAttribute('CALPLT')+')</p>';
-                     document.getElementById('UPRD_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+                     document.getElementById('UPRD_SchData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Scheduled Cases</font> ('+objElements[i].getAttribute('SCHCAS')+') <font style="FONT-WEIGHT:bold">Pallets</font> ('+objElements[i].getAttribute('SCHPLT')+')</p>';
+                     document.getElementById('UPRD_ReqQnty').value = objElements[i].getAttribute('REQCAS');
                   } else if (cstrTypeCode == '*FORM') {
                      document.getElementById('UPRD_MatData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Material:</font> ('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM')+'</p>';
                      document.getElementById('UPRD_ReqData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Requested Pouches</font> ('+objElements[i].getAttribute('REQPCH')+')</p>';
-                     document.getElementById('UPRD_CalData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Calculated Pouches</font> ('+objElements[i].getAttribute('CALPCH')+')</p>';
-                     document.getElementById('UPRD_SchQnty').value = objElements[i].getAttribute('SCHPCH');
+                     document.getElementById('UPRD_SchData').innerHTML = '<p><font style="FONT-WEIGHT:bold">Scheduled Pouches</font> ('+objElements[i].getAttribute('SCHPCH')+')</p>';
+                     document.getElementById('UPRD_ReqQnty').value = objElements[i].getAttribute('REQPCH');
                   }
                   strChgFlag = objElements[i].getAttribute('CHGFLG');
                   document.getElementById('UPRD_ChgMins').value = objElements[i].getAttribute('CHGMIN');
@@ -3467,37 +3476,28 @@ sub PaintFunction()%>
                   break;
                }
             }
-            document.getElementById('UPRD_SchQnty').focus();
+            document.getElementById('UPRD_ReqQnty').focus();
          } else {
             objMatData = document.getElementById('CPRD_MatData');
             objMatData.options.length = 0;
             objMatData.options[0] = new Option('** Select Material **','*NONE');
             objMatData.selectedIndex = 0;
-            objCalFlag = document.getElementById('CPRD_CalFlag');
             objChgFlag = document.getElementById('CPRD_ChgFlag');
-            document.getElementById('CPRD_SchQnty').value = '0';
+            document.getElementById('CPRD_ReqQnty').value = '0';
             document.getElementById('CPRD_ChgMins').value = '0';
             for (var i=0;i<objElements.length;i++) {
                if (objElements[i].nodeName == 'ACTDFN') {
                   if (cstrTypeCode == '*FILL') {
-                     document.getElementById('CPRD_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+                     document.getElementById('CPRD_ReqQnty').value = objElements[i].getAttribute('REQCAS');
                   } else if (cstrTypeCode == '*PACK') {
-                     document.getElementById('CPRD_SchQnty').value = objElements[i].getAttribute('SCHCAS');
+                     document.getElementById('CPRD_ReqQnty').value = objElements[i].getAttribute('REQCAS');
                   } else if (cstrTypeCode == '*FORM') {
-                     document.getElementById('CPRD_SchQnty').value = objElements[i].getAttribute('SCHPCH');
+                     document.getElementById('CPRD_ReqQnty').value = objElements[i].getAttribute('REQPCH');
                   }
-                  strCalFlag = objElements[i].getAttribute('CALFLG');
                   strChgFlag = objElements[i].getAttribute('CHGFLG');
                   document.getElementById('CPRD_ChgMins').value = objElements[i].getAttribute('CHGMIN');
                } else if (objElements[i].nodeName == 'MATDFN') {
                   objMatData.options[objMatData.options.length] = new Option('('+objElements[i].getAttribute('MATCDE')+') '+objElements[i].getAttribute('MATNAM'),objElements[i].getAttribute('MATCDE'));
-               }
-            }
-            objCalFlag.selectedIndex = -1;
-            for (var i=0;i<objCalFlag.length;i++) {
-               if (objCalFlag.options[i].value == strCalFlag) {
-                  objCalFlag.options[i].selected = true;
-                  break;
                }
             }
             objChgFlag.selectedIndex = -1;
@@ -3519,19 +3519,18 @@ sub PaintFunction()%>
    function doProdAccept() {
       if (!processForm()) {return;}
       var objMatData;
-      var objCalFlag;
       var objChgFlag;
       var strMessage = '';
       if (cstrProdMode == '*UPD') {
          objChgFlag = document.getElementById('UPRD_ChgFlag');
-         if (document.getElementById('UPRD_SchQnty').value == '' || document.getElementById('UPRD_SchQnty').value <= '0') {
+         if (document.getElementById('UPRD_ReqQnty').value == '' || document.getElementById('UPRD_ReqQnty').value <= '0') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             if (cstrTypeCode == '*FILL') {
-               strMessage = strMessage + 'Scheduled cases must be greater than zero';
+               strMessage = strMessage + 'Requested cases must be greater than zero';
             } else if (cstrTypeCode == '*PACK') {
-               strMessage = strMessage + 'Scheduled cases must be greater than zero';
+               strMessage = strMessage + 'Requested cases must be greater than zero';
             } else if (cstrTypeCode == '*FORM') {
-               strMessage = strMessage + 'Scheduled pouches must be greater than zero';
+               strMessage = strMessage + 'Requested pouches must be greater than zero';
             }
          }
          if (objChgFlag.selectedIndex == -1) {
@@ -3551,24 +3550,19 @@ sub PaintFunction()%>
          }
       } else {
          objMatData = document.getElementById('CPRD_MatData');
-         objCalFlag = document.getElementById('CPRD_CalFlag');
          objChgFlag = document.getElementById('CPRD_ChgFlag');
          if (objMatData.selectedIndex == -1 || objMatData.options[objMatData.selectedIndex].value == '*NONE') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Material must be selected';
          }
-         if (objCalFlag.selectedIndex == -1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Scheduled quantity must be selected';
-         }
-         if (document.getElementById('CPRD_SchQnty').value == '' || document.getElementById('CPRD_SchQnty').value <= '0') {
+         if (document.getElementById('CPRD_ReqQnty').value == '' || document.getElementById('CPRD_ReqQnty').value <= '0') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             if (cstrTypeCode == '*FILL') {
-               strMessage = strMessage + 'Scheduled cases must be greater than zero';
+               strMessage = strMessage + 'Requested cases must be greater than zero';
             } else if (cstrTypeCode == '*PACK') {
-               strMessage = strMessage + 'Scheduled cases must be greater than zero';
+               strMessage = strMessage + 'Requested cases must be greater than zero';
             } else if (cstrTypeCode == '*FORM') {
-               strMessage = strMessage + 'Scheduled pouches must be greater than zero';
+               strMessage = strMessage + 'Requested pouches must be greater than zero';
             }
          }
          if (objChgFlag.selectedIndex == -1) {
@@ -3602,7 +3596,7 @@ sub PaintFunction()%>
          strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
          strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
          strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
-         strXML = strXML+' SCHQTY="'+fixXML(document.getElementById('UPRD_SchQnty').value)+'"';
+         strXML = strXML+' REQQTY="'+fixXML(document.getElementById('UPRD_ReqQnty').value)+'"';
          strXML = strXML+' CHGFLG="'+fixXML(objChgFlag.options[objChgFlag.selectedIndex].value)+'"';
          strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('UPRD_ChgMins').value)+'"';
          strXML = strXML+'/>';
@@ -3617,8 +3611,7 @@ sub PaintFunction()%>
          strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
          strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
          strXML = strXML+' MATCDE="'+fixXML(objMatData.options[objMatData.selectedIndex].value)+'"';
-         strXML = strXML+' SCHQTY="'+fixXML(document.getElementById('CPRD_SchQnty').value)+'"';
-         strXML = strXML+' CALFLG="'+fixXML(objCalFlag.options[objCalFlag.selectedIndex].value)+'"';
+         strXML = strXML+' REQQTY="'+fixXML(document.getElementById('CPRD_ReqQnty').value)+'"';
          strXML = strXML+' CHGFLG="'+fixXML(objChgFlag.options[objChgFlag.selectedIndex].value)+'"';
          strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('CPRD_ChgMins').value)+'"';
          strXML = strXML+'/>';
@@ -3844,25 +3837,38 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=17 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
-                  <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Stock&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeStckUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Line&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineAdd();">&nbsp;Add&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeLineDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
-                  <td id="typPulse" class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Schedule&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdTime();">&nbsp;Add Time&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeSchdProd();">&nbsp;Add Production&nbsp;</a></nobr></td>
-                  <td class="clsTabB" align=center colspan=1 nowrap><nobr>&nbsp;Activities&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeUactToggle();">&nbsp;Show/Hide&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeUactDetach();">&nbsp;Detach&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeUactAttach();">&nbsp;Attach&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTypeUactDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdReport();">&nbsp;Schedule&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeShftReport();">&nbsp;Shift&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeResoReport();">&nbsp;Resource&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeProdReport();">&nbsp;Production&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=16 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Stock&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeStckUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Line&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineAdd();">&nbsp;Add&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
+                  <td id="typPulse" class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Schedule&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdTime();">&nbsp;Add Time&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdProd();">&nbsp;Add Production&nbsp;</a></nobr></td>
+                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Activities&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeUactToggle();">&nbsp;Show/Hide&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeUactDetach();">&nbsp;Detach&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeUactAttach();">&nbsp;Attach&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeUactDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -3998,16 +4004,7 @@ sub PaintFunction()%>
       <tr>
          <td id="wrkCProd" class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requested Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="CPRD_SchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Schedule Quantity:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="CPRD_CalFlag">
-               <option value="0">Requested quantity
-               <option value="1">Calculated quantity
-            </select>
+            <input class="clsInputNN" type="text" name="CPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
@@ -4062,15 +4059,15 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="UPRD_CalData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
+         <td id="UPRD_SchData" class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td id="wrkUProd" class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Scheduled Cases:&nbsp;</nobr></td>
+         <td id="wrkUProd" class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requested Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="UPRD_SchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="UPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
