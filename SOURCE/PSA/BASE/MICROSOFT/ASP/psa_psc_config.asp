@@ -2639,7 +2639,7 @@ sub PaintFunction()%>
    /////////////////////
    function requestStckUpdate() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDSTK" SRCCDE="*SCH"';
-      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"/>';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_stck_update.asp',function(strResponse) {checkStckLoad(strResponse);},false,streamXML(strXML));
    }
    function checkStckLoad(strResponse) {
@@ -3307,9 +3307,9 @@ sub PaintFunction()%>
             return;
          }
          if (cstrTimeMode == '*UPD') {
-            cobjScreens[7].hedtxt = 'Update Time Activity';
+            cobjScreens[7].hedtxt = 'Update Scheduled Time Activity';
          } else if (cstrTimeMode == '*CRT') {
-            cobjScreens[7].hedtxt = 'Create Time Activity';
+            cobjScreens[7].hedtxt = 'Create Scheduled Time Activity';
          }
          displayScreen('dspTime');
          var strSacCode = '';
@@ -3448,25 +3448,25 @@ sub PaintFunction()%>
          }
          if (cstrProdMode == '*UPD') {
             if (cstrTypeCode == '*FILL') {
-               cobjScreens[9].hedtxt = 'Update Filling Activity';
+               cobjScreens[9].hedtxt = 'Update Scheduled Filling Activity';
                document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*PACK') {
-               cobjScreens[9].hedtxt = 'Update Packing Activity';
+               cobjScreens[9].hedtxt = 'Update Scheduled Packing Activity';
                document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*FORM') {
-               cobjScreens[9].hedtxt = 'Update Forming Activity';
+               cobjScreens[9].hedtxt = 'Update Scheduled Forming Activity';
                document.getElementById('wrkUProd').innerHTML = '&nbsp;Requested Pouches:&nbsp;';
             }
             displayScreen('dspUProd');
          } else if (cstrProdMode == '*CRT') {
             if (cstrTypeCode == '*FILL') {
-               cobjScreens[8].hedtxt = 'Create Filling Activity';
+               cobjScreens[8].hedtxt = 'Create Scheduled Filling Activity';
                document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*PACK') {
-               cobjScreens[8].hedtxt = 'Create Packing Activity';
+               cobjScreens[8].hedtxt = 'Create Scheduled Packing Activity';
                document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Cases:&nbsp;';
             } else if (cstrTypeCode == '*FORM') {
-               cobjScreens[8].hedtxt = 'Create Forming Activity';
+               cobjScreens[8].hedtxt = 'Create Scheduled Forming Activity';
                document.getElementById('wrkCProd').innerHTML = '&nbsp;Requested Pouches:&nbsp;';
             }
             displayScreen('dspCProd');
