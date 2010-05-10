@@ -26,7 +26,7 @@ create table psa.psa_psc_actv
     psa_act_type                    varchar2(1)                   not null,
     psa_upd_user                    varchar2(30)                  not null,
     psa_upd_date                    date                          not null,
-    psa_chg_flag                    varchar2(1)                   null,
+    psa_sch_chg_flag                varchar2(1)                   null,
     psa_sch_lin_code                varchar2(32)                  null,
     psa_sch_con_code                varchar2(32)                  null,
     psa_sch_dft_flag                varchar2(1)                   null,
@@ -43,6 +43,7 @@ create table psa.psa_psc_actv
     psa_sch_dur_mins                number                        null,
     psa_sch_chg_mins                number                        null,
     psa_act_ent_flag                varchar2(1)                   null,
+    psa_act_chg_flag                varchar2(1)                   null,
     psa_act_lin_code                varchar2(32)                  null,
     psa_act_con_code                varchar2(32)                  null,
     psa_act_dft_flag                varchar2(1)                   null,
@@ -144,7 +145,7 @@ comment on column psa.psa_psc_actv.psa_prd_type is 'Production type code';
 comment on column psa.psa_psc_actv.psa_act_type is 'Activity type code (P=production or T=time)';
 comment on column psa.psa_psc_actv.psa_upd_user is 'Last updated user';
 comment on column psa.psa_psc_actv.psa_upd_date is 'Last updated date';
-comment on column psa.psa_psc_actv.psa_chg_flag is 'Activity production change event flag (0=no or 1=yes)';
+comment on column psa.psa_psc_actv.psa_sch_chg_flag is 'Scheduled activity production change event flag (0=no or 1=yes)';
 comment on column psa.psa_psc_actv.psa_sch_lin_code is 'Scheduled line code';
 comment on column psa.psa_psc_actv.psa_sch_con_code is 'Scheduled line configuration code';
 comment on column psa.psa_psc_actv.psa_sch_dft_flag is 'Scheduled default line flag';
@@ -161,6 +162,7 @@ comment on column psa.psa_psc_actv.psa_sch_end_time is 'Scheduled end time';
 comment on column psa.psa_psc_actv.psa_sch_dur_mins is 'Scheduled duration in minutes';
 comment on column psa.psa_psc_actv.psa_sch_chg_mins is 'Scheduled change in minutes';
 comment on column psa.psa_psc_actv.psa_act_ent_flag is 'Actual entered flag (0=no or 1=yes)';
+comment on column psa.psa_psc_actv.psa_act_chg_flag is 'Actual activity production change event flag (0=no or 1=yes)';
 comment on column psa.psa_psc_actv.psa_act_lin_code is 'Actual line code';
 comment on column psa.psa_psc_actv.psa_act_con_code is 'Actual line configuration code';
 comment on column psa.psa_psc_actv.psa_act_dft_flag is 'Actual default line flag';
