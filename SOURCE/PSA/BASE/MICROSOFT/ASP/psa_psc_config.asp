@@ -237,7 +237,7 @@ sub PaintFunction()%>
       window.setTimeout('requestSelectList(\'*NXTDEF\');',10);
    }
    function requestSelectList(strAction) {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="'+strAction+'" SRCCDE="*SCH" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
@@ -359,7 +359,7 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" PSCCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
@@ -400,19 +400,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" PSCCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" PSCCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" PSCCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -467,7 +467,7 @@ sub PaintFunction()%>
       if (!processForm()) {return;}
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF" SRCCDE="*SCH"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
          strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
@@ -571,7 +571,7 @@ sub PaintFunction()%>
       this.cmocde = '';
    }
    function requestWeekList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_week_select.asp',function(strResponse) {checkWeekList(strResponse);},false,streamXML(strXML));
    }
    function checkWeekList(strResponse) {
@@ -643,15 +643,11 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.className = 'clsLabelFN';
-         //      if (objElements[i].getAttribute('SLTSTS') == '0') {
-         //         objCell.innerHTML = '&nbsp;';
-         //      } else {
-                  if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
-                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
-                  } else {
-                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
-                  }
-         //      }
+               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               } else {
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -724,13 +720,13 @@ sub PaintFunction()%>
    function requestWeekCreate(strCode) {
       cstrWeekMode = '*CRT';
       cstrWeekCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTWEK" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTWEK" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
    }
    function requestWeekUpdate(strCode) {
       cstrWeekMode = '*UPD';
       cstrWeekCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDWEK" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDWEK" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_week_retrieve.asp',function(strResponse) {checkWeekLoad(strResponse);},false,streamXML(strXML));
    }
    function checkWeekLoad(strResponse) {
@@ -1173,9 +1169,9 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrWeekMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK"';
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDWEK" SRCCDE="*SCH"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK"';
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTWEK" SRCCDE="*SCH"';
       }
       strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
@@ -1391,7 +1387,7 @@ sub PaintFunction()%>
       cobjTypeUactCell = null;
       cbolTypePulse = false;
       cstrTypeTind = '0';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
    function requestTypeReload() {
@@ -1400,7 +1396,7 @@ sub PaintFunction()%>
       cobjTypeUactCell = null;
       cbolTypePulse = false;
       window.clearTimeout(cintTypePulse);
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
    function checkTypeLoad(strResponse) {
@@ -1605,11 +1601,12 @@ sub PaintFunction()%>
 
    function doTypeStckUpdate() {
       if (!processForm()) {return;}
-      //doActivityStart(document.body);
-      //window.setTimeout('requestStckUpdate();',10);
+      if (confirm('Please confirm the stock update\r\npress OK continue (the stock inventory will be updated for this week forward)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestStckUpdate();',10);
    }
-
-
    function doTypeLineSelect(objSelect) {
       if (cobjTypeSchdCell != null) {
          if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
@@ -2637,6 +2634,42 @@ sub PaintFunction()%>
       }
    }
 
+   /////////////////////
+   // Stock Functions //
+   /////////////////////
+   function requestStckUpdate() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDSTK" SRCCDE="*SCH"';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_stck_update.asp',function(strResponse) {checkStckLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkStckLoad(strResponse) {
+      if (strResponse.substring(0,3) != '*OK') {
+         doActivityStop();
+         alert(strResponse);
+      } else {
+         if (strResponse.length <= 3) {
+            requestTypeReload();
+            return;
+         }
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            doActivityStop();
+            alert(strMessage);
+            return;
+         }
+         requestTypeReload();
+      }
+   }
+
    ////////////////////
    // Line Functions //
    ////////////////////
@@ -2675,7 +2708,7 @@ sub PaintFunction()%>
    }
    function requestLineCreate() {
       cstrLineMode = '*CRT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTLIN"';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTLIN" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
@@ -2683,7 +2716,7 @@ sub PaintFunction()%>
    }
    function requestLineUpdate() {
       cstrLineMode = '*UPD';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDLIN"';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDLIN" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -2693,7 +2726,7 @@ sub PaintFunction()%>
    }
    function requestLineDelete() {
       cstrLineMode = '*DLT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTLIN"';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTLIN" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -2998,7 +3031,7 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrLineMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDLIN"';
+         strXML = strXML+'<PSA_REQUEST ACTION="*UPDLIN" SRCCDE="*SCH"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3006,7 +3039,7 @@ sub PaintFunction()%>
          strXML = strXML+' CONCDE="'+fixXML(cobjLineLcod[0].lcocde)+'"';
          strXML = strXML+' SMOCDE="'+fixXML(cobjLineSmod[objSmoList.selectedIndex-1].smocde)+'">';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTLIN"';
+         strXML = strXML+'<PSA_REQUEST ACTION="*CRTLIN" SRCCDE="*SCH"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3065,7 +3098,7 @@ sub PaintFunction()%>
    var cstrActvMode;
    function requestActvLoad() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="'+cstrActvMode+'"';
+      strXML = strXML+' <PSA_REQUEST ACTION="'+cstrActvMode+'" SRCCDE="*SCH"';
       if (cstrActvMode == '*RTVSCH') {
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
@@ -3183,7 +3216,7 @@ sub PaintFunction()%>
    function requestActvAttach() {
       cstrActvMode = '*RTVSCH';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*ATTACT"';
+      strXML = strXML+' <PSA_REQUEST ACTION="*ATTACT" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3197,7 +3230,7 @@ sub PaintFunction()%>
    function requestActvDetach() {
       cstrActvMode = '*RTVSCH';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*DETACT"';
+      strXML = strXML+' <PSA_REQUEST ACTION="*DETACT" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3207,7 +3240,7 @@ sub PaintFunction()%>
    function requestActvDelete() {
       cstrActvMode = '*RTVACT';
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+' <PSA_REQUEST ACTION="*DLTACT"';
+      strXML = strXML+' <PSA_REQUEST ACTION="*DLTACT" SRCCDE="*SCH"';
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3246,12 +3279,12 @@ sub PaintFunction()%>
    var cstrTimeMode;
    function requestTimeAdd() {
       cstrTimeMode = '*CRT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" SRCCDE="*SCH" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_time_retrieve.asp',function(strResponse) {checkTimeLoad(strResponse);},false,streamXML(strXML));
    }
    function requestTimeUpdate() {
       cstrTimeMode = '*UPD';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" SRCCDE="*SCH" ACTCDE="'+fixXML(cstrTypeAcde)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_time_retrieve.asp',function(strResponse) {checkTimeLoad(strResponse);},false,streamXML(strXML));
    }
    function checkTimeLoad(strResponse) {
@@ -3326,9 +3359,9 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrTimeMode == '*UPD') {
-         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT" SRCCDE="*SCH"';
       } else {
-         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT" SRCCDE="*SCH"';
       }
       strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
@@ -3380,7 +3413,7 @@ sub PaintFunction()%>
    var cstrProdMode;
    function requestProdAdd() {
       cstrProdMode = '*CRT';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTACT" SRCCDE="*SCH" ACTCDE="'+fixXML(cstrTypeAcde)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
       strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"/>'
@@ -3388,7 +3421,7 @@ sub PaintFunction()%>
    }
    function requestProdUpdate() {
       cstrProdMode = '*UPD';
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" ACTCDE="'+fixXML(cstrTypeAcde)+'"';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDACT" SRCCDE="*SCH" ACTCDE="'+fixXML(cstrTypeAcde)+'"';
       strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
       strXML = strXML+' LINCDE="'+fixXML(cstrTypeLcde)+'"';
       strXML = strXML+' CONCDE="'+fixXML(cstrTypeCcde)+'"/>'
@@ -3587,7 +3620,7 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrProdMode == '*UPD') {
-         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*UPDACT" SRCCDE="*SCH"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
@@ -3601,7 +3634,7 @@ sub PaintFunction()%>
          strXML = strXML+' CHGMIN="'+fixXML(document.getElementById('UPRD_ChgMins').value)+'"';
          strXML = strXML+'/>';
       } else {
-         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT"';
+         strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT" SRCCDE="*SCH"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
          strXML = strXML+' WEKCDE="'+fixXML(cstrTypeWeek)+'"';
          strXML = strXML+' PTYCDE="'+fixXML(cstrTypeCode)+'"';
