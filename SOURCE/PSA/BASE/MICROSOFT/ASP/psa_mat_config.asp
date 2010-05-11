@@ -1513,6 +1513,8 @@ sub PaintFunction()%>
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
+                  strXML = strXML+' LCOEFF="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rraeff'))+'"';
+                  strXML = strXML+' LCOWAS="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rrawas'))+'"';
                   strXML = strXML+'/>';
                }
             }
@@ -1557,6 +1559,8 @@ sub PaintFunction()%>
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
+                  strXML = strXML+' LCOEFF="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rraeff'))+'"';
+                  strXML = strXML+' LCOWAS="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rrawas'))+'"';
                   strXML = strXML+'/>';
                }
             }
