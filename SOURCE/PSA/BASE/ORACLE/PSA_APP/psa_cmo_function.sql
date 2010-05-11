@@ -636,7 +636,11 @@ create or replace package body psa_app.psa_cmo_function as
       /*-*/
       /* Local cursors
       /*-*/
-      -- child cursors
+      cursor csr_pshf is
+         select t01.*
+           from psa_psc_shft t01
+          where t01.pss_cmo_code = var_cmo_code;
+      rcd_pshf csr_pshf%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -671,7 +675,15 @@ create or replace package body psa_app.psa_cmo_function as
       /*-*/
       /* Validate the relationships
       /*-*/
-      -- must not be used
+      open csr_pshf;
+      fetch csr_pshf into rcd_pshf;
+      if csr_pshf%found then
+         psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_pshf;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Process the crew model definition

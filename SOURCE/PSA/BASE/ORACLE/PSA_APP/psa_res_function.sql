@@ -559,6 +559,21 @@ create or replace package body psa_app.psa_res_function as
       var_found boolean;
       var_res_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_cres is
+         select t01.*
+           from psa_cmo_resource t01
+          where t01.cmr_res_code = var_res_code;
+      rcd_cres csr_cres%rowtype;
+
+      cursor csr_pres is
+         select t01.*
+           from psa_psc_reso t01
+          where t01.psr_res_code = var_res_code;
+      rcd_pres csr_pres%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -585,6 +600,28 @@ create or replace package body psa_app.psa_res_function as
          return;
       end if;
       var_res_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RESCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_cres;
+      fetch csr_cres into rcd_cres;
+      if csr_cres%found then
+         psa_gen_function.add_mesg_data('Resource ('||var_res_code||') is currently attached to one or more crew models - unable to delete');
+      end if;
+      close csr_cres;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      open csr_pres;
+      fetch csr_pres into rcd_pres;
+      if csr_pres%found then
+         psa_gen_function.add_mesg_data('Resource ('||var_res_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_pres;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;

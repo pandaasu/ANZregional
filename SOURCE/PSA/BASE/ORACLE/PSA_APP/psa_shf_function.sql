@@ -589,11 +589,17 @@ create or replace package body psa_app.psa_shf_function as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_shift_model is
+      cursor csr_smod is
          select t01.*
            from psa_smo_shift t01
           where t01.sms_shf_code = var_shf_code;
-      rcd_shift_model csr_shift_model%rowtype;
+      rcd_smod csr_smod%rowtype;
+
+      cursor csr_pshf is
+         select t01.*
+           from psa_psc_shft t01
+          where t01.pss_shf_code = var_shf_code;
+      rcd_pshf csr_pshf%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -628,12 +634,21 @@ create or replace package body psa_app.psa_shf_function as
       /*-*/
       /* Validate the relationships
       /*-*/
-      open csr_shift_model;
-      fetch csr_shift_model into rcd_shift_model;
-      if csr_shift_model%found then
+      open csr_smod;
+      fetch csr_smod into rcd_smod;
+      if csr_smod%found then
          psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') is currently attached to one or more shift models - unable to delete');
       end if;
-      close csr_shift_model;
+      close csr_smod;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      open csr_pshf;
+      fetch csr_pshf into rcd_pshf;
+      if csr_pshf%found then
+         psa_gen_function.add_mesg_data('Shift code ('||var_shf_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_pshf;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;

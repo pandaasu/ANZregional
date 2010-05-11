@@ -542,7 +542,11 @@ create or replace package body psa_app.psa_sac_function as
       /*-*/
       /* Local cursors
       /*-*/
---
+      cursor csr_pact is
+         select t01.*
+           from psa_psc_actv t01
+          where t01.psa_sac_code = var_sac_code;
+      rcd_pact csr_pact%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -570,6 +574,19 @@ create or replace package body psa_app.psa_sac_function as
          return;
       end if;
       var_sac_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SACCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_pact;
+      fetch csr_pact into rcd_pact;
+      if csr_pact%found then
+         psa_gen_function.add_mesg_data('Schedule activity ('||var_sac_code||') is currently attached to one or more productuin schedules - unable to delete');
+      end if;
+      close csr_pact;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;

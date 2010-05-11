@@ -619,7 +619,11 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       /* Local cursors
       /*-*/
-      -- child cursors
+      cursor csr_plin is
+         select t01.*
+           from psa_psc_line t01
+          where t01.psl_smo_code = var_smo_code;
+      rcd_plin csr_plin%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -654,7 +658,15 @@ create or replace package body psa_app.psa_smo_function as
       /*-*/
       /* Validate the relationships
       /*-*/
-      -- must not be used
+      open csr_plin;
+      fetch csr_plin into rcd_plin;
+      if csr_plin%found then
+         psa_gen_function.add_mesg_data('Shift model ('||var_smo_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_plin;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Process the shift model definition

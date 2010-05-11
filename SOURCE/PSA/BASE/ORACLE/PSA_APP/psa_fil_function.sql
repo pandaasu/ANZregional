@@ -527,6 +527,15 @@ create or replace package body psa_app.psa_fil_function as
       var_found boolean;
       var_fil_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_lfil is
+         select t01.*
+           from psa_lin_filler t01
+          where t01.lfi_fil_code = var_fil_code;
+      rcd_lfil csr_lfil%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -553,6 +562,19 @@ create or replace package body psa_app.psa_fil_function as
          return;
       end if;
       var_fil_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@FILCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_lfil;
+      fetch csr_lfil into rcd_lfil;
+      if csr_lfil%found then
+         psa_gen_function.add_mesg_data('Filler ('||var_fil_code||') is currently attached to one or more line configurations - unable to delete');
+      end if;
+      close csr_lfil;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
