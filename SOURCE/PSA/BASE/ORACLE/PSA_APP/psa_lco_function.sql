@@ -789,6 +789,23 @@ create or replace package body psa_app.psa_lco_function as
       var_lin_code varchar2(32);
       var_con_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_mlin is
+         select t01.*
+           from psa_mat_line t01
+          where t01.mli_lin_code = var_lin_code
+            and t01.mli_con_code = var_con_code;
+      rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_plin is
+         select t01.*
+           from psa_psc_line t01
+          where t01.psl_lin_code = var_lin_code
+            and t01.psl_con_code = var_con_code;
+      rcd_plin csr_plin%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -816,6 +833,19 @@ create or replace package body psa_app.psa_lco_function as
       end if;
       var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
       var_con_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CONCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_mlin;
+      fetch csr_mlin into rcd_mlin;
+      if csr_mlin%found then
+         psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') is currently attached to one or more materials - unable to delete');
+      end if;
+      close csr_mlin;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
