@@ -1791,12 +1791,12 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_line.mli_dft_flag := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCODFT')));
                rcd_psa_mat_line.mli_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_lin_node,'@LCORRA')));
                if rcd_type.pty_prd_run_efficiency = '1' then
-                  rcd_psa_mat_line.mli_rra_efficiency := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOEFF'));
+                  rcd_psa_mat_line.mli_rra_efficiency := nvl(psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOEFF')),100);
                else
                   rcd_psa_mat_line.mli_rra_efficiency := 100;
                end if;
                if rcd_type.pty_prd_run_wastage = '1' then
-                  rcd_psa_mat_line.mli_rra_wastage := psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOWAS'));
+                  rcd_psa_mat_line.mli_rra_wastage := nvl(psa_to_number(xslProcessor.valueOf(obj_lin_node,'@LCOWAS')),0);
                else
                   rcd_psa_mat_line.mli_rra_wastage := 0;
                end if;
