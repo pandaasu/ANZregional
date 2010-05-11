@@ -708,6 +708,21 @@ create or replace package body psa_app.psa_lin_function as
       var_found boolean;
       var_lin_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_mlin is
+         select t01.*
+           from psa_mat_line t01
+          where t01.mli_lin_code = var_lin_code;
+      rcd_mlin csr_mlin%rowtype;
+
+      cursor csr_plin is
+         select t01.*
+           from psa_psc_line t01
+          where t01.psl_lin_code = var_lin_code;
+      rcd_plin csr_plin%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -734,6 +749,28 @@ create or replace package body psa_app.psa_lin_function as
          return;
       end if;
       var_lin_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@LINCDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_mlin;
+      fetch csr_mlin into rcd_mlin;
+      if csr_mlin%found then
+         psa_gen_function.add_mesg_data('Line ('||var_lin_code||') is currently attached to one or more materials - unable to delete');
+      end if;
+      close csr_mlin;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      open csr_plin;
+      fetch csr_plin into rcd_plin;
+      if csr_plin%found then
+         psa_gen_function.add_mesg_data('Line ('||var_lin_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_plin;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
