@@ -849,6 +849,15 @@ create or replace package body psa_app.psa_lco_function as
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
+      open csr_plin;
+      fetch csr_plin into rcd_plin;
+      if csr_plin%found then
+         psa_gen_function.add_mesg_data('Line configuration ('||var_lin_code||' / '||var_con_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_plin;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
 
       /*-*/
       /* Process the line configuration

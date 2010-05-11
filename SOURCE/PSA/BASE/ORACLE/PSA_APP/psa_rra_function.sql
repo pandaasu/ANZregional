@@ -629,6 +629,21 @@ create or replace package body psa_app.psa_rra_function as
       var_found boolean;
       var_rra_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_lrat is
+         select t01.*
+           from psa_lin_rate t01
+          where t01.lra_rra_code = var_rra_code;
+      rcd_lrat csr_lrat%rowtype;
+
+      cursor csr_mlin is
+         select t01.*
+           from psa_mat_line t01
+          where t01.mli_rra_code = var_rra_code;
+      rcd_mlin csr_mlin%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -655,6 +670,28 @@ create or replace package body psa_app.psa_rra_function as
          return;
       end if;
       var_rra_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@RRACDE')));
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Validate the relationships
+      /*-*/
+      open csr_lrat;
+      fetch csr_lrat into rcd_lrat;
+      if csr_lrat%found then
+         psa_gen_function.add_mesg_data('Run rate ('||var_rra_code||') is currently attached to one or more line configurations - unable to delete');
+      end if;
+      close csr_lrat;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      open csr_mlin;
+      fetch csr_mlin into rcd_mlin;
+      if csr_mlin%found then
+         psa_gen_function.add_mesg_data('Run rate ('||var_rra_code||') is currently attached to one or more materials - unable to delete');
+      end if;
+      close csr_mlin;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
