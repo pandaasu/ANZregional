@@ -2172,10 +2172,13 @@ sub PaintFunction()%>
                objDiv.style.color = '#000000';
                if (objWork.winflw == '0') {
                   objDiv.style.border = '#000000 2px solid';
-               } else {
-                  objDiv.style.border = '#c000c0 3px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 3px solid';
+                     objDiv.style.border = '#c00000 2px solid';
+                  }
+               } else {
+                  objDiv.style.border = '#c000c0 2px solid';
+                  if (objWork.wekflw == '1') {
+                     objDiv.style.border = '#c00000 2px solid';
                   }
                }
                objDiv.style.whiteSpace = 'nowrap';
@@ -2193,17 +2196,27 @@ sub PaintFunction()%>
                if (objWork.acttyp == 'T') {
                   objDiv.appendChild(document.createTextNode('Activity ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
-                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Duration ('+objWork.actdmi+')'));
+                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+')'));
+                  objDiv.appendChild(document.createElement('br'));
+                  if (objWork.actent == '0') {
+                     objDiv.appendChild(document.createTextNode('Scheduled Duration ('+objWork.schdmi+')'));
+                  } else {
+                     objDiv.appendChild(document.createTextNode('Scheduled Duration ('+objWork.schdmi+')'));
+                     objDiv.appendChild(document.createElement('br'));
+                     objDiv.appendChild(document.createTextNode('Actual Duration ('+objWork.actdmi+')'));
+                  }
                } else {
                   objDiv.appendChild(document.createTextNode('Material ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
-                  if (objWork.chgflg == '0') {
-                     objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Production ('+objWork.actdmi+')'));
-                  } else {
-                     objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+') Production ('+objWork.actdmi+') Change ('+objWork.actcmi+')'));
-                  }
-                  objDiv.appendChild(document.createElement('br'));
+                  objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+')'));
                   if (objWork.actent == '0') {
+                     objDiv.appendChild(document.createElement('br'));
+                     if (objWork.chgflg == '0') {
+                        objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+')'));
+                     } else {
+                        objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+') Change ('+objWork.schcmi+')'));
+                     }
+                     objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
                      } else if (cstrTypeCode == '*PACK') {
@@ -2212,6 +2225,17 @@ sub PaintFunction()%>
                         objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                      }
                   } else {
+                     objDiv.appendChild(document.createElement('br'));
+                     if (objWork.chgflg == '0') {
+                        objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        objDiv.appendChild(document.createTextNode('Actual Production ('+objWork.actdmi+')'));
+                     } else {
+                        objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+') Change ('+objWork.schcmi+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        objDiv.appendChild(document.createTextNode('Actual Production ('+objWork.actdmi+') Change ('+objWork.actcmi+')'));
+                     }
+                     objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
                         objDiv.appendChild(document.createElement('br'));
@@ -2288,10 +2312,13 @@ sub PaintFunction()%>
                   objDiv.style.color = '#000000';
                   if (objWork.winflw == '0') {
                      objDiv.style.border = '#c7c7c7 1px solid';
-                  } else {
-                     objDiv.style.border = '#c000c0 3px solid';
                      if (objWork.wekflw == '1') {
-                        objDiv.style.border = '#c00000 3px solid';
+                        objDiv.style.border = '#c00000 1px solid';
+                     }
+                  } else {
+                     objDiv.style.border = '#c000c0 1px solid';
+                     if (objWork.wekflw == '1') {
+                        objDiv.style.border = '#c00000 1px solid';
                      }
                   }
                   objDiv.style.whiteSpace = 'nowrap';
@@ -2361,10 +2388,13 @@ sub PaintFunction()%>
                objDiv.style.color = '#000000';
                if (objWork.winflw == '0') {
                   objDiv.style.border = '#c7c7c7 1px solid';
-               } else {
-                  objDiv.style.border = '#c000c0 3px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 3px solid';
+                     objDiv.style.border = '#c00000 1px solid';
+                  }
+               } else {
+                  objDiv.style.border = '#c000c0 1px solid';
+                  if (objWork.wekflw == '1') {
+                     objDiv.style.border = '#c00000 1px solid';
                   }
                }
                objDiv.style.whiteSpace = 'nowrap';
