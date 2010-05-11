@@ -204,6 +204,14 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDelete(\''+strCode+'\');',10);
    }
+   function doSelectSap(strCode) {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the SAP update\r\npress OK continue (the *MASTER production schedule will be interfaced to SAP)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestSap(\''+strCode+'\');',10);
+   }
    function doSelectWeek(strCode) {
       if (!processForm()) {return;}
       cstrWeekProd = strCode;
@@ -311,7 +319,7 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'center';
                if (objElements[i].getAttribute('PSCCDE') == '*MASTER') {
-                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
+                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectSap(\''+objElements[i].getAttribute('PSCCDE')+'\');">SAP Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
                } else {
                   objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('PSCCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('PSCCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('PSCCDE')+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectWeek(\''+objElements[i].getAttribute('PSCCDE')+'\');">Weeks</a>&nbsp;';
                }
@@ -358,6 +366,45 @@ sub PaintFunction()%>
    //////////////////////
    var cstrDeleteCode;
    function requestDelete(strCode) {
+      cstrDeleteCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SAPDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_config_sap.asp',function(strResponse) {checkSap(strResponse);},false,streamXML(strXML));
+   }
+   function checkSap(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doSelectRefresh();
+      }
+   }
+
+   ///////////////////
+   // Sap Functions //
+   ///////////////////
+   var cstrSapCode;
+   function requestSap(strCode) {
       cstrDeleteCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
