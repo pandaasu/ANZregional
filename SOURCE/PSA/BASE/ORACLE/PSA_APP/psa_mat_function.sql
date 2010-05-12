@@ -2104,11 +2104,11 @@ create or replace package body psa_app.psa_mat_function as
          elsif rcd_retrieve.mde_mat_status = '*ADD' then
             psa_gen_function.add_mesg_data('Material ('||var_com_code||') is status *ADD - unable to attach as a component');
          else
-            if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'MPO') then
-               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO for filling component');
+            if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != 'VERP' or rcd_retrieve.mde_mat_usage != 'PCH') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / PCH for filling component');
             end if;
-            if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'TDU') then
-               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / TDU for packing component');
+            if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'MPO') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO for packing component');
             end if;
             if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or (rcd_retrieve.mde_mat_usage != 'RLS' and rcd_retrieve.mde_mat_usage != 'GUSSET')) then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS or VERP / GUSSET for forming component');
