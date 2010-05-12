@@ -485,7 +485,6 @@ sub PaintFunction()%>
          }
          displayScreen('dspDefine');
          document.getElementById('FILL_Data').style.display = 'none';
-         document.getElementById('FILL_ComData').style.display = 'none';
          document.getElementById('PACK_Data').style.display = 'none';
          document.getElementById('FORM_Data').style.display = 'none';
          document.getElementById('TDU_Data').style.display = 'none';
@@ -575,7 +574,6 @@ sub PaintFunction()%>
                cintUntCase = objElements[i].getAttribute('MATUNC');
                cintNetWght = objElements[i].getAttribute('MATNEW');
                if (cstrDefineUsag == 'TDU') {
-                  document.getElementById('FILL_ComData').style.display = 'block';
                   document.getElementById('TDU_Data').style.display = 'block';
                }
             } else if (objElements[i].nodeName == 'MATPTY') {
@@ -1007,7 +1005,7 @@ sub PaintFunction()%>
          bolComp = true;
       } else if (cstrDefineUsag == 'MPO') {
          bolFill = true;
-         bolComp = false;
+         bolComp = true;
       } else if (cstrDefineUsag == 'PCH') {
          bolForm = true;
          bolComp = true;
@@ -2110,7 +2108,7 @@ sub PaintFunction()%>
                      </table>
                   </nobr></td>
                </tr>
-               <tr id="FILL_ComData" style="display:none;visibility:visible">
+               <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
                      <table id="FILL_ComList" class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
                         <tr>
