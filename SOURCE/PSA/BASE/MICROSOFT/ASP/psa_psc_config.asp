@@ -3385,32 +3385,45 @@ sub PaintFunction()%>
          }
          if (cstrTimeMode == '*UPD') {
             cobjScreens[7].hedtxt = 'Update Scheduled Time Activity';
+            document.getElementById('addTime').style.display = 'none';
+            document.getElementById('updTime').style.display = 'block';
          } else if (cstrTimeMode == '*CRT') {
             cobjScreens[7].hedtxt = 'Create Scheduled Time Activity';
+            document.getElementById('addTime').style.display = 'block';
+            document.getElementById('updTime').style.display = 'none';
          }
          displayScreen('dspTime');
-         var strSacCode = '';
-         var objSacCode = document.getElementById('TIM_SacCode');
-         objSacCode.options.length = 0;
-         objSacCode.options[0] = new Option('** Select Time Activity **','*NONE');
-         objSacCode.selectedIndex = 0;
+         var strSacCode;
+         var objSacCode;
+         if (cstrTimeMode == '*CRT') {
+            strSacCode = '';
+            objSacCode = document.getElementById('TIM_SacCode');
+            objSacCode.options.length = 0;
+            objSacCode.options[0] = new Option('** Select Time Activity **','*NONE');
+            objSacCode.selectedIndex = 0;
+         } else {
+            document.getElementById('TIM_UpdTime').innerHTML = '';
+         }
          document.getElementById('TIM_DurMins').value = '0';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'ACTDFN') {
-               strSacCode = objElements[i].getAttribute('SACCDE');
+               if (cstrTimeMode == '*UPD') {
+                  document.getElementById('TIM_UpdTime').innerHTML = '<p>'+'('+objElements[i].getAttribute('SACCDE')+') '+objElements[i].getAttribute('SACNAM')+'</p>';
+               } else {
+                  strSacCode = objElements[i].getAttribute('SACCDE');
+               }
                document.getElementById('TIM_DurMins').value = objElements[i].getAttribute('DURMIN');
             } else if (objElements[i].nodeName == 'SACDFN') {
-               objSacCode.options[objSacCode.options.length] = new Option(objElements[i].getAttribute('SACNAM'),objElements[i].getAttribute('SACCDE'));
+               if (cstrTimeMode == '*CRT') {
+                  objSacCode.options[objSacCode.options.length] = new Option(objElements[i].getAttribute('SACNAM'),objElements[i].getAttribute('SACCDE'));
+               }
             }
          }
-         objSacCode.selectedIndex = -1;
-         for (var i=0;i<objSacCode.length;i++) {
-            if (objSacCode.options[i].value == strSacCode) {
-               objSacCode.options[i].selected = true;
-               break;
-            }
+         if (cstrTimeMode == '*CRT') {
+            document.getElementById('TIM_SacCode').focus();
+         } else {
+            document.getElementById('TIM_DurMins').focus();
          }
-         document.getElementById('TIM_SacCode').focus();
       }
    }
    function doTimeCancel() {
@@ -3420,11 +3433,14 @@ sub PaintFunction()%>
    }
    function doTimeAccept() {
       if (!processForm()) {return;}
-      var objSacCode = document.getElementById('TIM_SacCode');
+      var objSacCode;
       var strMessage = '';
-      if (objSacCode.selectedIndex == -1 || objSacCode.options[objSacCode.selectedIndex].value == '*NONE') {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Time activity must be selected';
+      if (cstrTimeMode == '*CRT') {
+         objSacCode = document.getElementById('TIM_SacCode');
+         if (objSacCode.selectedIndex == -1 || objSacCode.options[objSacCode.selectedIndex].value == '*NONE') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Time activity must be selected';
+         }
       }
       if (document.getElementById('TIM_DurMins').value == '' || document.getElementById('TIM_DurMins').value <= '0') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -3448,7 +3464,9 @@ sub PaintFunction()%>
       strXML = strXML+' WINCDE="'+fixXML(cstrTypeWcde)+'"';
       strXML = strXML+' WINSEQ="'+fixXML(cstrTypeWseq)+'"';
       strXML = strXML+' ACTCDE="'+fixXML(cstrTypeAcde)+'"';
-      strXML = strXML+' SACCDE="'+fixXML(objSacCode.options[objSacCode.selectedIndex].value)+'"';
+      if (cstrTimeMode == '*CRT') {
+         strXML = strXML+' SACCDE="'+fixXML(objSacCode.options[objSacCode.selectedIndex].value)+'"';
+      }
       strXML = strXML+' DURMIN="'+fixXML(document.getElementById('TIM_DurMins').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
@@ -3549,6 +3567,7 @@ sub PaintFunction()%>
             displayScreen('dspCProd');
          }
          var objMatData;
+         var objChgFlag;
          var strChgFlag = '';
          if (cstrProdMode == '*UPD') {
             objChgFlag = document.getElementById('UPRD_ChgFlag');
@@ -4069,16 +4088,20 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      <tr>
+      <tr id="addTime">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Time Activity:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="TIM_SacCode"></select>
          </nobr></td>
       </tr>
+      <tr id="updTime">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Time Activity:&nbsp;</nobr></td>
+         <td id="TIM_UpdTime" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Duration Minutes:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="TIM_DurMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="TIM_DurMins" size="7" maxlength="7" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -4114,7 +4137,7 @@ sub PaintFunction()%>
       <tr>
          <td id="wrkCProd" class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requested Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="CPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="CPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
@@ -4129,7 +4152,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Minutes:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="CPRD_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="CPRD_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -4177,7 +4200,7 @@ sub PaintFunction()%>
       <tr>
          <td id="wrkUProd" class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requested Cases:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="UPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="UPRD_ReqQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
@@ -4192,7 +4215,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Change Minutes:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="UPRD_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);"onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="UPRD_ChgMins" size="7" maxlength="7" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
