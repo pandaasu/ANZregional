@@ -2394,7 +2394,7 @@ create or replace package body psa_app.psa_psc_function as
                if csr_enty%notfound then
                   exit;
                end if;
-               pipe row(psa_xml_object('<ENTDFN ENTTIM="'||psa_to_xml(to_char(rcd_enty.pse_ent_time,'yyyy/mm/dd hh24:mi:ss'))||'"'||
+               pipe row(psa_xml_object('<ENTDFN ENTTIM="'||psa_to_xml(to_char(rcd_enty.pse_ent_time,'dd/mm/yyyy hh24:mi'))||'"'||
                                               ' ENTTXT="'||psa_to_xml(rcd_enty.pse_ent_text)||'"'||
                                               ' ENTQTY="'||psa_to_xml(to_char(rcd_enty.pse_ent_qnty))||'"'||
                                               ' ENTWAS="'||psa_to_xml(to_char(rcd_enty.pse_ent_wast))||'"/>'));
@@ -4774,6 +4774,7 @@ create or replace package body psa_app.psa_psc_function as
 
 
       var_ent_time date;
+      var_str_time date;
       var_end_time date;
       var_com_text varchar2(256 char);
 
@@ -4883,6 +4884,9 @@ create or replace package body psa_app.psa_psc_function as
       var_req_qnty := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@REQQTY'));
       var_chg_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CHGFLG'));
       var_chg_mins := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@CHGMIN'));
+      var_str_time := psa_to_date(xslProcessor.valueOf(obj_psa_request,'@STRTIM'),'dd/mm/yyyy hh24:mi');
+      var_end_time := psa_to_date(xslProcessor.valueOf(obj_psa_request,'@ENDTIM'),'dd/mm/yyyy hh24:mi');
+      var_com_text := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMTXT'));
       var_upd_user := upper(par_user);
       var_upd_date := sysdate;
       if var_src_code != '*SCH' and var_src_code != '*ACT' then
@@ -4997,6 +5001,29 @@ create or replace package body psa_app.psa_psc_function as
       end if;
 
       /*-*/
+      /* Validate the input
+      /*-*/
+      if var_src_code = '*SCH' then
+         if var_req_qnty is null or var_req_qnty <= 0 then
+            psa_gen_function.add_mesg_data('Requested quantity must be greater than zero');
+         end if;
+      else
+         if var_str_time is null then
+            psa_gen_function.add_mesg_data('Start time must be a valid date in the format DD/MM/YYYY HH24:MI');
+         end if;
+         if var_end_time is null then
+            psa_gen_function.add_mesg_data('End time must be a valid date in the format DD/MM/YYYY HH24:MI');
+         end if;
+         if not(var_str_time is null) and not(var_end_time is null) and var_str_time >= var_end_time then
+            psa_gen_function.add_mesg_data('End time must be greater than the start time');
+         end if;
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+
+      /*-*/
       /* Update the production schedule data
       /*-*/
       update psa_psc_prod
@@ -5040,6 +5067,7 @@ create or replace package body psa_app.psa_psc_function as
                rcd_actv.psa_act_chg_flag := '1';
                rcd_actv.psa_act_chg_mins := var_chg_mins;
             end if;
+            rcd_actv.psa_act_str_time := var_str_time;
             rcd_actv.psa_act_end_time := var_end_time;
             rcd_actv.psa_act_com_text := var_com_text;
             update psa_psc_actv
@@ -5048,8 +5076,9 @@ create or replace package body psa_app.psa_psc_function as
                    psa_act_ent_flag = '1',
                    psa_act_chg_flag = rcd_actv.psa_act_chg_flag,
                    psa_act_chg_mins = rcd_actv.psa_act_chg_mins,
-                   psa_act_end_time = psa_act_end_time,
-                   psa_act_com_text = psa_act_com_text
+                   psa_act_str_time = rcd_actv.psa_act_str_time,
+                   psa_act_end_time = rcd_actv.psa_act_end_time,
+                   psa_act_com_text = rcd_actv.psa_act_com_text
              where psa_act_code = rcd_actv.psa_act_code;
          end if;
       elsif var_action = '*CRTACT' then
@@ -5216,6 +5245,7 @@ create or replace package body psa_app.psa_psc_function as
                rcd_actv.psa_act_chg_flag := '1';
                rcd_actv.psa_act_chg_mins := var_chg_mins;
             end if;
+            rcd_actv.psa_act_str_time := var_str_time;
             rcd_actv.psa_act_end_time := var_end_time;
             rcd_actv.psa_act_com_text := var_com_text;
          end if;
@@ -5231,7 +5261,7 @@ create or replace package body psa_app.psa_psc_function as
          for idx in 0..xmlDom.getLength(obj_ent_list)-1 loop
             obj_ent_node := xmlDom.item(obj_ent_list,idx);
             rcd_enty.pse_act_code := rcd_actv.psa_act_code;
-            rcd_enty.pse_ent_time := nvl(psa_to_date(xslProcessor.valueOf(obj_ent_node,'@ENTTIM'),'yyyy/mm/dd hh24:mi:ss'),sysdate);
+            rcd_enty.pse_ent_time := nvl(psa_to_date(xslProcessor.valueOf(obj_ent_node,'@ENTTIM'),'dd/mm/yyyy hh24:mi'),sysdate);
             rcd_enty.pse_ent_text := psa_from_xml(xslProcessor.valueOf(obj_ent_node,'@ENTTXT'));
             rcd_enty.pse_ent_qnty := nvl(psa_to_number(xslProcessor.valueOf(obj_ent_node,'@ENTQTY')),0);
             rcd_enty.pse_ent_wast := nvl(psa_to_number(xslProcessor.valueOf(obj_ent_node,'@ENTWAS')),0);
@@ -7502,6 +7532,7 @@ create or replace package body psa_app.psa_psc_function as
       rcd_actv.psa_mat_var_mix_was := rcd_actv.psa_mat_act_mix_was - rcd_actv.psa_mat_sch_mix_was;
       rcd_actv.psa_mat_var_ton_was := rcd_actv.psa_mat_act_ton_was - rcd_actv.psa_mat_sch_ton_was;
       rcd_actv.psa_mat_var_dur_min := rcd_actv.psa_mat_act_dur_min - rcd_actv.psa_mat_sch_dur_min;
+      rcd_actv.psa_var_dur_mins := rcd_actv.psa_act_dur_mins - rcd_actv.psa_sch_dur_mins;
       rcd_actv.psa_var_chg_mins := rcd_actv.psa_act_chg_mins - rcd_actv.psa_sch_chg_mins;
 
       /*-*/
