@@ -2713,7 +2713,7 @@ sub PaintFunction()%>
                   break;
                }
             }
-            document.getElementById('UPRD_StrDate').focus();
+            document.getElementById('UPRD_StrTime').focus();
          } else {
             cintProdIndx = 0;
             objMatData = document.getElementById('CPRD_MatData');
@@ -2798,15 +2798,15 @@ sub PaintFunction()%>
             intIndx = objProdEntList.rows[i].getAttribute('entidx');
             if (document.getElementById('PRDENTTIM_'+intIndx).value == '') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual time ('+i+') must be entered';
+               strMessage = strMessage + 'Actual time ('+(i-1)+') must be entered';
             }
             if (document.getElementById('PRDENTQTY_'+intIndx).value == '' || document.getElementById('PRDENTQTY_'+intIndx).value <= '0') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual quantity ('+i+') must be greater than zero';
+               strMessage = strMessage + 'Actual quantity ('+(i-1)+') must be greater than zero';
             }
             if (document.getElementById('PRDENTWAS_'+intIndx).value == '' || document.getElementById('PRDENTWAS_'+intIndx).value < '0') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual wastage ('+i+') must be greater than or equal to zero';
+               strMessage = strMessage + 'Actual wastage ('+(i-1)+') must be greater than or equal to zero';
             }
          }
       } else {
@@ -2848,15 +2848,15 @@ sub PaintFunction()%>
             intIndx = objProdEntList.rows[i].getAttribute('entidx');
             if (document.getElementById('PRDENTTIM_'+intIndx).value == '') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual time ('+i+') must be entered';
+               strMessage = strMessage + 'Actual time ('+(i-1)+') must be entered';
             }
             if (document.getElementById('PRDENTQTY_'+intIndx).value == '' || document.getElementById('PRDENTQTY_'+intIndx).value <= '0') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual quantity ('+i+') must be greater than zero';
+               strMessage = strMessage + 'Actual quantity ('+(i-1)+') must be greater than zero';
             }
             if (document.getElementById('PRDENTWAS_'+intIndx).value == '' || document.getElementById('PRDENTWAS_'+intIndx).value < '0') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Actual wastage ('+i+') must be greater than or equal to zero';
+               strMessage = strMessage + 'Actual wastage ('+(i-1)+') must be greater than or equal to zero';
             }
          }
       }
@@ -2880,7 +2880,7 @@ sub PaintFunction()%>
          strXML = strXML+' STRTIM="'+fixXML(document.getElementById('UPRD_StrTime').value)+'"';
          strXML = strXML+' ENDTIM="'+fixXML(document.getElementById('UPRD_EndTime').value)+'"';
          strXML = strXML+' COMTXT="'+fixXML(document.getElementById('UPRD_ComText').value)+'"';
-         strXML = strXML+'/>';
+         strXML = strXML+'>';
          objProdEntList = document.getElementById('UPRD_EntList');
          for (var i=2;i<objProdEntList.rows.length;i++) {
             intIndx = objProdEntList.rows[i].getAttribute('entidx');
@@ -2891,6 +2891,7 @@ sub PaintFunction()%>
             strXML = strXML+' ENTWAS="'+fixXML(document.getElementById('PRDENTWAS_'+intIndx).value)+'"';
             strXML = strXML+'/>';
          }
+         strXML = strXML+' </PSA_REQUEST>';
       } else {
          strXML = strXML+' <PSA_REQUEST ACTION="*CRTACT" SRCCDE="*ACT"';
          strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'"';
@@ -2907,7 +2908,7 @@ sub PaintFunction()%>
          strXML = strXML+' STRTIM="'+fixXML(document.getElementById('CPRD_StrTime').value)+'"';
          strXML = strXML+' ENDTIM="'+fixXML(document.getElementById('CPRD_EndTime').value)+'"';
          strXML = strXML+' COMTXT="'+fixXML(document.getElementById('CPRD_ComText').value)+'"';
-         strXML = strXML+'/>';
+         strXML = strXML+'>';
          objProdEntList = document.getElementById('CPRD_EntList');
          for (var i=2;i<objProdEntList.rows.length;i++) {
             intIndx = objProdEntList.rows[i].getAttribute('entidx');
@@ -2918,6 +2919,7 @@ sub PaintFunction()%>
             strXML = strXML+' ENTWAS="'+fixXML(document.getElementById('PRDENTWAS_'+intIndx).value)+'"';
             strXML = strXML+'/>';
          }
+         strXML = strXML+' </PSA_REQUEST>';
       }
       doActivityStart(document.body);
       window.setTimeout('requestProdAccept(\''+strXML+'\');',10);
@@ -2986,7 +2988,7 @@ sub PaintFunction()%>
       objCell.style.whiteSpace = 'nowrap';
       objInput = document.createElement('input');
       objInput.type = 'text';
-      objInput.value = 'YYYY/MM/DD HH:MI';
+      objInput.value = 'yyyy/mm/dd hh:mi';
       objInput.id = 'PRDENTTIM_'+cintProdIndx;
       objInput.size = 16;
       objInput.maxLength = 16;
