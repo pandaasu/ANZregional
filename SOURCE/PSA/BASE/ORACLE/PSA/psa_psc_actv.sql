@@ -35,12 +35,6 @@ create table psa.psa_psc_actv
     psa_sch_rra_unit                number                        null,
     psa_sch_rra_effp                number                        null,
     psa_sch_rra_wasp                number                        null,
-    psa_sch_win_code                varchar2(32)                  null,
-    psa_sch_win_seqn                number                        null,
-    psa_sch_win_flow                varchar2(1)                   null,
-    psa_sch_str_time                date                          null,
-    psa_sch_chg_time                date                          null,
-    psa_sch_end_time                date                          null,
     psa_sch_dur_mins                number                        null,
     psa_sch_chg_mins                number                        null,
     psa_act_ent_flag                varchar2(1)                   null,
@@ -155,12 +149,6 @@ comment on column psa.psa_psc_actv.psa_sch_rra_code is 'Scheduled run rate code'
 comment on column psa.psa_psc_actv.psa_sch_rra_unit is 'Scheduled run rate units';
 comment on column psa.psa_psc_actv.psa_sch_rra_effp is 'Scheduled run rate efficiency percentage';
 comment on column psa.psa_psc_actv.psa_sch_rra_wasp is 'Scheduled run rate wastage percentage';
-comment on column psa.psa_psc_actv.psa_sch_win_code is 'Scheduled shift window code';
-comment on column psa.psa_psc_actv.psa_sch_win_seqn is 'Scheduled shift window sequence';
-comment on column psa.psa_psc_actv.psa_sch_win_flow is 'Scheduled shift window overflow (0=no or 1=yes)';
-comment on column psa.psa_psc_actv.psa_sch_str_time is 'Scheduled start time';
-comment on column psa.psa_psc_actv.psa_sch_chg_time is 'Scheduled change time';
-comment on column psa.psa_psc_actv.psa_sch_end_time is 'Scheduled end time';
 comment on column psa.psa_psc_actv.psa_sch_dur_mins is 'Scheduled duration in minutes';
 comment on column psa.psa_psc_actv.psa_sch_chg_mins is 'Scheduled change in minutes';
 comment on column psa.psa_psc_actv.psa_act_ent_flag is 'Actual entered flag (0=no or 1=yes)';
@@ -267,8 +255,6 @@ alter table psa.psa_psc_actv
 create index psa_psc_actv_ix01 on psa.psa_psc_actv
    (psa_psc_code, psa_psc_week, psa_prd_type, psa_act_code);
 create index psa_psc_actv_ix02 on psa.psa_psc_actv
-   (psa_psc_code, psa_psc_week, psa_prd_type, psa_sch_lin_code, psa_sch_con_code, psa_sch_win_code, psa_sch_win_seqn);
-create index psa_psc_actv_ix03 on psa.psa_psc_actv
    (psa_psc_code, psa_psc_week, psa_prd_type, psa_act_lin_code, psa_act_con_code, psa_act_win_code, psa_act_win_seqn);
 
 /**/
