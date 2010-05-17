@@ -1308,12 +1308,10 @@ sub PaintFunction()%>
    var cstrTypeProd;
    var cstrTypeWeek;
    var cstrTypeCode;
-
    var cintTypeIndx;
    var cstrTypeType;
    var cstrTypeSind;
    var cstrTypeTind;
-
    var cintTypeLidx;
    var cintTypeWidx;
    var cintTypeAidx;
@@ -1321,24 +1319,19 @@ sub PaintFunction()%>
    var cstrTypeAtxt;
    var cstrTypeAtyp;
    var cstrTypeAval;
-
    var cstrTypeLcde;
    var cstrTypeCcde;
    var cstrTypeWcde;
    var cstrTypeWseq;
-
    var cintTypeRidx;
    var cstrTypeRcde;
    var cstrTypeRtxt;
    var cstrTypeRtyp;
    var cstrTypeRval;
-
    var cstrTypeHead;
-
    var cobjTypeLineCell;
    var cobjTypeSchdCell;
    var cobjTypeUactCell;
-
    var cintTypeHsiz = new Array();
    var cintTypeBsiz = new Array();
    var cobjTypeDate = new Array();
@@ -1407,11 +1400,19 @@ sub PaintFunction()%>
       this.actpch = 0;
       this.actmix = 0;
       this.actton = 0;
+      this.invary = new Array();
+   }
+   function clsTypeInvt() {
+      this.matcde = '';
+      this.matnam = '';
+      this.invqty = '0';
+      this.invavl = '0';
    }
    function clsTypeUact() {
       this.actcde = '';
       this.matcde = '';
       this.matnam = '';
+      this.actent = '';
       this.lincde = '';
       this.concde = '';
       this.dftflg = '';
@@ -1543,12 +1544,20 @@ sub PaintFunction()%>
                objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
                objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
                objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+            } else if (objElements[i].nodeName == 'LININV') {
+               objInvAry = objActAry[objActAry.length-1].invary;
+               objInvAry[objInvAry.length] = new clsTypeInvt();
+               objInvAry[objInvAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
+               objInvAry[objInvAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               objInvAry[objInvAry.length-1].invqty = objElements[i].getAttribute('INVQTY');
+               objInvAry[objInvAry.length-1].invavl = objElements[i].getAttribute('INVAVL');
             } else if (objElements[i].nodeName == 'UNSACT') {
                cobjTypeUact[cobjTypeUact.length] = new clsTypeUact();
                cobjTypeUact[cobjTypeUact.length-1].actcde = objElements[i].getAttribute('ACTCDE');
                cobjTypeUact[cobjTypeUact.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
                cobjTypeUact[cobjTypeUact.length-1].matcde = objElements[i].getAttribute('MATCDE');
                cobjTypeUact[cobjTypeUact.length-1].matnam = objElements[i].getAttribute('MATNAM');
+               cobjTypeUact[cobjTypeUact.length-1].actent = objElements[i].getAttribute('ACTENT');
                cobjTypeUact[cobjTypeUact.length-1].lincde = objElements[i].getAttribute('LINCDE');
                cobjTypeUact[cobjTypeUact.length-1].concde = objElements[i].getAttribute('CONCDE');
                cobjTypeUact[cobjTypeUact.length-1].dftflg = objElements[i].getAttribute('DFTFLG');
@@ -2119,6 +2128,7 @@ sub PaintFunction()%>
       var objTypBody = document.getElementById('tabBodySchd');
       var objShfAry = cobjTypeLine[intLinIdx].shfary;
       var objActAry = cobjTypeLine[intLinIdx].actary;
+      var objInvAry;
       var objTable;
       var objRow;
       var objCell;
@@ -2185,6 +2195,7 @@ sub PaintFunction()%>
       //
       for (var i=0;i<objActAry.length;i++) {
          objWork = objActAry[i];
+         objInvAry = objWork.invary;
          intStrBar = objWork.strbar-0;
          intEndBar = objWork.endbar-0;
          if (objWork.chgflg == '1') {
@@ -2296,6 +2307,10 @@ sub PaintFunction()%>
                         objDiv.appendChild(document.createElement('br'));
                         objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.schpch+')'));
                      }
+                  }
+                  for (var k=0;k<objActAry.length;k++) {
+                     objDiv.appendChild(document.createElement('br'));
+                     objDiv.appendChild(document.createTextNode('Component ('+objActAry[k].matcde+') '+objActAry[k].matnam+' Required ('+objActAry[k].invqty+') Available ('+objActAry[k].invavl+')'));
                   }
                }
                objCell.appendChild(objDiv);
