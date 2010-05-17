@@ -1321,9 +1321,9 @@ sub PaintFunction()%>
                         objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.schpch+')'));
                      }
                   }
-                  for (var k=0;k<objActAry.length;k++) {
+                  for (var k=0;k<objInvAry.length;k++) {
                      objDiv.appendChild(document.createElement('br'));
-                     objDiv.appendChild(document.createTextNode('Component ('+objActAry[k].matcde+') '+objActAry[k].matnam+' Required ('+objActAry[k].invqty+') Available ('+objActAry[k].invavl+')'));
+                     objDiv.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
                   }
                }
                objCell.appendChild(objDiv);
