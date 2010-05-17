@@ -76,20 +76,13 @@ create or replace package body psa_app.psa_psc_function as
                            par_con_code in varchar2);
    procedure calc_schedule(par_act_code in number);
    procedure calc_actual(par_act_code in number);
-   procedure align_schedule(par_psc_code in varchar2,
+   procedure align_activity(par_psc_code in varchar2,
                             par_prd_type in varchar2,
                             par_lin_code in varchar2,
                             par_con_code in varchar2,
                             par_win_code in varchar2);
-   procedure align_actual(par_psc_code in varchar2,
-                          par_prd_type in varchar2,
-                          par_lin_code in varchar2,
-                          par_con_code in varchar2,
-                          par_win_code in varchar2);
-   procedure align_schedule_stock(par_psc_code in varchar2,
-                                  par_psc_week in varchar2);
-   procedure align_actual_stock(par_psc_code in varchar2,
-                                par_psc_week in varchar2);
+   procedure align_stock(par_psc_code in varchar2,
+                         par_psc_week in varchar2);
 
    /*-*/
    /* Private definitions
@@ -3297,12 +3290,6 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_sch_rra_unit := null;
             rcd_actv.psa_sch_rra_effp := null;
             rcd_actv.psa_sch_rra_wasp := null;
-            rcd_actv.psa_sch_win_code := '*NONE';
-            rcd_actv.psa_sch_win_seqn := null;
-            rcd_actv.psa_sch_win_flow := null;
-            rcd_actv.psa_sch_str_time := null;
-            rcd_actv.psa_sch_chg_time := null;
-            rcd_actv.psa_sch_end_time := null;
             rcd_actv.psa_sch_dur_mins := 0;
             rcd_actv.psa_sch_chg_mins := 0;
             rcd_actv.psa_act_ent_flag := '0';
@@ -3591,8 +3578,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_prd_type = var_pty_code
             and t01.psa_act_lin_code = var_lin_code
             and t01.psa_act_con_code = var_con_code
-            and nvl(t01.psa_sch_lin_code,'*NONE') = var_lin_code
-            and nvl(t01.psa_sch_con_code,'*NONE') = var_con_code;
+            and t01.psa_sch_ent_flag = '1';
       rcd_actl csr_actl%rowtype;
 
       cursor csr_lcon is
@@ -3682,22 +3668,7 @@ create or replace package body psa_app.psa_psc_function as
                    t01.mli_con_code asc;
       rcd_mlin csr_mlin%rowtype;
 
-
--- REQUIRED ???????
-----------------
       cursor csr_sact is
-         select t01.*
-           from psa_psc_actv t01
-          where t01.psa_psc_code = rcd_psa_psc_line.psl_psc_code
-            and t01.psa_psc_week = rcd_psa_psc_line.psl_psc_week
-            and t01.psa_prd_type = rcd_psa_psc_line.psl_prd_type
-            and t01.psa_sch_lin_code = rcd_psa_psc_line.psl_lin_code
-            and t01.psa_sch_con_code = rcd_psa_psc_line.psl_con_code
-            and t01.psa_sch_win_code != '*NONE'
-          order by t01.psa_sch_str_time asc;
-      rcd_sact csr_sact%rowtype;
-
-      cursor csr_aact is
          select t01.*
            from psa_psc_actv t01
           where t01.psa_psc_code = rcd_psa_psc_line.psl_psc_code
@@ -3707,7 +3678,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_act_con_code = rcd_psa_psc_line.psl_con_code
             and t01.psa_act_win_code != '*NONE'
           order by t01.psa_act_str_time asc;
-      rcd_aact csr_aact%rowtype;
+      rcd_sact csr_sact%rowtype;
 
       cursor csr_wact is
          select t01.pss_win_code as win_code,
@@ -4108,7 +4079,6 @@ create or replace package body psa_app.psa_psc_function as
                update psa_psc_actv
                   set psa_sch_chg_flag = rcd_actv.psa_sch_chg_flag,
                       psa_sch_chg_mins = rcd_actv.psa_sch_chg_mins,
-                      psa_act_chg_mins = rcd_actv.psa_act_chg_mins,
                       psa_sch_lin_code = rcd_actv.psa_sch_lin_code,
                       psa_sch_con_code = rcd_actv.psa_sch_con_code,
                       psa_sch_dft_flag = rcd_actv.psa_sch_dft_flag,
@@ -4117,6 +4087,7 @@ create or replace package body psa_app.psa_psc_function as
                       psa_sch_rra_effp = rcd_actv.psa_sch_rra_effp,
                       psa_sch_rra_wasp = rcd_actv.psa_sch_rra_wasp,
                       psa_act_chg_flag = rcd_actv.psa_act_chg_flag,
+                      psa_act_chg_mins = rcd_actv.psa_act_chg_mins,
                       psa_act_lin_code = rcd_actv.psa_act_lin_code,
                       psa_act_con_code = rcd_actv.psa_act_con_code,
                       psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
@@ -4155,60 +4126,6 @@ create or replace package body psa_app.psa_psc_function as
          close csr_wact;
 
          /*-*/
-         /* Update the line scheduled activities
-         /*-*/
-         if var_src_code = '*SCH' then
-
-            /*-*/
-            /* Update the line scheduled activities
-            /*-*/
-            open csr_sact;
-            loop
-               fetch csr_sact into rcd_sact;
-               if csr_sact%notfound then
-                  exit;
-               end if;
-               var_win_flag := false;
-               for idx in 1..tbl_wact.count loop
-                  if tbl_wact(idx).win_code = rcd_sact.psa_sch_win_code then
-                     tbl_wact(idx).win_seqn := tbl_wact(idx).win_seqn + 1;
-                     var_win_code := tbl_wact(idx).win_code;
-                     var_win_seqn := tbl_wact(idx).win_seqn;
-                     var_win_flag := true;
-                     exit;
-                  end if;
-               end loop;
-               if var_win_flag = false then
-                  for idx in reverse 1..tbl_wact.count loop
-                     if tbl_wact(idx).win_stim <= rcd_sact.psa_sch_str_time then
-                        tbl_wact(idx).win_seqn := tbl_wact(idx).win_seqn + 1;
-                        var_win_code := tbl_wact(idx).win_code;
-                        var_win_seqn := tbl_wact(idx).win_seqn;
-                        exit;
-                     end if;
-                  end loop;
-               end if;
-               update psa_psc_actv
-                  set psa_sch_win_code = var_win_code,
-                      psa_sch_win_seqn = var_win_seqn
-                where psa_act_code = rcd_sact.psa_act_code;
-            end loop;
-            close csr_sact;
-
-            /*-*/
-            /* Align the schedule shift windows
-            /*-*/
-            for idx in 1..tbl_wact.count loop
-               align_schedule(rcd_psa_psc_line.psl_psc_code,
-                              rcd_psa_psc_line.psl_prd_type,
-                              rcd_psa_psc_line.psl_lin_code,
-                              rcd_psa_psc_line.psl_con_code,
-                              tbl_wact(idx).win_code);
-            end loop;
-
-         end if;
-
-         /*-*/
          /* Reset the shift window sequences
          /*-*/
          for idx in 1..tbl_wact.count loop
@@ -4216,17 +4133,17 @@ create or replace package body psa_app.psa_psc_function as
          end loop;
 
          /*-*/
-         /* Update the line actual activities
+         /* Update the line activities
          /*-*/
-         open csr_aact;
+         open csr_sact;
          loop
-            fetch csr_aact into rcd_aact;
-            if csr_aact%notfound then
+            fetch csr_sact into rcd_sact;
+            if csr_sact%notfound then
                exit;
             end if;
             var_win_flag := false;
             for idx in 1..tbl_wact.count loop
-               if tbl_wact(idx).win_code = rcd_aact.psa_act_win_code then
+               if tbl_wact(idx).win_code = rcd_sact.psa_act_win_code then
                   tbl_wact(idx).win_seqn := tbl_wact(idx).win_seqn + 1;
                   var_win_code := tbl_wact(idx).win_code;
                   var_win_seqn := tbl_wact(idx).win_seqn;
@@ -4236,7 +4153,7 @@ create or replace package body psa_app.psa_psc_function as
             end loop;
             if var_win_flag = false then
                for idx in reverse 1..tbl_wact.count loop
-                  if tbl_wact(idx).win_stim <= rcd_aact.psa_act_str_time then
+                  if tbl_wact(idx).win_stim <= rcd_sact.psa_act_str_time then
                      tbl_wact(idx).win_seqn := tbl_wact(idx).win_seqn + 1;
                      var_win_code := tbl_wact(idx).win_code;
                      var_win_seqn := tbl_wact(idx).win_seqn;
@@ -4247,19 +4164,19 @@ create or replace package body psa_app.psa_psc_function as
             update psa_psc_actv
                set psa_act_win_code = var_win_code,
                    psa_act_win_seqn = var_win_seqn
-             where psa_act_code = rcd_aact.psa_act_code;
+             where psa_act_code = rcd_sact.psa_act_code;
          end loop;
-         close csr_aact;
+         close csr_sact;
 
          /*-*/
-         /* Align the actual shift windows
+         /* Align the shift windows
          /*-*/
          for idx in 1..tbl_wact.count loop
-            align_actual(rcd_psa_psc_line.psl_psc_code,
-                         rcd_psa_psc_line.psl_prd_type,
-                         rcd_psa_psc_line.psl_lin_code,
-                         rcd_psa_psc_line.psl_con_code,
-                         tbl_wact(idx).win_code);
+            align_activity(rcd_psa_psc_line.psl_psc_code,
+                           rcd_psa_psc_line.psl_prd_type,
+                           rcd_psa_psc_line.psl_lin_code,
+                           rcd_psa_psc_line.psl_con_code,
+                           tbl_wact(idx).win_code);
          end loop;
 
       end if;
@@ -4560,12 +4477,6 @@ create or replace package body psa_app.psa_psc_function as
          rcd_actv.psa_sch_rra_unit := null;
          rcd_actv.psa_sch_rra_effp := null;
          rcd_actv.psa_sch_rra_wasp := null;
-     --    rcd_actv.psa_sch_win_code := null;
-     --    rcd_actv.psa_sch_win_seqn := null;
-     --    rcd_actv.psa_sch_win_flow := null;
-     --    rcd_actv.psa_sch_str_time := null;
-     --    rcd_actv.psa_sch_chg_time := null;
-     --    rcd_actv.psa_sch_end_time := null;
          rcd_actv.psa_sch_dur_mins := null;
          rcd_actv.psa_sch_chg_mins := null;
          rcd_actv.psa_act_ent_flag := '0';
@@ -4663,8 +4574,6 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_sch_ent_flag := '1';
             rcd_actv.psa_sch_lin_code := var_lin_code;
             rcd_actv.psa_sch_con_code := var_con_code;
-         --   rcd_actv.psa_sch_win_code := var_win_code;
-         --   rcd_actv.psa_sch_win_seqn := var_win_seqn + .10;
             rcd_actv.psa_sch_dur_mins := var_dur_mins;
             rcd_actv.psa_act_lin_code := var_lin_code;
             rcd_actv.psa_act_con_code := var_con_code;
@@ -4691,20 +4600,9 @@ create or replace package body psa_app.psa_psc_function as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
-      /* Align the shift window scheduled activities when required
-      /*-*/
-   --   if var_src_code = '*SCH' then
-   --      align_schedule(var_psc_code,
-   --                     var_pty_code,
-   --                     var_lin_code,
-   --                     var_con_code,
-   --                     var_win_code);
-   --   end if;
-
-      /*-*/
       /* Align the shift window actual activities
       /*-*/
-      align_actual(var_psc_code,
+      align_activity(var_psc_code,
                    var_pty_code,
                    var_lin_code,
                    var_con_code,
@@ -4770,16 +4668,9 @@ create or replace package body psa_app.psa_psc_function as
       var_req_wast number;
       var_chg_flag varchar2(1);
       var_chg_mins number;
-
-
-
-      var_ent_time date;
       var_str_time date;
       var_end_time date;
       var_com_text varchar2(256 char);
-
-
-
       var_upd_user varchar2(30);
       var_upd_date date;
       rcd_actv psa_psc_actv%rowtype;
@@ -4935,7 +4826,7 @@ create or replace package body psa_app.psa_psc_function as
             psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
          else
             if var_src_code = '*SCH' then
-               if rcd_actv.psa_sch_win_code = '*NONE' then
+               if rcd_actv.psa_act_win_code = '*NONE' then
                   psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is not attached to the schedule');
                else
                   if rcd_actv.psa_act_ent_flag = '1' then
@@ -5098,12 +4989,6 @@ create or replace package body psa_app.psa_psc_function as
          rcd_actv.psa_sch_rra_unit := null;
          rcd_actv.psa_sch_rra_effp := null;
          rcd_actv.psa_sch_rra_wasp := null;
-      --   rcd_actv.psa_sch_win_code := null;
-      --   rcd_actv.psa_sch_win_seqn := null;
-      --   rcd_actv.psa_sch_win_flow := null;
-      --   rcd_actv.psa_sch_str_time := null;
-      --   rcd_actv.psa_sch_chg_time := null;
-      --   rcd_actv.psa_sch_end_time := null;
          rcd_actv.psa_sch_dur_mins := 0;
          rcd_actv.psa_sch_chg_mins := 0;
          rcd_actv.psa_act_ent_flag := '0';
@@ -5206,8 +5091,6 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
             rcd_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
             rcd_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
-        --    rcd_actv.psa_sch_win_code := var_win_code;
-        --    rcd_actv.psa_sch_win_seqn := var_win_seqn + .10;
             rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
             rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
             rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
@@ -5284,24 +5167,13 @@ create or replace package body psa_app.psa_psc_function as
       end if;
 
       /*-*/
-      /* Align the shift window scheduled activities when required
-      /*-*/
-  --    if var_src_code = '*SCH' then
-  --       align_schedule(var_psc_code,
-  --                      var_pty_code,
-  --                      var_lin_code,
-  --                      var_con_code,
-  --                      var_win_code);
-  --    end if;
-
-      /*-*/
       /* Align the shift window actual activities
       /*-*/
-      align_actual(var_psc_code,
-                   var_pty_code,
-                   var_lin_code,
-                   var_con_code,
-                   var_win_code);
+      align_activity(var_psc_code,
+                     var_pty_code,
+                     var_lin_code,
+                     var_con_code,
+                     var_win_code);
 
       /*-*/
       /* Commit the database
@@ -5444,8 +5316,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Align the stock forward from this week
       /*-*/
-      align_schedule_stock(var_psc_code, var_wek_code);
-      align_actual_stock(var_psc_code, var_wek_code);
+      align_stock(var_psc_code, var_wek_code);
 
       /*-*/
       /* Commit the database
@@ -5800,13 +5671,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       if var_src_code = '*SCH' then
          update psa_psc_actv
-            set psa_sch_win_code = '*NONE',
-                psa_sch_win_seqn = null,
-                psa_sch_win_flow = null,
-                psa_sch_str_time = null,
-                psa_sch_chg_time = null,
-                psa_sch_end_time = null,
-                psa_act_win_code = '*NONE',
+            set psa_act_win_code = '*NONE',
                 psa_act_win_seqn = null,
                 psa_act_win_flow = null,
                 psa_act_str_time = null,
@@ -5977,7 +5842,7 @@ create or replace package body psa_app.psa_psc_function as
          psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
       else
          if var_src_code = '*SCH' then
-            if rcd_actv.psa_sch_win_code != '*NONE' then
+            if rcd_actv.psa_act_win_code != '*NONE' then
                psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is currently on schedule - unable to delete');
             else
                if rcd_actv.psa_act_ent_flag = '1' then
@@ -6186,7 +6051,7 @@ create or replace package body psa_app.psa_psc_function as
          psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
       else
          if var_src_code = '*SCH' then
-            if rcd_actv.psa_sch_win_code != '*NONE' then
+            if rcd_actv.psa_act_win_code != '*NONE' then
                psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is already attached');
             else
                if rcd_actv.psa_act_ent_flag = '1' then
@@ -6195,11 +6060,7 @@ create or replace package body psa_app.psa_psc_function as
             end if;
          else
             if rcd_actv.psa_act_win_code != '*NONE' then
-               psa_gen_function.add_mesg_data('Production actual activity code ('||var_act_code||') is already attached');
-            else
-               if rcd_actv.psa_act_ent_flag = '0' then
-                  psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') has no actuals entered - unable to attach');
-               end if;
+               psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is already attached');
             end if;
          end if;
       end if;
@@ -6212,22 +6073,19 @@ create or replace package body psa_app.psa_psc_function as
       /* Retrieve the production line data when required
       /*-*/
       if rcd_actv.psa_act_type = 'P' then
-         if (var_src_code = '*SCH' and (var_lin_code != rcd_actv.psa_sch_lin_code or var_con_code != rcd_actv.psa_sch_con_code)) or
-            (var_src_code = '*ACT' and (var_lin_code != rcd_actv.psa_act_lin_code or var_con_code != rcd_actv.psa_act_con_code)) then
-            var_found := false;
-            open csr_mlin;
-            fetch csr_mlin into rcd_mlin;
-            if csr_mlin%found then
-               var_found := true;
-            end if;
-            close csr_mlin;
-            if var_found = false then
-               psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have configuration for selected line configuration');
-            end if;
-            if psa_gen_function.get_mesg_count != 0 then
-               rollback;
-               return;
-            end if;
+         var_found := false;
+         open csr_mlin;
+         fetch csr_mlin into rcd_mlin;
+         if csr_mlin%found then
+            var_found := true;
+         end if;
+         close csr_mlin;
+         if var_found = false then
+            psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have configuration for selected line configuration');
+         end if;
+         if psa_gen_function.get_mesg_count != 0 then
+            rollback;
+            return;
          end if;
       end if;
 
@@ -6251,8 +6109,6 @@ create or replace package body psa_app.psa_psc_function as
                    psa_upd_date = var_upd_date,
                    psa_sch_lin_code = var_lin_code,
                    psa_sch_con_code = var_con_code,
-                   psa_sch_win_code = var_win_code,
-                   psa_sch_win_seqn = var_win_seqn + .10,
                    psa_act_lin_code = var_lin_code,
                    psa_act_con_code = var_con_code,
                    psa_act_win_code = var_win_code,
@@ -6270,96 +6126,74 @@ create or replace package body psa_app.psa_psc_function as
          end if;
       else
          if var_src_code = '*SCH' then
-            if var_lin_code != rcd_actv.psa_sch_lin_code or var_con_code != rcd_actv.psa_sch_con_code then
-               rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
-               rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
-               rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
-               rcd_actv.psa_sch_rra_code := rcd_mlin.mli_rra_code;
-               rcd_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
-               rcd_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
-               rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
-               rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
-               rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
-               rcd_actv.psa_act_rra_code := rcd_mlin.mli_rra_code;
-               rcd_actv.psa_act_rra_unit := rcd_mlin.rrd_rra_units;
-               rcd_actv.psa_act_rra_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_actv.psa_act_rra_wasp := rcd_mlin.mli_rra_wastage;
-               rcd_actv.psa_act_cal_unit := rcd_mlin.rrd_rra_units;
-               rcd_actv.psa_act_cal_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_actv.psa_act_cal_wasp := rcd_mlin.mli_rra_wastage;
-               update psa_psc_actv
-                  set psa_upd_user = var_upd_user,
-                      psa_upd_date = var_upd_date,
-                      psa_sch_lin_code = rcd_actv.psa_sch_lin_code,
-                      psa_sch_con_code = rcd_actv.psa_sch_con_code,
-                      psa_sch_dft_flag = rcd_actv.psa_sch_dft_flag,
-                      psa_sch_rra_code = rcd_actv.psa_sch_rra_code,
-                      psa_sch_rra_unit = rcd_actv.psa_sch_rra_unit,
-                      psa_sch_rra_effp = rcd_actv.psa_sch_rra_effp,
-                      psa_sch_rra_wasp = rcd_actv.psa_sch_rra_wasp,
-                      psa_sch_win_code = var_win_code,
-                      psa_sch_win_seqn = var_win_seqn + .10,
-                      psa_act_lin_code = rcd_actv.psa_act_lin_code,
-                      psa_act_con_code = rcd_actv.psa_act_con_code,
-                      psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
-                      psa_act_rra_code = rcd_actv.psa_act_rra_code,
-                      psa_act_rra_unit = rcd_actv.psa_act_rra_unit,
-                      psa_act_rra_effp = rcd_actv.psa_act_rra_effp,
-                      psa_act_rra_wasp = rcd_actv.psa_act_rra_wasp,
-                      psa_act_cal_unit = rcd_actv.psa_act_cal_unit,
-                      psa_act_cal_effp = rcd_actv.psa_act_cal_effp,
-                      psa_act_cal_wasp = rcd_actv.psa_act_cal_wasp,
-                      psa_act_win_code = var_win_code,
-                      psa_act_win_seqn = var_win_seqn + .10
-                where psa_act_code = rcd_actv.psa_act_code;
-            else
-               update psa_psc_actv
-                  set psa_upd_user = var_upd_user,
-                      psa_upd_date = var_upd_date,
-                      psa_sch_win_code = var_win_code,
-                      psa_sch_win_seqn = var_win_seqn + .10,
-                      psa_act_win_code = var_win_code,
-                      psa_act_win_seqn = var_win_seqn + .10
-                where psa_act_code = rcd_actv.psa_act_code;
-            end if;
+            rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
+            rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
+            rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_actv.psa_sch_rra_code := rcd_mlin.mli_rra_code;
+            rcd_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
+            rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
+            rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
+            rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_actv.psa_act_rra_code := rcd_mlin.mli_rra_code;
+            rcd_actv.psa_act_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_rra_wasp := rcd_mlin.mli_rra_wastage;
+            rcd_actv.psa_act_cal_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_cal_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_cal_wasp := rcd_mlin.mli_rra_wastage;
+            update psa_psc_actv
+               set psa_upd_user = var_upd_user,
+                   psa_upd_date = var_upd_date,
+                   psa_sch_lin_code = rcd_actv.psa_sch_lin_code,
+                   psa_sch_con_code = rcd_actv.psa_sch_con_code,
+                   psa_sch_dft_flag = rcd_actv.psa_sch_dft_flag,
+                   psa_sch_rra_code = rcd_actv.psa_sch_rra_code,
+                   psa_sch_rra_unit = rcd_actv.psa_sch_rra_unit,
+                   psa_sch_rra_effp = rcd_actv.psa_sch_rra_effp,
+                   psa_sch_rra_wasp = rcd_actv.psa_sch_rra_wasp,
+                   psa_act_lin_code = rcd_actv.psa_act_lin_code,
+                   psa_act_con_code = rcd_actv.psa_act_con_code,
+                   psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
+                   psa_act_rra_code = rcd_actv.psa_act_rra_code,
+                   psa_act_rra_unit = rcd_actv.psa_act_rra_unit,
+                   psa_act_rra_effp = rcd_actv.psa_act_rra_effp,
+                   psa_act_rra_wasp = rcd_actv.psa_act_rra_wasp,
+                   psa_act_cal_unit = rcd_actv.psa_act_cal_unit,
+                   psa_act_cal_effp = rcd_actv.psa_act_cal_effp,
+                   psa_act_cal_wasp = rcd_actv.psa_act_cal_wasp,
+                   psa_act_win_code = var_win_code,
+                   psa_act_win_seqn = var_win_seqn + .10
+             where psa_act_code = rcd_actv.psa_act_code;
             calc_schedule(rcd_actv.psa_act_code);
          else
-            if var_lin_code != rcd_actv.psa_act_lin_code or var_con_code != rcd_actv.psa_act_con_code then
-               rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
-               rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
-               rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
-               rcd_actv.psa_act_rra_code := rcd_mlin.mli_rra_code;
-               rcd_actv.psa_act_rra_unit := rcd_mlin.rrd_rra_units;
-               rcd_actv.psa_act_rra_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_actv.psa_act_rra_wasp := rcd_mlin.mli_rra_wastage;
-               rcd_actv.psa_act_cal_unit := rcd_mlin.rrd_rra_units;
-               rcd_actv.psa_act_cal_effp := rcd_mlin.mli_rra_efficiency;
-               rcd_actv.psa_act_cal_wasp := rcd_mlin.mli_rra_wastage;
-               update psa_psc_actv
-                  set psa_upd_user = var_upd_user,
-                      psa_upd_date = var_upd_date,
-                      psa_act_lin_code = rcd_actv.psa_act_lin_code,
-                      psa_act_con_code = rcd_actv.psa_act_con_code,
-                      psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
-                      psa_act_rra_code = rcd_actv.psa_act_rra_code,
-                      psa_act_rra_unit = rcd_actv.psa_act_rra_unit,
-                      psa_act_rra_effp = rcd_actv.psa_act_rra_effp,
-                      psa_act_rra_wasp = rcd_actv.psa_act_rra_wasp,
-                      psa_act_cal_unit = rcd_actv.psa_act_cal_unit,
-                      psa_act_cal_effp = rcd_actv.psa_act_cal_effp,
-                      psa_act_cal_wasp = rcd_actv.psa_act_cal_wasp,
-                      psa_act_win_code = var_win_code,
-                      psa_act_win_seqn = var_win_seqn + .10
-                where psa_act_code = rcd_actv.psa_act_code;
-            else
-               update psa_psc_actv
-                  set psa_upd_user = var_upd_user,
-                      psa_upd_date = var_upd_date,
-                      psa_act_win_code = var_win_code,
-                      psa_act_win_seqn = var_win_seqn + .10
-                where psa_act_code = rcd_actv.psa_act_code;
-            end if;
+            rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
+            rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
+            rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_actv.psa_act_rra_code := rcd_mlin.mli_rra_code;
+            rcd_actv.psa_act_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_rra_wasp := rcd_mlin.mli_rra_wastage;
+            rcd_actv.psa_act_cal_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_cal_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_cal_wasp := rcd_mlin.mli_rra_wastage;
+            update psa_psc_actv
+               set psa_upd_user = var_upd_user,
+                   psa_upd_date = var_upd_date,
+                   psa_act_lin_code = rcd_actv.psa_act_lin_code,
+                   psa_act_con_code = rcd_actv.psa_act_con_code,
+                   psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
+                   psa_act_rra_code = rcd_actv.psa_act_rra_code,
+                   psa_act_rra_unit = rcd_actv.psa_act_rra_unit,
+                   psa_act_rra_effp = rcd_actv.psa_act_rra_effp,
+                   psa_act_rra_wasp = rcd_actv.psa_act_rra_wasp,
+                   psa_act_cal_unit = rcd_actv.psa_act_cal_unit,
+                   psa_act_cal_effp = rcd_actv.psa_act_cal_effp,
+                   psa_act_cal_wasp = rcd_actv.psa_act_cal_wasp,
+                   psa_act_win_code = var_win_code,
+                   psa_act_win_seqn = var_win_seqn + .10
+             where psa_act_code = rcd_actv.psa_act_code;
             calc_actual(rcd_actv.psa_act_code);
          end if;
       end if;
@@ -6370,24 +6204,13 @@ create or replace package body psa_app.psa_psc_function as
       xmlDom.freeDocument(obj_xml_document);
 
       /*-*/
-      /* Align the shift window scheduled activities when required
-      /*-*/
-      if var_src_code = '*SCH' then
-         align_schedule(var_psc_code,
-                        var_pty_code,
-                        var_lin_code,
-                        var_con_code,
-                        var_win_code);
-      end if;
-
-      /*-*/
       /* Align the shift window actual activities
       /*-*/
-      align_actual(var_psc_code,
-                   var_pty_code,
-                   var_lin_code,
-                   var_con_code,
-                   var_win_code);
+      align_activity(var_psc_code,
+                     var_pty_code,
+                     var_lin_code,
+                     var_con_code,
+                     var_win_code);
 
       /*-*/
       /* Commit the database
@@ -6534,7 +6357,7 @@ create or replace package body psa_app.psa_psc_function as
          psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') does not exist');
       else
          if var_src_code = '*SCH' then
-            if rcd_actv.psa_sch_win_code = '*NONE' then
+            if rcd_actv.psa_act_win_code = '*NONE' then
                psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is already detached');
             else
                if rcd_actv.psa_act_ent_flag = '1' then
@@ -6543,7 +6366,7 @@ create or replace package body psa_app.psa_psc_function as
             end if;
          else
             if rcd_actv.psa_act_win_code = '*NONE' then
-               psa_gen_function.add_mesg_data('Production actual activity code ('||var_act_code||') is already detached');
+               psa_gen_function.add_mesg_data('Production schedule activity code ('||var_act_code||') is already detached');
             end if;
          end if;
       end if;
@@ -6569,12 +6392,6 @@ create or replace package body psa_app.psa_psc_function as
          update psa_psc_actv
             set psa_upd_user = var_upd_user,
                 psa_upd_date = var_upd_date,
-                psa_sch_win_code = '*NONE',
-                psa_sch_win_seqn = null,
-                psa_sch_win_flow = null,
-                psa_sch_str_time = null,
-                psa_sch_chg_time = null,
-                psa_sch_end_time = null,
                 psa_act_win_code = '*NONE',
                 psa_act_win_seqn = null,
                 psa_act_win_flow = null,
@@ -6596,24 +6413,13 @@ create or replace package body psa_app.psa_psc_function as
       end if;
 
       /*-*/
-      /* Align the shift window scheduled activities when required
-      /*-*/
-      if var_src_code = '*SCH' then
-         align_schedule(rcd_actv.psa_psc_code,
-                        rcd_actv.psa_prd_type,
-                        rcd_actv.psa_sch_lin_code,
-                        rcd_actv.psa_sch_con_code,
-                        rcd_actv.psa_sch_win_code);
-      end if;
-
-      /*-*/
       /* Align the shift window actual activities
       /*-*/
-      align_actual(rcd_actv.psa_psc_code,
-                   rcd_actv.psa_prd_type,
-                   rcd_actv.psa_act_lin_code,
-                   rcd_actv.psa_act_con_code,
-                   rcd_actv.psa_act_win_code);
+      align_activity(rcd_actv.psa_psc_code,
+                     rcd_actv.psa_prd_type,
+                     rcd_actv.psa_act_lin_code,
+                     rcd_actv.psa_act_con_code,
+                     rcd_actv.psa_act_win_code);
 
       /*-*/
       /* Commit the database
@@ -6810,7 +6616,8 @@ create or replace package body psa_app.psa_psc_function as
           where t01.psa_psc_code = par_psc_code
             and t01.psa_psc_week = par_psc_week
             and t01.psa_prd_type = par_prd_type
-            and t01.psa_sch_win_code = '*NONE'
+            and t01.psa_act_win_code = '*NONE'
+            and t01.psa_act_ent_flag = '0'
           order by t01.psa_act_type asc,
                    t01.psa_sch_lin_code asc,
                    t01.psa_sch_con_code asc,
@@ -6843,7 +6650,6 @@ create or replace package body psa_app.psa_psc_function as
           where t01.psa_psc_code = par_psc_code
             and t01.psa_psc_week = par_psc_week
             and t01.psa_prd_type = par_prd_type
-            and t01.psa_sch_win_code != '*NONE'
             and t01.psa_act_win_code = '*NONE'
           order by t01.psa_act_type asc,
                    t01.psa_act_lin_code asc,
@@ -7028,10 +6834,8 @@ create or replace package body psa_app.psa_psc_function as
       cursor csr_sivt is
          select t01.psi_mat_code,
                 t02.mde_mat_name,
-                to_char(t01.psi_sch_qnty) as psi_sch_qnty,
-                to_char(t01.psi_act_qnty) as psi_act_qnty,
-                to_char(t01.psi_sch_aval) as psi_sch_aval,
-                to_char(t01.psi_act_aval) as psi_act_aval
+                to_char(t01.psi_inv_qnty) as psi_inv_qnty,
+                to_char(t01.psi_inv_aval) as psi_inv_aval
            from psa_psc_invt t01,
                 psa_mat_defn t02
           where t01.psi_mat_code = t02.mde_mat_code
@@ -7153,10 +6957,8 @@ create or replace package body psa_app.psa_psc_function as
                end if;
                ptbl_data(ptbl_data.count+1) := '<LININV MATCDE="'||psa_to_xml(rcd_sivt.psi_mat_code)||'"'||
                                                       ' MATNAM="'||psa_to_xml(rcd_sivt.mde_mat_name)||'"'||
-                                                      ' SCHQTY="'||psa_to_xml(rcd_sivt.psi_sch_qnty)||'"'||
-                                                      ' ACTQTY="'||psa_to_xml(rcd_sivt.psi_act_qnty)||'"'||
-                                                      ' SCHAVL="'||psa_to_xml(rcd_sivt.psi_sch_aval)||'"'||
-                                                      ' ACTAVL="'||psa_to_xml(rcd_sivt.psi_act_aval)||'"/>';
+                                                      ' INVQTY="'||psa_to_xml(rcd_sivt.psi_inv_qnty)||'"'||
+                                                      ' INVAVL="'||psa_to_xml(rcd_sivt.psi_inv_aval)||'"/>';
             end loop;
             close csr_sivt;
          elsif rcd_sact.psa_act_type = 'T' then
@@ -7373,10 +7175,8 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          rcd_psa_psc_invt.psi_act_code := rcd_actv.psa_act_code;
          rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_com_code;
-         rcd_psa_psc_invt.psi_sch_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_sch_qty;
-         rcd_psa_psc_invt.psi_act_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_act_qty;
-         rcd_psa_psc_invt.psi_sch_aval := 0;
-         rcd_psa_psc_invt.psi_act_aval := 0;
+         rcd_psa_psc_invt.psi_inv_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_act_qty;
+         rcd_psa_psc_invt.psi_inv_aval := 0;
          insert into psa_psc_invt values rcd_psa_psc_invt;
       end loop;
       close csr_mcom;
@@ -7449,7 +7249,7 @@ create or replace package body psa_app.psa_psc_function as
       open csr_enty;
       fetch csr_enty into rcd_enty;
       if csr_enty%found then
-         rcd_actv.psa_mat_act_qty := nvl(rcd_enty.pse_ent_qnty,0);
+         rcd_actv.psa_mat_act_qty := nvl(rcd_enty.pse_ent_qnty,0) + nvl(rcd_enty.pse_ent_wast,0);
          rcd_actv.psa_mat_act_was := nvl(rcd_enty.pse_ent_wast,0);
       end if;
       close csr_enty;
@@ -7588,10 +7388,8 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          rcd_psa_psc_invt.psi_act_code := rcd_actv.psa_act_code;
          rcd_psa_psc_invt.psi_mat_code := rcd_mcom.mco_com_code;
-         rcd_psa_psc_invt.psi_sch_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_sch_qty;
-         rcd_psa_psc_invt.psi_act_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_act_qty;
-         rcd_psa_psc_invt.psi_sch_aval := 0;
-         rcd_psa_psc_invt.psi_act_aval := 0;
+         rcd_psa_psc_invt.psi_inv_qnty := rcd_mcom.mco_com_quantity * rcd_actv.psa_mat_act_qty;
+         rcd_psa_psc_invt.psi_inv_aval := 0;
          insert into psa_psc_invt values rcd_psa_psc_invt;
       end loop;
       close csr_mcom;
@@ -7602,149 +7400,13 @@ create or replace package body psa_app.psa_psc_function as
    end calc_actual;
 
    /******************************************************/
-   /* This procedure performs the align schedule routine */
+   /* This procedure performs the align activity routine */
    /******************************************************/
-   procedure align_schedule(par_psc_code in varchar2,
+   procedure align_activity(par_psc_code in varchar2,
                             par_prd_type in varchar2,
                             par_lin_code in varchar2,
                             par_con_code in varchar2,
                             par_win_code in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_win_code varchar2(32);
-      var_win_seqn number;
-      var_win_flow varchar2(1);
-      var_str_time date;
-      var_chg_time date;
-      var_end_time date;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_pact is
-         select t01.*
-           from psa_psc_actv t01
-          where t01.psa_psc_code = par_psc_code
-            and t01.psa_prd_type = par_prd_type
-            and t01.psa_sch_lin_code = par_lin_code
-            and t01.psa_sch_con_code = par_con_code
-            and t01.psa_sch_win_code != '*NONE'
-            and t01.psa_sch_win_code < par_win_code
-          order by t01.psa_sch_win_code desc,
-                   t01.psa_sch_win_seqn desc;
-      rcd_pact csr_pact%rowtype;
-
-      cursor csr_sact is
-         select t01.*,
-                t02.pss_win_stim,
-                t02.pss_win_etim
-           from psa_psc_actv t01,
-                (select t01.pss_win_code,
-                        t01.pss_win_stim,
-                        t01.pss_win_etim
-                   from psa_psc_shft t01
-                  where t01.pss_psc_code = par_psc_code
-                    and t01.pss_prd_type = par_prd_type
-                    and t01.pss_lin_code = par_lin_code
-                    and t01.pss_con_code = par_con_code
-                    and t01.pss_win_code != '*NONE'
-                    and t01.pss_win_code >= par_win_code
-                    and t01.pss_win_type = '1') t02
-          where t01.psa_sch_win_code = t02.pss_win_code(+)
-            and t01.psa_psc_code = par_psc_code
-            and t01.psa_prd_type = par_prd_type
-            and t01.psa_sch_lin_code = par_lin_code
-            and t01.psa_sch_con_code = par_con_code
-            and t01.psa_sch_win_code != '*NONE'
-            and t01.psa_sch_win_code >= par_win_code
-          order by t01.psa_sch_win_code asc,
-                   t01.psa_sch_win_seqn asc;
-      rcd_sact csr_sact%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Retrieve the previous activity
-      /*-*/
-      var_win_code := '*NONE';
-      var_win_seqn := 0;
-      var_str_time := to_date('20000101','yyyymmdd');
-      var_chg_time := null;
-      var_end_time := null;
-      open csr_pact;
-      fetch csr_pact into rcd_pact;
-      if csr_pact%found then
-         var_win_code := rcd_pact.psa_sch_win_code;
-         var_win_seqn := rcd_pact.psa_sch_win_seqn;
-         var_str_time := rcd_pact.psa_sch_end_time + (1 / 1440);
-      end if;
-      close csr_pact;
-
-      /*-*/
-      /* Realign the shift window scheduled activities
-      /*-*/
-      open csr_sact;
-      loop
-         fetch csr_sact into rcd_sact;
-         if csr_sact%notfound then
-            exit;
-         end if;
-         if rcd_sact.psa_sch_win_code != var_win_code then
-            var_win_code := rcd_sact.psa_sch_win_code;
-            var_win_seqn := 0;
-            if rcd_sact.pss_win_stim >= var_str_time then
-               var_str_time := rcd_sact.pss_win_stim;
-               if var_win_code > par_win_code and rcd_sact.psa_sch_str_time = rcd_sact.pss_win_stim then
-                  exit;
-               end if;
-            end if;
-         end if;
-         var_win_seqn := var_win_seqn + 1;
-         if rcd_sact.psa_act_type = 'P' then
-            if rcd_sact.psa_sch_chg_flag = '1' then
-               var_chg_time := var_str_time + (rcd_sact.psa_sch_dur_mins / 1440);
-               var_end_time := var_str_time + ((rcd_sact.psa_sch_dur_mins + rcd_sact.psa_sch_chg_mins) / 1440);
-            else
-               var_chg_time := null;
-               var_end_time := var_str_time + (rcd_sact.psa_sch_dur_mins / 1440);
-            end if;
-         else
-            var_chg_time := null;
-            var_end_time := var_str_time + (rcd_sact.psa_sch_dur_mins / 1440);
-         end if;
-         var_win_flow := '0';
-         if var_end_time > rcd_sact.pss_win_etim then
-            var_win_flow := '1';
-         end if;
-         update psa_psc_actv
-            set psa_sch_win_seqn = var_win_seqn,
-                psa_sch_win_flow = var_win_flow,
-                psa_sch_str_time = var_str_time,
-                psa_sch_chg_time = var_chg_time,
-                psa_sch_end_time = var_end_time
-          where psa_act_code = rcd_sact.psa_act_code;
-         var_str_time := var_end_time + (1 / 1440);
-      end loop;
-      close csr_sact;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end align_schedule;
-
-   /****************************************************/
-   /* This procedure performs the align actual routine */
-   /****************************************************/
-   procedure align_actual(par_psc_code in varchar2,
-                          par_prd_type in varchar2,
-                          par_lin_code in varchar2,
-                          par_con_code in varchar2,
-                          par_win_code in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -7871,177 +7533,13 @@ create or replace package body psa_app.psa_psc_function as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end align_actual;
+   end align_activity;
 
-   /************************************************************/
-   /* This procedure performs the align schedule stock routine */
-   /************************************************************/
-   procedure align_schedule_stock(par_psc_code in varchar2,
-                                  par_psc_week in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_min_date date;
-      var_str_date date;
-      var_stk_code varchar2(32);
-      var_act_code number;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_date is
-         select min(trunc(t01.psd_day_date)) as min_day_date
-           from psa_psc_date t01
-          where t01.psd_psc_code = par_psc_code
-            and t01.psd_psc_week = par_psc_week;
-      rcd_date csr_date%rowtype;
-
-      cursor csr_stak is
-         select t02.std_stk_code,
-                to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') as sth_stk_time,
-                t02.std_mat_code,
-                t02.std_mat_qnty
-           from psa_stk_header t01,
-                psa_stk_detail t02
-          where t01.sth_stk_code = t02.std_stk_code
-          order by t02.std_stk_code desc,
-                   t02.std_mat_code asc;
-      rcd_stak csr_stak%rowtype;
-
-      cursor csr_sact is
-         select t01.*,
-                decode(t01.psa_sch_chg_flag,'1',t01.psa_sch_chg_time,t01.psa_sch_end_time) as psa_prd_time,
-                nvl(t02.psi_mat_code,'*NONE') as psi_mat_code,
-                nvl(t02.psi_sch_qnty,0) as psi_sch_qnty
-           from psa_psc_actv t01,
-                psa_psc_invt t02
-          where t01.psa_act_code = t02.psi_act_code(+)
-            and t01.psa_psc_code = par_psc_code
-            and t01.psa_act_type = 'P'
-            and t01.psa_sch_win_code != '*NONE'
-            and t01.psa_sch_str_time >= var_str_date
-          order by t01.psa_sch_str_time asc;
-      rcd_sact csr_sact%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the schedule inventory
-      /*-*/
-      ptbl_sinv.delete;
-
-      /*-*/
-      /* Retrieve the week boundaries
-      /*-*/
-      var_min_date := null;
-      open csr_date;
-      fetch csr_date into rcd_date;
-      if csr_date%found then
-         var_min_date := rcd_date.min_day_date;
-      end if;
-      close csr_date;
-
-      /*-*/
-      /* Retrieve the relevant stocktake data
-      /*-*/
-      var_str_date := to_date('20000101','yyyymmdd');
-      var_stk_code := '*FIRST';
-      open csr_stak;
-      loop
-         fetch csr_stak into rcd_stak;
-         if csr_stak%notfound then
-            exit;
-         end if;
-         if rcd_stak.std_stk_code != var_stk_code then
-            if var_stk_code = '*EXIT' then
-               exit;
-            end if;
-            if rcd_stak.sth_stk_time < var_min_date then
-               var_str_date := rcd_stak.sth_stk_time;
-               var_stk_code := '*EXIT';
-            else
-               var_stk_code := rcd_stak.std_stk_code;
-            end if;
-            ptbl_sinv(ptbl_sinv.count+1).invdat := rcd_stak.sth_stk_time;
-            ptbl_sinv(ptbl_sinv.count).matary.delete;
-         end if;
-         ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
-      end loop;
-      close csr_stak;
-      ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
-      ptbl_sinv(ptbl_sinv.count).matary.delete;
-
-      /*-*/
-      /* Update the schedule production activity inventory data
-      /*-*/
-      var_act_code := -1;
-      open csr_sact;
-      loop
-         fetch csr_sact into rcd_sact;
-         if csr_sact%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Update the schedule activity inventory comsumption when required
-         /* **note** consumption is based on activity start time
-         /*-*/
-         if rcd_sact.psi_mat_code != '*NONE' then
-            for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invdat <= rcd_sact.psa_sch_str_time then
-                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
-                     update psa_psc_invt
-                        set psi_sch_aval = 0
-                      where psi_act_code = rcd_sact.psa_act_code
-                        and psi_mat_code = rcd_sact.psi_mat_code;
-                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := rcd_sact.psi_sch_qnty * -1;
-                  else
-                     update psa_psc_invt
-                        set psi_sch_aval = ptbl_sinv(idx).matary(rcd_sact.psi_mat_code)
-                      where psi_act_code = rcd_sact.psa_act_code
-                        and psi_mat_code = rcd_sact.psi_mat_code;
-                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) - rcd_sact.psi_sch_qnty;
-                  end if;
-                  exit;
-               end if;
-            end loop;
-         end if;
-
-         /*-*/
-         /* Update the schedule activity inventory production when required
-         /* **note** production is based on activity end time
-         /*-*/
-         if rcd_sact.psa_act_code != var_act_code then
-            var_act_code := rcd_sact.psa_act_code;
-            for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
-                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
-                     ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_req_qty;
-                  else
-                     ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_req_qty;
-                  end if;
-                  exit;
-              end if;
-            end loop;
-         end if;
-
-      end loop;
-      close csr_sact;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end align_schedule_stock;
-
-   /*********************************************************/
-   /* This procedure performs the align actual stock routine */
-   /**********************************************************/
-   procedure align_actual_stock(par_psc_code in varchar2,
-                                par_psc_week in varchar2) is
+   /***************************************************/
+   /* This procedure performs the align stock routine */
+   /***************************************************/
+   procedure align_stock(par_psc_code in varchar2,
+                         par_psc_week in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -8077,7 +7575,7 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*,
                 decode(t01.psa_act_chg_flag,'1',t01.psa_act_chg_time,t01.psa_act_end_time) as psa_prd_time,
                 nvl(t02.psi_mat_code,'*NONE') as psi_mat_code,
-                nvl(t02.psi_act_qnty,0) as psi_act_qnty
+                nvl(t02.psi_inv_qnty,0) as psi_inv_qnty
            from psa_psc_actv t01,
                 psa_psc_invt t02
           where t01.psa_act_code = t02.psi_act_code(+)
@@ -8140,7 +7638,7 @@ create or replace package body psa_app.psa_psc_function as
       ptbl_sinv(ptbl_sinv.count).matary.delete;
 
       /*-*/
-      /* Update the actual production activity inventory data
+      /* Update the production activity inventory data
       /*-*/
       var_act_code := -1;
       open csr_sact;
@@ -8151,7 +7649,7 @@ create or replace package body psa_app.psa_psc_function as
          end if;
 
          /*-*/
-         /* Update the actual activity inventory comsumption when required
+         /* Update the activity inventory comsumption when required
          /* **note** consumption is based on activity start time
          /*-*/
          if rcd_sact.psi_mat_code != '*NONE' then
@@ -8159,16 +7657,16 @@ create or replace package body psa_app.psa_psc_function as
                if ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
                   if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
                      update psa_psc_invt
-                        set psi_act_aval = 0
+                        set psi_inv_aval = 0
                       where psi_act_code = rcd_sact.psa_act_code
                         and psi_mat_code = rcd_sact.psi_mat_code;
-                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := rcd_sact.psi_act_qnty * -1;
+                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := rcd_sact.psi_inv_qnty * -1;
                   else
                      update psa_psc_invt
-                        set psi_act_aval = ptbl_sinv(idx).matary(rcd_sact.psi_mat_code)
+                        set psi_inv_aval = ptbl_sinv(idx).matary(rcd_sact.psi_mat_code)
                       where psi_act_code = rcd_sact.psa_act_code
                         and psi_mat_code = rcd_sact.psi_mat_code;
-                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) - rcd_sact.psi_act_qnty;
+                     ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psi_mat_code) - rcd_sact.psi_inv_qnty;
                   end if;
                   exit;
                end if;
@@ -8176,7 +7674,7 @@ create or replace package body psa_app.psa_psc_function as
          end if;
 
          /*-*/
-         /* Update the actual activity inventory production when required
+         /* Update the activity inventory production when required
          /* **note** production is based on activity end time
          /*-*/
          if rcd_sact.psa_act_code != var_act_code then
@@ -8199,7 +7697,7 @@ create or replace package body psa_app.psa_psc_function as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end align_actual_stock;
+   end align_stock;
 
 end psa_psc_function;
 /
