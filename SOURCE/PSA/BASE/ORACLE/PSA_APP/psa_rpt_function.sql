@@ -62,7 +62,6 @@ create or replace package body psa_app.psa_rpt_function as
       var_psc_code varchar2(32);
       var_wek_code varchar2(32);
       var_pty_code varchar2(32);
-      var_output varchar2(2000);
       var_work varchar2(2000);
       var_fil_name varchar2(800);
       var_min_time date;
@@ -76,6 +75,11 @@ create or replace package body psa_app.psa_rpt_function as
       var_stk_flag varchar2(1);
       var_str_time varchar2(10);
       var_str_date boolean;
+      var_str_barn number;
+      var_chg_barn number;
+      var_end_barn number;
+      var_wek_flow varchar2(1);
+      var_bcolor varchar2(20);
 
       /*-*/
       /* Local cursors
@@ -198,6 +202,60 @@ create or replace package body psa_app.psa_rpt_function as
             and t01.lfi_con_code = var_con_code
           order by t01.lfi_fil_code asc;
 
+      cursor csr_sact is
+         select to_char(t01.psa_act_code) as psa_act_code,
+                t01.psa_psc_week,
+                t01.psa_act_type,
+                t01.psa_sch_chg_flag,
+                t01.psa_act_chg_flag,
+                t01.psa_act_win_code,
+                to_char(t01.psa_act_win_seqn) as psa_act_win_seqn,
+                t01.psa_act_win_flow,
+                t01.psa_act_str_time,
+                t01.psa_act_chg_time,
+                t01.psa_act_end_time,
+                to_char(trunc(nvl(t01.psa_sch_dur_mins,0)/60))||' hrs '||to_char(mod(nvl(t01.psa_sch_dur_mins,0),60))||' min' as psa_sch_dur_mins,
+                to_char(trunc(nvl(t01.psa_act_dur_mins,0)/60))||' hrs '||to_char(mod(nvl(t01.psa_act_dur_mins,0),60))||' min' as psa_act_dur_mins,
+                to_char(trunc(nvl(t01.psa_sch_chg_mins,0)/60))||' hrs '||to_char(mod(nvl(t01.psa_sch_chg_mins,0),60))||' min' as psa_sch_chg_mins,
+                to_char(trunc(nvl(t01.psa_act_chg_mins,0)/60))||' hrs '||to_char(mod(nvl(t01.psa_act_chg_mins,0),60))||' min' as psa_act_chg_mins,
+                t01.psa_act_ent_flag,
+                t01.psa_sac_code,
+                t01.psa_sac_name,
+                t01.psa_mat_code,
+                t01.psa_mat_name,
+                to_char(t01.psa_mat_sch_plt_qty) as psa_mat_sch_plt_qty,
+                to_char(t01.psa_mat_sch_cas_qty) as psa_mat_sch_cas_qty,
+                to_char(t01.psa_mat_sch_pch_qty) as psa_mat_sch_pch_qty,
+                to_char(t01.psa_mat_sch_mix_qty) as psa_mat_sch_mix_qty,
+                to_char(t01.psa_mat_sch_ton_qty,'fm999999990.000') as psa_mat_sch_ton_qty,
+                to_char(t01.psa_mat_act_plt_qty) as psa_mat_act_plt_qty,
+                to_char(t01.psa_mat_act_cas_qty) as psa_mat_act_cas_qty,
+                to_char(t01.psa_mat_act_pch_qty) as psa_mat_act_pch_qty,
+                to_char(t01.psa_mat_act_mix_qty) as psa_mat_act_mix_qty,
+                to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty
+           from psa_psc_actv t01
+          where t01.psa_psc_code = rcd_retrieve.psp_psc_code
+            and t01.psa_prd_type = rcd_retrieve.psp_prd_type
+            and t01.psa_act_lin_code = var_lin_code
+            and t01.psa_act_con_code = var_con_code
+            and t01.psa_act_win_code != '*NONE'
+            and ((t01.psa_act_str_time >= var_min_time and t01.psa_act_str_time < var_max_time) or
+                 (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time))
+          order by t01.psa_act_str_time asc;
+      rcd_sact csr_sact%rowtype;
+
+      cursor csr_sivt is
+         select t01.psi_mat_code,
+                t02.mde_mat_name,
+                to_char(t01.psi_inv_qnty) as psi_inv_qnty,
+                to_char(t01.psi_inv_aval) as psi_inv_aval
+           from psa_psc_invt t01,
+                psa_mat_defn t02
+          where t01.psi_mat_code = t02.mde_mat_code
+            and t01.psi_act_code = rcd_sact.psa_act_code
+          order by t01.psi_mat_code asc;
+      rcd_sivt csr_sivt%rowtype;
+
       /*-*/
       /* Local arrays
       /*-*/
@@ -234,7 +292,7 @@ create or replace package body psa_app.psa_rpt_function as
           stytxt varchar2(256),
           rowspn varchar2(5),
           colspn varchar2(5),
-          outtxt varchar2(1024));
+          outtxt varchar2(2000));
       type typ_scol is table of dat_scol index by binary_integer;
       type dat_srow is record (rowcde number, colary typ_scol);
       type typ_srow is table of dat_srow index by binary_integer;
@@ -405,7 +463,15 @@ create or replace package body psa_app.psa_rpt_function as
          for idc in 1..var_cmax loop
             tbl_srow(idr).colary(idc).haltxt := 'center';
             tbl_srow(idr).colary(idc).valtxt := 'center';
-            tbl_srow(idr).colary(idc).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#f7f7f7;color:#000000;';
+            if idc > 2 and mod(idc,2) = 0 then
+               tbl_srow(idr).colary(idc).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border:#808080 .5pt solid;';
+            else
+               if idr = 1 then
+                  tbl_srow(idr).colary(idc).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-left:#808080 .5pt solid;border-right:#808080 .5pt solid;';
+               else
+                  tbl_srow(idr).colary(idc).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-left:#808080 .5pt solid;border-right:#808080 .5pt solid;';
+               end if;
+            end if;
             tbl_srow(idr).colary(idc).rowspn := '1';
             tbl_srow(idr).colary(idc).colspn := '1';
             tbl_srow(idr).colary(idc).outtxt := null;
@@ -425,15 +491,16 @@ create or replace package body psa_app.psa_rpt_function as
          end if;
          var_str_date := true;
          for idd in 1..24 loop
-            var_str_time := to_char(idd,'fm00');
+            var_str_time := to_char(idd-1,'fm00');
             var_ridx := var_ridx + 1;
             tbl_srow(var_ridx).colary(1).haltxt := 'center';
             tbl_srow(var_ridx).colary(1).valtxt := 'center';
             if var_str_date = true then
-               tbl_srow(var_ridx).colary(1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c0ff;color:#000000;';
+               tbl_srow(var_ridx).colary(1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#8080ff;color:#000000;border:#808080 .5pt solid;';
             else
-               tbl_srow(var_ridx).colary(1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#dddfff;color:#000000;';
+               tbl_srow(var_ridx).colary(1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;';
             end if;
+            var_str_date := false;
             tbl_srow(var_ridx).colary(1).rowspn := '4';
             tbl_srow(var_ridx).colary(1).colspn := '1';
             tbl_srow(var_ridx).colary(1).outtxt := rcd_date.psd_day_name||'<br>'||rcd_date.psd_day_date;
@@ -447,14 +514,13 @@ create or replace package body psa_app.psa_rpt_function as
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
             tbl_srow(var_ridx).colary(2).valtxt := 'center';
             if var_stk_flag = '0' then
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             end if;
             tbl_srow(var_ridx).colary(2).rowspn := '1';
             tbl_srow(var_ridx).colary(2).colspn := '1';
             tbl_srow(var_ridx).colary(2).outtxt := var_str_time||':00';
-            var_str_date := false;
             var_ridx := var_ridx + 1;
             tbl_srow(var_ridx).colary(1).haltxt := '*NULL';
             var_stk_flag := '0';
@@ -467,9 +533,9 @@ create or replace package body psa_app.psa_rpt_function as
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
             tbl_srow(var_ridx).colary(2).valtxt := 'center';
             if var_stk_flag = '0' then
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c000;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             end if;
             tbl_srow(var_ridx).colary(2).rowspn := '1';
             tbl_srow(var_ridx).colary(2).colspn := '1';
@@ -486,9 +552,9 @@ create or replace package body psa_app.psa_rpt_function as
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
             tbl_srow(var_ridx).colary(2).valtxt := 'center';
             if var_stk_flag = '0' then
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c000;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             end if;
             tbl_srow(var_ridx).colary(2).rowspn := '1';
             tbl_srow(var_ridx).colary(2).colspn := '1';
@@ -505,9 +571,9 @@ create or replace package body psa_app.psa_rpt_function as
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
             tbl_srow(var_ridx).colary(2).valtxt := 'center';
             if var_stk_flag = '0' then
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
-               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;';
+               tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c000;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             end if;
             tbl_srow(var_ridx).colary(2).rowspn := '1';
             tbl_srow(var_ridx).colary(2).colspn := '1';
@@ -526,16 +592,16 @@ create or replace package body psa_app.psa_rpt_function as
             for ids in 1..tbl_line(idl).shfary.count loop
                if tbl_line(idl).shfary(ids).cmo_code != '*NONE' then
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).haltxt := 'center';
-                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).valtxt := 'center';
-                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0ffc0;color:#000000;border:#04aa04 2px solid;padding-left:2px;padding-right:2px;';
+                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).valtxt := 'top';
+                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0ffc0;color:#000000;border:#008000 1pt solid;';
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).rowspn := to_char((tbl_line(idl).shfary(ids).end_barn - tbl_line(idl).shfary(ids).str_barn) + 1);
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).colspn := '1';
-                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).outtxt := null;
+                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).outtxt := tbl_line(idl).shfary(ids).shf_name;
                   for idw in tbl_line(idl).shfary(ids).str_barn..tbl_line(idl).shfary(ids).end_barn loop
                      if idw != tbl_line(idl).shfary(ids).str_barn then
                         tbl_srow(idw).colary(var_cidx).haltxt := '*NULL';
                      end if;
-                     tbl_srow(idw).colary(var_cidx+1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;';
+                     tbl_srow(idw).colary(var_cidx+1).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
                   end loop;
                end if;
             end loop;
@@ -543,20 +609,274 @@ create or replace package body psa_app.psa_rpt_function as
       end loop;
 
       /*-*/
+      /* Retrieve and load the schedule data
+      /*-*/
+      var_cidx := 2;
+      for idl in 1..tbl_line.count loop
+         var_cidx := var_cidx + 2;
+         var_lin_code := tbl_line(idl).lin_code;
+         var_con_code := tbl_line(idl).con_code;
+
+         /*-*/
+         /* Load the schedule data
+         /*-*/
+         open csr_sact;
+         loop
+            fetch csr_sact into rcd_sact;
+            if csr_sact%notfound then
+               exit;
+            end if;
+            var_wek_flow := '0';
+            if rcd_sact.psa_psc_week != var_wek_code then
+               var_wek_flow := '1';
+            end if;
+            var_str_barn := trunc(((rcd_sact.psa_act_str_time - var_min_time) * 1440) / 15) + 1;
+            var_end_barn := trunc(((rcd_sact.psa_act_end_time - var_min_time) * 1440) / 15) + 1;
+            if rcd_sact.psa_act_type = 'P' then
+               if rcd_sact.psa_act_chg_flag = '1' then
+                  var_chg_barn := trunc(((rcd_sact.psa_act_chg_time - var_min_time) * 1440) / 15) + 1;
+               end if;
+               if rcd_sact.psa_act_win_flow = '0' then
+                  var_bcolor := '#000000';
+                  if var_wek_flow = '1' then
+                     var_bcolor := '#800000';
+                  end if;
+               else
+                  var_bcolor := '#800080';
+                  if var_wek_flow = '1' then
+                     var_bcolor := '#800000';
+                  end if;
+               end if;
+               var_work := tbl_srow(var_str_barn).colary(var_cidx).outtxt;
+               if not(var_work is null) then
+                  var_work := var_work||'<br>';
+               end if;
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD* - Material ('||rcd_sact.psa_mat_code||') '||rcd_sact.psa_mat_name||'</font>';
+               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               if rcd_sact.psa_sch_chg_flag = '0' then
+                  var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||')';
+               else
+                  var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||') Change ('||rcd_sact.psa_sch_chg_mins||')';
+               end if;
+               if rcd_sact.psa_act_ent_flag = '1' then
+                  if rcd_sact.psa_act_chg_flag = '0' then
+                     var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||')';
+                  else
+                     var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||') Change ('||rcd_sact.psa_act_chg_mins||')';
+                  end if;
+               end if;
+               if rcd_retrieve.psp_prd_type = '*FILL' then
+                  var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pouches ('||rcd_sact.psa_mat_sch_pch_qty||') Mixes ('||rcd_sact.psa_mat_sch_mix_qty||')';
+               elsif rcd_retrieve.psp_prd_type = '*PACK' then
+                  var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pallets ('||rcd_sact.psa_mat_sch_plt_qty||')';
+               elsif rcd_retrieve.psp_prd_type = '*FORM' then
+                  var_work := var_work||'<br>'||'Scheduled Pouches ('||rcd_sact.psa_mat_sch_pch_qty||')';
+               end if;
+               if rcd_sact.psa_act_ent_flag = '1' then
+                  if rcd_retrieve.psp_prd_type = '*FILL' then
+                     var_work := var_work||'<br>'||'Actual Cases ('||rcd_sact.psa_mat_act_cas_qty||') Pouches ('||rcd_sact.psa_mat_act_pch_qty||') Mixes ('||rcd_sact.psa_mat_act_mix_qty||')';
+                  elsif rcd_retrieve.psp_prd_type = '*PACK' then
+                     var_work := var_work||'<br>'||'Actual Cases ('||rcd_sact.psa_mat_act_cas_qty||') Pallets ('||rcd_sact.psa_mat_act_plt_qty||')';
+                  elsif rcd_retrieve.psp_prd_type = '*FORM' then
+                     var_work := var_work||'<br>'||'Actual Pouches ('||rcd_sact.psa_mat_act_pch_qty||')';
+                  end if;
+               end if;
+               open csr_sivt;
+               loop
+                  fetch csr_sivt into rcd_sivt;
+                  if csr_sivt%notfound then
+                     exit;
+                  end if;
+                  var_work := var_work||'<br>'||'Component ('||rcd_sivt.psi_mat_code||') '||rcd_sivt.mde_mat_name||' Required ('||rcd_sivt.psi_inv_qnty||') Available ('||rcd_sivt.psi_inv_aval||')';
+               end loop;
+               close csr_sivt;
+               tbl_srow(var_str_barn).colary(var_cidx).haltxt := 'left';
+               tbl_srow(var_str_barn).colary(var_cidx).valtxt := 'top';
+               tbl_srow(var_str_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+               tbl_srow(var_str_barn).colary(var_cidx).rowspn := '1';
+               tbl_srow(var_str_barn).colary(var_cidx).colspn := '1';
+               tbl_srow(var_str_barn).colary(var_cidx).outtxt := var_work;
+               if rcd_sact.psa_act_chg_flag = '1' then
+                  for idb in var_str_barn+1..var_chg_barn-1 loop
+                     var_work := tbl_srow(idb).colary(var_cidx).outtxt;
+                     if not(var_work is null) then
+                        var_work := var_work||'<br>';
+                     end if;
+                     var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font>';
+                     tbl_srow(idb).colary(var_cidx).haltxt := 'left';
+                     tbl_srow(idb).colary(var_cidx).valtxt := 'top';
+                     tbl_srow(idb).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+                     tbl_srow(idb).colary(var_cidx).rowspn := '1';
+                     tbl_srow(idb).colary(var_cidx).colspn := '1';
+                     tbl_srow(idb).colary(var_cidx).outtxt := var_work;
+                 end loop;
+                  var_work := tbl_srow(var_chg_barn).colary(var_cidx).outtxt;
+                  if not(var_work is null) then
+                     var_work := var_work||'<br>';
+                  end if;
+                  var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - Material change ('||to_char(rcd_sact.psa_act_chg_time,'hh24:mi')||')';
+                  tbl_srow(var_chg_barn).colary(var_cidx).haltxt := 'left';
+                  tbl_srow(var_chg_barn).colary(var_cidx).valtxt := 'top';
+                  tbl_srow(var_chg_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+                  tbl_srow(var_chg_barn).colary(var_cidx).rowspn := '1';
+                  tbl_srow(var_chg_barn).colary(var_cidx).colspn := '1';
+                  tbl_srow(var_chg_barn).colary(var_cidx).outtxt := var_work;
+                  for idb in var_chg_barn+1..var_end_barn-1 loop
+                     var_work := tbl_srow(idb).colary(var_cidx).outtxt;
+                     if not(var_work is null) then
+                        var_work := var_work||'<br>';
+                     end if;
+                     var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font>';
+                     tbl_srow(idb).colary(var_cidx).haltxt := 'left';
+                     tbl_srow(idb).colary(var_cidx).valtxt := 'top';
+                     tbl_srow(idb).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+                     tbl_srow(idb).colary(var_cidx).rowspn := '1';
+                     tbl_srow(idb).colary(var_cidx).colspn := '1';
+                     tbl_srow(idb).colary(var_cidx).outtxt := var_work;
+                 end loop;
+               else
+                  for idb in var_str_barn+1..var_end_barn-1 loop
+                     var_work := tbl_srow(idb).colary(var_cidx).outtxt;
+                     if not(var_work is null) then
+                        var_work := var_work||'<br>';
+                     end if;
+                     var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font>';
+                     tbl_srow(idb).colary(var_cidx).haltxt := 'left';
+                     tbl_srow(idb).colary(var_cidx).valtxt := 'top';
+                     tbl_srow(idb).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+                     tbl_srow(idb).colary(var_cidx).rowspn := '1';
+                     tbl_srow(idb).colary(var_cidx).colspn := '1';
+                     tbl_srow(idb).colary(var_cidx).outtxt := var_work;
+                 end loop;
+               end if;
+               var_work := tbl_srow(var_end_barn).colary(var_cidx).outtxt;
+               if not(var_work is null) then
+                  var_work := var_work||'<br>';
+               end if;
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               tbl_srow(var_end_barn).colary(var_cidx).haltxt := 'left';
+               tbl_srow(var_end_barn).colary(var_cidx).valtxt := 'top';
+               tbl_srow(var_end_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+               tbl_srow(var_end_barn).colary(var_cidx).rowspn := '1';
+               tbl_srow(var_end_barn).colary(var_cidx).colspn := '1';
+               tbl_srow(var_end_barn).colary(var_cidx).outtxt := var_work;
+            elsif rcd_sact.psa_act_type = 'T' then
+               if rcd_sact.psa_act_win_flow = '0' then
+                  var_bcolor := '#000000';
+                  if var_wek_flow = '1' then
+                     var_bcolor := '#800000';
+                  end if;
+               else
+                  var_bcolor := '#800080';
+                  if var_wek_flow = '1' then
+                     var_bcolor := '#800000';
+                  end if;
+               end if;
+               var_work := tbl_srow(var_str_barn).colary(var_cidx).outtxt;
+               if not(var_work is null) then
+                  var_work := var_work||'<br>';
+               end if;
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME* - Activity ('||rcd_sact.psa_sac_code||') '||rcd_sact.psa_sac_name||'</font>';
+               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               var_work := var_work||'<br>'||'Scheduled Duration ('||rcd_sact.psa_sch_dur_mins||')';
+               if rcd_sact.psa_act_ent_flag = '1' then
+                  var_work := var_work||'<br>'||'Actual Duration ('||rcd_sact.psa_act_dur_mins||')';
+               end if;
+               tbl_srow(var_str_barn).colary(var_cidx).haltxt := 'left';
+               tbl_srow(var_str_barn).colary(var_cidx).valtxt := 'top';
+               tbl_srow(var_str_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+               tbl_srow(var_str_barn).colary(var_cidx).rowspn := '1';
+               tbl_srow(var_str_barn).colary(var_cidx).colspn := '1';
+               tbl_srow(var_str_barn).colary(var_cidx).outtxt := var_work;
+               for idb in var_str_barn+1..var_end_barn-1 loop
+                  var_work := tbl_srow(idb).colary(var_cidx).outtxt;
+                  if not(var_work is null) then
+                     var_work := var_work||'<br>';
+                  end if;
+                  var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME*</font>';
+                  tbl_srow(idb).colary(var_cidx).haltxt := 'left';
+                  tbl_srow(idb).colary(var_cidx).valtxt := 'top';
+                  tbl_srow(idb).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+                  tbl_srow(idb).colary(var_cidx).rowspn := '1';
+                  tbl_srow(idb).colary(var_cidx).colspn := '1';
+                  tbl_srow(idb).colary(var_cidx).outtxt := var_work;
+               end loop;
+               var_work := tbl_srow(var_end_barn).colary(var_cidx).outtxt;
+               if not(var_work is null) then
+                  var_work := var_work||'<br>';
+               end if;
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               tbl_srow(var_end_barn).colary(var_cidx).haltxt := 'left';
+               tbl_srow(var_end_barn).colary(var_cidx).valtxt := 'top';
+               tbl_srow(var_end_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
+               tbl_srow(var_end_barn).colary(var_cidx).rowspn := '1';
+               tbl_srow(var_end_barn).colary(var_cidx).colspn := '1';
+               tbl_srow(var_end_barn).colary(var_cidx).outtxt := var_work;
+            end if;
+         end loop;
+         close csr_sact;
+
+      end loop;
+
+      /*-*/
       /* Start the report
       /*-*/
-      pipe row('<table style="border:#c7c7c7 1px solid;">');
-      pipe row('<tr><td align=center colspan='||to_char(var_cmax)||' style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#CCFFCC;color:#000000;">Production Schedule Report - '||var_psc_code||' - '||'Y'||substr(var_wek_code,1,4)||' P'||substr(var_wek_code,5,2)||' W'||substr(var_wek_code,7,1)||' - '||rcd_retrieve.pty_prd_name||'</td></tr>');
+      pipe row('<html');
+      pipe row('<head>');
+      pipe row('<style>br {mos-data_placement:same-cell;}</style>');
+      pipe row('<!--[if gte mso 9]><xml>');
+      pipe row(' <x:ExcelWorkbook>');
+      pipe row('  <x:ExcelWorksheets>');
+      pipe row('   <x:ExcelWorksheet>');
+      pipe row('    <x:Name>'||var_psc_code||'</x:Name>');
+      pipe row('    <x:WorksheetOptions>');
+      pipe row('     <x:Selected/>');
+      pipe row('     <x:DoNotDisplayGridlines/>');
+      pipe row('     <x:FreezePanes/>');
+      pipe row('     <x:FrozenNoSplit/>');
+      pipe row('     <x:SplitHorizontal>2</x:SplitHorizontal>');
+      pipe row('     <x:TopRowBottomPane>2</x:TopRowBottomPane>');
+      pipe row('     <x:SplitVertical>2</x:SplitVertical>');
+      pipe row('     <x:LeftColumnRightPane>2</x:LeftColumnRightPane>');
+      pipe row('     <x:ActivePane>0</x:ActivePane>');
+      pipe row('     <x:Panes>');
+      pipe row('      <x:Pane>');
+      pipe row('       <x:Number>3</x:Number>');
+      pipe row('      </x:Pane>');
+      pipe row('      <x:Pane>');
+      pipe row('       <x:Number>1</x:Number>');
+      pipe row('      </x:Pane>');
+      pipe row('      <x:Pane>');
+      pipe row('       <x:Number>2</x:Number>');
+      pipe row('      </x:Pane>');
+      pipe row('      <x:Pane>');
+      pipe row('       <x:Number>0</x:Number>');
+      pipe row('       <x:ActiveRow>2</x:ActiveRow>');
+      pipe row('       <x:ActiveCol>2</x:ActiveCol>');
+      pipe row('      </x:Pane>');
+      pipe row('     </x:Panes>');
+      pipe row('     <x:ProtectContents>False</x:ProtectContents>');
+      pipe row('     <x:ProtectObjects>False</x:ProtectObjects>');
+      pipe row('     <x:ProtectScenarios>False</x:ProtectScenarios>');
+      pipe row('    </x:WorksheetOptions>');
+      pipe row('   </x:ExcelWorksheet>');
+      pipe row('  </x:ExcelWorksheets>');
+      pipe row('  <x:ProtectStructure>False</x:ProtectStructure>');
+      pipe row('  <x:ProtectWindows>False</x:ProtectWindows>');
+      pipe row(' </x:ExcelWorkbook>');
+      pipe row('</xml><![endif]-->');
+      pipe row('</head>');
+      pipe row('<body>');
+      pipe row('<table style="border:#808080 .5pt solid;">');
+      pipe row('<tr><td align=center colspan='||to_char(var_cmax)||' style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>Production Schedule Report - '||var_psc_code||' - '||'Y'||substr(var_wek_code,1,4)||' P'||substr(var_wek_code,5,2)||' W'||substr(var_wek_code,7,1)||' - '||rcd_retrieve.pty_prd_name||'</td></tr>');
       pipe row('<tr>');
-      pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;">Date</td>');
-      pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;">Time</td>');
+      pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>Date</td>');
+      pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>Time</td>');
       for idl in 1..tbl_line.count loop
          if tbl_line(idl).ovr_flag = '0' then
-            pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#04aa04;color:#ffffff;">Shift</td>');
-            pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;">('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
+            pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
          else
-            pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c00000;color:#ffffff;">Shift</td>');
-            pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c00000;color:#ffffff;">('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
+            pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
          end if;
       end loop;
       pipe row('</tr>');
@@ -568,7 +888,7 @@ create or replace package body psa_app.psa_rpt_function as
          pipe row('<tr>');
          for idc in 1..tbl_srow(idr).colary.count loop
             if tbl_srow(idr).colary(idc).haltxt != '*NULL' then
-               pipe row('<td align='||tbl_srow(idr).colary(idc).haltxt||' valign='||tbl_srow(idr).colary(idc).valtxt||' rowspan='||tbl_srow(idr).colary(idc).rowspn||' colspan='||tbl_srow(idr).colary(idc).colspn||' style="'||tbl_srow(idr).colary(idc).stytxt||'">'||tbl_srow(idr).colary(idc).outtxt||'</td>');
+               pipe row('<td align='||tbl_srow(idr).colary(idc).haltxt||' valign='||tbl_srow(idr).colary(idc).valtxt||' rowspan='||tbl_srow(idr).colary(idc).rowspn||' colspan='||tbl_srow(idr).colary(idc).colspn||' style="'||tbl_srow(idr).colary(idc).stytxt||'" nowrap>'||tbl_srow(idr).colary(idc).outtxt||'</td>');
             end if;
          end loop;
          pipe row('</tr>');
@@ -578,6 +898,8 @@ create or replace package body psa_app.psa_rpt_function as
       /* End the report
       /*-*/
       pipe row('</table>');
+      pipe row('</body>');
+      pipe row('</html>');
 
       /*-*/
       /* Return
