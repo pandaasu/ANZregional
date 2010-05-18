@@ -1,4 +1,4 @@
-create or replace package pt_app.tagsys_fctry_intfc as
+CREATE OR REPLACE package pt_app.tagsys_fctry_intfc as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -31,7 +31,8 @@ create or replace package pt_app.tagsys_fctry_intfc as
   2008/10   Trevor Keon     Updated layout and create_pllt to use matl instead
                             of matl_vw for performance reasons
   2010/03   G.Brooder       Remove Bathurst AU30 - BTH is now ICS.
-                            Comment Wodonga AU20 IPAL processing CR58468.
+                            Comment out Wodonga AU20 Tolas IPAL processing CR58468.
+  2010/04   G.Brooder       Comment out Wodonga AU20 Tolas IPAL cancels. CR59683.
 *******************************************************************************/
 
   /*-*/
@@ -136,7 +137,8 @@ create or replace package pt_app.tagsys_fctry_intfc as
 end;
 /
 
-create or replace package body pt_app.tagsys_fctry_intfc as
+
+CREATE OR REPLACE package body pt_app.tagsys_fctry_intfc as
    
   b_test_flag boolean := false; 
    
@@ -562,7 +564,7 @@ create or replace package body pt_app.tagsys_fctry_intfc as
           /* only for Wodonga Cannery
           /*-*/
 
-          /***** CR58468 ***** IPAL sends no longer required for AU20
+          /***** CR58468 ***** TOLAS IPAL sends no longer required for AU20
           if i_plant_code = 'AU20' then
             /*-*/
             /* send the FDS file to Tolas
@@ -597,7 +599,7 @@ create or replace package body pt_app.tagsys_fctry_intfc as
               to_char(lpad(v_seq,8,'0'))
             );
           end if;
-          /***** CR58468 *****/
+          /***** CR58468 ***** TOLAS IPAL sends no longer required for AU20 */
                                  
                     
           /*-*/
@@ -1128,28 +1130,29 @@ create or replace package body pt_app.tagsys_fctry_intfc as
       /* Cancel sent to atlas
       /*-*/
         
-      /*-*/
+      /***** CR59683 ***** TOLAS IPAL cancels no longer required for AU20
+      /*-*
       /* now send Tolas Files if required
-      /*-*/
+      /*-*
       begin
-        /*-*/
+        /*-*
         /* only for Wodonga Cannery 
-        /*-*/
+        /*-*
         if r_plt.plant_code = 'AU20' then
-          /*-*/
+          /*-*
           /* get a sequence number for the Tolas interface
-          /*-*/
+          /*-*
           begin
             select plt_tolas_seq.nextval into v_seq from dual;
             insert into plt_tolas
             values (i_plt_code, v_seq);
           end;
                                     
-          /*-*/
+          /*-*
           /* send the FDS file to Tolas
           /* this file is based on plant and will be assigned to a different queue for the 2 Plant Codes
           /* defined in the If statement
-          /*-*/
+          /*-*
           tolas_fds_send
           (
             v_result,
@@ -1188,6 +1191,7 @@ create or replace package body pt_app.tagsys_fctry_intfc as
       /*-*/
       /* Tolas files sent
       /*-*/
+      /***** CR59683 ***** TOLAS IPAL cancels no longer required for AU20 */
         
       exit;
               
@@ -1478,3 +1482,4 @@ grant execute on pt_app.tagsys_fctry_intfc to shiftlog;
 /* Synonym 
 /**/
 create or replace public synonym tagsys_fctry_intfc for pt_app.tagsys_fctry_intfc;
+
