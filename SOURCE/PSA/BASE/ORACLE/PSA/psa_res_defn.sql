@@ -32,7 +32,7 @@ create table psa.psa_res_defn
 comment on table psa.psa_res_defn is 'Resource Definition Table';
 comment on column psa.psa_res_defn.rde_res_code is 'Resource code';
 comment on column psa.psa_res_defn.rde_res_name is 'Resource name';
-comment on column psa.psa_res_defn.rde_res_status is 'Shift status (0=inactive or 1=active)';
+comment on column psa.psa_res_defn.rde_res_status is 'Resource status (0=inactive or 1=active)';
 comment on column psa.psa_res_defn.rde_prd_type is 'Production type code';
 comment on column psa.psa_res_defn.rde_upd_user is 'Last updated user';
 comment on column psa.psa_res_defn.rde_upd_date is 'Last updated date';
