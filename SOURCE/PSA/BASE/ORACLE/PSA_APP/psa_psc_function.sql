@@ -1226,7 +1226,7 @@ create or replace package body psa_app.psa_psc_function as
       rcd_mdat csr_mdat%rowtype;
 
       cursor csr_date is
-         select to_char(t01.psd_day_date,'yyyy/mm/dd') as psd_day_date,
+         select to_char(t01.psd_day_date,'dd/mm/yyyy') as psd_day_date,
                 t01.psd_day_name as psd_day_name
            from psa_psc_date t01
           where t01.psd_psc_code = rcd_retrieve.psp_psc_code
@@ -2786,7 +2786,7 @@ create or replace package body psa_app.psa_psc_function as
           where t01.rde_mat_code = t02.mde_mat_code
             and t02.mde_mat_code = t03.mpr_mat_code
             and t01.rde_req_code = rcd_psa_psc_week.psw_req_code
-------   and t01.rde_mat_emsg is null
+            and t01.rde_mat_emsg is null
             and t02.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
             and t03.mpr_req_flag = '1'
           order by t02.mde_mat_code asc,
@@ -6794,6 +6794,7 @@ create or replace package body psa_app.psa_psc_function as
          select to_char(t01.psa_act_code) as psa_act_code,
                 t01.psa_psc_week,
                 t01.psa_act_type,
+                t01.psa_sch_chg_flag,
                 t01.psa_act_chg_flag,
                 t01.psa_act_win_code,
                 to_char(t01.psa_act_win_seqn) as psa_act_win_seqn,
@@ -6827,7 +6828,8 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_act_con_code = par_con_code
             and t01.psa_act_win_code != '*NONE'
             and ((t01.psa_act_str_time >= var_min_time and t01.psa_act_str_time < var_max_time) or
-                 (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time))
+                 (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time) or
+                 (t01.psa_act_str_time < var_min_time and t01.psa_act_end_time >= var_max_time))
           order by t01.psa_act_str_time asc;
       rcd_sact csr_sact%rowtype;
 
@@ -6888,19 +6890,29 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          var_str_barn := trunc(((rcd_sact.psa_act_str_time - var_min_time) * 1440) / 15) + 1;
          var_end_barn := trunc(((rcd_sact.psa_act_end_time - var_min_time) * 1440) / 15) + 1;
+         if rcd_sact.psa_act_str_time < var_min_time then
+            var_str_barn := 1;
+         end if;
+         if rcd_sact.psa_act_end_time >= var_max_time then
+            var_end_barn := con_max_bar;
+         end if;
          if rcd_sact.psa_act_type = 'P' then
             if rcd_sact.psa_act_chg_flag = '1' then
                var_chg_barn := trunc(((rcd_sact.psa_act_chg_time - var_min_time) * 1440) / 15) + 1;
+               if rcd_sact.psa_act_chg_time < var_min_time or rcd_sact.psa_act_chg_time >= var_max_time then
+                  var_chg_barn := 0;
+               end if;
                ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                       ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
+                                                      ' SCHCHG="'||psa_to_xml(rcd_sact.psa_sch_chg_flag)||'"'||
                                                       ' CHGFLG="'||psa_to_xml(rcd_sact.psa_act_chg_flag)||'"'||
                                                       ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
                                                       ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                       ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
                                                       ' WEKFLW="'||psa_to_xml(var_wek_flow)||'"'||
-                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
-                                                      ' CHGTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_chg_time,'hh24:mi'))||'"'||
-                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
+                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi'))||'"'||
+                                                      ' CHGTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_chg_time,'dd/mm/yyyy hh24:mi'))||'"'||
+                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi'))||'"'||
                                                       ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                       ' CHGBAR="'||psa_to_xml(to_char(var_chg_barn))||'"'||
                                                       ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
@@ -6924,13 +6936,14 @@ create or replace package body psa_app.psa_psc_function as
             else
                ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                       ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
+                                                      ' SCHCHG="'||psa_to_xml(rcd_sact.psa_sch_chg_flag)||'"'||
                                                       ' CHGFLG="'||psa_to_xml(rcd_sact.psa_act_chg_flag)||'"'||
                                                       ' WINCDE="'||psa_to_xml(rcd_sact.psa_act_win_code)||'"'||
                                                       ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                       ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
                                                       ' WEKFLW="'||psa_to_xml(var_wek_flow)||'"'||
-                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
-                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
+                                                      ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi'))||'"'||
+                                                      ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi'))||'"'||
                                                       ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                       ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
                                                       ' SCHDMI="'||psa_to_xml(rcd_sact.psa_sch_dur_mins)||'"'||
@@ -6968,8 +6981,8 @@ create or replace package body psa_app.psa_psc_function as
                                                    ' WINSEQ="'||psa_to_xml(rcd_sact.psa_act_win_seqn)||'"'||
                                                    ' WINFLW="'||psa_to_xml(rcd_sact.psa_act_win_flow)||'"'||
                                                    ' WEKFLW="'||psa_to_xml(var_wek_flow)||'"'||
-                                                   ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'hh24:mi'))||'"'||
-                                                   ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'hh24:mi'))||'"'||
+                                                   ' STRTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi'))||'"'||
+                                                   ' ENDTIM="'||psa_to_xml(to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi'))||'"'||
                                                    ' STRBAR="'||psa_to_xml(to_char(var_str_barn))||'"'||
                                                    ' ENDBAR="'||psa_to_xml(to_char(var_end_barn))||'"'||
                                                    ' SCHDMI="'||psa_to_xml(rcd_sact.psa_sch_dur_mins)||'"'||

@@ -68,6 +68,7 @@ create or replace package body psa_app.psa_rpt_function as
       var_max_time date;
       var_lin_code varchar2(32);
       var_con_code varchar2(32);
+      var_cmo_code varchar2(32);
       var_sidx integer;
       var_ridx integer;
       var_cidx integer;
@@ -104,7 +105,7 @@ create or replace package body psa_app.psa_rpt_function as
       rcd_mdat csr_mdat%rowtype;
 
       cursor csr_date is
-         select to_char(t01.psd_day_date,'yyyy/mm/dd') as psd_day_date,
+         select to_char(t01.psd_day_date,'dd/mm/yyyy') as psd_day_date,
                 t01.psd_day_name as psd_day_name
            from psa_psc_date t01
           where t01.psd_psc_code = rcd_retrieve.psp_psc_code
@@ -162,6 +163,17 @@ create or replace package body psa_app.psa_rpt_function as
             and t01.pss_con_code = rcd_line.psl_con_code
           order by t01.pss_smo_seqn asc;
       rcd_shft csr_shft%rowtype;
+
+      cursor csr_cmod is
+         select t02.rde_res_code,
+                t02.rde_res_name,
+                to_char(t01.cmr_res_qnty) as cmr_res_qnty
+           from psa_cmo_resource t01,
+                psa_res_defn t02
+          where t01.cmr_res_code = t02.rde_res_code
+            and t01.cmr_cmo_code = var_cmo_code
+          order by t01.cmr_res_code asc;
+      rcd_cmod csr_cmod%rowtype;
 
       cursor csr_olin is
          select t01.psa_lin_code,
@@ -240,7 +252,8 @@ create or replace package body psa_app.psa_rpt_function as
             and t01.psa_act_con_code = var_con_code
             and t01.psa_act_win_code != '*NONE'
             and ((t01.psa_act_str_time >= var_min_time and t01.psa_act_str_time < var_max_time) or
-                 (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time))
+                 (t01.psa_act_end_time >= var_min_time and t01.psa_act_end_time < var_max_time) or
+                 (t01.psa_act_str_time < var_min_time and t01.psa_act_end_time >= var_max_time))
           order by t01.psa_act_str_time asc;
       rcd_sact csr_sact%rowtype;
 
@@ -512,7 +525,7 @@ create or replace package body psa_app.psa_rpt_function as
                end if;
             end loop;
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
-            tbl_srow(var_ridx).colary(2).valtxt := 'center';
+            tbl_srow(var_ridx).colary(2).valtxt := 'top';
             if var_stk_flag = '0' then
                tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:bold;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
@@ -531,7 +544,7 @@ create or replace package body psa_app.psa_rpt_function as
                end if;
             end loop;
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
-            tbl_srow(var_ridx).colary(2).valtxt := 'center';
+            tbl_srow(var_ridx).colary(2).valtxt := 'top';
             if var_stk_flag = '0' then
                tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
@@ -550,7 +563,7 @@ create or replace package body psa_app.psa_rpt_function as
                end if;
             end loop;
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
-            tbl_srow(var_ridx).colary(2).valtxt := 'center';
+            tbl_srow(var_ridx).colary(2).valtxt := 'top';
             if var_stk_flag = '0' then
                tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
@@ -569,7 +582,7 @@ create or replace package body psa_app.psa_rpt_function as
                end if;
             end loop;
             tbl_srow(var_ridx).colary(2).haltxt := 'center';
-            tbl_srow(var_ridx).colary(2).valtxt := 'center';
+            tbl_srow(var_ridx).colary(2).valtxt := 'top';
             if var_stk_flag = '0' then
                tbl_srow(var_ridx).colary(2).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0c0ff;color:#000000;border:#808080 .5pt solid;mso-number-format:\@;';
             else
@@ -591,12 +604,23 @@ create or replace package body psa_app.psa_rpt_function as
          if tbl_line(idl).ovr_flag = '0' then
             for ids in 1..tbl_line(idl).shfary.count loop
                if tbl_line(idl).shfary(ids).cmo_code != '*NONE' then
+                  var_work := tbl_line(idl).shfary(ids).shf_name;
+                  var_cmo_code := tbl_line(idl).shfary(ids).cmo_code;
+                  open csr_cmod;
+                  loop
+                     fetch csr_cmod into rcd_cmod;
+                     if csr_cmod%notfound then
+                        exit;
+                     end if;
+                     var_work := var_work||'<br>('||rcd_cmod.cmr_res_qnty||') - '||rcd_cmod.rde_res_name;
+                  end loop;
+                  close csr_cmod;
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).haltxt := 'center';
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).valtxt := 'top';
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#c0ffc0;color:#000000;border:#008000 1pt solid;';
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).rowspn := to_char((tbl_line(idl).shfary(ids).end_barn - tbl_line(idl).shfary(ids).str_barn) + 1);
                   tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).colspn := '1';
-                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).outtxt := tbl_line(idl).shfary(ids).shf_name;
+                  tbl_srow(tbl_line(idl).shfary(ids).str_barn).colary(var_cidx).outtxt := var_work;
                   for idw in tbl_line(idl).shfary(ids).str_barn..tbl_line(idl).shfary(ids).end_barn loop
                      if idw != tbl_line(idl).shfary(ids).str_barn then
                         tbl_srow(idw).colary(var_cidx).haltxt := '*NULL';
@@ -632,9 +656,18 @@ create or replace package body psa_app.psa_rpt_function as
             end if;
             var_str_barn := trunc(((rcd_sact.psa_act_str_time - var_min_time) * 1440) / 15) + 1;
             var_end_barn := trunc(((rcd_sact.psa_act_end_time - var_min_time) * 1440) / 15) + 1;
+            if rcd_sact.psa_act_str_time < var_min_time then
+               var_str_barn := 1;
+            end if;
+            if rcd_sact.psa_act_end_time >= var_max_time then
+               var_end_barn := con_max_bar;
+            end if;
             if rcd_sact.psa_act_type = 'P' then
                if rcd_sact.psa_act_chg_flag = '1' then
                   var_chg_barn := trunc(((rcd_sact.psa_act_chg_time - var_min_time) * 1440) / 15) + 1;
+                  if rcd_sact.psa_act_chg_time < var_min_time or rcd_sact.psa_act_chg_time >= var_max_time then
+                     var_chg_barn := 0;
+                  end if;
                end if;
                if rcd_sact.psa_act_win_flow = '0' then
                   var_bcolor := '#000000';
@@ -652,7 +685,7 @@ create or replace package body psa_app.psa_rpt_function as
                   var_work := var_work||'<br>';
                end if;
                var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD* - Material ('||rcd_sact.psa_mat_code||') '||rcd_sact.psa_mat_name||'</font>';
-               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
                if rcd_sact.psa_sch_chg_flag = '0' then
                   var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||')';
                else
@@ -696,7 +729,7 @@ create or replace package body psa_app.psa_rpt_function as
                tbl_srow(var_str_barn).colary(var_cidx).rowspn := '1';
                tbl_srow(var_str_barn).colary(var_cidx).colspn := '1';
                tbl_srow(var_str_barn).colary(var_cidx).outtxt := var_work;
-               if rcd_sact.psa_act_chg_flag = '1' then
+               if rcd_sact.psa_act_chg_flag = '1' and var_chg_barn != 0 then
                   for idb in var_str_barn+1..var_chg_barn-1 loop
                      var_work := tbl_srow(idb).colary(var_cidx).outtxt;
                      if not(var_work is null) then
@@ -709,12 +742,12 @@ create or replace package body psa_app.psa_rpt_function as
                      tbl_srow(idb).colary(var_cidx).rowspn := '1';
                      tbl_srow(idb).colary(var_cidx).colspn := '1';
                      tbl_srow(idb).colary(var_cidx).outtxt := var_work;
-                 end loop;
+                  end loop;
                   var_work := tbl_srow(var_chg_barn).colary(var_cidx).outtxt;
                   if not(var_work is null) then
                      var_work := var_work||'<br>';
                   end if;
-                  var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - Material change ('||to_char(rcd_sact.psa_act_chg_time,'hh24:mi')||')';
+                  var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - Material change ('||to_char(rcd_sact.psa_act_chg_time,'dd/mm/yyyy hh24:mi')||')';
                   tbl_srow(var_chg_barn).colary(var_cidx).haltxt := 'left';
                   tbl_srow(var_chg_barn).colary(var_cidx).valtxt := 'top';
                   tbl_srow(var_chg_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
@@ -753,7 +786,7 @@ create or replace package body psa_app.psa_rpt_function as
                if not(var_work is null) then
                   var_work := var_work||'<br>';
                end if;
-               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
                tbl_srow(var_end_barn).colary(var_cidx).haltxt := 'left';
                tbl_srow(var_end_barn).colary(var_cidx).valtxt := 'top';
                tbl_srow(var_end_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
@@ -777,7 +810,7 @@ create or replace package body psa_app.psa_rpt_function as
                   var_work := var_work||'<br>';
                end if;
                var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME* - Activity ('||rcd_sact.psa_sac_code||') '||rcd_sact.psa_sac_name||'</font>';
-               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
                var_work := var_work||'<br>'||'Scheduled Duration ('||rcd_sact.psa_sch_dur_mins||')';
                if rcd_sact.psa_act_ent_flag = '1' then
                   var_work := var_work||'<br>'||'Actual Duration ('||rcd_sact.psa_act_dur_mins||')';
@@ -805,7 +838,7 @@ create or replace package body psa_app.psa_rpt_function as
                if not(var_work is null) then
                   var_work := var_work||'<br>';
                end if;
-               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'hh24:mi')||')';
+               var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*TIME*</font> - End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
                tbl_srow(var_end_barn).colary(var_cidx).haltxt := 'left';
                tbl_srow(var_end_barn).colary(var_cidx).valtxt := 'top';
                tbl_srow(var_end_barn).colary(var_cidx).stytxt := 'font-family:Arial;font-size:8pt;font-weight:normal;background-color:#ffffff;color:#000000;border-top:#808080 .5pt solid;border-bottom:#808080 .5pt solid;mso-number-format:\@;';
