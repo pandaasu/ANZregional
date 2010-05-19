@@ -218,6 +218,7 @@ create or replace package body psa_app.psa_mat_function as
          if var_user != '*BATCH' then
             psa_gen_function.add_mesg_data('PSA SAP Material Maintenance was unable to lock the function - update not processed');
          end if;
+         return;
       end if;
 
       /*-*/
@@ -630,6 +631,11 @@ create or replace package body psa_app.psa_mat_function as
       /* End procedure
       /*-*/
       lics_logging.write_log('End - PSA SAP Material Maintenance');
+
+      /*-*/
+      /* Release the lock on the material update
+      /*-*/
+      lics_locking.release(var_loc_string);
 
       /*-*/
       /* Log end
