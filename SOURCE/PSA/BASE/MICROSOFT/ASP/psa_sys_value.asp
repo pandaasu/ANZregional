@@ -190,45 +190,18 @@ sub PaintFunction()%>
             return;
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_StpTarg').value = '';
-         document.getElementById('DEF_StpHost').value = '';
-         document.getElementById('DEF_StpPort').value = '';
-         document.getElementById('DEF_RptAlrt').value = '';
-         document.getElementById('DEF_RptEgrp').value = '';
-         document.getElementById('DEF_QryAlrt').value = '';
-         document.getElementById('DEF_QryEgrp').value = '';
-         document.getElementById('DEF_QryHDay').value = '';
-         document.getElementById('DEF_AbrEgrp').value = '';
-         document.getElementById('DEF_RcpEgrp').value = '';
-         document.getElementById('DEF_SmsBtim').value = '';
+         document.getElementById('DEF_MatAema').value = '';
+         document.getElementById('DEF_HisYear').value = '';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'SYSTEM') {
-               if (objElements[i].getAttribute('SYSCDE') == 'SMTP_TARGET') {
-                  document.getElementById('DEF_StpTarg').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'SMTP_HOST') {
-                  document.getElementById('DEF_StpHost').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'SMTP_PORT') {
-                  document.getElementById('DEF_StpPort').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_ALERT') {
-                  document.getElementById('DEF_RptAlrt').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'REPORT_GENERATION_EMAIL_GROUP') {
-                  document.getElementById('DEF_RptEgrp').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_ALERT') {
-                  document.getElementById('DEF_QryAlrt').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_CHECKER_EMAIL_GROUP') {
-                  document.getElementById('DEF_QryEgrp').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'QUERY_HISTORY_DAYS') {
-                  document.getElementById('DEF_QryHDay').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'ABBREVIATION_EMAIL_GROUP') {
-                  document.getElementById('DEF_AbrEgrp').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'RECIPIENT_EMAIL_GROUP') {
-                  document.getElementById('DEF_RcpEgrp').value = objElements[i].getAttribute('SYSVAL');
-               } else if (objElements[i].getAttribute('SYSCDE') == 'PSA_BROADCAST_TIME') {
-                  document.getElementById('DEF_SmsBtim').value = objElements[i].getAttribute('SYSVAL');
+               if (objElements[i].getAttribute('SYSCDE') == 'MATERIAL_AUDIT_EMAIL') {
+                  document.getElementById('DEF_MatAema').value = objElements[i].getAttribute('SYSVAL');
+               } else if (objElements[i].getAttribute('SYSCDE') == 'SCHEDULE_WEEK_HISTORY') {
+                  document.getElementById('DEF_HisYear').value = objElements[i].getAttribute('SYSVAL');
                }
             }
          }
-         document.getElementById('DEF_StpTarg').focus();
+         document.getElementById('DEF_MatAema').focus();
       }
    }
    function doDefineAccept() {
@@ -238,17 +211,8 @@ sub PaintFunction()%>
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PSA_REQUEST ACTION="*UPDVAL">';
-      strXML = strXML+'<SYSTEM SYSCDE="SMTP_TARGET" SYSVAL="'+fixXML(document.getElementById('DEF_StpTarg').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="SMTP_HOST" SYSVAL="'+fixXML(document.getElementById('DEF_StpHost').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="SMTP_PORT" SYSVAL="'+fixXML(document.getElementById('DEF_StpPort').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_RptAlrt').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="REPORT_GENERATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RptEgrp').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_ALERT" SYSVAL="'+fixXML(document.getElementById('DEF_QryAlrt').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="QUERY_CHECKER_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_QryEgrp').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="QUERY_HISTORY_DAYS" SYSVAL="'+fixXML(document.getElementById('DEF_QryHDay').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="ABBREVIATION_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_AbrEgrp').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="RECIPIENT_EMAIL_GROUP" SYSVAL="'+fixXML(document.getElementById('DEF_RcpEgrp').value)+'"/>';
-      strXML = strXML+'<SYSTEM SYSCDE="PSA_BROADCAST_TIME" SYSVAL="'+fixXML(document.getElementById('DEF_SmsBtim').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="MATERIAL_AUDIT_EMAIL" SYSVAL="'+fixXML(document.getElementById('DEF_MatAema').value)+'"/>';
+      strXML = strXML+'<SYSTEM SYSCDE="SCHEDULE_WEEK_HISTORY" SYSVAL="'+fixXML(document.getElementById('DEF_HisYear').value)+'"/>';
       strXML = strXML+'</PSA_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -296,7 +260,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_rcp_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('psa_sys_value_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -312,69 +276,15 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Target:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Material Audit Email Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StpTarg" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_MatAema" size="64" maxlength="128" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Host:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Schedule History Years:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StpHost" size="64" maxlength="64" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMTP Port:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_StpPort" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Alert:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RptAlrt" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Report Generation Email Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RptEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker Alert:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_QryAlrt" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker Email Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_QryEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Query Daily Checker History Days:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_QryHDay" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Abbreviation Report Email Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_AbrEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Recipient Audit Report Email Group:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_RcpEgrp" size="64" maxlength="128" value="" onFocus="setSelect(this);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;SMS Broadcast Time (HH24MISS):&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_SmsBtim" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="DEF_HisYear" size="2" maxlength="2" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
