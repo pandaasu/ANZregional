@@ -180,10 +180,10 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDetail(\''+strCode+'\');',10);
    }
-   function doSelectCreate() {
+   function doSelectCreate(strType) {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestDefineCreate();',10);
+      window.setTimeout('requestDefineCreate(\''+strType+'\');',10);
    }
    function doSelectRefresh() {
       if (!processForm()) {return;}
@@ -266,6 +266,12 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Type&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
          objCell.innerHTML = '&nbsp;Loaded User&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
@@ -311,6 +317,12 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('STKTYP')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('STKUSR')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
@@ -319,17 +331,17 @@ sub PaintFunction()%>
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = 5;
+            objCell.colSpan = 6;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[5].style.width = 16;
+            objTabHead.rows(0).cells[6].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[5].style.width = 16;
+            objTabHead.rows(0).cells[6].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -381,8 +393,10 @@ sub PaintFunction()%>
    // Define Functions //
    //////////////////////
    var cstrDefineCode;
-   function requestDefineCreate() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF"/>';
+   var cstrDefineType;
+   function requestDefineCreate(strType) {
+      cstrDefineType = strType;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" STKTYP="'+fixXML(cstrDefineType)+'"/>';
       doPostRequest('<%=strBase%>psa_stk_load_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -532,7 +546,7 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
+      strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF" STKTYP="'+fixXML(cstrDefineType)+';
       strXML = strXML+' STKCDE="'+fixXML(cstrDefineCode)+'"';
       strXML = strXML+' STKNAM="'+fixXML(document.getElementById('DEF_StkName').value)+'"';
       strXML = strXML+' STKTIM="'+fixXML(document.getElementById('DEF_StkTime').value)+'"';
@@ -757,11 +771,12 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate('FERT');">&nbsp;Create FERT&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate('VERP');">&nbsp;Create vERP&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>

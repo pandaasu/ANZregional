@@ -2259,7 +2259,9 @@ sub PaintFunction()%>
          cobjTypeUact.length = 0;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
-               cstrTypePulse = objElements[i].getAttribute('PULVAL');
+               if (cstrActvMode == '*RTVSCH') {
+                  cstrTypePulse = objElements[i].getAttribute('PULVAL');
+               }
             } else if (objElements[i].nodeName == 'LINACT') {
                if (cstrActvMode == '*RTVSCH') {
                   objActAry[objActAry.length] = new clsTypeActv();
