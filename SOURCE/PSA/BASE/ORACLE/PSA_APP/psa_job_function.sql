@@ -53,6 +53,7 @@ create or replace package body psa_app.psa_job_function as
       var_exception varchar2(4000);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
+      var_count number;
       var_purge number;
       var_wek_code varchar2(7);
 
@@ -65,7 +66,8 @@ create or replace package body psa_app.psa_job_function as
       /* Local cursors
       /*-*/
       cursor csr_week_now is
-         select t01.mars_week
+         select t01.mars_year,
+                t01.mars_week
            from mars_date t01
           where trunc(t01.calendar_date) = trunc(sysdate);
       rcd_week_now csr_week_now%rowtype;
@@ -89,11 +91,14 @@ create or replace package body psa_app.psa_job_function as
       var_log_search := 'PSA_SCHEDULE_PURGE';
       var_purge := 0;
       begin
-         var_purge := to_number(psa_job_function.retrieve_system_value('SCHEDULE_WEEK_HISTORY'));
+         var_purge := to_number(psa_sys_function.retrieve_system_value('SCHEDULE_WEEK_HISTORY'));
       exception
          when others then
-            var_purge := 5;
+            var_purge := 2;
       end;
+      if var_purge < 2 then
+         var_purge := 2;
+      end if;
 
       /*-*/
       /* Retrieve the current MARS week
@@ -118,12 +123,14 @@ create or replace package body psa_app.psa_job_function as
       /*-*/
       /* Purge the schedule weeks
       /*-*/
+      var_count := 0;
       open csr_pwek;
       loop
          fetch csr_pwek into rcd_pwek;
          if csr_pwek%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
          delete from psa_psc_enty where pse_act_code in (select psa_act_code from psa_psc_actv where psa_psc_code = rcd_pwek.psw_psc_code and psa_psc_week = rcd_pwek.psw_psc_week);
          delete from psa_psc_invt where psi_act_code in (select psa_act_code from psa_psc_actv where psa_psc_code = rcd_pwek.psw_psc_code and psa_psc_week = rcd_pwek.psw_psc_week);
          delete from psa_psc_actv where psa_psc_code = rcd_pwek.psw_psc_code and psa_psc_week = rcd_pwek.psw_psc_week;
@@ -140,7 +147,7 @@ create or replace package body psa_app.psa_job_function as
       /*-*/
       /* End procedure
       /*-*/
-      lics_logging.write_log('End - PSA Schedule Purge');
+      lics_logging.write_log('End - PSA Schedule Purge - '||to_char(var_count)||' weeks purged');
 
       /*-*/
       /* Log end
