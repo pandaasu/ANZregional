@@ -91,12 +91,10 @@ create or replace package body psa_app.psa_psc_function as
    con_max_bar constant number := 768;
    type ptyp_data is table of varchar2(2000 char) index by binary_integer;
    ptbl_data ptyp_data;
-   type prcd_invm is record (plt_qty number,cas_qty number,pch_qty number,ton_qty number);
    type ptyp_invm is table of number index by varchar2(32);
-   type prcd_invd is record (invdat date,matary ptyp_invm);
+   type prcd_invd is record (invdat date, invtyp varchar2(10), matary ptyp_invm);
    type ptyp_invd is table of prcd_invd index by binary_integer;
    ptbl_sinv ptyp_invd;
-   ptbl_ainv ptyp_invd;
 
    /***************************************************/
    /* This procedure performs the select list routine */
@@ -7641,6 +7639,7 @@ create or replace package body psa_app.psa_psc_function as
       var_min_date date;
       var_str_date date;
       var_stk_code varchar2(32);
+      var_stk_type varchar2(10);
       var_act_code number;
 
       /*-*/
@@ -7654,14 +7653,16 @@ create or replace package body psa_app.psa_psc_function as
       rcd_date csr_date%rowtype;
 
       cursor csr_stak is
-         select t02.std_stk_code,
+         select t01.sth_stk_code,
                 to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') as sth_stk_time,
-                t02.std_mat_code,
-                t02.std_mat_qnty
+                nvl(t02.std_mat_code,'*NONE') as std_mat_code,
+                nvl(t02.std_mat_qnty,0) as std_mat_qnty
            from psa_stk_header t01,
                 psa_stk_detail t02
-          where t01.sth_stk_code = t02.std_stk_code
-          order by t02.std_stk_code desc,
+          where t01.sth_stk_code = t02.std_stk_code(+)
+            and t01.sth_stk_type = var_stk_type
+          order by to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') desc,
+                   t01.sth_stk_code asc,
                    t02.std_mat_code asc;
       rcd_stak csr_stak%rowtype;
 
@@ -7669,10 +7670,13 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*,
                 decode(t01.psa_act_chg_flag,'1',t01.psa_act_chg_time,t01.psa_act_end_time) as psa_prd_time,
                 nvl(t02.psi_mat_code,'*NONE') as psi_mat_code,
-                nvl(t02.psi_inv_qnty,0) as psi_inv_qnty
+                nvl(t02.psi_inv_qnty,0) as psi_inv_qnty,
+                nvl(t03.mde_mat_type,'*NONE') as psi_mat_type
            from psa_psc_actv t01,
-                psa_psc_invt t02
+                psa_psc_invt t02,
+                psa_mat_defn t03
           where t01.psa_act_code = t02.psi_act_code(+)
+            and t02.psi_mat_code = t03.mde_mat_code(+)
             and t01.psa_psc_code = par_psc_code
             and t01.psa_act_type = 'P'
             and t01.psa_act_win_code != '*NONE'
@@ -7702,8 +7706,9 @@ create or replace package body psa_app.psa_psc_function as
       close csr_date;
 
       /*-*/
-      /* Retrieve the relevant stocktake data
+      /* Retrieve the relevant stocktake FERT data
       /*-*/
+      var_stk_type := 'FERT';
       var_str_date := to_date('20000101','yyyymmdd');
       var_stk_code := '*FIRST';
       open csr_stak;
@@ -7712,7 +7717,7 @@ create or replace package body psa_app.psa_psc_function as
          if csr_stak%notfound then
             exit;
          end if;
-         if rcd_stak.std_stk_code != var_stk_code then
+         if rcd_stak.sth_stk_code != var_stk_code then
             if var_stk_code = '*EXIT' then
                exit;
             end if;
@@ -7720,15 +7725,54 @@ create or replace package body psa_app.psa_psc_function as
                var_str_date := rcd_stak.sth_stk_time;
                var_stk_code := '*EXIT';
             else
-               var_stk_code := rcd_stak.std_stk_code;
+               var_stk_code := rcd_stak.sth_stk_code;
             end if;
             ptbl_sinv(ptbl_sinv.count+1).invdat := rcd_stak.sth_stk_time;
+            ptbl_sinv(ptbl_sinv.count).invtyp := 'FERT';
             ptbl_sinv(ptbl_sinv.count).matary.delete;
          end if;
-         ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+         if rcd_stak.std_mat_code != '*NONE' then
+            ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+         end if;
       end loop;
       close csr_stak;
       ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
+      ptbl_sinv(ptbl_sinv.count).invtyp := 'FERT';
+      ptbl_sinv(ptbl_sinv.count).matary.delete;
+
+      /*-*/
+      /* Retrieve the relevant stocktake VERP data
+      /*-*/
+      var_stk_type := 'VERP';
+      var_str_date := to_date('20000101','yyyymmdd');
+      var_stk_code := '*FIRST';
+      open csr_stak;
+      loop
+         fetch csr_stak into rcd_stak;
+         if csr_stak%notfound then
+            exit;
+         end if;
+         if rcd_stak.sth_stk_code != var_stk_code then
+            if var_stk_code = '*EXIT' then
+               exit;
+            end if;
+            if rcd_stak.sth_stk_time < var_min_date then
+               var_str_date := rcd_stak.sth_stk_time;
+               var_stk_code := '*EXIT';
+            else
+               var_stk_code := rcd_stak.sth_stk_code;
+            end if;
+            ptbl_sinv(ptbl_sinv.count+1).invdat := rcd_stak.sth_stk_time;
+            ptbl_sinv(ptbl_sinv.count).invtyp := 'VERP';
+            ptbl_sinv(ptbl_sinv.count).matary.delete;
+         end if;
+         if rcd_stak.std_mat_code != '*NONE' then
+            ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+         end if;
+      end loop;
+      close csr_stak;
+      ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
+      ptbl_sinv(ptbl_sinv.count).invtyp := 'VERP';
       ptbl_sinv(ptbl_sinv.count).matary.delete;
 
       /*-*/
@@ -7748,7 +7792,7 @@ create or replace package body psa_app.psa_psc_function as
          /*-*/
          if rcd_sact.psi_mat_code != '*NONE' then
             for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
+               if ptbl_sinv(idx).invtyp = rcd_sact.psi_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
                   if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
                      update psa_psc_invt
                         set psi_inv_aval = 0
@@ -7774,7 +7818,7 @@ create or replace package body psa_app.psa_psc_function as
          if rcd_sact.psa_act_code != var_act_code then
             var_act_code := rcd_sact.psa_act_code;
             for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invdat <= rcd_sact.psa_act_end_time then
+               if ptbl_sinv(idx).invtyp = rcd_sact.psa_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_act_end_time then
                   if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
                      ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_qty;
                   else
