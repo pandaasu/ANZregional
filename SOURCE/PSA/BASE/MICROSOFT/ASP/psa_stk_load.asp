@@ -418,7 +418,11 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         cobjScreens[2].hedtxt = 'Create Stocktake';
+         if (cstrDefineType == 'FERT') {
+            cobjScreens[2].hedtxt = 'Create FERT Stocktake';
+         } else {
+            cobjScreens[2].hedtxt = 'Create VERP Stocktake';
+         }
          displayScreen('dspDefine');
          cstrDefineCode = '';
          document.getElementById('DEF_StkName').value = '';
@@ -546,7 +550,7 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF" STKTYP="'+fixXML(cstrDefineType)+';
+      strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF" STKTYP="'+fixXML(cstrDefineType)+'"';
       strXML = strXML+' STKCDE="'+fixXML(cstrDefineCode)+'"';
       strXML = strXML+' STKNAM="'+fixXML(document.getElementById('DEF_StkName').value)+'"';
       strXML = strXML+' STKTIM="'+fixXML(document.getElementById('DEF_StkTime').value)+'"';
@@ -776,7 +780,7 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate('FERT');">&nbsp;Create FERT&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate('VERP');">&nbsp;Create vERP&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate('VERP');">&nbsp;Create VERP&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
