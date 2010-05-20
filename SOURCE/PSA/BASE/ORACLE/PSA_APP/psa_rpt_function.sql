@@ -604,7 +604,7 @@ create or replace package body psa_app.psa_rpt_function as
          if tbl_line(idl).ovr_flag = '0' then
             for ids in 1..tbl_line(idl).shfary.count loop
                if tbl_line(idl).shfary(ids).cmo_code != '*NONE' then
-                  var_work := tbl_line(idl).shfary(ids).shf_name;
+                  var_work := '<font style="font-weight:bold;">'||tbl_line(idl).shfary(ids).shf_name||'</font>';
                   var_cmo_code := tbl_line(idl).shfary(ids).cmo_code;
                   open csr_cmod;
                   loop
