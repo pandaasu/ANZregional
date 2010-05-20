@@ -95,7 +95,7 @@ sub ProcessRequest()
    '//
    '// Retrieve any messages
    '//
-   strStatement = "select xml_text from table(sms_app.sms_gen_function.get_mesg_data)"
+   strStatement = "select xml_text from table(psa_app.psa_gen_function.get_mesg_data)"
    strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
