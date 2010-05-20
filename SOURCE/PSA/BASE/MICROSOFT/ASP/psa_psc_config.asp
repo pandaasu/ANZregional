@@ -367,10 +367,10 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SAPDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_config_sap.asp',function(strResponse) {checkSap(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
-   function checkSap(strResponse) {
+   function checkDelete(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -406,10 +406,10 @@ sub PaintFunction()%>
    var cstrSapCode;
    function requestSap(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>psa_psc_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SAPDEF" SRCCDE="*SCH" PSCCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_config_sap.asp',function(strResponse) {checkSap(strResponse);},false,streamXML(strXML));
    }
-   function checkDelete(strResponse) {
+   function checkSap(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -1372,6 +1372,7 @@ sub PaintFunction()%>
    function clsTypeActv() {
       this.actcde = '';
       this.acttyp = '';
+      this.schchg = '';
       this.chgflg = '';
       this.wincde = '';
       this.winseq = '';
@@ -1516,6 +1517,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length] = new clsTypeActv();
                objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
                objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
+               objActAry[objActAry.length-1].schchg = objElements[i].getAttribute('SCHCHG');
                objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
                objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
                objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
@@ -1653,6 +1655,14 @@ sub PaintFunction()%>
          objUacBody.deleteRow(i);
       }
       displayScreen('dspWeeks');
+   }
+
+   function doTypeSchdReport() {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the schedule report\r\npress OK continue (the schedule report will be generated)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doReportOutput(eval('document.body'),'Production Schedule Report','*SPREADSHEET','select * from table(psa_app.psa_rpt_function.report_schedule(\''+cstrTypeProd+'\',\''+cstrTypeWeek+'\',\''+cstrTypeCode+'\'))');
    }
 
    function doTypeStckUpdate() {
@@ -2198,6 +2208,7 @@ sub PaintFunction()%>
          objInvAry = objWork.invary;
          intStrBar = objWork.strbar-0;
          intEndBar = objWork.endbar-0;
+         intChgBar = 0;
          if (objWork.chgflg == '1') {
             intChgBar = objWork.chgbar-0;
          }
@@ -2243,10 +2254,8 @@ sub PaintFunction()%>
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
                objDiv.style.padding = '2px';
-               if (objWork.actent == '0') {
-                  objDiv.style.cursor = 'pointer';
-                  objDiv.onclick = function() {doTypeSchdSelect(this);};
-               }
+               objDiv.style.cursor = 'pointer';
+               objDiv.onclick = function() {doTypeSchdSelect(this);};
                objDiv.setAttribute('actidx',i);
                objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);
@@ -2267,9 +2276,9 @@ sub PaintFunction()%>
                   objDiv.appendChild(document.createTextNode('Material ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
                   objDiv.appendChild(document.createTextNode('Start ('+objWork.strtim+') End ('+objWork.endtim+')'));
+                  objDiv.appendChild(document.createElement('br'));
                   if (objWork.actent == '0') {
-                     objDiv.appendChild(document.createElement('br'));
-                     if (objWork.chgflg == '0') {
+                     if (objWork.schchg == '0') {
                         objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+')'));
                      } else {
                         objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+') Change ('+objWork.schcmi+')'));
@@ -2283,29 +2292,31 @@ sub PaintFunction()%>
                         objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                      }
                   } else {
-                     objDiv.appendChild(document.createElement('br'));
-                     if (objWork.chgflg == '0') {
+                     if (objWork.schchg == '0') {
                         objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+')'));
                         objDiv.appendChild(document.createElement('br'));
-                        objDiv.appendChild(document.createTextNode('Actual Production ('+objWork.actdmi+')'));
                      } else {
                         objDiv.appendChild(document.createTextNode('Scheduled Production ('+objWork.schdmi+') Change ('+objWork.schcmi+')'));
                         objDiv.appendChild(document.createElement('br'));
+                     }
+                     if (objWork.chgflg == '0') {
+                        objDiv.appendChild(document.createTextNode('Actual Production ('+objWork.actdmi+')'));
+                     } else {
                         objDiv.appendChild(document.createTextNode('Actual Production ('+objWork.actdmi+') Change ('+objWork.actcmi+')'));
                      }
                      objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
                         objDiv.appendChild(document.createElement('br'));
-                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
+                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.actcas+') Pouches ('+objWork.actpch+') Mixes ('+objWork.actmix+')'));
                      } else if (cstrTypeCode == '*PACK') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                         objDiv.appendChild(document.createElement('br'));
-                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
+                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.actcas+') Pallets ('+objWork.actplt+')'));
                      } else if (cstrTypeCode == '*FORM') {
                         objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                         objDiv.appendChild(document.createElement('br'));
-                        objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.schpch+')'));
+                        objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.actpch+')'));
                      }
                   }
                   for (var k=0;k<objInvAry.length;k++) {
@@ -3800,6 +3811,7 @@ sub PaintFunction()%>
 <!--#include file="ics_std_request.inc"-->
 <!--#include file="ics_std_activity.inc"-->
 <!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_report.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
