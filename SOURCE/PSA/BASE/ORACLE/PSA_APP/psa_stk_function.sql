@@ -70,6 +70,7 @@ create or replace package body psa_app.psa_stk_function as
            from (select t01.sth_stk_code,
                         t01.sth_stk_name,
                         t01.sth_stk_time,
+                        t01.sth_stk_type,
                         t01.sth_upd_user
                    from psa_stk_header t01
                   where (var_str_code is null or t01.sth_stk_code >= var_str_code)
@@ -81,6 +82,7 @@ create or replace package body psa_app.psa_stk_function as
            from (select t01.sth_stk_code,
                         t01.sth_stk_name,
                         t01.sth_stk_time,
+                        t01.sth_stk_type,
                         t01.sth_upd_user
                    from psa_stk_header t01
                   where ((var_action = '*NXTDEF' and (var_end_code is null or t01.sth_stk_code < var_end_code)) or
@@ -93,6 +95,7 @@ create or replace package body psa_app.psa_stk_function as
            from (select t01.sth_stk_code,
                         t01.sth_stk_name,
                         t01.sth_stk_time,
+                        t01.sth_stk_type,
                         t01.sth_upd_user
                    from psa_stk_header t01
                   where ((var_action = '*PRVDEF' and (var_str_code is null or t01.sth_stk_code > var_str_code)) or
@@ -154,7 +157,7 @@ create or replace package body psa_app.psa_stk_function as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
+            pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKTYP="'||psa_to_xml(tbl_list(idx).sth_stk_type)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -163,14 +166,14 @@ create or replace package body psa_app.psa_stk_function as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKTYP="'||psa_to_xml(tbl_list(idx).sth_stk_type)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKTYP="'||psa_to_xml(tbl_list(idx).sth_stk_type)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -180,14 +183,14 @@ create or replace package body psa_app.psa_stk_function as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKTYP="'||psa_to_xml(tbl_list(idx).sth_stk_type)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
+               pipe row(psa_xml_object('<LSTROW STKCDE="'||psa_to_xml(tbl_list(idx).sth_stk_code)||'" STKNAM="'||psa_to_xml(tbl_list(idx).sth_stk_name)||'" STKTIM="'||psa_to_xml(tbl_list(idx).sth_stk_time)||'" STKTYP="'||psa_to_xml(tbl_list(idx).sth_stk_type)||'" STKUSR="'||psa_to_xml(tbl_list(idx).sth_upd_user)||'"/>'));
             end loop;
          end if;
       end if;
@@ -236,6 +239,7 @@ create or replace package body psa_app.psa_stk_function as
       var_action varchar2(32);
       var_found boolean;
       var_output varchar2(2000 char);
+      var_stk_type varchar2(10);
 
       /*-*/
       /* Local cursors
@@ -243,8 +247,9 @@ create or replace package body psa_app.psa_stk_function as
       cursor csr_detail is
          select t01.*
            from psa_mat_defn t01
-          where t01.mde_mat_usage in ('MPO','PCH','RLS')
-            and t01.mde_mat_status in ('*ADD','*CHG','*DEL','*ACTIVE')
+          where t01.mde_mat_type = var_stk_type
+            and t01.mde_mat_usage in ('MPO','PCH','RLS')
+            and t01.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
           order by t01.mde_mat_code asc;
       rcd_detail csr_detail%rowtype;
 
@@ -271,6 +276,7 @@ create or replace package body psa_app.psa_stk_function as
       xmlParser.freeParser(obj_xml_parser);
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_stk_type := upper(xslProcessor.valueOf(obj_psa_request,'@STKTYP'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*CRTDEF' then
          psa_gen_function.add_mesg_data('Invalid request action');
@@ -287,7 +293,7 @@ create or replace package body psa_app.psa_stk_function as
       /*-*/
       /* Pipe the stocktake XML
       /*-*/
-      var_output := '<STKHDR STKCDE="STOCKTAKE_'||psa_to_xml(to_char(sysdate,'yyyymmddhh24miss'))||'" STKNAM="" STKTIM="'||psa_to_xml(to_char(sysdate,'yyyy/mm/dd hh24:mi'))||'"/>';
+      var_output := '<STKHDR STKCDE="STOCK_'||var_stk_type||'_'||psa_to_xml(to_char(sysdate,'yyyymmddhh24miss'))||'" STKNAM="" STKTIM="'||psa_to_xml(to_char(sysdate,'yyyy/mm/dd hh24:mi'))||'"/>';
       pipe row(psa_xml_object(var_output));
 
       /*-*/
@@ -391,6 +397,7 @@ create or replace package body psa_app.psa_stk_function as
       rcd_psa_stk_header.sth_stk_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STKCDE'));
       rcd_psa_stk_header.sth_stk_name := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STKNAM'));
       rcd_psa_stk_header.sth_stk_time := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STKTIM'));
+      rcd_psa_stk_header.sth_stk_type := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@STKTYP'));
       rcd_psa_stk_header.sth_upd_user := upper(par_user);
       rcd_psa_stk_header.sth_upd_date := sysdate;
       if psa_gen_function.get_mesg_count != 0 then
@@ -409,6 +416,9 @@ create or replace package body psa_app.psa_stk_function as
          if psa_to_date(rcd_psa_stk_header.sth_stk_time,'yyyy/mm/dd hh24:mi') is null then
             psa_gen_function.add_mesg_data('Stocktake as at time must be supplied in format YYYY/MM/DD HH24:MI');
          end if;
+      end if;
+      if rcd_psa_stk_header.sth_stk_type != 'FERT' and rcd_psa_stk_header.sth_stk_type != 'VERP' then
+         psa_gen_function.add_mesg_data('Stocktake type must be FERT or VERP');
       end if;
       if rcd_psa_stk_header.sth_upd_user is null then
          psa_gen_function.add_mesg_data('Update user must be supplied');
@@ -430,7 +440,10 @@ create or replace package body psa_app.psa_stk_function as
          if csr_material%notfound then
             psa_gen_function.add_mesg_data('Material code ('||var_det_code||') does not exist');
          else
-            if rcd_material.mde_mat_status != '*ADD' and rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_usage != '*DEL' and rcd_material.mde_mat_usage != '*ACTIVE' then
+            if rcd_material.mde_mat_type != rcd_psa_stk_header.sth_stk_type then
+               psa_gen_function.add_mesg_data('Material code ('||var_det_code||') type must be '||rcd_psa_stk_header.sth_stk_type);
+            end if;
+            if rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_status != '*DEL' and rcd_material.mde_mat_status != '*ACTIVE' then
                psa_gen_function.add_mesg_data('Material code ('||var_det_code||') status must be *CHG, *DEL or *ACTIVE');
             end if;
          end if;
