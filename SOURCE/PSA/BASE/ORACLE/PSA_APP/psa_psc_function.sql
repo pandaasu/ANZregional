@@ -6467,6 +6467,11 @@ create or replace package body psa_app.psa_psc_function as
       var_found boolean;
       var_src_code varchar2(4);
       var_psc_code varchar2(32);
+      var_exception varchar2(4000);
+      var_instance number(15,0);
+      var_log_prefix varchar2(256);
+      var_log_search varchar2(256);
+      var_start boolean;
 
       /*-*/
       /* Local cursors
@@ -6528,15 +6533,69 @@ create or replace package body psa_app.psa_psc_function as
       end;
       if var_found = false then
          psa_gen_function.add_mesg_data('Production schedule code ('||var_psc_code||') does not exist');
-      else
-         if upper(rcd_retrieve.psh_psc_code) = con_mst_cde then
-            psa_gen_function.add_mesg_data('Production schedule code '||con_mst_cde||' - unable to update SAP');
-         end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
          return;
       end if;
+
+      /*-*/
+      /* Initialise the log variables
+      /*-*/
+      var_log_prefix := 'PSA - SAP_SCHEDULE_INTERFACE';
+      var_log_search := 'SAP_SCHEDULE_INTERFACE';
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log(var_log_prefix, var_log_search);
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - PSA SAP Schedule Interface');
+
+      /*-*/
+      /* Extract the order data
+      /*-*/
+    --    var_start := true;
+    --  open csr_extract;
+    --  loop
+    --     fetch csr_extract into rcd_extract;
+    --     if csr_extract%notfound then
+    --        exit;
+    --     end if;
+
+         /*-*/
+         /* Create outbound interface when required
+         /*-*/
+    --     if var_start = true then
+    --        var_instance := lics_outbound_loader.create_interface('CISATL11',null,'CISATL11.DAT');
+    --        var_start := false;
+    --     end if;
+
+    --     lics_outbound_loader.append_data('OITM');
+
+
+    --  end loop;
+    --  close csr_extract;
+
+      /*-*/
+      /* Finalise interface when required
+      /*-*/
+    --  if var_start = false and lics_outbound_loader.is_created = true then
+    --     lics_outbound_loader.finalise_interface;
+    --  end if;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - PSA SAP Schedule Interface');
+
+      /*-*/
+      /* Log end
+      /*-*/
+      lics_logging.end_log;
 
       /*-*/
       /* Process the production schedule data
@@ -6569,9 +6628,31 @@ create or replace package body psa_app.psa_psc_function as
          rollback;
 
          /*-*/
+         /* Save the exception
+         /*-*/
+         var_exception := substr(SQLERRM, 1, 1536);
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**FATAL ERROR** - ' || var_exception);
+            lics_logging.end_log;
+         end if;
+
+         /*-*/
+         /* Finalise the outbound loader when required
+         /*-*/
+      --   if var_start = false and lics_outbound_loader.is_created = true then
+      --      lics_outbound_loader.add_exception(var_exception);
+      --      lics_outbound_loader.finalise_interface;
+      --   end if;
+
+         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - SAP_DATA - ' || substr(SQLERRM, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - PSA_PSC_FUNCTION - SAP_DATA - ' || var_exception);
+
 
    /*-------------*/
    /* End routine */
