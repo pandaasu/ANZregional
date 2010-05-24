@@ -59,9 +59,9 @@ create or replace package body vds_app.vds_reference as
       /*-*/
       /* Delete the existing data
       /*-*/
-      delete from vds.CABN;
+      delete from vds.refn_CABN;
       commit;
-      delete from vds.CABNT;
+      delete from vds.refn_CABNT;
       commit;
       delete from vds.refn_CAWN;
       commit;
