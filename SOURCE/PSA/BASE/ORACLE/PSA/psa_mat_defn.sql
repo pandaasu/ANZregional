@@ -30,6 +30,7 @@ create table psa.psa_mat_defn
     mde_unt_case                    number                        not null,
     mde_sap_line                    varchar2(32)                  null,
     mde_psa_line                    varchar2(32)                  null,
+    mde_psa_ucas                    number                        not null,
     mde_mat_status                  varchar2(10)                  not null,
     mde_sys_user                    varchar2(30)                  not null,
     mde_sys_date                    date                          not null,
@@ -51,6 +52,7 @@ comment on column psa.psa_mat_defn.mde_net_weight is 'Material net weight';
 comment on column psa.psa_mat_defn.mde_unt_case is 'Material units per case';
 comment on column psa.psa_mat_defn.mde_sap_line is 'SAP production line';
 comment on column psa.psa_mat_defn.mde_psa_line is 'PSA production line';
+comment on column psa.psa_mat_defn.mde_psa_ucas is 'PSA units per case';
 comment on column psa.psa_mat_defn.mde_mat_status is 'Material status (*ADD, *CHG, *DEL, *ACTIVE or *INACTIVE)';
 comment on column psa.psa_mat_defn.mde_sys_user is 'Material system updated user';
 comment on column psa.psa_mat_defn.mde_sys_date is 'Material system updated date';
