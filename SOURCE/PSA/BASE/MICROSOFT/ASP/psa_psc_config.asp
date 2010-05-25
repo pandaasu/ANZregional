@@ -575,6 +575,7 @@ sub PaintFunction()%>
    function clsWeekData() {
       this.wekcde = '';
       this.weknam = '';
+      this.cmocde = '*NONE';
       this.reqcde = '*NONE';
       this.dayary = new Array();
    }
@@ -806,6 +807,10 @@ sub PaintFunction()%>
          cobjWeekPtyp = new Array();
          var objArray;
          var objChild;
+         var objPscCmod = document.getElementById('WEK_PscCmod');
+         objPscCmod.options.length = 0;
+         objPscCmod.options[0] = new Option('** Select Production Crew Model **','*NONE');
+         objPscCmod.selectedIndex = 0;
          var objPscPreq = document.getElementById('WEK_PscPreq');
          objPscPreq.options.length = 0;
          objPscPreq.options[0] = new Option('** Select Production Requirements **','*NONE');
@@ -816,12 +821,15 @@ sub PaintFunction()%>
                document.getElementById('hedWeekd').innerText = cobjScreens[4].hedtxt+' - '+objElements[i].getAttribute('WEKNAM');
                cobjWeekData.wekcde = objElements[i].getAttribute('WEKCDE');
                cobjWeekData.weknam = objElements[i].getAttribute('WEKNAM');
+               cobjWeekData.cmocde = objElements[i].getAttribute('CMOCDE');
                cobjWeekData.reqcde = objElements[i].getAttribute('REQCDE');
             } else if (objElements[i].nodeName == 'DAYDFN') {
                objArray = cobjWeekData.dayary;
                objArray[objArray.length] = new clsWeekDayd();
                objArray[objArray.length-1].daycde = objElements[i].getAttribute('DAYCDE');
                objArray[objArray.length-1].daynam = objElements[i].getAttribute('DAYNAM');
+            } else if (objElements[i].nodeName == 'PLNCMO') {
+               objPscCmod.options[objPscCmod.options.length] = new Option('('+objElements[i].getAttribute('CMOCDE')+') '+objElements[i].getAttribute('CMONAM'),objElements[i].getAttribute('CMOCDE'));
             } else if (objElements[i].nodeName == 'REQDFN') {
                objPscPreq.options[objPscPreq.options.length] = new Option('('+objElements[i].getAttribute('REQCDE')+') '+objElements[i].getAttribute('REQNAM'),objElements[i].getAttribute('REQCDE'));
                objPscPreq.options[objPscPreq.options.length-1].setAttribute('reqwek',objElements[i].getAttribute('REQWEK'));
@@ -862,13 +870,19 @@ sub PaintFunction()%>
                objChild[objChild.length-1].cmocde = objElements[i].getAttribute('CMOCDE');
             }
          }
+         for (var i=0;i<objPscCmod.length;i++) {
+            if (objPscCmod.options[i].value == cobjWeekData.cmocde) {
+               objPscCmod.options[i].selected = true;
+               break;
+            }
+         }
          for (var i=0;i<objPscPreq.length;i++) {
             if (objPscPreq.options[i].value == cobjWeekData.reqcde) {
                objPscPreq.options[i].selected = true;
                break;
             }
          }
-         document.getElementById('WEK_PscPreq').focus();
+         document.getElementById('WEK_PscCmod').focus();
          doWeekPaint();
       }
    }
@@ -1169,8 +1183,13 @@ sub PaintFunction()%>
       var bolPtypFound;
       var bolLineFound;
       var bolShftFound;
+      var objPscCmod = document.getElementById('WEK_PscCmod');
       var objPscPreq = document.getElementById('WEK_PscPreq');
       var strMessage = '';
+      if (objPscCmod.selectedIndex == -1 || objPscCmod.options[objPscCmod.selectedIndex].value == '*NONE') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Production crew model must be selected';
+      }
       if (objPscPreq.selectedIndex == -1 || objPscPreq.options[objPscPreq.selectedIndex].value == '*NONE') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Production requirements must be selected';
@@ -1222,6 +1241,7 @@ sub PaintFunction()%>
       }
       strXML = strXML+' PSCCDE="'+fixXML(cstrWeekProd)+'"';
       strXML = strXML+' WEKCDE="'+fixXML(cobjWeekData.wekcde)+'"';
+      strXML = strXML+' CMOCDE="'+fixXML(objPscCmod.options[objPscCmod.selectedIndex].value)+'"';
       strXML = strXML+' REQCDE="'+fixXML(objPscPreq.options[objPscPreq.selectedIndex].value)+'">';
       for (var i=0;i<cobjWeekPtyp.length;i++) {
          objElePtyp = document.getElementById('WEKPTY_'+i);
@@ -2144,6 +2164,7 @@ sub PaintFunction()%>
       var objCell;
       var objDiv;
       var objImg;
+      var objFont;
       var objWork;
       var intStrBar;
       var intEndBar;
@@ -2323,7 +2344,14 @@ sub PaintFunction()%>
                   }
                   for (var k=0;k<objInvAry.length;k++) {
                      objDiv.appendChild(document.createElement('br'));
-                     objDiv.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                     if ((objInvAry[k].invqty-0) <= (objInvAry[k].invavl-0)) {
+                        objDiv.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                     } else {
+                        objFont = document.createElement('font');
+                        objFont.style.backgroundColor = '#ffc0c0';
+                        objFont.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                        objDiv.appendChild(objFont);
+                     }
                   }
                }
                objCell.appendChild(objDiv);
@@ -3961,6 +3989,12 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Crew Model:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="WEK_PscCmod"></select>
+         </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Production Requirements:&nbsp;</nobr></td>

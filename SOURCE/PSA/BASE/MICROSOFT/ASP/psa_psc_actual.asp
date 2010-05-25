@@ -1159,6 +1159,7 @@ sub PaintFunction()%>
       var objCell;
       var objDiv;
       var objImg;
+      var objFont;
       var objWork;
       var intStrBar;
       var intEndBar;
@@ -1336,7 +1337,14 @@ sub PaintFunction()%>
                   }
                   for (var k=0;k<objInvAry.length;k++) {
                      objDiv.appendChild(document.createElement('br'));
-                     objDiv.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                     if ((objInvAry[k].invqty-0) <= (objInvAry[k].invavl-0)) {
+                        objDiv.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                     } else {
+                        objFont = document.createElement('font');
+                        objFont.style.backgroundColor = '#ffc0c0';
+                        objFont.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
+                        objDiv.appendChild(objFont);
+                     }
                   }
                }
                objCell.appendChild(objDiv);
