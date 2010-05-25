@@ -734,6 +734,7 @@ create or replace package body psa_app.psa_psc_function as
       var_wek_code varchar2(32);
       var_output varchar2(2000 char);
       var_mars_week number;
+      var_cmo_code varchar2(32);
       var_req_code varchar2(32);
       var_wrk_code varchar2(32);
       var_fil_name varchar2(800);
@@ -773,6 +774,7 @@ create or replace package body psa_app.psa_psc_function as
 
       cursor csr_week_old is
          select t01.psw_psc_week,
+                t01.psw_cmo_code,
                 t01.psw_req_code,
                 t01.psw_upd_user,
                 t01.psw_upd_date
@@ -790,6 +792,15 @@ create or replace package body psa_app.psa_psc_function as
           where t01.mars_week = var_mars_week
           order by t01.calendar_date asc;
       rcd_week csr_week%rowtype;
+
+      cursor csr_pmod is
+         select t01.cmd_cmo_code,
+                t01.cmd_cmo_name
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_status = '1'
+            and t01.cmd_prd_type = '*PLANT'
+          order by t01.cmd_cmo_code asc;
+      rcd_pmod csr_pmod%rowtype;
 
       cursor csr_preq is
          select t01.rhe_req_code,
@@ -969,6 +980,7 @@ create or replace package body psa_app.psa_psc_function as
             end if;
          end if;
          close csr_week_max;
+         var_cmo_code := '*NONE';
          var_req_code := '*NONE';
       else
          open csr_week_old;
@@ -977,6 +989,7 @@ create or replace package body psa_app.psa_psc_function as
             psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') MARS week ('||var_wek_code||') does not exist');
          else
             var_mars_week := to_number(rcd_week_old.psw_psc_week);
+            var_cmo_code := rcd_week_old.psw_cmo_code;
             var_req_code := rcd_week_old.psw_req_code;
          end if;
          close csr_week_old;
@@ -1010,12 +1023,27 @@ create or replace package body psa_app.psa_psc_function as
             var_wek_code := rcd_week.wek_code;
             pipe row(psa_xml_object('<WEKDFN WEKCDE="'||psa_to_xml(rcd_week.wek_code)||'"'||
                                            ' WEKNAM="'||psa_to_xml(rcd_week.wek_name)||'"'||
+                                           ' CMOCDE="'||psa_to_xml(var_cmo_code)||'"'||
                                            ' REQCDE="'||psa_to_xml(var_req_code)||'"/>'));
          end if;
          pipe row(psa_xml_object('<DAYDFN DAYCDE="'||psa_to_xml(rcd_week.day_code)||'"'||
                                         ' DAYNAM="'||psa_to_xml(rcd_week.day_name)||'"/>'));
       end loop;
       close csr_week;
+
+      /*-*/
+      /* Pipe the crew model data XML
+      /*-*/
+      open csr_pmod;
+      loop
+         fetch csr_pmod into rcd_pmod;
+         if csr_pmod%notfound then
+            exit;
+         end if;
+         pipe row(psa_xml_object('<PLNCMO CMOCDE="'||psa_to_xml(rcd_pmod.cmd_cmo_code)||'"'||
+                                        ' CMONAM="'||psa_to_xml(rcd_pmod.cmd_cmo_name)||'"/>'));
+      end loop;
+      close csr_pmod;
 
       /*-*/
       /* Pipe the production requirements data XML
@@ -2713,6 +2741,19 @@ create or replace package body psa_app.psa_psc_function as
             and psa_act_ent_flag = '1';
       rcd_schd csr_schd%rowtype;
 
+      cursor csr_pmod is
+         select t01.*
+           from psa_cmo_defn t01
+          where t01.cmd_cmo_code = rcd_psa_psc_week.psw_cmo_code;
+      rcd_pmod csr_pmod%rowtype;
+
+      cursor csr_peso is
+         select t01.*
+           from psa_cmo_resource t01
+          where t01.cmr_cmo_code = rcd_psa_psc_week.psw_cmo_code
+          order by t01.cmr_res_code asc;
+      rcd_peso csr_peso%rowtype;
+
       cursor csr_reqh is
          select t01.*
            from psa_req_header t01
@@ -2872,6 +2913,7 @@ create or replace package body psa_app.psa_psc_function as
       end if;
       rcd_psa_psc_week.psw_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
       rcd_psa_psc_week.psw_psc_week := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      rcd_psa_psc_week.psw_cmo_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CMOCDE'));
       rcd_psa_psc_week.psw_req_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@REQCDE'));
       rcd_psa_psc_week.psw_upd_user := upper(par_user);
       rcd_psa_psc_week.psw_upd_date := sysdate;
@@ -2961,6 +3003,9 @@ create or replace package body psa_app.psa_psc_function as
       if rcd_psa_psc_week.psw_psc_week is null then
          psa_gen_function.add_mesg_data('Production schedule week must be supplied');
       end if;
+      if rcd_psa_psc_week.psw_cmo_code is null then
+         psa_gen_function.add_mesg_data('Production crew model must be supplied');
+      end if;
       if rcd_psa_psc_week.psw_req_code is null then
          psa_gen_function.add_mesg_data('Production requirements must be supplied');
       end if;
@@ -2975,6 +3020,23 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Validate the parent relationships
       /*-*/
+      var_found := false;
+      open csr_pmod;
+      fetch csr_pmod into rcd_pmod;
+      if csr_pmod%found then
+         var_found := true;
+      end if;
+      close csr_pmod;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Crew model ('||rcd_psa_psc_week.psw_cmo_code||') does not exist');
+      else
+         if rcd_pmod.cmd_cmo_status != '1' then
+            psa_gen_function.add_mesg_data('Crew model ('||rcd_psa_psc_week.psw_cmo_code||') must be status active');
+         end if;
+         if rcd_pmod.cmd_prd_type != '*PLANT' then
+            psa_gen_function.add_mesg_data('Crew model ('||rcd_psa_psc_week.psw_cmo_code||') must belong to *PLANT');
+         end if;
+      end if;
       var_found := false;
       open csr_reqh;
       fetch csr_reqh into rcd_reqh;
@@ -3067,6 +3129,9 @@ create or replace package body psa_app.psa_psc_function as
                      if rcd_cmod.cmd_cmo_status != '1' then
                         psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active');
                      end if;
+                     if rcd_cmod.cmd_prd_type != var_pty_code then
+                        psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must belong to '||var_pty_code);
+                     end if;
                   end if;
                end if;
             end loop;
@@ -3083,7 +3148,8 @@ create or replace package body psa_app.psa_psc_function as
       if var_action = '*UPDWEK' then
          var_confirm := 'updated';
          update psa_psc_week
-            set psw_req_code = rcd_psa_psc_week.psw_req_code,
+            set psw_cmo_code = rcd_psa_psc_week.psw_cmo_code,
+                psw_req_code = rcd_psa_psc_week.psw_req_code,
                 psw_upd_user = rcd_psa_psc_week.psw_upd_user,
                 psw_upd_date = rcd_psa_psc_week.psw_upd_date
           where psw_psc_code = rcd_psa_psc_week.psw_psc_code
@@ -3107,6 +3173,27 @@ create or replace package body psa_app.psa_psc_function as
                return;
          end;
       end if;
+
+      /*-*/
+      /* Retrieve and insert the plant resource data
+      /*-*/
+      open csr_peso;
+      loop
+         fetch csr_peso into rcd_peso;
+         if csr_peso%notfound then
+            exit;
+         end if;
+         rcd_psa_psc_reso.psr_psc_code := rcd_psa_psc_week.psw_psc_code;
+         rcd_psa_psc_reso.psr_psc_week := rcd_psa_psc_week.psw_psc_week;
+         rcd_psa_psc_reso.psr_prd_type := '*PLANT';
+         rcd_psa_psc_reso.psr_lin_code := '*PLANT';
+         rcd_psa_psc_reso.psr_con_code := '*PLANT';
+         rcd_psa_psc_reso.psr_smo_seqn := 0;
+         rcd_psa_psc_reso.psr_res_code := rcd_peso.cmr_res_code;
+         rcd_psa_psc_reso.psr_res_qnty := rcd_peso.cmr_res_qnty;
+         insert into psa_psc_reso values rcd_psa_psc_reso;
+      end loop;
+      close csr_peso;
 
       /*-*/
       /* Retrieve and insert the production date data
@@ -3860,6 +3947,9 @@ create or replace package body psa_app.psa_psc_function as
             else
                if var_action = '*CRTLIN' and rcd_cmod.cmd_cmo_status != '1' then
                   psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must be status active to create a production schedule line');
+               end if;
+               if var_action = '*CRTLIN' and rcd_cmod.cmd_prd_type != var_pty_code then
+                  psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') must belong to '||var_pty_code||'  to create a production schedule line');
                end if;
             end if;
          end if;

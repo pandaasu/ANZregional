@@ -636,6 +636,12 @@ create or replace package body psa_app.psa_cmo_function as
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_pwek is
+         select t01.*
+           from psa_psc_week t01
+          where t01.psw_cmo_code = var_cmo_code;
+      rcd_pwek csr_pwek%rowtype;
+
       cursor csr_pshf is
          select t01.*
            from psa_psc_shft t01
@@ -675,6 +681,12 @@ create or replace package body psa_app.psa_cmo_function as
       /*-*/
       /* Validate the relationships
       /*-*/
+      open csr_pwek;
+      fetch csr_pwek into rcd_pwek;
+      if csr_pwek%found then
+         psa_gen_function.add_mesg_data('Crew model ('||var_cmo_code||') is currently attached to one or more production schedules - unable to delete');
+      end if;
+      close csr_pwek;
       open csr_pshf;
       fetch csr_pshf into rcd_pshf;
       if csr_pshf%found then
