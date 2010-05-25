@@ -21,6 +21,7 @@
 create table psa.psa_psc_week
    (psw_psc_code                    varchar2(32)                  not null,
     psw_psc_week                    varchar2(7)                   not null,
+    psw_cmo_code                    varchar2(32)                  not null,
     psw_req_code                    varchar2(32)                  not null,
     psw_upd_user                    varchar2(30)                  not null,
     psw_upd_date                    date                          not null);
@@ -31,6 +32,7 @@ create table psa.psa_psc_week
 comment on table psa.psa_psc_week is 'Production Schedule Week Table';
 comment on column psa.psa_psc_week.psw_psc_code is 'Schedule code';
 comment on column psa.psa_psc_week.psw_psc_week is 'Schedule MARS week';
+comment on column psa.psa_psc_week.psw_cmo_code is 'Crew model code';
 comment on column psa.psa_psc_week.psw_req_code is 'Requirement code';
 comment on column psa.psa_psc_week.psw_upd_user is 'Last updated user';
 comment on column psa.psa_psc_week.psw_upd_date is 'Last updated date';
