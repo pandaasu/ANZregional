@@ -2768,7 +2768,7 @@ create or replace package body psa_app.psa_psc_function as
                 t02.mde_mat_uom,
                 t02.mde_gro_weight,
                 t02.mde_net_weight,
-                t02.mde_unt_case,
+                t02.mde_psa_ucas,
                 t03.mpr_prd_type,
                 t03.mpr_sch_priority,
                 t03.mpr_cas_pallet,
@@ -3322,7 +3322,7 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_mat_uom := rcd_reqd.mde_mat_uom;
             rcd_actv.psa_mat_gro_weight := rcd_reqd.mde_gro_weight;
             rcd_actv.psa_mat_net_weight := rcd_reqd.mde_net_weight;
-            rcd_actv.psa_mat_unt_case := rcd_reqd.mde_unt_case;
+            rcd_actv.psa_mat_unt_case := rcd_reqd.mde_psa_ucas;
             rcd_actv.psa_mat_sch_priority := rcd_reqd.mpr_sch_priority;
             rcd_actv.psa_mat_cas_pallet := rcd_reqd.mpr_cas_pallet;
             rcd_actv.psa_mat_bch_quantity := rcd_reqd.mpr_bch_quantity;
@@ -4697,7 +4697,7 @@ create or replace package body psa_app.psa_psc_function as
                 t01.mde_mat_uom,
                 t01.mde_gro_weight,
                 t01.mde_net_weight,
-                t01.mde_unt_case,
+                t01.mde_psa_ucas,
                 t01.mde_mat_status,
                 t02.mpr_prd_type,
                 t02.mpr_sch_priority,
@@ -5021,7 +5021,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_actv.psa_mat_uom := rcd_mdef.mde_mat_uom;
          rcd_actv.psa_mat_gro_weight := rcd_mdef.mde_gro_weight;
          rcd_actv.psa_mat_net_weight := rcd_mdef.mde_net_weight;
-         rcd_actv.psa_mat_unt_case := rcd_mdef.mde_unt_case;
+         rcd_actv.psa_mat_unt_case := rcd_mdef.mde_psa_ucas;
          rcd_actv.psa_mat_sch_priority := rcd_mdef.mpr_sch_priority;
          rcd_actv.psa_mat_cas_pallet := rcd_mdef.mpr_cas_pallet;
          rcd_actv.psa_mat_bch_quantity := rcd_mdef.mpr_bch_quantity;
@@ -5444,6 +5444,7 @@ create or replace package body psa_app.psa_psc_function as
       delete from psa_psc_shft where pss_psc_code = var_psc_code;
       delete from psa_psc_line where psl_psc_code = var_psc_code;
       delete from psa_psc_prod where psp_psc_code = var_psc_code;
+      delete from psa_psc_date where psd_psc_code = var_psc_code;
       delete from psa_psc_week where psw_psc_code = var_psc_code;
       delete from psa_psc_hedr where psh_psc_code = var_psc_code;
 
@@ -6531,6 +6532,10 @@ create or replace package body psa_app.psa_psc_function as
       end;
       if var_found = false then
          psa_gen_function.add_mesg_data('Production schedule code ('||var_psc_code||') does not exist');
+      else
+         if rcd_retrieve.psh_psc_code != con_mst_cde then
+            psa_gen_function.add_mesg_data('Production schedule code '||con_mst_cde||' - must be *MASTER for SAP update');
+         end if;
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
@@ -6553,9 +6558,12 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       lics_logging.write_log('Begin - PSA SAP Schedule Interface');
 
+
+
       /*-*/
       /* Extract the order data
       /*-*/
+    --  var_int_date := to_char(sysdate,'yyyymmddhh24midss');
     --    var_start := true;
     --  open csr_extract;
     --  loop
@@ -6572,7 +6580,11 @@ create or replace package body psa_app.psa_psc_function as
     --        var_start := false;
     --     end if;
 
-    --     lics_outbound_loader.append_data('OITM');
+
+
+    --     lics_outbound_loader.append_data('CTL009'||var_int_date);
+    --     lics_outbound_loader.append_data('HDR||rcd_detl.sap_code||rpad(' ',18-length(rcd_detl.sap_code),' ')||'NZ01NZ01      '||to_char(rcd_detl.sch_qnty,'fm000000000000000')||rcd_detl.uom_code||rpad(' ',3-length(rcd_detl.uom_code),' ')||'0001');
+    --     lics_outbound_loader.append_data('DET0010    '||to_char(rcd_detl.end_date,'yyyymmddhh24midss')||to_char(rcd_detl.str_date,'yyyymmddhh24midss'));
 
 
     --  end loop;

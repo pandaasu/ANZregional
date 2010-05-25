@@ -252,6 +252,7 @@ create or replace package body psa_app.psa_mat_function as
             rcd_psa_mat_defn.mde_unt_case := rcd_bds_data.bds_pce_factor_from_base_uom;
             rcd_psa_mat_defn.mde_sap_line := rcd_bds_data.sap_prodctn_line_code;
             rcd_psa_mat_defn.mde_psa_line := rcd_bds_data.lli_lin_code;
+            rcd_psa_mat_defn.mde_psa_ucas := rcd_bds_data.bds_pce_factor_from_base_uom;
             rcd_psa_mat_defn.mde_mat_status := '*ADD';
             rcd_psa_mat_defn.mde_sys_user := user;
             rcd_psa_mat_defn.mde_sys_date := sysdate;
@@ -271,7 +272,7 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_yld_percent := 100;
                   rcd_psa_mat_prod.mpr_yld_value := 0;
                   rcd_psa_mat_prod.mpr_pck_percent := 100;
-                  rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+                  rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                   rcd_psa_mat_prod.mpr_bch_weight := 0;
                   insert into psa_mat_prod values rcd_psa_mat_prod;
                else
@@ -306,7 +307,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_yld_percent := 100;
                rcd_psa_mat_prod.mpr_yld_value := 0;
                rcd_psa_mat_prod.mpr_pck_percent := 100;
-               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                rcd_psa_mat_prod.mpr_bch_weight := 0;
                insert into psa_mat_prod values rcd_psa_mat_prod;
             elsif rcd_psa_mat_defn.mde_mat_usage = 'PCH' then
@@ -432,8 +433,8 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_pck_weight := rcd_psa_prod.mpr_pck_weight;
                   rcd_psa_mat_prod.mpr_bch_weight := rcd_psa_prod.mpr_bch_weight;
                   if rcd_psa_prod.mpr_prd_type = '*FILL' then
-                     rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_psa_mat_defn.mde_unt_case * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
-                     rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_unt_case, 3);
+                     rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_psa_mat_defn.mde_psa_ucas * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
+                     rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                      rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
                   elsif rcd_psa_prod.mpr_prd_type = '*PACK' then
                      rcd_psa_mat_prod.mpr_yld_value := 1;
@@ -727,6 +728,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.mde_sap_code,
                 nvl(t01.mde_sap_line,'*NONE') as mde_sap_line,
                 nvl(t01.mde_psa_line,'*NONE') as mde_psa_line,
+                to_char(t01.mde_psa_ucas) as mde_psa_ucas,
                 t01.mde_sys_user||' on '||to_char(t01.mde_sys_date,'yyyy/mm/dd hh24:mi:ss') as mde_sys_user,
                 decode(t01.mde_upd_user,null,'ADDED',t01.mde_upd_user||' on '||to_char(t01.mde_upd_date,'yyyy/mm/dd hh24:mi:ss')) as mde_upd_user
            from psa_mat_defn t01
@@ -799,7 +801,7 @@ create or replace package body psa_app.psa_mat_function as
       /* Start the report
       /*-*/
       pipe row('<table border=1>');
-      pipe row('<tr><td align=center colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Master Report</td></tr>');
+      pipe row('<tr><td align=center colspan=15 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material Master Report</td></tr>');
       pipe row('<tr>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Description</td>');
@@ -813,6 +815,7 @@ create or replace package body psa_app.psa_mat_function as
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Code</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Line</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Line</td>');
+      pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Units/Case</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">SAP Updated</td>');
       pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">PSA Updated</td>');
       pipe row('</tr>');
@@ -830,7 +833,7 @@ create or replace package body psa_app.psa_mat_function as
          /*-*/
          /* Output the definition data
          /*-*/
-         pipe row('<tr><td align=center colspan=14></td></tr>');
+         pipe row('<tr><td align=center colspan=15></td></tr>');
          var_output := '<tr>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFC0;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>';
          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_name||'</td>';
@@ -844,6 +847,7 @@ create or replace package body psa_app.psa_mat_function as
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;mso-number-format:\@;" nowrap>'||rcd_defn.mde_sap_code||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_line||'</td>';
          var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_line||'</td>';
+         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_ucas||'</td>';
          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sys_user||'</td>';
          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_upd_user||'</td>';
          var_output := var_output||'</tr>';
@@ -860,29 +864,25 @@ create or replace package body psa_app.psa_mat_function as
             end if;
 
             if rcd_prod.mpr_prd_type = '*FILL' then
-               pipe row('<tr><td align=center colspan=14></td></tr>');
+               pipe row('<tr><td align=center colspan=15></td></tr>');
                var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Requirements:</font> '||rcd_prod.mpr_req_flag;
-               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Case Quantity:</font> '||rcd_prod.mpr_bch_quantity;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Yield %:</font> '||rcd_prod. mpr_yld_percent;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Yield:</font> '||rcd_prod.mpr_yld_value;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight %:</font> '||rcd_prod.mpr_pck_percent;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight:</font> '||rcd_prod.mpr_pck_weight;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Weight:</font> '||rcd_prod.mpr_bch_weight;
-               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             elsif rcd_prod.mpr_prd_type = '*PACK' then
-               pipe row('<tr><td align=center colspan=14></td></tr>');
+               pipe row('<tr><td align=center colspan=15></td></tr>');
                var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
-               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Cases/Pallet:</font> '||rcd_prod.mpr_cas_pallet;
-               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             elsif rcd_prod.mpr_prd_type = '*FORM' then
-               pipe row('<tr><td align=center colspan=14></td></tr>');
+               pipe row('<tr><td align=center colspan=15></td></tr>');
                var_work := '<font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Default Line:</font> '||rcd_prod.mpr_dft_line;
-               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Scheduling Priority:</font> '||rcd_prod.mpr_sch_priority;
-               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Lot Quantity:</font> '||rcd_prod.mpr_bch_quantity;
-               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+               pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             end if;
 
             /*-*/
@@ -905,9 +905,9 @@ create or replace package body psa_app.psa_mat_function as
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Efficiency %:</font> '||rcd_line.mli_rra_efficiency;
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Wastage %:</font> '||rcd_line.mli_rra_wastage;
                   if var_lin_flag = false then
-                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   else
-                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   end if;
                elsif rcd_prod.mpr_prd_type = '*PACK' then
                   var_work := rcd_line.mli_lin_code||' / '||rcd_line.mli_con_code;
@@ -916,9 +916,9 @@ create or replace package body psa_app.psa_mat_function as
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
                   if var_lin_flag = false then
-                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   else
-                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   end if;
                elsif rcd_prod.mpr_prd_type = '*FORM' then
                   var_work := rcd_line.mli_lin_code||' / '||rcd_line.mli_con_code;
@@ -927,9 +927,9 @@ create or replace package body psa_app.psa_mat_function as
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
                   if var_lin_flag = false then
-                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   else
-                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                     pipe row('<tr><td align=center colspan=1></td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   end if;
                end if;
                var_lin_flag := true;
@@ -950,9 +950,9 @@ create or replace package body psa_app.psa_mat_function as
 
                var_work := rcd_comp.mco_com_code||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Quantity:</font> '||rcd_comp.mco_com_quantity;
                if var_com_flag = false then
-                  pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Components</td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Components</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                else
-                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=13 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
+                  pipe row('<tr><td align=center colspan=1></td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                end if;
                var_com_flag := true;
 
@@ -1210,7 +1210,6 @@ create or replace package body psa_app.psa_mat_function as
                 t01.pty_prd_run_efficiency,
                 t01.pty_prd_run_wastage,
                 nvl(t02.mpr_mat_code,'*NONE') as mpr_mat_code,
-                to_char(nvl(t02.mpr_sch_priority,1)) as mpr_sch_priority,
                 nvl(t02.mpr_req_flag,'0') as mpr_req_flag,
                 nvl(t02.mpr_dft_line,'*NONE') as mpr_dft_line,
                 to_char(nvl(t02.mpr_cas_pallet,0)) as mpr_cas_pallet,
@@ -1349,6 +1348,7 @@ create or replace package body psa_app.psa_mat_function as
       var_output := var_output||' SAPCDE="'||psa_to_xml(rcd_retrieve.mde_sap_code)||'"';
       var_output := var_output||' SAPLIN="'||psa_to_xml(nvl(rcd_retrieve.mde_sap_line,'*NONE'))||'"';
       var_output := var_output||' PSALIN="'||psa_to_xml(nvl(rcd_retrieve.mde_psa_line,'*NONE'))||'"';
+      var_output := var_output||' PSAUNC="'||psa_to_xml(to_char(rcd_retrieve.mde_psa_ucas))||'"';
       var_output := var_output||' SYSDTE="'||psa_to_xml(rcd_retrieve.mde_sys_user||' on '||to_char(rcd_retrieve.mde_sys_date,'yyyy/mm/dd hh24:mi:ss'))||'"';
       var_output := var_output||' UPDDTE="'||psa_to_xml(rcd_retrieve.upd_date)||'"/>';
       pipe row(psa_xml_object(var_output));
@@ -1369,7 +1369,6 @@ create or replace package body psa_app.psa_mat_function as
          var_output := '<MATPTY PTYCDE="'||psa_to_xml(rcd_prod.pty_prd_type)||'"';
          var_output := var_output||' PTYNAM="'||psa_to_xml(rcd_prod.pty_prd_name)||'"';
          var_output := var_output||' MPRMAT="'||psa_to_xml(rcd_prod.mpr_mat_code)||'"';
-         var_output := var_output||' MPRSCH="'||psa_to_xml(rcd_prod.mpr_sch_priority)||'"';
          var_output := var_output||' MPRREQ="'||psa_to_xml(rcd_prod.mpr_req_flag)||'"';
          var_output := var_output||' MPRLIN="'||psa_to_xml(rcd_prod.mpr_dft_line)||'"';
          var_output := var_output||' MPRCPL="'||psa_to_xml(rcd_prod.mpr_cas_pallet)||'"';
@@ -1552,9 +1551,13 @@ create or replace package body psa_app.psa_mat_function as
          return;
       end if;
       rcd_psa_mat_defn.mde_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
+      rcd_psa_mat_defn.mde_psa_ucas := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@PSAUNC'));
       rcd_psa_mat_defn.mde_mat_status := '*ACTIVE';
       rcd_psa_mat_defn.mde_upd_user := upper(par_user);
       rcd_psa_mat_defn.mde_upd_date := sysdate;
+      if rcd_psa_mat_defn.mde_psa_ucas is null or rcd_psa_mat_defn.mde_psa_ucas <= 0 then
+         psa_gen_function.add_mesg_data('PSA units per case must be greater than zero');
+      end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -1726,7 +1729,8 @@ create or replace package body psa_app.psa_mat_function as
       /*-*/
       var_confirm := 'updated';
       update psa_mat_defn
-         set mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
+         set mde_psa_ucas = rcd_psa_mat_defn.mde_psa_ucas,
+             mde_mat_status = rcd_psa_mat_defn.mde_mat_status,
              mde_upd_user = rcd_psa_mat_defn.mde_upd_user,
              mde_upd_date = rcd_psa_mat_defn.mde_upd_date
        where mde_mat_code = rcd_psa_mat_defn.mde_mat_code;
@@ -1746,18 +1750,18 @@ create or replace package body psa_app.psa_mat_function as
             rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
             rcd_psa_mat_prod.mpr_prd_type := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@PTYCDE')));
             if rcd_psa_mat_prod.mpr_prd_type = '*FILL' then
-               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_sch_priority := 1;
                rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := 0;
                rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
                rcd_psa_mat_prod.mpr_yld_percent := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRYPC'));
-               rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_retrieve.mde_unt_case * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
+               rcd_psa_mat_prod.mpr_yld_value := round(rcd_psa_mat_prod.mpr_bch_quantity * rcd_psa_mat_defn.mde_psa_ucas * (rcd_psa_mat_prod.mpr_yld_percent / 100), 0);
                rcd_psa_mat_prod.mpr_pck_percent := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRRPC'));
-               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_retrieve.mde_net_weight / rcd_retrieve.mde_unt_case, 3);
+               rcd_psa_mat_prod.mpr_pck_weight := round(rcd_retrieve.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
             elsif rcd_psa_mat_prod.mpr_prd_type = '*PACK' then
-               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_sch_priority := 1;
                rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRCPL'));
@@ -1768,11 +1772,11 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_weight := 0;
                rcd_psa_mat_prod.mpr_bch_weight := 0;
             elsif rcd_psa_mat_prod.mpr_prd_type = '*FORM' then
-               rcd_psa_mat_prod.mpr_sch_priority := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRSCH'));
+               rcd_psa_mat_prod.mpr_sch_priority := 1;
                rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
                rcd_psa_mat_prod.mpr_dft_line := upper(psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRLIN')));
                rcd_psa_mat_prod.mpr_cas_pallet := 0;
-               rcd_psa_mat_prod.mpr_bch_quantity := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRBQY'));
+               rcd_psa_mat_prod.mpr_bch_quantity := 0;
                rcd_psa_mat_prod.mpr_yld_percent := 0;
                rcd_psa_mat_prod.mpr_yld_value := rcd_psa_mat_prod.mpr_bch_quantity;
                rcd_psa_mat_prod.mpr_pck_percent := 0;
