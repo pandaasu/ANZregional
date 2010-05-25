@@ -457,7 +457,6 @@ sub PaintFunction()%>
    var cbolFillDflt;
    var cbolPackDflt;
    var cbolFormDflt;
-   var cintUntCase;
    var cintNetWght;
    function requestDefineUpdate(strCode) {
       cstrDefineCode = strCode;
@@ -505,7 +504,6 @@ sub PaintFunction()%>
          cbolFormDflt = false;
          cintLineCount = 0;
          cintCompCount = 0;
-         cintUntCase = 0;
          cintNetWght = 0;
          var objFillPrdLine = document.getElementById('FILL_PrdLine');
          var objPackPrdLine = document.getElementById('PACK_PrdLine');
@@ -566,13 +564,17 @@ sub PaintFunction()%>
                document.getElementById('DEF_MatUcas').innerHTML = '<p>'+objElements[i].getAttribute('MATUNC')+'</p>';
                document.getElementById('DEF_SapCode').innerHTML = '<p>'+objElements[i].getAttribute('SAPCDE')+'</p>';
                document.getElementById('DEF_SapLine').innerHTML = '<p>'+objElements[i].getAttribute('SAPLIN')+'</p>';
+               document.getElementById('DEF_PsaUcas').value = objElements[i].getAttribute('PSAUNC');
                document.getElementById('DEF_SysDate').innerHTML = '<p>'+objElements[i].getAttribute('SYSDTE')+'</p>';
                document.getElementById('DEF_UpdDate').innerHTML = '<p>'+objElements[i].getAttribute('UPDDTE')+'</p>';
                cstrDefineType = objElements[i].getAttribute('MATTYP');
                cstrDefineUsag = objElements[i].getAttribute('MATUSG');
                cstrDefineLine = objElements[i].getAttribute('PSALIN');
-               cintUntCase = objElements[i].getAttribute('MATUNC');
                cintNetWght = objElements[i].getAttribute('MATNEW');
+               document.getElementById('DEF_PsaUcas').disabled = false;
+               if (cstrDefineType != 'FERT') {
+                  document.getElementById('DEF_PsaUcas').disabled = true;
+               }
                if (cstrDefineUsag == 'TDU') {
                   document.getElementById('TDU_Data').style.display = 'block';
                }
@@ -594,7 +596,6 @@ sub PaintFunction()%>
                   if (objElements[i].getAttribute('MPRREQ') == '1') {
                      objFillReqFlag.selectedIndex = 1;
                   }
-                  document.getElementById('FILL_SchPrty').value = objElements[i].getAttribute('MPRSCH');
                   document.getElementById('FILL_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FILL_YldPcnt').value = objElements[i].getAttribute('MPRYPC');
                   document.getElementById('FILL_PckPcnt').value = objElements[i].getAttribute('MPRPPC');
@@ -623,7 +624,6 @@ sub PaintFunction()%>
                   if (objElements[i].getAttribute('MPRREQ') == '1') {
                      objPackReqFlag.selectedIndex = 1;
                   }
-                  document.getElementById('PACK_SchPrty').value = objElements[i].getAttribute('MPRSCH');
                   document.getElementById('PACK_CasPalt').value = objElements[i].getAttribute('MPRCPL');
                   document.getElementById('PACK_ComMatl').value = '';
                   document.getElementById('PACK_ComQnty').value = '';
@@ -639,8 +639,6 @@ sub PaintFunction()%>
                   if (objElements[i].getAttribute('MPRREQ') == '1') {
                      objFormReqFlag.selectedIndex = 1;
                   }
-                  document.getElementById('FORM_SchPrty').value = objElements[i].getAttribute('MPRSCH');
-                  document.getElementById('FORM_BchQnty').value = objElements[i].getAttribute('MPRBQY');
                   document.getElementById('FORM_ComMatl').value = '';
                   document.getElementById('FORM_ComQnty').value = '';
                   objFormPrdLine.style.display = 'block';
@@ -1010,6 +1008,12 @@ sub PaintFunction()%>
          bolForm = true;
          bolComp = true;
       }
+      if (cstrDefineType == 'FERT') {
+         if (document.getElementById('DEF_PsaUcas').value == '' || document.getElementById('DEF_PsaUcas').value < 1) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'PSA units per case must be greater than zero';
+         }
+      }
       if (bolFill == true) {
          if (cbolFillDflt == true) {
             bolLinFound = false;
@@ -1052,10 +1056,6 @@ sub PaintFunction()%>
                   strMessage = strMessage + 'Default filling line must be a selected filling line configuration';
                }
             }
-         }
-         if (document.getElementById('FILL_SchPrty').value == '' || document.getElementById('FILL_SchPrty').value < 1 || document.getElementById('FILL_SchPrty').value > 100) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Filling scheduling priority must be range 1 to 100';
          }
          if (document.getElementById('FILL_BchQnty').value == '' || document.getElementById('FILL_BchQnty').value < 1) {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -1192,10 +1192,6 @@ sub PaintFunction()%>
                   strMessage = strMessage + 'Default packing line must be a selected packing line configuration';
                }
             }
-         }
-         if (document.getElementById('PACK_SchPrty').value == '' || document.getElementById('PACK_SchPrty').value < 1 || document.getElementById('PACK_SchPrty').value > 100) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Packing scheduling priority must be range 1 to 100';
          }
          if (document.getElementById('PACK_CasPalt').value == '' || document.getElementById('PACK_CasPalt').value < 1) {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -1351,14 +1347,6 @@ sub PaintFunction()%>
                }
             }
          }
-         if (document.getElementById('FORM_SchPrty').value == '' || document.getElementById('FORM_SchPrty').value < 1 || document.getElementById('FORM_SchPrty').value > 100) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Forming scheduling priority must be range 1 to 100';
-         }
-         if (document.getElementById('FORM_BchQnty').value == '' || document.getElementById('FORM_BchQnty').value < 1) {
-            if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Forming batch lot quantity must be greater than zero';
-         }
          objLines.length = 0;
          for (var i=0;i<objFormLinList.rows.length;i++) {
             objRow = objFormLinList.rows[i];
@@ -1436,7 +1424,7 @@ sub PaintFunction()%>
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF" MATCDE="'+fixXML(cstrDefineCode)+'">';
+      strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF" MATCDE="'+fixXML(cstrDefineCode)+'" PSAUNC="'+fixXML(document.getElementById('DEF_PsaUcas').value)+'">';
       if (bolFill == true) {
          strXML = strXML+'<MATPTY';
          strXML = strXML+' PTYCDE="*FILL"';
@@ -1446,7 +1434,6 @@ sub PaintFunction()%>
             strXML = strXML+' MPRLIN="'+fixXML(objFillPrdLine.options[objFillPrdLine.selectedIndex].value)+'"';
          }
          strXML = strXML+' MPRREQ="'+fixXML(objFillReqFlag.options[objFillReqFlag.selectedIndex].value)+'"';
-         strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FILL_SchPrty').value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FILL_BchQnty').value)+'"';
          strXML = strXML+' MPRYPC="'+fixXML(document.getElementById('FILL_YldPcnt').value)+'"';
          strXML = strXML+' MPRRPC="'+fixXML(document.getElementById('FILL_PckPcnt').value)+'">';
@@ -1494,7 +1481,6 @@ sub PaintFunction()%>
             strXML = strXML+' MPRLIN="'+fixXML(objPackPrdLine.options[objPackPrdLine.selectedIndex].value)+'"';
          }
          strXML = strXML+' MPRREQ="'+fixXML(objPackReqFlag.options[objPackReqFlag.selectedIndex].value)+'"';
-         strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('PACK_SchPrty').value)+'"';
          strXML = strXML+' MPRCPL="'+fixXML(document.getElementById('PACK_CasPalt').value)+'">';
          for (var i=0;i<objPackLinList.rows.length;i++) {
             objRow = objPackLinList.rows[i];
@@ -1539,9 +1525,7 @@ sub PaintFunction()%>
          } else {
             strXML = strXML+' MPRLIN="'+fixXML(objFormPrdLine.options[objFormPrdLine.selectedIndex].value)+'"';
          }
-         strXML = strXML+' MPRREQ="'+fixXML(objFormReqFlag.options[objFormReqFlag.selectedIndex].value)+'"';
-         strXML = strXML+' MPRSCH="'+fixXML(document.getElementById('FORM_SchPrty').value)+'"';
-         strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FORM_BchQnty').value)+'">';
+         strXML = strXML+' MPRREQ="'+fixXML(objFormReqFlag.options[objFormReqFlag.selectedIndex].value)+'">';
          for (var i=0;i<objFormLinList.rows.length;i++) {
             objRow = objFormLinList.rows[i];
             if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
@@ -1893,8 +1877,9 @@ sub PaintFunction()%>
          var intBchQnty = document.getElementById('FILL_BchQnty').value;
          var intYldPcnt = document.getElementById('FILL_YldPcnt').value;
          var intPckPcnt = document.getElementById('FILL_PckPcnt').value;
-         var intYldValu = Math.round(intBchQnty * cintUntCase * (intYldPcnt / 100));
-         var intPckValu = Math.round((cintNetWght / cintUntCase) * 1000) / 1000;
+         var intPsaUcas = document.getElementById('DEF_PsaUcas').value;
+         var intYldValu = Math.round(intBchQnty * intPsaUcas * (intYldPcnt / 100));
+         var intPckValu = Math.round((cintNetWght / intPsaUcas) * 1000) / 1000;
          var intBchValu = Math.round((intYldValu * intPckValu * (intPckPcnt / 100)) * 1000) / 1000;
          document.getElementById('FILL_YldValu').innerHTML = intYldValu;
          document.getElementById('FILL_PckValu').innerHTML = intPckValu;
@@ -1997,18 +1982,20 @@ sub PaintFunction()%>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsGrid02" align=center valign=top cols=4 cellpadding=0 cellspacing=1>
+            <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
                <tr>
                   <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Unit Of Measure</nobr></td>
                   <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Gross Weight</nobr></td>
                   <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Net Weight</nobr></td>
                   <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Units/Case</nobr></td>
+                  <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>PSA Units/Case</nobr></td>
                </tr>
                <tr>
                   <td id="DEF_MatMuom" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                   <td id="DEF_MatGwgt" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                   <td id="DEF_MatNwgt" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                   <td id="DEF_MatUcas" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
+                  <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="DEF_PsaUcas" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -2049,11 +2036,10 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=6 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Filling Line</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Batch Case Quantity</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Yield Percentage</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Pack Weight Percentage</nobr></td>
@@ -2062,7 +2048,6 @@ sub PaintFunction()%>
                            <td id="FILL_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FILL_PrdLine"></select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FILL_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
-                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_BchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_YldPcnt" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,2,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_PckPcnt" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,2,false);"></nobr></td>
@@ -2144,18 +2129,16 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=4 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Packing Line</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Cases Per Pallet</nobr></td>
                         </tr>
                         <tr>
                            <td id="PACK_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PACK_PrdLine"></select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="PACK_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
-                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="PACK_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="PACK_CasPalt" size="5" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
                      </table>
@@ -2214,19 +2197,15 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=3 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Default Forming Line</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Requirements</nobr></td>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Scheduling Priority</nobr></td>
-                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Batch Lot Quantity</nobr></td>
                         </tr>
                         <tr>
                            <td id="FORM_DftLine" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FORM_PrdLine"></select></nobr></td>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><select class="clsInputBN" id="FORM_ReqFlag"><option value="0">No<option value="1">Yes</select></nobr></td>
-                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FORM_SchPrty" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
-                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FORM_BchQnty" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);"></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>

@@ -2256,7 +2256,7 @@ sub PaintFunction()%>
                objDiv.style.padding = '2px';
                if (objWork.actent == '0') {
                   objDiv.style.cursor = 'pointer';
-                  objDiv.onclick = function() {doTypeSelect(this);};
+                  objDiv.onclick = function() {doTypeSchdSelect(this);};
                }
                objDiv.setAttribute('actidx',i);
                objDiv.setAttribute('wincde',objWork.wincde);
