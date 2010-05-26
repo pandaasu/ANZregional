@@ -183,6 +183,15 @@ create or replace package body psa_app.psa_mix_function as
       var_end_date := psa_to_date(par_end_date,'dd/mm/yyyy')+1;
 
       /*-*/
+      /* Pipe the heading line
+      /*-*/
+      var_output := '"Scheduled Date"';
+      var_output := var_output||',"Material Code"';
+      var_output := var_output||',"Material Name"';
+      var_output := var_output||',"Quantity"';
+      pipe row(var_output);
+
+      /*-*/
       /* Retrieve the extract data
       /*-*/
       open csr_extract;
