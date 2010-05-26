@@ -129,7 +129,7 @@ sub PaintFunction()%>
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Production Mix Extract Selection';
       displayScreen('dspLoad');
-      doSelectExtract();
+      doSelectLoad();
    }
 
    ///////////////////////
@@ -161,16 +161,16 @@ sub PaintFunction()%>
    //////////////////////
    // Select Functions //
    //////////////////////
-   function doSelectExtract() {
+   function doSelectLoad() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
-      window.setTimeout('requestSelectExtract();',10);
+      window.setTimeout('requestSelectLoad();',10);
    }
-   function requestSelectExtract() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="SLTEXT"/>';
-      doPostRequest('<%=strBase%>psa_mix_extract_select.asp',function(strResponse) {checkSelectExtract(strResponse);},false,streamXML(strXML));
+   function requestSelectLoad() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*SLTEXT"/>';
+      doPostRequest('<%=strBase%>psa_mix_extract_select.asp',function(strResponse) {checkSelectLoad(strResponse);},false,streamXML(strXML));
    }
-   function checkSelectExtract(strResponse) {
+   function checkSelectLoad(strResponse) {
       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
@@ -224,7 +224,7 @@ sub PaintFunction()%>
       strEndWork = strEndDate.split('/');
       if (strEndWork.length != 3) {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + ''End date must be in format dd/mm/yyyy';
+         strMessage = strMessage + 'End date must be in format dd/mm/yyyy';
       }
       if (strMessage == '') {
          if ((strStrWork[2]+strStrWork[1]+strStrWork[0]) > (strEndWork[2]+strEndWork[1]+strEndWork[0])) {
@@ -239,7 +239,7 @@ sub PaintFunction()%>
       if (confirm('Please confirm the production mix extract\r\npress OK continue (the production mix extract will be generated)\r\npress Cancel to cancel and return') == false) {
          return;
       }
-      doReportOutput(eval('document.body'),'Production Mix Report','*CSV','select * from table(pts_app.pts_mix_function.extract_data(\''+strStrDate+'\',\''+strEndDate+'\'))');
+      doReportOutput(eval('document.body'),'Production Mix Report','*CSV','select * from table(psa_app.psa_mix_function.extract_data(\''+strStrDate+'\',\''+strEndDate+'\'))');
    }
 
 // -->
@@ -260,7 +260,7 @@ sub PaintFunction()%>
          <td id="hedLoad" class="clsFunction" align=center colspan=2 nowrap><nobr>**LOADING**</nobr></td>
       </tr>
    </table>
-   <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Production Mix Extract Selection</nobr></td>
