@@ -6560,7 +6560,10 @@ create or replace package body psa_app.psa_psc_function as
       var_instance number(15,0);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
-      var_start boolean;
+      var_int_date date;
+      var_count integer;
+      type typ_outp is table of varchar2(4000) index by binary_integer;
+      tbl_outp typ_outp;
 
       /*-*/
       /* Local cursors
@@ -6571,6 +6574,20 @@ create or replace package body psa_app.psa_psc_function as
           where t01.psh_psc_code = var_psc_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_data is
+         select t01.*,
+                t02.mde_sap_code,
+                t02.mde_mat_uom
+           from psa_psc_actv t01,
+                psa_mat_defn t02
+          where t01.psa_mat_code = t02.mde_mat_code
+            and t01.psa_psc_code = var_psc_code
+            and t01.psa_act_type = 'P'
+            and t01.psa_act_str_time >= trunc(sysdate) + 1
+          order by t02.mde_sap_code asc,
+                   t01.psa_act_str_time asc;
+      rcd_data csr_data%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -6648,44 +6665,54 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       lics_logging.write_log('Begin - PSA SAP Schedule Interface');
 
-
+      /*-*/
+      /* Extract the interface data
+      /*-*/
+      lics_logging.write_log('Extracting production schedule data');
+      var_int_date := to_char(sysdate,'yyyymmddhh24midss');
+      tbl_outp.delete;
+      var_count := 0;
+      open csr_data;
+      loop
+         fetch csr_data into rcd_data;
+         if csr_data%notfound then
+            exit;
+         end if;
+         var_count := var_count + 1;
+         tbl_outp(tbl_outp.count + 1) := 'CTL009'||var_int_date;
+         tbl_outp(tbl_outp.count + 1) := 'HDR'||rcd_data.mde_sap_code||rpad(' ',18-length(rcd_data.mde_sap_code),' ')||'NZ01NZ01      '||to_char(rcd_data.psa_mat_sch_qty,'fm000000000000000')||rcd_data.mde_mat_uom||rpad(' ',3-length(rcd_data.mde_mat_uom),' ')||'0001';
+         tbl_outp(tbl_outp.count + 1) := 'DET0010    '||to_char(rcd_data.psa_act_end_time,'yyyymmddhh24midss')||to_char(rcd_data.psa_act_str_time,'yyyymmddhh24midss');
+      end loop;
+      close csr_data;
 
       /*-*/
-      /* Extract the order data
+      /* Send the interface data when required
       /*-*/
-    --  var_int_date := to_char(sysdate,'yyyymmddhh24midss');
-    --    var_start := true;
-    --  open csr_extract;
-    --  loop
-    --     fetch csr_extract into rcd_extract;
-    --     if csr_extract%notfound then
-    --        exit;
-    --     end if;
+      if var_count != 0 then
 
          /*-*/
-         /* Create outbound interface when required
+         /* Production plan
          /*-*/
-    --     if var_start = true then
-    --        var_instance := lics_outbound_loader.create_interface('CISATL11',null,'CISATL11.DAT');
-    --        var_start := false;
-    --     end if;
+         lics_logging.write_log('Sending production plan interface PSAATL11');
+         var_instance := lics_outbound_loader.create_interface('PSAATL11',null,'PSAATL11.DAT');
+         for idx in 1..tbl_outp.count loop
+            lics_outbound_loader.append_data(tbl_outp(idx));
+         end loop;
+         lics_outbound_loader.finalise_interface;
 
+         /*-*/
+         /* Trigger file
+         /*-*/
+         lics_logging.write_log('Sending trigger file interface PSAATL09');
+         var_instance := lics_outbound_loader.create_interface('PSAATL09',null,'PSAATL09.DAT');
+         lics_outbound_loader.append_data('HDRZ_PRODUCTION_SCHEDULE           009                                                                                 '||var_int_date||'      00964'||to_char(var_count,'fm000000')||'ZIN_MAPP                      COUNT               030600');
+         lics_outbound_loader.finalise_interface;
 
+      else
 
-    --     lics_outbound_loader.append_data('CTL009'||var_int_date);
-    --     lics_outbound_loader.append_data('HDR||rcd_detl.sap_code||rpad(' ',18-length(rcd_detl.sap_code),' ')||'NZ01NZ01      '||to_char(rcd_detl.sch_qnty,'fm000000000000000')||rcd_detl.uom_code||rpad(' ',3-length(rcd_detl.uom_code),' ')||'0001');
-    --     lics_outbound_loader.append_data('DET0010    '||to_char(rcd_detl.end_date,'yyyymmddhh24midss')||to_char(rcd_detl.str_date,'yyyymmddhh24midss'));
+         lics_logging.write_log('No schedule data extracted for this date');
 
-
-    --  end loop;
-    --  close csr_extract;
-
-      /*-*/
-      /* Finalise interface when required
-      /*-*/
-    --  if var_start = false and lics_outbound_loader.is_created = true then
-    --     lics_outbound_loader.finalise_interface;
-    --  end if;
+      end if;
 
       /*-*/
       /* End procedure
@@ -6700,7 +6727,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Process the production schedule data
       /*-*/
-      var_confirm := 'sent SAP interface';
+      var_confirm := 'completed SAP interface';
 
       /*-*/
       /* Commit the database
@@ -6743,10 +6770,10 @@ create or replace package body psa_app.psa_psc_function as
          /*-*/
          /* Finalise the outbound loader when required
          /*-*/
-      --   if var_start = false and lics_outbound_loader.is_created = true then
-      --      lics_outbound_loader.add_exception(var_exception);
-      --      lics_outbound_loader.finalise_interface;
-      --   end if;
+         if lics_outbound_loader.is_created = true then
+            lics_outbound_loader.add_exception(var_exception);
+            lics_outbound_loader.finalise_interface;
+         end if;
 
          /*-*/
          /* Raise an exception to the calling application
