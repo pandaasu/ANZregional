@@ -834,24 +834,23 @@ create or replace package body psa_app.psa_mat_function as
          /* Output the definition data
          /*-*/
          pipe row('<tr><td align=center colspan=15></td></tr>');
-         var_output := '<tr>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFC0;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>';
-         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_name||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_type||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_usage||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_status||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_uom||'</td>';
-         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_gro_weight||'</td>';
-         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_net_weight||'</td>';
-         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_unt_case||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;mso-number-format:\@;" nowrap>'||rcd_defn.mde_sap_code||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_line||'</td>';
-         var_output := var_output||'<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_line||'</td>';
-         var_output := var_output||'<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_ucas||'</td>';
-         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sys_user||'</td>';
-         var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_upd_user||'</td>';
-         var_output := var_output||'</tr>';
-         pipe row(var_output);
+         pipe row('<tr>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFC0;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_code||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_name||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_type||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_usage||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_status||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_mat_uom||'</td>');
+         pipe row('<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_gro_weight||'</td>');
+         pipe row('<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_net_weight||'</td>');
+         pipe row('<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_unt_case||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;mso-number-format:\@;" nowrap>'||rcd_defn.mde_sap_code||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sap_line||'</td>');
+         pipe row('<td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_line||'</td>');
+         pipe row('<td align=right colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_psa_ucas||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_sys_user||'</td>');
+         pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_defn.mde_upd_user||'</td>');
+         pipe row('</tr>');
 
          /*-*/
          /* Retrieve the production type data
