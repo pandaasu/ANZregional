@@ -679,6 +679,20 @@ sub PaintFunction()%>
       }
       doReportOutput(eval('document.body'),'Production Schedule Report','*SPREADSHEET','select * from table(psa_app.psa_rpt_function.report_schedule(\''+cstrTypeProd+'\',\''+cstrTypeWeek+'\',\''+cstrTypeCode+'\'))');
    }
+   function doTypeShftReport() {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the shift report\r\npress OK continue (the shift report will be generated)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+      doReportOutput(eval('document.body'),'Production Shift Report','*SPREADSHEET','select * from table(psa_app.psa_rpt_function.report_shift(\''+cstrTypeProd+'\',\''+cstrTypeWeek+'\',\''+cstrTypeCode+'\'))');
+   }
+   function doTypeProdReport() {
+      if (!processForm()) {return;}
+      if (confirm('Please confirm the production report\r\npress OK continue (the production report will be generated)\r\npress Cancel to cancel and return') == false) {
+         return;
+      }
+  //    doReportOutput(eval('document.body'),'Production Actual Report','*SPREADSHEET','select * from table(psa_app.psa_rpt_function.report_production(\''+cstrTypeProd+'\',\''+cstrTypeWeek+'\',\''+cstrTypeCode+'\'))');
+   }
 
    function doTypeStckUpdate() {
       if (!processForm()) {return;}
@@ -3164,13 +3178,12 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=6 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdReport();">&nbsp;Schedule&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeShftReport();">&nbsp;Shift&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeResoReport();">&nbsp;Resource&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeProdReport();">&nbsp;Production&nbsp;</a></nobr></td>
                </tr>
             </table>
