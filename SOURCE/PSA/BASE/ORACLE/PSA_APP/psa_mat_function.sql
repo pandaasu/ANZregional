@@ -125,6 +125,7 @@ create or replace package body psa_app.psa_mat_function as
             and t02.sap_prodctn_line_code = t04.lli_sap_code(+)
             and t04.lli_lin_code = t05.lde_lin_code(+)
             and t01.plant_code = 'NZ01'
+            and t01.special_procurement_type != '50'
             and ((t01.material_type = 'FERT' and t01.plant_specific_status = '20' and (t01.mars_traded_unit_flag = 'X' or t01.mars_intrmdt_prdct_compnt_flag = 'X')) or
                  (t01.material_type = 'VERP' and t01.plant_specific_status = '20' and (substr(t01.bds_material_desc_en,1,3) in ('PCH','RLS') or substr(t01.bds_material_desc_en,1,6) in ('GUSSET'))))
           order by t01.sap_material_code asc;
