@@ -907,15 +907,15 @@ create or replace package body psa_app.psa_rpt_function as
       for idl in 1..tbl_line.count loop
          if tbl_line(idl).ovr_flag = '0' then
             if tbl_line(idl).fil_name is null then
-               pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||'</td>');
+               pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||'</td>');
             else
-               pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
+               pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#008000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
             end if;
          else
             if tbl_line(idl).fil_name is null then
-               pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#800000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||'</td>');
+               pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#800000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||'</td>');
             else
-               pipe row('<td align=center colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#800000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
+               pipe row('<td align=center colspan=2 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#800000;color:#ffffff;border:#c0ffc0 1pt solid;" nowrap>('||tbl_line(idl).lin_code||') '||tbl_line(idl).lin_name||' - ('||tbl_line(idl).con_code||') '||tbl_line(idl).con_name||' - '||tbl_line(idl).fil_name||'</td>');
             end if;
          end if;
       end loop;
