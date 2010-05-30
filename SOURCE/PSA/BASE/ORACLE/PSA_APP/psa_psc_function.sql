@@ -6585,6 +6585,7 @@ create or replace package body psa_app.psa_psc_function as
             and t01.psa_psc_code = var_psc_code
             and t01.psa_act_type = 'P'
             and t01.psa_act_str_time >= trunc(sysdate) + 1
+            and t01.psa_act_str_time < trunc(sysdate) + 29
           order by t02.mde_sap_code asc,
                    t01.psa_act_str_time asc;
       rcd_data csr_data%rowtype;
@@ -6667,6 +6668,7 @@ create or replace package body psa_app.psa_psc_function as
 
       /*-*/
       /* Extract the interface data
+      /* **note** 28 days window from midnight today
       /*-*/
       lics_logging.write_log('Extracting production schedule data');
       var_int_date := to_char(sysdate,'yyyymmddhh24midss');
