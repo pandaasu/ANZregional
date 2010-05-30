@@ -222,12 +222,6 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Last Updated&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
          objCell.innerHTML = '&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
@@ -256,28 +250,22 @@ sub PaintFunction()%>
                   objCell.className = 'clsLabelFN';
                }
                objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('SLTUPD')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
             }
          }
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = 3;
+            objCell.colSpan = 2;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             setScrollable('HeadWeeks','BodyWeeks','horizontal');
-            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.rows(0).cells[2].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadWeeks','BodyWeeks','horizontal');
-            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.rows(0).cells[2].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -454,7 +442,7 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                cstrTypePulse = objElements[i].getAttribute('PULVAL');
-               cstrTypeHead = 'Actuals Maintenance - '+cstrTypeProd+' - '+objElements[i].getAttribute('WEKNAM')+' - '+objElements[i].getAttribute('PTYNAM');
+               cstrTypeHead = 'Schedule Enquiry - '+cstrTypeProd+' - '+objElements[i].getAttribute('WEKNAM')+' - '+objElements[i].getAttribute('PTYNAM');
                document.getElementById('hedType').innerText = cstrTypeHead;
             } else if (objElements[i].nodeName == 'DAYDFN') {
                cobjTypeDate[cobjTypeDate.length] = new clsTypeDate();
@@ -1006,46 +994,6 @@ sub PaintFunction()%>
       }
 
       //
-      // paint the line window start when required
-      //
-      for (var i=0;i<objShfAry.length;i++) {
-         if (objShfAry[i].wintyp == '1') {
-            objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objShfAry[i].barstr);
-            objRow = objTable.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'left';
-            objCell.vAlign = 'top';
-            objCell.style.fontSize = '8pt';
-            objCell.style.fontWeight = 'normal';
-            objCell.style.backgroundColor = 'transparent';
-            objCell.style.color = '#000000';
-            objCell.style.border = 'none';
-            objCell.style.padding = '0px';
-            objCell.style.whiteSpace = 'nowrap';
-            objDiv = document.createElement('div');
-            objDiv.align = 'left';
-            objDiv.vAlign = 'top';
-            objDiv.style.cursor = 'pointer';
-            objDiv.style.fontSize = '10pt';
-            objDiv.style.fontWeight = 'bold';
-            objDiv.style.backgroundColor = '#ffd9ff';
-            objDiv.style.color = '#000000';
-            objDiv.style.border = '#c7c7c7 1px solid';
-            objDiv.style.paddingLeft = '4px';
-            objDiv.style.paddingRight = '4px';
-            objDiv.style.whiteSpace = 'nowrap';
-            objDiv.style.width = '1%';
-            objDiv.setAttribute('actidx',-1);
-            objDiv.setAttribute('wincde',objShfAry[i].wincde);
-            objDiv.setAttribute('actcde','');
-            objDiv.setAttribute('acttyp','+');
-            objDiv.appendChild(document.createTextNode('+'));
-            objCell.appendChild(objDiv);
-         }
-      }
-
-      //
       // paint the line activities
       //
       for (var i=0;i<objActAry.length;i++) {
@@ -1099,7 +1047,6 @@ sub PaintFunction()%>
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
                objDiv.style.padding = '2px';
-               objDiv.style.cursor = 'pointer';
                objDiv.setAttribute('actidx',i);
                objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);
@@ -1430,21 +1377,13 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
-                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdReport();">&nbsp;Schedule&nbsp;</a></nobr></td>
-               </tr>
-            </table>
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
-               <tr>
                   <td id="typPulse" class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Enquiry&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdReport();">&nbsp;Schedule&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
