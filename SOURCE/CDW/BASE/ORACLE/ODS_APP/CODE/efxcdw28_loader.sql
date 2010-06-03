@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package ods_app.efxcdw20_loader as
+create or replace package ods_app.efxcdw28_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : efxcdw20_loader
+    Package : efxcdw28_loader
     Owner   : ods_app
 
     Description
     -----------
-    Operational Data Store - Efex Range Data - EFEX to CDW
+    Operational Data Store - Efex Target Data - EFEX to CDW
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -27,13 +27,13 @@ create or replace package ods_app.efxcdw20_loader as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end efxcdw20_loader;
+end efxcdw28_loader;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ods_app.efxcdw20_loader as
+create or replace package body ods_app.efxcdw28_loader as
 
    /*-*/
    /* Private exceptions
@@ -50,7 +50,7 @@ create or replace package body ods_app.efxcdw20_loader as
    /* Private definitions
    /*-*/
    var_trn_error boolean;
-   rcd_efex_range efex_range%rowtype;
+   rcd_efex_target efex_target%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -73,8 +73,13 @@ create or replace package body ods_app.efxcdw20_loader as
       lics_inbound_utility.clear_definition;
       /*-*/
       lics_inbound_utility.set_definition('HDR','RCD_ID',3);
-      lics_inbound_utility.set_definition('HDR','RAN_ID',10);
-      lics_inbound_utility.set_definition('HDR','RAN_NAME',50);
+      lics_inbound_utility.set_definition('HDR','STE_ID',10);
+      lics_inbound_utility.set_definition('HDR','TAR_ID',10);
+      lics_inbound_utility.set_definition('HDR','PRD_NUM',10);
+      lics_inbound_utility.set_definition('HDR','BUS_ID',10);
+      lics_inbound_utility.set_definition('HDR','TAR_NAME',50);
+      lics_inbound_utility.set_definition('HDR','TAR_VALUE',15);
+      lics_inbound_utility.set_definition('HDR','ACT_VALUE',15);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
 
    /*-------------*/
@@ -166,24 +171,34 @@ create or replace package body ods_app.efxcdw20_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_range.range_id := lics_inbound_utility.get_number('RAN_ID');
-      rcd_efex_range.range_name := lics_inbound_utility.get_variable('RAN_NAME');
-      rcd_efex_range.status := lics_inbound_utility.get_variable('STATUS');
-      rcd_efex_range.valdtn_status := ods_constants.valdtn_valid;
+      rcd_efex_target.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
+      rcd_efex_target.target_id := lics_inbound_utility.get_number('TAR_ID');
+      rcd_efex_target.mars_period := lics_inbound_utility.get_number(PRD_NUM');
+      rcd_efex_target.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_target.target_name := lics_inbound_utility.get_variable('TAR_NAME');
+      rcd_efex_target.target_value := lics_inbound_utility.get_number('TAR_VALUE');
+      rcd_efex_target.actual_value := lics_inbound_utility.get_number('ACT_VALUE');
+      rcd_efex_target.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_target.valdtn_status := ods_constants.valdtn_unchecked;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
       /*------------------------------*/
 
       begin
-         insert into efex_range values rcd_efex_range;
+         insert into efex_target values rcd_efex_target;
       exception
          when dup_val_on_index then
-            update efex_range
-               set range_name = rcd_efex_range.range_name,
-                   status = rcd_efex_range.status,
-                   valdtn_status = rcd_efex_range.valdtn_status
-             where range_id = rcd_efex_range.range_id;
+            update efex_target
+               set bus_unit_id = rcd_efex_target.bus_unit_id,
+                   target_name = rcd_efex_target.target_name,
+                   target_value = rcd_efex_target.target_value,
+                   actual_value = rcd_efex_target.actual_value,
+                   status = rcd_efex_target.status,
+                   valdtn_status = rcd_efex_target.valdtn_status
+             where sales_terr_id = rcd_efex_target.sales_terr_id
+               and target_id = rcd_efex_target.target_id
+               and mars_period = rcd_efex_target.mars_period;
       end;
 
    /*-------------------*/
@@ -203,11 +218,11 @@ create or replace package body ods_app.efxcdw20_loader as
    /*-------------*/
    end process_record_hdr;
 
-end efxcdw20_loader;
+end efxcdw28_loader;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym efxcdw20_loader for ods_app.efxcdw20_loader;
-grant execute on ods_app.efxcdw20_loader to lics_app;
+create or replace public synonym efxcdw28_loader for ods_app.efxcdw28_loader;
+grant execute on ods_app.efxcdw28_loader to lics_app;

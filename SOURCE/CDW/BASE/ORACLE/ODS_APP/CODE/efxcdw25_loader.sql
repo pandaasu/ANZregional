@@ -16,7 +16,7 @@ create or replace package ods_app.efxcdw25_loader as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/05   Steve Gregan   Created
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -480,8 +480,8 @@ create or replace package body ods_app.efxcdw25_loader as
                    deal_value = rcd_efex_pmt_deal.deal_value,
                    status = rcd_efex_pmt_deal.status,
                    valdtn_status = rcd_efex_pmt_deal.valdtn_status
-             where efex_pmt_id = rcd_efex_pmt_deal.efex_pmt_id
-               and efex_seq_num = rcd_efex_pmt_deal.seq_num;
+             where pmt_id = rcd_efex_pmt_deal.pmt_id
+               and seq_num = rcd_efex_pmt_deal.seq_num;
       end;
 
    /*-------------------*/
@@ -547,8 +547,8 @@ create or replace package body ods_app.efxcdw25_loader as
                    rtn_value = rcd_efex_pmt_rtn.rtn_value,
                    status = rcd_efex_pmt_rtn.status,
                    valdtn_status = rcd_efex_pmt_rtn.valdtn_status
-             where efex_pmt_id = rcd_efex_pmt_rtn.efex_pmt_id
-               and efex_seq_num = rcd_efex_pmt_rtn.seq_num;
+             where pmt_id = rcd_efex_pmt_rtn.pmt_id
+               and seq_num = rcd_efex_pmt_rtn.seq_num;
       end;
 
    /*-------------------*/
