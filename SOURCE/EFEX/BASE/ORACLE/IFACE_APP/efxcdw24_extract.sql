@@ -28,6 +28,7 @@ create or replace package iface_app.efxcdw24_extract as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -241,7 +242,7 @@ create or replace package body iface_app.efxcdw24_extract as
          /*-*/
          var_count := var_count + 1;
          lics_outbound_loader.append_data('HDR'||
-                                          nvl(to_char(rcd_extract.order_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_extract.order_id),'0')),' ') ||
+                                          nvl(rcd_extract.order_id,'0')||rpad(' ',10-length(nvl(rcd_extract.order_id,'0')),' ') ||
                                           nvl(rcd_extract.purchase_order,' ')||rpad(' ',50-length(nvl(rcd_extract.purchase_order,' ')),' ') ||
                                           nvl(rcd_extract.order_date,' ')||rpad(' ',14-length(nvl(rcd_extract.order_date,' ')),' ') ||
                                           nvl(rcd_extract.order_code,' ')||rpad(' ',50-length(nvl(rcd_extract.order_code,' ')),' ') ||
@@ -272,6 +273,11 @@ create or replace package body iface_app.efxcdw24_extract as
          end if;
 
          /*-*/
+         /* Append end line
+         /*-*/
+         lics_outbound_loader.append_data('END');
+
+         /*-*/
          /* Extract the order items based on the order distributor
          /* **notes**
          /* 1. Assumption that the order customer market is the same as all related order item markets
@@ -284,11 +290,11 @@ create or replace package body iface_app.efxcdw24_extract as
                   exit;
                end if;
                lics_outbound_loader.append_data('ITM'||
-                                                nvl(to_char(rcd_item01.order_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_item01.order_id),'0')),' ') ||
-                                                nvl(to_char(rcd_item01.item_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_item01.item_id),'0')),' ') ||
-                                                nvl(to_char(rcd_item01.order_qty),'0')||rpad(' ',15-length(nvl(to_char(rcd_item01.order_qty),'0')),' ') ||
-                                                nvl(to_char(rcd_item01.alloc_qty),'0')||rpad(' ',15-length(nvl(to_char(rcd_item01.alloc_qty),'0')),' ') ||
-                                                nvl(to_char(rcd_extract.distributor_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_extract.distributor_id),'0')),' ') ||
+                                                nvl(rcd_item01.order_id,'0')||rpad(' ',10-length(nvl(rcd_item01.order_id,'0')),' ') ||
+                                                nvl(rcd_item01.item_id,'0')||rpad(' ',10-length(nvl(rcd_item01.item_id,'0')),' ') ||
+                                                nvl(rcd_item01.order_qty,'0')||rpad(' ',15-length(nvl(rcd_item01.order_qty,'0')),' ') ||
+                                                nvl(rcd_item01.alloc_qty,'0')||rpad(' ',15-length(nvl(rcd_item01.alloc_qty,'0')),' ') ||
+                                                nvl(rcd_extract.distributor_id,'0')||rpad(' ',10-length(nvl(rcd_extract.distributor_id,'0')),' ') ||
                                                 nvl(rcd_item01.uom,' ')||rpad(' ',10-length(nvl(rcd_item01.uom,' ')),' ') ||
                                                 nvl(rcd_item01.status,' ')||rpad(' ',1-length(nvl(rcd_item01.status,' ')),' '));
             end loop;
@@ -301,11 +307,11 @@ create or replace package body iface_app.efxcdw24_extract as
                   exit;
                end if;
                lics_outbound_loader.append_data('ITM'||
-                                                nvl(to_char(rcd_item02.order_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_item02.order_id),'0')),' ') ||
-                                                nvl(to_char(rcd_item02.item_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_item02.item_id),'0')),' ') ||
-                                                nvl(to_char(rcd_item02.order_qty),'0')||rpad(' ',15-length(nvl(to_char(rcd_item02.order_qty),'0')),' ') ||
-                                                nvl(to_char(rcd_item02.alloc_qty),'0')||rpad(' ',15-length(nvl(to_char(rcd_item02.alloc_qty),'0')),' ') ||
-                                                nvl(to_char(rcd_item02.distributor_id),'0')||rpad(' ',10-length(nvl(to_char(rcd_item02.distributor_id),'0')),' ') ||
+                                                nvl(rcd_item02.order_id,'0')||rpad(' ',10-length(nvl(rcd_item02.order_id,'0')),' ') ||
+                                                nvl(rcd_item02.item_id,'0')||rpad(' ',10-length(nvl(rcd_item02.item_id,'0')),' ') ||
+                                                nvl(rcd_item02.order_qty,'0')||rpad(' ',15-length(nvl(rcd_item02.order_qty,'0')),' ') ||
+                                                nvl(rcd_item02.alloc_qty,'0')||rpad(' ',15-length(nvl(rcd_item02.alloc_qty,'0')),' ') ||
+                                                nvl(rcd_item02.distributor_id,'0')||rpad(' ',10-length(nvl(rcd_item02.distributor_id,'0')),' ') ||
                                                 nvl(rcd_item02.uom,' ')||rpad(' ',10-length(nvl(rcd_item02.uom,' ')),' ') ||
                                                 nvl(rcd_item02.status,' ')||rpad(' ',1-length(nvl(rcd_item02.status,' ')),' '));
             end loop;

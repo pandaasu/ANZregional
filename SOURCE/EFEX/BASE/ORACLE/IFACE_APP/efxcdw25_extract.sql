@@ -28,6 +28,7 @@ create or replace package iface_app.efxcdw25_extract as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -302,7 +303,7 @@ create or replace package body iface_app.efxcdw25_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXCDW24 EXTRACT - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - EFXCDW25 EXTRACT - ' || var_exception);
 
    /*-------------*/
    /* End routine */

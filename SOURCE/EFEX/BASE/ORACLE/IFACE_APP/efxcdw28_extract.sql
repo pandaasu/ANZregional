@@ -1,18 +1,18 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package iface_app.efxcdw23_extract as
+create or replace package iface_app.efxcdw28_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : efxcdw23_extract
+    Package : efxcdw28_extract
     Owner   : iface_app
 
     Description
     -----------
-    Efex Distribution Total Data - EFEX to CDW
+    Efex Target Data - EFEX to CDW
 
     1. PAR_MARKET (MANDATORY)
 
@@ -23,7 +23,7 @@ create or replace package iface_app.efxcdw23_extract as
        ## - Number of days changes to extract
        0 - Full extract (default)
 
-    This package extracts the EFEX distribution totals that have been modified within the last
+    This package extracts the EFEX target data that have been modified within the last
     history number of days and sends the extract file to the CDW environment.
 
     YYYY/MM   Author         Description
@@ -37,19 +37,24 @@ create or replace package iface_app.efxcdw23_extract as
    /*-*/
    procedure execute(par_market in number, par_history in number default 0);
 
-end efxcdw23_extract;
+end efxcdw28_extract;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body iface_app.efxcdw23_extract as
+create or replace package body iface_app.efxcdw28_extract as
 
    /*-*/
    /* Private exceptions
    /*-*/
    application_exception exception;
    pragma exception_init(application_exception, -20000);
+
+   /*-*/
+   /* Private definitions
+   /*-*/
+   con_group constant number := 500;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -62,37 +67,31 @@ create or replace package body iface_app.efxcdw23_extract as
       var_exception varchar2(4000);
       var_history number;
       var_instance number(15,0);
+      var_str_time date;
+      var_end_time date;
       var_start boolean;
+      var_count integer;
 
       /*-*/
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select to_char(t01.customer_id) as customer_id,
-                to_char(t01.item_group_id) as item_group_id,
-                to_char(t03.sales_territory_id) as sales_territory_id,
-                to_char(t06.segment_id) as segment_id,
-                to_char(t07.business_unit_id) as business_unit_id,
-                to_char(t04.user_id) as user_id,
-                to_char(t01.total_qty) as total_qty,
-                t01.status as status,
-                to_char(t01.modified_date,'yyyymmddhh24miss') as efex_lupdt
-           from distribution_total t01,
-                customer t02,
-                cust_sales_territory t03,
-                sales_territory t04,
-                sales_area t05,
-                sales_region t06,
-                segment t07
-          where t01.customer_id = t02.customer_id
-            and t02.customer_id = t03.customer_id
-            and t03.sales_territory_id = t04.sales_territory_id
-            and t04.sales_area_id = t05.sales_area_id
-            and t05.sales_region_id = t06.sales_region_id
-            and t06.segment_id = t07.segment_id
-            and t02.market_id = par_market
-            and t03.primary_flg = 'Y'
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+         select to_char(t02.sales_territory_id) as sales_territory_id,
+                to_char(t01.target_id) as target_id,
+                to_char(t02.period) as period,
+                to_char(t01.business_unit_id) as business_unit_id,
+                t01.target_name,
+                to_char(t02.target_value) as target_value,
+                to_char(t02.actual_value) as actual_value,
+                t01.status
+           from target t01,
+                target_territory_value t02,
+                business_unit t03
+          where t01.target_id = t02.target_id
+            and t01.business_unit_id = t03.business_unit_id
+            and t03.market_id = par_market
+            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
+                 trunc(t02.modified_date) >= trunc(sysdate) - var_history)
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -101,9 +100,12 @@ create or replace package body iface_app.efxcdw23_extract as
    begin
 
       /*-*/
-      /* Initialise variables
+      /* Initialise procedure
       /*-*/
+      var_str_time := sysdate;
+      var_end_time := sysdate;
       var_start := true;
+      var_count := 0;
 
       /*-*/
       /* Define number of days to extract
@@ -115,7 +117,7 @@ create or replace package body iface_app.efxcdw23_extract as
       end if;
 
       /*-*/
-      /* Open cursor for output
+      /* Extract the order data
       /*-*/
       open csr_extract;
       loop
@@ -127,30 +129,34 @@ create or replace package body iface_app.efxcdw23_extract as
          /*-*/
          /* Create outbound interface when required
          /*-*/
-         if var_start = true then
-            var_instance := lics_outbound_loader.create_interface('EFXCDW23',null,'EFXCDW23.DAT');
+         if var_start = true or var_count = con_group then
+            if var_start = false and lics_outbound_loader.is_created = true then
+               lics_outbound_loader.finalise_interface;
+            end if;
+            var_instance := lics_outbound_loader.create_interface('EFXCDW28',null,'EFXCDW28.DAT');
             var_start := false;
+            var_count := 0;
          end if;
 
          /*-*/
-         /* Append data lines
+         /* Append header line
          /*-*/
-         lics_outbound_loader.append_data('HDR' ||
-                                          nvl(rcd_extract.customer_id,'0')||rpad(' ',10-length(nvl(rcd_extract.customer_id,'0')),' ') ||
-                                          nvl(rcd_extract.item_group_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_group_id,'0')),' ') ||
+         var_count := var_count + 1;
+         lics_outbound_loader.append_data('HDR'||
                                           nvl(rcd_extract.sales_territory_id,'0')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,'0')),' ') ||
-                                          nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
+                                          nvl(rcd_extract.target_id,'0')||rpad(' ',10-length(nvl(rcd_extract.target_id,'0')),' ') ||
+                                          nvl(rcd_extract.period,'0')||rpad(' ',10-length(nvl(rcd_extract.period,'0')),' ') ||
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
-                                          nvl(rcd_extract.user_id,'0')||rpad(' ',10-length(nvl(rcd_extract.user_id,'0')),' ') ||
-                                          nvl(rcd_extract.total_qty,'0')||rpad(' ',15-length(nvl(rcd_extract.total_qty,'0')),' ') ||
-                                          nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' ') ||
-                                          nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
+                                          nvl(rcd_extract.target_name,' ')||rpad(' ',50-length(nvl(rcd_extract.target_name,' ')),' ') ||
+                                          nvl(rcd_extract.target_value,'0')||rpad(' ',15-length(nvl(rcd_extract.target_value,'0')),' ') ||
+                                          nvl(rcd_extract.actual_value,'0')||rpad(' ',15-length(nvl(rcd_extract.actual_value,'0')),' ') ||
+                                          nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
       end loop;
       close csr_extract;
 
       /*-*/
-      /* Finalise Interface
+      /* Finalise interface when required
       /*-*/
       if var_start = false and lics_outbound_loader.is_created = true then
          lics_outbound_loader.finalise_interface;
@@ -187,18 +193,18 @@ create or replace package body iface_app.efxcdw23_extract as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXCDW23 EXTRACT - ' || var_exception);
+         raise_application_error(-20000, 'FATAL ERROR - EFXCDW28 EXTRACT - ' || var_exception);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
    end execute;
 
-end efxcdw23_extract;
+end efxcdw28_extract;
 /
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym efxcdw23_extract for iface_app.efxcdw23_extract;
-grant execute on efxcdw23_extract to public;
+create or replace public synonym efxcdw28_extract for iface_app.efxcdw28_extract;
+grant execute on efxcdw28_extract to public;

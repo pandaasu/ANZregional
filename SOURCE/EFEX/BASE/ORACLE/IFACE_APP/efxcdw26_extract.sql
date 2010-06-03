@@ -28,6 +28,7 @@ create or replace package iface_app.efxcdw26_extract as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -75,7 +76,6 @@ create or replace package body iface_app.efxcdw26_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-
          select to_char(t01.mrq_id) as mrq_id,
                 to_char(t01.customer_id) as customer_id,
                 to_char(t03.sales_territory_id) as sales_territory_id,

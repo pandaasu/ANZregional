@@ -28,6 +28,7 @@ create or replace package iface_app.efxcdw11_extract as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -140,7 +141,7 @@ create or replace package body iface_app.efxcdw11_extract as
                                           nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
                                           nvl(rcd_extract.item_group_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_group_id,'0')),' ') ||
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
-                                          nvl(rcd_extract.distribution_flg,' ')||rpad(' ',50-length(nvl(rcd_extract.distribution_flg,' ')),' ') ||
+                                          nvl(rcd_extract.distribution_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.distribution_flg,' ')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' ') ||
                                           nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
 

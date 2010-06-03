@@ -28,6 +28,7 @@ create or replace package iface_app.efxcdw17_extract as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
+    2010/05   Steve Gregan   Created
 
    *******************************************************************************/
 
@@ -149,6 +150,11 @@ create or replace package body iface_app.efxcdw17_extract as
          if length(rcd_extract.comm_text) > 2000 then
             lics_outbound_loader.append_data('TXT' || nvl(substr(rcd_extract.comm_text,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.comm_text,2001),' ')),' '));
          end if;
+
+         /*-*/
+         /* Append end line
+         /*-*/
+         lics_outbound_loader.append_data('END');
 
       end loop;
       close csr_extract;
