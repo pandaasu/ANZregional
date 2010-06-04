@@ -77,8 +77,23 @@ create or replace package body iface_app.efxcdw03_extract as
                 t01.status as status
            from users t01
           where t01.market_id = par_market
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
+            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
+                 exists (select 'x' from user_segment where user_id = t01.user_id and trunc(modified_date) >= trunc(sysdate) - var_history));
       rcd_extract csr_extract%rowtype;
+
+      cursor csr_segment is
+         select to_char(t01.user_id) as user_id,
+                to_char(t01.segment_id) as segment_id,
+                to_char(t01.business_unit_id) as business_unit_id,
+                t01.status
+           from user_segment t01,
+                segment t02,
+                business_unit t03
+          where t01.segment_id = t02.segment_id
+            and t02.business_unit_id = t03.business_unit_id
+            and t01.user_id = rcd_extract.user_id
+          order by t01.segment_id asc;
+      rcd_segment csr_segment%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -128,6 +143,23 @@ create or replace package body iface_app.efxcdw03_extract as
                                           nvl(rcd_extract.phone_number,' ')||rpad(' ',50-length(nvl(rcd_extract.phone_number,' ')),' ') ||
                                           nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
+
+         /*-*/
+         /* Extract the user segments
+         /*-*/
+         open csr_segment;
+         loop
+            fetch csr_segment into rcd_segment;
+            if csr_segment%notfound then
+               exit;
+            end if;
+            lics_outbound_loader.append_data('SEG'||
+                                             nvl(rcd_segment.user_id,'0')||rpad(' ',10-length(nvl(rcd_segment.user_id,'0')),' ') ||
+                                             nvl(rcd_segment.segment_id,'0')||rpad(' ',10-length(nvl(rcd_segment.segment_id,'0')),' ') ||
+                                             nvl(rcd_segment.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_segment.business_unit_id,'0')),' ') ||
+                                             nvl(rcd_segment.status,' ')||rpad(' ',1-length(nvl(rcd_segment.status,' ')),' '));
+          end loop;
+         close csr_segment;
 
       end loop;
       close csr_extract;
