@@ -67,8 +67,6 @@ create or replace package body iface_app.efxcdw25_extract as
       var_exception varchar2(4000);
       var_history number;
       var_instance number(15,0);
-      var_str_time date;
-      var_end_time date;
       var_start boolean;
       var_count integer;
 
@@ -147,8 +145,6 @@ create or replace package body iface_app.efxcdw25_extract as
       /*-*/
       /* Initialise procedure
       /*-*/
-      var_str_time := sysdate;
-      var_end_time := sysdate;
       var_start := true;
       var_count := 0;
 
