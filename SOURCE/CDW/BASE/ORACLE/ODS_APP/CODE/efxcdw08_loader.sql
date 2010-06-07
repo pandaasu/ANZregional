@@ -169,10 +169,10 @@ create or replace package body ods_app.efxcdw08_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_matl_grp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID');
+      rcd_efex_matl_grp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID',null);
       rcd_efex_matl_grp.matl_grp_name := lics_inbound_utility.get_variable('ITG_NAME');
-      rcd_efex_matl_grp.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_matl_grp.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_matl_grp.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_matl_grp.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_matl_grp.tot_distbn_flg := lics_inbound_utility.get_variable('TDS_FLAG');
       rcd_efex_matl_grp.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl_grp.valdtn_status := ods_constants.valdtn_unchecked;

@@ -172,13 +172,13 @@ create or replace package body ods_app.efxcdw23_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_distbn_tot.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_distbn_tot.matl_grp_id := lics_inbound_utility.get_number('ITG_ID');
-      rcd_efex_distbn_tot.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_distbn_tot.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_distbn_tot.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_distbn_tot.user_id := lics_inbound_utility.get_number('USR_ID');
-      rcd_efex_distbn_tot.tot_qty := lics_inbound_utility.get_number('TOT_QTY');
+      rcd_efex_distbn_tot.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_distbn_tot.matl_grp_id := lics_inbound_utility.get_number('ITG_ID',null);
+      rcd_efex_distbn_tot.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_distbn_tot.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_distbn_tot.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_distbn_tot.user_id := lics_inbound_utility.get_number('USR_ID',null);
+      rcd_efex_distbn_tot.tot_qty := lics_inbound_utility.get_number('TOT_QTY',null);
       rcd_efex_distbn_tot.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_distbn_tot.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_distbn_tot.valdtn_status := ods_constants.valdtn_unchecked;

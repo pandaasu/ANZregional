@@ -171,13 +171,13 @@ create or replace package body ods_app.efxcdw12_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_route_sched.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_route_sched.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_route_sched.route_sched_date := lics_inbound_utility.get_date('RSC_DATE','yyyymmddhh24miss');
-      rcd_efex_route_sched.tot_scanned := lics_inbound_utility.get_number('TOT_SCANNED');
-      rcd_efex_route_sched.tot_sched := lics_inbound_utility.get_number('TOT_SCHEDULED');
-      rcd_efex_route_sched.tot_skipped := lics_inbound_utility.get_number('TOT_SKIPPED');
-      rcd_efex_route_sched.tot_errors := lics_inbound_utility.get_number('TOT_ERRORS');
-      rcd_efex_route_sched.tot_calls := lics_inbound_utility.get_number('TOT_CALLS');
+      rcd_efex_route_sched.tot_scanned := lics_inbound_utility.get_number('TOT_SCANNED',null);
+      rcd_efex_route_sched.tot_sched := lics_inbound_utility.get_number('TOT_SCHEDULED',null);
+      rcd_efex_route_sched.tot_skipped := lics_inbound_utility.get_number('TOT_SKIPPED',null);
+      rcd_efex_route_sched.tot_errors := lics_inbound_utility.get_number('TOT_ERRORS',null);
+      rcd_efex_route_sched.tot_calls := lics_inbound_utility.get_number('TOT_CALLS',null);
       rcd_efex_route_sched.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_route_sched.valdtn_status := ods_constants.valdtn_unchecked;
 

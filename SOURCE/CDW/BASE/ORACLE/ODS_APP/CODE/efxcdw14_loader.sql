@@ -174,14 +174,14 @@ create or replace package body ods_app.efxcdw14_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_call.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
+      rcd_efex_call.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
       rcd_efex_call.call_date := lics_inbound_utility.get_date('CAL_DATE','yyyymmddhh24miss');
-      rcd_efex_call.user_id := lics_inbound_utility.get_number('USR_ID');
-      rcd_efex_call.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_call.sales_terr_user_id := lics_inbound_utility.get_number('STE_USR_ID');
-      rcd_efex_call.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_call.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_call.accomp_user_id := lics_inbound_utility.get_number('ACC_USR_ID');
+      rcd_efex_call.user_id := lics_inbound_utility.get_number('USR_ID',null);
+      rcd_efex_call.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_call.sales_terr_user_id := lics_inbound_utility.get_number('STE_USR_ID',null);
+      rcd_efex_call.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_call.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_call.accomp_user_id := lics_inbound_utility.get_number('ACC_USR_ID',null);
       rcd_efex_call.call_type := lics_inbound_utility.get_variable('CAL_TYPE');
       rcd_efex_call.end_date := lics_inbound_utility.get_date('END_DATE','yyyymmddhh24miss');
       rcd_efex_call.status := lics_inbound_utility.get_variable('STATUS');

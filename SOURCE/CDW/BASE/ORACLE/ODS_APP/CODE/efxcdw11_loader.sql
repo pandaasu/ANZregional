@@ -171,11 +171,11 @@ create or replace package body ods_app.efxcdw11_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_matl_matl_subgrp.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
-      rcd_efex_matl_matl_subgrp.matl_subgrp_id := lics_inbound_utility.get_number('ISG_ID');
-      rcd_efex_matl_matl_subgrp.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_matl_matl_subgrp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID');
-      rcd_efex_matl_matl_subgrp.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_matl_matl_subgrp.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_matl_matl_subgrp.matl_subgrp_id := lics_inbound_utility.get_number('ISG_ID',null);
+      rcd_efex_matl_matl_subgrp.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_matl_matl_subgrp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID',null);
+      rcd_efex_matl_matl_subgrp.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_matl_matl_subgrp.distbn_flg := lics_inbound_utility.get_variable('DIS_FLAG');
       rcd_efex_matl_matl_subgrp.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl_matl_subgrp.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');

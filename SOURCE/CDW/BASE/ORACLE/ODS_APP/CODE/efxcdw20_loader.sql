@@ -166,7 +166,7 @@ create or replace package body ods_app.efxcdw20_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_range.range_id := lics_inbound_utility.get_number('RAN_ID');
+      rcd_efex_range.range_id := lics_inbound_utility.get_number('RAN_ID',null);
       rcd_efex_range.range_name := lics_inbound_utility.get_variable('RAN_NAME');
       rcd_efex_range.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_range.valdtn_status := ods_constants.valdtn_valid;

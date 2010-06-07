@@ -166,8 +166,8 @@ create or replace package body ods_app.efxcdw29_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_call_type.call_type_code := lics_inbound_utility.get_number('LVA_ID');
-      rcd_efex_call_type.call_type := lics_inbound_utility.get_number('LVA_NAME');
+      rcd_efex_call_type.call_type_code := lics_inbound_utility.get_number('LVA_ID',null);
+      rcd_efex_call_type.call_type := lics_inbound_utility.get_variable('LVA_NAME');
 
       /*------------------------------*/
       /* UPDATE - Update the database */

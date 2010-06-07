@@ -182,13 +182,13 @@ create or replace package body ods_app.efxcdw17_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_assmnt_questn.assmnt_id := lics_inbound_utility.get_number('COM_ID');
+      rcd_efex_assmnt_questn.assmnt_id := lics_inbound_utility.get_number('COM_ID',null);
       rcd_efex_assmnt_questn.assmnt_questn := null;
       rcd_efex_assmnt_questn.questn_type := lics_inbound_utility.get_variable('COM_TYPE');
-      rcd_efex_assmnt_questn.efex_grp_id := lics_inbound_utility.get_number('CGR_ID');
+      rcd_efex_assmnt_questn.efex_grp_id := lics_inbound_utility.get_number('CGR_ID',null);
       rcd_efex_assmnt_questn.questn_grp := lics_inbound_utility.get_variable('CGR_NAME');
-      rcd_efex_assmnt_questn.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_assmnt_questn.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_assmnt_questn.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_assmnt_questn.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_assmnt_questn.active_date := lics_inbound_utility.get_date('ACT_DATE','yyyymmddhh24miss');
       rcd_efex_assmnt_questn.inactive_date := lics_inbound_utility.get_date('INA_DATE','yyyymmddhh24miss');
       rcd_efex_assmnt_questn.due_date := lics_inbound_utility.get_date('DUE_DATE','yyyymmddhh24miss');

@@ -77,7 +77,6 @@ create or replace package body ods_app.efxcdw07_loader as
       lics_inbound_utility.set_definition('HDR','CUS_CODE',50);
       lics_inbound_utility.set_definition('HDR','CUS_NAME',100);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
       lics_inbound_utility.set_definition('HDR','ADR_TEXT1',100);
       lics_inbound_utility.set_definition('HDR','ADR_TEXT2',100);
       lics_inbound_utility.set_definition('HDR','ADR_POST',50);
@@ -197,7 +196,7 @@ create or replace package body ods_app.efxcdw07_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_cust.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
+      rcd_efex_cust.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
       rcd_efex_cust.cust_code := lics_inbound_utility.get_variable('CUS_CODE');
       rcd_efex_cust.cust_name := lics_inbound_utility.get_variable('CUS_NAME');
       rcd_efex_cust.addr_1 := lics_inbound_utility.get_variable('ADR_TEXT1');
@@ -210,29 +209,27 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.distbr_flg := lics_inbound_utility.get_variable('DIS_FLAG');
       rcd_efex_cust.outlet_flg := lics_inbound_utility.get_variable('OUT_FLAG');
       rcd_efex_cust.active_flg := lics_inbound_utility.get_variable('ACT_FLAG');
-      rcd_efex_cust.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_cust.range_id := lics_inbound_utility.get_number('RAN_ID');
-      rcd_efex_cust.cust_visit_freq_id := lics_inbound_utility.get_number('CVF_ID');
+      rcd_efex_cust.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_cust.range_id := lics_inbound_utility.get_number('RAN_ID',null);
+      rcd_efex_cust.cust_visit_freq_id := lics_inbound_utility.get_number('CVF_ID',null);
       rcd_efex_cust.cust_visit_freq := lics_inbound_utility.get_variable('RPT_MEASURE');
-      rcd_efex_cust.cust_type_id := lics_inbound_utility.get_number('CTY_ID');
-      rcd_efex_cust.affltn_id := lics_inbound_utility.get_number('AFF_ID');
-      rcd_efex_cust.distbr_id := lics_inbound_utility.get_number('DIS_ID');
-      rcd_efex_cust.cust_grade_id := lics_inbound_utility.get_number('CGR_ID');
+      rcd_efex_cust.cust_type_id := lics_inbound_utility.get_number('CTY_ID',null);
+      rcd_efex_cust.affltn_id := lics_inbound_utility.get_number('AFF_ID',null);
+      rcd_efex_cust.distbr_id := lics_inbound_utility.get_number('DIS_ID',null);
+      rcd_efex_cust.cust_grade_id := lics_inbound_utility.get_number('CGR_ID',null);
       rcd_efex_cust.cust_grade := lics_inbound_utility.get_variable('CGR_NAME');
       rcd_efex_cust.payee_name := lics_inbound_utility.get_variable('PAY_NAME');
       rcd_efex_cust.merch_name := lics_inbound_utility.get_variable('MCH_NAME');
       rcd_efex_cust.merch_code := lics_inbound_utility.get_variable('MCH_CODE');
       rcd_efex_cust.vendor_code := lics_inbound_utility.get_variable('VEN_CODE');
       rcd_efex_cust.abn := lics_inbound_utility.get_variable('VAT_NUMB');
-      rcd_efex_cust.meals_day := lics_inbound_utility.get_number('DAY_MEAL');
-      rcd_efex_cust.lead_time := lics_inbound_utility.get_number('LED_TIME');
-      rcd_efex_cust.disc_pct := lics_inbound_utility.get_number('DSC_PERCENT');
+      rcd_efex_cust.meals_day := lics_inbound_utility.get_number('DAY_MEAL',null);
+      rcd_efex_cust.lead_time := lics_inbound_utility.get_number('LED_TIME',null);
+      rcd_efex_cust.disc_pct := lics_inbound_utility.get_number('DSC_PERCENT',null);
       rcd_efex_cust.corporate_flg := lics_inbound_utility.get_variable('COR_FLAG');
       rcd_efex_cust.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_cust.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_cust.valdtn_status := ods_constants.valdtn_unchecked;
-
----MARKET_ID
 
       /*------------------------------*/
       /* UPDATE - Update the database */

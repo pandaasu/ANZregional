@@ -174,16 +174,16 @@ create or replace package body ods_app.efxcdw16_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_timesheet_day.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_timesheet_day.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_timesheet_day.timesheet_date := lics_inbound_utility.get_date('TIM_DATE','yyyymmddhh24miss');
-      rcd_efex_timesheet_day.time1 := lics_inbound_utility.get_number('TIM_TIME1');
-      rcd_efex_timesheet_day.time2 := lics_inbound_utility.get_number('TIM_TIME2');
-      rcd_efex_timesheet_day.time3 := lics_inbound_utility.get_number('TIM_TIME3');
-      rcd_efex_timesheet_day.time4 := lics_inbound_utility.get_number('TIM_TIME4');
-      rcd_efex_timesheet_day.time5 := lics_inbound_utility.get_number('TIM_TIME5');
-      rcd_efex_timesheet_day.time6 := lics_inbound_utility.get_number('TIM_TIME6');
-      rcd_efex_timesheet_day.traveltime := lics_inbound_utility.get_number('TRV_TIME');
-      rcd_efex_timesheet_day.travelkms := lics_inbound_utility.get_number('TRV_KMS');
+      rcd_efex_timesheet_day.time1 := lics_inbound_utility.get_number('TIM_TIME1',null);
+      rcd_efex_timesheet_day.time2 := lics_inbound_utility.get_number('TIM_TIME2',null);
+      rcd_efex_timesheet_day.time3 := lics_inbound_utility.get_number('TIM_TIME3',null);
+      rcd_efex_timesheet_day.time4 := lics_inbound_utility.get_number('TIM_TIME4',null);
+      rcd_efex_timesheet_day.time5 := lics_inbound_utility.get_number('TIM_TIME5',null);
+      rcd_efex_timesheet_day.time6 := lics_inbound_utility.get_number('TIM_TIME6',null);
+      rcd_efex_timesheet_day.traveltime := lics_inbound_utility.get_number('TRV_TIME',null);
+      rcd_efex_timesheet_day.travelkms := lics_inbound_utility.get_number('TRV_KMS',null);
       rcd_efex_timesheet_day.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_timesheet_day.valdtn_status := ods_constants.valdtn_unchecked;
 

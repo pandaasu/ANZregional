@@ -221,12 +221,12 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt.pmt_id := lics_inbound_utility.get_number('PAY_ID');
-      rcd_efex_pmt.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_pmt.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_pmt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_pmt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_pmt.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_pmt.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_pmt.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_pmt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_pmt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_pmt.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_pmt.pmt_date := lics_inbound_utility.get_date('PAY_DATE','yyyymmddhh24miss');
       rcd_efex_pmt.pmt_method := lics_inbound_utility.get_variable('PAY_METHOD');
       rcd_efex_pmt.rlse_date := lics_inbound_utility.get_date('RLS_DATE','yyyymmddhh24miss');
@@ -236,7 +236,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt.contra_pmt_status := lics_inbound_utility.get_variable('CTR_STATUS');
       rcd_efex_pmt.contra_procd_date := lics_inbound_utility.get_date('CTR_PRC_DATE','yyyymmddhh24miss');
       rcd_efex_pmt.contra_replicated_date := lics_inbound_utility.get_date('CTR_REP_DATE','yyyymmddhh24miss');
-      rcd_efex_pmt.contra_deducted := lics_inbound_utility.get_number('CTR_DEDUCTED');
+      rcd_efex_pmt.contra_deducted := lics_inbound_utility.get_number('CTR_DEDUCTED',null);
       rcd_efex_pmt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt.valdtn_status := ods_constants.valdtn_unchecked;
       var_ret_claim := lics_inbound_utility.get_variable('RET_CLAIM');
@@ -245,8 +245,8 @@ create or replace package body ods_app.efxcdw25_loader as
       /* DELETE - Delete any child rows */
       /*--------------------------------*/
 
-      delete from efex_pmt_deal where efex_pmt_id = rcd_efex_pmt.efex_pmt_id;
-      delete from efex_pmt_rtn where efex_pmt_id = rcd_efex_pmt.efex_pmt_id;
+      delete from efex_pmt_deal where pmt_id = rcd_efex_pmt.pmt_id;
+      delete from efex_pmt_rtn where pmt_id = rcd_efex_pmt.pmt_id;
 
    /*-------------------*/
    /* Exception handler */
@@ -285,7 +285,7 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt.order_notes := rcd_efex_pmt.order_notes || lics_inbound_utility.get_variable('NTE_TEXT');
+      rcd_efex_pmt.pmt_notes := rcd_efex_pmt.pmt_notes || lics_inbound_utility.get_variable('NTE_TEXT');
 
    /*-------------------*/
    /* Exception handler */
@@ -386,11 +386,11 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt_deal.pmt_id := lics_inbound_utility.get_number('PAY_ID');
-      rcd_efex_pmt_deal.seq_num := lics_inbound_utility.get_number('SEQ_NUM');
-      rcd_efex_pmt_deal.efex_order_id := lics_inbound_utility.get_number('ORD_ID');
+      rcd_efex_pmt_deal.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt_deal.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
+      rcd_efex_pmt_deal.efex_order_id := lics_inbound_utility.get_number('ORD_ID',null);
       rcd_efex_pmt_deal.details := null;
-      rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_number('DEA_VALUE');
+      rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_number('DEA_VALUE',null);
       rcd_efex_pmt_deal.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_deal.valdtn_status := ods_constants.valdtn_unchecked;
 
@@ -521,13 +521,13 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt_rtn.pmt_id := lics_inbound_utility.get_number('PAY_ID');
-      rcd_efex_pmt_rtn.seq_num := lics_inbound_utility.get_number('SEQ_NUM');
-      rcd_efex_pmt_rtn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
+      rcd_efex_pmt_rtn.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt_rtn.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
+      rcd_efex_pmt_rtn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
       rcd_efex_pmt_rtn.rtn_claim_code := var_ret_claim;
       rcd_efex_pmt_rtn.rtn_reason := lics_inbound_utility.get_variable('RET_REASON');
-      rcd_efex_pmt_rtn.rtn_qty := lics_inbound_utility.get_number('RET_QTY');
-      rcd_efex_pmt_rtn.rtn_value := lics_inbound_utility.get_number('RET_VALUE');
+      rcd_efex_pmt_rtn.rtn_qty := lics_inbound_utility.get_number('RET_QTY',null);
+      rcd_efex_pmt_rtn.rtn_value := lics_inbound_utility.get_number('RET_VALUE',null);
       rcd_efex_pmt_rtn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_rtn.valdtn_status := ods_constants.valdtn_unchecked;
 

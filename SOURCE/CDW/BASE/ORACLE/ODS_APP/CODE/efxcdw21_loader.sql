@@ -171,8 +171,8 @@ create or replace package body ods_app.efxcdw21_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_range_matl.range_id := lics_inbound_utility.get_number('RAN_ID');
-      rcd_efex_range_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
+      rcd_efex_range_matl.range_id := lics_inbound_utility.get_number('RAN_ID',null);
+      rcd_efex_range_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
       rcd_efex_range_matl.ref_code := lics_inbound_utility.get_variable('REF_CODE');
       rcd_efex_range_matl.grade := lics_inbound_utility.get_variable('GRADE');
       rcd_efex_range_matl.rqd_flg := lics_inbound_utility.get_variable('REQ_FLAG');

@@ -80,7 +80,6 @@ create or replace package body ods_app.efxcdw03_loader as
       lics_inbound_utility.set_definition('HDR','LST_NAME',50);
       lics_inbound_utility.set_definition('HDR','EMA_ADDR',50);
       lics_inbound_utility.set_definition('HDR','PHO_NUMB',50);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
       /*-*/
       lics_inbound_utility.set_definition('SEG','RCD_ID',3);
@@ -179,12 +178,11 @@ create or replace package body ods_app.efxcdw03_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_user.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_user.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_user.firstname := lics_inbound_utility.get_variable('FST_NAME');
       rcd_efex_user.lastname := lics_inbound_utility.get_variable('LST_NAME');
       rcd_efex_user.email_addr := lics_inbound_utility.get_variable('EMA_ADDR');
       rcd_efex_user.phone_num := lics_inbound_utility.get_variable('PHO_NUMB');
-      rcd_efex_user.market_id := lics_inbound_utility.get_number('MKT_ID');
       rcd_efex_user.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_user.valdtn_status := ods_constants.valdtn_valid;
 
@@ -201,7 +199,6 @@ create or replace package body ods_app.efxcdw03_loader as
                    lastname = rcd_efex_user.lastname,
                    email_addr = rcd_efex_user.email_addr,
                    phone_num = rcd_efex_user.phone_num,
-                   market_id = rcd_efex_user.market_id,
                    status = rcd_efex_user.status,
                    valdtn_status = rcd_efex_user.valdtn_status
              where user_id = rcd_efex_user.user_id;
@@ -250,9 +247,9 @@ create or replace package body ods_app.efxcdw03_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_user_sgmnt.user_id := lics_inbound_utility.get_number('USR_ID');
-      rcd_efex_user_sgmnt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_user_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_user_sgmnt.user_id := lics_inbound_utility.get_number('USR_ID',null);
+      rcd_efex_user_sgmnt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_user_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_user_sgmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_user_sgmnt.valdtn_status := ods_constants.valdtn_unchecked;
 

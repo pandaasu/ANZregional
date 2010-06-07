@@ -75,7 +75,6 @@ create or replace package body ods_app.efxcdw01_loader as
       lics_inbound_utility.set_definition('HDR','RCD_ID',3);
       lics_inbound_utility.set_definition('HDR','BUS_ID',10);
       lics_inbound_utility.set_definition('HDR','BUS_NAME',50);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
 
    /*-------------*/
@@ -167,9 +166,8 @@ create or replace package body ods_app.efxcdw01_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_bus_unit.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_bus_unit.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_bus_unit.bus_unit_name := lics_inbound_utility.get_variable('BUS_NAME');
-      rcd_efex_bus_unit.market_id := lics_inbound_utility.get_number('MKT_ID');
       rcd_efex_bus_unit.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_bus_unit.valdtn_status := ods_constants.valdtn_valid;
 

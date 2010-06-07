@@ -82,7 +82,6 @@ create or replace package body ods_app.efxcdw05_loader as
       lics_inbound_utility.set_definition('HDR','CCH_ID',10);
       lics_inbound_utility.set_definition('HDR','CCH_NAME',50);
       lics_inbound_utility.set_definition('HDR','CCH_STATUS',1);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
 
    /*-------------*/
    /* End routine */
@@ -173,16 +172,15 @@ create or replace package body ods_app.efxcdw05_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_cust_chnl.cust_type_id := lics_inbound_utility.get_number('CTY_ID');
+      rcd_efex_cust_chnl.cust_type_id := lics_inbound_utility.get_number('CTY_ID',null);
       rcd_efex_cust_chnl.cust_type_name := lics_inbound_utility.get_variable('CTY_NAME');
       rcd_efex_cust_chnl.cust_type_status := lics_inbound_utility.get_variable('CTY_STATUS');
-      rcd_efex_cust_chnl.cust_trad_chnl_id := lics_inbound_utility.get_number('CTC_ID');
+      rcd_efex_cust_chnl.cust_trad_chnl_id := lics_inbound_utility.get_number('CTC_ID',null);
       rcd_efex_cust_chnl.cust_trad_chnl_name := lics_inbound_utility.get_variable('CTC_NAME');
       rcd_efex_cust_chnl.trad_chnl_status := lics_inbound_utility.get_variable('CTC_STATUS');
-      rcd_efex_cust_chnl.cust_chnl_id := lics_inbound_utility.get_number('CCH_ID');
+      rcd_efex_cust_chnl.cust_chnl_id := lics_inbound_utility.get_number('CCH_ID',null);
       rcd_efex_cust_chnl.cust_chnl_name := lics_inbound_utility.get_variable('CCH_NAME');
       rcd_efex_cust_chnl.cust_chnl_status := lics_inbound_utility.get_variable('CCH_STATUS');
-      rcd_efex_cust_chnl.market_id := lics_inbound_utility.get_number('MKT_ID');
       rcd_efex_cust_chnl.valdtn_status := ods_constants.valdtn_valid;
 
       /*------------------------------*/
@@ -202,7 +200,6 @@ create or replace package body ods_app.efxcdw05_loader as
                    cust_chnl_id = rcd_efex_cust_chnl.cust_chnl_id,
                    cust_chnl_name = rcd_efex_cust_chnl.cust_chnl_name,
                    cust_chnl_status = rcd_efex_cust_chnl.cust_chnl_status,
-                   market_id = rcd_efex_cust_chnl.market_id,
                    valdtn_status = rcd_efex_cust_chnl.valdtn_status
              where cust_type_id = rcd_efex_cust_chnl.cust_type_id;
       end;

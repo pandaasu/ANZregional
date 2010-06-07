@@ -77,7 +77,6 @@ create or replace package body ods_app.efxcdw04_loader as
       lics_inbound_utility.set_definition('HDR','AFF_NAME',50);
       lics_inbound_utility.set_definition('HDR','AFG_ID',10);
       lics_inbound_utility.set_definition('HDR','AFG_NAME',50);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
 
    /*-------------*/
@@ -169,11 +168,10 @@ create or replace package body ods_app.efxcdw04_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_affltn.affltn_id := lics_inbound_utility.get_number('AFF_ID');
+      rcd_efex_affltn.affltn_id := lics_inbound_utility.get_number('AFF_ID',null);
       rcd_efex_affltn.affltn_name := lics_inbound_utility.get_variable('AFF_NAME');
-      rcd_efex_affltn.affltn_grp_id := lics_inbound_utility.get_number('AFG_ID');
+      rcd_efex_affltn.affltn_grp_id := lics_inbound_utility.get_number('AFG_ID',null);
       rcd_efex_affltn.affltn_grp_name := lics_inbound_utility.get_variable('AFG_NAME');
-      rcd_efex_affltn.market_id := lics_inbound_utility.get_number('MKT_ID');
       rcd_efex_affltn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_affltn.valdtn_status := ods_constants.valdtn_valid;
 
@@ -189,7 +187,6 @@ create or replace package body ods_app.efxcdw04_loader as
                set affltn_name = rcd_efex_affltn.affltn_name,
                    affltn_grp_id = rcd_efex_affltn.affltn_grp_id,
                    affltn_grp_name = rcd_efex_affltn.affltn_grp_name,
-                   market_id = rcd_efex_affltn.market_id,
                    status = rcd_efex_affltn.status,
                    valdtn_status = rcd_efex_affltn.valdtn_status
              where affltn_id = rcd_efex_affltn.affltn_id;

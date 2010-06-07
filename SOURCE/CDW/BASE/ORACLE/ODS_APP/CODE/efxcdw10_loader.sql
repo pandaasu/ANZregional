@@ -182,23 +182,23 @@ create or replace package body ods_app.efxcdw10_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
+      rcd_efex_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
       rcd_efex_matl.efex_matl_code := lics_inbound_utility.get_variable('ITM_CODE');
       rcd_efex_matl.matl_name := lics_inbound_utility.get_variable('ITM_NAME');
       rcd_efex_matl.rank := lics_inbound_utility.get_variable('RANK');
-      rcd_efex_matl.cases_layer := lics_inbound_utility.get_number('CAS_LAYER');
-      rcd_efex_matl.layers_pallet := lics_inbound_utility.get_number('LAY_PALLET');
-      rcd_efex_matl.units_case := lics_inbound_utility.get_number('UNT_CASE');
+      rcd_efex_matl.cases_layer := lics_inbound_utility.get_number('CAS_LAYER',null);
+      rcd_efex_matl.layers_pallet := lics_inbound_utility.get_number('LAY_PALLET',null);
+      rcd_efex_matl.units_case := lics_inbound_utility.get_number('UNT_CASE',null);
       rcd_efex_matl.unit_measure := lics_inbound_utility.get_variable('UNT_MEASURE');
-      rcd_efex_matl.tdu_price := lics_inbound_utility.get_number('TDU_PRICE');
-      rcd_efex_matl.rrp_price := lics_inbound_utility.get_number('RRP_PRICE');
-      rcd_efex_matl.mcu_price := lics_inbound_utility.get_number('MCU_PRIC');
-      rcd_efex_matl.rsu_price := lics_inbound_utility.get_number('RSU_PRICE');
-      rcd_efex_matl.min_order_qty := lics_inbound_utility.get_number('MIN_ORDQTY');
-      rcd_efex_matl.order_multiples := lics_inbound_utility.get_number('ORD_MULTIPLE');
+      rcd_efex_matl.tdu_price := lics_inbound_utility.get_number('TDU_PRICE',null);
+      rcd_efex_matl.rrp_price := lics_inbound_utility.get_number('RRP_PRICE',null);
+      rcd_efex_matl.mcu_price := lics_inbound_utility.get_number('MCU_PRIC',null);
+      rcd_efex_matl.rsu_price := lics_inbound_utility.get_number('RSU_PRICE',null);
+      rcd_efex_matl.min_order_qty := lics_inbound_utility.get_number('MIN_ORDQTY',null);
+      rcd_efex_matl.order_multiples := lics_inbound_utility.get_number('ORD_MULTIPLE',null);
       rcd_efex_matl.topseller_flg := lics_inbound_utility.get_variable('TOP_FLAG');
       rcd_efex_matl.import_flg := lics_inbound_utility.get_variable('IMP_FLAG');
-      rcd_efex_matl.matl_source_id := lics_inbound_utility.get_number('ITS_ID');
+      rcd_efex_matl.matl_source_id := lics_inbound_utility.get_number('ITS_ID',null);
       rcd_efex_matl.pos_matl_flg := lics_inbound_utility.get_variable('POS_FLAG');
       rcd_efex_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl.valdtn_status := ods_constants.valdtn_valid;

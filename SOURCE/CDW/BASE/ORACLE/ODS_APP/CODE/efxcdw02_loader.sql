@@ -167,9 +167,9 @@ create or replace package body ods_app.efxcdw02_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_sgmnt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
+      rcd_efex_sgmnt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
       rcd_efex_sgmnt.sgmnt_name := lics_inbound_utility.get_variable('SEG_NAME');
-      rcd_efex_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_sgmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_sgmnt.valdtn_status := ods_constants.valdtn_unchecked;
 

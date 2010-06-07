@@ -171,13 +171,13 @@ create or replace package body ods_app.efxcdw28_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_target.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_target.target_id := lics_inbound_utility.get_number('TAR_ID');
-      rcd_efex_target.mars_period := lics_inbound_utility.get_number(PRD_NUM');
-      rcd_efex_target.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_target.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_target.target_id := lics_inbound_utility.get_number('TAR_ID',null);
+      rcd_efex_target.mars_period := lics_inbound_utility.get_number('PRD_NUM',null);
+      rcd_efex_target.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_target.target_name := lics_inbound_utility.get_variable('TAR_NAME');
-      rcd_efex_target.target_value := lics_inbound_utility.get_number('TAR_VALUE');
-      rcd_efex_target.actual_value := lics_inbound_utility.get_number('ACT_VALUE');
+      rcd_efex_target.target_value := lics_inbound_utility.get_number('TAR_VALUE',null);
+      rcd_efex_target.actual_value := lics_inbound_utility.get_number('ACT_VALUE',null);
       rcd_efex_target.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_target.valdtn_status := ods_constants.valdtn_unchecked;
 

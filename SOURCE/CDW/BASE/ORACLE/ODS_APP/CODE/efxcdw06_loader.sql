@@ -90,7 +90,6 @@ create or replace package body ods_app.efxcdw06_loader as
       lics_inbound_utility.set_definition('HDR','SEG_ID',10);
       lics_inbound_utility.set_definition('HDR','SEG_STATUS',1);
       lics_inbound_utility.set_definition('HDR','BUS_ID',10);
-      lics_inbound_utility.set_definition('HDR','MKT_ID',10);
       lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
 
    /*-------------*/
@@ -182,22 +181,22 @@ create or replace package body ods_app.efxcdw06_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_sales_terr.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
+      rcd_efex_sales_terr.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
       rcd_efex_sales_terr.sales_terr_name := lics_inbound_utility.get_variable('STE_NAME');
       rcd_efex_sales_terr.sales_terr_status := lics_inbound_utility.get_variable('STE_STATUS');
-      rcd_efex_sales_terr.sales_terr_user_id := lics_inbound_utility.get_number('STE_USR_ID');
-      rcd_efex_sales_terr.sales_area_id := lics_inbound_utility.get_number('SAR_ID');
+      rcd_efex_sales_terr.sales_terr_user_id := lics_inbound_utility.get_number('STE_USR_ID',null);
+      rcd_efex_sales_terr.sales_area_id := lics_inbound_utility.get_number('SAR_ID',null);
       rcd_efex_sales_terr.sales_area_name := lics_inbound_utility.get_variable('SAR_NAME');
       rcd_efex_sales_terr.sales_area_status := lics_inbound_utility.get_variable('SAR_STATUS');
-      rcd_efex_sales_terr.sales_area_user_id := lics_inbound_utility.get_number('SAR_USR_ID');
+      rcd_efex_sales_terr.sales_area_user_id := lics_inbound_utility.get_number('SAR_USR_ID',null);
       rcd_efex_sales_terr.area_mgr_name := substr(lics_inbound_utility.get_variable('SAR_USR_NAME'),1,50);
-      rcd_efex_sales_terr.sales_regn_id := lics_inbound_utility.get_number('SRE_ID');
+      rcd_efex_sales_terr.sales_regn_id := lics_inbound_utility.get_number('SRE_ID',null);
       rcd_efex_sales_terr.sales_regn_name := lics_inbound_utility.get_variable('SRE_NAME');
       rcd_efex_sales_terr.sales_regn_status := lics_inbound_utility.get_variable('SRE_STATUS');
-      rcd_efex_sales_terr.sales_regn_user_id := lics_inbound_utility.get_number('SRE_USR_ID');
+      rcd_efex_sales_terr.sales_regn_user_id := lics_inbound_utility.get_number('SRE_USR_ID',null);
       rcd_efex_sales_terr.regn_mgr_name := substr(lics_inbound_utility.get_variable('SRE_USR_NAME'),1,50);
-      rcd_efex_sales_terr.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_sales_terr.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_sales_terr.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_sales_terr.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_sales_terr.sgmnt_status := lics_inbound_utility.get_variable('SEG_STATUS');
       rcd_efex_sales_terr.status := lics_inbound_utility.get_variable('STE_STATUS');
       rcd_efex_sales_terr.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');

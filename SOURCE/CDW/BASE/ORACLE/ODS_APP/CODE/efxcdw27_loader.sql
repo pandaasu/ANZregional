@@ -202,15 +202,15 @@ create or replace package body ods_app.efxcdw27_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq_task.mrq_task_id := lics_inbound_utility.get_number('TSK_ID');
-      rcd_efex_mrq_task.mrq_id := lics_inbound_utility.get_number('MRQ_ID');
+      rcd_efex_mrq_task.mrq_task_id := lics_inbound_utility.get_number('TSK_ID',null);
+      rcd_efex_mrq_task.mrq_id := lics_inbound_utility.get_number('MRQ_ID',null);
       rcd_efex_mrq_task.mrq_task_name := lics_inbound_utility.get_variable('TSK_NAME');
       rcd_efex_mrq_task.job_type := lics_inbound_utility.get_variable('JOB_TYPE');
       rcd_efex_mrq_task.display_type := lics_inbound_utility.get_variable('DSP_TYPE');
-      rcd_efex_mrq_task.setup_mins := lics_inbound_utility.get_number('SET_MINS');
-      rcd_efex_mrq_task.actual_mins := lics_inbound_utility.get_number('ACT_MINS');
-      rcd_efex_mrq_task.hr_rate := lics_inbound_utility.get_number('HR_RATE');
-      rcd_efex_mrq_task.actual_cases := lics_inbound_utility.get_number('ACT_CASES);
+      rcd_efex_mrq_task.setup_mins := lics_inbound_utility.get_number('SET_MINS',null);
+      rcd_efex_mrq_task.actual_mins := lics_inbound_utility.get_number('ACT_MINS',null);
+      rcd_efex_mrq_task.hr_rate := lics_inbound_utility.get_number('HR_RATE',null);
+      rcd_efex_mrq_task.actual_cases := lics_inbound_utility.get_number('ACT_CASES',null);
       rcd_efex_mrq_task.compliance_rslt := null;
       rcd_efex_mrq_task.mrq_pricing := null;
       rcd_efex_mrq_task.mrq_task_notes := null;
@@ -435,9 +435,9 @@ create or replace package body ods_app.efxcdw27_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq_task_matl.mrq_task_id := lics_inbound_utility.get_number('TSK_ID');
-      rcd_efex_mrq_task_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
-      rcd_efex_mrq_task_matl.matl_qty := lics_inbound_utility.get_number('ITM_QTY');
+      rcd_efex_mrq_task_matl.mrq_task_id := lics_inbound_utility.get_number('TSK_ID',null);
+      rcd_efex_mrq_task_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_mrq_task_matl.matl_qty := lics_inbound_utility.get_number('ITM_QTY',null);
       rcd_efex_mrq_task_matl.supplier := lics_inbound_utility.get_variable('SUPPLIER');
       rcd_efex_mrq_task_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_mrq_task_matl.valdtn_status := ods_constants.valdtn_unchecked;

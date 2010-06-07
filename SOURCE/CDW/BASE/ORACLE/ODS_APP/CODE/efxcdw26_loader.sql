@@ -190,21 +190,21 @@ create or replace package body ods_app.efxcdw26_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq.mrq_id := lics_inbound_utility.get_number('MRQ_ID');
-      rcd_efex_mrq.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_mrq.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_mrq.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_mrq.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_mrq.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_mrq.mrq_id := lics_inbound_utility.get_number('MRQ_ID',null);
+      rcd_efex_mrq.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_mrq.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_mrq.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_mrq.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_mrq.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_mrq.creatn_date := lics_inbound_utility.get_date('CRT_DATE','yyyymmddhh24miss');
       rcd_efex_mrq.mrq_date := lics_inbound_utility.get_date('MRQ_DATE','yyyymmddhh24miss');
       rcd_efex_mrq.alt_date := lics_inbound_utility.get_date('ALT_DATE','yyyymmddhh24miss');
-      rcd_efex_mrq.cust_contact_id := lics_inbound_utility.get_number('CON_ID');
+      rcd_efex_mrq.cust_contact_id := lics_inbound_utility.get_number('CON_ID',null);
       rcd_efex_mrq.cust_contact_name := substr(lics_inbound_utility.get_variable('CON_NAME'),1,100);
       rcd_efex_mrq.merch_name := lics_inbound_utility.get_variable('MCH_NAME');
       rcd_efex_mrq.merch_comnt := null;
-      rcd_efex_mrq.merch_travel_time := lics_inbound_utility.get_number('MCH_TRVMINS');
-      rcd_efex_mrq.merch_travel_kms := lics_inbound_utility.get_number('MCH_TRVKLMS');
+      rcd_efex_mrq.merch_travel_time := lics_inbound_utility.get_number('MCH_TRVMINS',null);
+      rcd_efex_mrq.merch_travel_kms := lics_inbound_utility.get_number('MCH_TRVKLMS',null);
       rcd_efex_mrq.date_completed := lics_inbound_utility.get_date('COM_DATE','yyyymmddhh24miss');
       rcd_efex_mrq.completed_flg := lics_inbound_utility.get_variable('COM_FLAG');
       rcd_efex_mrq.satisfactory_flg := lics_inbound_utility.get_variable('SAT_FLAG');

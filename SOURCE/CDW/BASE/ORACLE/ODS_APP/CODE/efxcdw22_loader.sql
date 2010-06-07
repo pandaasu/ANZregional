@@ -180,20 +180,20 @@ create or replace package body ods_app.efxcdw22_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_distbn.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_distbn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
-      rcd_efex_distbn.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_distbn.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_distbn.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_distbn.user_id := lics_inbound_utility.get_number('USR_ID');
-      rcd_efex_distbn.range_id := lics_inbound_utility.get_number('RAN_ID');
-      rcd_efex_distbn.display_qty := lics_inbound_utility.get_number('DSP_QTY');
-      rcd_efex_distbn.facing_qty := lics_inbound_utility.get_number('FAC_QTY');
+      rcd_efex_distbn.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_distbn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_distbn.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_distbn.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_distbn.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_distbn.user_id := lics_inbound_utility.get_number('USR_ID',null);
+      rcd_efex_distbn.range_id := lics_inbound_utility.get_number('RAN_ID',null);
+      rcd_efex_distbn.display_qty := lics_inbound_utility.get_number('DSP_QTY',null);
+      rcd_efex_distbn.facing_qty := lics_inbound_utility.get_number('FAC_QTY',null);
       rcd_efex_distbn.out_of_stock_flg := lics_inbound_utility.get_variable('OST_FLAG');
       rcd_efex_distbn.out_of_date_flg := lics_inbound_utility.get_variable('ODT_FLAG');
       rcd_efex_distbn.rqd_flg := lics_inbound_utility.get_variable('REQ_FLAG');
-      rcd_efex_distbn.inv_qty := lics_inbound_utility.get_number('INV_QTY');
-      rcd_efex_distbn.sell_price := lics_inbound_utility.get_number('SEL_PRICE');
+      rcd_efex_distbn.inv_qty := lics_inbound_utility.get_number('INV_QTY',null);
+      rcd_efex_distbn.sell_price := lics_inbound_utility.get_number('SEL_PRICE',null);
       rcd_efex_distbn.in_store_date := lics_inbound_utility.get_date('IST_DATE','yyyymmddhh24miss');
       rcd_efex_distbn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_distbn.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');

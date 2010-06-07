@@ -205,25 +205,25 @@ create or replace package body ods_app.efxcdw24_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_order.efex_order_id := lics_inbound_utility.get_number('ORD_ID');
+      rcd_efex_order.efex_order_id := lics_inbound_utility.get_number('ORD_ID',null);
       rcd_efex_order.purch_order_num := lics_inbound_utility.get_variable('PUR_ORDER');
       rcd_efex_order.order_notes := null;
       rcd_efex_order.order_date := lics_inbound_utility.get_date('ORD_DATE','yyyymmddhh24miss');
       rcd_efex_order.order_code := lics_inbound_utility.get_variable('ORD_CODE');
-      rcd_efex_order.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_order.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_order.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_order.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
-      rcd_efex_order.cust_contact_id := lics_inbound_utility.get_number('CON_ID');
+      rcd_efex_order.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_order.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_order.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_order.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_order.cust_contact_id := lics_inbound_utility.get_number('CON_ID',null);
       rcd_efex_order.cust_contact := substr(lics_inbound_utility.get_variable('CON_NAME'),1,100);
-      rcd_efex_order.order_distbr_id := lics_inbound_utility.get_number('DIS_ID');
-      rcd_efex_order.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_order.order_distbr_id := lics_inbound_utility.get_number('DIS_ID',null);
+      rcd_efex_order.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_order.dlvry_date := lics_inbound_utility.get_date('DEL_DATE','yyyymmddhh24miss');
-      rcd_efex_order.tot_matls := lics_inbound_utility.get_number('TOT_ITEMS');
-      rcd_efex_order.tot_price := lics_inbound_utility.get_number('TOT_PRICE');
+      rcd_efex_order.tot_matls := lics_inbound_utility.get_number('TOT_ITEMS',null);
+      rcd_efex_order.tot_price := lics_inbound_utility.get_number('TOT_PRICE',null);
       rcd_efex_order.confirm_flg := lics_inbound_utility.get_variable('COM_FLAG');
       rcd_efex_order.order_status := lics_inbound_utility.get_variable('ORD_STATUS');
-      rcd_efex_order.tp_amt := lics_inbound_utility.get_number('TPM_VALUE');
+      rcd_efex_order.tp_amt := lics_inbound_utility.get_number('TPM_VALUE',null);
       rcd_efex_order.tp_paid_flg := lics_inbound_utility.get_variable('TPM_FLAG');
       rcd_efex_order.dlvrd_flg := lics_inbound_utility.get_variable('DEL_FLAG');
       rcd_efex_order.status := lics_inbound_utility.get_variable('STATUS');
@@ -373,12 +373,12 @@ create or replace package body ods_app.efxcdw24_loader as
       /*-------------------------------*/
 
       lics_inbound_utility.parse_record('ITM', par_record);
-      rcd_efex_order_matl.efex_order_id := lics_inbound_utility.get_number('ORD_ID');
-      rcd_efex_order_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID');
-      rcd_efex_order_matl.order_qty := lics_inbound_utility.get_number('ORD_QTY');
-      rcd_efex_order_matl.alloc_qty := lics_inbound_utility.get_number('ALC_QTY');
+      rcd_efex_order_matl.efex_order_id := lics_inbound_utility.get_number('ORD_ID',null);
+      rcd_efex_order_matl.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_order_matl.order_qty := lics_inbound_utility.get_number('ORD_QTY',null);
+      rcd_efex_order_matl.alloc_qty := lics_inbound_utility.get_number('ALC_QTY',null);
       rcd_efex_order_matl.uom := lics_inbound_utility.get_variable('UOM_CODE');
-      rcd_efex_order_matl.matl_distbr_id := lics_inbound_utility.get_number('DIS_ID');
+      rcd_efex_order_matl.matl_distbr_id := lics_inbound_utility.get_number('DIS_ID',null);
       rcd_efex_order_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_order_matl.valdtn_status := ods_constants.valdtn_unchecked;
 

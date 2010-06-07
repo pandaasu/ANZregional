@@ -171,13 +171,13 @@ create or replace package body ods_app.efxcdw13_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_route_plan.user_id := lics_inbound_utility.get_number('USR_ID');
+      rcd_efex_route_plan.user_id := lics_inbound_utility.get_number('USR_ID',null);
       rcd_efex_route_plan.route_plan_date := lics_inbound_utility.get_date('RPL_DATE','yyyymmddhh24miss');
-      rcd_efex_route_plan.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_route_plan.route_plan_order := lics_inbound_utility.get_number('RPL_ORDER');
-      rcd_efex_route_plan.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_route_plan.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_route_plan.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_route_plan.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_route_plan.route_plan_order := lics_inbound_utility.get_number('RPL_ORDER',null);
+      rcd_efex_route_plan.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_route_plan.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_route_plan.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_route_plan.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_route_plan.valdtn_status := ods_constants.valdtn_unchecked;
 

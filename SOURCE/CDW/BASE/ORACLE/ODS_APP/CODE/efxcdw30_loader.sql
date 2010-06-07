@@ -181,11 +181,11 @@ create or replace package body ods_app.efxcdw30_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_cust_note.cust_note_id := lics_inbound_utility.get_number('NTE_ID');
-      rcd_efex_cust_note.efex_cust_id := lics_inbound_utility.get_number('CUS_ID');
-      rcd_efex_cust_note.sales_terr_id := lics_inbound_utility.get_number('STE_ID');
-      rcd_efex_cust_note.sgmnt_id := lics_inbound_utility.get_number('SEG_ID');
-      rcd_efex_cust_note.bus_unit_id := lics_inbound_utility.get_number('BUS_ID');
+      rcd_efex_cust_note.cust_note_id := lics_inbound_utility.get_number('NTE_ID',null);
+      rcd_efex_cust_note.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_cust_note.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_cust_note.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_cust_note.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_cust_note.cust_note_title := lics_inbound_utility.get_variable('NTE_TITLE');
       rcd_efex_cust_note.cust_note_body := null;
       rcd_efex_cust_note.cust_note_author := lics_inbound_utility.get_variable('NTE_AUTHOR');
