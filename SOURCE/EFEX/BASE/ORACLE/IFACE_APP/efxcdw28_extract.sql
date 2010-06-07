@@ -89,7 +89,7 @@ create or replace package body iface_app.efxcdw28_extract as
             and t01.business_unit_id = t03.business_unit_id
             and t03.market_id = par_market
             and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t02.modified_date) >= trunc(sysdate) - var_history)
+                 trunc(t02.modified_date) >= trunc(sysdate) - var_history);
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/

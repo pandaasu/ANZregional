@@ -83,7 +83,7 @@ create or replace package body iface_app.efxcdw27_extract as
                 to_char(t01.setup_mins) as setup_mins,
                 to_char(t01.actual_mins) as actual_mins,
                 to_char(0) as hr_rate,
-                to_char(t01.actual_cases) as actuals cases,
+                to_char(t01.actual_cases) as actual_cases,
                 t01.compliance_result,
                 t01.mrq_pricing,
                 t01.mrq_task_notes,
@@ -109,7 +109,7 @@ create or replace package body iface_app.efxcdw27_extract as
                 to_char(t01.setup_mins) as setup_mins,
                 to_char(t01.actual_mins) as actual_mins,
                 to_char(0) as hr_rate,
-                to_char(t01.actual_cases) as actuals cases,
+                to_char(t01.actual_cases) as actual_cases,
                 t01.compliance_result,
                 t01.mrq_pricing,
                 t01.mrq_task_notes,
@@ -139,7 +139,7 @@ create or replace package body iface_app.efxcdw27_extract as
 
       cursor csr_setting is
          select default_value
-           from sync.setting
+           from setting
           where setting_name = 'MRQ_RATE';
       rcd_setting csr_setting%rowtype;
 
@@ -216,7 +216,7 @@ create or replace package body iface_app.efxcdw27_extract as
          /* Append result lines
          /*-*/
          lics_outbound_loader.append_data('RES' || nvl(substr(rcd_extract.compliance_result,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.compliance_result,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
+         if length(rcd_extract.compliance_result) > 2000 then
             lics_outbound_loader.append_data('RES' || nvl(substr(rcd_extract.compliance_result,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.compliance_result,2001),' ')),' '));
          end if;
 
@@ -224,7 +224,7 @@ create or replace package body iface_app.efxcdw27_extract as
          /* Append pricing lines
          /*-*/
          lics_outbound_loader.append_data('PRC' || nvl(substr(rcd_extract.mrq_pricing,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.mrq_pricing,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
+         if length(rcd_extract.mrq_pricing) > 2000 then
             lics_outbound_loader.append_data('PRC' || nvl(substr(rcd_extract.mrq_pricing,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.mrq_pricing,2001),' ')),' '));
          end if;
 
@@ -232,7 +232,7 @@ create or replace package body iface_app.efxcdw27_extract as
          /* Append note lines
          /*-*/
          lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.mrq_task_notes,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.mrq_task_notes,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
+         if length(rcd_extract.mrq_task_notes) > 2000 then
             lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.mrq_task_notes,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.mrq_task_notes,2001),' ')),' '));
          end if;
 

@@ -74,7 +74,7 @@ create or replace package body iface_app.efxcdw29_extract as
            from list_values t01
           where t01.market_id = par_market
             and t01.list_type = 'CALL_TYPE'
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history
+            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -117,7 +117,6 @@ create or replace package body iface_app.efxcdw29_extract as
          /*-*/
          /* Append header line
          /*-*/
-         var_count := var_count + 1;
          lics_outbound_loader.append_data('HDR'||
                                           nvl(rcd_extract.list_value_id,'0')||rpad(' ',10-length(nvl(rcd_extract.list_value_id,'0')),' ') ||
                                           nvl(rcd_extract.list_value_name,' ')||rpad(' ',50-length(nvl(rcd_extract.list_value_name,' ')),' ') ||

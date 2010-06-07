@@ -84,12 +84,12 @@ create or replace package body iface_app.efxcdw25_extract as
                 t01.payment_method,
                 to_char(t01.release_date,'yyyymmddhh24miss') as release_date,
                 t01.processed_flg,
-                t01.contra_payment_reference,
+                t01.payment_reference,
                 t01.payment_notes,
-                t01.contra_payment_status,
-                to_char(t01.contra_processed_date,'yyyymmddhh24miss') as contra_processed_date,
-                to_char(t01.contra_replicated_date,'yyyymmddhh24miss') as contra_replicated_date,
-                to_char(t01.contra_deducted as contra_deducted,
+                t01.payment_status,
+                to_char(t01.processed_date,'yyyymmddhh24miss') as processed_date,
+                to_char(t01.replicated_date,'yyyymmddhh24miss') as replicated_date,
+                to_char(t01.deducted) as deducted,
                 t01.status,
                 t01.return_claim_code
            from payment t01,
@@ -194,11 +194,11 @@ create or replace package body iface_app.efxcdw25_extract as
                                           nvl(rcd_extract.payment_method,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_method,' ')),' ') ||
                                           nvl(rcd_extract.release_date,' ')||rpad(' ',14-length(nvl(rcd_extract.release_date,' ')),' ') ||
                                           nvl(rcd_extract.processed_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.processed_flg,' ')),' ') ||
-                                          nvl(rcd_extract.contra_payment_reference,' ')||rpad(' ',50-length(nvl(rcd_extract.contra_payment_reference,' ')),' ') ||
-                                          nvl(rcd_extract.contra_payment_status,' ')||rpad(' ',50-length(nvl(rcd_extract.contra_payment_status,' ')),' ') ||
-                                          nvl(rcd_extract.contra_processed_date,' ')||rpad(' ',14-length(nvl(rcd_extract.contra_processed_date,' ')),' ') ||
-                                          nvl(rcd_extract.contra_replicated_date,' ')||rpad(' ',14-length(nvl(rcd_extract.contra_replicated_date,' ')),' ') ||
-                                          nvl(rcd_extract.contra_deducted,'0')||rpad(' ',15-length(nvl(rcd_extract.contra_deducted,'0')),' ') ||
+                                          nvl(rcd_extract.payment_reference,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_reference,' ')),' ') ||
+                                          nvl(rcd_extract.payment_status,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_status,' ')),' ') ||
+                                          nvl(rcd_extract.processed_date,' ')||rpad(' ',14-length(nvl(rcd_extract.processed_date,' ')),' ') ||
+                                          nvl(rcd_extract.replicated_date,' ')||rpad(' ',14-length(nvl(rcd_extract.replicated_date,' ')),' ') ||
+                                          nvl(rcd_extract.deducted,'0')||rpad(' ',15-length(nvl(rcd_extract.deducted,'0')),' ') ||
                                           nvl(rcd_extract.return_claim_code,' ')||rpad(' ',50-length(nvl(rcd_extract.return_claim_code,' ')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
@@ -206,7 +206,7 @@ create or replace package body iface_app.efxcdw25_extract as
          /* Append note lines
          /*-*/
          lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.payment_notes,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.payment_notes,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
+         if length(rcd_extract.payment_notes) > 2000 then
             lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.payment_notes,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.payment_notes,2001),' ')),' '));
          end if;
 
@@ -231,7 +231,7 @@ create or replace package body iface_app.efxcdw25_extract as
                                              nvl(rcd_deal.deal_value,'0')||rpad(' ',15-length(nvl(rcd_deal.deal_value,'0')),' ') ||
                                              nvl(rcd_deal.status,' ')||rpad(' ',1-length(nvl(rcd_deal.status,' ')),' '));
             lics_outbound_loader.append_data('DED' || nvl(substr(rcd_deal.details,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_deal.details,1,2000),' ')),' '));
-            if length(rcd_extract.order_notes) > 2000 then
+            if length(rcd_deal.details) > 2000 then
                lics_outbound_loader.append_data('DED' || nvl(substr(rcd_deal.details,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_deal.details,2001),' ')),' '));
             end if;
             lics_outbound_loader.append_data('DET');

@@ -83,8 +83,8 @@ create or replace package body iface_app.efxcdw03_extract as
 
       cursor csr_segment is
          select to_char(t01.user_id) as user_id,
-                to_char(t01.segment_id) as segment_id,
-                to_char(t01.business_unit_id) as business_unit_id,
+                to_char(t02.segment_id) as segment_id,
+                to_char(t03.business_unit_id) as business_unit_id,
                 t01.status
            from user_segment t01,
                 segment t02,

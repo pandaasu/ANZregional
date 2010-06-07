@@ -99,7 +99,7 @@ create or replace package body iface_app.efxcdw30_extract as
             and t06.segment_id = t07.segment_id
             and t02.market_id = par_market
             and t03.primary_flg = 'Y'
-            and trunc(t01.modified_date) >= trunc(sysdate) - var_history
+            and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -156,15 +156,15 @@ create or replace package body iface_app.efxcdw30_extract as
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
                                           nvl(rcd_extract.cust_note_title,' ')||rpad(' ',50-length(nvl(rcd_extract.cust_note_title,' ')),' ') ||
                                           nvl(rcd_extract.cust_note_author,' ')||rpad(' ',10-length(nvl(rcd_extract.cust_note_author,' ')),' ') ||
-                                          nvl(rcd_extract.note_created,' ')||rpad(' ',50-length(nvl(rcd_note.extract_created,' ')),' ') ||
+                                          nvl(rcd_extract.cust_note_created,' ')||rpad(' ',50-length(nvl(rcd_extract.cust_note_created,' ')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
          /*-*/
          /* Append note lines
          /*-*/
-         lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_note.note_body,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_note.note_body,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
-            lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_note.note_body,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_note.note_body,2001),' ')),' '));
+         lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.cust_note_body,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.cust_note_body,1,2000),' ')),' '));
+         if length(rcd_extract.cust_note_body) > 2000 then
+            lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.cust_note_body,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.cust_note_body,2001),' ')),' '));
          end if;
 
          /*-*/

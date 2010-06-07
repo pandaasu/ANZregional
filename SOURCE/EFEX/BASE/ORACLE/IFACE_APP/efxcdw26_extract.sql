@@ -176,14 +176,14 @@ create or replace package body iface_app.efxcdw26_extract as
                                           nvl(rcd_extract.merch_travel_kms,'0')||rpad(' ',15-length(nvl(rcd_extract.merch_travel_kms,'0')),' ') ||
                                           nvl(rcd_extract.date_completed,' ')||rpad(' ',14-length(nvl(rcd_extract.date_completed,' ')),' ') ||
                                           nvl(rcd_extract.complete_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.complete_flg,' ')),' ') ||
-                                          nvl(rcd_extract.satisfactory_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.satisfactory_flg,' ')),' ') |||
+                                          nvl(rcd_extract.satisfactory_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.satisfactory_flg,' ')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
          /*-*/
          /* Append comment lines
          /*-*/
          lics_outbound_loader.append_data('COM' || nvl(substr(rcd_extract.merch_comments,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.merch_comments,1,2000),' ')),' '));
-         if length(rcd_extract.order_notes) > 2000 then
+         if length(rcd_extract.merch_comments) > 2000 then
             lics_outbound_loader.append_data('COM' || nvl(substr(rcd_extract.merch_comments,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.merch_comments,2001),' ')),' '));
          end if;
 
