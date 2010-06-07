@@ -70,7 +70,6 @@ create or replace package body iface_app.efxcdw01_extract as
       cursor csr_extract is
          select to_char(t01.business_unit_id) as business_unit_id,
                 t01.business_unit_name as business_unit_name,
-                to_char(t01.market_id) as market_id,
                 t01.status as status
            from business_unit t01
           where t01.market_id = par_market
@@ -120,7 +119,6 @@ create or replace package body iface_app.efxcdw01_extract as
          lics_outbound_loader.append_data('HDR' ||
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
                                           nvl(rcd_extract.business_unit_name,' ')||rpad(' ',50-length(nvl(rcd_extract.business_unit_name,' ')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
       end loop;

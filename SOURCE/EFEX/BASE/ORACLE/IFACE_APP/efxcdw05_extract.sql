@@ -76,8 +76,7 @@ create or replace package body iface_app.efxcdw05_extract as
                 t02.status as cust_trade_channel_status,
                 to_char(t03.cust_channel_id) as cust_channel_id,
                 t03.cust_channel_name as cust_channel_name,
-                t03.status as cust_channel_status,
-                to_char(t03.market_id) as market_id
+                t03.status as cust_channel_status
            from cust_type t01,
                 cust_trade_channel t02,
                 cust_channel t03
@@ -138,8 +137,7 @@ create or replace package body iface_app.efxcdw05_extract as
                                           nvl(rcd_extract.cust_trade_channel_status,' ')||rpad(' ',1-length(nvl(rcd_extract.cust_trade_channel_status,' ')),' ') ||
                                           nvl(rcd_extract.cust_channel_id,'0')||rpad(' ',10-length(nvl(rcd_extract.cust_channel_id,'0')),' ') ||
                                           nvl(rcd_extract.cust_channel_name,' ')||rpad(' ',50-length(nvl(rcd_extract.cust_channel_name,' ')),' ') ||
-                                          nvl(rcd_extract.cust_channel_status,' ')||rpad(' ',1-length(nvl(rcd_extract.cust_channel_status,' ')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' '));
+                                          nvl(rcd_extract.cust_channel_status,' ')||rpad(' ',1-length(nvl(rcd_extract.cust_channel_status,' ')),' '));
 
       end loop;
       close csr_extract;

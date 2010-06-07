@@ -78,7 +78,6 @@ create or replace package body iface_app.efxcdw07_extract as
                 t01.customer_code as customer_code,
                 t01.customer_name as customer_name,
                 t01.status as status,
-                to_char(t01.market_id) as market_id,
                 t01.address_1 as address_1,
                 t01.address_2 as address_2,
                 t01.postal_address as postal_address,
@@ -126,7 +125,6 @@ create or replace package body iface_app.efxcdw07_extract as
                 t01.customer_code as customer_code,
                 t01.customer_name as customer_name,
                 t01.status as status,
-                to_char(t01.market_id) as market_id,
                 t01.address_1 as address_1,
                 t01.address_2 as address_2,
                 t01.postal_address as postal_address,
@@ -223,7 +221,6 @@ create or replace package body iface_app.efxcdw07_extract as
                                           nvl(rcd_extract.customer_code,' ')||rpad(' ',50-length(nvl(rcd_extract.customer_code,' ')),' ') ||
                                           nvl(rcd_extract.customer_name,' ')||rpad(' ',100-length(nvl(rcd_extract.customer_name,' ')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.address_1,' ')||rpad(' ',100-length(nvl(rcd_extract.address_1,' ')),' ') ||
                                           nvl(rcd_extract.address_2,' ')||rpad(' ',100-length(nvl(rcd_extract.address_2,' ')),' ') ||
                                           nvl(rcd_extract.postal_address,' ')||rpad(' ',50-length(nvl(rcd_extract.postal_address,' ')),' ') ||

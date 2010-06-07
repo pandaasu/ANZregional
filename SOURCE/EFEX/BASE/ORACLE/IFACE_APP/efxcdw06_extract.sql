@@ -85,7 +85,6 @@ create or replace package body iface_app.efxcdw06_extract as
                 to_char(t04.segment_id) as segment_id,
                 t04.status as segment_status,
                 to_char(t05.business_unit_id) as business_unit_id,
-                to_char(t05.market_id) as market_id,
                 case when (t01.modified_date > t02.modified_date) then to_char(t01.modified_date,'yyyymmddhh24miss') else to_char(t02.modified_date,'yyyymmddhh24miss') end efex_lupdt
            from sales_territory t01,
                 sales_area t02,
@@ -168,7 +167,6 @@ create or replace package body iface_app.efxcdw06_extract as
                                           nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
                                           nvl(rcd_extract.segment_status,' ')||rpad(' ',1-length(nvl(rcd_extract.segment_status,' ')),' ') ||
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
 
       end loop;

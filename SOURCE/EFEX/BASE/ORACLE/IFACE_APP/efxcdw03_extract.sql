@@ -73,7 +73,6 @@ create or replace package body iface_app.efxcdw03_extract as
                 t01.lastname as lastname,
                 t01.email_address as email_address,
                 t01.phone_number as phone_number,
-                to_char(t01.market_id) as market_id,
                 t01.status as status
            from users t01
           where t01.market_id = par_market
@@ -141,7 +140,6 @@ create or replace package body iface_app.efxcdw03_extract as
                                           nvl(rcd_extract.lastname,' ')||rpad(' ',50-length(nvl(rcd_extract.lastname,' ')),' ') ||
                                           nvl(rcd_extract.email_address,' ')||rpad(' ',50-length(nvl(rcd_extract.email_address,' ')),' ') ||
                                           nvl(rcd_extract.phone_number,' ')||rpad(' ',50-length(nvl(rcd_extract.phone_number,' ')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
          /*-*/

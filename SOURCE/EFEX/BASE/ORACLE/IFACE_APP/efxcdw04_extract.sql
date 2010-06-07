@@ -72,7 +72,6 @@ create or replace package body iface_app.efxcdw04_extract as
                 t01.affiliation_name as affiliation_name,
                 to_char(t02.affiliation_group_id) as affiliation_group_id,
                 t02.affiliation_group_name as affiliation_group_name,
-                to_char(t02.market_id) as market_id,
                 t01.status as status
            from affiliation t01,
                 affiliation_group t02
@@ -127,7 +126,6 @@ create or replace package body iface_app.efxcdw04_extract as
                                           nvl(rcd_extract.affiliation_name,' ')||rpad(' ',50-length(nvl(rcd_extract.affiliation_name,' ')),' ') ||
                                           nvl(rcd_extract.affiliation_group_id,'0')||rpad(' ',10-length(nvl(rcd_extract.affiliation_group_id,'0')),' ') ||
                                           nvl(rcd_extract.affiliation_group_name,' ')||rpad(' ',50-length(nvl(rcd_extract.affiliation_group_name,' ')),' ') ||
-                                          nvl(rcd_extract.market_id,'0')||rpad(' ',10-length(nvl(rcd_extract.market_id,'0')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
       end loop;
