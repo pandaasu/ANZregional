@@ -286,10 +286,11 @@ create or replace package body psa_app.psa_psc_function as
       var_action varchar2(32);
       var_src_code varchar2(4);
       var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
       var_output varchar2(2000 char);
       var_ths_week varchar2(7);
       var_lst_week varchar2(7);
-      var_sltsts varchar2(1);
+      var_opn_flag varchar2(1);
 
       /*-*/
       /* Local cursors
@@ -306,7 +307,8 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*
            from psa_psc_week t01
           where t01.psw_psc_code = var_psc_code
-            and ((var_src_code = '*SCH' and t01.psw_psc_week >= var_ths_week) or
+            and ((var_src_code = '*SCH' and t01.psw_psc_week < var_wek_code and rownum <= 10) or
+                 (var_src_code = '*ENQ' and t01.psw_psc_week < var_wek_code and rownum <= 10) or
                  (var_src_code = '*ACT' and t01.psw_psc_week >= var_lst_week and t01.psw_psc_week <= var_ths_week))
           order by t01.psw_psc_week desc;
       rcd_week csr_week%rowtype;
@@ -347,11 +349,12 @@ create or replace package body psa_app.psa_psc_function as
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_src_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@SRCCDE')));
       var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := nvl(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE')),'9999999');
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*WEKLST' then
          psa_gen_function.add_mesg_data('Invalid request action');
       end if;
-      if var_src_code != '*SCH' and var_src_code != '*ACT' then
+      if var_src_code != '*SCH' and var_src_code != '*ACT' and var_src_code != '*ENQ' then
          psa_gen_function.add_mesg_data('Invalid source code');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
@@ -406,11 +409,20 @@ create or replace package body psa_app.psa_psc_function as
          end if;
 
          /*-*/
+         /* Set the open flag
+         /*-*/
+         var_opn_flag := '1';
+         if rcd_week.psw_psc_week < var_ths_week then
+            var_opn_flag := '0';
+         end if;
+
+         /*-*/
          /* Pipe the production schedule week types
          /*-*/
          pipe row(psa_xml_object('<LSTROW SLTTYP="'||psa_to_xml('*WEEK')||'"'||
                                         ' SLTCDE="'||psa_to_xml(rcd_week.psw_psc_week)||'"'||
                                         ' SLTTXT="'||psa_to_xml('Y'||substr(rcd_week.psw_psc_week,1,4)||' P'||substr(rcd_week.psw_psc_week,5,2)||' W'||substr(rcd_week.psw_psc_week,7,1))||'"'||
+                                        ' SLTOPN="'||psa_to_xml(var_opn_flag)||'"'||
                                         ' SLTUPD="'||psa_to_xml('Last updated by '||rcd_week.psw_upd_user||' on '||to_char(rcd_week.psw_upd_date,'yyyy/mm/dd'))||'"/>'));
 
          /*-*/
@@ -426,6 +438,7 @@ create or replace package body psa_app.psa_psc_function as
                                            ' SLTWEK="'||psa_to_xml(rcd_week.psw_psc_week)||'"'||
                                            ' SLTCDE="'||psa_to_xml(rcd_prod.psp_prd_type)||'"'||
                                            ' SLTTXT="'||psa_to_xml(rcd_prod.pty_prd_name)||'"'||
+                                           ' SLTOPN="'||psa_to_xml(var_opn_flag)||'"'||
                                            ' SLTUPD="'||psa_to_xml('Last updated by '||rcd_prod.psp_upd_user||' on '||to_char(rcd_prod.psp_upd_date,'yyyy/mm/dd'))||'"/>'));
          end loop;
          close csr_prod;
@@ -4691,10 +4704,10 @@ create or replace package body psa_app.psa_psc_function as
       /* Align the shift window actual activities
       /*-*/
       align_activity(var_psc_code,
-                   var_pty_code,
-                   var_lin_code,
-                   var_con_code,
-                   var_win_code);
+                     var_pty_code,
+                     var_lin_code,
+                     var_con_code,
+                     var_win_code);
 
       /*-*/
       /* Commit the database
@@ -7769,6 +7782,8 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       var_min_date date;
       var_str_date date;
+      var_str_fert date;
+      var_str_verp date;
       var_stk_code varchar2(32);
       var_stk_type varchar2(10);
       var_act_code number;
@@ -7837,11 +7852,16 @@ create or replace package body psa_app.psa_psc_function as
       close csr_date;
 
       /*-*/
+      /* Initialise the activity start date
+      /*-*/
+      var_str_date := to_date('20000101','yyyymmdd');
+
+      /*-*/
       /* Retrieve the relevant stocktake FERT data
       /*-*/
       var_stk_type := 'FERT';
-      var_str_date := to_date('20000101','yyyymmdd');
       var_stk_code := '*FIRST';
+      var_str_fert := to_date('20000101','yyyymmdd');
       open csr_stak;
       loop
          fetch csr_stak into rcd_stak;
@@ -7853,8 +7873,8 @@ create or replace package body psa_app.psa_psc_function as
                exit;
             end if;
             if rcd_stak.sth_stk_time < var_min_date then
-               var_str_date := rcd_stak.sth_stk_time;
                var_stk_code := '*EXIT';
+               var_str_fert := rcd_stak.sth_stk_time;
             else
                var_stk_code := rcd_stak.sth_stk_code;
             end if;
@@ -7875,8 +7895,8 @@ create or replace package body psa_app.psa_psc_function as
       /* Retrieve the relevant stocktake VERP data
       /*-*/
       var_stk_type := 'VERP';
-      var_str_date := to_date('20000101','yyyymmdd');
       var_stk_code := '*FIRST';
+      var_str_verp := to_date('20000101','yyyymmdd');
       open csr_stak;
       loop
          fetch csr_stak into rcd_stak;
@@ -7888,8 +7908,8 @@ create or replace package body psa_app.psa_psc_function as
                exit;
             end if;
             if rcd_stak.sth_stk_time < var_min_date then
-               var_str_date := rcd_stak.sth_stk_time;
                var_stk_code := '*EXIT';
+               var_str_verp := rcd_stak.sth_stk_time;
             else
                var_stk_code := rcd_stak.sth_stk_code;
             end if;
@@ -7905,6 +7925,14 @@ create or replace package body psa_app.psa_psc_function as
       ptbl_sinv(ptbl_sinv.count+1).invdat := to_date('20000101','yyyymmdd');
       ptbl_sinv(ptbl_sinv.count).invtyp := 'VERP';
       ptbl_sinv(ptbl_sinv.count).matary.delete;
+
+      /*-*/
+      /* Set the activity start date
+      /*-*/
+      var_str_date := var_str_fert;
+      if var_str_verp < var_str_fert then
+         var_str_date := var_str_verp;
+      end if;
 
       /*-*/
       /* Update the production activity inventory data
@@ -7923,7 +7951,7 @@ create or replace package body psa_app.psa_psc_function as
          /*-*/
          if rcd_sact.psi_mat_code != '*NONE' then
             for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invtyp = rcd_sact.psi_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
+               if ptbl_sinv(idx).invtyp = rcd_sact.psi_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_act_str_time then
                   if not(ptbl_sinv(idx).matary.exists(rcd_sact.psi_mat_code)) then
                      update psa_psc_invt
                         set psi_inv_aval = 0
@@ -7949,7 +7977,7 @@ create or replace package body psa_app.psa_psc_function as
          if rcd_sact.psa_act_code != var_act_code then
             var_act_code := rcd_sact.psa_act_code;
             for idx in 1..ptbl_sinv.count loop
-               if ptbl_sinv(idx).invtyp = rcd_sact.psa_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_act_end_time then
+               if ptbl_sinv(idx).invtyp = rcd_sact.psa_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
                   if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
                      ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_qty;
                   else
