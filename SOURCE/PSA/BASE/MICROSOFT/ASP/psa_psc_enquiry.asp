@@ -169,8 +169,15 @@ sub PaintFunction()%>
    // Week Functions //
    ////////////////////
    var cstrWeekProd = '*MASTER';
+   var cstrWeekMore;
+   var cstrWeekLast;
    function requestWeekList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*ACT" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
+      var strXML;
+      if (cstrWeekMore == '0') {
+         strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*ENQ" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="9999999"/>';
+      } else {
+         strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*ENQ" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekLast)+'"/>';
+      }
       doPostRequest('<%=strBase%>psa_psc_week_select.asp',function(strResponse) {checkWeekList(strResponse);},false,streamXML(strXML));
    }
    function checkWeekList(strResponse) {
@@ -200,33 +207,39 @@ sub PaintFunction()%>
          objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
-         for (var i=objTabHead.rows.length-1;i>=0;i--) {
-            objTabHead.deleteRow(i);
+         if (cstrWeekMore == '0') {
+            cstrWeekLast = '';
+            for (var i=objTabHead.rows.length-1;i>=0;i--) {
+               objTabHead.deleteRow(i);
+            }
+            for (var i=objTabBody.rows.length-1;i>=0;i--) {
+               objTabBody.deleteRow(i);
+            }
+            objRow = objTabHead.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;Action&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;Week / Production Type&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
          }
-         for (var i=objTabBody.rows.length-1;i>=0;i--) {
-            objTabBody.deleteRow(i);
-         }
-         objRow = objTabHead.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Action&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Week / Production Type&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
+               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                  cstrWeekLast = objElements[i].getAttribute('SLTCDE');
+               }
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
@@ -281,6 +294,13 @@ sub PaintFunction()%>
    }
    function doWeekRefresh() {
       if (!processForm()) {return;}
+      cstrWeekMore = '0';
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekList();',10);
+   }
+   function doWeekMore() {
+      if (!processForm()) {return;}
+      cstrWeekMore = '1';
       doActivityStart(document.body);
       window.setTimeout('requestWeekList();',10);
    }
@@ -1343,6 +1363,7 @@ sub PaintFunction()%>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekMore();">&nbsp;More&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>

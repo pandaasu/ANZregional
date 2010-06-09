@@ -1275,8 +1275,10 @@ sub PaintFunction()%>
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
                objDiv.style.padding = '2px';
-               objDiv.style.cursor = 'pointer';
-               objDiv.onclick = function() {doTypeSchdSelect(this);};
+               if (objWork.wekflw == '0') {
+                  objDiv.style.cursor = 'pointer';
+                  objDiv.onclick = function() {doTypeSchdSelect(this);};
+               }
                objDiv.setAttribute('actidx',i);
                objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);

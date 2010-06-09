@@ -215,6 +215,7 @@ sub PaintFunction()%>
    function doSelectWeek(strCode) {
       if (!processForm()) {return;}
       cstrWeekProd = strCode;
+      cstrWeekMore = '0';
       doActivityStart(document.body);
       window.setTimeout('requestWeekList();',10);
    }
@@ -569,6 +570,8 @@ sub PaintFunction()%>
    var cstrWeekMode;
    var cstrWeekProd;
    var cstrWeekCode;
+   var cstrWeekMore;
+   var cstrWeekLast;
    var cobjWeekData;
    var cobjWeekSmod;
    var cobjWeekPtyp;
@@ -619,7 +622,12 @@ sub PaintFunction()%>
       this.cmocde = '';
    }
    function requestWeekList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'"/>';
+      var strXML;
+      if (cstrWeekMore == '0') {
+         strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="9999999"/>';
+      } else {
+         strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*WEKLST" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrWeekProd)+'" WEKCDE="'+fixXML(cstrWeekLast)+'"/>';
+      }
       doPostRequest('<%=strBase%>psa_psc_week_select.asp',function(strResponse) {checkWeekList(strResponse);},false,streamXML(strXML));
    }
    function checkWeekList(strResponse) {
@@ -653,48 +661,56 @@ sub PaintFunction()%>
          objTabBody.style.tableLayout = 'auto';
          var objRow;
          var objCell;
-         for (var i=objTabHead.rows.length-1;i>=0;i--) {
-            objTabHead.deleteRow(i);
+         if (cstrWeekMore == '0') {
+            cstrWeekLast = '';
+            for (var i=objTabHead.rows.length-1;i>=0;i--) {
+               objTabHead.deleteRow(i);
+            }
+            for (var i=objTabBody.rows.length-1;i>=0;i--) {
+               objTabBody.deleteRow(i);
+            }
+            objRow = objTabHead.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;Action&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;Week / Production Type&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;Last Updated&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.innerHTML = '&nbsp;';
+            objCell.className = 'clsLabelHB';
+            objCell.style.whiteSpace = 'nowrap';
          }
-         for (var i=objTabBody.rows.length-1;i>=0;i--) {
-            objTabBody.deleteRow(i);
-         }
-         objRow = objTabHead.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Action&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Week / Production Type&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Last Updated&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
+               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                  cstrWeekLast = objElements[i].getAttribute('SLTCDE');
+               }
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.className = 'clsLabelFN';
-               if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
-                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
-               } else {
-                  objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+               if (objElements[i].getAttribute('SLTOPN') == '1') {
+                  if (objElements[i].getAttribute('SLTTYP') == '*WEEK') {
+                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doWeekUpdate(\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+                  } else {
+                     objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTypeUpdate(\''+objElements[i].getAttribute('SLTWEK')+'\',\''+objElements[i].getAttribute('SLTCDE')+'\');">Update</a>&nbsp;';
+                  }
                }
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -762,6 +778,13 @@ sub PaintFunction()%>
    }
    function doWeekRefresh() {
       if (!processForm()) {return;}
+      cstrWeekMore = '0';
+      doActivityStart(document.body);
+      window.setTimeout('requestWeekList();',10);
+   }
+   function doWeekMore() {
+      if (!processForm()) {return;}
+      cstrWeekMore = '1';
       doActivityStart(document.body);
       window.setTimeout('requestWeekList();',10);
    }
@@ -2280,7 +2303,7 @@ sub PaintFunction()%>
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
                objDiv.style.padding = '2px';
-               if (objWork.actent == '0') {
+               if (objWork.actent == '0' && objWork.wekflw == '0') {
                   objDiv.style.cursor = 'pointer';
                   objDiv.onclick = function() {doTypeSchdSelect(this);};
                }
@@ -3956,10 +3979,11 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekMore();">&nbsp;More&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doWeekCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
             </table>
