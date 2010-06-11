@@ -18,7 +18,11 @@ create or replace package iface_app.efxcdw22_extract as
 
        ## - Market id for the extract
 
-    2. PAR_HISTORY (OPTIONAL)
+    2. PAR_TIMESTAMP (MANDATORY)
+
+       ## - Timestamp (YYYYMMDDHH24MISS) for the extract
+
+    3. PAR_HISTORY (OPTIONAL)
 
        ## - Number of days changes to extract
        0 - Full extract (default)
@@ -35,7 +39,7 @@ create or replace package iface_app.efxcdw22_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_market in number, par_history in number default 0);
+   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number;
 
 end efxcdw22_extract;
 /
@@ -51,10 +55,15 @@ create or replace package body iface_app.efxcdw22_extract as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private definitions
+   /*-*/
+   con_group constant number := 500;
+
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_market in number, par_history in number default 0) is
+   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number is
 
       /*-*/
       /* Local definitions
@@ -62,7 +71,8 @@ create or replace package body iface_app.efxcdw22_extract as
       var_exception varchar2(4000);
       var_history number;
       var_instance number(15,0);
-      var_start boolean;
+      var_count integer;
+      var_return number;
 
       /*-*/
       /* Local cursors
@@ -112,7 +122,9 @@ create or replace package body iface_app.efxcdw22_extract as
       /*-*/
       /* Initialise variables
       /*-*/
-      var_start := true;
+      var_instance := -1;
+      var_count := con_group;
+      var_return := 0;
 
       /*-*/
       /* Define number of days to extract
@@ -136,14 +148,20 @@ create or replace package body iface_app.efxcdw22_extract as
          /*-*/
          /* Create outbound interface when required
          /*-*/
-         if var_start = true then
+         if var_count = con_group then
+            if var_instance != -1 then
+               lics_outbound_loader.finalise_interface;
+            end if;
             var_instance := lics_outbound_loader.create_interface('EFXCDW22',null,'EFXCDW22.DAT');
-            var_start := false;
+            lics_outbound_loader.append_data('CTL'||'EFXCDW22'||rpad(' ',32-length('EFXCDW22'),' ')||nvl(par_market,'0')||rpad(' ',10-length(nvl(par_market,'0')),' ')||nvl(par_timestamp,' ')||rpad(' ',14-length(nvl(par_timestamp,' ')),' '));
+            var_count := 0;
          end if;
 
          /*-*/
          /* Append data lines
          /*-*/
+         var_count := var_count + 1;
+         var_return := var_return + 1;
          lics_outbound_loader.append_data('HDR' ||
                                           nvl(rcd_extract.customer_id,'0')||rpad(' ',10-length(nvl(rcd_extract.customer_id,'0')),' ') ||
                                           nvl(rcd_extract.item_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_id,'0')),' ') ||
@@ -169,9 +187,14 @@ create or replace package body iface_app.efxcdw22_extract as
       /*-*/
       /* Finalise Interface
       /*-*/
-      if var_start = false and lics_outbound_loader.is_created = true then
+      if var_instance != -1 then
          lics_outbound_loader.finalise_interface;
       end if;
+
+      /*-*/
+      /* Return the result
+      /*-*/
+      return var_return;
 
    /*-------------------*/
    /* Exception handler */
@@ -196,7 +219,7 @@ create or replace package body iface_app.efxcdw22_extract as
          /*-*/
          /* Finalise the outbound loader when required
          /*-*/
-         if var_start = false and lics_outbound_loader.is_created = true then
+         if var_instance != -1 then
             lics_outbound_loader.add_exception(var_exception);
             lics_outbound_loader.finalise_interface;
          end if;
