@@ -81,10 +81,10 @@ create or replace package body iface_app.efxcdw_extract as
       /* Local constants
       /*-*/
       con_function constant varchar2(128) := 'Efex CDW Extract';
-      con_alt_group constant varchar2(32) := 'EFEX_ALERT';
-      con_alt_code constant varchar2(32) := 'CDW_EXTRACT';
-      con_ema_group constant varchar2(32) := 'EFEX_EMAIL_GROUP';
-      con_ema_code constant varchar2(32) := 'CDW_EXTRACT';
+      con_alt_group constant varchar2(32) := 'EFEX_CDW_EXTRACT';
+      con_alt_code constant varchar2(32) := 'ALERT_STRING';
+      con_ema_group constant varchar2(32) := 'EFEX_CDW_EXTRACT';
+      con_ema_code constant varchar2(32) := 'EMAIL_GROUP';
 
    /*-------------*/
    /* Begin block */
