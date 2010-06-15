@@ -61,7 +61,6 @@ create or replace package body ods_app.efxcdw_poller as
       /*-*/
       /* Local constants
       /*-*/
-      con_function constant varchar2(128) := 'Efex CDW Poller';
       con_alt_group constant varchar2(32) := 'EFEX_CDW_POLLER';
       con_alt_code constant varchar2(32) := 'ALERT_STRING';
       con_ema_group constant varchar2(32) := 'EFEX_CDW_POLLER';
