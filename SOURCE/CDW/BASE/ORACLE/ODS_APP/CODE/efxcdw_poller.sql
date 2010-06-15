@@ -48,15 +48,12 @@ create or replace package body ods_app.efxcdw_poller as
    /***********************************************/
    procedure execute is
 
-
--- poller should always be running looking for control status = header and a balance situation
--- poller shuts down and alerts after "n" minutes if not balanced
--- poller submits stream for validation and aggregation when balanced
-
       /*-*/
       /* Local definitions
       /*-*/
       var_company varchar2(32 char);
+      var_alert varchar2(256);
+      var_email varchar2(256);
       var_extract_status varchar2(32);
       var_available boolean;
       var_completed boolean;
@@ -167,21 +164,35 @@ create or replace package body ods_app.efxcdw_poller as
          else
 
             /*-*/
-            /* Cancel the extract when required
-            /* **note** extract is only ever cancelled when an override is found
+            /* Default the extract status
             /*-*/
             var_extract_status := rcd_header.extract_status;
+
+            /*-*/
+            /* Cancel the extract when required
+            /* **note** 1. extract is cancelled when an override is found
+            /*          2. extract is cancelled when unknown market
+            /*-*/
             open csr_override;
             fetch csr_override into rcd_override;
             if csr_override%found then
                var_extract_status := '*CANCELLED';
             end if;
             close csr_override;
+            /*-*/
+            var_company := null;
+            if rcd_header.market_id = 1 then
+               var_company := '147';
+            elsif rcd_header.market_id = 5 then
+               var_company := '149';
+            else
+               var_extract_status := '*CANCELLED';
+            end if;
 
             /*-*/
             /* Attempt to complete when extract when the control interface has been received
             /*-*/
-            if rcd_header.extract_status = '*CONTROL' then
+            if var_extract_status = '*CONTROL' then
    
                /*-*/
                /* Retrieve the related interface details
@@ -286,10 +297,14 @@ create or replace package body ods_app.efxcdw_poller as
                   lics_mailer.append_data('<td align=center colspan=3></td>');
                   lics_mailer.append_data('</tr>');
                   lics_mailer.append_data('<tr>');
-                  if rcd_header.extract_status = '*CONTROL' then
-                     lics_mailer.append_data('<td align=center colspan=3>** Extract control EFXCDW00 interface does not balance to received interfaces **</td>');
-                  elsif rcd_header.extract_status = '*INTERFACE' then
-                     lics_mailer.append_data('<td align=center colspan=3>** Extract control EFXCDW00 interface not received **</td>');
+                  if var_company is null then
+                     lics_mailer.append_data('<td align=center colspan=3>** Extract market id is unknown **</td>');
+                  else
+                     if rcd_header.extract_status = '*CONTROL' then
+                        lics_mailer.append_data('<td align=center colspan=3>** Extract control EFXCDW00 interface does not balance to received interfaces **</td>');
+                     elsif rcd_header.extract_status = '*INTERFACE' then
+                        lics_mailer.append_data('<td align=center colspan=3>** Extract control EFXCDW00 interface not received **</td>');
+                     end if;
                   end if;
                   lics_mailer.append_data('</tr>');
 
