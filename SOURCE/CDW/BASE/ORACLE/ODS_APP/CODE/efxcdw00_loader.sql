@@ -26,6 +26,7 @@ create or replace package ods_app.efxcdw00_loader as
    procedure on_start;
    procedure on_data(par_record in varchar2);
    procedure on_end;
+   procedure update_interface(par_interface in varchar2, par_market in number, par_extract in varchar2, par_count in number);
 
 end efxcdw00_loader;
 /
@@ -51,8 +52,8 @@ create or replace package body ods_app.efxcdw00_loader as
    /* Private definitions
    /*-*/
    var_trn_error boolean;
-   rcd_efex_cntl efex_cntl_hdr%rowtype;
-   rcd_efex_cntl efex_cntl_det%rowtype;
+   rcd_efex_cntl_hdr efex_cntl_hdr%rowtype;
+   rcd_efex_cntl_det efex_cntl_det%rowtype;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -75,7 +76,7 @@ create or replace package body ods_app.efxcdw00_loader as
       lics_inbound_utility.clear_definition;
       /*-*/
       lics_inbound_utility.set_definition('CTL','RCD_ID',3);
-      lics_inbound_utility.set_definition('CTL','INT_ID',10);
+      lics_inbound_utility.set_definition('CTL','INT_ID',32);
       lics_inbound_utility.set_definition('CTL','MKT_ID',10);
       lics_inbound_utility.set_definition('CTL','EXT_ID',14);
       /*-*/
@@ -173,9 +174,9 @@ create or replace package body ods_app.efxcdw00_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_cntl_hdr.market_id := lics_inbound_utility.get_variable('MKT_ID',null);
+      rcd_efex_cntl_hdr.market_id := lics_inbound_utility.get_number('MKT_ID',null);
       rcd_efex_cntl_hdr.extract_time := lics_inbound_utility.get_variable('EXT_ID');
-      rcd_efex_cntl_hdr.status := '*LOADED';
+      rcd_efex_cntl_hdr.extract_status := '*CONTROL';
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -186,21 +187,10 @@ create or replace package body ods_app.efxcdw00_loader as
       exception
          when dup_val_on_index then
             update efex_cntl_hdr
-               set cntl_name = rcd_efex_cntl_hdr.cntl_name,
-                   status = rcd_efex_cntl_hdr.status,
-                   valdtn_status = rcd_efex_cntl_hdr.valdtn_status
-             where iface_id = rcd_efex_cntl_hdr.iface_id
-               and iface_time = rcd_efex_cntl_hdr.iface_time
-               and market_id = rcd_efex_cntl_hdr.iface_id;
+               set extract_status = rcd_efex_cntl_hdr.extract_status
+             where market_id = rcd_efex_cntl_hdr.market_id
+               and extract_time = rcd_efex_cntl_hdr.extract_time;
       end;
-
-
-
--- poller is spawned from EFXCDW00 to balance the send
--- poller shuts down and alerts after "n" minutes if not balanced
--- poller submits stream for validation and aggregation when balanced
--- EFXCDW00 should send error when required ?????
-
 
    /*-------------------*/
    /* Exception handler */
@@ -276,6 +266,57 @@ create or replace package body ods_app.efxcdw00_loader as
    /* End routine */
    /*-------------*/
    end process_record_det;
+
+   /********************************************************/
+   /* This procedure performs the update interface routine */
+   /********************************************************/
+   procedure update_interface(par_interface in varchar2, par_market in number, par_extract in varchar2, par_count in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Insert the control header
+      /*-*/
+      rcd_efex_cntl_hdr.market_id := par_market;
+      rcd_efex_cntl_hdr.extract_time := par_extract;
+      rcd_efex_cntl_hdr.extract_status := '*INTERFACE';
+      begin
+         insert into efex_cntl_hdr values rcd_efex_cntl_hdr;
+      exception
+         when dup_val_on_index then
+            null;
+      end;
+
+      /*-*/
+      /* Insert/Update the control detail
+      /*-*/
+      rcd_efex_cntl_det.market_id := par_market;
+      rcd_efex_cntl_det.extract_time := par_extract;
+      rcd_efex_cntl_det.iface_code := par_interface;
+      rcd_efex_cntl_det.iface_count := 0;
+      rcd_efex_cntl_det.iface_recvd := par_count;
+      begin
+         insert into efex_cntl_det values rcd_efex_cntl_det;
+      exception
+         when dup_val_on_index then
+            update efex_cntl_det
+               set iface_recvd = iface_recvd + par_count
+             where market_id = rcd_efex_cntl_det.market_id
+               and extract_time = rcd_efex_cntl_det.extract_time
+               and iface_code = rcd_efex_cntl_det.iface_code;
+      end;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end update_interface;
 
 end efxcdw00_loader;
 /

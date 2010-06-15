@@ -44,12 +44,17 @@ create or replace package body ods_app.efxcdw22_loader as
    /*-*/
    /* Private declarations
    /*-*/
+   procedure process_record_ctl(par_record in varchar2);
    procedure process_record_hdr(par_record in varchar2);
 
    /*-*/
    /* Private definitions
    /*-*/
    var_trn_error boolean;
+   var_trn_count number;
+   var_trn_interface varchar2(32);
+   var_trn_market number;
+   var_trn_extract varchar2(14);
    rcd_efex_distbn efex_distbn%rowtype;
 
    /************************************************/
@@ -66,11 +71,20 @@ create or replace package body ods_app.efxcdw22_loader as
       /* Initialise the transaction variables
       /*-*/
       var_trn_error := false;
+      var_trn_count := 0;
+      var_trn_interface := null;
+      var_trn_market := 0;
+      var_trn_extract := null;
 
       /*-*/
       /* Initialise the inbound definitions
       /*-*/
       lics_inbound_utility.clear_definition;
+      /*-*/
+      lics_inbound_utility.set_definition('CTL','RCD_ID',3);
+      lics_inbound_utility.set_definition('CTL','INT_ID',10);
+      lics_inbound_utility.set_definition('CTL','MKT_ID',10);
+      lics_inbound_utility.set_definition('CTL','EXT_ID',14);
       /*-*/
       lics_inbound_utility.set_definition('HDR','RCD_ID',3);
       lics_inbound_utility.set_definition('HDR','CUS_ID',10);
@@ -116,6 +130,7 @@ create or replace package body ods_app.efxcdw22_loader as
       /*-*/
       var_record_identifier := substr(par_record,1,3);
       case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
          when 'HDR' then process_record_hdr(par_record);
          else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
       end case;
@@ -152,6 +167,7 @@ create or replace package body ods_app.efxcdw22_loader as
       if var_trn_error = true then
          rollback;
       else
+         efxcdw00_loader.update_interface(var_trn_interface, var_trn_market, var_trn_extract, var_trn_count);
          commit;
       end if;
 
@@ -159,6 +175,47 @@ create or replace package body ods_app.efxcdw22_loader as
    /* End routine */
    /*-------------*/
    end on_end;
+
+   /**************************************************/
+   /* This procedure performs the record CTL routine */
+   /**************************************************/
+   procedure process_record_ctl(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('CTL', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      var_trn_interface := lics_inbound_utility.get_variable('INT_ID');
+      var_trn_market := lics_inbound_utility.get_number('MKT_ID',null);
+      var_trn_extract := lics_inbound_utility.get_variable('EXT_ID');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
 
    /**************************************************/
    /* This procedure performs the record HDR routine */
@@ -198,6 +255,7 @@ create or replace package body ods_app.efxcdw22_loader as
       rcd_efex_distbn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_distbn.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_distbn.valdtn_status := ods_constants.valdtn_unchecked;
+      var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
