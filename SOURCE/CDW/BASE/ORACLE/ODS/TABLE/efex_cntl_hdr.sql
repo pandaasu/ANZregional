@@ -37,7 +37,7 @@ alter table ods.efex_cntl_hdr
 comment on table ods.efex_cntl_hdr is 'Operational Data Store - Efex Control Header';
 comment on column ods.efex_cntl_hdr.market_id is 'Efex Market Unique Code';
 comment on column ods.efex_cntl_hdr.extract_time is 'Efex Extract Time (YYYYMMDDHH24MISS)';
-comment on column ods.efex_cntl_hdr.extract_status is 'Efex Extract Status (*CONTROL or *INTERFACE)';
+comment on column ods.efex_cntl_hdr.extract_status is 'Efex Extract Status (*CONTROL or *INTERFACE or *COMPLETED or *CANCELLED)';
 
 /**/
 /* Authority 
