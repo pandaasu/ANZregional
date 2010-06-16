@@ -1,4 +1,4 @@
-create or replace package bds_atllad06_flatten as
+CREATE OR REPLACE package BDS_APP.bds_atllad06_flatten as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -45,6 +45,7 @@ create or replace package bds_atllad06_flatten as
  2008/01   Linden Glen    Added Z_APCHAR10 to 13 to process_material
                           Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
                                 ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 to process_customer
+ 2009/04   Trevor Keon    Added Z_APCHAR14 and 15 to process_material                                
 
 *******************************************************************************/
 
@@ -56,11 +57,7 @@ create or replace package bds_atllad06_flatten as
 end bds_atllad06_flatten;
 /
 
-
-/****************/
-/* Package Body */
-/****************/
-create or replace package body bds_atllad06_flatten as
+CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
 
    /*-*/
    /* Private exceptions
@@ -254,6 +251,8 @@ create or replace package body bds_atllad06_flatten as
                 max(case when t02.atnam = 'Z_APCHAR11' then t02.atwrt end) as sap_nz_promotional_grp_code,
                 max(case when t02.atnam = 'Z_APCHAR12' then t02.atwrt end) as sap_nz_sop_business_code,
                 max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as sap_nz_must_win_ctgry_code,
+                max(case when t02.atnam = 'Z_APCHAR14' then t02.atwrt end) as sap_au_snk_activity_name,
+                max(case when t02.atnam = 'Z_APCHAR15' then t02.atwrt end) as sap_china_forecast_group,
                 max(case when t02.atnam = 'CLFROH01' then t02.atwrt end) as sap_raw_family_code,
                 max(case when t02.atnam = 'CLFROH02' then t02.atwrt end) as sap_raw_sub_family_code,
                 max(case when t02.atnam = 'CLFROH03' then t02.atwrt end) as sap_raw_group_code,
@@ -347,6 +346,8 @@ create or replace package body bds_atllad06_flatten as
       rcd_bds_material_classfctn.sap_nz_promotional_grp_code := rcd_lads_mat_classfctn.sap_nz_promotional_grp_code;
       rcd_bds_material_classfctn.sap_nz_sop_business_code := rcd_lads_mat_classfctn.sap_nz_sop_business_code;
       rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code := rcd_lads_mat_classfctn.sap_nz_must_win_ctgry_code;
+      rcd_bds_material_classfctn.sap_au_snk_activity_name := rcd_lads_mat_classfctn.sap_au_snk_activity_name;
+      rcd_bds_material_classfctn.sap_china_forecast_group := rcd_lads_mat_classfctn.sap_china_forecast_group;      
 
       /*-*/
       /* UPDATE BDS, INSERT when new record
@@ -402,7 +403,9 @@ create or replace package body bds_atllad06_flatten as
              sap_china_abc_indctr_code = rcd_bds_material_classfctn.sap_china_abc_indctr_code,
              sap_nz_promotional_grp_code = rcd_bds_material_classfctn.sap_nz_promotional_grp_code,
              sap_nz_sop_business_code = rcd_bds_material_classfctn.sap_nz_sop_business_code,
-             sap_nz_must_win_ctgry_code = rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code
+             sap_nz_must_win_ctgry_code = rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code,
+             sap_au_snk_activity_name = rcd_bds_material_classfctn.sap_au_snk_activity_name,
+             sap_china_forecast_group = rcd_bds_material_classfctn.sap_china_forecast_group
          where sap_material_code = rcd_bds_material_classfctn.sap_material_code;
       if (sql%notfound) then
          insert into bds_material_classfctn
@@ -457,7 +460,9 @@ create or replace package body bds_atllad06_flatten as
              sap_china_abc_indctr_code,
              sap_nz_promotional_grp_code,
              sap_nz_sop_business_code,
-             sap_nz_must_win_ctgry_code)
+             sap_nz_must_win_ctgry_code,
+             sap_au_snk_activity_name,
+             sap_china_forecast_group)
            values
             (rcd_bds_material_classfctn.sap_material_code,
              rcd_bds_material_classfctn.sap_idoc_name,
@@ -510,7 +515,9 @@ create or replace package body bds_atllad06_flatten as
              rcd_bds_material_classfctn.sap_china_abc_indctr_code,
              rcd_bds_material_classfctn.sap_nz_promotional_grp_code,
              rcd_bds_material_classfctn.sap_nz_sop_business_code,
-             rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code);
+             rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code,
+             rcd_bds_material_classfctn.sap_au_snk_activity_name,
+             rcd_bds_material_classfctn.sap_china_forecast_group);
       end if;
 
 
