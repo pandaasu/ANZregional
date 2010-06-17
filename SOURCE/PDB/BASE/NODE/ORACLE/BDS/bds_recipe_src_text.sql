@@ -37,7 +37,7 @@ create table bds.bds_recipe_src_text
 /**/
 /* Primary Key Constraint 
 /**/
-alter table bds.bds_recipe_resource 
+alter table bds.bds_recipe_src_text 
   add constraint bds_recipe_src_text_pk primary key (recipe_src_text_id);
 
 /**/
