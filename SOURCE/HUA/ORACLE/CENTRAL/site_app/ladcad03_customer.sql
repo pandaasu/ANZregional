@@ -1,4 +1,4 @@
-create or replace package ladcad03_customer as
+CREATE OR REPLACE PACKAGE SITE_APP.ladcad03_customer as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -22,6 +22,7 @@ create or replace package ladcad03_customer as
  2008/05   Linden Glen    Added swb_status
  2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
  2009/07   Trevor Keon    Added division 56 to query
+ 2010/05   Ben Halicki    Added cn_sales_team_code and cn_sales_team_name
 
 *******************************************************************************/
 
@@ -33,10 +34,11 @@ create or replace package ladcad03_customer as
 end ladcad03_customer;
 /
 
+
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ladcad03_customer as
+CREATE OR REPLACE PACKAGE BODY SITE_APP.ladcad03_customer as
 
    /*-*/
    /* Private exceptions
@@ -88,6 +90,8 @@ create or replace package body ladcad03_customer as
                 max(h.sap_sub_channel_desc) as channel_name,
                 max(h.sap_channel_code) as channel_grp_code,
                 max(h.sap_channel_desc) as channel_grp_name,
+                max(h.sap_cn_sales_team_code) as cn_sales_team_code,
+                max(h.sap_cn_sales_team_desc) as cn_sales_team_name,
                 case
                    when max(a.account_group_code) = '0001' 
                     and nvl(max(c.search_term_02),'x') not in ('SHIPTO','BILLTO') 
@@ -214,6 +218,8 @@ create or replace package body ladcad03_customer as
                                           nvl(rec_cust_master.channel_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_name,' ')),' ') ||
                                           rpad(to_char(nvl(rec_cust_master.channel_grp_code,' ')),10, ' ') ||
                                           nvl(rec_cust_master.channel_grp_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.channel_grp_name,' ')),' ') ||
+                                          rpad(to_char(nvl(rec_cust_master.cn_sales_team_code,' ')),10, ' ') ||
+                                          nvl(rec_cust_master.cn_sales_team_name,' ')||rpad(' ',120-length(nvl(rec_cust_master.cn_sales_team_name,' ')),' ') ||
                                           rpad(to_char(nvl(rec_cust_master.swb_status,' ')),8, ' ') ||
                                           rpad(to_char(nvl(rec_cust_master.bds_lads_date,' ')),14, ' ') ||
                                           rpad(to_char(nvl(rec_cust_master.sales_org_code,' ')),4, ' ') ||
@@ -267,6 +273,7 @@ create or replace package body ladcad03_customer as
 
 end ladcad03_customer;
 /
+
 
 /**************************/
 /* Package Synonym/Grants */
