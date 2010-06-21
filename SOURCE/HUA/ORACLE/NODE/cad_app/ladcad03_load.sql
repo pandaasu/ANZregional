@@ -1,4 +1,4 @@
-create or replace package ladcad03_customer as
+CREATE OR REPLACE PACKAGE CAD_APP.ladcad03_customer as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -18,7 +18,8 @@ create or replace package ladcad03_customer as
  2008/02   Linden Glen    Added LAST_UPDATE_DATE
  2008/05   Linden Glen    Added swb_status
  2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
-
+ 2010/05   Ben Halicki    Added cn_sales_team_code and cn_sales_team_name
+ 
 *******************************************************************************/
 
    /*-*/
@@ -31,10 +32,11 @@ create or replace package ladcad03_customer as
 end ladcad03_customer;
 /
 
+
 /****************/
 /* Package Body */
 /****************/
-create or replace package body ladcad03_customer as
+CREATE OR REPLACE PACKAGE BODY CAD_APP.ladcad03_customer as
 
    /*-*/
    /* Private exceptions
@@ -106,6 +108,8 @@ create or replace package body ladcad03_customer as
       lics_inbound_utility.set_definition('HDR','CHANNEL_NAME',120);
       lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_CODE',10);
       lics_inbound_utility.set_definition('HDR','CHANNEL_GRP_NAME',120);
+      lics_inbound_utility.set_definition('HDR','CN_SALES_TEAM_CODE',10);
+      lics_inbound_utility.set_definition('HDR','CN_SALES_TEAM_NAME',120);
       lics_inbound_utility.set_definition('HDR','SWB_STATUS',8);
       lics_inbound_utility.set_definition('HDR','LAST_UPDATE_DATE',14);
       lics_inbound_utility.set_definition('HDR','ORG_CODE',4);
@@ -292,6 +296,8 @@ create or replace package body ladcad03_customer as
       rcd_cad_customer_master.channel_name := lics_inbound_utility.get_variable('CHANNEL_NAME');
       rcd_cad_customer_master.channel_grp_code := lics_inbound_utility.get_variable('CHANNEL_GRP_CODE');
       rcd_cad_customer_master.channel_grp_name := lics_inbound_utility.get_variable('CHANNEL_GRP_NAME');
+      rcd_cad_customer_master.cn_sales_team_code := lics_inbound_utility.get_variable('CN_SALES_TEAM_CODE');
+      rcd_cad_customer_master.cn_sales_team_name := lics_inbound_utility.get_variable('CN_SALES_TEAM_NAME');
       rcd_cad_customer_master.last_update_date := lics_inbound_utility.get_variable('LAST_UPDATE_DATE');
       rcd_cad_customer_master.swb_status := lics_inbound_utility.get_variable('SWB_STATUS');
       rcd_cad_customer_master.cad_load_date := sysdate;
@@ -360,6 +366,8 @@ create or replace package body ladcad03_customer as
           channel_name,
           channel_grp_code,
           channel_grp_name,
+          cn_sales_team_code,
+          cn_sales_team_name,
           swb_status,
           last_update_date,
           cad_load_date,
@@ -394,6 +402,8 @@ create or replace package body ladcad03_customer as
           rcd_cad_customer_master.channel_name,
           rcd_cad_customer_master.channel_grp_code,
           rcd_cad_customer_master.channel_grp_name,
+          rcd_cad_customer_master.cn_sales_team_code,
+          rcd_cad_customer_master.cn_sales_team_name,
           rcd_cad_customer_master.swb_status,
           rcd_cad_customer_master.last_update_date,
           rcd_cad_customer_master.cad_load_date,
@@ -408,6 +418,7 @@ create or replace package body ladcad03_customer as
 
 end ladcad03_customer;
 /
+
 
 /**************************/
 /* Package Synonym/Grants */
