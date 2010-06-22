@@ -981,6 +981,16 @@ create or replace package body psa_app.psa_psc_function as
                   var_mars_week := rcd_week_nxt.mars_week;
                end if;
                close csr_week_nxt;
+               if var_mars_week < rcd_week_now.mars_week then
+                  open csr_week_new;
+                  fetch csr_week_new into rcd_week_new;
+                  if csr_week_new%notfound or rcd_week_new.mars_week is null then
+                     psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') future MARS week does not exist');
+                  else
+                     var_mars_week := rcd_week_new.mars_week;
+                  end if;
+                  close csr_week_new;
+               end if;
             else
                open csr_week_new;
                fetch csr_week_new into rcd_week_new;
@@ -1006,9 +1016,6 @@ create or replace package body psa_app.psa_psc_function as
             var_req_code := rcd_week_old.psw_req_code;
          end if;
          close csr_week_old;
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         return;
       end if;
       if var_mars_week < rcd_week_now.mars_week then
          psa_gen_function.add_mesg_data('Production Schedule ('||var_psc_code||') MARS week ('||to_char(var_mars_week,'fm0000000')||') is in the past - unable to update');
@@ -6573,7 +6580,7 @@ create or replace package body psa_app.psa_psc_function as
       var_instance number(15,0);
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
-      var_int_date date;
+      var_int_date varchar2(14);
       var_count integer;
       type typ_outp is table of varchar2(4000) index by binary_integer;
       tbl_outp typ_outp;
@@ -6684,7 +6691,7 @@ create or replace package body psa_app.psa_psc_function as
       /* **note** 28 days window from midnight today
       /*-*/
       lics_logging.write_log('Extracting production schedule data');
-      var_int_date := to_char(sysdate,'yyyymmddhh24midss');
+      var_int_date := to_char(sysdate,'yyyymmddhh24miss');
       tbl_outp.delete;
       var_count := 0;
       open csr_data;
@@ -6696,7 +6703,7 @@ create or replace package body psa_app.psa_psc_function as
          var_count := var_count + 1;
          tbl_outp(tbl_outp.count + 1) := 'CTL009'||var_int_date;
          tbl_outp(tbl_outp.count + 1) := 'HDR'||rcd_data.mde_sap_code||rpad(' ',18-length(rcd_data.mde_sap_code),' ')||'NZ01NZ01      '||to_char(rcd_data.psa_mat_sch_qty,'fm000000000000000')||rcd_data.mde_mat_uom||rpad(' ',3-length(rcd_data.mde_mat_uom),' ')||'0001';
-         tbl_outp(tbl_outp.count + 1) := 'DET0010    '||to_char(rcd_data.psa_act_end_time,'yyyymmddhh24midss')||to_char(rcd_data.psa_act_str_time,'yyyymmddhh24midss');
+         tbl_outp(tbl_outp.count + 1) := 'DET0010    '||to_char(rcd_data.psa_act_end_time,'yyyymmddhh24miss')||to_char(rcd_data.psa_act_str_time,'yyyymmddhh24miss');
       end loop;
       close csr_data;
 
@@ -7802,10 +7809,13 @@ create or replace package body psa_app.psa_psc_function as
          select t01.sth_stk_code,
                 to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') as sth_stk_time,
                 nvl(t02.std_mat_code,'*NONE') as std_mat_code,
-                nvl(t02.std_mat_qnty,0) as std_mat_qnty
+                nvl(t02.std_mat_qnty,0) as std_mat_qnty,
+                nvl(t03.mde_psa_ucas,1) as mde_psa_ucas
            from psa_stk_header t01,
-                psa_stk_detail t02
+                psa_stk_detail t02,
+                psa_mat_defn t03
           where t01.sth_stk_code = t02.std_stk_code(+)
+            and t02.std_mat_code = t03.mde_mat_code(+)
             and t01.sth_stk_type = var_stk_type
           order by to_date(t01.sth_stk_time,'yyyy/mm/dd hh24:mi') desc,
                    t01.sth_stk_code asc,
@@ -7883,7 +7893,7 @@ create or replace package body psa_app.psa_psc_function as
             ptbl_sinv(ptbl_sinv.count).matary.delete;
          end if;
          if rcd_stak.std_mat_code != '*NONE' then
-            ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty;
+            ptbl_sinv(ptbl_sinv.count).matary(rcd_stak.std_mat_code) := rcd_stak.std_mat_qnty * rcd_stak.mde_psa_ucas;
          end if;
       end loop;
       close csr_stak;
@@ -7978,10 +7988,24 @@ create or replace package body psa_app.psa_psc_function as
             var_act_code := rcd_sact.psa_act_code;
             for idx in 1..ptbl_sinv.count loop
                if ptbl_sinv(idx).invtyp = rcd_sact.psa_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
-                  if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
-                     ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_qty;
-                  else
-                     ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_qty;
+                  if rcd_actv.psa_prd_type = '*FILL' then
+                     if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
+                     else
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_pch_qty;
+                     end if;
+                  elsif rcd_actv.psa_prd_type = '*PACK' then
+                     if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
+                     else
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_pch_qty;
+                     end if;
+                  elsif rcd_actv.psa_prd_type = '*FORM' then
+                     if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
+                     else
+                        ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_pch_qty;
+                     end if;
                   end if;
                   exit;
               end if;
