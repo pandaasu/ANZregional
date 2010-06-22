@@ -7988,19 +7988,19 @@ create or replace package body psa_app.psa_psc_function as
             var_act_code := rcd_sact.psa_act_code;
             for idx in 1..ptbl_sinv.count loop
                if ptbl_sinv(idx).invtyp = rcd_sact.psa_mat_type and ptbl_sinv(idx).invdat <= rcd_sact.psa_prd_time then
-                  if rcd_actv.psa_prd_type = '*FILL' then
+                  if rcd_sact.psa_prd_type = '*FILL' then
                      if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
                         ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
                      else
                         ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_pch_qty;
                      end if;
-                  elsif rcd_actv.psa_prd_type = '*PACK' then
+                  elsif rcd_sact.psa_prd_type = '*PACK' then
                      if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
                         ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
                      else
                         ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) + rcd_sact.psa_mat_inv_pch_qty;
                      end if;
-                  elsif rcd_actv.psa_prd_type = '*FORM' then
+                  elsif rcd_sact.psa_prd_type = '*FORM' then
                      if not(ptbl_sinv(idx).matary.exists(rcd_sact.psa_mat_code)) then
                         ptbl_sinv(idx).matary(rcd_sact.psa_mat_code) := rcd_sact.psa_mat_inv_pch_qty;
                      else
