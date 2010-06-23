@@ -110,6 +110,14 @@ create or replace package body iface_app.efxcdw07_extract as
                 to_char(t01.lead_time) as lead_time,
                 to_char(t01.discount_pct) as discount_pct,
                 t01.corporate_flg as corporate_flg,
+                to_char(t01.call_week1_day) as call_week1_day,
+                to_char(t01.call_week2_day) as call_week2_day,
+                to_char(t01.call_week3_day) as call_week3_day,
+                to_char(t01.call_week4_day) as call_week4_day,
+                to_char(t01.call_week1_day_seq) as call_week1_day_seq,
+                to_char(t01.call_week2_day_seq) as call_week2_day_seq,
+                to_char(t01.call_week3_day_seq) as call_week3_day_seq,
+                to_char(t01.call_week4_day_seq) as call_week4_day_seq,
                 case when (t01.modified_date > t02.modified_date) then to_char(t01.modified_date,'yyyymmddhh24miss') else to_char(t02.modified_date,'yyyymmddhh24miss') end as efex_lupdt
            from customer t01,
                 cust_sales_territory t02,
@@ -157,6 +165,14 @@ create or replace package body iface_app.efxcdw07_extract as
                 to_char(t01.lead_time) as lead_time,
                 to_char(t01.discount_pct) as discount_pct,
                 t01.corporate_flg as corporate_flg,
+                to_char(t01.call_week1_day) as call_week1_day,
+                to_char(t01.call_week2_day) as call_week2_day,
+                to_char(t01.call_week3_day) as call_week3_day,
+                to_char(t01.call_week4_day) as call_week4_day,
+                to_char(t01.call_week1_day_seq) as call_week1_day_seq,
+                to_char(t01.call_week2_day_seq) as call_week2_day_seq,
+                to_char(t01.call_week3_day_seq) as call_week3_day_seq,
+                to_char(t01.call_week4_day_seq) as call_week4_day_seq,
                 to_char(t01.modified_date,'yyyymmddhh24miss') as efex_lupdt
            from customer t01,
                 cust_grade t02,
@@ -255,6 +271,14 @@ create or replace package body iface_app.efxcdw07_extract as
                                           nvl(rcd_extract.lead_time,'0')||rpad(' ',15-length(nvl(rcd_extract.lead_time,'0')),' ') ||
                                           nvl(rcd_extract.discount_pct,'0')||rpad(' ',15-length(nvl(rcd_extract.discount_pct,'0')),' ') ||
                                           nvl(rcd_extract.corporate_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.corporate_flg,' ')),' ') ||
+                                          nvl(rcd_extract.call_week1_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day,'0')),' ') ||
+                                          nvl(rcd_extract.call_week2_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day,'0')),' ') ||
+                                          nvl(rcd_extract.call_week3_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day,'0')),' ') ||
+                                          nvl(rcd_extract.call_week4_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day,'0')),' ') ||
+                                          nvl(rcd_extract.call_week1_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day_seq,'0')),' ') ||
+                                          nvl(rcd_extract.call_week2_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day_seq,'0')),' ') ||
+                                          nvl(rcd_extract.call_week3_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day_seq,'0')),' ') ||
+                                          nvl(rcd_extract.call_week4_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day_seq,'0')),' ') ||
                                           nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
 
       end loop;
