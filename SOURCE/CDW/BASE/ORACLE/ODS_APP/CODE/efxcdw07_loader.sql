@@ -118,6 +118,14 @@ create or replace package body ods_app.efxcdw07_loader as
       lics_inbound_utility.set_definition('HDR','DAY_MEAL',15);
       lics_inbound_utility.set_definition('HDR','LED_TIME',15);
       lics_inbound_utility.set_definition('HDR','DSC_PERCENT',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK1DAY',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK2DAY',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK3DAY',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK4DAY',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK1DAYSEQ',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK2DAYSEQ',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK3DAYSEQ',15);
+      lics_inbound_utility.set_definition('HDR','CAL_WEEK4DAYSEQ',15);
       lics_inbound_utility.set_definition('HDR','COR_FLAG',1);
       lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
 
@@ -284,6 +292,15 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.lead_time := lics_inbound_utility.get_number('LED_TIME',null);
       rcd_efex_cust.disc_pct := lics_inbound_utility.get_number('DSC_PERCENT',null);
       rcd_efex_cust.corporate_flg := lics_inbound_utility.get_variable('COR_FLAG');
+      rcd_efex_cust.call_week1_day := lics_inbound_utility.get_number('CAL_WEEK1DAY',null);
+      rcd_efex_cust.call_week2_day := lics_inbound_utility.get_number('CAL_WEEK2DAY',null);
+      rcd_efex_cust.call_week3_day := lics_inbound_utility.get_number('CAL_WEEK3DAY',null);
+      rcd_efex_cust.call_week4_day := lics_inbound_utility.get_number('CAL_WEEK4DAY',null);
+      rcd_efex_cust.call_week1_day_seq := lics_inbound_utility.get_number('CAL_WEEK1DAYSEQ',null);
+      rcd_efex_cust.call_week2_day_seq := lics_inbound_utility.get_number('CAL_WEEK2DAYSEQ',null);
+      rcd_efex_cust.call_week3_day_seq := lics_inbound_utility.get_number('CAL_WEEK3DAYSEQ',null);
+      rcd_efex_cust.call_week4_day_seq := lics_inbound_utility.get_number('CAL_WEEK4DAYSEQ',null);
+      rcd_efex_cust.efex_mkt_id := var_trn_market;
       rcd_efex_cust.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_cust.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_cust.valdtn_status := ods_constants.valdtn_unchecked;
@@ -328,6 +345,15 @@ create or replace package body ods_app.efxcdw07_loader as
                    lead_time = rcd_efex_cust.lead_time,
                    disc_pct = rcd_efex_cust.disc_pct,
                    corporate_flg = rcd_efex_cust.corporate_flg,
+                   call_week1_day = rcd_efex_cust.call_week1_day,
+                   call_week2_day = rcd_efex_cust.call_week2_day,
+                   call_week3_day = rcd_efex_cust.call_week3_day,
+                   call_week4_day = rcd_efex_cust.call_week4_day,
+                   call_week1_day_seq = rcd_efex_cust.call_week1_day_seq,
+                   call_week2_day_seq = rcd_efex_cust.call_week2_day_seq,
+                   call_week3_day_seq = rcd_efex_cust.call_week3_day_seq,
+                   call_week4_day_seq = rcd_efex_cust.call_week4_day_seq,
+                   efex_mkt_id = rcd_efex_cust.efex_mkt_id,
                    efex_lupdt = rcd_efex_cust.efex_lupdt,
                    status = rcd_efex_cust.status,
                    valdtn_status = rcd_efex_cust.valdtn_status

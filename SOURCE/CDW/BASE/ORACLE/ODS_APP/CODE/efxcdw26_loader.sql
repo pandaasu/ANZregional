@@ -267,6 +267,7 @@ create or replace package body ods_app.efxcdw26_loader as
       rcd_efex_mrq.satisfactory_flg := lics_inbound_utility.get_variable('SAT_FLAG');
       rcd_efex_mrq.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_mrq.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_mrq.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
    /*-------------------*/
@@ -368,7 +369,8 @@ create or replace package body ods_app.efxcdw26_loader as
                    completed_flg = rcd_efex_mrq.completed_flg,
                    satisfactory_flg = rcd_efex_mrq.satisfactory_flg,
                    status = rcd_efex_mrq.status,
-                   valdtn_status = rcd_efex_mrq.valdtn_status
+                   valdtn_status = rcd_efex_mrq.valdtn_status,
+                   efex_mkt_id = rcd_efex_mrq.efex_mkt_id
              where mrq_id = rcd_efex_mrq.mrq_id;
       end;
 

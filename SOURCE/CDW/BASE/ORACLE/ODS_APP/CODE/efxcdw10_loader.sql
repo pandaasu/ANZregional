@@ -259,6 +259,7 @@ create or replace package body ods_app.efxcdw10_loader as
       rcd_efex_matl.pos_matl_flg := lics_inbound_utility.get_variable('POS_FLAG');
       rcd_efex_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl.valdtn_status := ods_constants.valdtn_valid;
+      rcd_efex_matl.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -287,7 +288,8 @@ create or replace package body ods_app.efxcdw10_loader as
                    matl_source_id = rcd_efex_matl.matl_source_id,
                    pos_matl_flg = rcd_efex_matl.pos_matl_flg,
                    status = rcd_efex_matl.status,
-                   valdtn_status = rcd_efex_matl.valdtn_status
+                   valdtn_status = rcd_efex_matl.valdtn_status,
+                   efex_mkt_id = rcd_efex_matl.efex_mkt_id
              where efex_matl_id = rcd_efex_matl.efex_matl_id;
       end;
 

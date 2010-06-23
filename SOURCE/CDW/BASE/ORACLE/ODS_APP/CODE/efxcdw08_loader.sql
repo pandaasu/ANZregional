@@ -233,6 +233,7 @@ create or replace package body ods_app.efxcdw08_loader as
       rcd_efex_matl_grp.tot_distbn_flg := lics_inbound_utility.get_variable('TDS_FLAG');
       rcd_efex_matl_grp.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl_grp.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_matl_grp.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -249,7 +250,8 @@ create or replace package body ods_app.efxcdw08_loader as
                    bus_unit_id = rcd_efex_matl_grp.bus_unit_id,
                    tot_distbn_flg = rcd_efex_matl_grp.tot_distbn_flg,
                    status = rcd_efex_matl_grp.status,
-                   valdtn_status = rcd_efex_matl_grp.valdtn_status
+                   valdtn_status = rcd_efex_matl_grp.valdtn_status,
+                   efex_mkt_id = rcd_efex_matl_grp.efex_mkt_id
              where matl_grp_id = rcd_efex_matl_grp.matl_grp_id;
       end;
 

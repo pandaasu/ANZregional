@@ -243,6 +243,7 @@ create or replace package body ods_app.efxcdw14_loader as
       rcd_efex_call.end_date := lics_inbound_utility.get_date('END_DATE','yyyymmddhh24miss');
       rcd_efex_call.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_call.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_call.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -262,7 +263,8 @@ create or replace package body ods_app.efxcdw14_loader as
                    call_type = rcd_efex_call.call_type,
                    end_date = rcd_efex_call.end_date,
                    status = rcd_efex_call.status,
-                   valdtn_status = rcd_efex_call.valdtn_status
+                   valdtn_status = rcd_efex_call.valdtn_status,
+                   efex_mkt_id = rcd_efex_call.efex_mkt_id
              where efex_cust_id = rcd_efex_call.efex_cust_id
                and call_date = rcd_efex_call.call_date
                and user_id = rcd_efex_call.user_id;

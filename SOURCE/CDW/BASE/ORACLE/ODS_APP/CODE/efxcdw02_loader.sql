@@ -229,6 +229,7 @@ create or replace package body ods_app.efxcdw02_loader as
       rcd_efex_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_sgmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_sgmnt.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_sgmnt.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -243,7 +244,8 @@ create or replace package body ods_app.efxcdw02_loader as
                set sgmnt_name = rcd_efex_sgmnt.sgmnt_name,
                    bus_unit_id = rcd_efex_sgmnt.bus_unit_id,
                    status = rcd_efex_sgmnt.status,
-                   valdtn_status = rcd_efex_sgmnt.valdtn_status
+                   valdtn_status = rcd_efex_sgmnt.valdtn_status,
+                   efex_mkt_id = rcd_efex_sgmnt.efex_mkt_id
              where sgmnt_id = rcd_efex_sgmnt.sgmnt_id;
       end;
 

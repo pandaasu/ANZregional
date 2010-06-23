@@ -237,6 +237,7 @@ create or replace package body ods_app.efxcdw21_loader as
       rcd_efex_range_matl.target_date := lics_inbound_utility.get_date('TAR_DATE','yyyymmddhh24miss');
       rcd_efex_range_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_range_matl.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_range_matl.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -254,19 +255,11 @@ create or replace package body ods_app.efxcdw21_loader as
                    start_date = rcd_efex_range_matl.start_date,
                    target_date = rcd_efex_range_matl.target_date,
                    status = rcd_efex_range_matl.status,
-                   valdtn_status = rcd_efex_range_matl.valdtn_status
+                   valdtn_status = rcd_efex_range_matl.valdtn_status,
+                   efex_mkt_id = rcd_efex_range_matl.efex_mkt_id
              where range_id = rcd_efex_range_matl.range_id
                and efex_matl_id = rcd_efex_range_matl.efex_matl_id;
       end;
-
---???????  surely done in efex ???????
- -- UPDATE efex_range_matl t1
- -- SET status = 'X'
- -- WHERE exists (SELECT *
- --               FROM efex_matl t2
- --               WHERE t1.efex_matl_id = t2.efex_matl_id
- --               AND t2.status = 'X'
- --               AND TRUNC(t2.matl_lupdt) = TRUNC(SYSDATE));
 
    /*-------------------*/
    /* Exception handler */

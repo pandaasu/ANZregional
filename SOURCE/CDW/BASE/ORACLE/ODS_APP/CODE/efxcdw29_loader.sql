@@ -225,6 +225,7 @@ create or replace package body ods_app.efxcdw29_loader as
 
       rcd_efex_call_type.call_type_code := lics_inbound_utility.get_number('LVA_ID',null);
       rcd_efex_call_type.call_type := lics_inbound_utility.get_variable('LVA_NAME');
+      rcd_efex_call_type.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -236,7 +237,8 @@ create or replace package body ods_app.efxcdw29_loader as
       exception
          when dup_val_on_index then
             update efex_call_type
-               set call_type = rcd_efex_call_type.call_type
+               set call_type = rcd_efex_call_type.call_type,
+                   efex_mkt_id = rcd_efex_call_type.efex_mkt_id
              where call_type_code = rcd_efex_call_type.call_type_code;
       end;
 

@@ -285,6 +285,7 @@ create or replace package body ods_app.efxcdw24_loader as
       rcd_efex_order.dlvrd_flg := lics_inbound_utility.get_variable('DEL_FLAG');
       rcd_efex_order.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_order.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_order.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*-------------------------------------*/
@@ -395,7 +396,8 @@ create or replace package body ods_app.efxcdw24_loader as
                    tp_paid_flg = rcd_efex_order.tp_paid_flg,
                    dlvrd_flg = rcd_efex_order.dlvrd_flg,
                    status = rcd_efex_order.status,
-                   valdtn_status = rcd_efex_order.valdtn_status
+                   valdtn_status = rcd_efex_order.valdtn_status,
+                   efex_mkt_id = rcd_efex_order.efex_mkt_id
              where efex_order_id = rcd_efex_order.efex_order_id;
       end;
 
@@ -439,6 +441,7 @@ create or replace package body ods_app.efxcdw24_loader as
       rcd_efex_order_matl.matl_distbr_id := lics_inbound_utility.get_number('DIS_ID',null);
       rcd_efex_order_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_order_matl.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_order_matl.efex_mkt_id := var_trn_market;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -454,7 +457,8 @@ create or replace package body ods_app.efxcdw24_loader as
                    uom = rcd_efex_order_matl.uom,
                    matl_distbr_id = rcd_efex_order_matl.matl_distbr_id,
                    status = rcd_efex_order_matl.status,
-                   valdtn_status = rcd_efex_order_matl.valdtn_status
+                   valdtn_status = rcd_efex_order_matl.valdtn_status,
+                   efex_mkt_id = rcd_efex_order_matl.efex_mkt_id
              where efex_order_id = rcd_efex_order_matl.efex_order_id
                and efex_matl_id = rcd_efex_order_matl.efex_matl_id;
       end;

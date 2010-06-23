@@ -296,6 +296,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt.contra_deducted := lics_inbound_utility.get_number('CTR_DEDUCTED',null);
       rcd_efex_pmt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt.efex_mkt_id := var_trn_market;
       var_ret_claim := lics_inbound_utility.get_variable('RET_CLAIM');
       var_trn_count := var_trn_count + 1;
 
@@ -403,7 +404,8 @@ create or replace package body ods_app.efxcdw25_loader as
                    contra_replicated_date = rcd_efex_pmt.contra_replicated_date,
                    contra_deducted = rcd_efex_pmt.contra_deducted,
                    status = rcd_efex_pmt.status,
-                   valdtn_status = rcd_efex_pmt.valdtn_status
+                   valdtn_status = rcd_efex_pmt.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt.efex_mkt_id
              where pmt_id = rcd_efex_pmt.pmt_id;
       end;
 
@@ -451,6 +453,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_number('DEA_VALUE',null);
       rcd_efex_pmt_deal.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_deal.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt_deal.efex_mkt_id := var_trn_market;
 
    /*-------------------*/
    /* Exception handler */
@@ -537,7 +540,8 @@ create or replace package body ods_app.efxcdw25_loader as
                    details = rcd_efex_pmt_deal.details,
                    deal_value = rcd_efex_pmt_deal.deal_value,
                    status = rcd_efex_pmt_deal.status,
-                   valdtn_status = rcd_efex_pmt_deal.valdtn_status
+                   valdtn_status = rcd_efex_pmt_deal.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt_deal.efex_mkt_id
              where pmt_id = rcd_efex_pmt_deal.pmt_id
                and seq_num = rcd_efex_pmt_deal.seq_num;
       end;
@@ -588,6 +592,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt_rtn.rtn_value := lics_inbound_utility.get_number('RET_VALUE',null);
       rcd_efex_pmt_rtn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_rtn.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt_rtn.efex_mkt_id := var_trn_market;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -604,7 +609,8 @@ create or replace package body ods_app.efxcdw25_loader as
                    rtn_qty = rcd_efex_pmt_rtn.rtn_qty,
                    rtn_value = rcd_efex_pmt_rtn.rtn_value,
                    status = rcd_efex_pmt_rtn.status,
-                   valdtn_status = rcd_efex_pmt_rtn.valdtn_status
+                   valdtn_status = rcd_efex_pmt_rtn.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt_rtn.efex_mkt_id
              where pmt_id = rcd_efex_pmt_rtn.pmt_id
                and seq_num = rcd_efex_pmt_rtn.seq_num;
       end;

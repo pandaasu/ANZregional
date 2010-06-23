@@ -241,6 +241,7 @@ create or replace package body ods_app.efxcdw19_loader as
       rcd_efex_assmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_assmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_assmnt.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_assmnt.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -259,7 +260,8 @@ create or replace package body ods_app.efxcdw19_loader as
                    sgmnt_id = rcd_efex_assmnt.sgmnt_id,
                    bus_unit_id = rcd_efex_assmnt.bus_unit_id,
                    status = rcd_efex_assmnt.status,
-                   valdtn_status = rcd_efex_assmnt.valdtn_status
+                   valdtn_status = rcd_efex_assmnt.valdtn_status,
+                   efex_mkt_id = rcd_efex_assmnt.efex_mkt_id
              where assmnt_id = rcd_efex_assmnt.assmnt_id
                and efex_cust_id = rcd_efex_assmnt.efex_cust_id
                and resp_date = rcd_efex_assmnt.resp_date;

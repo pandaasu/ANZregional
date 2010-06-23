@@ -237,6 +237,7 @@ create or replace package body ods_app.efxcdw11_loader as
       rcd_efex_matl_matl_subgrp.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl_matl_subgrp.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_matl_matl_subgrp.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_matl_matl_subgrp.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -254,36 +255,11 @@ create or replace package body ods_app.efxcdw11_loader as
                    distbn_flg = rcd_efex_matl_matl_subgrp.distbn_flg,
                    status = rcd_efex_matl_matl_subgrp.status,
                    efex_lupdt = rcd_efex_matl_matl_subgrp.efex_lupdt,
-                   valdtn_status = rcd_efex_matl_matl_subgrp.valdtn_status
+                   valdtn_status = rcd_efex_matl_matl_subgrp.valdtn_status,
+                   efex_mkt_id = rcd_efex_matl_matl_subgrp.efex_mkt_id
              where efex_matl_id = rcd_efex_matl_matl_subgrp.efex_matl_id
                and matl_subgrp_id = rcd_efex_matl_matl_subgrp.matl_subgrp_id;
       end;
-
-
--- ???? surely this is done in EFEX - if not then it should be ????
-
---  UPDATE efex_matl_matl_subgrp t1
---  SET status = 'X',
---      efex_lupdt = trunc(sysdate)
--- WHERE exists (SELECT *
---                FROM efex_matl t2
---                WHERE t1.efex_matl_id = t2.efex_matl_id
---                AND t2.status = 'X'
---                AND t2.matl_lupdt >= TRUNC(SYSDATE))
---    AND status = 'A';
-
-
-  -- efex_matl_grp extract has already change the efex_matl_subgrp.status to X when group.status changed to X
---  UPDATE efex_matl_matl_subgrp t1
---  SET status = 'X',
---      efex_lupdt = trunc(sysdate)
---  WHERE exists (SELECT *
---                FROM efex_matl_subgrp t2
---                WHERE t1.matl_subgrp_id = t2.matl_subgrp_id
---                AND t2.status = 'X'
---                AND t2.matl_subgrp_lupdt >= TRUNC(SYSDATE))
---    AND status = 'A';
-
 
    /*-------------------*/
    /* Exception handler */

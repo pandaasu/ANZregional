@@ -237,6 +237,7 @@ create or replace package body ods_app.efxcdw12_loader as
       rcd_efex_route_sched.tot_calls := lics_inbound_utility.get_number('TOT_CALLS',null);
       rcd_efex_route_sched.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_route_sched.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_route_sched.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -254,7 +255,8 @@ create or replace package body ods_app.efxcdw12_loader as
                    tot_errors = rcd_efex_route_sched.tot_errors,
                    tot_calls = rcd_efex_route_sched.tot_calls,
                    status = rcd_efex_route_sched.status,
-                   valdtn_status = rcd_efex_route_sched.valdtn_status
+                   valdtn_status = rcd_efex_route_sched.valdtn_status,
+                   efex_mkt_id = rcd_efex_route_sched.efex_mkt_id
              where user_id = rcd_efex_route_sched.user_id
                and route_sched_date = rcd_efex_route_sched.route_sched_date;
       end;

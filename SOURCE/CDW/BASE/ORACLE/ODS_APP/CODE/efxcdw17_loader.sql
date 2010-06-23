@@ -251,6 +251,7 @@ create or replace package body ods_app.efxcdw17_loader as
       rcd_efex_assmnt_questn.due_date := lics_inbound_utility.get_date('DUE_DATE','yyyymmddhh24miss');
       rcd_efex_assmnt_questn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_assmnt_questn.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_assmnt_questn.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
    /*-------------------*/
@@ -344,7 +345,8 @@ create or replace package body ods_app.efxcdw17_loader as
                    inactive_date = rcd_efex_assmnt_questn.inactive_date,
                    due_date = rcd_efex_assmnt_questn.due_date,
                    status = rcd_efex_assmnt_questn.status,
-                   valdtn_status = rcd_efex_assmnt_questn.valdtn_status
+                   valdtn_status = rcd_efex_assmnt_questn.valdtn_status,
+                   efex_mkt_id = rcd_efex_assmnt_questn.efex_mkt_id
              where assmnt_id = rcd_efex_assmnt_questn.assmnt_id;
       end;
 

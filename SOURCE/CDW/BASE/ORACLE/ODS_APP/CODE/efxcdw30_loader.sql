@@ -249,6 +249,7 @@ create or replace package body ods_app.efxcdw30_loader as
       rcd_efex_cust_note.cust_note_created := lics_inbound_utility.get_variable('NTE_CREATED');
       rcd_efex_cust_note.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_cust_note.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_cust_note.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
    /*-------------------*/
@@ -341,7 +342,8 @@ create or replace package body ods_app.efxcdw30_loader as
                    cust_note_author = rcd_efex_cust_note.cust_note_author,
                    cust_note_created = rcd_efex_cust_note.cust_note_created,
                    status = rcd_efex_cust_note.status,
-                   valdtn_status = rcd_efex_cust_note.valdtn_status
+                   valdtn_status = rcd_efex_cust_note.valdtn_status,
+                   efex_mkt_id = rcd_efex_cust_note.efex_mkt_id
              where cust_note_id = rcd_efex_cust_note.cust_note_id;
       end;
 

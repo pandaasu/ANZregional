@@ -237,6 +237,7 @@ create or replace package body ods_app.efxcdw13_loader as
       rcd_efex_route_plan.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_route_plan.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_route_plan.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_route_plan.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -253,7 +254,8 @@ create or replace package body ods_app.efxcdw13_loader as
                    sgmnt_id = rcd_efex_route_plan.sgmnt_id,
                    bus_unit_id = rcd_efex_route_plan.bus_unit_id,
                    status = rcd_efex_route_plan.status,
-                   valdtn_status = rcd_efex_route_plan.valdtn_status
+                   valdtn_status = rcd_efex_route_plan.valdtn_status,
+                   efex_mkt_id = rcd_efex_route_plan.efex_mkt_id
              where user_id = rcd_efex_route_plan.user_id
                and route_plan_date = rcd_efex_route_plan.route_plan_date
                and efex_cust_id = rcd_efex_route_plan.efex_cust_id;

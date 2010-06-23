@@ -231,6 +231,7 @@ create or replace package body ods_app.efxcdw04_loader as
       rcd_efex_affltn.affltn_grp_name := lics_inbound_utility.get_variable('AFG_NAME');
       rcd_efex_affltn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_affltn.valdtn_status := ods_constants.valdtn_valid;
+      rcd_efex_affltn.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -246,7 +247,8 @@ create or replace package body ods_app.efxcdw04_loader as
                    affltn_grp_id = rcd_efex_affltn.affltn_grp_id,
                    affltn_grp_name = rcd_efex_affltn.affltn_grp_name,
                    status = rcd_efex_affltn.status,
-                   valdtn_status = rcd_efex_affltn.valdtn_status
+                   valdtn_status = rcd_efex_affltn.valdtn_status,
+                   efex_mkt_id = rcd_efex_affltn.efex_mkt_id
              where affltn_id = rcd_efex_affltn.affltn_id;
       end;
 

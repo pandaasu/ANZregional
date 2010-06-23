@@ -227,6 +227,7 @@ create or replace package body ods_app.efxcdw20_loader as
       rcd_efex_range.range_name := lics_inbound_utility.get_variable('RAN_NAME');
       rcd_efex_range.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_range.valdtn_status := ods_constants.valdtn_valid;
+      rcd_efex_range.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -240,7 +241,8 @@ create or replace package body ods_app.efxcdw20_loader as
             update efex_range
                set range_name = rcd_efex_range.range_name,
                    status = rcd_efex_range.status,
-                   valdtn_status = rcd_efex_range.valdtn_status
+                   valdtn_status = rcd_efex_range.valdtn_status,
+                   efex_mkt_id = rcd_efex_range.efex_mkt_id
              where range_id = rcd_efex_range.range_id;
       end;
 

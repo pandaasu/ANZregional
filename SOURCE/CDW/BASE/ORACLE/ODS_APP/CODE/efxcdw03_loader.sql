@@ -242,6 +242,7 @@ create or replace package body ods_app.efxcdw03_loader as
       rcd_efex_user.phone_num := lics_inbound_utility.get_variable('PHO_NUMB');
       rcd_efex_user.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_user.valdtn_status := ods_constants.valdtn_valid;
+      rcd_efex_user.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -258,7 +259,8 @@ create or replace package body ods_app.efxcdw03_loader as
                    email_addr = rcd_efex_user.email_addr,
                    phone_num = rcd_efex_user.phone_num,
                    status = rcd_efex_user.status,
-                   valdtn_status = rcd_efex_user.valdtn_status
+                   valdtn_status = rcd_efex_user.valdtn_status,
+                   efex_mkt_id = rcd_efex_user.efex_mkt_id
              where user_id = rcd_efex_user.user_id;
       end;
 
@@ -310,6 +312,7 @@ create or replace package body ods_app.efxcdw03_loader as
       rcd_efex_user_sgmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_user_sgmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_user_sgmnt.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_user_sgmnt.efex_mkt_id := var_trn_market;
 
       /*------------------------------*/
       /* UPDATE - Update the database */

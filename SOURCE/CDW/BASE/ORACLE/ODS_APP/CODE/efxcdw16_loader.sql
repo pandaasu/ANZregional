@@ -243,6 +243,7 @@ create or replace package body ods_app.efxcdw16_loader as
       rcd_efex_timesheet_day.travelkms := lics_inbound_utility.get_number('TRV_KMS',null);
       rcd_efex_timesheet_day.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_timesheet_day.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_timesheet_day.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -263,7 +264,8 @@ create or replace package body ods_app.efxcdw16_loader as
                    traveltime = rcd_efex_timesheet_day.traveltime,
                    travelkms = rcd_efex_timesheet_day.travelkms,
                    status = rcd_efex_timesheet_day.status,
-                   valdtn_status = rcd_efex_timesheet_day.valdtn_status
+                   valdtn_status = rcd_efex_timesheet_day.valdtn_status,
+                   efex_mkt_id = rcd_efex_timesheet_day.efex_mkt_id
              where user_id = rcd_efex_timesheet_day.user_id 
                and timesheet_date = rcd_efex_timesheet_day.timesheet_date;
       end;

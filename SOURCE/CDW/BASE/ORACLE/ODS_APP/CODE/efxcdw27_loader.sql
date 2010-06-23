@@ -273,6 +273,7 @@ create or replace package body ods_app.efxcdw27_loader as
       rcd_efex_mrq_task.mrq_task_notes := null;
       rcd_efex_mrq_task.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_mrq_task.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_mrq_task.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*--------------------------------*/
@@ -452,7 +453,8 @@ create or replace package body ods_app.efxcdw27_loader as
                    mrq_pricing = rcd_efex_mrq_task.mrq_pricing,
                    mrq_task_notes = rcd_efex_mrq_task.mrq_task_notes,
                    status = rcd_efex_mrq_task.status,
-                   valdtn_status = rcd_efex_mrq_task.valdtn_status
+                   valdtn_status = rcd_efex_mrq_task.valdtn_status,
+                   efex_mkt_id = rcd_efex_mrq_task.efex_mkt_id
              where mrq_task_id = rcd_efex_mrq_task.mrq_task_id;
       end;
 
@@ -499,6 +501,7 @@ create or replace package body ods_app.efxcdw27_loader as
       rcd_efex_mrq_task_matl.supplier := lics_inbound_utility.get_variable('SUPPLIER');
       rcd_efex_mrq_task_matl.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_mrq_task_matl.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_mrq_task_matl.efex_mkt_id := var_trn_market;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -512,7 +515,8 @@ create or replace package body ods_app.efxcdw27_loader as
                set matl_qty = rcd_efex_mrq_task_matl.matl_qty,
                    supplier = rcd_efex_mrq_task_matl.supplier,
                    status = rcd_efex_mrq_task_matl.status,
-                   valdtn_status = rcd_efex_mrq_task_matl.valdtn_status
+                   valdtn_status = rcd_efex_mrq_task_matl.valdtn_status,
+                   efex_mkt_id = rcd_efex_mrq_task_matl.efex_mkt_id
              where mrq_task_id = rcd_efex_mrq_task_matl.mrq_task_id
                and efex_matl_id = rcd_efex_mrq_task_matl.efex_matl_id;
       end;

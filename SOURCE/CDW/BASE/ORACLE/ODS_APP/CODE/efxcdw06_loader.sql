@@ -258,6 +258,7 @@ create or replace package body ods_app.efxcdw06_loader as
       rcd_efex_sales_terr.status := lics_inbound_utility.get_variable('STE_STATUS');
       rcd_efex_sales_terr.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_sales_terr.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_sales_terr.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -287,7 +288,8 @@ create or replace package body ods_app.efxcdw06_loader as
                    sgmnt_status = rcd_efex_sales_terr.sgmnt_status,
                    status = rcd_efex_sales_terr.status,
                    efex_lupdt = rcd_efex_sales_terr.efex_lupdt,
-                   valdtn_status = rcd_efex_sales_terr.valdtn_status
+                   valdtn_status = rcd_efex_sales_terr.valdtn_status,
+                   efex_mkt_id = rcd_efex_sales_terr.efex_mkt_id
              where sales_terr_id = rcd_efex_sales_terr.sales_terr_id;
       end;
 

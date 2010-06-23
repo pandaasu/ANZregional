@@ -237,6 +237,7 @@ create or replace package body ods_app.efxcdw28_loader as
       rcd_efex_target.actual_value := lics_inbound_utility.get_number('ACT_VALUE',null);
       rcd_efex_target.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_target.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_target.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -253,7 +254,8 @@ create or replace package body ods_app.efxcdw28_loader as
                    target_value = rcd_efex_target.target_value,
                    actual_value = rcd_efex_target.actual_value,
                    status = rcd_efex_target.status,
-                   valdtn_status = rcd_efex_target.valdtn_status
+                   valdtn_status = rcd_efex_target.valdtn_status,
+                   efex_mkt_id = rcd_efex_target.efex_mkt_id
              where sales_terr_id = rcd_efex_target.sales_terr_id
                and target_id = rcd_efex_target.target_id
                and mars_period = rcd_efex_target.mars_period;

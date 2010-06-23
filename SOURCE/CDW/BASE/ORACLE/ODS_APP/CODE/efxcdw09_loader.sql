@@ -229,6 +229,7 @@ create or replace package body ods_app.efxcdw09_loader as
       rcd_efex_matl_subgrp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID',null);
       rcd_efex_matl_subgrp.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_matl_subgrp.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_matl_subgrp.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
 
       /*------------------------------*/
@@ -243,19 +244,10 @@ create or replace package body ods_app.efxcdw09_loader as
                set matl_subgrp_name = rcd_efex_matl_subgrp.matl_subgrp_name,
                    matl_grp_id = rcd_efex_matl_subgrp.matl_grp_id,
                    status = rcd_efex_matl_subgrp.status,
-                   valdtn_status = rcd_efex_matl_subgrp.valdtn_status
+                   valdtn_status = rcd_efex_matl_subgrp.valdtn_status,
+                   efex_mkt_id = rcd_efex_matl_subgrp.efex_mkt_id
              where matl_subgrp_id = rcd_efex_matl_subgrp.matl_subgrp_id;
       end;
-
---doesn't make sense - how can lupdt be greater than sysdate
---  UPDATE efex_matl_subgrp t1
---  SET status = 'X'
---  WHERE EXISTS (SELECT *
---                FROM efex_matl_grp t2
---                WHERE t1.matl_grp_id = t2.matl_grp_id
---                  AND t2.status = 'X'
---                  AND t2.matl_grp_lupdt    > trunc(sysdate))
---    AND status = 'A';
 
    /*-------------------*/
    /* Exception handler */
