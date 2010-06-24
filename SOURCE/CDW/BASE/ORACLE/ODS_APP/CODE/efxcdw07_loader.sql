@@ -224,6 +224,14 @@ create or replace package body ods_app.efxcdw07_loader as
       var_trn_market := lics_inbound_utility.get_number('MKT_ID',null);
       var_trn_extract := lics_inbound_utility.get_variable('EXT_ID');
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -305,6 +313,14 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_cust.valdtn_status := ods_constants.valdtn_unchecked;
       var_trn_count := var_trn_count + 1;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
 
       /*------------------------------*/
       /* UPDATE - Update the database */

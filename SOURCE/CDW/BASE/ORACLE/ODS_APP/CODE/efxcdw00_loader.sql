@@ -178,6 +178,14 @@ create or replace package body ods_app.efxcdw00_loader as
       rcd_efex_cntl_hdr.extract_time := lics_inbound_utility.get_variable('EXT_ID');
       rcd_efex_cntl_hdr.extract_status := '*CONTROL';
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
       /*------------------------------*/
       /* UPDATE - Update the database */
       /*------------------------------*/
@@ -234,6 +242,14 @@ create or replace package body ods_app.efxcdw00_loader as
       rcd_efex_cntl_det.iface_code := lics_inbound_utility.get_variable('INT_CODE');
       rcd_efex_cntl_det.iface_count := lics_inbound_utility.get_number('INT_COUNT',null);
       rcd_efex_cntl_det.iface_recvd := 0;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
 
       /*------------------------------*/
       /* UPDATE - Update the database */

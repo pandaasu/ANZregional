@@ -329,7 +329,7 @@ create or replace package body ods_app.efxcdw_poller as
                   lics_mailer.append_data('<tr>');
                   lics_mailer.append_data('<td align=center style="mso-number-format:\@;">'||to_char(rcd_header.market_id)||'</td>');
                   lics_mailer.append_data('<td align=center style="mso-number-format:\@;">'||rcd_header.extract_time||'</td>');
-                  lics_mailer.append_data('<td align=center>'||rcd_header.extract_status||'</td>');
+                  lics_mailer.append_data('<td align=center>'||var_extract_status||'</td>');
                   lics_mailer.append_data('</tr>');
 
                   /*-*/
@@ -360,7 +360,11 @@ create or replace package body ods_app.efxcdw_poller as
                      /* Output the detail data
                      /*-*/
                      lics_mailer.append_data('<tr>');
-                     lics_mailer.append_data('<td align=center>'||rcd_detail.iface_code||'</td>');
+                     if rcd_detail.iface_count != rcd_detail.iface_recvd then
+                        lics_mailer.append_data('<td align=center style="BACKGROUND-COLOR:#ff0000;COLOR:#ffffff;">'||rcd_detail.iface_code||'</td>');
+                     else
+                        lics_mailer.append_data('<td align=center>'||rcd_detail.iface_code||'</td>');
+                     end if;
                      lics_mailer.append_data('<td align=right>'||to_char(rcd_detail.iface_count)||'</td>');
                      lics_mailer.append_data('<td align=right>'||to_char(rcd_detail.iface_recvd)||'</td>');
                      lics_mailer.append_data('</tr>');

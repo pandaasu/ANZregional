@@ -241,6 +241,14 @@ create or replace package body ods_app.efxcdw25_loader as
       var_trn_market := lics_inbound_utility.get_number('MKT_ID',null);
       var_trn_extract := lics_inbound_utility.get_variable('EXT_ID');
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -300,6 +308,14 @@ create or replace package body ods_app.efxcdw25_loader as
       var_ret_claim := lics_inbound_utility.get_variable('RET_CLAIM');
       var_trn_count := var_trn_count + 1;
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
       /*--------------------------------*/
       /* DELETE - Delete any child rows */
       /*--------------------------------*/
@@ -346,6 +362,14 @@ create or replace package body ods_app.efxcdw25_loader as
 
       rcd_efex_pmt.pmt_notes := rcd_efex_pmt.pmt_notes || lics_inbound_utility.get_variable('NTE_TEXT');
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -378,6 +402,14 @@ create or replace package body ods_app.efxcdw25_loader as
       /*-------------------------------*/
 
       lics_inbound_utility.parse_record('END', par_record);
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -455,6 +487,14 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt_deal.valdtn_status := ods_constants.valdtn_unchecked;
       rcd_efex_pmt_deal.efex_mkt_id := var_trn_market;
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -494,6 +534,14 @@ create or replace package body ods_app.efxcdw25_loader as
 
       rcd_efex_pmt_deal.details := rcd_efex_pmt_deal.details || lics_inbound_utility.get_variable('DET_TEXT');
 
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -526,6 +574,14 @@ create or replace package body ods_app.efxcdw25_loader as
       /*-------------------------------*/
 
       lics_inbound_utility.parse_record('DET', par_record);
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
@@ -593,6 +649,14 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt_rtn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_rtn.valdtn_status := ods_constants.valdtn_unchecked;
       rcd_efex_pmt_rtn.efex_mkt_id := var_trn_market;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
 
       /*------------------------------*/
       /* UPDATE - Update the database */
