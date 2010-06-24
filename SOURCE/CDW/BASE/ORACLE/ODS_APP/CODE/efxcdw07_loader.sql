@@ -118,6 +118,7 @@ create or replace package body ods_app.efxcdw07_loader as
       lics_inbound_utility.set_definition('HDR','DAY_MEAL',15);
       lics_inbound_utility.set_definition('HDR','LED_TIME',15);
       lics_inbound_utility.set_definition('HDR','DSC_PERCENT',15);
+      lics_inbound_utility.set_definition('HDR','COR_FLAG',1);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK1DAY',15);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK2DAY',15);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK3DAY',15);
@@ -126,7 +127,6 @@ create or replace package body ods_app.efxcdw07_loader as
       lics_inbound_utility.set_definition('HDR','CAL_WEEK2DAYSEQ',15);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK3DAYSEQ',15);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK4DAYSEQ',15);
-      lics_inbound_utility.set_definition('HDR','COR_FLAG',1);
       lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
 
    /*-------------*/
