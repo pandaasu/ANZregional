@@ -82,7 +82,7 @@ create or replace package body ods_app.efxcdw21_loader as
       lics_inbound_utility.clear_definition;
       /*-*/
       lics_inbound_utility.set_definition('CTL','RCD_ID',3);
-      lics_inbound_utility.set_definition('CTL','INT_ID',10);
+      lics_inbound_utility.set_definition('CTL','INT_ID',32);
       lics_inbound_utility.set_definition('CTL','MKT_ID',10);
       lics_inbound_utility.set_definition('CTL','EXT_ID',14);
       /*-*/
