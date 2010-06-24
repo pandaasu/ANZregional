@@ -19,7 +19,7 @@ create or replace package ods_app.ods_efex_validation as
 
     1. PAR_MARKET (market code) (MANDATORY)
 
-       The market for which the validation is to be performed. 
+       The market for which the validation is to be performed.
 
     **notes**
     1. A web log is produced under the search value ODS_EFEX_VALIDATION where all errors are logged.
@@ -61,34 +61,35 @@ create or replace package body ods_app.ods_efex_validation as
    /*-*/
    procedure validate_efex_sgmnt(par_market in number);
    procedure validate_efex_sales_terr(par_market in number);
-   procedure validate_efex_matl_grp(var_market in number);
-   procedure validate_efex_matl_subgrp(var_market in number);
-   procedure validate_efex_matl_matl_subgrp(var_market in number);
-   procedure validate_efex_cust(var_market in number);
-   procedure validate_efex_route_sched(var_market in number);
-   procedure validate_efex_route_plan(var_market in number);
-   procedure validate_efex_call(var_market);
-   procedure validate_efex_timesheet_call(var_market);
-   procedure validate_efex_timesheet_day(var_market);
-   procedure validate_efex_assmnt_questn(var_market);
-   procedure validate_efex_assmnt_assgnmnt(var_market);
-   procedure validate_efex_assmnt(var_market);
-   procedure validate_efex_range_matl(var_market);
-   procedure validate_efex_distbn(var_market);
-   procedure validate_efex_distbn_tot(var_market);
-   procedure validate_efex_order(var_market);
-   procedure validate_efex_order_matl(var_market);
-   procedure validate_efex_pmt(var_market);
-   procedure validate_efex_pmt_deal(var_market);
-   procedure validate_efex_pmt_rtn(var_market);
-   procedure validate_efex_mrq(var_market);
-   procedure validate_efex_mrq_task(var_market);
-   procedure validate_efex_mrq_task_matl(var_market);
-   procedure validate_efex_target(var_market);
-   procedure validate_efex_user_sgmnt(var_market);
-   procedure validate_efex_cust_note(var_market);
+   procedure validate_efex_matl_grp(par_market in number);
+   procedure validate_efex_matl_subgrp(par_market in number);
+   procedure validate_efex_matl_matl_subgrp(par_market in number);
+   procedure validate_efex_cust(par_market in number, par_reset in boolean);
+   procedure validate_efex_route_sched(par_market in number);
+   procedure validate_efex_route_plan(par_market in number);
+   procedure validate_efex_call(par_market in number);
+   procedure validate_efex_timesheet_call(par_market in number);
+   procedure validate_efex_timesheet_day(par_market in number);
+   procedure validate_efex_assmnt_questn(par_market in number);
+   procedure validate_efex_assmnt_assgnmnt(par_market in number);
+   procedure validate_efex_assmnt(par_market in number);
+   procedure validate_efex_range_matl(par_market in number);
+   procedure validate_efex_distbn(par_market in number);
+   procedure validate_efex_distbn_tot(par_market in number);
+   procedure validate_efex_order(par_market in number);
+   procedure validate_efex_order_matl(par_market in number);
+   procedure validate_efex_pmt(par_market in number);
+   procedure validate_efex_pmt_deal(par_market in number);
+   procedure validate_efex_pmt_rtn(par_market in number);
+   procedure validate_efex_mrq(par_market in number);
+   procedure validate_efex_mrq_task(par_market in number);
+   procedure validate_efex_mrq_task_matl(par_market in number);
+   procedure validate_efex_target(par_market in number);
+   procedure validate_efex_user_sgmnt(par_market in number);
+   procedure validate_efex_cust_note(par_market in number);
    procedure clear_reasons(par_market in number, par_rea_type in varchar2);
-   procedure add_reason(par_rea_type in number,
+   procedure add_reason(par_rea_start in boolean,
+                        par_rea_type in number,
                         par_rea_message in varchar2,
                         par_rea_severity in varchar2,
                         par_rea_code1 in varchar2,
@@ -167,7 +168,7 @@ create or replace package body ods_app.ods_efex_validation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Efex Validation - Parameters(Market = ' || var_ market || ')');
+      lics_logging.write_log('Begin - Efex Validation - Parameters (Market = ' || var_market || ')');
 
       /*-*/
       /* Request the lock on the aggregation
@@ -190,12 +191,103 @@ create or replace package body ods_app.ods_efex_validation as
          /* Execute the validation procedures
          /*-*/
          begin
+
+
+--doesn't make sense - how can lupdt be greater than sysdate
+--  UPDATE efex_matl_subgrp t1
+--  SET status = 'X'
+--  WHERE EXISTS (SELECT *
+--                FROM efex_matl_grp t2
+--                WHERE t1.matl_grp_id = t2.matl_grp_id
+--                  AND t2.status = 'X'
+--                  AND t2.matl_grp_lupdt    > trunc(sysdate))
+--    AND status = 'A';
+
+
+-- ???? surely this is done in EFEX - if not then it should be ????
+
+--  UPDATE efex_matl_matl_subgrp t1
+--  SET status = 'X',
+--      efex_lupdt = trunc(sysdate)
+-- WHERE exists (SELECT *
+--                FROM efex_matl t2
+--                WHERE t1.efex_matl_id = t2.efex_matl_id
+--                AND t2.status = 'X'
+--                AND t2.matl_lupdt >= TRUNC(SYSDATE))
+--    AND status = 'A';
+
+
+  -- efex_matl_grp extract has already change the efex_matl_subgrp.status to X when group.status changed to X
+--  UPDATE efex_matl_matl_subgrp t1
+--  SET status = 'X',
+--      efex_lupdt = trunc(sysdate)
+--  WHERE exists (SELECT *
+--                FROM efex_matl_subgrp t2
+--                WHERE t1.matl_subgrp_id = t2.matl_subgrp_id
+--                AND t2.status = 'X'
+--                AND t2.matl_subgrp_lupdt >= TRUNC(SYSDATE))
+--    AND status = 'A';
+
+
+--???????  surely done in efex ???????
+ -- UPDATE efex_range_matl t1
+ -- SET status = 'X'
+ -- WHERE exists (SELECT *
+ --               FROM efex_matl t2
+ --               WHERE t1.efex_matl_id = t2.efex_matl_id
+ --               AND t2.status = 'X'
+ --               AND TRUNC(t2.matl_lupdt) = TRUNC(SYSDATE));
+
+
+--- how to do this
+---
+--  CURSOR csr_removed_distbn IS  -- Distribution removed from efex but exists in Venus.
+--     SELECT
+--       t1.customer_id   efex_cust_id,
+--       t1.item_id       efex_matl_id,
+--       t1.out_of_stock_flg,
+--       t1.out_of_date_flg,
+--       t1.sell_price,
+--       t1.in_store_date,
+--       t1.modified_date efex_lupdt,
+--       t1.status
+--     FROM
+--       venus_distribution@ap0085p.world t1
+--     WHERE
+--       EXISTS (SELECT * FROM efex_distbn t2 WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
+--       AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
+--       AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
+--  rv_removed_distbn csr_removed_distbn%ROWTYPE;
+
+
+ -- FOR rv_removed_distbn IN csr_removed_distbn LOOP
+ --     UPDATE efex_distbn
+ --     SET
+ --       display_qty = 0,
+ --       facing_qty = 0,
+ --       inv_qty = 0,
+ --       rqd_flg = 'N',
+ --       efex_lupdt = rv_removed_distbn.efex_lupdt,
+ --       out_of_stock_flg = rv_removed_distbn.out_of_stock_flg,
+ --       out_of_date_flg = rv_removed_distbn.out_of_date_flg,
+ --       sell_price = rv_removed_distbn.sell_price,
+ --       in_store_date = rv_removed_distbn.in_store_date,
+ --       status = rv_removed_distbn.status
+ --     WHERE
+ --       efex_cust_id = rv_removed_distbn.efex_cust_id
+ --       AND efex_matl_id = rv_removed_distbn.efex_matl_id;
+--
+ --     v_removed_count := v_removed_count + SQL%ROWCOUNT;
+ -- END LOOP;
+
+
+
             validate_efex_sgmnt(var_market);
             validate_efex_sales_terr(var_market);
             validate_efex_matl_grp(var_market);
             validate_efex_matl_subgrp(var_market);
             validate_efex_matl_matl_subgrp(var_market);
-            validate_efex_cust(var_market);
+            validate_efex_cust(var_market, false);
             validate_efex_route_sched(var_market);
             validate_efex_route_plan(var_market);
             validate_efex_call(var_market);
@@ -333,7 +425,7 @@ create or replace package body ods_app.ods_efex_validation as
       cursor csr_list is
          select t01.*,
                 (select bus_unit_id from efex_bus_unit where bus_unit_id = t01.bus_unit_id and valdtn_status = ods_constants.valdtn_valid) as chk_bus_unit_id
-           from efex_sgmnt t01,
+           from efex_sgmnt t01
           where t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
       rcd_list csr_list%rowtype;
@@ -503,7 +595,7 @@ create or replace package body ods_app.ods_efex_validation as
                 (select sgmnt_id from efex_sgmnt where sgmnt_id = t01.sgmnt_id and valdtn_status = ods_constants.valdtn_valid) as chk_sgmnt_id,
                 (select bus_unit_id from efex_bus_unit where bus_unit_id = t01.bus_unit_id and valdtn_status = ods_constants.valdtn_valid) as chk_bus_unit_id,
                 (select user_id from efex_user where user_id = t01.sales_terr_user_id and valdtn_status = ods_constants.valdtn_valid) as chk_user_id
-           from efex_sales_terr t01,
+           from efex_sales_terr t01
           where t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
       rcd_list csr_list%rowtype;
@@ -708,7 +800,7 @@ create or replace package body ods_app.ods_efex_validation as
          select t01.*,
                 (select sgmnt_id from efex_sgmnt where sgmnt_id = t01.sgmnt_id and valdtn_status = ods_constants.valdtn_valid) as chk_sgmnt_id,
                 (select bus_unit_id from efex_bus_unit where bus_unit_id = t01.bus_unit_id and valdtn_status = ods_constants.valdtn_valid) as chk_bus_unit_id
-           from efex_matl_grp t01,
+           from efex_matl_grp t01
           where t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
       rcd_list csr_list%rowtype;
@@ -904,7 +996,7 @@ create or replace package body ods_app.ods_efex_validation as
                 (select matl_grp_id from efex_matl_grp where matl_grp_id = t01.matl_grp_id and valdtn_status = ods_constants.valdtn_valid) as chk_matl_grp_id
            from efex_matl_subgrp t01,
                 efex_matl_grp t02
-          where t01.efex_grp_id = t02.efex_grp_id(+)
+          where t01.matl_grp_id = t02.matl_grp_id(+)
             and t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
       rcd_list csr_list%rowtype;
@@ -1335,7 +1427,7 @@ create or replace package body ods_app.ods_efex_validation as
    /**************************************************************/
    /* This procedure performs the validate Efex customer routine */
    /**************************************************************/
-   procedure validate_efex_customer(par_market in number, par_reset in boolean) is
+   procedure validate_efex_cust(par_market in number, par_reset in boolean) is
 
       /*-*/
       /* Local variables
@@ -1358,7 +1450,7 @@ create or replace package body ods_app.ods_efex_validation as
                 (select cust_type_id from efex_cust_chnl where cust_type_id = t01.cust_type_id and valdtn_status = ods_constants.valdtn_valid) as chk_cust_type_id,
                 (select affltn_id from efex_affltn where affltn_id = t01.affltn_id and valdtn_status = ods_constants.valdtn_valid) as chk_affltn_id,
                 (select cust_code from cust_dim where ltrim(cust_code,'0') = t01.cust_code) as chk_cust_code,
-                (select distbr_id from efex_affltn where distbr_id = t01.distbr_id and (valdtn_status = ods_constants.valdtn_valid or valdtn_status = ods_constants.valdtn_unchecked) as chk_distbr_id
+                (select distbr_id from efex_affltn where distbr_id = t01.distbr_id and (valdtn_status = ods_constants.valdtn_valid or valdtn_status = ods_constants.valdtn_unchecked)) as chk_distbr_id
            from efex_cust t01,
                 efex_sales_terr t02
           where t01.sales_terr_id = t02.sales_terr_id(+)
@@ -1815,7 +1907,7 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the user
          /*-*/
          if rcd_list.chk_user_id is null then
-            lics_logging.write_log('efex_route_sched business/user/sched date: '||rcd_list.bus_unit_id||'/'rcd_list.user_id||'/'||rcd_list.route_sched_date||': Invalid or non-existant User Id.');
+            lics_logging.write_log('efex_route_sched business/user/sched date: '||rcd_list.bus_unit_id||'/'||rcd_list.user_id||'/'||rcd_list.route_sched_date||': Invalid or non-existant User Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_sched,
                        'KEY: [user-sched_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
@@ -2260,7 +2352,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the customer
             /*-*/
             if rcd_list.chk_efex_cust_id is null then
-               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant EFEX Customer Id.');
+               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant EFEX Customer Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_call,
                           'KEY: [cust-call_date-user] - Invalid or non-existant EFEX Customer Id - ' || rcd_list.efex_cust_id,
@@ -2268,7 +2360,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2278,7 +2370,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the user
             /*-*/
             if rcd_list.chk_user_id is null then
-               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant User Id.');
+               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant User Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_call,
                           'KEY: [cust-call_date-user] - Invalid or non-existant User Id - ' || rcd_list.user_id,
@@ -2286,7 +2378,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2296,7 +2388,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the sales territory
             /*-*/
             if rcd_list.chk_sales_terr_id is null then
-               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Sales Territory Id.');
+               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Sales Territory Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_call,
                           'KEY: [cust-call_date-user] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
@@ -2304,7 +2396,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2314,7 +2406,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the segment
             /*-*/
             if rcd_list.chk_sgmnt_id is null then
-               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Segment Id.');
+               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Segment Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_call,
                           'KEY: [cust-call_date-user] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
@@ -2322,7 +2414,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2332,7 +2424,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the business unit
             /*-*/
             if rcd_list.chk_bus_unit_id is null then
-               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Business Unit Id.');
+               lics_logging.write_log('efex_call cust/call date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Business Unit Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_call,
                           'KEY: [cust-call_date-user] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
@@ -2340,7 +2432,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.call_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2524,7 +2616,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the customer
             /*-*/
             if rcd_list.chk_efex_cust_id is null then
-               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant EFEX Customer Id.');
+               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant EFEX Customer Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_call,
                           'KEY: [cust-timesheet_date-user] - Invalid or non-existant EFEX Customer Id - ' || rcd_list.efex_cust_id,
@@ -2532,7 +2624,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2542,7 +2634,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the user
             /*-*/
             if rcd_list.chk_user_id is null then
-               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant User Id.');
+               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant User Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_call,
                           'KEY: [cust-timesheet_date-user] - Invalid or non-existant User Id - ' || rcd_list.user_id,
@@ -2550,7 +2642,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2560,7 +2652,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the sales territory
             /*-*/
             if rcd_list.chk_sales_terr_id is null then
-               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Sales Territory Id.');
+               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Sales Territory Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_call,
                           'KEY: [cust-timesheet_date-user] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
@@ -2568,7 +2660,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2578,7 +2670,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the segment
             /*-*/
             if rcd_list.chk_sgmnt_id is null then
-               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Segment Id.');
+               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Segment Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_call,
                           'KEY: [cust-timesheet_date-user] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
@@ -2586,7 +2678,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2596,7 +2688,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the business unit
             /*-*/
             if rcd_list.chk_bus_unit_id is null then
-               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Business Unit Id.');
+               lics_logging.write_log('efex_timesheet_call cust/timesheet_date/user: '||rcd_list.efex_cust_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||'/'||rcd_list.user_id||': Invalid or non-existant Business Unit Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_call,
                           'KEY: [cust-timesheet_date-user] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
@@ -2604,7 +2696,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           rcd_list.user_id,
                           null);
                var_first := false;
@@ -2787,7 +2879,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the user
             /*-*/
             if rcd_list.chk_user_id is null then
-               lics_logging.write_log('efex_timesheet_day user/timesheet_date: '||rcd_list.user_id||'/'||(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant User Id.');
+               lics_logging.write_log('efex_timesheet_day user/timesheet_date: '||rcd_list.user_id||'/'||to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant User Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_tmesht_day,
                           'KEY: [user-timesheet_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
@@ -2795,7 +2887,7 @@ create or replace package body ods_app.ods_efex_validation as
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.user_id,
-                          (rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.timesheet_date,'dd-mon-yyyy hh24:mi:ss'),
                           null,
                           null);
                var_first := false;
@@ -3124,7 +3216,7 @@ create or replace package body ods_app.ods_efex_validation as
       /*-*/
       /* Reset any invalid data to unchecked
       /*-*/
-      update efex_efex_assmnt_assgnmnt
+      update efex_assmnt_assgnmnt
          set valdtn_status = ods_constants.valdtn_unchecked
        where valdtn_status = ods_constants.valdtn_invalid;
 
@@ -3430,7 +3522,7 @@ create or replace package body ods_app.ods_efex_validation as
       /*-*/
       /* Reset any invalid data to unchecked
       /*-*/
-      update efex_efex_assmnt
+      update efex_assmnt
          set valdtn_status = ods_constants.valdtn_unchecked
        where valdtn_status = ods_constants.valdtn_invalid;
 
@@ -3491,7 +3583,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the assessment
             /*-*/
             if rcd_list.chk_assmnt_id is null then
-               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Assessment Id.');
+               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Assessment Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_assmnt,
                           'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Assessment Id - ' || rcd_list.assmnt_id,
@@ -3500,7 +3592,7 @@ create or replace package body ods_app.ods_efex_validation as
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
                           rcd_list.efex_cust_id,
-                          (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                           null);
                var_first := false;
             end if;
@@ -3509,7 +3601,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the customer
             /*-*/
             if rcd_list.chk_efex_cust_id is null then
-               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Efex Customer Id.');
+               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Efex Customer Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_assmnt,
                           'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
@@ -3518,7 +3610,7 @@ create or replace package body ods_app.ods_efex_validation as
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
                           rcd_list.efex_cust_id,
-                          (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                           null);
                var_first := false;
             end if;
@@ -3528,7 +3620,7 @@ create or replace package body ods_app.ods_efex_validation as
             /*-*/
             if rcd_list.sales_terr_id is not null then
                if rcd_list.chk_sales_terr_id is null then
-                  lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Sales Territory Id.');
+                  lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Sales Territory Id.');
                   add_reason(var_first,
                              ods_constants.valdtn_type_efex_assmnt,
                              'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
@@ -3537,7 +3629,7 @@ create or replace package body ods_app.ods_efex_validation as
                              nvl(rcd_list.bus_unit_id,-1),
                              rcd_list.assmnt_id,
                              rcd_list.efex_cust_id,
-                             (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                             to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                              null);
                   var_first := false;
                end if;
@@ -3547,7 +3639,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the segment
             /*-*/
             if rcd_list.chk_sgmnt_id is null then
-               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Segment Id.');
+               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Segment Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_assmnt,
                           'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
@@ -3556,7 +3648,7 @@ create or replace package body ods_app.ods_efex_validation as
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
                           rcd_list.efex_cust_id,
-                          (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                           null);
                var_first := false;
             end if;
@@ -3565,7 +3657,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the business unit
             /*-*/
             if rcd_list.chk_bus_unit_id is null then
-               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Business Unit Id.');
+               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant Business Unit Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_assmnt,
                           'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
@@ -3574,7 +3666,7 @@ create or replace package body ods_app.ods_efex_validation as
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
                           rcd_list.efex_cust_id,
-                          (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                           null);
                var_first := false;
             end if;
@@ -3583,7 +3675,7 @@ create or replace package body ods_app.ods_efex_validation as
             /* Validate the user
             /*-*/
             if rcd_list.chk_user_id is null then
-               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant User Id.');
+               lics_logging.write_log('efex_assmnt assmnt/cust/resp_date: '||rcd_list.assmnt_id||'/'||rcd_list.efex_cust_id||'/'||to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss')||': Invalid or non-existant User Id.');
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_assmnt,
                           'KEY: [assmnt-cust-resp_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
@@ -3592,7 +3684,7 @@ create or replace package body ods_app.ods_efex_validation as
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
                           rcd_list.efex_cust_id,
-                          (rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
+                          to_char(rcd_list.resp_date,'dd-mon-yyyy hh24:mi:ss'),
                           null);
                var_first := false;
             end if;
@@ -3773,7 +3865,7 @@ create or replace package body ods_app.ods_efex_validation as
                        'KEY: [range-matl] - Invalid or non-existant Range Id - ' || rcd_list.range_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
+                       -1,
                        rcd_list.range_id,
                        rcd_list.efex_matl_id,
                        null,
@@ -3791,7 +3883,7 @@ create or replace package body ods_app.ods_efex_validation as
                        'KEY: [range-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
+                       -1,
                        rcd_list.range_id,
                        rcd_list.efex_matl_id,
                        null,
@@ -3809,7 +3901,7 @@ create or replace package body ods_app.ods_efex_validation as
                        'KEY: [range-matl] - Required flag has not been provided.',
                        ods_constants.valdtn_severity_critical,
                        par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
+                       -1,
                        rcd_list.range_id,
                        rcd_list.efex_matl_id,
                        null,
@@ -3825,8 +3917,8 @@ create or replace package body ods_app.ods_efex_validation as
          end if;
          update efex_range_matl
             set valdtn_status = var_valdtn_status
-          where range_id = rcd_list.range_id,
-                efex_matl_id = rcd_list.efex_matl_id;
+          where range_id = rcd_list.range_id
+            and efex_matl_id = rcd_list.efex_matl_id;
 
          /*-*/
          /* Commit the database when required
@@ -4575,14 +4667,14 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the customer
          /*-*/
          if rcd_list.chk_efex_cust_id is null then
-            lics_logging.write_log('efex_order order: '||rcd_list.order_id||': Invalid or non-existant Efex Customer Id.');
+            lics_logging.write_log('efex_order order: '||rcd_list.efex_order_id||': Invalid or non-existant Efex Customer Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.order_id,
+                       rcd_list.efex_order_id,
                        null,
                        null,
                        null);
@@ -4593,14 +4685,14 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the user
          /*-*/
          if rcd_list.chk_user_id is null then
-            lics_logging.write_log('efex_order order: '||rcd_list.order_id||': Invalid or non-existant User Id.');
+            lics_logging.write_log('efex_order order: '||rcd_list.efex_order_id||': Invalid or non-existant User Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant User Id - ' || rcd_list.user_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.order_id,
+                       rcd_list.efex_order_id,
                        null,
                        null,
                        null);
@@ -4611,15 +4703,15 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the sales territory
          /*-*/
          if rcd_list.chk_sales_terr_id is null then
-            lics_logging.write_log('efex_order order: '||rcd_list.order_id||': Invalid or non-existant Sales Territory Id.');
+            lics_logging.write_log('efex_order order: '||rcd_list.efex_order_id||': Invalid or non-existant Sales Territory Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.order_id,
-                       null,,
+                       rcd_list.efex_order_id,
+                       null,
                        null,
                        null);
             var_first := false;
@@ -4629,14 +4721,14 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the segment
          /*-*/
          if rcd_list.chk_sgmnt_id is null then
-            lics_logging.write_log('efex_order order: '||rcd_list.order_id||': Invalid or non-existant Segment Id.');
+            lics_logging.write_log('efex_order order: '||rcd_list.efex_order_id||': Invalid or non-existant Segment Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.order_id,
+                       rcd_list.efex_order_id,
                        null,
                        null,
                        null);
@@ -4647,14 +4739,14 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the business unit
          /*-*/
          if rcd_list.chk_bus_unit_id is null then
-            lics_logging.write_log('efex_order order: '||rcd_list.order_id||': Invalid or non-existant Business Unit Id.');
+            lics_logging.write_log('efex_order order: '||rcd_list.efex_order_id||': Invalid or non-existant Business Unit Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.order_id,
+                       rcd_list.efex_order_id,
                        null,
                        null,
                        null);
@@ -4669,7 +4761,7 @@ create or replace package body ods_app.ods_efex_validation as
          end if;
          update efex_order
             set valdtn_status = var_valdtn_status
-          where order_id = rcd_list.order_id;
+          where efex_order_id = rcd_list.efex_order_id;
 
          /*-*/
          /* Commit the database when required
@@ -4867,14 +4959,14 @@ create or replace package body ods_app.ods_efex_validation as
          /* Validate the material distributor
          /*-*/
          if rcd_list.status = 'A' and rcd_list.chk_matl_distbr_id is null then
-            lics_logging.write_log('efex_order_matl cust/matl: '||rcd_list.efex_cust_id||'/'||rcd_list.efex_matl_id||': Invalid or non-existant Material Distributor Id.');
+            lics_logging.write_log('efex_order_matl order/matl: '||rcd_list.efex_order_id||'/'||rcd_list.efex_matl_id||': Invalid or non-existant Material Distributor Id.');
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order_matl,
                        'KEY: [cust-matl] - Invalid or non-existant Material Distributor Id - ' || rcd_list.matl_distbr_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.efex_cust_id,
+                       rcd_list.efex_order_id,
                        rcd_list.efex_matl_id,
                        null,
                        null);
@@ -5434,17 +5526,6 @@ create or replace package body ods_app.ods_efex_validation as
             and t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
       rcd_list csr_list%rowtype;
-
-
-      IF rv_efex_pmt_rtn.efex_matl_id IS NOT NULL THEN
-         v_count := 0;
-         SELECT
-           count(*) INTO v_count
-         FROM
-           efex_matl
-         WHERE
-           efex_matl_id = rv_efex_pmt_rtn.efex_matl_id
-           AND valdtn_status = ods_constants.valdtn_valid;
 
    /*-------------*/
    /* Begin block */
@@ -6180,7 +6261,7 @@ create or replace package body ods_app.ods_efex_validation as
                        'KEY: [mrq_task-matl] - Invalid or non-existant MRQ Task Id - ' || rcd_list.mrq_task_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
+                       2,
                        rcd_list.mrq_task_id,
                        rcd_list.efex_matl_id,
                        null,
@@ -6198,7 +6279,7 @@ create or replace package body ods_app.ods_efex_validation as
                        'KEY: [mrq_task-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
                        ods_constants.valdtn_severity_critical,
                        par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
+                       2,
                        rcd_list.mrq_task_id,
                        rcd_list.efex_matl_id,
                        null,
@@ -6985,7 +7066,7 @@ create or replace package body ods_app.ods_efex_validation as
    /**************************************************/
    /* This procedure performs the add reason routine */
    /**************************************************/
-   procedure add_reason(par_rea_start in boolean;
+   procedure add_reason(par_rea_start in boolean,
                         par_rea_type in number,
                         par_rea_message in varchar2,
                         par_rea_severity in varchar2,
@@ -7076,11 +7157,10 @@ create or replace package body ods_app.ods_efex_validation as
           valdtn_reasn_dtl_seq,
           valdtn_reasn_dtl_msg,
           valdtn_reasn_dtl_svrty)
-         values(
-          (pvar_rea_code,
-           pvar_rea_seqn,
-           par_rea_message,
-           par_rea_severity);
+         values(pvar_rea_code,
+                pvar_rea_seqn,
+                par_rea_message,
+                par_rea_severity);
 
    /*-------------*/
    /* End routine */
