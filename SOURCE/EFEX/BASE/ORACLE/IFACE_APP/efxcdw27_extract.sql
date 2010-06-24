@@ -177,7 +177,7 @@ create or replace package body iface_app.efxcdw27_extract as
       if csr_setting%found then
          var_hr_rate := rcd_setting.default_value;
       end if;
-      open csr_setting;
+      close csr_setting;
 
       /*-*/
       /* Extract the order data
