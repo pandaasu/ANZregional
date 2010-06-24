@@ -106,6 +106,12 @@ create or replace package body ods_app.efxcdw_poller as
    begin
 
       /*-*/
+      /* Initialise the procedure
+      /*-*/
+      var_alert := lics_setting_configuration.retrieve_setting(con_alt_group, con_alt_code);
+      var_email := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);
+
+      /*-*/
       /* Retrieve the outstanding control headers
       /*-*/
       open csr_list;
