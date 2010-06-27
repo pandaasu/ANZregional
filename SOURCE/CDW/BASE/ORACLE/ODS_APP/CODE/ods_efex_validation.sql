@@ -221,10 +221,10 @@ create or replace package body ods_app.ods_efex_validation as
             validate_efex_user_sgmnt(var_market);
             validate_efex_cust_note(var_market);
             align_data(var_market);
-          exception
-               when others then
-                  var_errors := true;
-          end;
+         exception
+              when others then
+                 var_errors := true;
+         end;
 
          /*-*/
          /* Release the lock on the aggregation
