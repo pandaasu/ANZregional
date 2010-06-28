@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE ODS_APP.scheduled_efex_aggregation IS
+CREATE OR REPLACE PACKAGE         scheduled_efex_aggregation IS
 
 /*******************************************************************************
   NAME:      run_efex_aggregation
@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE ODS_APP.scheduled_efex_aggregation IS
              should be run once daily after the efex to ods extraction has completed.
 
              The scheduled job will call this efex aggregation procedure passing
-             Aggregation Date as parameters.  Aggregation Date will be set to SYSDATE-1
+             Aggregation Date as parameters.  Aggregation Date will be set to SYSDATE
              when called via the scheduled job.
 
    NOTES:  The sequence of the function call within this procedure should not be changed
@@ -24,13 +24,13 @@ CREATE OR REPLACE PACKAGE ODS_APP.scheduled_efex_aggregation IS
                                          efex_assoc_sgmnt_fact
                                          efex_cust_note_fact
                                        Update the efex_cust.sales_terr_code when
-                                       a new code is created for the same Sales 
+                                       a new code is created for the same Sales
                                        Territory.
   1.2   21/01/2008 Kris Lee           Create new distribution and total distribution
-                                      with new code when new code created for sales 
+                                      with new code when new code created for sales
                                       territory or customer.
                                       Fix efex_distbn_xactn_dim, efex_distbn_fact,
-                                      efex_tot_distn_xactn_dim with new codes from 
+                                      efex_tot_distn_xactn_dim with new codes from
                                       latest customer and sales territory.
   1.3   19/02/2008 Kris Lee           - Create efx_cust_distbn_oppotn_fact_aggr
                                                efx_matl_distbn_oppotn_fact_aggr
@@ -38,29 +38,34 @@ CREATE OR REPLACE PACKAGE ODS_APP.scheduled_efex_aggregation IS
                                       - Eff_end_date should be updated when customer or
                                         sales territory status changed to X.
                                       - Create new customer detail record when customer
-                                        record re-opened from efex (change status from X to A). 
+                                        record re-opened from efex (change status from X to A).
                                       - Change efex_distbn_xactn_dim gap logic
                                       - Add new fields to efex_distbn_fact.
                                       - Add new fields to efex_range_matl_fact.
                                       - Change efex_cust_note.cust_note_created data type to
                                         date and truncate to date part only.
                                       - Set default values for efex_cust_dtl_dim nullable fields.
-  1.4   30/05/2008 Paul Berude        - Create efx_cust_fact_aggr 
+  1.4   30/05/2008 Paul Berude        - Create efx_cust_fact_aggr
   1.5   08/08/2008 Paul Berude        Change efex_target column user_id to sales_terr_id due to
                                       change in efex application
- 
+  1.6   06/07/2009 Trevor Keon        - Added batch commits to the efex_distbn_fact_aggr function
+  1.7   28/06/2010 Steve Gregan       - Added market id to the flattening/aggregation process
+                                        This process is now performed by market id
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
   ---- ------ -------- ------------------------------------ --------------------
   1    IN     DATE     Aggregation Date                     20071001
+  2    IN     NUMBER   Market Id                            1
 
   RETURN VALUE:
   ASSUMPTIONS:
   NOTES:
 ********************************************************************************/
 PROCEDURE run_efex_aggregation (
-  i_aggregation_date IN DATE );
+  i_aggregation_date IN DATE,
+  i_market_id IN NUMBER,
+  i_company_code IN VARCHAR2);
 
 /*******************************************************************************
   NAME:      write_log
@@ -116,10 +121,13 @@ FUNCTION format_cust_code (
 END scheduled_efex_aggregation;
 /
 
-CREATE OR REPLACE PACKAGE BODY ODS_APP.scheduled_efex_aggregation IS
+
+CREATE OR REPLACE PACKAGE BODY         scheduled_efex_aggregation IS
 
   c_future_date          CONSTANT DATE := TO_DATE('99991231','YYYYMMDD');
   c_tp_budget_target_id  CONSTANT efex_target_fact.efex_target_id%TYPE := 12;
+  p_market_id            NUMBER;
+  p_company_code         VARCHAR2(10);
 
 FUNCTION efex_ref_data_flattening (
   i_log_level             IN ods.log.log_level%TYPE
@@ -332,7 +340,9 @@ FUNCTION efex_target_fact_aggr (
   ) RETURN NUMBER;
 
 PROCEDURE run_efex_aggregation (
-  i_aggregation_date IN DATE ) IS
+  i_aggregation_date IN DATE,
+  i_market_id IN NUMBER,
+  i_company_code IN VARCHAR2) IS
 
   -- VARIABLE DECLARATIONS
   v_processing_msg   constants.message_string;
@@ -348,6 +358,8 @@ PROCEDURE run_efex_aggregation (
 BEGIN
   -- Initialise variables.
   v_log_level := 0;
+  p_market_id := i_market_id;
+  p_company_code := i_company_code;
 
   -- Get the Database name
   SELECT
@@ -360,20 +372,29 @@ BEGIN
   -- Start scheduled efex aggregation.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level, 'Scheduled EFEX Flattening and Aggregation - Start');
 
+  -- Market id must be valid.
+  IF p_market_id is null OR (p_market_is != 1 AND p_market_id != 5) THEN
+      v_processing_msg := 'Invalid market id [' || TO_CHAR(i_market_id) || '].';
+      RAISE e_processing_error;
+  END IF:
+
+  -- Company code must be valid.
+  IF p_company_code is null OR (p_company_code != '147' AND p_company_code != '149') THEN
+      v_processing_msg := 'Invalid company code [' || p_company_code || '].';
+      RAISE e_processing_error;
+  END IF:
+
   -- Convert the inputted aggregation date to standard date format.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Converting the inputted Aggregation' ||
     ' Date [' || TO_CHAR(i_aggregation_date) || '] to standard date format.');
   BEGIN
     IF i_aggregation_date IS NULL THEN
       RAISE e_processing_error;
-
     ELSE
       v_aggregation_date := i_aggregation_date;
       v_aggregation_date := TO_DATE(TO_CHAR(v_aggregation_date, 'YYYYMMDD'), 'YYYYMMDD');
     END IF;
-
-    write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Will be flattening and aggregating EFEX data for date: ' || v_aggregation_date || '.');
-
+    write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Will be flattening and aggregating EFEX data for date: ' || v_aggregation_date || ' and market: ' || p_market_id || '.');
   EXCEPTION
     WHEN OTHERS THEN
       v_processing_msg := 'Unable to convert the inputted Aggregation Date [' || TO_CHAR(i_aggregation_date, 'YYYYMMDD') || '] from string to date format.';
@@ -731,7 +752,7 @@ BEGIN
     v_processing_msg := 'Unable to successfully complete the efex_target_fact_aggr.';
     RAISE e_processing_error;
   END IF;
-  
+
   -- End scheduled efex aggregation processing.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level, 'Scheduled Efex Flattening and Aggregation - End');
 
@@ -790,6 +811,7 @@ BEGIN
               call_type
             FROM
               ods.efex_call_type
+            WHERE efex_mkt_id = p_market_id
             MINUS
             SELECT
               call_type_code,
@@ -1063,7 +1085,8 @@ FUNCTION efex_bus_unit_flattening (
     FROM ods.efex_bus_unit
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(bus_unit_lupdt) = i_aggregation_date;
+      AND trunc(bus_unit_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_bus_unit flattening.
@@ -1090,6 +1113,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(bus_unit_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_bus_unit_id = t2.efex_bus_unit_id )
         WHEN MATCHED THEN
@@ -1142,7 +1166,8 @@ FUNCTION efex_sgmnt_flattening (
     FROM ods.efex_sgmnt
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(sgmnt_lupdt) = i_aggregation_date;
+      AND trunc(sgmnt_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_sgmnt flattening.
@@ -1170,6 +1195,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(sgmnt_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_sgmnt_id = t2.efex_sgmnt_id )
         WHEN MATCHED THEN
@@ -1225,7 +1251,8 @@ FUNCTION efex_assoc_flattening (
     FROM ods.efex_user
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(user_lupdt) = i_aggregation_date;
+      AND trunc(user_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_assoc flattening.
@@ -1256,6 +1283,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(user_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_assoc_id = t2.efex_assoc_id )
         WHEN MATCHED THEN
@@ -1320,7 +1348,8 @@ FUNCTION efex_banner_flattening (
     FROM ods.efex_affltn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(affltn_lupdt) = i_aggregation_date;
+      AND trunc(affltn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_banner flattening.
@@ -1349,6 +1378,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(affltn_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_banner_id = t2.efex_banner_id )
         WHEN MATCHED THEN
@@ -1407,7 +1437,8 @@ FUNCTION efex_chnl_flattening (
     FROM ods.efex_cust_chnl
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(cust_chnl_lupdt) = i_aggregation_date;
+      AND trunc(cust_chnl_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_chnl flattening.
@@ -1438,6 +1469,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(cust_chnl_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_cust_type_id = t2.efex_cust_type_id )
         WHEN MATCHED THEN
@@ -1515,11 +1547,12 @@ FUNCTION efex_sales_terr_flattening (
     FROM ods.efex_sales_terr
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(sales_terr_lupdt) = i_aggregation_date;
+      AND trunc(sales_terr_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   -- efex_sales_terr cursor from ODS table.
   CURSOR csr_sales_terr IS
-    SELECT 
+    SELECT
       sales_terr_id       efex_sales_terr_id,
       sales_terr_name,
       sales_terr_user_id  sales_terr_mgr_id,
@@ -1530,34 +1563,35 @@ FUNCTION efex_sales_terr_flattening (
       sales_regn_id       efex_sales_regn_id,
       sales_regn_name,
       sales_regn_user_id  efex_regn_mgr_id,
-      regn_mgr_name,       
+      regn_mgr_name,
       sgmnt_id            efex_sgmnt_id,
-      bus_unit_id         efex_bus_unit_id,       
+      bus_unit_id         efex_bus_unit_id,
       TRUNC(efex_lupdt)   efex_lupdt,
       status
-    FROM 
+    FROM
       ods.efex_sales_terr
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(sales_terr_lupdt) = i_aggregation_date;
+      AND trunc(sales_terr_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   rv_sales_terr csr_sales_terr%ROWTYPE;
 
   -- Select the latest record from dim for the same sales_terr_id.
   CURSOR csr_last_sales_terr IS
-    SELECT 
+    SELECT
       sales_terr_code,
       efex_sales_terr_id,
       sales_terr_mgr_id,
       efex_sales_area_id,
       efex_sales_regn_id,
       efex_sgmnt_id
-    FROM 
+    FROM
       efex_sales_terr_dim
     WHERE
       efex_sales_terr_id = v_efex_sales_terr_id
       AND last_rec_flg = 'Y';
-      
+
     rv_last_sales_terr csr_last_sales_terr%ROWTYPE;
 
   -- Select the new sales_terr_code here so we can
@@ -1566,7 +1600,7 @@ FUNCTION efex_sales_terr_flattening (
   CURSOR csr_sales_terr_code IS
     SELECT
       efex_sales_terr_dim_seq.nextval as sales_terr_code
-    FROM 
+    FROM
       dual;
 
 BEGIN
@@ -1612,7 +1646,7 @@ BEGIN
 
             -- The following sales territory requires slowly change.
             write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'The following sales terr' ||
-                     ' requires slowly changes sales terr id/mgr id/sales area id/sales regn id [' || 
+                     ' requires slowly changes sales terr id/mgr id/sales area id/sales regn id [' ||
                      rv_sales_terr.efex_sales_terr_id || '/' || rv_sales_terr.sales_terr_mgr_id || '/' ||
                      rv_sales_terr.efex_sales_area_id || '/' || rv_sales_terr.efex_sales_regn_id || '].');
 
@@ -1627,9 +1661,9 @@ BEGIN
       IF v_insert_flg = TRUE THEN
          -- If slowly change occurs, close the last sales territory record first.
          IF v_update_flg = TRUE THEN
-            UPDATE 
+            UPDATE
               efex_sales_terr_dim
-            SET 
+            SET
               eff_end_date = rv_sales_terr.efex_lupdt,
               last_rec_flg = 'N'
             WHERE
@@ -1664,9 +1698,9 @@ BEGIN
             eff_start_date,
             eff_end_date,
             last_rec_flg,
-            status  
+            status
            )
-         VALUES 
+         VALUES
           (
            v_new_sales_terr_code,
            rv_sales_terr.sales_terr_mgr_id,
@@ -1695,12 +1729,12 @@ BEGIN
 
            -- Update the sales_terr_code in efex_cust_dtl_dim table to reflex the changes.
            UPDATE efex_cust_dtl_dim
-           SET 
+           SET
              sales_terr_code = v_new_sales_terr_code
            WHERE
              efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
              AND last_rec_flg = 'Y';
-   
+
            v_cust_update_count := v_cust_update_count + SQL%ROWCOUNT;
 
            write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_cust_dtl_dim updated [' || v_cust_update_count ||
@@ -1708,11 +1742,11 @@ BEGIN
 
            -- Update the lupdt column in efex_target table to aggregate using the new sales territory record.
            UPDATE efex_target
-           SET 
+           SET
              target_lupdt = sysdate
            WHERE
              sales_terr_id = rv_sales_terr.efex_sales_terr_id;
-   
+
            v_target_update_count := v_target_update_count + SQL%ROWCOUNT;
 
            write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_target updated [' || v_target_update_count ||
@@ -1778,7 +1812,7 @@ BEGIN
                  rv_sales_terr.sales_terr_mgr_id,
                  t1.efex_range_id,
                  t1.rqd_flg_code,
-                 t1.ranged_flg_code, 
+                 t1.ranged_flg_code,
                  t1.outofdate_stock_flg_code,
                  t1.gap_flg_code,
                  t1.facing_qty,
@@ -1802,15 +1836,15 @@ BEGIN
                WHERE
                  t1.efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
                  AND sales_terr_code = v_old_sales_terr_code
-                 AND t1.last_rec_flg = 'Y'    -- for all active distribution      
-                 AND t1.status = 'A'    
+                 AND t1.last_rec_flg = 'Y'    -- for all active distribution
+                 AND t1.status = 'A'
                  AND t1.efex_matl_id = t3.efex_matl_id   -- with active subgroup assigment
                  AND t3.efex_sgmnt_id = rv_sales_terr.efex_sgmnt_id
                  AND t3.status = 'A'
-                 AND NOT EXISTS (SELECT * 
-                                FROM efex_distbn t3 
+                 AND NOT EXISTS (SELECT *
+                                FROM efex_distbn t3
                                 WHERE t1.efex_cust_id = t3.efex_cust_id
-                                  AND t1.efex_matl_id = t3.efex_matl_id 
+                                  AND t1.efex_matl_id = t3.efex_matl_id
                                   AND TRUNC(t3.distbn_lupdt) = i_aggregation_date)
                  AND EXISTS (SELECT *                 -- for active customer only
                              FROM efex_cust t4
@@ -1818,14 +1852,14 @@ BEGIN
                                AND t4.status = 'A'
                                AND t4.valdtn_status = ods_constants.valdtn_valid )
                  AND rv_sales_terr.efex_lupdt = t2.calendar_date;
-   
+
                v_rec_count := SQL%ROWCOUNT;
-   
+
               write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim INSERTED [' || v_rec_count ||
                         '] for sales_terr_id/new sales_terr_code [' || rv_sales_terr.efex_sales_terr_id || '/' || v_new_sales_terr_code || '].');
-   
-              -- Now close the records that we have created a new one. 
-              UPDATE 
+
+              -- Now close the records that we have created a new one.
+              UPDATE
                 efex_distbn_xactn_dim t1
               SET
                 last_rec_flg = 'N',
@@ -1834,24 +1868,24 @@ BEGIN
                 efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
                 AND sales_terr_code = v_old_sales_terr_code
                 AND last_rec_flg = 'Y'
-                AND t1.status = 'A'    
-                AND EXISTS (SELECT * 
-                            FROM efex_distbn_xactn_dim t3 
+                AND t1.status = 'A'
+                AND EXISTS (SELECT *
+                            FROM efex_distbn_xactn_dim t3
                             WHERE t1.efex_cust_id = t3.efex_cust_id
-                              AND t1.efex_matl_id = t3.efex_matl_id 
-                              AND t1.efex_sales_terr_id = t3.efex_sales_terr_id 
+                              AND t1.efex_matl_id = t3.efex_matl_id
+                              AND t1.efex_sales_terr_id = t3.efex_sales_terr_id
                               AND t3.sales_terr_code = v_new_sales_terr_code);
 
-   
+
               v_rec_count := SQL%ROWCOUNT;
-   
+
               write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim UPDATED [' || v_rec_count ||
                         '] for sales_terr_id [' || rv_sales_terr.efex_sales_terr_id || '].');
 
-              -- sales territory assign to different sgmnt then 
+              -- sales territory assign to different sgmnt then
               IF v_old_efex_sgmnt_id <> rv_sales_terr.efex_sgmnt_id THEN
-                 -- Trigger the ODS efex_distbn if any item segment doesn't have active subgroup assignment. 
-                 UPDATE 
+                 -- Trigger the ODS efex_distbn if any item segment doesn't have active subgroup assignment.
+                 UPDATE
                    efex_distbn t1
                  SET
                    valdtn_status = ods_constants.valdtn_unchecked,
@@ -1861,17 +1895,17 @@ BEGIN
                    sales_terr_id = rv_sales_terr.efex_sales_terr_id
                    AND sgmnt_id = v_old_efex_sgmnt_id
                    AND status = 'A'
-                   AND NOT EXISTS (SELECT * 
-                                   FROM 
+                   AND NOT EXISTS (SELECT *
+                                   FROM
                                      efex_matl_matl_subgrp t2
-                                   WHERE 
+                                   WHERE
                                      t2.efex_matl_id = t1.efex_matl_id
                                      AND t2.sgmnt_id = rv_sales_terr.efex_sgmnt_id
                                      AND t2.status = 'A'
                                      AND t2.valdtn_status = ods_constants.valdtn_valid);
               END IF;
-  
-              
+
+
              -- Insert a new distribution transaction record.
              INSERT INTO efex_tot_distbn_xactn_dim
                (
@@ -1911,28 +1945,28 @@ BEGIN
                c_future_date,
                'Y',
                t1.status
-             FROM 
+             FROM
                efex_tot_distbn_xactn_dim t1
              WHERE
                t1.efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
                AND t1.last_rec_flg = 'Y'
-               AND NOT EXISTS (SELECT * 
-                               FROM efex_distbn_tot t3 
+               AND NOT EXISTS (SELECT *
+                               FROM efex_distbn_tot t3
                                WHERE t1.efex_cust_id = t3.efex_cust_id
-                                 AND t1.efex_matl_grp_id = t3.matl_grp_id 
-                                 AND    t1.efex_sales_terr_id = t3.sales_terr_id 
+                                 AND t1.efex_matl_grp_id = t3.matl_grp_id
+                                 AND    t1.efex_sales_terr_id = t3.sales_terr_id
                                  AND TRUNC(t3.distbn_tot_lupdt) = i_aggregation_date)
                AND EXISTS (SELECT *
                            FROM efex_cust t4
                            WHERE t1.efex_cust_id = t4.efex_cust_id
                              AND t4.status = 'A' );
-   
+
              v_rec_count := SQL%ROWCOUNT;
-   
+
              write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_xactn_dim INSERTED [' || v_rec_count ||
                         '] for sales_terr_id/new sales_terr_code [' || rv_sales_terr.efex_sales_terr_id || '/' || v_new_sales_terr_code || '].');
-   
-             UPDATE 
+
+             UPDATE
                efex_tot_distbn_xactn_dim t1
              SET
                last_rec_flg = 'N',
@@ -1941,21 +1975,21 @@ BEGIN
                efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
                AND sales_terr_code <> v_new_sales_terr_code
                AND last_rec_flg = 'Y'
-               AND NOT EXISTS (SELECT * 
-                               FROM efex_distbn_tot t3 
+               AND NOT EXISTS (SELECT *
+                               FROM efex_distbn_tot t3
                                WHERE t1.efex_cust_id = t3.efex_cust_id
-                                 AND t1.efex_matl_grp_id = t3.matl_grp_id 
-                                 AND    t1.efex_sales_terr_id = t3.sales_terr_id 
+                                 AND t1.efex_matl_grp_id = t3.matl_grp_id
+                                 AND    t1.efex_sales_terr_id = t3.sales_terr_id
                                  AND TRUNC(t3.distbn_tot_lupdt) = i_aggregation_date)
                AND EXISTS (SELECT *
                            FROM efex_cust t4
                            WHERE t1.efex_cust_id = t4.efex_cust_id
                              AND t4.status = 'A' );
-   
+
              v_rec_count := SQL%ROWCOUNT;
-   
+
              COMMIT;
-   
+
              write_log(ods_constants.data_type_efex_sales_terr, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_xactn_dim UPDATED [' || v_rec_count ||
                         '] for sales_terr_id [' || rv_sales_terr.efex_sales_terr_id || '].');
           END IF; -- active sales territory
@@ -1964,7 +1998,7 @@ BEGIN
 
       -- Update the latest record only.
       IF v_insert_flg = FALSE AND v_update_flg = TRUE THEN
-         UPDATE 
+         UPDATE
            efex_sales_terr_dim
          SET
            sales_terr_name = rv_sales_terr.sales_terr_name,
@@ -1973,9 +2007,9 @@ BEGIN
            sales_regn_name = rv_sales_terr.sales_regn_name,
            regn_mgr_name = rv_sales_terr.regn_mgr_name,
            status = rv_sales_terr.status,
-           eff_end_date = CASE WHEN (rv_sales_terr.status = 'X' AND eff_end_date = c_future_date) THEN rv_sales_terr.efex_lupdt 
+           eff_end_date = CASE WHEN (rv_sales_terr.status = 'X' AND eff_end_date = c_future_date) THEN rv_sales_terr.efex_lupdt
                                WHEN (rv_sales_terr.status = 'A') THEN c_future_date ELSE eff_end_date END
-         WHERE 
+         WHERE
            efex_sales_terr_id = rv_sales_terr.efex_sales_terr_id
            AND last_rec_flg = 'Y';
 
@@ -1990,7 +2024,7 @@ BEGIN
              'SCHEDULED_EFEX_AGGREGATION.EFEX_SALES_TERR_FLATTENING: sales_terr_id [' || rv_sales_terr.efex_sales_terr_id ||
              '], Error: ' || SUBSTR(SQLERRM, 1, 512));
          RAISE e_processing_error;
-      
+
      END;
 
     END LOOP;
@@ -2028,7 +2062,7 @@ FUNCTION efex_cust_flattening (
   v_cust_code             cust_dim.cust_code%TYPE;
   v_update_flg            BOOLEAN := FALSE;
   v_insert_flg            BOOLEAN := FALSE;
-  v_skip_flg              BOOLEAN := FALSE;   
+  v_skip_flg              BOOLEAN := FALSE;
 
   v_update_count          PLS_INTEGER := 0;
   v_insert_count          PLS_INTEGER := 0;
@@ -2044,7 +2078,7 @@ FUNCTION efex_cust_flattening (
   v_old_cust_dtl_code     efex_cust_dtl_dim.cust_dtl_code%TYPE;
   v_new_cust_dtl_code     efex_cust_dtl_dim.cust_dtl_code%TYPE;
 
-  
+
   -- EXCEPTION DECLARATIONS
   e_processing_error EXCEPTION;
 
@@ -2055,10 +2089,11 @@ FUNCTION efex_cust_flattening (
     FROM efex_cust
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(cust_lupdt) = i_aggregation_date;
+      AND trunc(cust_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_efex_cust IS
-    SELECT 
+    SELECT
       t1.efex_cust_id,
       t1.cust_code,
       t1.cust_name,
@@ -2073,14 +2108,14 @@ FUNCTION efex_cust_flattening (
       t1.outlet_flg,
       t1.active_flg,
       NVL(t1.sales_terr_id, -1)                                             AS efex_sales_terr_id,
-      NVL(t1.range_id, ods_constants.efex_def_range_id)                     AS range_id,  
+      NVL(t1.range_id, ods_constants.efex_def_range_id)                     AS range_id,
       NVL(t1.cust_visit_freq_id, ods_constants.efex_def_cust_visit_freq_id) AS cust_visit_freq_id,
       NVL(t1.cust_visit_freq, 0)                                            AS cust_visit_freq,
       NVL(t1.cust_type_id, ods_constants.efex_def_cust_type_id)             AS cust_type_id,
       NVL(t1.affltn_id, ods_constants.efex_def_affltn_id)                   AS affltn_id,
       t1.distbr_id,
       NVL(t1.cust_grade_id, ods_constants.efex_def_cust_grade_id)           AS cust_grade_id,
-      NVL(t1.cust_grade, ods_constants.efex_def_cust_grade)                 AS cust_grade, 
+      NVL(t1.cust_grade, ods_constants.efex_def_cust_grade)                 AS cust_grade,
       t1.payee_name,
       t1.merch_name,
       t1.merch_code,
@@ -2095,31 +2130,32 @@ FUNCTION efex_cust_flattening (
       t2.sales_terr_code,
       t2.sales_terr_mgr_id,
       t2.efex_sgmnt_id
-    FROM 
+    FROM
       efex_cust t1,
       efex_sales_terr_dim t2
     WHERE
       valdtn_status = ods_constants.valdtn_valid
       AND trunc(cust_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id
       AND t1.sales_terr_id = t2.efex_sales_terr_id (+) -- Distributor doesn't has assigned sales territory
       AND t2.last_rec_flg (+) = 'Y';
   rv_efex_cust csr_efex_cust%ROWTYPE;
 
   -- Select the latest slowly changed fields record from dim for the same efex_cust_id
   CURSOR csr_last_cust_dtl IS
-    SELECT 
+    SELECT
       cust_dtl_code,
       efex_cust_id,
       NVL(t1.efex_sales_terr_id, -1)                                          AS efex_sales_terr_id,
-      NVL(efex_range_id, ods_constants.efex_def_range_id)                     AS efex_range_id,  
-      NVL(grade, ods_constants.efex_def_cust_grade)                           AS grade, 
+      NVL(efex_range_id, ods_constants.efex_def_range_id)                     AS efex_range_id,
+      NVL(grade, ods_constants.efex_def_cust_grade)                           AS grade,
       last_call_date, -- carry this information to new slowly change record
       last_order_date,
       last_order_id,
       t1.status AS last_status, -- pick the last ststus
       active_flg AS last_active_flg,
       t2.efex_sgmnt_id
-    FROM 
+    FROM
       efex_cust_dtl_dim t1,
       efex_sales_terr_dim t2
     WHERE
@@ -2129,9 +2165,9 @@ FUNCTION efex_cust_flattening (
   rv_last_cust_dtl csr_last_cust_dtl%ROWTYPE;
 
   CURSOR csr_cust_dim IS
-    SELECT 
+    SELECT
       cust_code
-    FROM 
+    FROM
       cust_dim
     WHERE
       cust_code = v_cust_code;
@@ -2140,7 +2176,7 @@ FUNCTION efex_cust_flattening (
   CURSOR csr_cust_dtl_code IS
     SELECT
       efex_cust_dtl_dim_seq.nextval as cust_dtl_code
-    FROM 
+    FROM
       dual;
 
 BEGIN
@@ -2158,9 +2194,9 @@ BEGIN
 
   IF v_rec_count > 0 THEN
 
-    FOR rv_efex_cust IN csr_efex_cust LOOP      
+    FOR rv_efex_cust IN csr_efex_cust LOOP
 
-     BEGIN 
+     BEGIN
       -- Now pass cursor results into variables.
       v_efex_cust_id :=  rv_efex_cust.efex_cust_id;
       v_cust_code := rv_efex_cust.cust_code;
@@ -2175,7 +2211,7 @@ BEGIN
       v_last_status := NULL;
       v_last_active_flg := NULL;
 
-      IF rv_efex_cust.cust_code IS NULL THEN        
+      IF rv_efex_cust.cust_code IS NULL THEN
         v_cust_code := 'EFX' || TO_CHAR(rv_efex_cust.efex_cust_id);
       ELSE  -- GRD customer
         -- Format cust_code to SAP format
@@ -2184,12 +2220,12 @@ BEGIN
 
       OPEN csr_cust_dim;
       FETCH csr_cust_dim INTO rv_cust_dim;
-    
+
       BEGIN
 
-        -- New outlet or distributor customer, then add to cust_dim 
+        -- New outlet or distributor customer, then add to cust_dim
         IF csr_cust_dim%NOTFOUND AND  rv_efex_cust.cust_code IS NULL THEN
-    
+
             INSERT INTO cust_dim
               (
                cust_code,
@@ -2244,23 +2280,23 @@ BEGIN
                 '000',                         -- fundr_grp_type_code
                 'Not Applicable'               -- fundr_grp_type_desc
                );
-    
+
              v_cust_dim_insert_count := v_cust_dim_insert_count + SQL%ROWCOUNT;
-    
+
           -- Found outlet or distributor customer from cust_dim
           ELSIF csr_cust_dim%FOUND AND rv_efex_cust.cust_code IS NULL THEN
-    
+
             UPDATE cust_dim
-            SET 
+            SET
               cust_name_en = rv_efex_cust.cust_name,
               addr_city_en = rv_efex_cust.city,
               addr_postl_code_en = rv_efex_cust.postcode,
               addr_regn_code_en = TRIM(rv_efex_cust.state)
-            WHERE 
+            WHERE
               cust_code = v_cust_code;
-    
+
             v_cust_dim_update_count := v_cust_dim_update_count + SQL%ROWCOUNT;
-    
+
           END IF;
           CLOSE csr_cust_dim;
 
@@ -2270,15 +2306,15 @@ BEGIN
              'SCHEDULED_EFEX_AGGREGATION.EFEX_CUST_FLATTENING(CUST_DIM): cust_id [' || rv_efex_cust.efex_cust_id ||
              '], Error: ' || SUBSTR(SQLERRM, 1, 512));
            RAISE e_processing_error;
- 
+
           END;
-    
+
           -- Check any efex customer detail record for this customer
           OPEN csr_last_cust_dtl;
           FETCH csr_last_cust_dtl INTO rv_last_cust_dtl;
-    
+
           IF csr_last_cust_dtl%NOTFOUND THEN
-    
+
              v_insert_flg := TRUE;
              v_update_flg := FALSE;
           ELSE
@@ -2300,12 +2336,12 @@ BEGIN
                 v_update_flg := TRUE;
                 v_insert_flg := FALSE;
              END IF;
-    
+
           END IF;
           CLOSE csr_last_cust_dtl;
-    
+
           IF v_insert_flg = TRUE THEN
-             -- Put the new cust_dtl_code in a variable so we can use it to update the distribution 
+             -- Put the new cust_dtl_code in a variable so we can use it to update the distribution
              OPEN csr_cust_dtl_code;
              FETCH csr_cust_dtl_code INTO v_new_cust_dtl_code;
              CLOSE csr_cust_dtl_code;
@@ -2313,13 +2349,13 @@ BEGIN
              -- Try to update the last record for the customer
              IF v_update_flg = TRUE THEN
                 UPDATE efex_cust_dtl_dim
-                SET 
+                SET
                    eff_end_date = CASE WHEN (eff_end_date = c_future_date) THEN rv_efex_cust.efex_lupdt ELSE eff_end_date END,  -- don't overwritten closed date
                    last_rec_flg = 'N'
                 WHERE
                    efex_cust_id = rv_efex_cust.efex_cust_id
                    AND last_rec_flg = 'Y';
-       
+
                 v_update_count := v_update_count + SQL%ROWCOUNT;
              END IF;
 
@@ -2357,12 +2393,12 @@ BEGIN
                 eff_start_date,
                 eff_end_date,
                 last_rec_flg,
-                status, 
+                status,
                 last_call_date,
                 last_order_date,
-                last_order_id 
+                last_order_id
                )
-             VALUES 
+             VALUES
               (
                v_new_cust_dtl_code,
                rv_efex_cust.efex_cust_id,
@@ -2378,16 +2414,16 @@ BEGIN
                rv_efex_cust.abn,
                rv_efex_cust.meals_day,
                rv_efex_cust.lead_time,
-               rv_efex_cust.cust_grade,  
+               rv_efex_cust.cust_grade,
                rv_efex_cust.affltn_id,
                rv_efex_cust.cust_type_id,
                DECODE(rv_efex_cust.efex_sales_terr_id, -1, NULL, rv_efex_cust.efex_sales_terr_id),
                rv_efex_cust.sales_terr_code,
-               rv_efex_cust.range_id,  
-               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 1/rv_efex_cust.cust_visit_freq), 
-               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 4/rv_efex_cust.cust_visit_freq), 
-               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 52/rv_efex_cust.cust_visit_freq), 
-               rv_efex_cust.cust_visit_freq, 
+               rv_efex_cust.range_id,
+               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 1/rv_efex_cust.cust_visit_freq),
+               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 4/rv_efex_cust.cust_visit_freq),
+               DECODE(rv_efex_cust.cust_visit_freq, 0, 0, 52/rv_efex_cust.cust_visit_freq),
+               rv_efex_cust.cust_visit_freq,
                rv_efex_cust.disc_pct,
                rv_efex_cust.corporate_flg,
                rv_efex_cust.distbr_flg,
@@ -2395,17 +2431,17 @@ BEGIN
                rv_efex_cust.active_flg,
                rv_efex_cust.efex_lupdt,
                DECODE(rv_efex_cust.status, 'A', c_future_date, rv_efex_cust.efex_lupdt),
-               'Y', 
+               'Y',
                rv_efex_cust.status,
                v_last_call_date,
                v_last_order_date,
                v_last_order_id
               );
-    
+
              v_insert_count := v_insert_count + SQL%ROWCOUNT;
 
              -- Only create new distribution transaction for active and not deleted customer
-             IF v_old_cust_dtl_code IS NOT NULL AND 
+             IF v_old_cust_dtl_code IS NOT NULL AND
                 rv_efex_cust.status = 'A'  AND  v_last_status = 'A'  THEN      -- don't do it if re-open deleted customer
                 -- Insert a new distribution transaction record.
                INSERT INTO efex_distbn_xactn_dim
@@ -2465,7 +2501,7 @@ BEGIN
                   rv_efex_cust.sales_terr_mgr_id,
                   t1.efex_range_id,
                   t1.rqd_flg_code,
-                  t1.ranged_flg_code, 
+                  t1.ranged_flg_code,
                   t1.outofdate_stock_flg_code,
                   t1.gap_flg_code,
                   t1.facing_qty,
@@ -2493,20 +2529,20 @@ BEGIN
                   AND t4.efex_matl_id = t1.efex_matl_id
                   AND t4.efex_sgmnt_id = rv_efex_cust.efex_sgmnt_id
                   AND t4.status = 'A'
-                  AND NOT EXISTS (SELECT * 
-                                  FROM efex_distbn t3 
-                                  WHERE t1.efex_cust_id = t3.efex_cust_id  
-                                    AND t1.efex_matl_id = t3.efex_matl_id 
+                  AND NOT EXISTS (SELECT *
+                                  FROM efex_distbn t3
+                                  WHERE t1.efex_cust_id = t3.efex_cust_id
+                                    AND t1.efex_matl_id = t3.efex_matl_id
                                     AND TRUNC(t3.distbn_lupdt) = i_aggregation_date)
                   AND rv_efex_cust.efex_lupdt = t2.calendar_date;
-    
+
                v_rec_count := SQL%ROWCOUNT;
-    
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim INSERTED [' || v_rec_count ||
                          '] for efex_cust_id/cust_dtl_code [' || rv_efex_cust.efex_cust_id || '/' || v_new_cust_dtl_code || '].');
-    
-               -- update previous xactn where new xactn created with new cust_dtl_code 
-               UPDATE 
+
+               -- update previous xactn where new xactn created with new cust_dtl_code
+               UPDATE
                  efex_distbn_xactn_dim t1
                SET
                  last_rec_flg = 'N',
@@ -2516,21 +2552,21 @@ BEGIN
                  AND cust_dtl_code = v_old_cust_dtl_code
                  AND last_rec_flg = 'Y'
                  AND status = 'A'
-                 AND EXISTS (SELECT * 
-                                 FROM efex_distbn_xactn_dim t3 
-                                 WHERE t1.efex_cust_id = t3.efex_cust_id  
-                                   AND t1.efex_matl_id = t3.efex_matl_id 
+                 AND EXISTS (SELECT *
+                                 FROM efex_distbn_xactn_dim t3
+                                 WHERE t1.efex_cust_id = t3.efex_cust_id
+                                   AND t1.efex_matl_id = t3.efex_matl_id
                                    AND t3.cust_dtl_code = v_new_cust_dtl_code);
 
                v_rec_count := SQL%ROWCOUNT;
-    
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim UPDATED [' || v_rec_count ||
                          '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
 
-               -- Delete those duplicated creation from efex_sales_terr_dim process for the same 
-               -- effective date.         
-               DELETE FROM 
-                 efex_distbn_xactn_dim 
+               -- Delete those duplicated creation from efex_sales_terr_dim process for the same
+               -- effective date.
+               DELETE FROM
+                 efex_distbn_xactn_dim
                WHERE
                  efex_cust_id = rv_efex_cust.efex_cust_id
                  AND eff_start_date = eff_end_date
@@ -2538,16 +2574,16 @@ BEGIN
                  AND last_rec_flg = 'N';
 
                v_rec_count := SQL%ROWCOUNT;
-    
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of duplicate efex_distbn_xactn_dim DELETED [' || v_rec_count ||
                          '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
 
-               -- Trigger the ODS efex_distbn if any item segment doesn't have active subgroup assignment. 
-               IF rv_efex_cust.efex_sgmnt_id <> rv_last_cust_dtl.efex_sgmnt_id THEN 
+               -- Trigger the ODS efex_distbn if any item segment doesn't have active subgroup assignment.
+               IF rv_efex_cust.efex_sgmnt_id <> rv_last_cust_dtl.efex_sgmnt_id THEN
                   write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Customer change segment old/new [' || rv_last_cust_dtl.efex_sgmnt_id ||
                          '/' || rv_efex_cust.efex_sgmnt_id || '].');
 
-                  UPDATE 
+                  UPDATE
                     efex_distbn t1
                   SET
                     valdtn_status = ods_constants.valdtn_unchecked,
@@ -2557,24 +2593,24 @@ BEGIN
                   WHERE
                     efex_cust_id = rv_efex_cust.efex_cust_id
                     AND status = 'A'
-                    AND NOT EXISTS (SELECT * 
-                                    FROM 
+                    AND NOT EXISTS (SELECT *
+                                    FROM
                                       efex_matl_matl_subgrp t2
-                                    WHERE 
+                                    WHERE
                                       t2.efex_matl_id = t1.efex_matl_id
                                       AND t2.sgmnt_id = rv_efex_cust.efex_sgmnt_id
                                       AND t2.status = 'A'
                                       AND t2.valdtn_status = ods_constants.valdtn_valid);
-   
+
                   v_rec_count := SQL%ROWCOUNT;
-       
+
                   IF v_rec_count > 0 THEN
                      write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn triggered [' || v_rec_count ||
                                   '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
                   END IF;
-   
+
                   -- close xactn where no active subgroup assignment
-                  UPDATE 
+                  UPDATE
                     efex_distbn_xactn_dim t1
                   SET
                     eff_end_date = rv_efex_cust.efex_lupdt,
@@ -2583,17 +2619,17 @@ BEGIN
                     efex_cust_id = rv_efex_cust.efex_cust_id
                     AND last_rec_flg = 'Y'
                     AND status = 'A'
-                    AND NOT EXISTS (SELECT * 
-                                    FROM 
+                    AND NOT EXISTS (SELECT *
+                                    FROM
                                       efex_matl_matl_subgrp t2
-                                    WHERE 
+                                    WHERE
                                       t2.efex_matl_id = t1.efex_matl_id
                                       AND t2.sgmnt_id = rv_efex_cust.efex_sgmnt_id
                                       AND t2.status = 'A'
                                       AND t2.valdtn_status = ods_constants.valdtn_valid);
 
                   v_rec_count := SQL%ROWCOUNT;
-       
+
                   IF v_rec_count > 0 THEN
                      write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim closed - NO active subgroup [' || v_rec_count ||
                                   '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
@@ -2601,7 +2637,7 @@ BEGIN
 
                   -- activative those distribution with status = A in ODS and X in DDS and has active subgroup
                   -- change sgmnt back to the segment with active item subgroup
-                  UPDATE 
+                  UPDATE
                     efex_distbn t1
                   SET
                     efex_lupdt = rv_efex_cust.efex_lupdt,
@@ -2611,10 +2647,10 @@ BEGIN
                   WHERE
                     efex_cust_id = rv_efex_cust.efex_cust_id
                     AND status = 'A'
-                    AND EXISTS (SELECT * 
-                                    FROM 
+                    AND EXISTS (SELECT *
+                                    FROM
                                       efex_matl_matl_subgrp t2
-                                    WHERE 
+                                    WHERE
                                       t2.efex_matl_id = t1.efex_matl_id
                                       AND t2.sgmnt_id = rv_efex_cust.efex_sgmnt_id
                                       AND t2.status = 'A'
@@ -2627,7 +2663,7 @@ BEGIN
                                   AND last_rec_flg = 'Y');
 
                   v_rec_count := SQL%ROWCOUNT;
-       
+
                   IF v_rec_count > 0 THEN
                      write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn updated - with active subgroup and xactn closed [' || v_rec_count ||
                                   '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
@@ -2674,24 +2710,24 @@ BEGIN
                  c_future_date,
                  'Y',
                  t1.status
-               FROM 
+               FROM
                  efex_tot_distbn_xactn_dim t1
                WHERE
                  t1.efex_cust_id = rv_efex_cust.efex_cust_id
                  AND t1.last_rec_flg = 'Y'   -- for latest distribution total
-                 AND NOT EXISTS (SELECT * 
-                                  FROM efex_distbn_tot t3 
-                                  WHERE t1.efex_cust_id = t3.efex_cust_id  
-                                    AND t1.efex_matl_grp_id = t3.matl_grp_id 
+                 AND NOT EXISTS (SELECT *
+                                  FROM efex_distbn_tot t3
+                                  WHERE t1.efex_cust_id = t3.efex_cust_id
+                                    AND t1.efex_matl_grp_id = t3.matl_grp_id
                                     AND TRUNC(t3.distbn_tot_lupdt) = i_aggregation_date);
 
-     
+
                v_rec_count := SQL%ROWCOUNT;
-     
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_xactn_dim INSERTED [' || v_rec_count ||
                          '] for efex_cust_id/cust_dtl_code [' || rv_efex_cust.efex_cust_id || '/' || v_new_cust_dtl_code || '].');
-     
-               UPDATE 
+
+               UPDATE
                  efex_tot_distbn_xactn_dim t1
                SET
                  last_rec_flg = 'N',
@@ -2700,22 +2736,22 @@ BEGIN
                  efex_cust_id = rv_efex_cust.efex_cust_id
                  AND cust_dtl_code <> v_new_cust_dtl_code
                  AND last_rec_flg = 'Y'
-                 AND NOT EXISTS (SELECT * 
-                                  FROM efex_distbn_tot t3 
-                                  WHERE t1.efex_cust_id = t3.efex_cust_id  
-                                    AND t1.efex_matl_grp_id = t3.matl_grp_id 
+                 AND NOT EXISTS (SELECT *
+                                  FROM efex_distbn_tot t3
+                                  WHERE t1.efex_cust_id = t3.efex_cust_id
+                                    AND t1.efex_matl_grp_id = t3.matl_grp_id
                                     AND TRUNC(t3.distbn_tot_lupdt) = i_aggregation_date);
 
-     
+
                v_rec_count := SQL%ROWCOUNT;
-          
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_xactn_dim UPDATED [' || v_rec_count ||
                          '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
 
-               -- Delete those duplicated creation from efex_sales_terr_dim process for the same 
+               -- Delete those duplicated creation from efex_sales_terr_dim process for the same
                -- effective date.
-               DELETE FROM 
-                 efex_tot_distbn_xactn_dim 
+               DELETE FROM
+                 efex_tot_distbn_xactn_dim
                WHERE
                  efex_cust_id = rv_efex_cust.efex_cust_id
                  AND eff_start_date = eff_end_date
@@ -2723,19 +2759,19 @@ BEGIN
                  AND last_rec_flg = 'N';
 
                v_rec_count := SQL%ROWCOUNT;
-     
+
                COMMIT;
-     
+
                write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of duplicate efex_tot_distbn_xactn_dim DELETED [' || v_rec_count ||
                          '] for efex_cust_id [' || rv_efex_cust.efex_cust_id || '].');
 
              END IF;  -- not a new customer
-    
+
           END IF;
-    
+
           -- Update the latest record without create new record.
           IF v_insert_flg = FALSE AND v_update_flg = TRUE THEN
-              UPDATE 
+              UPDATE
                 efex_cust_dtl_dim
               SET
                 cust_code = v_cust_code,
@@ -2762,39 +2798,39 @@ BEGIN
                 efex_distbr_id = rv_efex_cust.distbr_id,
                 active_flg = rv_efex_cust.active_flg,
                 status = rv_efex_cust.status,
-                eff_end_date = CASE WHEN (rv_efex_cust.status = 'X' AND eff_end_date = c_future_date) THEN rv_efex_cust.efex_lupdt 
+                eff_end_date = CASE WHEN (rv_efex_cust.status = 'X' AND eff_end_date = c_future_date) THEN rv_efex_cust.efex_lupdt
                                     WHEN (rv_efex_cust.status = 'A') THEN c_future_date ELSE eff_end_date END
-             WHERE 
+             WHERE
                efex_cust_id = rv_efex_cust.efex_cust_id
                AND last_rec_flg = 'Y';
-    
+
              v_update_count := v_update_count + SQL%ROWCOUNT;
-    
+
           END IF;
 
           -- When customer delete, close and delete the distribution and distribution total
           IF rv_efex_cust.status = 'X' AND  v_last_status = 'A' THEN  -- change from A to X only
              UPDATE efex_distbn_dim
              SET status = 'X'
-             WHERE efex_cust_id = rv_efex_cust.efex_cust_id  
+             WHERE efex_cust_id = rv_efex_cust.efex_cust_id
                AND status = 'A';
 
              v_rec_count := SQL%ROWCOUNT;
-         
+
              write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn_dim status set to X [' || v_rec_count ||
                          '] for deleted customer id [' || rv_efex_cust.efex_cust_id || '].');
 
              UPDATE efex_distbn_xactn_dim
-             SET 
+             SET
                status = 'X',
                eff_end_date = rv_efex_cust.efex_lupdt
-             WHERE 
+             WHERE
                efex_cust_id = rv_efex_cust.efex_cust_id
                AND last_rec_flg = 'Y'
                AND status = 'A';
 
              v_rec_count := SQL%ROWCOUNT;
-         
+
              write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_distbn_xactn_dim closed [' || v_rec_count ||
                          '] for deleted customer id [' || rv_efex_cust.efex_cust_id || '].');
 
@@ -2804,31 +2840,31 @@ BEGIN
                AND status = 'A';
 
              v_rec_count := SQL%ROWCOUNT;
-         
+
              write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_dim status set to X [' || v_rec_count ||
                          '] for deleted customer id [' || rv_efex_cust.efex_cust_id || '].');
 
              UPDATE efex_tot_distbn_xactn_dim
-             SET 
+             SET
                status = 'X',
                eff_end_date = rv_efex_cust.efex_lupdt
-             WHERE 
+             WHERE
                efex_cust_id = rv_efex_cust.efex_cust_id
                AND last_rec_flg = 'Y'
                AND status = 'A';
 
              v_rec_count := SQL%ROWCOUNT;
-         
+
              write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 3, 'Number of efex_tot_distbn_xactn_dim closed [' || v_rec_count ||
                          '] for deleted customer id [' || rv_efex_cust.efex_cust_id || '].');
- 
+
           END IF;
 
           -- customer re-open then activate the distribution
           IF (rv_last_cust_dtl.last_status = 'X' AND rv_efex_cust.status = 'A') THEN
              UPDATE efex_distbn
              SET efex_lupdt = rv_efex_cust.efex_lupdt
-             WHERE 
+             WHERE
                efex_cust_id = rv_efex_cust.efex_cust_id
                AND status = 'A';
           END IF;
@@ -2841,7 +2877,7 @@ BEGIN
              'SCHEDULED_EFEX_AGGREGATION.EFEX_CUST_FLATTENING(EFEX_CUST_DTL_DIM): cust_id [' || rv_efex_cust.efex_cust_id ||
              '], Error: ' || SUBSTR(SQLERRM, 1, 512));
          RAISE e_processing_error;
-      
+
      END;
 
     END LOOP;
@@ -2856,11 +2892,11 @@ BEGIN
     write_log(ods_constants.data_type_efex_cust, 'N/A', i_log_level + 2, 'Update the distbr_code where efex_distbr_id is not null.');
 
     UPDATE efex_cust_dtl_dim t1
-    SET distbr_code = (SELECT cust_dtl_code 
-                       FROM efex_cust_dtl_dim t2 
-                       WHERE t1.efex_distbr_id = t2.efex_cust_id 
+    SET distbr_code = (SELECT cust_dtl_code
+                       FROM efex_cust_dtl_dim t2
+                       WHERE t1.efex_distbr_id = t2.efex_cust_id
                          AND t2.last_rec_flg = 'Y')
-    WHERE  
+    WHERE
       efex_distbr_id IS NOT NULL;
 
     -- Update the distributor code now because when a customer record process, the parent customer record may not been process yet
@@ -2876,7 +2912,7 @@ EXCEPTION
   WHEN e_processing_error THEN
     ROLLBACK;
     RETURN constants.error;
- 
+
   WHEN OTHERS THEN
     ROLLBACK;
     write_log(ods_constants.data_type_efex_cust,'ERROR',i_log_level+1,
@@ -2901,7 +2937,8 @@ FUNCTION efex_matl_grp_flattening (
     FROM ods.efex_matl_grp
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(matl_grp_lupdt) = i_aggregation_date;
+      AND trunc(matl_grp_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_matl_grp flattening.
@@ -2930,6 +2967,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(matl_grp_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_matl_grp_id = t2.efex_matl_grp_id )
         WHEN MATCHED THEN
@@ -2989,7 +3027,8 @@ FUNCTION efex_matl_subgrp_flattening (
     FROM ods.efex_matl_subgrp
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(matl_subgrp_lupdt) = i_aggregation_date;
+      AND trunc(matl_subgrp_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_matl_subgrp flattening.
@@ -3017,6 +3056,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(matl_subgrp_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_matl_subgrp_id = t2.efex_matl_subgrp_id )
         WHEN MATCHED THEN
@@ -3072,7 +3112,8 @@ FUNCTION efex_matl_flattening (
     FROM efex_matl
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(matl_lupdt) = i_aggregation_date;
+      AND trunc(matl_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_matl flattening.
@@ -3115,6 +3156,7 @@ BEGIN
             WHERE
               t1.valdtn_status = ods_constants.valdtn_valid
               AND trunc(t1.matl_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_matl_id = t2.efex_matl_id )
         WHEN MATCHED THEN
@@ -3215,7 +3257,8 @@ FUNCTION efex_assmnt_questn_flattening (
     FROM efex_assmnt_questn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(assmnt_questn_lupdt) = i_aggregation_date;
+      AND trunc(assmnt_questn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_assmnt_questn flattening.
@@ -3248,6 +3291,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(assmnt_questn_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_assmnt_id = t2.efex_assmnt_id )
         WHEN MATCHED THEN
@@ -3318,7 +3362,8 @@ FUNCTION efex_range_flattening (
     FROM efex_range
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(range_lupdt) = i_aggregation_date;
+      AND trunc(range_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_range flattening.
@@ -3345,6 +3390,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(range_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_range_id = t2.efex_range_id )
         WHEN MATCHED THEN
@@ -3397,7 +3443,8 @@ FUNCTION efex_distbn_flattening (
     FROM efex_distbn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(distbn_lupdt) = i_aggregation_date;
+      AND trunc(distbn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 
 BEGIN
@@ -3419,7 +3466,7 @@ BEGIN
      MERGE INTO
        efex_distbn_dim t1
      USING (SELECT
-              TRUNC(t1.distbn_lupdt) as create_date,  
+              TRUNC(t1.distbn_lupdt) as create_date,
               t2.cust_dtl_code,
               t1.efex_cust_id,
               t3.sales_terr_code,
@@ -3443,20 +3490,21 @@ BEGIN
               efex_matl_matl_subgrp_dim t11
             WHERE
               t1.valdtn_status = ods_constants.valdtn_valid
-              AND trunc(distbn_lupdt) = i_aggregation_date       
+              AND trunc(distbn_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
               AND t1.sales_terr_id = t3.efex_sales_terr_id
               AND t3.last_rec_flg = 'Y'
-              AND t1.rqd_flg = t5.rqd_flg 
-              AND t1.efex_matl_id = t7.efex_matl_id(+) 
+              AND t1.rqd_flg = t5.rqd_flg
+              AND t1.efex_matl_id = t7.efex_matl_id(+)
               AND t1.range_id = t7.range_id(+)
               AND t1.efex_matl_id = t11.efex_matl_id (+)
               AND t1.sgmnt_id = t11.efex_sgmnt_id (+)
               AND t11.status (+) = 'A'
             ) t2
-        ON (t1.efex_cust_id = t2.efex_cust_id 
-            AND t1.efex_matl_id = t2.efex_matl_id ) 
+        ON (t1.efex_cust_id = t2.efex_cust_id
+            AND t1.efex_matl_id = t2.efex_matl_id )
         WHEN MATCHED THEN
           UPDATE SET
               t1.efex_matl_subgrp_id = (CASE WHEN (t2.efex_matl_subgrp_id IS NULL) THEN t1.efex_matl_subgrp_id ELSE t2.efex_matl_subgrp_id END),
@@ -3488,9 +3536,9 @@ BEGIN
               t1.status
             )
           VALUES
-            ( 
+            (
               efex_distbn_dim_seq.nextval,
-              '147',
+              p_company_code,
               t2.create_date,
               t2.cust_dtl_code,
               t2.efex_cust_id,
@@ -3548,7 +3596,7 @@ FUNCTION efex_distbn_xactn_flattening (
 
   v_upd_count            NUMBER := 0;
   v_ins_count            NUMBER := 0;
-  v_del_count            PLS_INTEGER := 0; 
+  v_del_count            PLS_INTEGER := 0;
 
   -- EXCEPTION DECLARATIONS
   e_processing_error EXCEPTION;
@@ -3560,13 +3608,14 @@ FUNCTION efex_distbn_xactn_flattening (
     FROM efex_distbn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(distbn_lupdt) = i_aggregation_date;
+      AND trunc(distbn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_efex_distbn IS
-    SELECT 
+    SELECT
       TRUNC(t1.distbn_lupdt) as distbn_date,  -- use the ODS timestamp to avoid the weekly gaps caused by invalid data sitting in ODS for weeks
       t2.distbn_code,
-      t3.cust_dtl_code,       
+      t3.cust_dtl_code,
       t1.efex_cust_id,
       t3.sales_terr_code, -- pick from efex_cust_dtl_dim in case it was updated
       t3.efex_sales_terr_id as efex_sales_terr_id,
@@ -3585,14 +3634,14 @@ FUNCTION efex_distbn_xactn_flattening (
       t1.display_qty,
       inv_qty,
       sell_price as matl_price,
-      -- NOTE: only handle petcare and snackfood 
+      -- NOTE: only handle petcare and snackfood
       CASE WHEN (t1.facing_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_pet AND t2.rqd_date_instore IS NULL) THEN 1
            WHEN (t1.display_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_snack AND t2.rqd_date_instore IS NULL) THEN 1
            WHEN (t1.facing_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_pet AND t2.rqd_date_instore < t1.efex_lupdt) THEN 1
            WHEN (t1.display_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_snack AND t2.rqd_date_instore < t1.efex_lupdt) THEN 1
            ELSE 0 END as gap,
       DECODE(t1.rqd_flg, 'Y', 1, 0) as rqd,
-      DECODE(t1.out_of_stock_flg, 'Y', 1, 0) as outofstock,  
+      DECODE(t1.out_of_stock_flg, 'Y', 1, 0) as outofstock,
       TRUNC(t1.efex_lupdt) as eff_start_date,
       t1.status
     FROM
@@ -3601,10 +3650,11 @@ FUNCTION efex_distbn_xactn_flattening (
       efex_cust_dtl_dim t3,
       efex_sales_terr_dim t4,
       efex_outofdate_stock_flg_dim t5,
-      efex_matl_matl_subgrp_dim t6      
+      efex_matl_matl_subgrp_dim t6
     WHERE
       t1.valdtn_status = ods_constants.valdtn_valid
       AND trunc(t1.distbn_lupdt) = i_aggregation_date
+      AND t1.efex_mkt_id = p_market_id
       AND t1.status = 'A'
       AND t1.efex_cust_id = t2.efex_cust_id
       AND t1.efex_matl_id = t2.efex_matl_id
@@ -3612,11 +3662,11 @@ FUNCTION efex_distbn_xactn_flattening (
       AND t3.last_rec_flg = 'Y'
       AND t3.efex_sales_terr_id = t4.efex_sales_terr_id
       AND t4.last_rec_flg = 'Y'
-      AND t1.out_of_stock_flg = t5.outofstock_flg 
-      AND t1.out_of_date_flg = t5.outofdate_flg 
-      AND t1.efex_matl_id = t6.efex_matl_id    
-      AND t4.efex_sgmnt_id = t6.efex_sgmnt_id    
-      AND t6.status = 'A'              
+      AND t1.out_of_stock_flg = t5.outofstock_flg
+      AND t1.out_of_date_flg = t5.outofdate_flg
+      AND t1.efex_matl_id = t6.efex_matl_id
+      AND t4.efex_sgmnt_id = t6.efex_sgmnt_id
+      AND t6.status = 'A'
    ORDER BY
      t1.efex_cust_id,
      t1.efex_matl_id,
@@ -3625,15 +3675,15 @@ FUNCTION efex_distbn_xactn_flattening (
 
   -- Select the latest transaction gap which is used to determine the new record gap_new and gap_closed
   CURSOR csr_last_distbn_tx IS
-    SELECT 
+    SELECT
       NVL(gap, 0) as gap
-    FROM 
+    FROM
       efex_distbn_xactn_dim
     WHERE
       efex_cust_id = v_efex_cust_id
       AND efex_matl_id = v_efex_matl_id
-      AND distbn_date = (SELECT MAX(distbn_date) 
-                         FROM efex_distbn_xactn_dim 
+      AND distbn_date = (SELECT MAX(distbn_date)
+                         FROM efex_distbn_xactn_dim
                          WHERE efex_cust_id = v_efex_cust_id
                            AND efex_matl_id = v_efex_matl_id
                            AND distbn_date < v_distbn_date);
@@ -3655,12 +3705,12 @@ BEGIN
     UPDATE efex_distbn_xactn_dim t1
     SET eff_end_date = (SELECT efex_lupdt
                         FROM efex_distbn t2
-                        WHERE 
+                        WHERE
                           t1.efex_cust_id = t2.efex_cust_id
                           AND t1.efex_matl_id = t2.efex_matl_id),
         status = 'X'
     WHERE
-      EXISTS (SELECT * 
+      EXISTS (SELECT *
               FROM efex_distbn t3
               WHERE t1.efex_cust_id = t3.efex_cust_id
                 AND t1.efex_matl_id = t3.efex_matl_id
@@ -3672,8 +3722,8 @@ BEGIN
 
 
     write_log(ods_constants.data_type_efex_distbn_tx, 'N/A', i_log_level + 2, 'EFEX distribution deleted yesterday were [' || SQL%ROWCOUNT || ']');
-                           
-    FOR rv_efex_distbn IN csr_efex_distbn LOOP      
+
+    FOR rv_efex_distbn IN csr_efex_distbn LOOP
 
          v_rec_count := 0;
 
@@ -3681,33 +3731,33 @@ BEGIN
          SELECT COUNT(*) INTO v_rec_count
          FROM
            efex_distbn_xactn_dim
-         WHERE 
+         WHERE
            efex_cust_id = rv_efex_distbn.efex_cust_id
            AND efex_matl_id = rv_efex_distbn.efex_matl_id
            AND eff_start_date = rv_efex_distbn.eff_start_date; -- compare with efex_lupdt date to avoid ODS distribution updated after aggregated to DDS
-   
+
          -- Only process this record if it hasn't been loaded before
          IF v_rec_count = 0 THEN
-   
+
           BEGIN
             -- Now pass cursor results into variables and set default values to variables
             v_efex_cust_id :=  rv_efex_distbn.efex_cust_id;
             v_efex_matl_id := rv_efex_distbn.efex_matl_id;
             v_distbn_date := rv_efex_distbn.distbn_date;
-      
+
             v_gap_new := 0;
             v_gap_closed := 0;
             v_gap_flg := 'N';
             v_new_gap_flg := 'N';
             v_closed_gap_flg := 'N';
-      
+
             -- Get the previous distribution transaction for the customer and material
             OPEN csr_last_distbn_tx;
             FETCH csr_last_distbn_tx INTO rv_last_distbn_tx;
-      
-            -- Distribution transaction found 
+
+            -- Distribution transaction found
             IF csr_last_distbn_tx%FOUND THEN
-      
+
               IF rv_efex_distbn.gap = 1  AND  rv_last_distbn_tx.gap = 1 THEN
                  v_gap_new := 0;
                  v_gap_closed := 0;
@@ -3722,7 +3772,7 @@ BEGIN
                  v_gap_closed := 1;
               END IF;
             ELSE -- not exist
-              IF rv_efex_distbn.gap = 1 THEN 
+              IF rv_efex_distbn.gap = 1 THEN
                  v_gap_new := 1;
                  v_gap_closed := 0;
               ELSIF rv_efex_distbn.gap = 0 THEN
@@ -3734,7 +3784,7 @@ BEGIN
               END IF;
             END IF;
             CLOSE csr_last_distbn_tx;
-      
+
             IF rv_efex_distbn.gap = 1 THEN
                v_gap_flg := 'Y';
             END IF;
@@ -3744,19 +3794,19 @@ BEGIN
             IF v_gap_closed = 1 THEN
                v_closed_gap_flg := 'Y';
             END IF;
-      
-            -- Close the last distribution transaction record for the same customer and material 
+
+            -- Close the last distribution transaction record for the same customer and material
             UPDATE efex_distbn_xactn_dim
-            SET 
+            SET
               last_rec_flg = 'N',
               eff_end_date = (CASE WHEN (eff_end_date = c_future_date) THEN rv_efex_distbn.distbn_date ELSE eff_end_date END) -- don't overwritten the eff_end_date was updated by Delete action
-            WHERE 
+            WHERE
               efex_cust_id = v_efex_cust_id
               AND efex_matl_id = v_efex_matl_id
               AND last_rec_flg = 'Y';
-      
+
             v_upd_count := v_upd_count + SQL%ROWCOUNT;
-            
+
             -- Insert a new distribution transaction record
             INSERT INTO efex_distbn_xactn_dim
               (
@@ -3798,7 +3848,7 @@ BEGIN
               )
             SELECT
               EFEX_DISTBN_XACTN_DIM_SEQ.nextval,
-              '147',
+              p_company_code,
               rv_efex_distbn.distbn_date,
               t3.mars_week,
               t3.mars_period,
@@ -3815,7 +3865,7 @@ BEGIN
               rv_efex_distbn.efex_assoc_id,
               rv_efex_distbn.efex_range_id,
               rv_efex_distbn.rqd_flg_code,
-              t2.ranged_flg_code, 
+              t2.ranged_flg_code,
               rv_efex_distbn.outofdate_stock_flg_code,
               t1.gap_flg_code,
               rv_efex_distbn.facing_qty,
@@ -3842,11 +3892,11 @@ BEGIN
               AND t1.closed_gap_flg = v_closed_gap_flg
               AND t2.ranged_flg = rv_efex_distbn.ranged_flg
               AND rv_efex_distbn.distbn_date = t3.calendar_date;
-      
+
             v_ins_count := v_ins_count + SQL%ROWCOUNT;
           EXCEPTION
             WHEN OTHERS THEN
-              write_log(ods_constants.data_type_efex_distbn_tx, 'N/A', i_log_level + 2, 
+              write_log(ods_constants.data_type_efex_distbn_tx, 'N/A', i_log_level + 2,
                       'SCHEDULED_EFEX_AGGREGATION.EFEX_DISTBN_XACTN_FLATTENING: cust/matl [' || rv_efex_distbn.efex_cust_id ||
                       '/'|| rv_efex_distbn.efex_matl_id || ']. Reason : ' || SUBSTR(SQLERRM, 1, 512));
               RAISE e_processing_error;
@@ -3859,7 +3909,7 @@ BEGIN
     COMMIT;
   END IF;
 
-  write_log(ods_constants.data_type_efex_distbn_tx, 'N/A', i_log_level + 2, 'Complete EFEX_DISBTN_XACTN_DIM flattening with insert count [' || 
+  write_log(ods_constants.data_type_efex_distbn_tx, 'N/A', i_log_level + 2, 'Complete EFEX_DISBTN_XACTN_DIM flattening with insert count [' ||
             v_ins_count || '], update count [' || v_upd_count || '], delete count [' || v_del_count || ']');
 
   -- Completed successfully.
@@ -3894,7 +3944,8 @@ FUNCTION efex_tot_distbn_flattening (
     FROM efex_distbn_tot
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(distbn_tot_lupdt) = i_aggregation_date;
+      AND trunc(distbn_tot_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_tot_distbn_dim flattening.
@@ -3928,6 +3979,7 @@ BEGIN
             WHERE
               t1.valdtn_status = ods_constants.valdtn_valid
               AND trunc(distbn_tot_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
               AND t1.sales_terr_id = t3.efex_sales_terr_id
@@ -3957,7 +4009,7 @@ BEGIN
               efex_tot_distbn_dim_seq.nextval,
               t2.cust_dtl_code,
               t2.efex_matl_grp_id,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -4007,10 +4059,11 @@ FUNCTION efex_tot_distn_tx_flattening (
     FROM efex_distbn_tot
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(distbn_tot_lupdt) = i_aggregation_date;
+      AND trunc(distbn_tot_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_efex_distbn_tot IS
-    SELECT 
+    SELECT
       TRUNC(t1.efex_lupdt) as distbn_xactn_date,
       t3.cust_dtl_code,
       t1.matl_grp_id as efex_matl_grp_id,
@@ -4021,7 +4074,7 @@ FUNCTION efex_tot_distn_tx_flattening (
       t4.efex_sgmnt_id as efex_sgmnt_id,
       t1.bus_unit_id as efex_bus_unit_id,
       t4.sales_terr_mgr_id as efex_assoc_id,
-      t1.tot_qty as tot_facings,      
+      t1.tot_qty as tot_facings,
       TRUNC(t1.efex_lupdt) as eff_start_date,
       t1.status,
       t3.status as cust_status
@@ -4033,6 +4086,7 @@ FUNCTION efex_tot_distn_tx_flattening (
     WHERE
       t1.valdtn_status = ods_constants.valdtn_valid
       AND trunc(t1.distbn_tot_lupdt) = i_aggregation_date
+      AND t1.efex_mkt_id = p_market_id
       AND t1.efex_cust_id = t2.efex_cust_id
       AND t1.matl_grp_id = t2.efex_matl_grp_id
       AND t1.efex_cust_id = t3.efex_cust_id
@@ -4057,13 +4111,13 @@ BEGIN
 
   IF v_rec_count > 0 THEN
 
-    FOR rv_efex_distbn_tot IN csr_efex_distbn_tot LOOP      
+    FOR rv_efex_distbn_tot IN csr_efex_distbn_tot LOOP
 
-      -- Check whether this transaction total has already been loaded into DDS 
+      -- Check whether this transaction total has already been loaded into DDS
       SELECT COUNT(*) INTO v_rec_count
       FROM
-        efex_tot_distbn_xactn_dim 
-      WHERE 
+        efex_tot_distbn_xactn_dim
+      WHERE
         efex_cust_id = rv_efex_distbn_tot.efex_cust_id
         AND efex_matl_grp_id = rv_efex_distbn_tot.efex_matl_grp_id
         AND distbn_xactn_date = rv_efex_distbn_tot.distbn_xactn_date;
@@ -4074,19 +4128,19 @@ BEGIN
          -- Now pass cursor results into variables and set default values to variables
          v_efex_cust_id :=  rv_efex_distbn_tot.efex_cust_id;
          v_efex_matl_grp_id := rv_efex_distbn_tot.efex_matl_grp_id;
-   
+
          -- Close the last distribution transaction record for the same customer and material group
          UPDATE efex_tot_distbn_xactn_dim
-         SET 
+         SET
            last_rec_flg = 'N',
            eff_end_date = rv_efex_distbn_tot.distbn_xactn_date
-         WHERE 
+         WHERE
            efex_cust_id = rv_efex_distbn_tot.efex_cust_id
            AND efex_matl_grp_id = rv_efex_distbn_tot.efex_matl_grp_id
            AND last_rec_flg = 'Y';
-   
+
          v_upd_count := v_upd_count + SQL%ROWCOUNT;
-         
+
          -- Insert a new distribution transaction record
          INSERT INTO efex_tot_distbn_xactn_dim
            (
@@ -4114,7 +4168,7 @@ BEGIN
             rv_efex_distbn_tot.distbn_xactn_date,
             rv_efex_distbn_tot.cust_dtl_code,
             rv_efex_distbn_tot.efex_matl_grp_id,
-            '147',
+            p_company_code,
             rv_efex_distbn_tot.distbn_code,
             rv_efex_distbn_tot.efex_cust_id,
             rv_efex_distbn_tot.sales_terr_code,
@@ -4128,16 +4182,16 @@ BEGIN
             'Y',
             rv_efex_distbn_tot.status
            );
-   
+
          v_ins_count := v_ins_count + SQL%ROWCOUNT;
-      END IF;   
+      END IF;
 
     END LOOP;
 
     COMMIT;
   END IF;
 
-  write_log(ods_constants.data_type_efex_tot_distbn_tx, 'N/A', i_log_level + 2, 'Complete EFEX_TOT_DISBTN_XACTN_DIM flattening with insert count [' || 
+  write_log(ods_constants.data_type_efex_tot_distbn_tx, 'N/A', i_log_level + 2, 'Complete EFEX_TOT_DISBTN_XACTN_DIM flattening with insert count [' ||
             v_ins_count || '] and update count [' || v_upd_count || ']');
 
   -- Completed successfully.
@@ -4181,15 +4235,16 @@ FUNCTION efex_turnin_order_flattening (
         SELECT MAX(order_date) as order_date, efex_cust_id
         FROM efex_order t1
         WHERE valdtn_status = 'VALID'
-          AND EXISTS (SELECT * 
-                      FROM efex_order t2 
-                      WHERE t1.efex_cust_id = t2.efex_cust_id 
+          AND EXISTS (SELECT *
+                      FROM efex_order t2
+                      WHERE t1.efex_cust_id = t2.efex_cust_id
                         AND t2.valdtn_status = 'VALID'
                         AND TRUNC(t2.order_lupdt) = i_aggregation_date
+                        AND t2.efex_mkt_id = p_market_id
                         AND t1.status = 'A'
                      )
           AND t1.status = 'A'
-        GROUP BY efex_cust_id 
+        GROUP BY efex_cust_id
       ) t2
     WHERE
       t1.efex_cust_id = t2.efex_cust_id
@@ -4212,8 +4267,8 @@ BEGIN
 
      MERGE INTO
        efex_turnin_order_dim t1
-     USING (    
-             SELECT 
+     USING (
+             SELECT
                t1.efex_order_id,
                TRUNC(t1.order_date) as order_date,
                t1.order_code,
@@ -4241,12 +4296,13 @@ BEGIN
              WHERE
                t1.valdtn_status = ods_constants.valdtn_valid
                AND trunc(t1.order_lupdt) = i_aggregation_date
+               AND t1.efex_mkt_id = p_market_id
                AND t1.efex_cust_id = t2.efex_cust_id
                AND t2.last_rec_flg = 'Y'
                AND t1.sales_terr_id = t3.efex_sales_terr_id
                AND t3.last_rec_flg = 'Y'
             ) t2
-        ON (t1.efex_order_id = t2.efex_order_id ) 
+        ON (t1.efex_order_id = t2.efex_order_id )
         WHEN MATCHED THEN
           UPDATE SET
             t1.order_code = t2.order_code,
@@ -4287,12 +4343,12 @@ BEGIN
               t1.status
             )
           VALUES
-            ( 
+            (
               t2.efex_order_id,
               t2.order_date,
               t2.order_code,
               t2.cust_dtl_code,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -4318,9 +4374,9 @@ BEGIN
       write_log(ods_constants.data_type_efex_turnin_ord, 'N/A', i_log_level + 2, 'Update latest order and date to EFEX_CUST_DTL_DIM table.');
 
       FOR rv_cust_latest_order IN csr_cust_latest_order LOOP
-          UPDATE 
-            efex_cust_dtl_dim 
-          SET 
+          UPDATE
+            efex_cust_dtl_dim
+          SET
             last_order_date = TRUNC(rv_cust_latest_order.order_date),
             last_order_id = rv_cust_latest_order.efex_order_id
           WHERE
@@ -4366,7 +4422,8 @@ FUNCTION efex_pmt_flattening (
     FROM efex_pmt
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(pmt_lupdt) = i_aggregation_date;
+      AND trunc(pmt_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 
 BEGIN
@@ -4386,8 +4443,8 @@ BEGIN
 
      MERGE INTO
        efex_pmt_dim t1
-     USING (    
-             SELECT 
+     USING (
+             SELECT
                t1.pmt_id          as efex_pmt_id,
                TRUNC(t1.pmt_date) as pmt_date,
                t2.cust_dtl_code,
@@ -4400,7 +4457,7 @@ BEGIN
                t1.contra_pmt_status,
                t1.contra_procd_date,
                t1.contra_replicated_date,
-               t1.contra_deducted, 
+               t1.contra_deducted,
                t1.status
              FROM
                efex_pmt t1,
@@ -4408,10 +4465,11 @@ BEGIN
              WHERE
                t1.valdtn_status = ods_constants.valdtn_valid
                AND trunc(t1.pmt_lupdt) = i_aggregation_date
+               AND t1.efex_mkt_id = p_market_id
                AND t1.efex_cust_id = t2.efex_cust_id
                AND t2.last_rec_flg = 'Y'
             ) t2
-        ON (t1.efex_pmt_id = t2.efex_pmt_id ) 
+        ON (t1.efex_pmt_id = t2.efex_pmt_id )
         WHEN MATCHED THEN
           UPDATE SET
             t1.pmt_date = t2.pmt_date,
@@ -4446,7 +4504,7 @@ BEGIN
               t1.status
             )
           VALUES
-            ( 
+            (
               t2.efex_pmt_id,
               t2.pmt_date,
               t2.cust_dtl_code,
@@ -4503,7 +4561,8 @@ FUNCTION efex_mrq_flattening (
     FROM efex_mrq
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(mrq_lupdt) = i_aggregation_date;
+      AND trunc(mrq_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_MRQ_DIM flattening.
@@ -4554,6 +4613,7 @@ BEGIN
              WHERE
                t1.valdtn_status = ods_constants.valdtn_valid
                AND trunc(t1.mrq_lupdt) = i_aggregation_date
+               AND t1.efex_mkt_id = p_market_id
                AND t1.efex_cust_id = t2.efex_cust_id
                AND t2.last_rec_flg = 'Y'
                AND t1.sales_terr_id = t3.efex_sales_terr_id
@@ -4610,7 +4670,7 @@ BEGIN
           VALUES
             (
               t2.efex_mrq_id,
-              '147',
+              p_company_code,
               t2.creatn_date,
               t2.cust_dtl_code,
               t2.efex_cust_id,
@@ -4671,7 +4731,8 @@ FUNCTION efex_mrq_task_flattening (
     FROM efex_mrq_task
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(mrq_task_lupdt) = i_aggregation_date;
+      AND trunc(mrq_task_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_MRQ_TASK_DIM flattening.
@@ -4707,6 +4768,7 @@ BEGIN
              WHERE
                t1.valdtn_status = ods_constants.valdtn_valid
                AND trunc(t1.mrq_task_lupdt) = i_aggregation_date
+               AND t1.efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_mrq_task_id = t2.efex_mrq_task_id )
         WHEN MATCHED THEN
@@ -4740,7 +4802,7 @@ BEGIN
           VALUES
             (
               t2.efex_mrq_task_id,
-              '147',
+              p_company_code,
               t2.mrq_task_name,
               t2.efex_mrq_id,
               t2.job_type,
@@ -4792,21 +4854,22 @@ FUNCTION efex_matl_matlsbgrp_flattening (
     FROM efex_matl_matl_subgrp
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date;
-      
+      AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
+
   CURSOR csr_no_new_assgnmnt IS
     SELECT  -- no more active item subgroup assignment for the same item and segment
-      efex_matl_id, 
-      sgmnt_id, 
+      efex_matl_id,
+      sgmnt_id,
       max(efex_lupdt) as efex_lupdt
     FROM efex_matl_matl_subgrp t1
     WHERE status = 'X'
-      AND NOT EXISTS (SELECT * 
+      AND NOT EXISTS (SELECT *
                       FROM efex_matl_matl_subgrp t2
                       WHERE t1.efex_matl_id = t2.efex_matl_id
                         AND t1.sgmnt_id = t2.sgmnt_id
                         AND t2.status = 'A')
-      AND EXISTS (SELECT * FROM efex_distbn_xactn_dim t4 
+      AND EXISTS (SELECT * FROM efex_distbn_xactn_dim t4
                   WHERE t1.efex_matl_id = t4.efex_matl_id
                     AND t1.sgmnt_id = t4.efex_sgmnt_id
                     AND t4.status = 'A'
@@ -4814,20 +4877,20 @@ FUNCTION efex_matl_matlsbgrp_flattening (
                     AND eff_end_date = c_future_date)
       AND valdtn_status = ods_constants.valdtn_valid
       AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date
-    GROUP BY efex_matl_id, sgmnt_id;    
-        
+    GROUP BY efex_matl_id, sgmnt_id;
+
     rv_no_new_assgnmnt csr_no_new_assgnmnt%ROWTYPE;
 
   -- distribution transaction have old subgroup assignment
   CURSOR csr_new_assgnmnt IS
-    SELECT 
-      t1.efex_matl_id, 
+    SELECT
+      t1.efex_matl_id,
       t1.efex_lupdt,
       t5.efex_cust_id
-    FROM 
+    FROM
       efex_matl_matl_subgrp t1,
       efex_distbn_xactn_dim t5
-    WHERE 
+    WHERE
       t1.valdtn_status = ods_constants.valdtn_valid
       AND t1.status = 'A'
       AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date
@@ -4836,7 +4899,7 @@ FUNCTION efex_matl_matlsbgrp_flattening (
       AND t1.matl_subgrp_id <> t5.efex_matl_subgrp_id  -- not the active subgroup
       AND t5.status = 'A'
       AND t5.last_rec_flg = 'Y'
-      AND EXISTS (SELECT * 
+      AND EXISTS (SELECT *
                   FROM efex_matl_matl_subgrp t2
                   WHERE t1.efex_matl_id = t2.efex_matl_id
                     AND t1.sgmnt_id = t2.sgmnt_id
@@ -4844,12 +4907,12 @@ FUNCTION efex_matl_matlsbgrp_flattening (
                     AND t2.status = 'X'
                     AND valdtn_status = ods_constants.valdtn_valid
                     AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date);
-        
+
     rv_new_assgnmnt csr_new_assgnmnt%ROWTYPE;
 
   CURSOR csr_reopen_distbn IS
-    SELECT t3.efex_cust_id, t3.efex_matl_id, t3.efex_sgmnt_id, t1.efex_lupdt 
-    FROM 
+    SELECT t3.efex_cust_id, t3.efex_matl_id, t3.efex_sgmnt_id, t1.efex_lupdt
+    FROM
       efex_matl_matl_subgrp t1,
       efex_distbn_xactn_dim t3,
       efex_cust t4
@@ -4863,8 +4926,8 @@ FUNCTION efex_matl_matlsbgrp_flattening (
       AND t3.last_rec_flg = 'Y'
       AND t3.status = 'X'     -- distribution transaction closed
       AND t4.efex_cust_id = t3.efex_cust_id   -- active customer
-      AND t4.status = 'A' 
-      AND EXISTS (SELECT *    -- new subgroup assignment have closed subgroup assignment before this date 
+      AND t4.status = 'A'
+      AND EXISTS (SELECT *    -- new subgroup assignment have closed subgroup assignment before this date
                   FROM efex_matl_matl_subgrp t2
                   WHERE t1.efex_matl_id = t2.efex_matl_id
                     AND t1.sgmnt_id = t2.sgmnt_id
@@ -4884,8 +4947,8 @@ FUNCTION efex_matl_matlsbgrp_flattening (
 
   -- new assigment for the item and segment
   CURSOR csr_new_matl_subgrp IS
-    SELECT t1.efex_matl_id, t1.sgmnt_id, t1.efex_lupdt, t6.efex_cust_id 
-    FROM 
+    SELECT t1.efex_matl_id, t1.sgmnt_id, t1.efex_lupdt, t6.efex_cust_id
+    FROM
       efex_matl_matl_subgrp t1,
       efex_distbn t6
     WHERE
@@ -4902,7 +4965,7 @@ FUNCTION efex_matl_matlsbgrp_flattening (
                         t1.efex_matl_id = t2.efex_matl_id
                         AND t1.matl_subgrp_id = t2.efex_matl_subgrp_id
                         AND t1.sgmnt_id = t2.efex_sgmnt_id)
-      AND NOT EXISTS (SELECT *        -- no closed assigment 
+      AND NOT EXISTS (SELECT *        -- no closed assigment
                       FROM efex_matl_matl_subgrp t3
                       WHERE
                         t1.efex_matl_id = t3.efex_matl_id
@@ -4910,7 +4973,7 @@ FUNCTION efex_matl_matlsbgrp_flattening (
                         AND t3.status = 'X')
       AND NOT EXISTS (SELECT *   -- distribution not in DDS yet
                       FROM efex_distbn_dim t4
-                      WHERE 
+                      WHERE
                         t1.efex_matl_id = t4.efex_matl_id
                         AND t1.sgmnt_id = t4.efex_sgmnt_id);
 
@@ -4931,9 +4994,9 @@ BEGIN
   IF v_rec_count > 0 THEN
 
       v_upd_count := 0;
-      FOR rv_no_new_assgnmnt IN csr_no_new_assgnmnt LOOP 
+      FOR rv_no_new_assgnmnt IN csr_no_new_assgnmnt LOOP
          UPDATE efex_distbn_xactn_dim
-         SET 
+         SET
            eff_end_date = trunc(rv_no_new_assgnmnt.efex_lupdt),
            status = 'X'
          WHERE
@@ -4942,10 +5005,10 @@ BEGIN
            AND efex_matl_id = rv_no_new_assgnmnt.efex_matl_id
            AND efex_sgmnt_id = rv_no_new_assgnmnt.sgmnt_id;
 
-         v_upd_count := v_upd_count + SQL%ROWCOUNT;          
+         v_upd_count := v_upd_count + SQL%ROWCOUNT;
 
          UPDATE efex_distbn_dim
-         SET 
+         SET
            status = 'X'
          WHERE
            status = 'A'
@@ -4964,12 +5027,12 @@ BEGIN
       v_upd_count := 0;
       -- activate the ods distribution to aviid duplicated efex_distbn_xactn_dim created by
       -- customer/sales terr/true distribution
-      FOR rv_new_assgnmnt IN csr_new_assgnmnt LOOP 
+      FOR rv_new_assgnmnt IN csr_new_assgnmnt LOOP
 
          -- close the transaction and create a new transaction
          UPDATE efex_distbn
          SET efex_lupdt = rv_new_assgnmnt.efex_lupdt
-         WHERE 
+         WHERE
            efex_cust_id =  rv_new_assgnmnt.efex_cust_id
            AND efex_matl_id = rv_new_assgnmnt.efex_matl_id;
 
@@ -4984,7 +5047,7 @@ BEGIN
 
       v_upd_count := 0;
       FOR rv_reopen_distbn IN csr_reopen_distbn LOOP
-         UPDATE efex_distbn 
+         UPDATE efex_distbn
          SET efex_lupdt = rv_reopen_distbn.efex_lupdt
          WHERE
            efex_cust_id = rv_reopen_distbn.efex_cust_id
@@ -5004,7 +5067,7 @@ BEGIN
       FOR rv_new_matl_subgrp IN csr_new_matl_subgrp LOOP
          UPDATE efex_distbn
          SET efex_lupdt = rv_new_matl_subgrp.efex_lupdt
-         WHERE 
+         WHERE
            efex_cust_id = rv_new_matl_subgrp.efex_cust_id
            AND efex_matl_id = rv_new_matl_subgrp.efex_matl_id;
 
@@ -5032,6 +5095,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(matl_matl_subgrp_lupdt) = i_aggregation_date
+              AND efex_mkt_id = p_market_id
             ) t2
         ON (t1.efex_matl_id = t2.efex_matl_id
             AND t1.efex_matl_subgrp_id = t2.efex_matl_subgrp_id)
@@ -5095,7 +5159,8 @@ FUNCTION efex_route_sched_fact_aggr (
     FROM efex_route_sched
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(route_sched_lupdt) = i_aggregation_date;
+      AND trunc(route_sched_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_route_sched_fact aggregation.
@@ -5122,7 +5187,8 @@ BEGIN
                      t1.efex_assoc_id = t2.user_id
                      AND t1.route_sched_time = t2.route_sched_date
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.route_sched_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.route_sched_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_route_sched, 'N/A', i_log_level + 2, 'efex_route_sched_fact delete count [' || SQL%ROWCOUNT || ']');
 
@@ -5144,7 +5210,7 @@ BEGIN
        user_id,
        route_sched_date,
        TRUNC(route_sched_date),
-       '147' as company_code,
+       p_company_code as company_code,
        tot_scanned,
        tot_sched,
        tot_skipped,
@@ -5155,6 +5221,7 @@ BEGIN
      WHERE
        valdtn_status = ods_constants.valdtn_valid
        AND trunc(route_sched_lupdt) = i_aggregation_date
+       AND efex_mkt_id = p_market_id
        AND status = 'A';
 
      write_log(ods_constants.data_type_efex_route_sched, 'N/A', i_log_level + 2, 'Insert count [' || SQL%ROWCOUNT || '] Active only');
@@ -5193,7 +5260,8 @@ FUNCTION efex_route_plan_fact_aggr (
     FROM efex_route_plan
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(route_plan_lupdt) = i_aggregation_date;
+      AND trunc(route_plan_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_route_plan_fact aggregation.
@@ -5221,7 +5289,8 @@ BEGIN
                      AND t2.route_plan_date = t1.route_plan_date
                      AND t2.efex_cust_id = t1.efex_cust_id
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.route_plan_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.route_plan_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_route_plan, 'N/A', i_log_level + 2, 'efex_route_plan_fact delete count [' || SQL%ROWCOUNT || ']');
 
@@ -5246,7 +5315,7 @@ BEGIN
         t2.cust_dtl_code,
         t1.user_id,
         t1.route_plan_order,
-        '147',
+        p_company_code,
         t1.efex_cust_id,
         t3.sales_terr_code,
         t1.sales_terr_id,
@@ -5260,6 +5329,7 @@ BEGIN
      WHERE
        t1.valdtn_status = ods_constants.valdtn_valid
        AND trunc(t1.route_plan_lupdt) = i_aggregation_date
+       AND t1.efex_mkt_id = p_market_id
        AND t1.status = 'A'
        AND t1.efex_cust_id = t2.efex_cust_id
        AND t2.last_rec_flg = 'Y'
@@ -5315,7 +5385,8 @@ FUNCTION efex_call_fact_aggr (
     FROM efex_call
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(call_lupdt) = i_aggregation_date;
+      AND trunc(call_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_efex_call IS
     SELECT
@@ -5341,6 +5412,7 @@ FUNCTION efex_call_fact_aggr (
     WHERE
       valdtn_status = ods_constants.valdtn_valid
       AND trunc(call_lupdt) = i_aggregation_date
+      AND t1.efex_mkt_id = p_market_id
       AND t1.status = 'A'  -- only the active record
       AND TRUNC(t1.call_date) = t2.calendar_date(+)
       AND t1.call_type = t3.call_type (+)
@@ -5396,7 +5468,8 @@ BEGIN
                      AND t2.user_id = t1.efex_assoc_caller_id
                      AND t2.status = 'X'
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.call_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.call_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_route_plan, 'N/A', i_log_level + 2, 'efex_call_fact delete count [' || SQL%ROWCOUNT || ']');
 
@@ -5472,7 +5545,7 @@ BEGIN
                 t1.cust_dtl_code,
                 rv_efex_call.call_yyyyppw,
                 rv_efex_call.efex_assoc_caller_id,
-                '147',
+                p_company_code,
                 rv_efex_call.efex_assoc_id,
                 rv_efex_call.efex_cust_id,
                 t2.sales_terr_code,
@@ -5557,7 +5630,8 @@ FUNCTION efex_timesheet_call_fact_aggr (
     FROM efex_timesheet_call
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(timesheet_call_lupdt) = i_aggregation_date;
+      AND trunc(timesheet_call_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_timesheet_call_fact aggregation.
@@ -5586,7 +5660,8 @@ BEGIN
                      AND t2.user_id = t1.efex_assoc_id
                      AND t2.status = 'X'
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.timesheet_call_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.timesheet_call_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_tmesht_call, 'N/A', i_log_level + 2, 'efex_timesheet_fact delete count [' || SQL%ROWCOUNT || '], now merge chnages to fact table');
 
@@ -5612,6 +5687,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(timesheet_call_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.status = 'A'
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
@@ -5649,7 +5725,7 @@ BEGIN
               t2.timesheet_date,
               t2.cust_dtl_code,
               t2.efex_assoc_id,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -5697,7 +5773,8 @@ FUNCTION efex_timesheet_day_fact_aggr (
     FROM efex_timesheet_day
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(timesheet_day_lupdt) = i_aggregation_date;
+      AND trunc(timesheet_day_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_timesheet_day_fact aggregation.
@@ -5724,7 +5801,8 @@ BEGIN
                      t2.user_id = t1.efex_assoc_id
                      AND t2.timesheet_date = t1.timesheet_time
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.timesheet_day_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.timesheet_day_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_tmesht_day, 'N/A', i_log_level + 2, 'efex_timesheet_fact delete count [' || SQL%ROWCOUNT || '], now merge chnages to fact table');
 
@@ -5744,7 +5822,7 @@ BEGIN
        timesheet_date,
        TRUNC(timesheet_date),
        user_id,
-       '147',
+       p_company_code,
        time1,
        time2,
        traveltime,
@@ -5754,6 +5832,7 @@ BEGIN
      WHERE
        valdtn_status = ods_constants.valdtn_valid
        AND trunc(timesheet_day_lupdt) = i_aggregation_date
+       AND efex_mkt_id = p_market_id
        AND status = 'A';
 
      -- Number of record modified.
@@ -5792,7 +5871,8 @@ FUNCTION efex_assmnt_assgnmnt_fact_aggr (
     FROM efex_assmnt_assgnmnt
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(assmnt_assgnmnt_lupdt) = i_aggregation_date;
+      AND trunc(assmnt_assgnmnt_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_assmnt_assgnmnt_fact aggregation.
@@ -5820,7 +5900,8 @@ BEGIN
                      AND t2.efex_cust_id = t1.efex_cust_id
                      AND t2.status = 'X'
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.assmnt_assgnmnt_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.assmnt_assgnmnt_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_ass_assgn, 'N/A', i_log_level + 2, 'efex_assmnt_assgnmnt_fact delete count [' || SQL%ROWCOUNT || '], now merge chnages to fact table');
 
@@ -5841,6 +5922,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(assmnt_assgnmnt_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.status = 'A'
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
@@ -5869,7 +5951,7 @@ BEGIN
             (
               t2.efex_assmnt_id,
               t2.cust_dtl_code,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -5915,7 +5997,8 @@ FUNCTION efex_assmnt_fact_aggr (
     FROM efex_assmnt
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(assmnt_lupdt) = i_aggregation_date;
+      AND trunc(assmnt_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_assmnt_fact aggregation.
@@ -5945,7 +6028,8 @@ BEGIN
                      AND t2.resp_date = t1.assmnt_date
                      AND t2.status = 'X'
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.assmnt_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.assmnt_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_assmnt, 'N/A', i_log_level + 2, 'efex_assmnt_fact delete count [' || SQL%ROWCOUNT || '], now merge chnages to fact table');
 
@@ -5969,6 +6053,7 @@ BEGIN
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(assmnt_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.status = 'A'
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
@@ -6002,7 +6087,7 @@ BEGIN
               t2.assmnt_date,
               t2.efex_assmnt_id,
               t2.cust_dtl_code,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -6049,7 +6134,8 @@ FUNCTION efex_range_matl_fact_aggr (
     FROM efex_range_matl
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(range_matl_lupdt) = i_aggregation_date;
+      AND trunc(range_matl_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_range_matl_fact aggregation.
@@ -6077,16 +6163,17 @@ BEGIN
               TRUNC(t1.target_date) as target_date,
               t1.status,
               t1.ref_code
-            FROM 
+            FROM
               efex_range_matl t1,
               efex_rqd_flg_dim t2
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(range_matl_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.rqd_flg = t2.rqd_flg
             ) t2
         ON (t1.efex_range_id = t2.efex_range_id
-            AND t1.efex_matl_id = t2.efex_matl_id)  
+            AND t1.efex_matl_id = t2.efex_matl_id)
         WHEN MATCHED THEN
           UPDATE SET
             t1.rqd_flg_code = rqd_flg_code,
@@ -6149,6 +6236,7 @@ FUNCTION efex_distbn_fact_aggr (
   v_rec_count            NUMBER := 0;
   v_del_count            NUMBER := 0;
   v_ins_count            NUMBER := 0;
+  v_upd_count            NUMBER := 0;
   v_efex_cust_id         efex_cust.efex_cust_id%TYPE;
   v_efex_matl_id         efex_matl_dim.efex_matl_id%TYPE;
   v_distbn_yyyyppw       mars_date_dim.mars_week%TYPE;
@@ -6157,7 +6245,9 @@ FUNCTION efex_distbn_fact_aggr (
 
   v_tot_new_gaps         NUMBER;
   v_tot_closed_gaps      NUMBER;
-  v_upd_count            NUMBER := 0;
+
+  v_commit_count         NUMBER;
+  c_commit_block         constant NUMBER := 10000;
 
   -- EXCEPTION DECLARATIONS
   e_processing_error EXCEPTION;
@@ -6169,15 +6259,16 @@ FUNCTION efex_distbn_fact_aggr (
     FROM efex_distbn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(distbn_lupdt) = i_aggregation_date;
+      AND trunc(distbn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_mars_week IS
-    SELECT mars_week 
-    FROM mars_date_dim 
+    SELECT mars_week
+    FROM mars_date_dim
     WHERE calendar_date = i_aggregation_date - 7;
 
   CURSOR csr_efex_distbn_xactn IS
-    SELECT 
+    SELECT
       t1.gap,  -- take the latest gap as the weekly tot_gaps
       t2.calendar_date as mars_week_end_date,
       t1.distbn_yyyyppw,
@@ -6208,13 +6299,13 @@ FUNCTION efex_distbn_fact_aggr (
       efex_distbn_xactn_dim t1,
       mars_date_dim t2,
       (SELECT mars_period, max(mars_week_of_period) as period_end_week
-       FROM mars_date_dim 
+       FROM mars_date_dim
        GROUP BY mars_period) t3,
       efex_matl_matl_subgrp_dim t4
     WHERE
       t1.last_rec_flg = 'Y'
       AND t1.status = 'A'    -- only pick the active transaction
-      AND t1.distbn_yyyyppw >= v_start_yyyyppw -- and start from last week 
+      AND t1.distbn_yyyyppw >= v_start_yyyyppw -- and start from last week
       AND t1.distbn_yyyyppw = t2.mars_week
       AND t2.mars_day_of_week = 7
       AND t1.distbn_yyyypp = t3.mars_period
@@ -6237,6 +6328,8 @@ FUNCTION efex_distbn_fact_aggr (
   rv_calc_distbn_gaps csr_calc_distbn_gaps%ROWTYPE;
 
 BEGIN
+  v_commit_count := 0;
+
   -- Starting efex_distbn_fact aggregation.
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level + 1, 'Start - EFEX_DISTBN_FACT aggregation.');
 
@@ -6247,9 +6340,9 @@ BEGIN
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level + 1, 're-process weekly distribution start from [' || v_start_yyyyppw || ']');
 
-  -- Need to re-run this even if no distribution received yesterday because some 
+  -- Need to re-run this even if no distribution received yesterday because some
   -- efex_distbn_xactn_dim records created from efex_sales_terr and efex_cust process.
-  FOR rv_efex_distbn_xactn IN csr_efex_distbn_xactn LOOP      
+  FOR rv_efex_distbn_xactn IN csr_efex_distbn_xactn LOOP
     BEGIN
        -- Assign to variable used by the cursor
        v_efex_cust_id := rv_efex_distbn_xactn.efex_cust_id;
@@ -6265,7 +6358,7 @@ BEGIN
        WHERE
          efex_cust_id = v_efex_cust_id
          AND efex_matl_id = v_efex_matl_id
-         AND mars_week_end_date = v_mars_week_end_date; 
+         AND mars_week_end_date = v_mars_week_end_date;
 
        v_del_count := v_del_count + SQL%ROWCOUNT;
 
@@ -6349,13 +6442,13 @@ BEGIN
                rv_efex_distbn_xactn.gap_closed,
                rv_efex_distbn_xactn.eop_flg
             );
-   
+
             v_ins_count := v_ins_count + SQL%ROWCOUNT;
        EXCEPTION
           WHEN DUP_VAL_ON_INDEX then
              BEGIN
-               UPDATE efex_distbn_fact 
-               SET 
+               UPDATE efex_distbn_fact
+               SET
                  sales_terr_code = rv_efex_distbn_xactn.sales_terr_code,
                  efex_sales_terr_id = rv_efex_distbn_xactn.efex_sales_terr_id,
                  efex_sgmnt_id = rv_efex_distbn_xactn.efex_sgmnt_id,
@@ -6379,22 +6472,22 @@ BEGIN
                  AND cust_dtl_code = rv_efex_distbn_xactn.cust_dtl_code
                  AND efex_matl_id = rv_efex_distbn_xactn.efex_matl_id;
 
-               write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Duplicated Insert for date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date || 
+               write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Duplicated Insert for date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date ||
                           '/' ||  rv_efex_distbn_xactn.cust_dtl_code || '/' || rv_efex_distbn_xactn.efex_matl_id || '] ERROR - ' || SUBSTR(SQLERRM, 1, 512));
              END;
 
           WHEN OTHERS then
 
-              write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Error from Other Insert for date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date || 
+              write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Error from Other Insert for date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date ||
                           '/' ||  rv_efex_distbn_xactn.cust_dtl_code || '/' || rv_efex_distbn_xactn.efex_matl_id || '] ERROR - ' || SUBSTR(SQLERRM, 1, 512));
-           
+
               RAISE e_processing_error;
-           
+
        END;
- 
-       -- Update any weekly snapshot has already been created in case any changes 
+
+       -- Update any weekly snapshot has already been created in case any changes
        -- made to sales territory or customer.
-       UPDATE 
+       UPDATE
          efex_distbn_fact
        SET
          cust_dtl_code = rv_efex_distbn_xactn.cust_dtl_code,
@@ -6408,10 +6501,16 @@ BEGIN
          AND mars_week_end_date > rv_efex_distbn_xactn.mars_week_end_date;
 
        v_upd_count := v_upd_count + SQL%ROWCOUNT;
+       v_commit_count := v_commit_count + 1;
+
+       if ( v_commit_count >= c_commit_block ) then
+         commit;
+         v_commit_count := 0;
+       end if;
 
     EXCEPTION
           WHEN OTHERS THEN
-               write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Error Record date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date || 
+               write_log(ods_constants.data_type_efex_distbn, 'ERROR', i_log_level + 2, 'Error Record date/cust code/matl [' || rv_efex_distbn_xactn.mars_week_end_date ||
                           '/' ||  rv_efex_distbn_xactn.cust_dtl_code || '/' || rv_efex_distbn_xactn.efex_matl_id || '] ERROR - ' || SUBSTR(SQLERRM, 1, 512));
           RAISE e_processing_error;
 
@@ -6420,7 +6519,7 @@ BEGIN
 
   COMMIT;
 
-  write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level + 2, 'Complete - EFEX_DISBTN_FACT aggregation with insert count [' || 
+  write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level + 2, 'Complete - EFEX_DISBTN_FACT aggregation with insert count [' ||
             v_ins_count || '] and delete count [' || v_del_count || '] and upd count [' || v_upd_count || ']');
 
   -- Completed successfully.
@@ -6556,7 +6655,8 @@ FUNCTION efex_turnin_order_fact_aggr (
       efex_order_matl
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(order_matl_lupdt) = i_aggregation_date;
+      AND trunc(order_matl_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_TURNIN_ORDER_FACT aggregation.
@@ -6586,6 +6686,7 @@ BEGIN
                      AND t1.efex_matl_id = t3.efex_matl_id
                      AND t3.valdtn_status = ods_constants.valdtn_valid
                      AND TRUNC(t3.order_matl_lupdt) = i_aggregation_date
+                     AND t3.efex_mkt_id = p_market_id
                      AND t3.status = 'X');
 
      write_log(ods_constants.data_type_efex_turnin_ord, 'N/A', i_log_level + 2, 'efex_turnin_order_fact delete count [' || SQL%ROWCOUNT || ']');
@@ -6635,6 +6736,7 @@ BEGIN
                   AND t2.status = 'A'
                   AND t2.valdtn_status = ods_constants.valdtn_valid
                   AND trunc(t2.order_matl_lupdt) = i_aggregation_date
+                  AND t2.efex_mkt_id = p_market_id
                ) t1,
                efex_cust_dtl_dim t2,
                efex_sales_terr_dim t3,
@@ -6688,7 +6790,7 @@ BEGIN
              t2.efex_matl_id,
              t2.order_date,
              t2.cust_dtl_code,
-             '147',
+             p_company_code,
              t2.efex_cust_id,
              t2.sales_terr_code,
              t2.efex_sales_terr_id,
@@ -6741,7 +6843,8 @@ FUNCTION efex_pmt_deal_fact_aggr (
       efex_pmt_deal
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(pmt_deal_lupdt) = i_aggregation_date;
+      AND trunc(pmt_deal_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_PMT_DEAL_FACT aggregation.
@@ -6769,6 +6872,7 @@ BEGIN
                      AND t1.seq_num = t2.seq_num
                      AND t2.valdtn_status = ods_constants.valdtn_valid
                      AND TRUNC(t2.pmt_deal_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id
                      AND t2.status = 'X');
 
      write_log(ods_constants.data_type_efex_pmt_deal, 'N/A', i_log_level + 2, 'efex_pmt_deal_fact delete count [' || SQL%ROWCOUNT || ']');
@@ -6799,6 +6903,7 @@ BEGIN
              WHERE
                t2.valdtn_status = ods_constants.valdtn_valid
                AND trunc(t2.pmt_deal_lupdt) = i_aggregation_date
+               AND t2.efex_mkt_id = p_market_id
                AND t2.status = 'A'
                AND t1.pmt_id = t2.pmt_id
                AND t1.efex_cust_id = t3.efex_cust_id
@@ -6841,7 +6946,7 @@ BEGIN
             (
              t2.efex_pmt_id,
              t2.seq_num,
-             '147',
+             p_company_code,
              t2.cust_dtl_code,
              t2.efex_cust_id,
              t2.sales_terr_code,
@@ -6891,7 +6996,8 @@ FUNCTION efex_pmt_rtn_fact_aggr (
       efex_pmt_rtn
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(pmt_rtn_lupdt) = i_aggregation_date;
+      AND trunc(pmt_rtn_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_PMT_RTN_FACT aggregation.
@@ -6919,6 +7025,7 @@ BEGIN
                      AND t1.seq_num = t2.seq_num
                      AND t2.valdtn_status = ods_constants.valdtn_valid
                      AND TRUNC(t2.pmt_rtn_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id
                      AND t2.status = 'X');
 
      write_log(ods_constants.data_type_efex_pmt_rtn, 'N/A', i_log_level + 2, 'efex_pmt_rtn_fact delete count [' || SQL%ROWCOUNT || ']');
@@ -6970,6 +7077,7 @@ BEGIN
                   AND t2.status = 'A'
                   AND t2.valdtn_status = ods_constants.valdtn_valid
                   AND trunc(t2.pmt_rtn_lupdt) = i_aggregation_date
+                  AND t2.efex_mkt_id = p_market_id
                 ) t1,
                 efex_cust_dtl_dim t2,
                 efex_sales_terr_dim t3,
@@ -7028,7 +7136,7 @@ BEGIN
             (
              t2.efex_pmt_id,
              t2.seq_num,
-             '147',
+             p_company_code,
              t2.cust_dtl_code,
              t2.efex_cust_id,
              t2.sales_terr_code,
@@ -7083,7 +7191,8 @@ FUNCTION efex_mrq_matl_fact_aggr (
       efex_mrq_task_matl
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(mrq_task_matl_lupdt) = i_aggregation_date;
+      AND trunc(mrq_task_matl_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting EFEX_mrq_matl_FACT aggregation.
@@ -7111,6 +7220,7 @@ BEGIN
                      AND t1.efex_matl_id = t2.efex_matl_id
                      AND t2.valdtn_status = ods_constants.valdtn_valid
                      AND TRUNC(t2.mrq_task_matl_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id
                      AND t2.status = 'X');
 
      write_log(ods_constants.data_type_efex_mrq_matl, 'N/A', i_log_level + 2, 'efex_mrq_matl_fact delete count [' || SQL%ROWCOUNT || ']');
@@ -7150,6 +7260,7 @@ BEGIN
                   AND t1.status = 'A'
                   AND t1.valdtn_status = ods_constants.valdtn_valid
                   AND trunc(t1.mrq_task_matl_lupdt) = i_aggregation_date
+                  AND t1.efex_mkt_id = p_market_id
                )  t1,
                efex_matl_matl_subgrp_dim t2
              WHERE
@@ -7184,7 +7295,7 @@ BEGIN
              t2.efex_mrq_task_id,
              t2.efex_matl_id,
              t2.efex_mrq_id,
-             '147',
+             p_company_code,
              t2.efex_matl_subgrp_id,
              t2.efex_matl_grp_id,
              t2.efex_assoc_id,
@@ -7223,19 +7334,19 @@ FUNCTION efex_distbn_fact_wkly_snapshot (
 
   -- CURSOR DECLARATIONS
   CURSOR csr_mars_date IS
-    SELECT 
-      calendar_date, 
+    SELECT
+      calendar_date,
       t1.mars_period,
       mars_week,
       mars_day_of_week,
       mars_week_of_period,
       t2.period_end_week
-    FROM mars_date_dim  t1 ,  
-         (SELECT mars_period, max(mars_week_of_period) as period_end_week 
-          FROM mars_date_dim 
-          GROUP BY mars_period) t2           
-    WHERE mars_week = (SELECT mars_week 
-                       FROM mars_date_dim 
+    FROM mars_date_dim  t1 ,
+         (SELECT mars_period, max(mars_week_of_period) as period_end_week
+          FROM mars_date_dim
+          GROUP BY mars_period) t2
+    WHERE mars_week = (SELECT mars_week
+                       FROM mars_date_dim
                        WHERE calendar_date = v_aggregation_date)
       AND mars_day_of_week = 7
       AND t1.mars_period = t2.mars_period;
@@ -7318,17 +7429,17 @@ BEGIN
           rqd,
           ranged,
           gap,
-          0,  
+          0,
           0,
           CASE WHEN ( rv_mars_date.mars_week_of_period = rv_mars_date.period_end_week) THEN 'Y' ELSE 'N' END
         FROM
           efex_distbn_xactn_dim t1,
-          efex_matl_matl_subgrp_dim t3          
+          efex_matl_matl_subgrp_dim t3
         WHERE
           t1.efex_matl_id = t3.efex_matl_id
           AND t1.efex_sgmnt_id = t3.efex_sgmnt_id
-          AND t3.status = 'A'                        
-          AND NOT EXISTS (SELECT * 
+          AND t3.status = 'A'
+          AND NOT EXISTS (SELECT *
                       FROM efex_distbn_fact t2
                       WHERE t2.efex_cust_id = t1.efex_cust_id
                         AND t2.efex_matl_id = t1.efex_matl_id
@@ -7336,9 +7447,10 @@ BEGIN
           AND t1.status = 'A'
           AND t1.last_rec_flg = 'Y'
           AND t1.eff_end_date = c_future_date;  -- only the one hasn't been closed
-      
+
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'Snapshot record created count [' || SQL%ROWCOUNT || ']');
 
+  commit;
 
   -- Completed efex_distbn_fact_wkly_snapshot
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level + 1, 'Completed efex_distbn_fact_wkly_snapshot.');
@@ -7369,11 +7481,12 @@ FUNCTION efex_assoc_sgmnt_fact_aggr (
   -- Check whether any efex user segment modified yesterday.
   CURSOR csr_efex_user_sgmnt_count IS
     SELECT count(*) AS rec_count
-    FROM 
-      efex_user_sgmnt 
+    FROM
+      efex_user_sgmnt
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(user_sgmnt_lupdt) = i_aggregation_date;
+      AND trunc(user_sgmnt_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_assoc_sgmnt_fact aggregation.
@@ -7401,7 +7514,8 @@ BEGIN
                      AND t1.efex_sgmnt_id = t2.sgmnt_id
                      AND t2.valdtn_status = ods_constants.valdtn_valid
                      AND TRUNC(t2.user_sgmnt_lupdt) = i_aggregation_date
-                     AND t2.status = 'X');    
+                     AND t2.efex_mkt_id = p_market_id
+                     AND t2.status = 'X');
 
      write_log(ods_constants.data_type_efex_user_sgmnt, 'N/A', i_log_level + 2, 'efex_assoc_sgmnt_fact delete count [' || SQL%ROWCOUNT || ']');
 
@@ -7409,20 +7523,21 @@ BEGIN
 
      MERGE INTO
        efex_assoc_sgmnt_fact t1
-     USING (    
-             SELECT 
+     USING (
+             SELECT
                user_id          as efex_assoc_id,
                sgmnt_id         as efex_sgmnt_id,
                bus_unit_id      as efex_bus_unit_id
              FROM
-               efex_user_sgmnt 
+               efex_user_sgmnt
              WHERE
                valdtn_status = ods_constants.valdtn_valid
                AND trunc(user_sgmnt_lupdt) = i_aggregation_date
+               AND efex_mkt_id = p_market_id
                AND status = 'A'
             ) t2
         ON (t1.efex_assoc_id = t2.efex_assoc_id
-            AND t1.efex_sgmnt_id = t2.efex_sgmnt_id ) 
+            AND t1.efex_sgmnt_id = t2.efex_sgmnt_id )
         WHEN MATCHED THEN
           UPDATE SET
             t1.efex_bus_unit_id = t2.efex_bus_unit_id
@@ -7434,7 +7549,7 @@ BEGIN
              t1.efex_bus_unit_id
             )
           VALUES
-            ( 
+            (
              t2.efex_assoc_id,
              t2.efex_sgmnt_id,
              t2.efex_bus_unit_id
@@ -7476,9 +7591,9 @@ FUNCTION efex_cust_fact_aggr (
   CURSOR csr_mars_period IS
     SELECT mars_period
     FROM mars_date_dim
-    WHERE 
+    WHERE
       calendar_date = trunc(sysdate);
-      
+
 BEGIN
 
   -- Starting current period snapshot of efex customer to efex_cust_fact
@@ -7495,7 +7610,7 @@ BEGIN
   MERGE INTO efex_cust_fact t1
   USING (SELECT
            v_curr_period as cust_yyyypp,
-           efex_cust_id, 
+           efex_cust_id,
            cust_dtl_code
          FROM
            efex_cust_dtl_dim
@@ -7512,7 +7627,7 @@ BEGIN
          WHERE
            cust_yyyypp = v_curr_period
        ) t2
-      ON (t1.cust_yyyypp = t2.cust_yyyypp AND t1.efex_cust_id = t2.efex_cust_id)   
+      ON (t1.cust_yyyypp = t2.cust_yyyypp AND t1.efex_cust_id = t2.efex_cust_id)
       WHEN MATCHED THEN
         UPDATE SET
              t1.cust_dtl_code = t2.cust_dtl_code
@@ -7530,7 +7645,7 @@ BEGIN
                t2.cust_dtl_code
               );
 
-  -- Number of records inserted.  
+  -- Number of records inserted.
   utils.ods_log (ods_constants.job_type_efex_aggregation, ods_constants.data_type_efex_cust, 'N/A', i_log_level + 2, 'Inserted count for Period/Count - ' || v_curr_period || '/' || SQL%ROWCOUNT);
 
   -- Commit.
@@ -7566,7 +7681,8 @@ FUNCTION efex_cust_note_fact_aggr (
     FROM efex_cust_note
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(cust_note_lupdt) = i_aggregation_date;
+      AND trunc(cust_note_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
 BEGIN
   -- Starting efex_cust_note_fact aggregation.
@@ -7594,7 +7710,8 @@ BEGIN
                      t2.cust_note_id = t1.efex_cust_note_id
                      AND t2.status = 'X'
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.cust_note_lupdt) = i_aggregation_date);    
+                     AND TRUNC(t2.cust_note_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_cust_note, 'N/A', i_log_level + 2, 'efex_cust_note_fact delete count [' || SQL%ROWCOUNT || '], now merge chnages to fact table');
 
@@ -7612,13 +7729,14 @@ BEGIN
               t1.cust_note_body,
               t1.cust_note_author,
               to_date(t1.cust_note_created) as cust_note_created
-            FROM 
+            FROM
               efex_cust_note t1,
               efex_cust_dtl_dim t2,
               efex_sales_terr_dim t3
             WHERE
               valdtn_status = ods_constants.valdtn_valid
               AND trunc(cust_note_lupdt) = i_aggregation_date
+              AND t1.efex_mkt_id = p_market_id
               AND t1.status = 'A'
               AND t1.efex_cust_id = t2.efex_cust_id
               AND t2.last_rec_flg = 'Y'
@@ -7652,7 +7770,7 @@ BEGIN
             (
               t2.efex_cust_note_id,
               t2.cust_dtl_code,
-              '147',
+              p_company_code,
               t2.efex_cust_id,
               t2.sales_terr_code,
               t2.efex_sales_terr_id,
@@ -7694,16 +7812,16 @@ FUNCTION efex_cust_opp_distbn_fact_aggr (
 
   -- CURSOR DECLARATIONS
   CURSOR csr_mars_date IS
-    SELECT 
+    SELECT
       t1.mars_period,
       mars_week,
       mars_week_of_period,
       t2.period_end_week
-    FROM mars_date_dim  t1 ,  
-         (SELECT mars_period, max(mars_week_of_period) as period_end_week 
-          FROM mars_date_dim 
-          GROUP BY mars_period) t2           
-    WHERE t1.calendar_date = v_aggregation_date  
+    FROM mars_date_dim  t1 ,
+         (SELECT mars_period, max(mars_week_of_period) as period_end_week
+          FROM mars_date_dim
+          GROUP BY mars_period) t2
+    WHERE t1.calendar_date = v_aggregation_date
       AND t1.mars_period = t2.mars_period;
   rv_mars_date csr_mars_date%ROWTYPE;
 
@@ -7721,7 +7839,7 @@ BEGIN
   IF rv_mars_date.mars_week_of_period = rv_mars_date.period_end_week THEN
      v_eop_flg := 'Y';
   ELSE
-     v_eop_flg := 'N'; 
+     v_eop_flg := 'N';
   END IF;
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'Current week [' || rv_mars_date.mars_week || '] ' ||
@@ -7732,7 +7850,7 @@ BEGIN
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'Delete count [' || SQL%ROWCOUNT || ']');
 
-  INSERT INTO efex_cust_opprtnty_distbn_fact 
+  INSERT INTO efex_cust_opprtnty_distbn_fact
     (efex_cust_id,
      cust_dtl_code,
      distbn_yyyyppw,
@@ -7741,13 +7859,13 @@ BEGIN
      eop_flg
     )
   SELECT
-    t2.efex_cust_id, 
+    t2.efex_cust_id,
     t2.cust_dtl_code,
     rv_mars_date.mars_week as distbn_yyyyppw,
     rv_mars_date.mars_period as distbn_yyyypp,
     count(t1.efex_matl_id) as tot_gaps,
-    v_eop_flg as eop_flg 
-  FROM  
+    v_eop_flg as eop_flg
+  FROM
     efex_range_matl_fact t1,  -- Generate the dummy distribution from DDS rather than loading from EFEX
     efex_cust_dtl_dim t2,
     efex_matl_matl_subgrp_dim t3,
@@ -7757,20 +7875,20 @@ BEGIN
     AND t1.efex_matl_id = t3.efex_matl_id
     AND t4.efex_sales_terr_id = t2.efex_sales_terr_id
        AND t4.efex_sgmnt_id = t3.efex_sgmnt_id
-    AND NOT EXISTS (SELECT * 
+    AND NOT EXISTS (SELECT *
                     FROM efex_distbn_dim t3         -- Never be a real distribution item
                     WHERE t3.efex_cust_id = t2.efex_cust_id
                       AND t3.efex_matl_id = t1.efex_matl_id )
     AND t1.status = 'A'
     AND t2.status = 'A'
-    AND t3.status = 'A'    
+    AND t3.status = 'A'
     AND t2.active_flg = 'Y'
     AND t2.last_rec_flg = 'Y'
     AND t4.last_rec_flg = 'Y'
   GROUP BY t2.efex_cust_id, cust_dtl_code;
-  
+
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'efex_cust_opprtnty_distbn_fact insert count [' || SQL%ROWCOUNT || ']');
- 
+
   COMMIT;
 
   -- Completed efex_cust_opp_distbn_fact_aggr
@@ -7799,16 +7917,16 @@ FUNCTION efex_matl_opp_distbn_fact_aggr (
 
   -- CURSOR DECLARATIONS
   CURSOR csr_mars_date IS
-    SELECT 
+    SELECT
       t1.mars_period,
       mars_week,
       mars_week_of_period,
       t2.period_end_week
-    FROM mars_date_dim  t1 ,  
-         (SELECT mars_period, max(mars_week_of_period) as period_end_week 
-          FROM mars_date_dim 
-          GROUP BY mars_period) t2           
-    WHERE t1.calendar_date = v_aggregation_date  
+    FROM mars_date_dim  t1 ,
+         (SELECT mars_period, max(mars_week_of_period) as period_end_week
+          FROM mars_date_dim
+          GROUP BY mars_period) t2
+    WHERE t1.calendar_date = v_aggregation_date
       AND t1.mars_period = t2.mars_period;
   rv_mars_date csr_mars_date%ROWTYPE;
 
@@ -7826,7 +7944,7 @@ BEGIN
   IF rv_mars_date.mars_week_of_period = rv_mars_date.period_end_week THEN
      v_eop_flg := 'Y';
   ELSE
-     v_eop_flg := 'N'; 
+     v_eop_flg := 'N';
   END IF;
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'Current week [' || rv_mars_date.mars_week || '] ' ||
@@ -7837,7 +7955,7 @@ BEGIN
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'efex_matl_opprtnty_distbn_fact delete count [' || SQL%ROWCOUNT || ']');
 
-  INSERT INTO efex_matl_opprtnty_distbn_fact 
+  INSERT INTO efex_matl_opprtnty_distbn_fact
     (efex_matl_id,
      distbn_yyyyppw,
      distbn_yyyypp,
@@ -7845,12 +7963,12 @@ BEGIN
      eop_flg
     )
   SELECT
-    t1.efex_matl_id, 
+    t1.efex_matl_id,
     rv_mars_date.mars_week as distbn_yyyyppw,
     rv_mars_date.mars_period as distbn_yyyypp,
     count(t1.efex_matl_id) as tot_gaps,
-    v_eop_flg as eop_flg 
-  FROM  
+    v_eop_flg as eop_flg
+  FROM
     efex_range_matl_fact t1,  -- Generate the dummy distribution from DDS rather than loading from EFEX
     efex_cust_dtl_dim t2,
     efex_matl_matl_subgrp_dim t3,
@@ -7860,22 +7978,22 @@ BEGIN
     AND t1.efex_matl_id = t3.efex_matl_id
     AND t4.efex_sales_terr_id = t2.efex_sales_terr_id
        AND t4.efex_sgmnt_id = t3.efex_sgmnt_id
-    AND NOT EXISTS (SELECT * 
-                    FROM efex_distbn_xactn_dim t3         -- No current active transaction in distribution 
+    AND NOT EXISTS (SELECT *
+                    FROM efex_distbn_xactn_dim t3         -- No current active transaction in distribution
                     WHERE t3.efex_cust_id = t2.efex_cust_id
                       AND t3.efex_matl_id = t1.efex_matl_id
                       AND t3.last_rec_flg = 'Y'
                       AND t3.status = 'A' )
     AND t1.status = 'A'
     AND t2.status = 'A'
-    AND t3.status = 'A'    
+    AND t3.status = 'A'
     AND t2.active_flg = 'Y'
     AND t2.last_rec_flg = 'Y'
     AND t4.last_rec_flg = 'Y'
   GROUP BY t1.efex_matl_id;
 
   write_log(ods_constants.data_type_efex_distbn, 'N/A', i_log_level, 'efex_matl_opprtnty_distbn_fact modified count [' || SQL%ROWCOUNT || ']');
- 
+
   COMMIT;
 
   -- Completed efex_matl_opp_distbn_fact_aggr
@@ -7912,7 +8030,8 @@ FUNCTION efex_target_fact_aggr (
       efex_target
     WHERE
       valdtn_status = ods_constants.valdtn_valid
-      AND trunc(target_lupdt) = i_aggregation_date;
+      AND trunc(target_lupdt) = i_aggregation_date
+      AND efex_mkt_id = p_market_id;
 
   CURSOR csr_mars_period IS
     SELECT mars_period as cur_mars_period
@@ -7957,7 +8076,8 @@ BEGIN
                      AND t1.efex_target_id = t2.target_id
                      AND t1.mars_period = t2.mars_period
                      AND t2.valdtn_status = ods_constants.valdtn_valid
-                     AND TRUNC(t2.target_lupdt) = i_aggregation_date);
+                     AND TRUNC(t2.target_lupdt) = i_aggregation_date
+                     AND t2.efex_mkt_id = p_market_id);
 
      write_log(ods_constants.data_type_efex_target, 'N/A', i_log_level + 2, 'efex_target_fact delete count [' || SQL%ROWCOUNT || ']');
 
@@ -7994,6 +8114,7 @@ BEGIN
        AND t2.period_day_num = 1  -- first date of period
        AND t1.valdtn_status = ods_constants.valdtn_valid
        AND TRUNC(t1.target_lupdt) = i_aggregation_date
+       AND t1.efex_mkt_id = p_market_id
        AND t1.status = 'A'
        AND t1.sales_terr_id = t3.efex_sales_terr_id
        AND t3.last_rec_flg = 'Y';
@@ -8019,7 +8140,7 @@ BEGIN
                                 AND t3.last_rec_flg = 'Y'
                                 AND t3.status = 'A'
                                 AND t2.efex_target_id = c_tp_budget_target_id
-                                AND t2.mars_period = v_cur_mars_period 
+                                AND t2.mars_period = v_cur_mars_period
                             );
 
       -- Number of customer detail record modified.
@@ -8106,10 +8227,3 @@ END write_log;
 
 END scheduled_efex_aggregation;
 /
-
-GRANT EXECUTE ON ODS_APP.SCHEDULED_EFEX_AGGREGATION TO LICS;
-GRANT EXECUTE ON ODS_APP.SCHEDULED_EFEX_AGGREGATION TO LICS_APP;
-GRANT EXECUTE ON ODS_APP.SCHEDULED_EFEX_AGGREGATION TO ODS_APP_EXEC;
-GRANT EXECUTE ON ODS_APP.SCHEDULED_EFEX_AGGREGATION TO PUBLIC;
-
-CREATE OR REPLACE PUBLIC SYNONYM SCHEDULED_EFEX_AGGREGATION FOR ODS_APP.SCHEDULED_EFEX_AGGREGATION;
