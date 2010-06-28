@@ -371,6 +371,7 @@ create or replace package body psa_app.psa_mat_function as
                    nvl(rcd_bds_data.mde_sap_line,'*NULL') != nvl(rcd_bds_data.sap_prodctn_line_code,'*NULL')) then
 
                   var_upd_flag := true;
+                  rcd_psa_mat_defn.mde_mat_status := rcd_bds_data.mde_mat_status;
                   if rcd_bds_data.mde_mat_status = '*ACTIVE' then
                      rcd_psa_mat_defn.mde_mat_status := '*CHG';
                   end if;
