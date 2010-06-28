@@ -373,16 +373,16 @@ BEGIN
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level, 'Scheduled EFEX Flattening and Aggregation - Start');
 
   -- Market id must be valid.
-  IF p_market_id is null OR (p_market_is != 1 AND p_market_id != 5) THEN
+  IF p_market_id is null OR (p_market_id != 1 AND p_market_id != 5) THEN
       v_processing_msg := 'Invalid market id [' || TO_CHAR(i_market_id) || '].';
       RAISE e_processing_error;
-  END IF:
+  END IF;
 
   -- Company code must be valid.
   IF p_company_code is null OR (p_company_code != '147' AND p_company_code != '149') THEN
       v_processing_msg := 'Invalid company code [' || p_company_code || '].';
       RAISE e_processing_error;
-  END IF:
+  END IF;
 
   -- Convert the inputted aggregation date to standard date format.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Converting the inputted Aggregation' ||
