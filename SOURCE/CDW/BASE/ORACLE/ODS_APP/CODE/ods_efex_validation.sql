@@ -1395,7 +1395,7 @@ create or replace package body ods_app.ods_efex_validation as
                 (select cust_type_id from efex_cust_chnl where cust_type_id = t01.cust_type_id and valdtn_status = ods_constants.valdtn_valid) as chk_cust_type_id,
                 (select affltn_id from efex_affltn where affltn_id = t01.affltn_id and valdtn_status = ods_constants.valdtn_valid) as chk_affltn_id,
                 (select cust_code from cust_dim where ltrim(cust_code,'0') = t01.cust_code) as chk_cust_code,
-                (select distbr_id from efex_affltn where distbr_id = t01.distbr_id and (valdtn_status = ods_constants.valdtn_valid or valdtn_status = ods_constants.valdtn_unchecked)) as chk_distbr_id
+                (select efex_cust_id from efex_cust where efex_cust_id = t01.distbr_id and (valdtn_status = ods_constants.valdtn_valid or valdtn_status = ods_constants.valdtn_unchecked)) as chk_distbr_id
            from efex_cust t01,
                 efex_sales_terr t02
           where t01.sales_terr_id = t02.sales_terr_id(+)
@@ -3314,12 +3314,9 @@ create or replace package body ods_app.ods_efex_validation as
             and efex_cust_id = rcd_list.efex_cust_id;
 
          /*-*/
-         /* Commit the database when required
+         /* Commit the database
          /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
+         commit;
 
       end loop;
       if csr_list%isopen then
@@ -7169,7 +7166,7 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local cursors
       /*-*/
       cursor csr_reason is
-         select t01.valdtn_reasn_hdr_code
+         select max(t01.valdtn_reasn_hdr_code) as valdtn_reasn_hdr_code
            from valdtn_reasn_hdr t01
           where valdtn_type_code = par_rea_type
             and item_code_1 = par_rea_code1
