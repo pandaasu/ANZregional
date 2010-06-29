@@ -86,7 +86,7 @@ create or replace package body iface_app.efxcdw30_extract as
                 t01.cust_note_title,
                 t01.cust_note_body,
                 t01.cust_note_author,
-                t01.cust_note_created,
+                to_char(t01.cust_note_created,'yyyy/mm/dd hh24:mi:ss') as cust_note_created,
                 t01.status
            from cust_note t01,
                 customer t02,
