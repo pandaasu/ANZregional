@@ -6831,14 +6831,13 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          if not(rcd_list.cust_note_created is null) then
             begin
-               var_wrk_date := to_date(rcd_list.cust_note_created,'dd/mm/yyyy hh24:mi:ss');
+               var_wrk_date := to_date(rcd_list.cust_note_created,'yyyy/mm/dd hh24:mi:ss');
             exception
                when others then
-
                   lics_logging.write_log('efex_cust_note cust_note: '||rcd_list.cust_note_id||': Invalid - cust_note_created is not a date.');
                   add_reason(var_first,
                              ods_constants.valdtn_type_efex_cust_note,
-                             'KEY: [cust_note] - Invalid - cust_note_created must be in [DD/MM/YYYY HH24:MI:SS] Date Format - ' || rcd_list.cust_note_created,
+                             'KEY: [cust_note] - Invalid - cust_note_created must be in [YYYY/MM/DD HH24:MI:SS] Date Format - ' || rcd_list.cust_note_created,
                              ods_constants.valdtn_severity_critical,
                              par_market,
                              nvl(rcd_list.bus_unit_id,-1),
@@ -7239,7 +7238,7 @@ create or replace package body ods_app.ods_efex_validation as
           valdtn_reasn_dtl_svrty)
          values(pvar_rea_code,
                 pvar_rea_seqn,
-                par_rea_message,
+                substr(par_rea_message,1,90),
                 par_rea_severity);
 
    /*-------------*/
