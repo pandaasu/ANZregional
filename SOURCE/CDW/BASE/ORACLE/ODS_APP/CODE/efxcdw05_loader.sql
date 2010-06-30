@@ -246,6 +246,7 @@ create or replace package body ods_app.efxcdw05_loader as
       rcd_efex_cust_chnl.cust_chnl_id := lics_inbound_utility.get_number('CCH_ID',null);
       rcd_efex_cust_chnl.cust_chnl_name := lics_inbound_utility.get_variable('CCH_NAME');
       rcd_efex_cust_chnl.cust_chnl_status := lics_inbound_utility.get_variable('CCH_STATUS');
+      rcd_efex_cust_chnl.status := lics_inbound_utility.get_variable('CTY_STATUS');
       rcd_efex_cust_chnl.valdtn_status := ods_constants.valdtn_valid;
       rcd_efex_cust_chnl.efex_mkt_id := var_trn_market;
       var_trn_count := var_trn_count + 1;
@@ -275,6 +276,7 @@ create or replace package body ods_app.efxcdw05_loader as
                    cust_chnl_id = rcd_efex_cust_chnl.cust_chnl_id,
                    cust_chnl_name = rcd_efex_cust_chnl.cust_chnl_name,
                    cust_chnl_status = rcd_efex_cust_chnl.cust_chnl_status,
+                   status = rcd_efex_cust_chnl.status,
                    valdtn_status = rcd_efex_cust_chnl.valdtn_status,
                    efex_mkt_id = rcd_efex_cust_chnl.efex_mkt_id
              where cust_type_id = rcd_efex_cust_chnl.cust_type_id;
