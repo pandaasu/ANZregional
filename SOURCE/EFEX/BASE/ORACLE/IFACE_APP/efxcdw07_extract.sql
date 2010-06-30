@@ -143,7 +143,7 @@ create or replace package body iface_app.efxcdw07_extract as
                 t01.city as city,
                 substr(t01.state,1,3) as state,
                 t01.postcode as postcode,
-                t01.phone_number as phone_number,
+                replace(replace(t01.phone_number,chr(10),null),chr(13),null) as phone_number,
                 t01.distributor_flg as distributor_flg,
                 t01.outlet_flg as outlet_flg,
                 t01.active_flg as active_flg,
