@@ -273,9 +273,9 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
       rcd_efex_cust.cust_code := lics_inbound_utility.get_variable('CUS_CODE');
       rcd_efex_cust.cust_name := lics_inbound_utility.get_variable('CUS_NAME');
-      rcd_efex_cust.addr_1 := lics_inbound_utility.get_variable('ADR_TEXT1');
-      rcd_efex_cust.addr_2 := lics_inbound_utility.get_variable('ADR_TEXT2');
-      rcd_efex_cust.postal_addr := lics_inbound_utility.get_variable('ADR_POST');
+      rcd_efex_cust.addr_1 := replace(replace(lics_inbound_utility.get_variable('ADR_TEXT1'),chr(14),chr(10)),chr(15),chr(13));
+      rcd_efex_cust.addr_2 := replace(replace(lics_inbound_utility.get_variable('ADR_TEXT2'),chr(14),chr(10)),chr(15),chr(13));
+      rcd_efex_cust.postal_addr := replace(replace(lics_inbound_utility.get_variable('ADR_POST'),chr(14),chr(10)),chr(15),chr(13));
       rcd_efex_cust.city := lics_inbound_utility.get_variable('ADR_CITY');
       rcd_efex_cust.state := lics_inbound_utility.get_variable('ADR_STATE');
       rcd_efex_cust.postcode := lics_inbound_utility.get_variable('ADR_PCODE');
