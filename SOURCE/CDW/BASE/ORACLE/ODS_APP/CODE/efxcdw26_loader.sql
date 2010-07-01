@@ -324,7 +324,7 @@ create or replace package body ods_app.efxcdw26_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq.merch_comnt := rcd_efex_mrq.merch_comnt || lics_inbound_utility.get_variable('COM_TEXT');
+      rcd_efex_mrq.merch_comnt := rcd_efex_mrq.merch_comnt || replace(replace(lics_inbound_utility.get_variable('COM_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised

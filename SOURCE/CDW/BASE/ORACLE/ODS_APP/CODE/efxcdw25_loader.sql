@@ -297,7 +297,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt.pmt_method := lics_inbound_utility.get_variable('PAY_METHOD');
       rcd_efex_pmt.rlse_date := lics_inbound_utility.get_date('RLS_DATE','yyyymmddhh24miss');
       rcd_efex_pmt.procd_flg := lics_inbound_utility.get_variable('PRC_FLAG');
-      rcd_efex_pmt.contra_pmt_ref := lics_inbound_utility.get_variable('CTR_REFNR');
+      rcd_efex_pmt.contra_pmt_ref := replace(replace(lics_inbound_utility.get_variable('CTR_REFNR'),chr(14),chr(10)),chr(15),chr(13));
       rcd_efex_pmt.pmt_notes := null;
       rcd_efex_pmt.contra_pmt_status := lics_inbound_utility.get_variable('CTR_STATUS');
       rcd_efex_pmt.contra_procd_date := lics_inbound_utility.get_date('CTR_PRC_DATE','yyyymmddhh24miss');
@@ -361,7 +361,7 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt.pmt_notes := rcd_efex_pmt.pmt_notes || lics_inbound_utility.get_variable('NTE_TEXT');
+      rcd_efex_pmt.pmt_notes := rcd_efex_pmt.pmt_notes || replace(replace(lics_inbound_utility.get_variable('NTE_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised
@@ -533,7 +533,7 @@ create or replace package body ods_app.efxcdw25_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_pmt_deal.details := rcd_efex_pmt_deal.details || lics_inbound_utility.get_variable('DET_TEXT');
+      rcd_efex_pmt_deal.details := rcd_efex_pmt_deal.details || replace(replace(lics_inbound_utility.get_variable('DET_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised
@@ -644,7 +644,7 @@ create or replace package body ods_app.efxcdw25_loader as
       rcd_efex_pmt_rtn.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
       rcd_efex_pmt_rtn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
       rcd_efex_pmt_rtn.rtn_claim_code := var_ret_claim;
-      rcd_efex_pmt_rtn.rtn_reason := lics_inbound_utility.get_variable('RET_REASON');
+      rcd_efex_pmt_rtn.rtn_reason := replace(replace(lics_inbound_utility.get_variable('RET_REASON'),chr(14),chr(10)),chr(15),chr(13));
       rcd_efex_pmt_rtn.rtn_qty := lics_inbound_utility.get_number('RET_QTY',null);
       rcd_efex_pmt_rtn.rtn_value := lics_inbound_utility.get_number('RET_VALUE',null);
       rcd_efex_pmt_rtn.status := lics_inbound_utility.get_variable('STATUS');

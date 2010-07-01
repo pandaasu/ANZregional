@@ -308,7 +308,7 @@ create or replace package body ods_app.efxcdw17_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_assmnt_questn.assmnt_questn := rcd_efex_assmnt_questn.assmnt_questn || lics_inbound_utility.get_variable('COM_TEXT');
+      rcd_efex_assmnt_questn.assmnt_questn := rcd_efex_assmnt_questn.assmnt_questn || replace(replace(lics_inbound_utility.get_variable('COM_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised

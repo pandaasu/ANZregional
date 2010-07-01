@@ -348,7 +348,7 @@ create or replace package body ods_app.efxcdw24_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_order.order_notes := rcd_efex_order.order_notes || lics_inbound_utility.get_variable('NTE_TEXT');
+      rcd_efex_order.order_notes := rcd_efex_order.order_notes || replace(replace(lics_inbound_utility.get_variable('NTE_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised

@@ -279,7 +279,7 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.city := lics_inbound_utility.get_variable('ADR_CITY');
       rcd_efex_cust.state := lics_inbound_utility.get_variable('ADR_STATE');
       rcd_efex_cust.postcode := lics_inbound_utility.get_variable('ADR_PCODE');
-      rcd_efex_cust.phone := lics_inbound_utility.get_variable('PHO_NUMB');
+      rcd_efex_cust.phone := replace(replace(lics_inbound_utility.get_variable('PHO_NUMB'),chr(14),chr(10)),chr(15),chr(13));
       rcd_efex_cust.distbr_flg := lics_inbound_utility.get_variable('DIS_FLAG');
       rcd_efex_cust.outlet_flg := lics_inbound_utility.get_variable('OUT_FLAG');
       rcd_efex_cust.active_flg := lics_inbound_utility.get_variable('ACT_FLAG');

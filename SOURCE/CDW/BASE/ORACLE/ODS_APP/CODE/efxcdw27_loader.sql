@@ -336,7 +336,7 @@ create or replace package body ods_app.efxcdw27_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq_task.compliance_rslt := rcd_efex_mrq_task.compliance_rslt || lics_inbound_utility.get_variable('RES_TEXT');
+      rcd_efex_mrq_task.compliance_rslt := rcd_efex_mrq_task.compliance_rslt || replace(replace(lics_inbound_utility.get_variable('RES_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised
@@ -383,7 +383,7 @@ create or replace package body ods_app.efxcdw27_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq_task.mrq_pricing := rcd_efex_mrq_task.mrq_pricing || lics_inbound_utility.get_variable('PRC_TEXT');
+      rcd_efex_mrq_task.mrq_pricing := rcd_efex_mrq_task.mrq_pricing || replace(replace(lics_inbound_utility.get_variable('PRC_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised
@@ -430,7 +430,7 @@ create or replace package body ods_app.efxcdw27_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_mrq_task.mrq_task_notes := rcd_efex_mrq_task.mrq_task_notes || lics_inbound_utility.get_variable('NTE_TEXT');
+      rcd_efex_mrq_task.mrq_task_notes := rcd_efex_mrq_task.mrq_task_notes || replace(replace(lics_inbound_utility.get_variable('NTE_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised

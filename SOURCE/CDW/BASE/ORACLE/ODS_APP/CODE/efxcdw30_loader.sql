@@ -252,7 +252,7 @@ create or replace package body ods_app.efxcdw30_loader as
       rcd_efex_cust_note.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
       rcd_efex_cust_note.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
       rcd_efex_cust_note.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
-      rcd_efex_cust_note.cust_note_title := lics_inbound_utility.get_variable('NTE_TITLE');
+      rcd_efex_cust_note.cust_note_title := replace(replace(lics_inbound_utility.get_variable('NTE_TITLE'),chr(14),chr(10)),chr(15),chr(13));
       rcd_efex_cust_note.cust_note_body := null;
       rcd_efex_cust_note.cust_note_author := lics_inbound_utility.get_variable('NTE_AUTHOR');
       rcd_efex_cust_note.cust_note_created := lics_inbound_utility.get_variable('NTE_CREATED');
@@ -306,7 +306,7 @@ create or replace package body ods_app.efxcdw30_loader as
       /* RETRIEVE - Retrieve the field values */
       /*--------------------------------------*/
 
-      rcd_efex_cust_note.cust_note_body := rcd_efex_cust_note.cust_note_body || lics_inbound_utility.get_variable('NTE_TEXT');
+      rcd_efex_cust_note.cust_note_body := rcd_efex_cust_note.cust_note_body || replace(replace(lics_inbound_utility.get_variable('NTE_TEXT'),chr(14),chr(10)),chr(15),chr(13));
 
       /*-*/
       /* Exceptions raised
