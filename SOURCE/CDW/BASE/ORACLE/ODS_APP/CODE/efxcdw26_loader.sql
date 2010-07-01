@@ -154,6 +154,7 @@ create or replace package body ods_app.efxcdw26_loader as
       /* Exception trap
       /*-*/
       when others then
+         var_trn_error := true;
          lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
 
    /*-------------*/
