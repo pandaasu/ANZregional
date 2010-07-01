@@ -79,7 +79,7 @@ create or replace package body iface_app.efxcdw17_extract as
       /*-*/
       cursor csr_extract is
          select to_char(t01.comm_id) as comm_id,
-                t01.comm_text as comm_text,
+                replace(replace(t01.comm_text,chr(10),chr(14)),chr(13),chr(15)) as comm_text,
                 t01.comm_type as comm_type,
                 to_char(t01.comm_group_id) as comm_group_id,
                 t02.comm_group_name as comm_group_name,

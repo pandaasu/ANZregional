@@ -90,7 +90,7 @@ create or replace package body iface_app.efxcdw26_extract as
                 to_char(t01.cust_contact_id) as cust_contact_id,
                 t08.first_name||' '||t08.last_name as cust_contact_name,
                 t01.merch_name,
-                t01.merch_comments,
+                replace(replace(t01.merch_comments,chr(10),chr(14)),chr(13),chr(15)) as merch_comments,
                 to_char(t01.merch_travel_mins) as merch_travel_mins,
                 to_char(t01.merch_travel_kms) as merch_travel_kms,
                 to_char(t01.date_completed,'yyyymmddhh24miss') as date_completed,

@@ -83,8 +83,8 @@ create or replace package body iface_app.efxcdw30_extract as
                 to_char(t03.sales_territory_id) as sales_territory_id,
                 to_char(t06.segment_id) as segment_id,
                 to_char(t07.business_unit_id) as business_unit_id,
-                t01.cust_note_title,
-                t01.cust_note_body,
+                replace(replace(t01.cust_note_title,chr(10),chr(14)),chr(13),chr(15)) as cust_note_title,
+                replace(replace(t01.cust_note_body,chr(10),chr(14)),chr(13),chr(15)) as cust_note_body,
                 t01.cust_note_author,
                 to_char(t01.cust_note_created,'yyyy/mm/dd hh24:mi:ss') as cust_note_created,
                 t01.status

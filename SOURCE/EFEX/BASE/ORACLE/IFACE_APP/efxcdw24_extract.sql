@@ -80,7 +80,7 @@ create or replace package body iface_app.efxcdw24_extract as
       cursor csr_extract is
          select to_char(t01.order_id) as order_id,
                 t01.purchase_order as purchase_order,
-                t01.order_notes as order_notes,
+                replace(replace(t01.order_notes,chr(10),chr(14)),chr(13),chr(15)) as order_notes,
                 to_char(t01.order_date,'yyyymmddhh24miss') as order_date,
                 t01.order_code as order_code,
                 to_char(t01.customer_id) as customer_id,
@@ -123,7 +123,7 @@ create or replace package body iface_app.efxcdw24_extract as
           union
          select to_char(t01.order_id) as order_id,
                 t01.purchase_order as purchase_order,
-                t01.order_notes as order_notes,
+                replace(replace(t01.order_notes,chr(10),chr(14)),chr(13),chr(15)) as order_notes,
                 to_char(t01.order_date,'yyyymmddhh24miss') as order_date,
                 t01.order_code as order_code,
                 to_char(t01.customer_id) as customer_id,

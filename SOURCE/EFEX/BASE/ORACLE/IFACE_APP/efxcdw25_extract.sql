@@ -88,8 +88,8 @@ create or replace package body iface_app.efxcdw25_extract as
                 t01.payment_method,
                 to_char(t01.release_date,'yyyymmddhh24miss') as release_date,
                 t01.processed_flg,
-                t01.payment_reference,
-                t01.payment_notes,
+                replace(replace(t01.payment_reference,chr(10),chr(14)),chr(13),chr(15)) as payment_reference,
+                replace(replace(t01.payment_notes,chr(10),chr(14)),chr(13),chr(15)) as payment_notes,
                 t01.payment_status,
                 to_char(t01.processed_date,'yyyymmddhh24miss') as processed_date,
                 to_char(t01.replicated_date,'yyyymmddhh24miss') as replicated_date,
@@ -120,7 +120,7 @@ create or replace package body iface_app.efxcdw25_extract as
          select to_char(t01.payment_id) as payment_id,
                 to_char(t01.sequence_num) as sequence_num,
                 to_char(t01.order_id) as order_id,
-                t01.details,
+                replace(replace(t01.details,chr(10),chr(14)),chr(13),chr(15)) as details,
                 to_char(t01.deal_value) as deal_value,
                 t01.status
            from payment_deal t01
@@ -132,7 +132,7 @@ create or replace package body iface_app.efxcdw25_extract as
          select to_char(t01.payment_id) as payment_id,
                 to_char(t01.sequence_num) as sequence_num,
                 to_char(t01.item_id) as item_id,
-                t01.return_reason,
+                replace(replace(t01.return_reason,chr(10),chr(14)),chr(13),chr(15)) as return_reason,
                 to_char(t01.return_qty) as return_qty,
                 to_char(t01.return_value) as return_value,
                 t01.status
