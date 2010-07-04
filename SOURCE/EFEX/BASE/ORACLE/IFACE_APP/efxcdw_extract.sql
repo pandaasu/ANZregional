@@ -25,7 +25,7 @@ create or replace package iface_app.efxcdw_extract as
     2. PAR_HISTORY (OPTIONAL)
 
        ## - Number of days changes to extract
-       0 - Full extract (default)
+       0 - Full extract (default) - maximum 14 days
 
     **notes**
     1. A web log is produced under the search value EFEX_CDW_EXTRACT where all errors are logged.
@@ -107,9 +107,12 @@ create or replace package body iface_app.efxcdw_extract as
       /* Define number of days to extract
       /*-*/
       if par_history = 0 then
-         var_history := 99999;
+         var_history := 21;
       else
          var_history := par_history;
+      end if;
+      if var_history > 21 then
+         var_history := 21;
       end if;
 
       /*-*/
