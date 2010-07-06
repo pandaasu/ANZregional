@@ -198,7 +198,8 @@ create or replace package body ods_app.efxcdw00_loader as
             update efex_cntl_hdr
                set extract_status = rcd_efex_cntl_hdr.extract_status
              where market_id = rcd_efex_cntl_hdr.market_id
-               and extract_time = rcd_efex_cntl_hdr.extract_time;
+               and extract_time = rcd_efex_cntl_hdr.extract_time
+               and (extract_status != '*COMPLETED' and extract_status != '*CANCELLED');
       end;
 
    /*-------------------*/

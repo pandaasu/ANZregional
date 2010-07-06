@@ -177,6 +177,7 @@ create or replace package body ods_app.efxcdw_poller as
             /* Cancel the extract when required
             /* **note** 1. extract is cancelled when an override is found
             /*          2. extract is cancelled when unknown market
+            /*          3. extract is more than 24 hours old
             /*-*/
             open csr_override;
             fetch csr_override into rcd_override;
@@ -191,6 +192,10 @@ create or replace package body ods_app.efxcdw_poller as
             elsif rcd_header.market_id = 5 then
                var_company := '149';
             else
+               var_extract_status := '*CANCELLED';
+            end if;
+            /*-*/
+            if to_date(rcd_header.extract_time,'yyyymmddhh24miss') < (sysdate - 1) then
                var_extract_status := '*CANCELLED';
             end if;
 
