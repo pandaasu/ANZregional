@@ -34,6 +34,7 @@ create or replace package dw_flag_file_creation as
     -------   ------         -----------
     2008/08   Steve Gregan   Created
     2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
+    2010/07   Steve Gregan   Added Qlikview flag file interfaces
 
    *******************************************************************************/
 
@@ -184,7 +185,7 @@ create or replace package body dw_flag_file_creation as
       if var_locked = true then
 
          /*-*/
-         /* Create the flag file interface
+         /* Create the flag file interface - BOXI
          /*-*/
          begin
             var_instance := lics_outbound_loader.create_interface('VENBOX01',null,var_filename);
@@ -193,7 +194,30 @@ create or replace package body dw_flag_file_creation as
          exception
             when others then
                var_errors := true;
-               lics_logging.write_log(substr(SQLERRM, 1, 3000));
+               var_exception := substr(SQLERRM, 1, 3000);
+               lics_logging.write_log(var_exception);
+               if lics_outbound_loader.is_created = true then
+                  lics_outbound_loader.add_exception(var_exception);
+                  lics_outbound_loader.finalise_interface;
+               end if;
+         end;
+
+         /*-*/
+         /* Create the flag file interface - Qlikview
+         /*-*/
+         begin
+            var_instance := lics_outbound_loader.create_interface('CDWQVW01',null,var_filename);
+            lics_outbound_loader.append_data('OK');
+            lics_outbound_loader.finalise_interface;
+         exception
+            when others then
+               var_errors := true;
+               var_exception := substr(SQLERRM, 1, 3000);
+               lics_logging.write_log(var_exception);
+               if lics_outbound_loader.is_created = true then
+                  lics_outbound_loader.add_exception(var_exception);
+                  lics_outbound_loader.finalise_interface;
+               end if;
          end;
 
          /*-*/
