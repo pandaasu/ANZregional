@@ -192,6 +192,7 @@ create or replace package body ods_app.ods_efex_validation as
          /* Execute the validation procedures
          /*-*/
          begin
+            align_data(var_market);
             validate_efex_sgmnt(var_market);
             validate_efex_sales_terr(var_market);
             validate_efex_matl_grp(var_market);
@@ -220,7 +221,6 @@ create or replace package body ods_app.ods_efex_validation as
             validate_efex_target(var_market);
             validate_efex_user_sgmnt(var_market);
             validate_efex_cust_note(var_market);
-            align_data(var_market);
          exception
               when others then
                  var_errors := true;
@@ -316,6 +316,211 @@ create or replace package body ods_app.ods_efex_validation as
    /* End routine */
    /*-------------*/
    end execute;
+
+   /**************************************************/
+   /* This procedure performs the align data routine */
+   /**************************************************/
+   procedure align_data(par_market in number) is
+
+      /*-*/
+      /* Local variables
+      /*-*/
+      var_open boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+     -- cursor csr_list is
+     --    select t1.customer_id   efex_cust_id,
+     --           t1.item_id       efex_matl_id,
+     --           t1.out_of_stock_flg,
+     --           t1.out_of_date_flg,
+     --           t1.sell_price,
+     --           t1.in_store_date,
+     --           t1.modified_date efex_lupdt,
+     --           t1.status
+     --      from venus_distribution@ap0085p.world t1
+     --     where EXISTS (SELECT * FROM efex_distbn t2
+     --                    WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
+     --                      AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
+     --                      AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
+     -- rcd_list csr_list%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - Align Data');
+
+      /*-*/
+      /* Update the material subgroup status
+      /*-*/
+      update efex_matl_subgrp t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_matl_grp
+                      where matl_grp_id = t01.matl_grp_id
+                        and status = 'X');
+      commit;
+
+      /*-*/
+      /* Update the material material subgroup status
+      /*-*/
+      update efex_matl_matl_subgrp t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_matl
+                      where efex_matl_id = t01.efex_matl_id
+                        and status = 'X');
+      commit;
+
+      update efex_matl_matl_subgrp t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_matl_subgrp
+                      where matl_subgrp_id = t01.matl_subgrp_id
+                        and status = 'X');
+      commit;
+
+      /*-*/
+      /* Update the range material status
+      /*-*/
+      update efex_range_matl t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_matl
+                      where efex_matl_id = t01.efex_matl_id
+                        and status = 'X');
+      commit;
+
+      /*-*/
+      /* Delete the distribution where customer was deleted before initial load
+      /*-*/
+      delete from efex_distbn t01
+       where not exists (select 'x'
+                           from efex_cust
+                          where efex_cust_id = t01.efex_cust_id);
+      commit;
+
+      /*-*/
+      /* Update the distribution status
+      /*-*/
+      update efex_distbn t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_cust
+                      where efex_cust_id = t01.efex_cust_id
+                        and status = 'X');
+      commit;
+
+      update efex_distbn t01
+         set status = 'X'
+       where status = 'A'
+         and exists (select 'x'
+                       from efex_matl
+                      where efex_matl_id = t01.efex_matl_id
+                        and status = 'X');
+      commit;
+
+      /*-*/
+      /* Delete the distribution where status = X and not loaded to DDS at all
+      /*-*/
+      delete from efex_distbn t01
+       where status = 'X'
+         and not exists (select 'x'
+                           from efex_distbn_dim
+                          where efex_cust_id = t01.efex_cust_id
+                            and efex_matl_id = t01.efex_matl_id);
+      commit;
+
+
+--- how to do this
+---
+--  CURSOR csr_removed_distbn IS  -- Distribution removed from efex but exists in Venus.
+--     SELECT
+--       t1.customer_id   efex_cust_id,
+--       t1.item_id       efex_matl_id,
+--       t1.out_of_stock_flg,
+--       t1.out_of_date_flg,
+--       t1.sell_price,
+--       t1.in_store_date,
+--       t1.modified_date efex_lupdt,
+--       t1.status
+--     FROM
+--       venus_distribution@ap0085p.world t1
+--     WHERE
+--       EXISTS (SELECT * FROM efex_distbn t2 WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
+--       AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
+--       AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
+--  rv_removed_distbn csr_removed_distbn%ROWTYPE;
+
+
+ -- FOR rv_removed_distbn IN csr_removed_distbn LOOP
+ --     UPDATE efex_distbn
+ --     SET
+ --       display_qty = 0,
+ --       facing_qty = 0,
+ --       inv_qty = 0,
+ --       rqd_flg = 'N',
+ --       efex_lupdt = rv_removed_distbn.efex_lupdt,
+ --       out_of_stock_flg = rv_removed_distbn.out_of_stock_flg,
+ --       out_of_date_flg = rv_removed_distbn.out_of_date_flg,
+ --       sell_price = rv_removed_distbn.sell_price,
+ --       in_store_date = rv_removed_distbn.in_store_date,
+ --       status = rv_removed_distbn.status
+ --     WHERE
+ --       efex_cust_id = rv_removed_distbn.efex_cust_id
+ --       AND efex_matl_id = rv_removed_distbn.efex_matl_id;
+--
+ --     v_removed_count := v_removed_count + SQL%ROWCOUNT;
+ -- END LOOP;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Align Data');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**ERROR** - Align Data - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - Align Data');
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**ERROR**');
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end align_data;
 
    /*************************************************************/
    /* This procedure performs the validate Efex segment routine */
@@ -629,19 +834,19 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          /* Validate the user
          /*-*/
-         if rcd_list.chk_user_id is null then
-            add_reason(var_first,
-                       ods_constants.valdtn_type_efex_sales_terr,
-                       'Invalid or non-existant Sales Territory User Id - ' || rcd_list.sales_terr_user_id,
-                       ods_constants.valdtn_severity_critical,
-                       par_market,
-                       nvl(rcd_list.bus_unit_id,-1),
-                       rcd_list.sales_terr_id,
-                       null,
-                       null,
-                       null);
-            var_first := false;
-         end if;
+     --    if rcd_list.chk_user_id is null then
+     --       add_reason(var_first,
+     --                  ods_constants.valdtn_type_efex_sales_terr,
+     --                  'Invalid or non-existant Sales Territory User Id - ' || rcd_list.sales_terr_user_id,
+     --                  ods_constants.valdtn_severity_critical,
+     --                  par_market,
+     --                  nvl(rcd_list.bus_unit_id,-1),
+     --                  rcd_list.sales_terr_id,
+     --                  null,
+     --                  null,
+     --                  null);
+     --       var_first := false;
+     --    end if;
 
          /*-*/
          /* Update the validation status
@@ -3265,9 +3470,12 @@ create or replace package body ods_app.ods_efex_validation as
             and efex_cust_id = rcd_list.efex_cust_id;
 
          /*-*/
-         /* Commit the database
+         /* Commit the database when required
          /*-*/
-         commit;
+         if var_count >= pcon_com_count then
+            var_count := 0;
+            commit;
+         end if;
 
       end loop;
       if csr_list%isopen then
@@ -6806,203 +7014,6 @@ create or replace package body ods_app.ods_efex_validation as
    /* End routine */
    /*-------------*/
    end validate_efex_cust_note;
-
-   /**************************************************/
-   /* This procedure performs the align data routine */
-   /**************************************************/
-   procedure align_data(par_market in number) is
-
-      /*-*/
-      /* Local variables
-      /*-*/
-      var_open boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-     -- cursor csr_list is
-     --    select t1.customer_id   efex_cust_id,
-     --           t1.item_id       efex_matl_id,
-     --           t1.out_of_stock_flg,
-     --           t1.out_of_date_flg,
-     --           t1.sell_price,
-     --           t1.in_store_date,
-     --           t1.modified_date efex_lupdt,
-     --           t1.status
-     --      from venus_distribution@ap0085p.world t1
-     --     where EXISTS (SELECT * FROM efex_distbn t2
-     --                    WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
-     --                      AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
-     --                      AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
-     -- rcd_list csr_list%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Begin procedure
-      /*-*/
-      lics_logging.write_log('Begin - Align Data');
-
-      /*-*/
-      /* Update the material subgroup status
-      /*-*/
-      update efex_matl_subgrp t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_matl_grp
-                      where matl_grp_id = t01.matl_grp_id
-                        and status = 'X');
-
-      /*-*/
-      /* Update the material material subgroup status
-      /*-*/
-      update efex_matl_matl_subgrp t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_matl
-                      where efex_matl_id = t01.efex_matl_id
-                        and status = 'X');
-
-      update efex_matl_matl_subgrp t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_matl_subgrp
-                      where matl_subgrp_id = t01.matl_subgrp_id
-                        and status = 'X');
-
-      /*-*/
-      /* Update the range material status
-      /*-*/
-      update efex_range_matl t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_matl
-                      where efex_matl_id = t01.efex_matl_id
-                        and status = 'X');
-
-      /*-*/
-      /* Delete the distribution where customer was deleted before initial load
-      /*-*/
-      delete from efex_distbn t01
-       where not exists (select 'x'
-                           from efex_cust
-                          where efex_cust_id = t01.efex_cust_id);
-
-      /*-*/
-      /* Update the distribution status
-      /*-*/
-      update efex_distbn t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_cust
-                      where efex_cust_id = t01.efex_cust_id
-                        and status = 'X');
-
-      update efex_distbn t01
-         set status = 'X'
-       where status = 'A'
-         and exists (select 'x'
-                       from efex_matl
-                      where efex_matl_id = t01.efex_matl_id
-                        and status = 'X');
-
-      /*-*/
-      /* Delete the distribution where status = X and not loaded to DDS at all
-      /*-*/
-      delete from efex_distbn t01
-       where status = 'X'
-         and not exists (select 'x'
-                           from efex_distbn_dim
-                          where efex_cust_id = t01.efex_cust_id
-                            and efex_matl_id = t01.efex_matl_id);
-
-
---- how to do this
----
---  CURSOR csr_removed_distbn IS  -- Distribution removed from efex but exists in Venus.
---     SELECT
---       t1.customer_id   efex_cust_id,
---       t1.item_id       efex_matl_id,
---       t1.out_of_stock_flg,
---       t1.out_of_date_flg,
---       t1.sell_price,
---       t1.in_store_date,
---       t1.modified_date efex_lupdt,
---       t1.status
---     FROM
---       venus_distribution@ap0085p.world t1
---     WHERE
---       EXISTS (SELECT * FROM efex_distbn t2 WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
---       AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
---       AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
---  rv_removed_distbn csr_removed_distbn%ROWTYPE;
-
-
- -- FOR rv_removed_distbn IN csr_removed_distbn LOOP
- --     UPDATE efex_distbn
- --     SET
- --       display_qty = 0,
- --       facing_qty = 0,
- --       inv_qty = 0,
- --       rqd_flg = 'N',
- --       efex_lupdt = rv_removed_distbn.efex_lupdt,
- --       out_of_stock_flg = rv_removed_distbn.out_of_stock_flg,
- --       out_of_date_flg = rv_removed_distbn.out_of_date_flg,
- --       sell_price = rv_removed_distbn.sell_price,
- --       in_store_date = rv_removed_distbn.in_store_date,
- --       status = rv_removed_distbn.status
- --     WHERE
- --       efex_cust_id = rv_removed_distbn.efex_cust_id
- --       AND efex_matl_id = rv_removed_distbn.efex_matl_id;
---
- --     v_removed_count := v_removed_count + SQL%ROWCOUNT;
- -- END LOOP;
-
-      /*-*/
-      /* End procedure
-      /*-*/
-      lics_logging.write_log('End - Align Data');
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Log error
-         /*-*/
-         if lics_logging.is_created = true then
-            lics_logging.write_log('**ERROR** - Align Data - ' || substr(SQLERRM, 1, 1024));
-            lics_logging.write_log('End - Align Data');
-         end if;
-
-         /*-*/
-         /* Raise an exception to the caller
-         /*-*/
-         raise_application_error(-20000, '**ERROR**');
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end align_data;
 
    /*****************************************************/
    /* This procedure performs the clear reasons routine */
