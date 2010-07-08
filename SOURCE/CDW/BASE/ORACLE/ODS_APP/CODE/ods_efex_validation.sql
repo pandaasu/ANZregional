@@ -88,6 +88,8 @@ create or replace package body ods_app.ods_efex_validation as
    procedure validate_efex_target(par_market in number);
    procedure validate_efex_user_sgmnt(par_market in number);
    procedure validate_efex_cust_note(par_market in number);
+   procedure send_emails(par_market in number);
+   procedure process_emails(par_market in number, par_bus_unit in number, par_job_type in number, par_company in varchar2, par_text in varchar2);
    procedure clear_reasons(par_market in number, par_rea_type in varchar2);
    procedure add_reason(par_rea_start in boolean,
                         par_rea_type in number,
@@ -531,8 +533,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -578,42 +578,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -644,18 +627,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where sgmnt_id = rcd_list.sgmnt_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -709,8 +682,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -758,42 +729,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -858,18 +812,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where sales_terr_id = rcd_list.sales_terr_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -923,8 +867,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -971,42 +913,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -1054,18 +979,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where matl_grp_id = rcd_list.matl_grp_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -1119,8 +1034,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -1169,42 +1082,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -1235,18 +1131,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where matl_subgrp_id = rcd_list.matl_subgrp_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -1300,8 +1186,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -1352,42 +1236,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -1505,18 +1372,8 @@ create or replace package body ods_app.ods_efex_validation as
             and matl_subgrp_id = rcd_list.matl_subgrp_id
             and sgmnt_id = rcd_list.sgmnt_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -1570,8 +1427,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
       var_work number;
@@ -1627,42 +1482,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -1860,18 +1698,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where efex_cust_id = rcd_list.efex_cust_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -1925,8 +1753,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -1975,42 +1801,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -2042,18 +1851,8 @@ create or replace package body ods_app.ods_efex_validation as
           where user_id = rcd_list.user_id
             and route_sched_date = rcd_list.route_sched_date;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -2107,8 +1906,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -2158,42 +1955,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -2294,18 +2074,8 @@ create or replace package body ods_app.ods_efex_validation as
             and route_plan_date = rcd_list.route_plan_date
             and efex_cust_id = rcd_list.efex_cust_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -2359,8 +2129,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -2410,42 +2178,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -2546,18 +2297,8 @@ create or replace package body ods_app.ods_efex_validation as
             and call_date = rcd_list.call_date
             and user_id = rcd_list.user_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -2611,8 +2352,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -2662,42 +2401,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -2798,18 +2520,8 @@ create or replace package body ods_app.ods_efex_validation as
             and timesheet_date = rcd_list.timesheet_date
             and user_id = rcd_list.user_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -2863,8 +2575,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -2913,42 +2623,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -2980,18 +2673,8 @@ create or replace package body ods_app.ods_efex_validation as
           where user_id = rcd_list.user_id
             and timesheet_date = rcd_list.timesheet_date;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -3045,8 +2728,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -3093,42 +2774,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -3176,18 +2840,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where assmnt_id = rcd_list.assmnt_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -3241,8 +2895,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -3294,42 +2946,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -3469,18 +3104,8 @@ create or replace package body ods_app.ods_efex_validation as
           where assmnt_id = rcd_list.assmnt_id
             and efex_cust_id = rcd_list.efex_cust_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -3534,8 +3159,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -3586,42 +3209,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -3739,18 +3345,8 @@ create or replace package body ods_app.ods_efex_validation as
             and efex_cust_id = rcd_list.efex_cust_id
             and resp_date = rcd_list.resp_date;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -3804,8 +3400,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -3852,42 +3446,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -3953,18 +3530,8 @@ create or replace package body ods_app.ods_efex_validation as
           where range_id = rcd_list.range_id
             and efex_matl_id = rcd_list.efex_matl_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -4018,8 +3585,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -4072,42 +3637,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -4258,18 +3806,8 @@ create or replace package body ods_app.ods_efex_validation as
           where efex_cust_id = rcd_list.efex_cust_id
             and efex_matl_id = rcd_list.efex_matl_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -4323,8 +3861,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -4375,42 +3911,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -4527,18 +4046,8 @@ create or replace package body ods_app.ods_efex_validation as
           where efex_cust_id = rcd_list.efex_cust_id
             and matl_grp_id = rcd_list.matl_grp_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -4592,8 +4101,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -4643,42 +4150,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -4777,18 +4267,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where efex_order_id = rcd_list.efex_order_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -4842,8 +4322,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -4894,42 +4372,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -4995,18 +4456,8 @@ create or replace package body ods_app.ods_efex_validation as
           where efex_order_id = rcd_list.efex_order_id
             and efex_matl_id = rcd_list.efex_matl_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -5060,8 +4511,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -5111,42 +4560,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -5246,18 +4678,8 @@ create or replace package body ods_app.ods_efex_validation as
           where pmt_id = rcd_list.pmt_id
             and efex_cust_id = rcd_list.efex_cust_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -5311,8 +4733,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -5362,42 +4782,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -5446,18 +4849,8 @@ create or replace package body ods_app.ods_efex_validation as
           where pmt_id = rcd_list.pmt_id
             and seq_num = rcd_list.seq_num;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -5511,8 +4904,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -5562,42 +4953,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -5646,18 +5020,8 @@ create or replace package body ods_app.ods_efex_validation as
           where pmt_id = rcd_list.pmt_id
             and seq_num = rcd_list.seq_num;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -5711,8 +5075,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -5762,42 +5124,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -5913,18 +5258,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where mrq_id = rcd_list.mrq_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -5978,8 +5313,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -6028,42 +5361,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -6094,18 +5410,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where mrq_task_id = rcd_list.mrq_task_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -6159,8 +5465,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -6207,42 +5511,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -6291,18 +5578,8 @@ create or replace package body ods_app.ods_efex_validation as
           where mrq_task_id = rcd_list.mrq_task_id
             and efex_matl_id = rcd_list.efex_matl_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -6356,8 +5633,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -6404,42 +5679,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -6489,18 +5747,8 @@ create or replace package body ods_app.ods_efex_validation as
             and target_id = rcd_list.target_id
             and mars_period = rcd_list.mars_period;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -6554,8 +5802,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
 
@@ -6603,42 +5849,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -6704,18 +5933,8 @@ create or replace package body ods_app.ods_efex_validation as
           where user_id = rcd_list.user_id
             and sgmnt_id = rcd_list.sgmnt_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -6769,8 +5988,6 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_count number;
-      var_open boolean;
-      var_exit boolean;
       var_first boolean;
       var_valdtn_status varchar2(10);
       var_wrk_date date;
@@ -6820,42 +6037,25 @@ create or replace package body ods_app.ods_efex_validation as
       /* Retrieve unchecked data and validate
       /*-*/
       var_count := 0;
-      var_open := true;
-      var_exit := false;
+      open csr_list;
       loop
-
-         /*-*/
-         /* Retrieve the next list item
-         /*-*/
-         loop
-            if var_open = true then
-               if csr_list%isopen then
-                  close csr_list;
-               end if;
-               open csr_list;
-               var_open := false;
+         if var_count >= pcon_com_count then
+            if csr_list%isopen then
+               close csr_list;
             end if;
-            begin
-               fetch csr_list into rcd_list;
-               if csr_list%notfound then
-                  var_exit := true;
-               end if;
-            exception
-               when snapshot_exception then
-                  var_open := true;
-            end;
-            if var_open = false then
-               exit;
-            end if;
-         end loop;
-         if var_exit = true then
+            commit;
+            open csr_list;
+            var_count := 0;
+         end if;
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
             exit;
          end if;
+         var_count := var_count + 1;
 
          /*-*/
          /* Reset validation data
          /*-*/
-         var_count := var_count + 1;
          var_first := true;
          var_valdtn_status := ods_constants.valdtn_valid;
 
@@ -6959,18 +6159,8 @@ create or replace package body ods_app.ods_efex_validation as
             set valdtn_status = var_valdtn_status
           where cust_note_id = rcd_list.cust_note_id;
 
-         /*-*/
-         /* Commit the database when required
-         /*-*/
-         if var_count >= pcon_com_count then
-            var_count := 0;
-            commit;
-         end if;
-
       end loop;
-      if csr_list%isopen then
-         close csr_list;
-      end if;
+      close csr_list;
 
       /*-*/
       /* Commit the database
@@ -7014,6 +6204,297 @@ create or replace package body ods_app.ods_efex_validation as
    /* End routine */
    /*-------------*/
    end validate_efex_cust_note;
+
+   /***************************************************/
+   /* This procedure performs the send emails routine */
+   /***************************************************/
+   procedure send_emails(par_market in number) is
+
+      /*-*/
+      /* Local variables
+      /*-*/
+      var_company varchar2(10);
+      con_bus_unit_147_pet constant number := 1;   
+      con_bus_unit_147_snack constant number := 2;   
+      con_bus_unit_147_food constant number := 4;
+      con_bus_unit_149 constant number := 7;
+      con_job_type_147_pet constant number := 23;   
+      con_job_type_147_snack constant number := 22;   
+      con_job_type_147_food constant number := 24;
+      con_job_type_149 constant number := 22;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Begin procedure
+      /*-*/
+      lics_logging.write_log('Begin - Send Emails');
+
+      /*-*/
+      /* Assign the company code
+      /*-*/
+      if par_market = 1 then
+         var_company := '147';
+         process_emails(par_market, con_bus_unit_147_pet, con_job_type_147_pet, var_company, 'Pet');
+         process_emails(par_market, con_bus_unit_147_snack, con_job_type_147_snack, var_company, 'Snack');
+         process_emails(par_market, con_bus_unit_147_food, con_job_type_147_food, var_company, 'Food');
+      elsif par_market = 5 then
+         var_company := '149';
+         process_emails(par_market, con_bus_unit_149, con_job_type_149, var_company, 'New Zealand');
+      end if;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Send Emails');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**ERROR** - Send Emails - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - Send Emails');
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**ERROR**');
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end send_emails;
+
+   /******************************************************/
+   /* This procedure performs the process emails routine */
+   /******************************************************/
+   procedure process_emails(par_market in number, par_bus_unit in number, par_job_type in number, par_company in varchar2, par_text in varchar2) is
+
+      /*-*/
+      /* Local variables
+      /*-*/
+      var_valdtn_type_code number;
+      var_row_count number;
+      var_prt_count number;
+      con_max_row constant number := 32500;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_email is
+         select distinct(t01.email_address) as email_address
+           from email_list t01
+          where t01.company_code = par_company
+            and t01.job_type_code = par_job_type
+          order by email_address asc;
+
+      cursor csr_data is
+         select t01.valdtn_type_code,
+                t03.valdtn_type_desc,
+                decode(t01.item_code_3,null,'',' - '||nvl(t01.item_code_3,''))||
+                decode(t01.item_code_4,null,'',' - '||nvl(t01.item_code_4,''))||
+                decode(t01.item_code_5,null,'',' - '||nvl(t01.item_code_5,''))||
+                decode(t01.item_code_6,null,'',' - '||nvl(t01.item_code_6,'')) as valdtn_key,
+                t02.valdtn_reasn_dtl_msg
+           from valdtn_reasn_hdr t01,
+                valdtn_reasn_dtl t02,
+                valdtn_type t03
+          where t01.valdtn_reasn_hdr_code = t02.valdtn_reasn_hdr_code
+            and t01.valdtn_type_code = t03.valdtn_type_code
+          where (t01.valdtn_type_code >= 30 and t01.valdtn_type_code <= 57)
+            and t01.item_code_1 = par_market
+            and t01.item_code_2 in (-1,par_bus_unit)
+          order by t01.valdtn_type_code asc,
+                   t01.item_code_3 asc,
+                   t01.item_code_4 asc,
+                   t01.item_code_5 asc,
+                   t01.item_code_6 asc;
+
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_email is table of csr_email%rowtype index by binary_integer;
+      tbl_email typ_email;
+      type typ_data is table of csr_data%rowtype index by binary_integer;
+      tbl_data typ_data;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the email address data
+      /*-*/
+      lics_logging.write_log('===> Retrieve the email address listing - '||par_text);
+      tbl_email.delete;
+      open csr_email;
+      fetch csr_email bulk collect into tbl_email;
+      close csr_email;
+
+      /*-*/
+      /* Retrieve the validation messages for snack
+      /*-*/
+      lics_logging.write_log('===> Retrieve the validation messages- '||par_text);
+      tbl_data.delete;
+      open csr_data;
+      fetch csr_data bulk collect into tbl_data;
+      close csr_data;
+
+      /*-*/
+      /* Email the validation messages for snack
+      /*-*/
+      if tbl_data.count = 0 then
+
+         /*-*/
+         /* No validation messages for snack
+         /*-*/
+         lics_logging.write_log('===> NO validation messages to send- '||par_text);
+
+      else
+
+         /*-*/
+         /* Retrieve the email address data
+         /*-*/
+         lics_logging.write_log('===> Email the validation messages- '||par_text);
+         for idx in 1..tbl_email.count loop
+
+            /*-*/
+            /* Create the new email and create the email text header part
+            /*-*/
+            lics_logging.write_log('======> Email - '||tbl_email(idx).email_address);
+            lics_mailer.create_email('EFEX_' || ods_parameter.business_unit_code || '_' || ods_parameter.system_environment,
+                                     tbl_email(idx).email_address,
+                                     'Efex Validation - Invalid Items Found for '||par_text||' on MFANZ CDW',
+                                     null,
+                                     null);
+            lics_mailer.create_part(null);
+            lics_mailer.append_data('Efex Validation - Invalid Items Found for '||par_text||' on MFANZ CDW');
+            lics_mailer.append_data(null);
+            lics_mailer.append_data('The following spreadsheet(s) contain the validation messages...');
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+
+            /*-*/
+            /* Retrieve the validation messages
+            /*-*/
+            var_valdtn_type_code := -1;
+            var_prt_count := 1;
+            var_row_count := 0;
+            for idy in 1..tbl_data.count loop
+
+               /*-*/
+               /* Validation type changed
+               /*-*/
+               if tbl_data(idy).valdtn_type_code != var_valdtn_type_code or var_row_count >= con_max_row then
+
+                  /*-*/
+                  /* Output the email file part trailer data when required
+                  /*-*/
+                  if var_valdtn_type_code != -1 then
+                     lics_mailer.append_data('</table>');
+                  end if;
+
+                  /*-*/
+                  /* Validation type changed
+                  /*-*/
+                  if tbl_data(idy).valdtn_type_code != var_valdtn_type_code then
+
+                     /*-*/
+                     /* Reset the part count
+                     /*-*/
+                     var_valdtn_type_code := tbl_data(idy).valdtn_type_code;
+                     var_prt_count := 1;
+
+                  /*-*/
+                  /* Maximum row count reached
+                  /*-*/
+                  else
+
+                     /*-*/
+                     /* Increment the part count
+                     /*-*/
+                     var_prt_count := var_prt_count + 1;
+
+                  end if;
+
+                  /*-*/
+                  /* Create the email file part and output the header data
+                  /*-*/
+                  if var_prt_count = 1 then
+                     lics_mailer.create_part(tbl_data(idy).valdtn_type_desc||'.xls');
+                  else
+                     lics_mailer.create_part(tbl_data(idy).valdtn_type_desc||'_PART'||to_char(var_prt_count,'fm9999999990')||'.xls');
+                  end if;
+                  lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
+                  lics_mailer.append_data('<tr><td align=left colspan=2 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">tbl_data(idy).valdtn_type_desc</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left colspan=2></td></tr>');
+                  lics_mailer.append_data('<tr>');
+                  lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Validation Key</td>');
+                  lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Message</td>');
+                  lics_mailer.append_data('</tr>');
+
+                  /*-*/
+                  /* Reset the email file row count
+                  /*-*/
+                  var_row_count := 1;
+
+               end if;
+
+               /*-*/
+               /* Output the message data
+               /*-*/
+               lics_mailer.append_data('<tr>');
+               lics_mailer.append_data('<td align=left>'||tbl_data(idy).valdtn_key||'</td>');
+               lics_mailer.append_data('<td align=left>'||tbl_data(idy).valdtn_reasn_dtl_msg||'</td>');
+               lics_mailer.append_data('</tr>');
+
+               /*-*/
+               /* Increment the email file row count
+               /*-*/
+               var_row_count := var_row_count + 1;
+
+            end loop;
+
+            /*-*/
+            /* Finalise the email
+            /*-*/
+            lics_mailer.append_data('</table>');
+            lics_mailer.create_part(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data(null);
+            lics_mailer.append_data('** Email End **');
+            lics_mailer.finalise_email;
+
+         end loop;
+
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_emails;
 
    /*****************************************************/
    /* This procedure performs the clear reasons routine */
