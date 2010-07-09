@@ -35,7 +35,7 @@ end lics_interface_loader;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lics_interface_loader as
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
 
    /*-*/
    /* Private exceptions
@@ -68,14 +68,13 @@ create or replace package body lics_interface_loader as
       var_result varchar2(4000);
       var_fil_name varchar2(64);
       var_opened boolean;
-      var_maximum boolean;
       var_instance number(15,0);
       var_fil_handle utl_file.file_type;
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface is 
+      cursor csr_lics_interface is
          select t01.*
            from lics_interface t01
           where t01.int_interface = var_interface;
@@ -148,7 +147,6 @@ create or replace package body lics_interface_loader as
       /* Perform the interface user invocation validation function when required
       /**/
       if not(rcd_lics_interface.int_usr_validation is null) then
-         var_maximum := false;
          open csr_lics_temp;
          loop
             fetch csr_lics_temp into rcd_lics_temp;
@@ -157,14 +155,7 @@ create or replace package body lics_interface_loader as
             end if;
             execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_data(:data); end;' using out var_result, rcd_lics_temp.dat_record;
             if not(var_result is null) then
-               if length(var_message) < 3900 then
-                  var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' || var_result;
-               else
-                  if var_maximum = false then
-                     var_maximum := true;
-                     var_message := var_message || chr(13) || '.... maximum message length exceeded';
-                  end if;
-               end if;
+               var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' || var_result;
             end if;
          end loop;
          close csr_lics_temp;
@@ -304,7 +295,7 @@ create or replace package body lics_interface_loader as
       /*-*/
       delete from lics_temp;
       commit;
-      
+
       /*-*/
       /* Parse the XML input
       /*-*/
