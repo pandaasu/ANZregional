@@ -4778,6 +4778,8 @@ create or replace package body psa_app.psa_psc_function as
       var_chg_mins number;
       var_str_time date;
       var_end_time date;
+      var_ent_time date;
+      var_wrk_time date;
       var_com_text varchar2(256 char);
       var_upd_user varchar2(30);
       var_upd_date date;
@@ -4879,7 +4881,7 @@ create or replace package body psa_app.psa_psc_function as
       var_win_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WINCDE')));
       var_win_seqn := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@WINSEQ'));
       var_act_code := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@ACTCDE'));
-      var_mat_code := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
+      var_mat_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATCDE'));
       var_req_qnty := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@REQQTY'));
       var_chg_flag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@CHGFLG'));
       var_chg_mins := psa_to_number(xslProcessor.valueOf(obj_psa_request,'@CHGMIN'));
@@ -4972,7 +4974,7 @@ create or replace package body psa_app.psa_psc_function as
          end if;
          close csr_mdef;
          if var_found = false then
-            psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have configuration for selected line configuration');
+            psa_gen_function.add_mesg_data('Production schedule activity material ('||var_mat_code||') does not have production type configuration');
          else
             if rcd_mdef.mde_mat_status != '*ACTIVE' and rcd_mdef.mde_mat_status != '*CHG' and rcd_mdef.mde_mat_status != '*DEL' then
                psa_gen_function.add_mesg_data('Production schedule activity material ('||var_mat_code||') must be status *ACTIVE, *CHG or *DEL');
@@ -5247,12 +5249,17 @@ create or replace package body psa_app.psa_psc_function as
       /* Load the schedule actual entry when required
       /*-*/
       if var_src_code = '*ACT' then
+         var_wrk_time := sysdate;
          delete from psa_psc_enty where pse_act_code = rcd_actv.psa_act_code;
          obj_ent_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/ENTDFN');
          for idx in 0..xmlDom.getLength(obj_ent_list)-1 loop
             obj_ent_node := xmlDom.item(obj_ent_list,idx);
+            var_ent_time := psa_to_date(xslProcessor.valueOf(obj_ent_node,'@ENTTIM'),'dd/mm/yyyy hh24:mi');
+            if var_ent_time is null then
+               var_ent_time := var_wrk_time + (1/1440);
+            end if;
             rcd_enty.pse_act_code := rcd_actv.psa_act_code;
-            rcd_enty.pse_ent_time := nvl(psa_to_date(xslProcessor.valueOf(obj_ent_node,'@ENTTIM'),'dd/mm/yyyy hh24:mi'),sysdate);
+            rcd_enty.pse_ent_time := var_ent_time;
             rcd_enty.pse_ent_text := psa_from_xml(xslProcessor.valueOf(obj_ent_node,'@ENTTXT'));
             rcd_enty.pse_ent_qnty := nvl(psa_to_number(xslProcessor.valueOf(obj_ent_node,'@ENTQTY')),0);
             rcd_enty.pse_ent_wast := nvl(psa_to_number(xslProcessor.valueOf(obj_ent_node,'@ENTWAS')),0);
