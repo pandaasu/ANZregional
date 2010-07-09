@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("PSA_PSC_CONFIG")
+   strReturn = GetSecurity()
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
