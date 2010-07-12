@@ -94,13 +94,12 @@ create or replace package body ods_app.ods_efex_validation as
    procedure add_reason(par_rea_start in boolean,
                         par_rea_type in number,
                         par_rea_message in varchar2,
-                        par_rea_severity in varchar2,
+                        par_mkt_id in number,
+                        par_bus_id in number,
                         par_rea_code1 in varchar2,
                         par_rea_code2 in varchar2,
                         par_rea_code3 in varchar2,
-                        par_rea_code4 in varchar2,
-                        par_rea_code5 in varchar2,
-                        par_rea_code6 in varchar2);
+                        par_rea_code4 in varchar2);
 
    /*-*/
    /* Private constants
@@ -110,8 +109,8 @@ create or replace package body ods_app.ods_efex_validation as
    /*-*/
    /* Private definitions
    /*-*/
-   pvar_rea_code number;
-   pvar_rea_seqn number;
+   pvar_hdr_seqn number;
+   pvar_det_seqn number;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -223,6 +222,7 @@ create or replace package body ods_app.ods_efex_validation as
             validate_efex_target(var_market);
             validate_efex_user_sgmnt(var_market);
             validate_efex_cust_note(var_market);
+            send_emails(var_market);
          exception
               when others then
                  var_errors := true;
@@ -607,7 +607,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_sgmnt,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.sgmnt_id,
@@ -758,7 +757,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_sales_terr,
                        'Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.sales_terr_id,
@@ -775,7 +773,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_sales_terr,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.sales_terr_id,
@@ -788,19 +785,18 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          /* Validate the user
          /*-*/
-     --    if rcd_list.chk_user_id is null then
-     --       add_reason(var_first,
-     --                  ods_constants.valdtn_type_efex_sales_terr,
-     --                  'Invalid or non-existant Sales Territory User Id - ' || rcd_list.sales_terr_user_id,
-     --                  ods_constants.valdtn_severity_critical,
-     --                  par_market,
-     --                  nvl(rcd_list.bus_unit_id,-1),
-     --                  rcd_list.sales_terr_id,
-     --                  null,
-     --                  null,
-     --                  null);
-     --       var_first := false;
-     --    end if;
+         if rcd_list.chk_user_id is null then
+            add_reason(var_first,
+                       ods_constants.valdtn_type_efex_sales_terr,
+                       'Invalid or non-existant Sales Territory User Id - ' || rcd_list.sales_terr_user_id,
+                       par_market,
+                       nvl(rcd_list.bus_unit_id,-1),
+                       rcd_list.sales_terr_id,
+                       null,
+                       null,
+                       null);
+            var_first := false;
+         end if;
 
          /*-*/
          /* Update the validation status
@@ -942,7 +938,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_grp,
                        'Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.matl_grp_id,
@@ -959,7 +954,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_grp,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.matl_grp_id,
@@ -1111,7 +1105,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_subgrp,
                        'Invalid or non-existant Material Group Id - ' || rcd_list.matl_grp_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.matl_subgrp_id,
@@ -1265,7 +1258,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid or non-existant EFEX Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1282,7 +1274,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid or non-existant Material Sub Group Id - ' || rcd_list.matl_subgrp_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1299,7 +1290,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid or non-existant Material Group Id - ' || rcd_list.matl_grp_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1316,7 +1306,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1333,7 +1322,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1350,7 +1338,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_matl_m_subgrp,
                        'KEY: [matl-subgrp-sgmnt] - Invalid - matl assign to more than one subgrp for same segment.',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_matl_id,
@@ -1512,7 +1499,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1531,7 +1517,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Range Id - ' || rcd_list.range_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1550,7 +1535,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Cust Type Id - ' || rcd_list.cust_type_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1569,7 +1553,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Affiliation Id - ' || rcd_list.affltn_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1588,7 +1571,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Customer Code - ' || rcd_list.cust_code,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1606,7 +1588,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust,
                        'Customer can not be outlet_flg = N and distributor_flg = N and customer_code IS NULL',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -1623,7 +1604,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust,
                        'Outlet customer should not be a Direct customer as well (have customer_code provided)',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -1642,7 +1622,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_cust,
                           'Invalid or non-existant Distributor Id - ' || rcd_list.distbr_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.efex_cust_id,
@@ -1663,7 +1642,6 @@ create or replace package body ods_app.ods_efex_validation as
                   add_reason(var_first,
                              ods_constants.valdtn_type_efex_cust,
                              'Customer Visit Frequency must be a positive number.',
-                             ods_constants.valdtn_severity_critical,
                              par_market,
                              nvl(rcd_list.bus_unit_id,-1),
                              rcd_list.efex_cust_id,
@@ -1677,7 +1655,6 @@ create or replace package body ods_app.ods_efex_validation as
                   add_reason(var_first,
                              ods_constants.valdtn_type_efex_cust,
                              'Customer Visit Frequency is not a number.',
-                             ods_constants.valdtn_severity_critical,
                              par_market,
                              nvl(rcd_list.bus_unit_id,-1),
                              rcd_list.efex_cust_id,
@@ -1830,7 +1807,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_sched,
                        'KEY: [user-sched_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -1984,7 +1960,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_plan,
                        'KEY: [user-plan_date-cust] - Invalid or non-existant EFEX Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2001,7 +1976,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_plan,
                        'KEY: [user-plan_date-cust] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2018,7 +1992,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_plan,
                        'KEY: [user-plan_date-cust] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2035,7 +2008,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_plan,
                        'KEY: [user-plan_date-cust] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2052,7 +2024,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_route_plan,
                        'KEY: [user-plan_date-cust] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2207,7 +2178,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_call,
                        'KEY: [cust-call_date-user] - Invalid or non-existant EFEX Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2224,7 +2194,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_call,
                        'KEY: [cust-call_date-user] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2241,7 +2210,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_call,
                        'KEY: [cust-call_date-user] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2258,7 +2226,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_call,
                        'KEY: [cust-call_date-user] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2275,7 +2242,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_call,
                        'KEY: [cust-call_date-user] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2430,7 +2396,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_call,
                        'KEY: [cust-timesheet_date-user] - Invalid or non-existant EFEX Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2447,7 +2412,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_call,
                        'KEY: [cust-timesheet_date-user] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2464,7 +2428,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_call,
                        'KEY: [cust-timesheet_date-user] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2481,7 +2444,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_call,
                        'KEY: [cust-timesheet_date-user] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2498,7 +2460,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_call,
                        'KEY: [cust-timesheet_date-user] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -2652,7 +2613,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_tmesht_day,
                        'KEY: [user-timesheet_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -2803,7 +2763,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_questn,
                        'Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -2820,7 +2779,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_questn,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -2975,7 +2933,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_assgn,
                        'KEY: [assmnt-cust] - Invalid or non-existant Assessment Id - ' || rcd_list.assmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -2992,7 +2949,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_assgn,
                        'KEY: [assmnt-cust] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3010,7 +2966,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_ass_assgn,
                           'KEY: [assmnt-cust] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
@@ -3028,7 +2983,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_assgn,
                        'KEY: [assmnt-cust] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3045,7 +2999,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_ass_assgn,
                        'KEY: [assmnt-cust] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3063,7 +3016,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_ass_assgn,
                           'KEY: [assmnt-cust] - Invalid or non-existant Customer Type Id - ' || rcd_list.cust_type_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
@@ -3082,7 +3034,6 @@ create or replace package body ods_app.ods_efex_validation as
                add_reason(var_first,
                           ods_constants.valdtn_type_efex_ass_assgn,
                           'KEY: [assmnt-cust] - Invalid or non-existant Affiliation Id - ' || rcd_list.affltn_id,
-                          ods_constants.valdtn_severity_critical,
                           par_market,
                           nvl(rcd_list.bus_unit_id,-1),
                           rcd_list.assmnt_id,
@@ -3238,7 +3189,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Assessment Id - ' || rcd_list.assmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3255,7 +3205,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3272,7 +3221,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3289,7 +3237,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3306,7 +3253,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3323,7 +3269,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_assmnt,
                        'KEY: [assmnt-cust-resp_date] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.assmnt_id,
@@ -3475,7 +3420,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_range_matl,
                        'KEY: [range-matl] - Invalid or non-existant Range Id - ' || rcd_list.range_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        -1,
                        rcd_list.range_id,
@@ -3492,7 +3436,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_range_matl,
                        'KEY: [range-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        -1,
                        rcd_list.range_id,
@@ -3509,7 +3452,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_range_matl,
                        'KEY: [range-matl] - Required flag has not been provided.',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        -1,
                        rcd_list.range_id,
@@ -3666,7 +3608,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3683,7 +3624,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3700,7 +3640,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3717,7 +3656,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3734,7 +3672,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3751,7 +3688,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Range Id - ' || rcd_list.range_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3768,7 +3704,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3785,7 +3720,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn,
                        'KEY: [cust-matl] - No subgroup found in efex_distbn',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3940,7 +3874,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3957,7 +3890,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.matl_grp_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3974,7 +3906,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -3991,7 +3922,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -4008,7 +3938,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -4025,7 +3954,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_distbn_tot,
                        'KEY: [cust-matl] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_cust_id,
@@ -4179,7 +4107,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4196,7 +4123,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4213,7 +4139,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4230,7 +4155,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4247,7 +4171,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order,
                        'Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4401,7 +4324,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order_matl,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Order Id - ' || rcd_list.efex_order_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4418,7 +4340,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order_matl,
                        'KEY: [cust-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4435,7 +4356,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_order_matl,
                        'KEY: [cust-matl] - Invalid or non-existant Material Distributor Id - ' || rcd_list.matl_distbr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.efex_order_id,
@@ -4589,7 +4509,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt,
                        'KEY: [pmt-cust] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4606,7 +4525,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt,
                        'KEY: [pmt-cust] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4623,7 +4541,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt,
                        'KEY: [pmt-cust] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4640,7 +4557,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt,
                        'KEY: [pmt-cust] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4657,7 +4573,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt,
                        'KEY: [pmt-cust] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4811,7 +4726,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt_deal,
                        'KEY: [pmt-seq_num] - Invalid or non-existant Payment Id - ' || rcd_list.pmt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4828,7 +4742,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt_deal,
                        'KEY: [pmt-seq_num] - Invalid or non-existant Efex Order Id - ' || rcd_list.efex_order_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4982,7 +4895,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt_rtn,
                        'KEY: [pmt-seq_num] - Invalid or non-existant Payment Id - ' || rcd_list.pmt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -4999,7 +4911,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_pmt_rtn,
                        'KEY: [pmt-seq_num] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.pmt_id,
@@ -5153,7 +5064,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5170,7 +5080,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5187,7 +5096,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5204,7 +5112,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5221,7 +5128,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5238,7 +5144,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq,
                        'KEY: [mrq] - ICompleted Flg has not been provided',
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_id,
@@ -5390,7 +5295,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq_task,
                        'KEY: [mrq_task] - Invalid or non-existant MRQ Id - ' || rcd_list.mrq_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.mrq_task_id,
@@ -5540,7 +5444,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq_task_matl,
                        'KEY: [mrq_task-matl] - Invalid or non-existant MRQ Task Id - ' || rcd_list.mrq_task_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        2,
                        rcd_list.mrq_task_id,
@@ -5557,7 +5460,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_mrq_task_matl,
                        'KEY: [mrq_task-matl] - Invalid or non-existant Efex Material Id - ' || rcd_list.efex_matl_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        2,
                        rcd_list.mrq_task_id,
@@ -5708,7 +5610,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_target,
                        'KEY: [sales_terr-target-mars_period] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.sales_terr_id,
@@ -5725,7 +5626,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_target,
                        'KEY: [sales_terr-target-mars_period] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.sales_terr_id,
@@ -5878,7 +5778,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_user_sgmnt,
                        'KEY: [user-segment] - Invalid or non-existant User Id - ' || rcd_list.user_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -5895,7 +5794,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_user_sgmnt,
                        'KEY: [user-segment] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -5912,7 +5810,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_user_sgmnt,
                        'KEY: [user-segment] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.user_id,
@@ -6066,7 +5963,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust_note,
                        'KEY: [cust_note] - Invalid or non-existant Efex Customer Id - ' || rcd_list.efex_cust_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.cust_note_id,
@@ -6083,7 +5979,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust_note,
                        'KEY: [cust_note] - Invalid or non-existant Sales Territory Id - ' || rcd_list.sales_terr_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.cust_note_id,
@@ -6100,7 +5995,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust_note,
                        'KEY: [cust_note] - Invalid or non-existant Segment Id - ' || rcd_list.sgmnt_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.cust_note_id,
@@ -6117,7 +6011,6 @@ create or replace package body ods_app.ods_efex_validation as
             add_reason(var_first,
                        ods_constants.valdtn_type_efex_cust_note,
                        'KEY: [cust_note] - Invalid or non-existant Business Unit Id - ' || rcd_list.bus_unit_id,
-                       ods_constants.valdtn_severity_critical,
                        par_market,
                        nvl(rcd_list.bus_unit_id,-1),
                        rcd_list.cust_note_id,
@@ -6138,7 +6031,6 @@ create or replace package body ods_app.ods_efex_validation as
                   add_reason(var_first,
                              ods_constants.valdtn_type_efex_cust_note,
                              'KEY: [cust_note] - Invalid - cust_note_created must be in [YYYY/MM/DD HH24:MI:SS] Date Format - ' || rcd_list.cust_note_created,
-                             ods_constants.valdtn_severity_critical,
                              par_market,
                              nvl(rcd_list.bus_unit_id,-1),
                              rcd_list.cust_note_id,
@@ -6214,12 +6106,12 @@ create or replace package body ods_app.ods_efex_validation as
       /* Local variables
       /*-*/
       var_company varchar2(10);
-      con_bus_unit_147_pet constant number := 1;   
-      con_bus_unit_147_snack constant number := 2;   
+      con_bus_unit_147_pet constant number := 1;
+      con_bus_unit_147_snack constant number := 2;
       con_bus_unit_147_food constant number := 4;
       con_bus_unit_149 constant number := 7;
-      con_job_type_147_pet constant number := 23;   
-      con_job_type_147_snack constant number := 22;   
+      con_job_type_147_pet constant number := 23;
+      con_job_type_147_snack constant number := 22;
       con_job_type_147_food constant number := 24;
       con_job_type_149 constant number := 22;
 
@@ -6309,25 +6201,21 @@ create or replace package body ods_app.ods_efex_validation as
 
       cursor csr_data is
          select t01.valdtn_type_code,
-                t03.valdtn_type_desc,
-                decode(t01.item_code_3,null,'',' - '||nvl(t01.item_code_3,''))||
-                decode(t01.item_code_4,null,'',' - '||nvl(t01.item_code_4,''))||
-                decode(t01.item_code_5,null,'',' - '||nvl(t01.item_code_5,''))||
-                decode(t01.item_code_6,null,'',' - '||nvl(t01.item_code_6,'')) as valdtn_key,
-                t02.valdtn_reasn_dtl_msg
-           from valdtn_reasn_hdr t01,
-                valdtn_reasn_dtl t02,
+                regexp_replace(t03.valdtn_type_desc,' ','_') as valdtn_type_desc,
+                key_text as valdtn_key,
+                to_char(t02.det_seqn) as valdtn_seq,
+                t02.msg_text as valdtn_reasn_dtl_msg
+           from efex_mesg_hdr t01,
+                efex_mesg_det t02,
                 valdtn_type t03
-          where t01.valdtn_reasn_hdr_code = t02.valdtn_reasn_hdr_code
+          where t01.hdr_seqn = t02.hdr_seqn
             and t01.valdtn_type_code = t03.valdtn_type_code
-          where (t01.valdtn_type_code >= 30 and t01.valdtn_type_code <= 57)
-            and t01.item_code_1 = par_market
-            and t01.item_code_2 in (-1,par_bus_unit)
+            and (t01.valdtn_type_code >= 30 and t01.valdtn_type_code <= 57)
+            and t01.efex_mkt_id = par_market
+            and t01.efex_bus_id in (-1,par_bus_unit)
           order by t01.valdtn_type_code asc,
-                   t01.item_code_3 asc,
-                   t01.item_code_4 asc,
-                   t01.item_code_5 asc,
-                   t01.item_code_6 asc;
+                   t01.key_text asc,
+                   t02.det_seqn;
 
       /*-*/
       /* Local arrays
@@ -6447,11 +6335,12 @@ create or replace package body ods_app.ods_efex_validation as
                      lics_mailer.create_part(tbl_data(idy).valdtn_type_desc||'_PART'||to_char(var_prt_count,'fm9999999990')||'.xls');
                   end if;
                   lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
-                  lics_mailer.append_data('<tr><td align=left colspan=2 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">tbl_data(idy).valdtn_type_desc</td></tr>');
-                  lics_mailer.append_data('<tr><td align=left colspan=2></td></tr>');
+                  lics_mailer.append_data('<tr><td align=left colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">'||tbl_data(idy).valdtn_type_desc||'</td></tr>');
+                  lics_mailer.append_data('<tr><td align=left colspan=3></td></tr>');
                   lics_mailer.append_data('<tr>');
                   lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Validation Key</td>');
-                  lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Message</td>');
+                  lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Message Seq</td>');
+                  lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Message Data</td>');
                   lics_mailer.append_data('</tr>');
 
                   /*-*/
@@ -6466,6 +6355,7 @@ create or replace package body ods_app.ods_efex_validation as
                /*-*/
                lics_mailer.append_data('<tr>');
                lics_mailer.append_data('<td align=left>'||tbl_data(idy).valdtn_key||'</td>');
+               lics_mailer.append_data('<td align=right>'||tbl_data(idy).valdtn_seq||'</td>');
                lics_mailer.append_data('<td align=left>'||tbl_data(idy).valdtn_reasn_dtl_msg||'</td>');
                lics_mailer.append_data('</tr>');
 
@@ -6509,17 +6399,17 @@ create or replace package body ods_app.ods_efex_validation as
       /*-*/
       /* Remove the reason details for the type and market
       /*-*/
-      delete from valdtn_reasn_dtl
-       where valdtn_reasn_hdr_code in (select valdtn_reasn_hdr_code
-                                         from valdtn_reasn_hdr
-                                        where valdtn_type_code = par_rea_type
-                                          and item_code_1 = par_market);
+      delete from efex_mesg_det
+       where hdr_seqn in (select hdr_seqn
+                            from efex_mesg_hdr
+                           where valdtn_type_code = par_rea_type
+                             and efex_mkt_id = par_market);
       /*-*/
       /* Remove the reason headers for the type and market
       /*-*/
-      delete from valdtn_reasn_hdr
+      delete from efex_mesg_hdr
        where valdtn_type_code = par_rea_type
-         and item_code_1 = par_market;
+         and efex_mkt_id = par_market;
 
    /*-------------*/
    /* End routine */
@@ -6532,32 +6422,17 @@ create or replace package body ods_app.ods_efex_validation as
    procedure add_reason(par_rea_start in boolean,
                         par_rea_type in number,
                         par_rea_message in varchar2,
-                        par_rea_severity in varchar2,
+                        par_mkt_id in number,
+                        par_bus_id in number,
                         par_rea_code1 in varchar2,
                         par_rea_code2 in varchar2,
                         par_rea_code3 in varchar2,
-                        par_rea_code4 in varchar2,
-                        par_rea_code5 in varchar2,
-                        par_rea_code6 in varchar2) is
+                        par_rea_code4 in varchar2) is
 
       /*-*/
       /* Local variables
       /*-*/
-      var_newid boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_reason is
-         select max(t01.valdtn_reasn_hdr_code) as valdtn_reasn_hdr_code
-           from valdtn_reasn_hdr t01
-          where valdtn_type_code = par_rea_type
-            and item_code_1 = par_rea_code1
-            and decode(item_code_2, par_rea_code2, 1, 0) = 1
-            and decode(item_code_3, par_rea_code3, 1, 0) = 1
-            and decode(item_code_4, par_rea_code4, 1, 0) = 1
-            and decode(item_code_5, par_rea_code5, 1, 0) = 1
-            and decode(item_code_6, par_rea_code6, 1, 0) = 1;
+      var_key_text varchar2(256);
 
    /*-------------*/
    /* Begin block */
@@ -6572,58 +6447,60 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          /* Create the reason header
          /*-*/
-         insert into valdtn_reasn_hdr
-            (valdtn_type_code,
-             item_code_1,
-             item_code_2,
-             item_code_3,
-             item_code_4,
-             item_code_5,
-             item_code_6)
-            values (par_rea_type,
-                    par_rea_code1,
-                    par_rea_code2,
-                    par_rea_code3,
-                    par_rea_code4,
-                    par_rea_code5,
-                    par_rea_code6);
-
-         /*-*/
-         /* Retrieve the surrogate key
-         /*-*/
-         open csr_reason;
-         fetch csr_reason into pvar_rea_code;
-         if csr_reason%notfound then
-            raise_application_error(-20000, 'Validation reason header not found');
+         var_key_text := '[';
+         if not(par_rea_code1 is null) then
+            var_key_text := var_key_text||par_rea_code1;
          end if;
-         close csr_reason;
+         if not(par_rea_code2 is null) then
+            var_key_text := var_key_text||' : '||par_rea_code2;
+         end if;
+         if not(par_rea_code3 is null) then
+            var_key_text := var_key_text||' : '||par_rea_code3;
+         end if;
+         if not(par_rea_code4 is null) then
+            var_key_text := var_key_text||' : '||par_rea_code4;
+         end if;
+         if var_key_text = '[' then
+            var_key_text := var_key_text||'*NONE';
+         end if;
+         var_key_text := var_key_text||']';
+         select efex_mesg_sequence.nextval into pvar_hdr_seqn from dual;
+         insert into efex_mesg_hdr
+            (hdr_seqn,
+             valdtn_type_code,
+             efex_mkt_id,
+             efex_bus_id,
+             key_text)
+            values(pvar_hdr_seqn,
+                   par_rea_type,
+                   par_mkt_id,
+                   par_bus_id,
+                   var_key_text);
 
          /*-*/
          /* Reset the detail sequence
          /*-*/
-         pvar_rea_seqn := 1;
+         pvar_det_seqn := 1;
 
       else
 
          /*-*/
          /* Increment the detail sequence
          /*-*/
-         pvar_rea_seqn := pvar_rea_seqn + 1;
+         pvar_det_seqn := pvar_det_seqn + 1;
 
       end if;
 
       /*-*/
       /* Create the reason detail
       /*-*/
-      insert into valdtn_reasn_dtl
-         (valdtn_reasn_hdr_code,
-          valdtn_reasn_dtl_seq,
-          valdtn_reasn_dtl_msg,
-          valdtn_reasn_dtl_svrty)
-         values(pvar_rea_code,
-                pvar_rea_seqn,
-                substr(par_rea_message,1,90),
-                par_rea_severity);
+      insert into efex_mesg_det
+         (hdr_seqn,
+          det_seqn,
+          msg_text)
+         values(pvar_hdr_seqn,
+                pvar_det_seqn,
+                substr(par_rea_message,1,256));
 
    /*-------------*/
    /* End routine */
