@@ -324,30 +324,6 @@ create or replace package body ods_app.ods_efex_validation as
    /**************************************************/
    procedure align_data(par_market in number) is
 
-      /*-*/
-      /* Local variables
-      /*-*/
-      var_open boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-     -- cursor csr_list is
-     --    select t1.customer_id   efex_cust_id,
-     --           t1.item_id       efex_matl_id,
-     --           t1.out_of_stock_flg,
-     --           t1.out_of_date_flg,
-     --           t1.sell_price,
-     --           t1.in_store_date,
-     --           t1.modified_date efex_lupdt,
-     --           t1.status
-     --      from venus_distribution@ap0085p.world t1
-     --     where EXISTS (SELECT * FROM efex_distbn t2
-     --                    WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
-     --                      AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
-     --                      AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
-     -- rcd_list csr_list%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -443,48 +419,6 @@ create or replace package body ods_app.ods_efex_validation as
                           where efex_cust_id = t01.efex_cust_id
                             and efex_matl_id = t01.efex_matl_id);
       commit;
-
-
---- how to do this
----
---  CURSOR csr_removed_distbn IS  -- Distribution removed from efex but exists in Venus.
---     SELECT
---       t1.customer_id   efex_cust_id,
---       t1.item_id       efex_matl_id,
---       t1.out_of_stock_flg,
---       t1.out_of_date_flg,
---       t1.sell_price,
---       t1.in_store_date,
---       t1.modified_date efex_lupdt,
---       t1.status
---     FROM
---       venus_distribution@ap0085p.world t1
---     WHERE
---       EXISTS (SELECT * FROM efex_distbn t2 WHERE t1.customer_id = t2.efex_cust_id AND t1.item_id = t2.efex_matl_id)
---       AND (t1.facing_qty = 0 AND t1.display_qty = 0 AND t1.inventory_qty = 0 AND t1.required_flg = 'N') -- become dummy distribution
---       AND (t1.modified_date > i_last_process_time AND t1.modified_date <= i_cur_time);
---  rv_removed_distbn csr_removed_distbn%ROWTYPE;
-
-
- -- FOR rv_removed_distbn IN csr_removed_distbn LOOP
- --     UPDATE efex_distbn
- --     SET
- --       display_qty = 0,
- --       facing_qty = 0,
- --       inv_qty = 0,
- --       rqd_flg = 'N',
- --       efex_lupdt = rv_removed_distbn.efex_lupdt,
- --       out_of_stock_flg = rv_removed_distbn.out_of_stock_flg,
- --       out_of_date_flg = rv_removed_distbn.out_of_date_flg,
- --       sell_price = rv_removed_distbn.sell_price,
- --       in_store_date = rv_removed_distbn.in_store_date,
- --       status = rv_removed_distbn.status
- --     WHERE
- --       efex_cust_id = rv_removed_distbn.efex_cust_id
- --       AND efex_matl_id = rv_removed_distbn.efex_matl_id;
---
- --     v_removed_count := v_removed_count + SQL%ROWCOUNT;
- -- END LOOP;
 
       /*-*/
       /* End procedure
