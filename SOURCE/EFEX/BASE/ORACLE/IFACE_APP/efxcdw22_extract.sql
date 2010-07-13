@@ -108,7 +108,6 @@ create or replace package body iface_app.efxcdw22_extract as
             and t04.sales_area_id = t05.sales_area_id
             and t05.sales_region_id = t06.sales_region_id
             and t06.segment_id = t07.segment_id
-            and (t01.facing_qty > 0 or t01.display_qty > 0 or t01.inventory_qty > 0 or t01.required_flg = 'Y')
             and t02.market_id = par_market
             and t03.primary_flg = 'Y'
             and trunc(t01.modified_date) >= trunc(sysdate) - var_history;
