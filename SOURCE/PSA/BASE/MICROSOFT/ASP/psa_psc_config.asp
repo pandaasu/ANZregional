@@ -1852,7 +1852,6 @@ sub PaintFunction()%>
       objCell.style.paddingRight = '2px';
       objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode('Time'));
-
       for (var i=0;i<cobjTypeLine.length;i++) {
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
@@ -1903,7 +1902,6 @@ sub PaintFunction()%>
          }
          cobjTypeLine[i].pntcol = objCell.cellIndex;
       }
-
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
@@ -1918,12 +1916,10 @@ sub PaintFunction()%>
       objCell.style.width = 16;
       objCell.style.whiteSpace = 'nowrap';
       objCell.innerHTML = '&nbsp;';
-
       intWrkCnt = 0;
       for (var i=0;i<cobjTypeDate.length;i++) {
 
          bolStrDay = true;
-
          for (var j=0;j<=23;j++) {
 
             if (j < 10) {
@@ -2303,7 +2299,7 @@ sub PaintFunction()%>
                objDiv.style.width = '1%';
                objDiv.style.height = '100%';
                objDiv.style.padding = '2px';
-               if (objWork.actent == '0' && objWork.wekflw == '0') {
+               if (objWork.wekflw == '0') {
                   objDiv.style.cursor = 'pointer';
                   objDiv.onclick = function() {doTypeSchdSelect(this);};
                }
@@ -2311,6 +2307,7 @@ sub PaintFunction()%>
                objDiv.setAttribute('wincde',objWork.wincde);
                objDiv.setAttribute('actcde',objWork.actcde);
                objDiv.setAttribute('acttyp',objWork.acttyp);
+               objDiv.setAttribute('actent',objWork.actent);
                if (objWork.acttyp == 'T') {
                   objDiv.appendChild(document.createTextNode('Activity ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
@@ -2581,6 +2578,10 @@ sub PaintFunction()%>
          alert('Unable to update shift window marker');
          return;
       }
+      if (cobjTypeSchdCell.getAttribute('actent') == '1') {
+         alert('Unable to update activity with actuals');
+         return;
+      }
       if (!processForm()) {return;}
       var objTime = cobjTypeSchdCell.parentNode.parentNode.parentNode.parentNode.parentNode;
       cintTypeLidx = objTime.getAttribute('linidx');
@@ -2681,6 +2682,10 @@ sub PaintFunction()%>
       }
       if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
          alert('Unable to detach shift window marker');
+         return;
+      }
+      if (cobjTypeSchdCell.getAttribute('actent') == '1') {
+         alert('Unable to detach activity with actuals');
          return;
       }
       if (!processForm()) {return;}
