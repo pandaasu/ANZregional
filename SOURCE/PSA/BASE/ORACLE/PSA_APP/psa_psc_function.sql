@@ -3664,27 +3664,27 @@ create or replace package body psa_app.psa_psc_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
-      cursor csr_schd is
-         select count(*) as wrk_count
-           from psa_psc_actv t01
-          where t01.psa_psc_code = var_psc_code
-            and t01.psa_psc_week = var_wek_code
-            and t01.psa_prd_type = var_pty_code
-            and t01.psa_act_lin_code = var_lin_code
-            and t01.psa_act_con_code = var_con_code
-            and t01.psa_act_ent_flag = '1';
-      rcd_schd csr_schd%rowtype;
+   --   cursor csr_schd is
+   --      select count(*) as wrk_count
+   --        from psa_psc_actv t01
+   --       where t01.psa_psc_code = var_psc_code
+   --         and t01.psa_psc_week = var_wek_code
+   --         and t01.psa_prd_type = var_pty_code
+   --         and t01.psa_act_lin_code = var_lin_code
+   --         and t01.psa_act_con_code = var_con_code
+   --         and t01.psa_act_ent_flag = '1';
+   --   rcd_schd csr_schd%rowtype;
 
-      cursor csr_actl is
-         select count(*) as wrk_count
-           from psa_psc_actv t01
-          where t01.psa_psc_code = var_psc_code
-            and t01.psa_psc_week = var_wek_code
-            and t01.psa_prd_type = var_pty_code
-            and t01.psa_act_lin_code = var_lin_code
-            and t01.psa_act_con_code = var_con_code
-            and t01.psa_sch_ent_flag = '1';
-      rcd_actl csr_actl%rowtype;
+   --   cursor csr_actl is
+   --      select count(*) as wrk_count
+   --        from psa_psc_actv t01
+   --       where t01.psa_psc_code = var_psc_code
+   --         and t01.psa_psc_week = var_wek_code
+   --         and t01.psa_prd_type = var_pty_code
+   --        and t01.psa_act_lin_code = var_lin_code
+   --         and t01.psa_act_con_code = var_con_code
+   --         and t01.psa_sch_ent_flag = '1';
+   --   rcd_actl csr_actl%rowtype;
 
       cursor csr_lcon is
          select t01.*
@@ -3871,36 +3871,36 @@ create or replace package body psa_app.psa_psc_function as
          return;
       end if;
 
-      /*-*/
-      /* Validation
-      /*-*/
-      if var_src_code = '*SCH' then
-         var_count := 0;
-         open csr_schd;
-         fetch csr_schd into rcd_schd;
-         if csr_schd%found then
-            var_count := rcd_schd.wrk_count;
-         end if;
-         close csr_schd;
-         if var_count != 0 then
-            psa_gen_function.add_mesg_data('Production schedule line has actuals entered - unable to update');
-         end if;
-      else
-         var_count := 0;
-         open csr_actl;
-         fetch csr_actl into rcd_actl;
-         if csr_actl%found then
-            var_count := rcd_actl.wrk_count;
-         end if;
-         close csr_actl;
-         if var_count != 0 then
-            psa_gen_function.add_mesg_data('Production schedule line has activities scheduled - unable to update');
-         end if;
-      end if;
-      if psa_gen_function.get_mesg_count != 0 then
-         rollback;
-         return;
-      end if;
+    --  /*-*/
+    --  /* Validation
+    --  /*-*/
+    --  if var_src_code = '*SCH' then
+    --     var_count := 0;
+    --     open csr_schd;
+    --     fetch csr_schd into rcd_schd;
+    --     if csr_schd%found then
+    --        var_count := rcd_schd.wrk_count;
+    --     end if;
+    --     close csr_schd;
+    --     if var_count != 0 then
+    --        psa_gen_function.add_mesg_data('Production schedule line has actuals entered - unable to update');
+    --     end if;
+    --  else
+    --     var_count := 0;
+    --     open csr_actl;
+    --     fetch csr_actl into rcd_actl;
+    --     if csr_actl%found then
+    --        var_count := rcd_actl.wrk_count;
+    --     end if;
+    --     close csr_actl;
+    --     if var_count != 0 then
+    --        psa_gen_function.add_mesg_data('Production schedule line has activities scheduled - unable to update');
+    --     end if;
+    --  end if;
+    --  if psa_gen_function.get_mesg_count != 0 then
+    --     rollback;
+    --     return;
+    --  end if;
 
       /*-*/
       /* Validate the line configuration
