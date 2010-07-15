@@ -26,6 +26,7 @@ create or replace package dw_fcst_maintenance as
     2008/05   Steve Gregan   Changed create apollo load to ignore zero quantity rows
     2008/05   Steve Gregan   Added forecast load pricing exception report
     2009/09   Steve Gregan   Modified to fix XML parsing cdata section bug
+    2010/07   Steve Gregan   Add cluster forecast
 
    *******************************************************************************/
 
@@ -2783,7 +2784,7 @@ create or replace package body dw_fcst_maintenance as
       pipe row('<tr>');
       if upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_ACROSS_PERIOD' or
          upper(rcd_fcst_load_header.load_type_data_format) = '*DGRP_DOWN_DAY' then
-         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group/Customer</td>');
+         pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Demand Group/Customer/Cluster</td>');
       end if;
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Material</td>');
       pipe row('<td align=center style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Plant</td>');
