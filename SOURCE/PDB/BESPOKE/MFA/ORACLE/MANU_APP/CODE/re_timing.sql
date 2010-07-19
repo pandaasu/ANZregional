@@ -11,7 +11,8 @@ CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing IS
    ---------  ----------  ---------------  ------------------------------------
    1.0        21/11/2005   Jeff Phillipson    1. Created this package.
    2.0		    22/11/2006   Jeff Phillipson	  Removed all RTT interfaces Just FRR procs now
-   3.1        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver                              
+   3.1        28-Aug-2008  Daniel Owen        Added DISTINCT to query in retrieve_recpe_waiver
+   3.2        19-Jul-2010  Daniel Owen        Updated retrieve_recpe_waiver to use process_order start_time and also filter included waivers by status.
 ******************************************************************************/
 
  /***********************************************************/
@@ -153,7 +154,8 @@ CREATE OR REPLACE PACKAGE MANU_APP.Re_Timing IS
   									   i_recipe_type IN NUMBER,
   										o_result OUT NUMBER,
 								  		o_result_msg OUT VARCHAR2,
-								  		o_retrieve_recipe OUT Re_Timing_Common.RETURN_REF_CURSOR);
+								  		o_retrieve_recipe OUT Re_Timing_Common.RETURN_REF_CURSOR,
+                      i_included_waiver_status IN VARCHAR2 DEFAULT 'AU');
 
 
   /***********************************************************/
@@ -828,12 +830,15 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 
   /***********************************************************/
   /* retrieve any waivers that are active for the selected proc order material
+  /* MFA requested that FRR's should also display any matching Un-approved waivers (so default string for included_waiver_status includes U)
+  /* Calling application (eg FRR) can *optionally* pass in a different string of waiver status's to include.
   /***********************************************************/
   PROCEDURE RETRIEVE_RECIPE_WAIVER(i_proc_order IN VARCHAR2,
   									   i_recipe_type IN NUMBER,
   										o_result OUT NUMBER,
 								  		o_result_msg OUT VARCHAR2,
-								  		o_retrieve_recipe OUT Re_Timing_Common.RETURN_REF_CURSOR) IS
+								  		o_retrieve_recipe OUT Re_Timing_Common.RETURN_REF_CURSOR,
+                      i_included_waiver_status IN VARCHAR2 DEFAULT 'AU') IS
 
   BEGIN
      o_result  := Re_Timing_Common.SUCCESS;
@@ -841,13 +846,12 @@ CREATE OR REPLACE PACKAGE BODY MANU_APP.Re_Timing IS
 
 	   OPEN o_retrieve_recipe FOR
 	   SELECT DISTINCT w.waiver_code
-		 FROM WAIVER w, WAIVER_CRTRIA c
-		WHERE w.waiver_code = c.waiver_code
-		  AND eff_start_datime <= SYSDATE
-		  AND eff_end_datime >= SYSDATE
-		  AND item_code = (SELECT LTRIM(material,'0')
-			                FROM CNTL_REC
-			      			 WHERE LTRIM(proc_order,'0') = LTRIM(i_proc_order,'0'));
+		 FROM wm.WAIVER w, wm.WAIVER_CRTRIA c
+		 WHERE w.waiver_code = c.waiver_code
+		  AND eff_start_datime <= (SELECT run_start_datime FROM cntl_rec WHERE LTRIM(proc_order,'0') = LTRIM(i_proc_order,'0'))
+		  AND eff_end_datime >= (SELECT run_start_datime FROM cntl_rec WHERE LTRIM(proc_order,'0') = LTRIM(i_proc_order,'0'))
+      AND instr(upper(i_included_waiver_status), upper(waiver_stat)) > 0
+		  AND (item_code = 0 OR item_code = (SELECT LTRIM(material,'0') FROM CNTL_REC WHERE LTRIM(proc_order,'0') = LTRIM(i_proc_order,'0')));
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -1290,4 +1294,5 @@ GRANT EXECUTE ON MANU_APP.RE_TIMING TO MANU_MAINT;
 GRANT EXECUTE ON MANU_APP.RE_TIMING TO MANU_USER;
 
 GRANT EXECUTE ON MANU_APP.RE_TIMING TO PUBLIC;
+
 
