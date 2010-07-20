@@ -1,7 +1,4 @@
-DROP PACKAGE BDS_APP.BDS_BOM;
-
-CREATE OR REPLACE PACKAGE BDS_APP.Bds_Bom
-AS
+CREATE OR REPLACE PACKAGE BDS_APP.bds_bom as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -60,71 +57,84 @@ FUNCTION : GET_COMPONENT_QTY This function retrieves the factory BOM for the req
  01-Mar-2007   Jeff Phillipson added get_hierarchy_reverse
  01-Jun-2007   Jeff Phillipson added get_comonent_qty
  02-Nov-2007   JP              added '<' to the next statement to reset scrap if the hierarchy level drops 
+ 29-Apr-2009   Trevor Keon     Changed var_scale rounding to 12 places to avoid returning 0
         
 *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   FUNCTION get_dataset (
-      par_eff_date        IN   DATE,
-      par_material_code   IN   VARCHAR2,
-      par_plant_code      IN   VARCHAR2
+   function get_dataset (
+      par_eff_date        in   date,
+      par_material_code   in   varchar2,
+      par_plant_code      in   varchar2
    )
-      RETURN bds_bom_dataset PIPELINED;
+      return bds_bom_dataset pipelined;
 
-   FUNCTION get_hierarchy (
-      par_eff_date        IN   DATE,
-      par_material_code   IN   VARCHAR2,
-      par_plant_code      IN   VARCHAR2
+   function get_hierarchy (
+      par_eff_date        in   date,
+      par_material_code   in   varchar2,
+      par_plant_code      in   varchar2
    )
-      RETURN bds_bom_hierarchy PIPELINED;
+      return bds_bom_hierarchy pipelined;
       
-   FUNCTION get_hierarchy_reverse (
-      par_eff_date        IN   DATE,
-      par_material_code   IN   VARCHAR2,
-      par_plant_code      IN   VARCHAR2
+   function get_hierarchy_reverse (
+      par_eff_date        in   date,
+      par_material_code   in   varchar2,
+      par_plant_code      in   varchar2
    )
-      RETURN bds_bom_dataset PIPELINED;
+      return bds_bom_dataset pipelined;
    
-   FUNCTION get_component_qty (
-      par_eff_date        IN   DATE,
-      par_material_code   IN   VARCHAR2,
-      par_plant_code      IN   VARCHAR2
+   function get_component_qty (
+      par_eff_date        in   date,
+      par_material_code   in   varchar2,
+      par_plant_code      in   varchar2
    )
-      RETURN bds_bom_component_qty PIPELINED;
+      return bds_bom_component_qty pipelined;
         
-END Bds_Bom;
+end bds_bom;
 /
 
 
-DROP PACKAGE BODY BDS_APP.BDS_BOM;
+CREATE PUBLIC SYNONYM BDS_BOM FOR BDS_APP.BDS_BOM;
 
-CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
+
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO APPSUPPORT;
+
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU WITH GRANT OPTION;
+
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU_APP WITH GRANT OPTION;
+
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO PKGSPEC WITH GRANT OPTION;
+
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO PKGSPEC_APP WITH GRANT OPTION;
+
+
+CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_bom as
 
    /*-*/
    /* Private exceptions
    /*-*/
-   application_exception EXCEPTION;
-   PRAGMA EXCEPTION_INIT(application_exception, -20000);
+   application_exception exception;
+   pragma exception_init(application_exception, -20000);
 
    /*******************************************************/
    /* This procedure performs the get bom dataset routine */
    /*******************************************************/
-   FUNCTION get_dataset(par_eff_date IN DATE, par_material_code IN VARCHAR2, par_plant_code IN VARCHAR2) RETURN bds_bom_dataset pipelined IS
+   function get_dataset(par_eff_date in date, par_material_code in varchar2, par_plant_code in varchar2) return bds_bom_dataset pipelined is
 
       /*-*/
-      /* Declare Variables
+      /* Declare variables
       /*-*/
-      var_eff_date bds_bom_all.bom_eff_from_date%TYPE;
-      var_material_code bds_bom_all.bom_material_code%TYPE;
-      var_plant_code bds_bom_all.bom_plant%TYPE;
+      var_eff_date bds_bom_all.bom_eff_from_date%type;
+      var_material_code bds_bom_all.bom_material_code%type;
+      var_plant_code bds_bom_all.bom_plant%type;
 
       /*-*/
       /* Cursor definitions
       /*-*/
-      CURSOR csr_bom_dataset IS
-         SELECT t01.bom_material_code,
+      cursor csr_bom_dataset is
+         select t01.bom_material_code,
                 t01.bom_alternative,
                 t01.bom_plant,
                 t01.bom_number,
@@ -144,48 +154,48 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                 t01.item_base_uom,
                 t01.item_eff_from_date,
                 t01.item_eff_to_date
-           FROM (SELECT t01.*,
-                        rank() OVER (PARTITION BY t01.bom_material_code,
+           from (select t01.*,
+                        rank() over (partition by t01.bom_material_code,
                                                   t01.bom_plant
-                                         ORDER BY t01.bom_eff_from_date DESC,
-                                                  t01.bom_alternative DESC) AS rnkseq
-                   FROM bds_bom_all t01
-                  WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)
-                    AND (var_material_code IS NULL OR t01.bom_material_code = var_material_code)
-                    AND (var_plant_code IS NULL OR t01.bom_plant = var_plant_code)) t01
-          WHERE t01.rnkseq = 1
-            AND t01.item_sequence != 0;
-      rcd_bom_dataset csr_bom_dataset%ROWTYPE;
+                                         order by t01.bom_eff_from_date desc,
+                                                  t01.bom_alternative desc) as rnkseq
+                   from bds_bom_all t01
+                  where trunc(t01.bom_eff_from_date) <= trunc(var_eff_date)
+                    and (var_material_code is null or t01.bom_material_code = var_material_code)
+                    and (var_plant_code is null or t01.bom_plant = var_plant_code)) t01
+          where t01.rnkseq = 1
+            and t01.item_sequence != 0;
+      rcd_bom_dataset csr_bom_dataset%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
-   BEGIN
+   begin
 
       /*-*/
       /* Initialise variables
       /*-*/
       var_eff_date := par_eff_date;
-      IF par_eff_date IS NULL THEN
-         var_eff_date := SYSDATE;
-      END IF;
+      if par_eff_date is null then
+         var_eff_date := sysdate;
+      end if;
       var_material_code := par_material_code;
       var_plant_code := par_plant_code;
 
       /*-*/
-      /* Retrieve the BOM header information and pipe to output
+      /* Retrieve the bom header information and pipe to output
       /*-*/
-      OPEN csr_bom_dataset;
-      LOOP
-         FETCH csr_bom_dataset INTO rcd_bom_dataset;
-         IF csr_bom_dataset%NOTFOUND THEN
-            EXIT;
-         END IF;
+      open csr_bom_dataset;
+      loop
+         fetch csr_bom_dataset into rcd_bom_dataset;
+         if csr_bom_dataset%notfound then
+            exit;
+         end if;
 
          /*-*/
          /* Pipe the output to the consumer
          /*-*/
-         pipe ROW(bds_bom_dataset_object(rcd_bom_dataset.bom_material_code,
+         pipe row(bds_bom_dataset_object(rcd_bom_dataset.bom_material_code,
                                          rcd_bom_dataset.bom_alternative,
                                          rcd_bom_dataset.bom_plant,
                                          rcd_bom_dataset.bom_number,
@@ -206,55 +216,55 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                          rcd_bom_dataset.item_eff_from_date,
                                          rcd_bom_dataset.item_eff_to_date));
 
-      END LOOP;
-      CLOSE csr_bom_dataset;
+      end loop;
+      close csr_bom_dataset;
 
       /*-*/
       /* Return
       /*-*/  
-      RETURN;
+      return;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   EXCEPTION
+   exception
 
       /**/
       /* Exception trap
       /**/
-      WHEN OTHERS THEN
+      when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         RAISE_APPLICATION_ERROR(-20000, 'BDS_BOM - GET_DATASET (' || par_eff_date || ',' || NVL(par_material_code,'*ALL') || ',' || NVL(par_plant_code,'*ALL') || ') - ' || SUBSTR(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'BDS_BOM - GET_DATASET (' || par_eff_date || ',' || nvl(par_material_code,'*ALL') || ',' || nvl(par_plant_code,'*ALL') || ') - ' || substr(sqlerrm, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   END get_dataset;
+   end get_dataset;
 
    /*********************************************************/
-   /* This procedure performs the get bom hierarchy routine */
+   /* this procedure performs the get bom hierarchy routine */
    /*********************************************************/
-   FUNCTION get_hierarchy(par_eff_date IN DATE, par_material_code IN VARCHAR2, par_plant_code IN VARCHAR2) RETURN bds_bom_hierarchy pipelined IS
+   function get_hierarchy(par_eff_date in date, par_material_code in varchar2, par_plant_code in varchar2) return bds_bom_hierarchy pipelined is
 
       /*-*/
-      /* Declare Variables
+      /* Declare variables
       /*-*/
-      var_eff_date bds_bom_all.bom_eff_from_date%TYPE;
-      var_material_code bds_bom_all.bom_material_code%TYPE;
-      var_plant_code bds_bom_all.bom_plant%TYPE;
+      var_eff_date bds_bom_all.bom_eff_from_date%type;
+      var_material_code bds_bom_all.bom_material_code%type;
+      var_plant_code bds_bom_all.bom_plant%type;
 
       /*-*/
       /* Cursor definitions
       /*-*/
-      CURSOR csr_bom_hierarchy IS
-         SELECT ROWNUM AS hierarchy_rownum,
-                LEVEL AS hierarchy_level,
+      cursor csr_bom_hierarchy is
+         select rownum as hierarchy_rownum,
+                level as hierarchy_level,
                 t01.*, 
-                CONNECT_BY_ISCYCLE AS CYCLE 
-           FROM (SELECT t01.bom_material_code,
+                connect_by_iscycle as cycle 
+           from (select t01.bom_material_code,
                         t01.bom_alternative,
                         t01.bom_plant,
                         t01.bom_number,
@@ -274,57 +284,57 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                         t01.item_base_uom,
                         t01.item_eff_from_date,
                         t01.item_eff_to_date
-                   FROM (SELECT t01.*,
-                                rank() OVER (PARTITION BY t01.bom_material_code,
+                   from (select t01.*,
+                                rank() over (partition by t01.bom_material_code,
                                                           t01.bom_plant
-                                                 ORDER BY t01.bom_eff_from_date DESC,
-                                                          t01.bom_alternative DESC) AS rnkseq
-                           FROM bds_bom_all t01
-                          WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)) t01
-                  WHERE t01.rnkseq = 1
-                    AND t01.item_sequence != 0) t01
-          START WITH t01.bom_material_code = var_material_code
-                 AND t01.bom_plant = var_plant_code
-        CONNECT BY NOCYCLE PRIOR t01.item_material_code = t01.bom_material_code
-          ORDER SIBLINGS BY TO_NUMBER(t01.item_number);
+                                                 order by t01.bom_eff_from_date desc,
+                                                          t01.bom_alternative desc) as rnkseq
+                           from bds_bom_all t01
+                          where trunc(t01.bom_eff_from_date) <= trunc(var_eff_date)) t01
+                  where t01.rnkseq = 1
+                    and t01.item_sequence != 0) t01
+          start with t01.bom_material_code = var_material_code
+                 and t01.bom_plant = var_plant_code
+        connect by nocycle prior t01.item_material_code = t01.bom_material_code
+          order siblings by to_number(t01.item_number);
           
-      rcd_bom_hierarchy csr_bom_hierarchy%ROWTYPE;
+      rcd_bom_hierarchy csr_bom_hierarchy%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
-   BEGIN
+   begin
 
       /*-*/
       /* Initialise variables
       /*-*/
       var_eff_date := par_eff_date;
-      IF par_eff_date IS NULL THEN
-         var_eff_date := SYSDATE;
-      END IF;
+      if par_eff_date is null then
+         var_eff_date := sysdate;
+      end if;
       var_material_code := par_material_code;
-      IF par_material_code IS NULL THEN
-         RAISE_APPLICATION_ERROR(-20000, 'Hierarchy material code must be supplied');
-      END IF;
+      if par_material_code is null then
+         raise_application_error(-20000, 'Hierarchy material code must be supplied');
+      end if;
       var_plant_code := par_plant_code;
-      IF par_plant_code IS NULL THEN
-         RAISE_APPLICATION_ERROR(-20000, 'Hierarchy plant code must be supplied');
-      END IF;
+      if par_plant_code is null then
+         raise_application_error(-20000, 'Hierarchy plant code must be supplied');
+      end if;
 
       /*-*/
-      /* Retrieve the BOM header information and pipe to output
+      /* Retrieve the bom header information and pipe to output
       /*-*/
-      OPEN csr_bom_hierarchy;
-      LOOP
-         FETCH csr_bom_hierarchy INTO rcd_bom_hierarchy;
-         IF csr_bom_hierarchy%NOTFOUND THEN
-            EXIT;
-         END IF;
+      open csr_bom_hierarchy;
+      loop
+         fetch csr_bom_hierarchy into rcd_bom_hierarchy;
+         if csr_bom_hierarchy%notfound then
+            exit;
+         end if;
 
          /*-*/
          /* Pipe the output to the consumer
          /*-*/
-         pipe ROW(bds_bom_hierarchy_object(rcd_bom_hierarchy.hierarchy_rownum,
+         pipe row(bds_bom_hierarchy_object(rcd_bom_hierarchy.hierarchy_rownum,
                                            rcd_bom_hierarchy.hierarchy_level,
                                            rcd_bom_hierarchy.bom_material_code,
                                            rcd_bom_hierarchy.bom_alternative,
@@ -347,59 +357,59 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                            rcd_bom_hierarchy.item_eff_from_date,
                                            rcd_bom_hierarchy.item_eff_to_date));
 
-      END LOOP;
-      CLOSE csr_bom_hierarchy;
+      end loop;
+      close csr_bom_hierarchy;
 
       /*-*/
       /* Return
       /*-*/  
-      RETURN;
+      return;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   EXCEPTION
+   exception
 
       /**/
       /* Exception trap
       /**/
-      WHEN OTHERS THEN
+      when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         RAISE_APPLICATION_ERROR(-20000, 'BDS_BOM - GET_HIERARCHY (' || par_eff_date || ',' || NVL(par_material_code,'NULL') || ',' || NVL(par_plant_code,'NULL') || ') - ' || SUBSTR(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'BDS_BOM - GET_HIERARCHY (' || par_eff_date || ',' || nvl(par_material_code,'NULL') || ',' || nvl(par_plant_code,'NULL') || ') - ' || substr(sqlerrm, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   END get_hierarchy;
+   end get_hierarchy;
    
    
    /*******************************************************/
    /* This procedure performs the get bom hierarchy       */
    /* upwards                                             */
    /*******************************************************/
-   FUNCTION get_hierarchy_reverse(par_eff_date IN DATE, par_material_code IN VARCHAR2, 
-                                          par_plant_code IN VARCHAR2) RETURN bds_bom_dataset pipelined IS
+   function get_hierarchy_reverse(par_eff_date in date, par_material_code in varchar2, 
+                                          par_plant_code in varchar2) return bds_bom_dataset pipelined is
 
       /*-*/
-      /* Declare Variables
+      /* Declare variables
       /*-*/
-      var_eff_date bds_bom_all.bom_eff_from_date%TYPE;
-      var_material_code bds_bom_all.item_material_code%TYPE;
-      var_plant_code bds_bom_all.bom_plant%TYPE;
-      var_bom_number bds_bom_all.bom_number%TYPE;
+      var_eff_date bds_bom_all.bom_eff_from_date%type;
+      var_material_code bds_bom_all.item_material_code%type;
+      var_plant_code bds_bom_all.bom_plant%type;
+      var_bom_number bds_bom_all.bom_number%type;
 
       /*-*/
       /* Cursor definitions
       /*-*/
-      CURSOR csr_bom_parents IS
-          SELECT ROWNUM AS hierarchy_rownum,
-                LEVEL AS hierarchy_level,
+      cursor csr_bom_parents is
+          select rownum as hierarchy_rownum,
+                level as hierarchy_level,
                 t01.*, 
-                CONNECT_BY_ISCYCLE AS CYCLE 
-           FROM (SELECT t01.bom_material_code,
+                connect_by_iscycle as cycle 
+           from (select t01.bom_material_code,
                         t01.bom_alternative,
                         t01.bom_plant,
                         t01.bom_number,
@@ -419,50 +429,50 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                         t01.item_base_uom,
                         t01.item_eff_from_date,
                         t01.item_eff_to_date
-                   FROM (SELECT t01.*,
-                                rank() OVER (PARTITION BY t01.bom_material_code,
+                   from (select t01.*,
+                                rank() over (partition by t01.bom_material_code,
                                                           t01.bom_plant
-                                                 ORDER BY t01.bom_eff_from_date DESC,
-                                                          t01.bom_alternative DESC) AS rnkseq
-                           FROM bds_bom_all t01
-                          WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(par_eff_date)) t01
-                  WHERE t01.rnkseq = 1
-                    AND t01.item_sequence != 0) t01
-          START WITH t01.item_material_code = var_material_code
-                 AND t01.bom_plant = var_plant_code 
-        CONNECT BY NOCYCLE PRIOR t01.bom_material_code = t01.item_material_code
-         ORDER SIBLINGS BY TO_NUMBER(t01.bom_material_code);
-      rcd_bom_parents csr_bom_parents%ROWTYPE;
+                                                 order by t01.bom_eff_from_date desc,
+                                                          t01.bom_alternative desc) as rnkseq
+                           from bds_bom_all t01
+                          where trunc(t01.bom_eff_from_date) <= trunc(par_eff_date)) t01
+                  where t01.rnkseq = 1
+                    and t01.item_sequence != 0) t01
+          start with t01.item_material_code = var_material_code
+                 and t01.bom_plant = var_plant_code 
+        connect by nocycle prior t01.bom_material_code = t01.item_material_code
+         order siblings by to_number(t01.bom_material_code);
+      rcd_bom_parents csr_bom_parents%rowtype;
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
-   BEGIN
+   begin
 
       /*-*/
       /* Initialise variables
       /*-*/
       var_eff_date := par_eff_date;
-      IF par_eff_date IS NULL THEN
-         var_eff_date := SYSDATE;
-      END IF;
+      if par_eff_date is null then
+         var_eff_date := sysdate;
+      end if;
       var_material_code := par_material_code;
       var_plant_code := par_plant_code;
 
       /*-*/
-      /* Retrieve the BOM header information and pipe to output
+      /* Retrieve the bom header information and pipe to output
       /*-*/
-      OPEN csr_bom_parents;
-      LOOP
-         FETCH csr_bom_parents INTO rcd_bom_parents;
-         IF csr_bom_parents%NOTFOUND THEN
-            EXIT;
-         END IF;
+      open csr_bom_parents;
+      loop
+         fetch csr_bom_parents into rcd_bom_parents;
+         if csr_bom_parents%notfound then
+            exit;
+         end if;
 
          /*-*/
          /* Pipe the output to the consumer
          /*-*/
-         pipe ROW(bds_bom_dataset_object(rcd_bom_parents.bom_material_code,
+         pipe row(bds_bom_dataset_object(rcd_bom_parents.bom_material_code,
                                          rcd_bom_parents.bom_alternative,
                                          rcd_bom_parents.bom_plant,
                                          rcd_bom_parents.bom_number,
@@ -483,195 +493,207 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                          rcd_bom_parents.item_eff_from_date,
                                          rcd_bom_parents.item_eff_to_date));
 
-      END LOOP;
-      CLOSE csr_bom_parents;
+      end loop;
+      close csr_bom_parents;
 
       /*-*/
       /* Return
       /*-*/  
-      RETURN;
+      return;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   EXCEPTION
+   exception
 
       /**/
       /* Exception trap
       /**/
-      WHEN OTHERS THEN
+      when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         RAISE_APPLICATION_ERROR(-20000, 'BDS_BOM - get_hierarchy_up (' || par_eff_date || ',' || NVL(par_material_code,'*ALL') || ',' || NVL(par_plant_code,'*ALL') || ') - ' || SUBSTR(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'BDS_BOM - get_hierarchy_up (' || par_eff_date || ',' || nvl(par_material_code,'*ALL') || ',' || nvl(par_plant_code,'*ALL') || ') - ' || substr(sqlerrm, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   END get_hierarchy_reverse;
+   end get_hierarchy_reverse;
    
    
 
    /*********************************************************/
    /* This procedure performs the get component quantity routine */
    /*********************************************************/
-   FUNCTION get_component_qty(par_eff_date IN DATE, par_material_code IN VARCHAR2, par_plant_code IN VARCHAR2) RETURN bds_bom_component_qty pipelined IS
+   function get_component_qty(par_eff_date in date, par_material_code in varchar2, par_plant_code in varchar2) return bds_bom_component_qty pipelined is
 
       /*-*/
-      /* Declare Variables
+      /* Declare variables
       /*-*/
-      var_eff_date bds_bom_all.bom_eff_from_date%TYPE;
-      var_material_code bds_bom_all.bom_material_code%TYPE;
-      var_plant_code bds_bom_all.bom_plant%TYPE;
-      var_scale bds_bom_all.bom_base_qty%TYPE;
-      var_bom_qty bds_bom_all.bom_base_qty%TYPE;
-      var_count NUMBER DEFAULT 0;
-      var_assembly_scrap_percntg bds_material_plant_mfanz.assembly_scrap_percntg%TYPE;
-      var_scrap_hierarchy_level NUMBER;
+      var_eff_date bds_bom_all.bom_eff_from_date%type;
+      var_material_code bds_bom_all.bom_material_code%type;
+      var_plant_code bds_bom_all.bom_plant%type;
+      var_scale bds_bom_all.bom_base_qty%type;
+      var_bom_qty bds_bom_all.bom_base_qty%type;
+      var_count number default 0;
+      var_assembly_scrap_percntg bds_material_plant_mfanz.assembly_scrap_percntg%type;
+      var_scrap_hierarchy_level number;
       
-      TYPE id_table_object IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+      type id_table_object is table of number index by binary_integer;
       id_table id_table_object;
       
       /*-*/
       /* Cursor definitions
       /*-*/
-      CURSOR csr_bom_hierarchy IS
-      SELECT t01.*,
-       CASE
-           WHEN t02.assembly_scrap_percntg IS NULL THEN 0
-           WHEN t02.assembly_scrap_percntg = '' THEN 0
-           WHEN t02.assembly_scrap_percntg = 0 THEN 0
-           ELSE t02.assembly_scrap_percntg
-       END assembly_scrap_percntg,
-	   CASE
-	       WHEN t01.item_base_uom = 'PCE' THEN t02.bds_pce_factor_from_base_uom
-		   ELSE 1
-	   END factor_from_base_uom    
-      FROM (SELECT ROWNUM AS hierarchy_rownum,
-                   LEVEL AS hierarchy_level,
-                   t01.*, 
-           CONNECT_BY_ISCYCLE AS CYCLE 
-             FROM (SELECT t01.bom_material_code,
-                          t01.bom_alternative,
-                          t01.bom_plant,
-                          t01.bom_number,
-                          t01.bom_msg_function,
-                          t01.bom_usage,
-                          t01.bom_eff_from_date,
-                          t01.bom_eff_to_date,
-                          t01.bom_base_qty,
-                          t01.bom_base_uom,
-                          t01.bom_status,
-                          t01.item_sequence,
-                          t01.item_number,
-                          t01.item_msg_function,
-                          t01.item_material_code,
-                          t01.item_category,
-                          t01.item_base_qty,
-                          t01.item_base_uom,
-                          t01.item_eff_from_date,
-                          t01.item_eff_to_date
-                     FROM (SELECT t01.*,
-                                  rank() OVER (PARTITION BY t01.bom_material_code,
-                                                            t01.bom_plant
-                                                   ORDER BY t01.bom_eff_from_date DESC,
-                                                            t01.bom_alternative DESC) AS rnkseq
-                             FROM bds_bom_all t01
-                            WHERE TRUNC(t01.bom_eff_from_date) <= TRUNC(var_eff_date)) t01
-                    WHERE t01.rnkseq = 1
-                      AND t01.item_sequence != 0
-                      AND t01.bom_plant = var_plant_code
-					  ) t01
-            START WITH t01.bom_material_code = var_material_code
-                   AND t01.bom_plant = var_plant_code
-            CONNECT BY NOCYCLE PRIOR t01.item_material_code = t01.bom_material_code
-            ORDER SIBLINGS BY TO_NUMBER(t01.item_number)) t01,
-           (SELECT assembly_scrap_percntg, sap_material_code, plant_code,
-		           bds_pce_factor_from_base_uom 
-              FROM bds_material_plant_mfanz) t02
-      WHERE t01.item_material_code = LTRIM(t02.sap_material_code(+),'0')
-        AND t01.bom_plant = t02.plant_code(+)
-      ORDER BY 1;
+      cursor csr_bom_hierarchy is
+        select t01.*,
+          case
+            when t02.assembly_scrap_percntg is null then 0
+            when t02.assembly_scrap_percntg = '' then 0
+            when t02.assembly_scrap_percntg = 0 then 0
+            else t02.assembly_scrap_percntg
+          end assembly_scrap_percntg,
+          case
+            when t01.item_base_uom = 'PCE' then t02.bds_pce_factor_from_base_uom
+            else 1
+          end factor_from_base_uom    
+        from 
+          (
+            select rownum as hierarchy_rownum,
+              level as hierarchy_level,
+              t01.*, 
+              connect_by_iscycle as cycle from 
+                (
+                  select t01.bom_material_code,
+                    t01.bom_alternative,
+                    t01.bom_plant,
+                    t01.bom_number,
+                    t01.bom_msg_function,
+                    t01.bom_usage,
+                    t01.bom_eff_from_date,
+                    t01.bom_eff_to_date,
+                    t01.bom_base_qty,
+                    t01.bom_base_uom,
+                    t01.bom_status,
+                    t01.item_sequence,
+                    t01.item_number,
+                    t01.item_msg_function,
+                    t01.item_material_code,
+                    t01.item_category,
+                    t01.item_base_qty,
+                    t01.item_base_uom,
+                    t01.item_eff_from_date,
+                    t01.item_eff_to_date
+                  from 
+                    (
+                      select t01.*,
+                        rank() over (partition by t01.bom_material_code, t01.bom_plant order by t01.bom_eff_from_date desc, t01.bom_alternative desc) as rnkseq
+                      from bds_bom_all t01
+                      where trunc(t01.bom_eff_from_date) <= trunc(var_eff_date)
+                    ) t01
+                  where t01.rnkseq = 1
+                    and t01.item_sequence != 0
+                    and t01.bom_plant = var_plant_code
+                ) t01
+              start with t01.bom_material_code = var_material_code
+                and t01.bom_plant = var_plant_code
+              connect by nocycle prior t01.item_material_code = t01.bom_material_code
+              order siblings by to_number(t01.item_number)
+            ) t01,
+            (
+              select assembly_scrap_percntg, 
+                sap_material_code, 
+                plant_code,
+                bds_pce_factor_from_base_uom 
+              from bds_material_plant_mfanz
+            ) t02
+          where t01.item_material_code = ltrim(t02.sap_material_code(+),'0')
+            and t01.bom_plant = t02.plant_code(+)
+          order by 1;
           
-      rcd_bom_hierarchy csr_bom_hierarchy%ROWTYPE;
-
-    
+      rcd_bom_hierarchy csr_bom_hierarchy%rowtype;
       
    /*-------------*/
    /* Begin block */
    /*-------------*/
-   BEGIN
+   begin
 
       /*-*/
       /* Initialise variables
       /*-*/
       var_eff_date := par_eff_date;
-      IF par_eff_date IS NULL THEN
-         var_eff_date := SYSDATE;
-      END IF;
+      if par_eff_date is null then
+         var_eff_date := sysdate;
+      end if;
+      
       var_material_code := par_material_code;
-      IF par_material_code IS NULL THEN
-         RAISE_APPLICATION_ERROR(-20000, 'Hierarchy material code must be supplied');
-      END IF;
+      
+      if par_material_code is null then
+         raise_application_error(-20000, 'Hierarchy material code must be supplied');
+      end if;
+      
       var_plant_code := par_plant_code;
-      IF par_plant_code IS NULL THEN
-         RAISE_APPLICATION_ERROR(-20000, 'Hierarchy plant code must be supplied');
-      END IF;
+      
+      if par_plant_code is null then
+         raise_application_error(-20000, 'Hierarchy plant code must be supplied');
+      end if;
+      
       var_assembly_scrap_percntg := 0;
       var_scrap_hierarchy_level := 0;
       
-      id_table.DELETE;
+      id_table.delete;
       
       /*-*/
       /* Retrieve the BOM header information and pipe to output
       /*-*/
-      OPEN csr_bom_hierarchy;
-      LOOP
-         FETCH csr_bom_hierarchy INTO rcd_bom_hierarchy;
-         IF csr_bom_hierarchy%NOTFOUND THEN
-            EXIT;
-         END IF;
+      open csr_bom_hierarchy;
+      loop
+         fetch csr_bom_hierarchy into rcd_bom_hierarchy;
+         if csr_bom_hierarchy%notfound then
+            exit;
+         end if;
          
-         IF var_count = 0 THEN
-             var_bom_qty := rcd_bom_hierarchy.bom_base_qty;
-             var_count := 1;
-         END IF;
+         if var_count = 0 then
+            var_bom_qty := rcd_bom_hierarchy.bom_base_qty;
+            var_count := 1;
+         end if;
          
          /*-*/
          /* save each levels bo qty
          /*-*/
-         id_table(rcd_bom_hierarchy.hierarchy_level) :=
-		      (rcd_bom_hierarchy.item_base_qty/rcd_bom_hierarchy.factor_from_base_uom)
-		       /rcd_bom_hierarchy.bom_base_qty;
+         id_table(rcd_bom_hierarchy.hierarchy_level) := (rcd_bom_hierarchy.item_base_qty / rcd_bom_hierarchy.factor_from_base_uom) 
+                                                        / rcd_bom_hierarchy.bom_base_qty;
          /*-*/
          /* convert bom ratio
          /*-*/
          var_scale := 1;
-         FOR i IN 1 .. rcd_bom_hierarchy.hierarchy_level
-             LOOP
-             var_scale :=  var_scale * id_table(i);
-         END LOOP;
+         for i in 1 .. rcd_bom_hierarchy.hierarchy_level
+            loop
+            var_scale :=  var_scale * id_table(i);
+         end loop;
          --var_scale := var_scale; --* var_bom_qty;
          /*-*/
          /* add losses to values
          /*-*/
          /* 2-Nov-2007 JP added '<' to the next statement to reset scrap if the hierarchy level drops */
-         IF var_scrap_hierarchy_level <= rcd_bom_hierarchy.hierarchy_level THEN
-             var_assembly_scrap_percntg := 0;
-         END IF;
-         IF rcd_bom_hierarchy.assembly_scrap_percntg <> 0 THEN
-             var_assembly_scrap_percntg := rcd_bom_hierarchy.assembly_scrap_percntg;
-             var_scrap_hierarchy_level := rcd_bom_hierarchy.hierarchy_level;
-         END IF;
+         if var_scrap_hierarchy_level <= rcd_bom_hierarchy.hierarchy_level then
+            var_assembly_scrap_percntg := 0;
+         end if;
+         if rcd_bom_hierarchy.assembly_scrap_percntg <> 0 then
+            var_assembly_scrap_percntg := rcd_bom_hierarchy.assembly_scrap_percntg;
+            var_scrap_hierarchy_level := rcd_bom_hierarchy.hierarchy_level;
+         end if;
+         
          var_scale := var_scale * (1 +  var_assembly_scrap_percntg/100);
-         IF rcd_bom_hierarchy.item_material_code = '1104205' OR rcd_bom_hierarchy.item_material_code = '1104209' THEN
-             DBMS_OUTPUT.PUT_LINE('Scale:' || var_scale || '-' || rcd_bom_hierarchy.hierarchy_level);
-         END IF;
+         
+         if rcd_bom_hierarchy.item_material_code = '1104205' or rcd_bom_hierarchy.item_material_code = '1104209' then
+            dbms_output.put_line('Scale:' || var_scale || '-' || rcd_bom_hierarchy.hierarchy_level);
+         end if;
          /*-*/
          /* Pipe the output to the consumer
          /*-*/
-         pipe ROW(bds_bom_component_qty_object(rcd_bom_hierarchy.hierarchy_rownum,
+         pipe row(bds_bom_component_qty_object(rcd_bom_hierarchy.hierarchy_rownum,
                                            rcd_bom_hierarchy.hierarchy_level,
                                            rcd_bom_hierarchy.bom_material_code,
                                            rcd_bom_hierarchy.bom_alternative,
@@ -693,56 +715,48 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Bds_Bom AS
                                            rcd_bom_hierarchy.item_base_uom,
                                            rcd_bom_hierarchy.item_eff_from_date,
                                            rcd_bom_hierarchy.item_eff_to_date,
-                                           ROUND(var_scale,4)));
-
-      END LOOP;
-      CLOSE csr_bom_hierarchy;
+                                           round(var_scale,12)));
+      end loop;
+      close csr_bom_hierarchy;
 
       /*-*/
       /* Return
       /*-*/  
-      RETURN;
+      return;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   EXCEPTION
+   exception
 
       /**/
       /* Exception trap
       /**/
-      WHEN OTHERS THEN
+      when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         RAISE_APPLICATION_ERROR(-20000, 'BDS_BOM - GET_HIERARCHY (' || par_eff_date || ',' || NVL(par_material_code,'NULL') || ',' || NVL(par_plant_code,'NULL') || ') - ' || SUBSTR(SQLERRM, 1, 1024));
+         raise_application_error(-20000, 'BDS_BOM - GET_HIERARCHY (' || par_eff_date || ',' || nvl(par_material_code,'NULL') || ',' || nvl(par_plant_code,'NULL') || ') - ' || substr(sqlerrm, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   END get_component_qty;
-   
-   
-   
-END Bds_Bom;
+   end get_component_qty;
+
+end bds_bom;
 /
 
-
-DROP PUBLIC SYNONYM BDS_BOM;
 
 CREATE PUBLIC SYNONYM BDS_BOM FOR BDS_APP.BDS_BOM;
 
 
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO APPSUPPORT;
 
-GRANT EXECUTE ON BDS_APP.BDS_BOM TO ESCHED_APP WITH GRANT OPTION;
-
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU WITH GRANT OPTION;
 
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO MANU_APP WITH GRANT OPTION;
 
+GRANT EXECUTE ON BDS_APP.BDS_BOM TO PKGSPEC WITH GRANT OPTION;
+
 GRANT EXECUTE ON BDS_APP.BDS_BOM TO PKGSPEC_APP WITH GRANT OPTION;
-
-GRANT EXECUTE ON BDS_APP.BDS_BOM TO PPLAN_APP WITH GRANT OPTION;
-
