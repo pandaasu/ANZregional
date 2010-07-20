@@ -470,7 +470,10 @@ create or replace package body psa_app.psa_req_function as
                   var_det_qtxt := replace(rtrim(ltrim(var_det_valu,'"'),'"'),',',null);
                end if;
             end if;
-            if tbl_code.exists(var_det_code) = true then
+            if var_det_code is null then
+               var_det_emsg := 'SAP material code - is null in file ';
+               var_det_mesg := true;
+            elsif tbl_code.exists(var_det_code) = true then
                var_det_emsg := 'SAP material code - is already in the requirement';
                var_det_mesg := true;
             else

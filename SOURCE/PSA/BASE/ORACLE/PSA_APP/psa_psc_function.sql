@@ -35,6 +35,7 @@ create or replace package psa_app.psa_psc_function as
    function retrieve_activity return psa_xml_type pipelined;
    function retrieve_time return psa_xml_type pipelined;
    function retrieve_production return psa_xml_type pipelined;
+   function retrieve_tonnage return psa_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    procedure update_week(par_user in varchar2);
    procedure update_line(par_user in varchar2);
@@ -291,6 +292,7 @@ create or replace package body psa_app.psa_psc_function as
       var_ths_week varchar2(7);
       var_lst_week varchar2(7);
       var_opn_flag varchar2(1);
+      var_count number;
 
       /*-*/
       /* Local cursors
@@ -307,8 +309,8 @@ create or replace package body psa_app.psa_psc_function as
          select t01.*
            from psa_psc_week t01
           where t01.psw_psc_code = var_psc_code
-            and ((var_src_code = '*SCH' and t01.psw_psc_week < var_wek_code and rownum <= 10) or
-                 (var_src_code = '*ENQ' and t01.psw_psc_week < var_wek_code and rownum <= 10) or
+            and ((var_src_code = '*SCH' and t01.psw_psc_week < var_wek_code) or
+                 (var_src_code = '*ENQ' and t01.psw_psc_week < var_wek_code) or
                  (var_src_code = '*ACT' and t01.psw_psc_week >= var_lst_week and t01.psw_psc_week <= var_ths_week))
           order by t01.psw_psc_week desc;
       rcd_week csr_week%rowtype;
@@ -401,10 +403,15 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Retrieve the production schedule weeks and pipe the results
       /*-*/
+      var_count := 0;
       open csr_week;
       loop
          fetch csr_week into rcd_week;
          if csr_week%notfound then
+            exit;
+         end if;
+         var_count := var_count + 1;
+         if var_count > 10 then
             exit;
          end if;
 
@@ -2519,6 +2526,198 @@ create or replace package body psa_app.psa_psc_function as
    /*-------------*/
    end retrieve_production;
 
+   /********************************************************/
+   /* This procedure performs the retrieve tonnage routine */
+   /********************************************************/
+   function retrieve_tonnage return psa_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_psa_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_psc_code varchar2(32);
+      var_wek_code varchar2(32);
+      var_wrk_dur_mins number;
+      var_wrk_str_time date;
+      var_wrk_end_time date;
+      var_act_ton_qty number;
+      var_tonnage number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from psa_psc_hedr t01
+          where t01.psh_psc_code = var_psc_code;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_time is
+         select min(trunc(t01.psd_day_date))+(7/24) as min_day_date,
+                max(trunc(t01.psd_day_date))+(7/24) as max_day_date
+           from psa_psc_date t01
+          where t01.psd_psc_code = var_psc_code
+            and t01.psd_psc_week = var_wek_code;
+      rcd_time csr_time%rowtype;
+
+      cursor csr_tonnage is
+         select t01.psa_act_str_time,
+                t01.psa_act_chg_time,
+                t01.psa_act_end_time,
+                t01.psa_act_dur_mins,
+                t01.psa_act_chg_flag,
+                t01.psa_mat_act_ton_qty
+           from psa_psc_actv t01
+          where t01.psa_psc_code = var_psc_code
+            and t01.psa_prd_type = '*FILL'
+            and t01.psa_act_type = 'P'
+            and ((t01.psa_act_str_time >= rcd_time.min_day_date and t01.psa_act_str_time < rcd_time.max_day_date) or
+                 (t01.psa_act_chg_flag = '0' and t01.psa_act_end_time >= rcd_time.min_day_date and t01.psa_act_end_time < rcd_time.max_day_date) or
+                 (t01.psa_act_chg_flag = '1' and t01.psa_act_chg_time >= rcd_time.min_day_date and t01.psa_act_chg_time < rcd_time.max_day_date));
+      rcd_tonnage csr_tonnage%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      psa_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PSA_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      var_psc_code := upper(psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PSCCDE')));
+      var_wek_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@WEKCDE'));
+      xmlDom.freeDocument(obj_xml_document);
+      if var_action != '*RTVTON' then
+         psa_gen_function.add_mesg_data('Invalid request action');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the existing production schedule
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule ('||var_psc_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Retrieve the week time frame
+      /*-*/
+      var_found := false;
+      open csr_time;
+      fetch csr_time into rcd_time;
+      if csr_time%found then
+         var_found := true;
+      end if;
+      close csr_time;
+      if var_found = false then
+         psa_gen_function.add_mesg_data('Production schedule week ('||var_wek_code||') does not exist');
+      end if;
+      if psa_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Accumulate the tonnage
+      /*-*/
+      var_tonnage := 0;
+      open csr_tonnage;
+      loop
+         fetch csr_tonnage into rcd_tonnage;
+         if csr_tonnage%notfound then
+            exit;
+         end if;
+         var_wrk_dur_mins := rcd_tonnage.psa_act_dur_mins;
+         var_wrk_str_time := rcd_tonnage.psa_act_str_time;
+         var_wrk_end_time := rcd_tonnage.psa_act_end_time;
+         var_act_ton_qty := rcd_tonnage.psa_mat_act_ton_qty;
+         if rcd_tonnage.psa_act_chg_flag = '1' then
+            var_wrk_end_time := rcd_tonnage.psa_act_chg_time;
+         end if;
+         if var_wrk_str_time < rcd_time.min_day_date or var_wrk_end_time > rcd_time.max_day_date then
+            if var_wrk_str_time < rcd_time.min_day_date then
+               var_wrk_str_time := rcd_time.min_day_date;
+            end if;
+            if var_wrk_end_time > rcd_time.max_day_date then
+               var_wrk_end_time := rcd_time.max_day_date;
+            end if;
+            var_wrk_dur_mins := ceil((var_wrk_end_time - var_wrk_str_time) * 1440);
+            var_act_ton_qty := round(rcd_tonnage.psa_mat_act_ton_qty * (var_wrk_dur_mins / rcd_tonnage.psa_act_dur_mins), 3);
+         end if;
+         var_tonnage := var_tonnage + var_act_ton_qty;
+      end loop;
+      close csr_tonnage;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the tonnage XML
+      /*-*/
+      pipe row(psa_xml_object('<WEKTON TONMSG="'||psa_to_xml('Total tonnage for date range '||to_char(rcd_time.min_day_date,'yyyy/mm/dd hh24:mi')||' to '||to_char(rcd_time.max_day_date,'yyyy/mm/dd hh24:mi')||' is '||to_char(round(var_tonnage,3),'fm999999990.000'))||'"/>'));
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(psa_xml_object('</PSA_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         psa_gen_function.add_mesg_data('FATAL ERROR - PSA_PSC_FUNCTION - RETRIEVE_TONNAGE - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_tonnage;
+
    /***************************************************/
    /* This procedure performs the update data routine */
    /***************************************************/
@@ -3664,28 +3863,6 @@ create or replace package body psa_app.psa_psc_function as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
-   --   cursor csr_schd is
-   --      select count(*) as wrk_count
-   --        from psa_psc_actv t01
-   --       where t01.psa_psc_code = var_psc_code
-   --         and t01.psa_psc_week = var_wek_code
-   --         and t01.psa_prd_type = var_pty_code
-   --         and t01.psa_act_lin_code = var_lin_code
-   --         and t01.psa_act_con_code = var_con_code
-   --         and t01.psa_act_ent_flag = '1';
-   --   rcd_schd csr_schd%rowtype;
-
-   --   cursor csr_actl is
-   --      select count(*) as wrk_count
-   --        from psa_psc_actv t01
-   --       where t01.psa_psc_code = var_psc_code
-   --         and t01.psa_psc_week = var_wek_code
-   --         and t01.psa_prd_type = var_pty_code
-   --        and t01.psa_act_lin_code = var_lin_code
-   --         and t01.psa_act_con_code = var_con_code
-   --         and t01.psa_sch_ent_flag = '1';
-   --   rcd_actl csr_actl%rowtype;
-
       cursor csr_lcon is
          select t01.*
            from psa_lin_config t01
@@ -3870,37 +4047,6 @@ create or replace package body psa_app.psa_psc_function as
          rollback;
          return;
       end if;
-
-    --  /*-*/
-    --  /* Validation
-    --  /*-*/
-    --  if var_src_code = '*SCH' then
-    --     var_count := 0;
-    --     open csr_schd;
-    --     fetch csr_schd into rcd_schd;
-    --     if csr_schd%found then
-    --        var_count := rcd_schd.wrk_count;
-    --     end if;
-    --     close csr_schd;
-    --     if var_count != 0 then
-    --        psa_gen_function.add_mesg_data('Production schedule line has actuals entered - unable to update');
-    --     end if;
-    --  else
-    --     var_count := 0;
-    --     open csr_actl;
-    --     fetch csr_actl into rcd_actl;
-    --     if csr_actl%found then
-    --        var_count := rcd_actl.wrk_count;
-    --     end if;
-    --     close csr_actl;
-    --     if var_count != 0 then
-    --        psa_gen_function.add_mesg_data('Production schedule line has activities scheduled - unable to update');
-    --     end if;
-    --  end if;
-    --  if psa_gen_function.get_mesg_count != 0 then
-    --     rollback;
-    --     return;
-    --  end if;
 
       /*-*/
       /* Validate the line configuration
