@@ -145,7 +145,7 @@ create or replace package body psa_doco as
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTA_REQ_DETAIL');
+      print_data('PSA_REQ_DETAIL');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
@@ -154,7 +154,7 @@ create or replace package body psa_doco as
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTA_STK_DETAIL');
+      print_data('PSA_STK_DETAIL');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
