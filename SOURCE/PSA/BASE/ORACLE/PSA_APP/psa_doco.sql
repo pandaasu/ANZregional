@@ -47,190 +47,155 @@ create or replace package body psa_doco as
       /* Print the data 
       /**/
       pipe row('System' || chr(9) || 'System Tables');
-      print_data('PTS_SYS_RULE');
+      print_data('PSA_SYSTEM');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_ENTITY');
+      print_data('PSA_PRD_TYPE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_LINK');
+      pipe row('Shift' || chr(9) || 'Shift Tables');
+      print_data('PSA_SHF_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_TABLE');
+      pipe row('Shift Model' || chr(9) || 'Shift Model Tables');
+      print_data('PSA_SMO_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_FIELD');
+      print_data('PSA_SMO_SHIFT');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_VALUE');
+      pipe row('Resource' || chr(9) || 'Resource Tables');
+      print_data('PSA_RES_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_SYS_SELECT');
+      pipe row('Crew Model' || chr(9) || 'Crew Model Tables');
+      print_data('PSA_CMO_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Company' || chr(9) || 'Company Tables');
-      print_data('PTS_COM_DEFINITION');
+      print_data('PSA_CMO_RESOURCE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Geographic' || chr(9) || 'Geographic Tables');
-      print_data('PTS_GEO_TYPE');
+      pipe row('Run Rate' || chr(9) || 'Run Rate Tables');
+      print_data('PSA_RRA_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_GEO_ZONE');
+      pipe row('Filler' || chr(9) || 'Filler Tables');
+      print_data('PSA_FIL_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Interviewer' || chr(9) || 'Interviewer Tables');
-      print_data('PTS_INT_DEFINITION');
+      pipe row('Line' || chr(9) || 'Line Tables');
+      print_data('PSA_LIN_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Household' || chr(9) || 'Household Tables');
-      print_data('PTS_HOU_DEFINITION');
+      print_data('PSA_LIN_CONFIG');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_HOU_CLASSIFICATION');
+      print_data('PSA_LIN_RATE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Pet Type' || chr(9) || 'Pet Type Tables');
-      print_data('PTS_PET_TYPE');
+      print_data('PSA_LIN_FILLER');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_PTY_SYS_FIELD');
+      print_data('PSA_LIN_LINK');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_PTY_SYS_VALUE');
+      print_data('PSA_SAP_LINE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Pet' || chr(9) || 'Pet Tables');
-      print_data('PTS_PET_DEFINITION');
+      pipe row('Material' || chr(9) || 'Material Tables');
+      print_data('PSA_MAT_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_PET_CLASSIFICATION');
+      print_data('PSA_MAT_PROD');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Question' || chr(9) || 'Question');
-      print_data('PTS_QUE_DEFINITION');
+      print_data('PSA_MAT_LINE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_QUE_RESPONSE');
+      print_data('PSA_MAT_COMP');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Sample' || chr(9) || 'Sample');
-      print_data('PTS_SAM_DEFINITION');
+      pipe row('Schedule Activity' || chr(9) || 'Schedule Activity Tables');
+      print_data('PSA_SAC_DEFN');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Selection Template' || chr(9) || 'Selection Template Tables');
-      print_data('PTS_STM_DEFINITION');
+      pipe row('Requirement' || chr(9) || 'Requirement Tables');
+      print_data('PSA_REQ_HEADER');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_STM_GROUP');
+      print_data('PTA_REQ_DETAIL');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_STM_RULE');
+      pipe row('Stocktake' || chr(9) || 'Stocktake Tables');
+      print_data('PSA_STK_HEADER');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_STM_VALUE');
+      print_data('PTA_STK_DETAIL');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_STM_PANEL');
+      pipe row('Production Schedule' || chr(9) || 'Production Schedule Tables');
+      print_data('PSA_PSC_HEDR');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      pipe row('Product Test' || chr(9) || 'Product Test Tables');
-      print_data('PTS_TES_TYPE');
+      print_data('PSA_PSC_WEEK');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_DEFINITION');
+      print_data('PSA_PSC_DATE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_KEYWORD');
+      print_data('PSA_PSC_PROD');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_QUESTION');
+      print_data('PSA_PSC_LINE');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_SAMPLE');
+      print_data('PSA_PSC_SHFT');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_FEEDING');
+      print_data('PSA_PSC_RESO');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_GROUP');
+      print_data('PSA_PSC_ACTV');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_RULE');
+      print_data('PSA_PSC_INVT');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
-      print_data('PTS_TES_VALUE');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_TES_PANEL');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_TES_STATISTIC');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_TES_CLASSIFICATION');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_TES_ALLOCATION');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_TES_RESPONSE');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      pipe row('Work' || chr(9) || 'Work Temporary Tables');
-      print_data('PTS_WOR_SEL_GROUP');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_WOR_SEL_RULE');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_WOR_SEL_VALUE');
-      for idx in 1..tbl_data.count loop
-         pipe row(tbl_data(idx));
-      end loop;
-      print_data('PTS_WOR_TAB_FIELD');
+      print_data('PSA_PSC_ENTY');
       for idx in 1..tbl_data.count loop
          pipe row(tbl_data(idx));
       end loop;
