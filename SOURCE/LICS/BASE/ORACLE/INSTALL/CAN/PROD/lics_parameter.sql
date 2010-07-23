@@ -26,10 +26,10 @@ create or replace package lics_parameter as
    /* Public system parameters
    /*-*/
    system_code constant varchar2(10) := 'ICS';
-   system_unit constant varchar2(10) := 'MFANZ';
-   system_environment constant varchar2(20) := 'CUC_PROD';
-   system_url constant varchar2(128) := 'http://care.ap.mars/cuc/';
-   system_startup constant varchar2(128) := '/ics/cuc/prod/bin/restart_jobs.sh';
+   system_unit constant varchar2(10) := 'CAN';
+   system_environment constant varchar2(20) := 'CANADA_PRODUCTION';
+   system_url constant varchar2(128) := 'http://vdsprod.bol.na.mars/';
+   system_startup constant varchar2(128) := '/ics/prod/bin/restart_jobs.sh';
 
    /*-*/
    /* Public environment parameters
@@ -45,7 +45,7 @@ create or replace package lics_parameter as
    /*-*/
    /* Public operator parameters
    /*-*/
-   operator_alert_script constant varchar2(64) := '/ics/cuc/prod/bin/ics_tivoli_alert.sh';
+   operator_alert_script constant varchar2(64) := '/ics/prod/bin/ics_tivoli_alert.sh';
 
    /*-*/
    /* Public email parameters
@@ -64,14 +64,14 @@ create or replace package lics_parameter as
    /*-*/
    purge_event_history_days constant number(5,0) := 14;
    purge_log_history_days constant number(5,0) := 14;
-   purge_file_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_cleanup.sh';
+   purge_file_script constant varchar2(128) := '/ics/prod/bin/ics_cleanup.sh';
 
    /*-*/
    /* Public script parameters
    /*-*/
-   script_directory constant varchar2(128) := '/ics/cuc/prod/bin/';
-   restore_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_restore.sh';
-   inbound_sap_script constant varchar2(128) := '/ics/cuc/prod/bin/ics_inbound_sap.sh';
+   script_directory constant varchar2(128) := '/ics/prod/bin/';
+   restore_script constant varchar2(128) := '/ics/prod/bin/ics_restore.sh';
+   inbound_sap_script constant varchar2(128) := '/ics/prod/bin/ics_inbound_sap.sh';
 
 end lics_parameter;
 /  
