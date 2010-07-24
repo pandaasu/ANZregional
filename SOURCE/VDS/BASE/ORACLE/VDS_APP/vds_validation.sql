@@ -19,6 +19,7 @@
  2006/12   Steve Gregan   Included classification search logic and emailing logic
  2007/01   Steve Gregan   Changed rule execution logic to array processing
  2010/03   Steve Gregan   Fix the email purging
+ 2010/06   Steve Gregan   Added rule execution exception traps
 
 *******************************************************************************/
 
@@ -179,42 +180,42 @@ create or replace package body vds_validation as
             /*-*/
             /* Execute the classification list query
             /*-*/
+            var_vir_table.delete;
             var_list := get_clob(rcd_classification.vac_lst_query);
             begin
                open csr_list for var_list;
+               loop
+                  fetch csr_list into var_vds_code,
+                                      var_vds_search01,
+                                      var_vds_search02,
+                                      var_vds_search03,
+                                      var_vds_search04,
+                                      var_vds_search05,
+                                      var_vds_search06,
+                                      var_vds_search07,
+                                      var_vds_search08,
+                                      var_vds_search09;
+                  if csr_list%notfound then
+                     exit;
+                  end if;
+                  var_vir_table.extend;
+                  var_vir_table(var_vir_table.last) := vds_validation_object(var_vds_code,
+                                                                             ltrim(var_vds_code,' 0'),
+                                                                             var_vds_search01,
+                                                                             var_vds_search02,
+                                                                             var_vds_search03,
+                                                                             var_vds_search04,
+                                                                             var_vds_search05,
+                                                                             var_vds_search06,
+                                                                             var_vds_search07,
+                                                                             var_vds_search08,
+                                                                             var_vds_search09);
+               end loop;
+               close csr_list;
             exception
                when others then
                   raise_application_error(-20000, 'Classification (' || rcd_classification.vac_class || ') list query failed - ' || substr(SQLERRM, 1, 1024));
             end;
-            var_vir_table.delete;
-            loop
-               fetch csr_list into var_vds_code,
-                                   var_vds_search01,
-                                   var_vds_search02,
-                                   var_vds_search03,
-                                   var_vds_search04,
-                                   var_vds_search05,
-                                   var_vds_search06,
-                                   var_vds_search07,
-                                   var_vds_search08,
-                                   var_vds_search09;
-               if csr_list%notfound then
-                  exit;
-               end if;
-               var_vir_table.extend;
-               var_vir_table(var_vir_table.last) := vds_validation_object(var_vds_code,
-                                                                           ltrim(var_vds_code,' 0'),
-                                                                           var_vds_search01,
-                                                                           var_vds_search02,
-                                                                           var_vds_search03,
-                                                                           var_vds_search04,
-                                                                           var_vds_search05,
-                                                                           var_vds_search06,
-                                                                           var_vds_search07,
-                                                                           var_vds_search08,
-                                                                           var_vds_search09);
-            end loop;
-            close csr_list;
 
             /*-*/
             /* Update to history any existing batch classification validation messages
@@ -266,41 +267,41 @@ create or replace package body vds_validation as
                        order by vfd_code asc, vfd_filter asc';
          begin
             open csr_test for var_test;
+            loop
+               fetch csr_test into rcd_vds_val_mes.vam_code,
+                                   rcd_vds_val_mes.vam_filter;
+               if csr_test%notfound then
+                  exit;
+               end if;
+               rcd_vds_val_mes.vam_class := '*FILTER';
+               if var_sav_code is null or var_sav_code != rcd_vds_val_mes.vam_code then
+                  var_sav_code := rcd_vds_val_mes.vam_code;
+                  rcd_vds_val_mes.vam_sequence := 1;
+               else
+                  rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+               end if;
+               rcd_vds_val_mes.vam_group := rcd_group.vag_group;
+               rcd_vds_val_mes.vam_type := '*FILTER';
+               rcd_vds_val_mes.vam_rule := '*MISSING';
+               rcd_vds_val_mes.vam_text := 'Filter detail code is not a valid SAP code';
+               rcd_vds_val_mes.vam_version := 0;
+               rcd_vds_val_mes.vam_emailed := 0;
+               rcd_vds_val_mes.vam_search01 := null;
+               rcd_vds_val_mes.vam_search02 := null;
+               rcd_vds_val_mes.vam_search03 := null;
+               rcd_vds_val_mes.vam_search04 := null;
+               rcd_vds_val_mes.vam_search05 := null;
+               rcd_vds_val_mes.vam_search06 := null;
+               rcd_vds_val_mes.vam_search07 := null;
+               rcd_vds_val_mes.vam_search08 := null;
+               rcd_vds_val_mes.vam_search09 := null;
+               create_message(rcd_vds_val_mes);
+            end loop;
+            close csr_test;
          exception
             when others then
                raise_application_error(-20000, 'Filter missing code query failed - ' || substr(SQLERRM, 1, 1024));
          end;
-         loop
-            fetch csr_test into rcd_vds_val_mes.vam_code,
-                                rcd_vds_val_mes.vam_filter;
-            if csr_test%notfound then
-               exit;
-            end if;
-            rcd_vds_val_mes.vam_class := '*FILTER';
-            if var_sav_code is null or var_sav_code != rcd_vds_val_mes.vam_code then
-               var_sav_code := rcd_vds_val_mes.vam_code;
-               rcd_vds_val_mes.vam_sequence := 1;
-            else
-               rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-            end if;
-            rcd_vds_val_mes.vam_group := rcd_group.vag_group;
-            rcd_vds_val_mes.vam_type := '*FILTER';
-            rcd_vds_val_mes.vam_rule := '*MISSING';
-            rcd_vds_val_mes.vam_text := 'Filter detail code is not a valid SAP code';
-            rcd_vds_val_mes.vam_version := 0;
-            rcd_vds_val_mes.vam_emailed := 0;
-            rcd_vds_val_mes.vam_search01 := null;
-            rcd_vds_val_mes.vam_search02 := null;
-            rcd_vds_val_mes.vam_search03 := null;
-            rcd_vds_val_mes.vam_search04 := null;
-            rcd_vds_val_mes.vam_search05 := null;
-            rcd_vds_val_mes.vam_search06 := null;
-            rcd_vds_val_mes.vam_search07 := null;
-            rcd_vds_val_mes.vam_search08 := null;
-            rcd_vds_val_mes.vam_search09 := null;
-            create_message(rcd_vds_val_mes);
-         end loop;
-         close csr_test;
          commit;
 
          /*-*/
@@ -667,131 +668,131 @@ create or replace package body vds_validation as
          var_row_count := 0;
          begin
             open csr_dynamic for var_dynamic;
-         exception
-            when others then
-               raise_application_error(-20000, 'Rule (' || rcd_class_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
-         end;
-         loop
-            fetch csr_dynamic into var_wrk_trm_code,
-                                   var_wrk_search01,
-                                   var_wrk_search02,
-                                   var_wrk_search03,
-                                   var_wrk_search04,
-                                   var_wrk_search05,
-                                   var_wrk_search06,
-                                   var_wrk_search07,
-                                   var_wrk_search08,
-                                   var_wrk_search09,
-                                   var_val_key,
-                                   var_val_message;
-            if csr_dynamic%notfound then
-               exit;
-            end if;
-
-            /*-*/
-            /* Change work code
-            /*-*/
-            if var_sav_trm_code is null or var_sav_trm_code != var_wrk_trm_code then
+            loop
+               fetch csr_dynamic into var_wrk_trm_code,
+                                      var_wrk_search01,
+                                      var_wrk_search02,
+                                      var_wrk_search03,
+                                      var_wrk_search04,
+                                      var_wrk_search05,
+                                      var_wrk_search06,
+                                      var_wrk_search07,
+                                      var_wrk_search08,
+                                      var_wrk_search09,
+                                      var_val_key,
+                                      var_val_message;
+               if csr_dynamic%notfound then
+                  exit;
+               end if;
 
                /*-*/
-               /* Output the previous code after messages
+               /* Change work code
                /*-*/
-               if not(var_sav_trm_code) is null then
+               if var_sav_trm_code is null or var_sav_trm_code != var_wrk_trm_code then
 
                   /*-*/
-                  /* Output the *LAST_ROW message
+                  /* Output the previous code after messages
                   /*-*/
-                  if rcd_class_rule.var_test = '*LAST_ROW' and var_row_count > 0 then
+                  if not(var_sav_trm_code) is null then
+
+                     /*-*/
+                     /* Output the *LAST_ROW message
+                     /*-*/
+                     if rcd_class_rule.var_test = '*LAST_ROW' and var_row_count > 0 then
+                        rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                        rcd_vds_val_mes.vam_text := var_val_message;
+                        create_message(rcd_vds_val_mes);
+                     end if;
+
+                     /*-*/
+                     /* Output the *ANY_ROWS static message
+                     /*-*/
+                     if rcd_class_rule.var_test = '*ANY_ROWS' and var_row_count > 0 then
+                        rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                        rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                        create_message(rcd_vds_val_mes);
+                     end if;
+
+                     /*-*/
+                     /* Output the *NO_ROWS static message
+                     /*-*/
+                     if rcd_class_rule.var_test = '*NO_ROWS' and var_row_count = 0 then
+                        rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                        rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                        create_message(rcd_vds_val_mes);
+                     end if;
+
+                  end if;
+
+                  /*-*/
+                  /* Reset the work code
+                  /*-*/
+                  var_sav_trm_code := var_wrk_trm_code;
+                  var_row_count := 0;
+
+                  /*-*/
+                  /* Set the code and find the highest message sequence number
+                  /*-*/
+                  rcd_vds_val_mes.vam_code := var_wrk_trm_code;
+                  rcd_vds_val_mes.vam_sequence := 0;
+                  open csr_message;
+                  fetch csr_message into rcd_message;
+                  if csr_message%found then
+                     rcd_vds_val_mes.vam_sequence := rcd_message.vam_sequence;
+                  end if;
+                  close csr_message;
+
+               end if;
+
+               /*-*/
+               /* Set the message search values
+               /*-*/
+               rcd_vds_val_mes.vam_search01 := var_wrk_search01;
+               rcd_vds_val_mes.vam_search02 := var_wrk_search02;
+               rcd_vds_val_mes.vam_search03 := var_wrk_search03;
+               rcd_vds_val_mes.vam_search04 := var_wrk_search04;
+               rcd_vds_val_mes.vam_search05 := var_wrk_search05;
+               rcd_vds_val_mes.vam_search06 := var_wrk_search06;
+               rcd_vds_val_mes.vam_search07 := var_wrk_search07;
+               rcd_vds_val_mes.vam_search08 := var_wrk_search08;
+               rcd_vds_val_mes.vam_search09 := var_wrk_search09;
+
+               /*-*/
+               /* Rule message found
+               /*-*/
+               if not(var_val_key) is null then
+
+                  /*-*/
+                  /* Increment the row
+                  /*-*/
+                  var_row_count := var_row_count + 1;
+
+                  /*-*/
+                  /* Output the *FIRST_ROW message
+                  /*-*/
+                  if rcd_class_rule.var_test = '*FIRST_ROW' and var_row_count = 1 then
                      rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
                      rcd_vds_val_mes.vam_text := var_val_message;
                      create_message(rcd_vds_val_mes);
                   end if;
 
                   /*-*/
-                  /* Output the *ANY_ROWS static message
+                  /* Output the *EACH_ROW message
                   /*-*/
-                  if rcd_class_rule.var_test = '*ANY_ROWS' and var_row_count > 0 then
+                  if rcd_class_rule.var_test = '*EACH_ROW' then
                      rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                     rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
-                     create_message(rcd_vds_val_mes);
-                  end if;
-
-                  /*-*/
-                  /* Output the *NO_ROWS static message
-                  /*-*/
-                  if rcd_class_rule.var_test = '*NO_ROWS' and var_row_count = 0 then
-                     rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                     rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                     rcd_vds_val_mes.vam_text := var_val_message;
                      create_message(rcd_vds_val_mes);
                   end if;
 
                end if;
 
-               /*-*/
-               /* Reset the work code
-               /*-*/
-               var_sav_trm_code := var_wrk_trm_code;
-               var_row_count := 0;
-
-               /*-*/
-               /* Set the code and find the highest message sequence number
-               /*-*/
-               rcd_vds_val_mes.vam_code := var_wrk_trm_code;
-               rcd_vds_val_mes.vam_sequence := 0;
-               open csr_message;
-               fetch csr_message into rcd_message;
-               if csr_message%found then
-                  rcd_vds_val_mes.vam_sequence := rcd_message.vam_sequence;
-               end if;
-               close csr_message;
-
-            end if;
-
-            /*-*/
-            /* Set the message search values
-            /*-*/
-            rcd_vds_val_mes.vam_search01 := var_wrk_search01;
-            rcd_vds_val_mes.vam_search02 := var_wrk_search02;
-            rcd_vds_val_mes.vam_search03 := var_wrk_search03;
-            rcd_vds_val_mes.vam_search04 := var_wrk_search04;
-            rcd_vds_val_mes.vam_search05 := var_wrk_search05;
-            rcd_vds_val_mes.vam_search06 := var_wrk_search06;
-            rcd_vds_val_mes.vam_search07 := var_wrk_search07;
-            rcd_vds_val_mes.vam_search08 := var_wrk_search08;
-            rcd_vds_val_mes.vam_search09 := var_wrk_search09;
-
-            /*-*/
-            /* Rule message found
-            /*-*/
-            if not(var_val_key) is null then
-
-               /*-*/
-               /* Increment the row
-               /*-*/
-               var_row_count := var_row_count + 1;
-
-               /*-*/
-               /* Output the *FIRST_ROW message
-               /*-*/
-               if rcd_class_rule.var_test = '*FIRST_ROW' and var_row_count = 1 then
-                  rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                  rcd_vds_val_mes.vam_text := var_val_message;
-                  create_message(rcd_vds_val_mes);
-               end if;
-
-               /*-*/
-               /* Output the *EACH_ROW message
-               /*-*/
-               if rcd_class_rule.var_test = '*EACH_ROW' then
-                  rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                  rcd_vds_val_mes.vam_text := var_val_message;
-                  create_message(rcd_vds_val_mes);
-               end if;
-
-            end if;
-
-         end loop;
-         close csr_dynamic;
+            end loop;
+            close csr_dynamic;
+         exception
+            when others then
+               raise_application_error(-20000, 'Rule (' || rcd_class_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
+         end;
 
          /*-*/
          /* Output the previous code after messages
@@ -897,131 +898,131 @@ create or replace package body vds_validation as
             var_row_count := 0;
             begin
                open csr_dynamic for var_dynamic;
-            exception
-               when others then
-                  raise_application_error(-20000, 'Rule (' || rcd_type_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
-            end;
-            loop
-               fetch csr_dynamic into var_wrk_trm_code,
-                                      var_wrk_search01,
-                                      var_wrk_search02,
-                                      var_wrk_search03,
-                                      var_wrk_search04,
-                                      var_wrk_search05,
-                                      var_wrk_search06,
-                                      var_wrk_search07,
-                                      var_wrk_search08,
-                                      var_wrk_search09,
-                                      var_val_key,
-                                      var_val_message;
-               if csr_dynamic%notfound then
-                  exit;
-               end if;
-
-               /*-*/
-               /* Change work code
-               /*-*/
-               if var_sav_trm_code is null or var_sav_trm_code != var_wrk_trm_code then
+               loop
+                  fetch csr_dynamic into var_wrk_trm_code,
+                                         var_wrk_search01,
+                                         var_wrk_search02,
+                                         var_wrk_search03,
+                                         var_wrk_search04,
+                                         var_wrk_search05,
+                                         var_wrk_search06,
+                                         var_wrk_search07,
+                                         var_wrk_search08,
+                                         var_wrk_search09,
+                                         var_val_key,
+                                         var_val_message;
+                  if csr_dynamic%notfound then
+                     exit;
+                  end if;
 
                   /*-*/
-                  /* Output the previous code after messages
+                  /* Change work code
                   /*-*/
-                  if not(var_sav_trm_code) is null then
+                  if var_sav_trm_code is null or var_sav_trm_code != var_wrk_trm_code then
 
                      /*-*/
-                     /* Output the *LAST_ROW message
+                     /* Output the previous code after messages
                      /*-*/
-                     if rcd_class_rule.var_test = '*LAST_ROW' and var_row_count > 0 then
+                     if not(var_sav_trm_code) is null then
+
+                        /*-*/
+                        /* Output the *LAST_ROW message
+                        /*-*/
+                        if rcd_class_rule.var_test = '*LAST_ROW' and var_row_count > 0 then
+                           rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                           rcd_vds_val_mes.vam_text := var_val_message;
+                           create_message(rcd_vds_val_mes);
+                        end if;
+
+                        /*-*/
+                        /* Output the *ANY_ROWS static message
+                        /*-*/
+                        if rcd_class_rule.var_test = '*ANY_ROWS' and var_row_count > 0 then
+                           rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                           rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                           create_message(rcd_vds_val_mes);
+                        end if;
+
+                        /*-*/
+                        /* Output the *NO_ROWS static message
+                        /*-*/
+                        if rcd_class_rule.var_test = '*NO_ROWS' and var_row_count = 0 then
+                           rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
+                           rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                           create_message(rcd_vds_val_mes);
+                        end if;
+
+                     end if;
+
+                     /*-*/
+                     /* Reset the work code
+                     /*-*/
+                     var_sav_trm_code := var_wrk_trm_code;
+                     var_row_count := 0;
+
+                     /*-*/
+                     /* Set the code and find the highest message sequence number
+                     /*-*/
+                     rcd_vds_val_mes.vam_code := var_wrk_trm_code;
+                     rcd_vds_val_mes.vam_sequence := 0;
+                     open csr_message;
+                     fetch csr_message into rcd_message;
+                     if csr_message%found then
+                        rcd_vds_val_mes.vam_sequence := rcd_message.vam_sequence;
+                     end if;
+                     close csr_message;
+
+                  end if;
+
+                  /*-*/
+                  /* Set the message search values
+                  /*-*/
+                  rcd_vds_val_mes.vam_search01 := var_wrk_search01;
+                  rcd_vds_val_mes.vam_search02 := var_wrk_search02;
+                  rcd_vds_val_mes.vam_search03 := var_wrk_search03;
+                  rcd_vds_val_mes.vam_search04 := var_wrk_search04;
+                  rcd_vds_val_mes.vam_search05 := var_wrk_search05;
+                  rcd_vds_val_mes.vam_search06 := var_wrk_search06;
+                  rcd_vds_val_mes.vam_search07 := var_wrk_search07;
+                  rcd_vds_val_mes.vam_search08 := var_wrk_search08;
+                  rcd_vds_val_mes.vam_search09 := var_wrk_search09;
+
+                  /*-*/
+                  /* Rule message found
+                  /*-*/
+                  if not(var_val_key) is null then
+
+                     /*-*/
+                     /* Increment the row
+                     /*-*/
+                     var_row_count := var_row_count + 1;
+
+                     /*-*/
+                     /* Output the *FIRST_ROW message
+                     /*-*/
+                     if rcd_type_rule.var_test = '*FIRST_ROW' and var_row_count = 1 then
                         rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
                         rcd_vds_val_mes.vam_text := var_val_message;
                         create_message(rcd_vds_val_mes);
                      end if;
 
                      /*-*/
-                     /* Output the *ANY_ROWS static message
+                     /* Output the *EACH_ROW message
                      /*-*/
-                     if rcd_class_rule.var_test = '*ANY_ROWS' and var_row_count > 0 then
+                     if rcd_type_rule.var_test = '*EACH_ROW' then
                         rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                        rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
-                        create_message(rcd_vds_val_mes);
-                     end if;
-
-                     /*-*/
-                     /* Output the *NO_ROWS static message
-                     /*-*/
-                     if rcd_class_rule.var_test = '*NO_ROWS' and var_row_count = 0 then
-                        rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                        rcd_vds_val_mes.vam_text := rcd_class_rule.var_message;
+                        rcd_vds_val_mes.vam_text := var_val_message;
                         create_message(rcd_vds_val_mes);
                      end if;
 
                   end if;
 
-                  /*-*/
-                  /* Reset the work code
-                  /*-*/
-                  var_sav_trm_code := var_wrk_trm_code;
-                  var_row_count := 0;
-
-                  /*-*/
-                  /* Set the code and find the highest message sequence number
-                  /*-*/
-                  rcd_vds_val_mes.vam_code := var_wrk_trm_code;
-                  rcd_vds_val_mes.vam_sequence := 0;
-                  open csr_message;
-                  fetch csr_message into rcd_message;
-                  if csr_message%found then
-                     rcd_vds_val_mes.vam_sequence := rcd_message.vam_sequence;
-                  end if;
-                  close csr_message;
-
-               end if;
-
-               /*-*/
-               /* Set the message search values
-               /*-*/
-               rcd_vds_val_mes.vam_search01 := var_wrk_search01;
-               rcd_vds_val_mes.vam_search02 := var_wrk_search02;
-               rcd_vds_val_mes.vam_search03 := var_wrk_search03;
-               rcd_vds_val_mes.vam_search04 := var_wrk_search04;
-               rcd_vds_val_mes.vam_search05 := var_wrk_search05;
-               rcd_vds_val_mes.vam_search06 := var_wrk_search06;
-               rcd_vds_val_mes.vam_search07 := var_wrk_search07;
-               rcd_vds_val_mes.vam_search08 := var_wrk_search08;
-               rcd_vds_val_mes.vam_search09 := var_wrk_search09;
-
-               /*-*/
-               /* Rule message found
-               /*-*/
-               if not(var_val_key) is null then
-
-                  /*-*/
-                  /* Increment the row
-                  /*-*/
-                  var_row_count := var_row_count + 1;
-
-                  /*-*/
-                  /* Output the *FIRST_ROW message
-                  /*-*/
-                  if rcd_type_rule.var_test = '*FIRST_ROW' and var_row_count = 1 then
-                     rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                     rcd_vds_val_mes.vam_text := var_val_message;
-                     create_message(rcd_vds_val_mes);
-                  end if;
-
-                  /*-*/
-                  /* Output the *EACH_ROW message
-                  /*-*/
-                  if rcd_type_rule.var_test = '*EACH_ROW' then
-                     rcd_vds_val_mes.vam_sequence := rcd_vds_val_mes.vam_sequence + 1;
-                     rcd_vds_val_mes.vam_text := var_val_message;
-                     create_message(rcd_vds_val_mes);
-                  end if;
-
-               end if;
-
-            end loop;
-            close csr_dynamic;
+               end loop;
+               close csr_dynamic;
+            exception
+               when others then
+                  raise_application_error(-20000, 'Rule (' || rcd_type_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
+            end;
 
             /*-*/
             /* Output the previous code after messages
