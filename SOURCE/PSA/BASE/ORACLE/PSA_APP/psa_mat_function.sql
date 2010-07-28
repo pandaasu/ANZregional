@@ -1893,8 +1893,11 @@ create or replace package body psa_app.psa_mat_function as
 
       cursor csr_component is
          select count(*) as com_count
-           from psa_mat_comp t01
-          where t01.mco_com_code = rcd_psa_mat_defn.mde_mat_code;
+           from psa_mat_comp t01,
+                psa_mat_defn t02
+          where t01.mco_mat_code = t02.mde_mat_code
+            and t01.mco_com_code = rcd_psa_mat_defn.mde_mat_code
+            and t02.mde_mat_status in ('*ACTIVE','*CHG','*DEL') ;
       rcd_component csr_component%rowtype;
 
    /*-------------*/
@@ -1979,7 +1982,7 @@ create or replace package body psa_app.psa_mat_function as
       end if;
       close csr_component;
       if rcd_component.com_count != 0 then
-         psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is attached as a component to '||to_char(rcd_component.com_count)||' materials - unable to inactivate');
+         psa_gen_function.add_mesg_data('Material ('||rcd_psa_mat_defn.mde_mat_code||') is attached as a component to '||to_char(rcd_component.com_count)||' active materials - unable to inactivate');
       end if;
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
