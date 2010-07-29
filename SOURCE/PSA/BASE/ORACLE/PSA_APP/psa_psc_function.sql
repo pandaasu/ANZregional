@@ -6387,7 +6387,7 @@ create or replace package body psa_app.psa_psc_function as
              where psa_act_code = var_act_code;
          end if;
       else
-         if var_src_code = '*SCH' then
+         if var_src_code = '*SCH' or rcd_actv.psa_act_ent_flag = '0' then
             rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
             rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
             rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
@@ -6650,7 +6650,7 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       /* Detach the activity from the schedule
       /*-*/
-      if var_src_code = '*SCH' then
+      if var_src_code = '*SCH' or rcd_actv.psa_act_ent_flag = '0' then
          update psa_psc_actv
             set psa_upd_user = var_upd_user,
                 psa_upd_date = var_upd_date,
@@ -6667,10 +6667,7 @@ create or replace package body psa_app.psa_psc_function as
                 psa_upd_date = var_upd_date,
                 psa_act_win_code = '*NONE',
                 psa_act_win_seqn = null,
-                psa_act_win_flow = null,
-                psa_act_str_time = null,
-                psa_act_chg_time = null,
-                psa_act_end_time = null
+                psa_act_win_flow = null
              where psa_act_code = var_act_code;
       end if;
 
