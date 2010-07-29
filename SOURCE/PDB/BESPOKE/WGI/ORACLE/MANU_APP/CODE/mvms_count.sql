@@ -12,6 +12,8 @@ CREATE OR REPLACE FUNCTION MANU_APP.Mvms_Count( matl IN VARCHAR2) RETURN NUMBER 
    1.0        24/02/2005   Jeff Phillipson 1. Created this function.
    1.01       19/02/2008   Beau Frericks   2. Updated SQL on FIND the quantity of the RSU to the 
                                               TDU  oninclude a filter on finshed goods only
+   1.02       29/07/2010   Ben Halicki     1. Updated calculation of qty to qty/batch_qty, 
+                                               requested by Nic Newman.                                         
 
    This function will attempt to find the quantity of MPOs used to create the FG number
    sent into the function
@@ -38,13 +40,11 @@ BEGIN
         OR (ASCII(RTRIM(LTRIM(SUBSTR(matl,1,1)))) > 57) THEN
         
            -- numeric of 8 chars long 
-           -- or alpha numeric 
-           --dbms_output.put_line (matl);
-           
+           -- or alpha numeric          
         SELECT DECODE(SUM(r.qty * x.qty), NULL, 0, SUM(r.qty * x.qty)) qty INTO v_count
           FROM (
                -- Find all materials defined by PCE or SB if in NZ11 ( all the MPOs) 
-               SELECT LEVEL lvl,  MATERIAL, sub_matl, qty,uom, alternate, ROWNUM id, batch_qty 
+               SELECT LEVEL lvl,  MATERIAL, sub_matl, (qty/batch_qty) as qty,uom, alternate, ROWNUM id, batch_qty 
                  FROM bom 
                 WHERE   uom = 'PCE' OR uom = 'SB'
                 START WITH MATERIAL = matl 
@@ -56,7 +56,7 @@ BEGIN
                ) r, 
                (
                -- FIND the quantity of the RSU to the TDU 
-               SELECT qty  
+               select (qty/batch_qty) as qty
                  FROM bom
                 WHERE MATERIAL = matl
                   AND alternate = Get_Alternate(MATERIAL) 
