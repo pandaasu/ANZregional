@@ -134,6 +134,7 @@ sub PaintFunction()%>
       cobjScreens[7] = new clsScreen('dspTime','hedTime');
       cobjScreens[8] = new clsScreen('dspCProd','hedCProd');
       cobjScreens[9] = new clsScreen('dspUProd','hedUProd');
+      cobjScreens[10] = new clsScreen('dspLShow','hedLShow');
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Production Schedule Selection';
       cobjScreens[2].hedtxt = 'Production Schedule Definition';
@@ -144,6 +145,7 @@ sub PaintFunction()%>
       cobjScreens[7].hedtxt = 'Time Activity';
       cobjScreens[8].hedtxt = 'Create Production Activity';
       cobjScreens[9].hedtxt = 'Update Production Activity';
+      cobjScreens[10].hedtxt = 'Line Configuration Selection';
       cobjScreens[0].bodsrl = 'no';
       cobjScreens[1].bodsrl = 'no';
       cobjScreens[2].bodsrl = 'auto';
@@ -154,6 +156,7 @@ sub PaintFunction()%>
       cobjScreens[7].bodsrl = 'auto';
       cobjScreens[8].bodsrl = 'auto';
       cobjScreens[9].bodsrl = 'auto';
+      cobjScreens[10].bodsrl = 'auto';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -1344,10 +1347,6 @@ sub PaintFunction()%>
    var cbolTypePulse;
    var cstrTypePulse;
    var cintTypePulse;
-   var cobjTico = new Image();
-   var cobjPico = new Image();
-   cobjTico.src = 'timIcon.png';
-   cobjPico.src = 'prdIcon.png';
    var cstrTypeProd;
    var cstrTypeWeek;
    var cstrTypeCode;
@@ -1381,6 +1380,8 @@ sub PaintFunction()%>
    var cobjTypeStck = new Array();
    var cobjTypeLine = new Array();
    var cobjTypeUact = new Array();
+   var cbolTypeShow;
+   var cobjTypeShow = new Array();
    function clsTypeDate() {
       this.daycde = '';
       this.daynam = '';
@@ -1396,6 +1397,7 @@ sub PaintFunction()%>
       this.lconam = '';
       this.filnam = '';
       this.ovrflw = '';
+      this.sholin = '';
       this.pntcol = 0;
       this.shfary = new Array();
       this.actary = new Array();
@@ -1473,12 +1475,18 @@ sub PaintFunction()%>
       this.schton = 0;
       this.schdur = 0;
    }
+   function clsTypeShow() {
+      this.lincde = '';
+      this.lcocde = '';
+   }
    function requestTypeLoad() {
       cobjTypeLineCell = null;
       cobjTypeSchdCell = null;
       cobjTypeUactCell = null;
       cbolTypePulse = false;
       cstrTypeTind = '0';
+      cbolTypeShow = false;
+      cobjTypeShow.length = 0;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -1488,6 +1496,15 @@ sub PaintFunction()%>
       cobjTypeUactCell = null;
       cbolTypePulse = false;
       window.clearTimeout(cintTypePulse);
+      cbolTypeShow = true;
+      cobjTypeShow.length = 0;
+      for (var w=0;w<cobjTypeLine.length;w++) {
+         if (cobjTypeLine[w].sholin == '1') {
+            cobjTypeShow[cobjTypeShow.length] = new clsTypeShow();
+            cobjTypeShow[cobjTypeShow.length-1].lincde = cobjTypeLine[w].lincde;
+            cobjTypeShow[cobjTypeShow.length-1].lcocde = cobjTypeLine[w].lcocde;
+         }
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*GETTYP" SRCCDE="*SCH" PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'" PTYCDE="'+fixXML(cstrTypeCode)+'"/>';
       doPostRequest('<%=strBase%>psa_psc_type_retrieve.asp',function(strResponse) {checkTypeLoad(strResponse);},false,streamXML(strXML));
    }
@@ -1510,7 +1527,6 @@ sub PaintFunction()%>
             alert(strMessage);
             return;
          }
-         displayScreen('dspType');
          cobjTypeLineCell = null;
          cobjTypeSchdCell = null;
          cobjTypeUactCell = null;
@@ -1520,6 +1536,7 @@ sub PaintFunction()%>
          cobjTypeUact.length = 0;
          var objShfAry;
          var objActAry;
+         var bolFound;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                cstrTypePulse = objElements[i].getAttribute('PULVAL');
@@ -1541,6 +1558,12 @@ sub PaintFunction()%>
                cobjTypeLine[cobjTypeLine.length-1].lconam = objElements[i].getAttribute('LCONAM');
                cobjTypeLine[cobjTypeLine.length-1].filnam = objElements[i].getAttribute('FILNAM');
                cobjTypeLine[cobjTypeLine.length-1].ovrflw = objElements[i].getAttribute('OVRFLW');
+               cobjTypeLine[cobjTypeLine.length-1].sholin = '0';
+               for (var w=0;w<cobjTypeShow.length;w++) {
+                  if (cobjTypeShow[w].lincde == objElements[i].getAttribute('LINCDE') && cobjTypeShow[w].lcocde == objElements[i].getAttribute('LCOCDE')) {
+                     cobjTypeLine[cobjTypeLine.length-1].sholin = '1';
+                  }
+               }
             } else if (objElements[i].nodeName == 'SHFDFN') {
                objShfAry = cobjTypeLine[cobjTypeLine.length-1].shfary;
                objShfAry[objShfAry.length] = new clsTypeShft();
@@ -1620,23 +1643,26 @@ sub PaintFunction()%>
                cobjTypeUact[cobjTypeUact.length-1].schdur = objElements[i].getAttribute('SCHDUR');
             }
          }
-         doTypeSchdPaint();
-         doTypeSchdPaintActv();
-         document.getElementById('datTypeUact').style.display = 'block';
-         doTypeUactPaint();
-         document.getElementById('datTypeUact').style.display = 'none';
-         if (cstrTypeTind == '1') {
-            document.getElementById('datTypeSchd').style.width = '75%';
-            document.getElementById('datTypeUact').style.display = 'block';
+         if (cbolTypeShow == false) {
+            doTypeLineShow();
          } else {
-            document.getElementById('datTypeSchd').style.width = '100%';
-            document.getElementById('datTypeUact').style.display = 'none';
+            displayScreen('dspType');
+            doTypeSchdPaint();
+            doTypeSchdPaintActv();
+            document.getElementById('datTypeUact').style.display = 'block';
+            doTypeUactPaint();
+            if (cstrTypeTind == '1') {
+               document.getElementById('datTypeSchd').style.width = '75%';
+               document.getElementById('datTypeUact').style.display = 'block';
+            } else {
+               document.getElementById('datTypeSchd').style.width = '100%';
+               document.getElementById('datTypeUact').style.display = 'none';
+            }
+            if (cbolTypePulse == false) {
+               cbolTypePulse = true;
+               cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
+            }
          }
-         document.getElementById('typPulse').style.backgroundColor = '#b0e0e6';
-      }
-      if (cbolTypePulse == false) {
-         cbolTypePulse = true;
-         cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
       }
    }
    function doTypePulseRequest() {
@@ -1713,6 +1739,11 @@ sub PaintFunction()%>
       }
       doReportOutput(eval('document.body'),'Production Shift Report','*SPREADSHEET','select * from table(psa_app.psa_rpt_function.report_shift(\''+cstrTypeProd+'\',\''+cstrTypeWeek+'\',\''+cstrTypeCode+'\'))');
    }
+   function doTypeTonnReport() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestTonnReport();',10);
+   }
    function doTypeStckUpdate() {
       if (!processForm()) {return;}
       if (confirm('Please confirm the stock update\r\npress OK continue (the stock inventory will be updated for this week forward)\r\npress Cancel to cancel and return') == false) {
@@ -1745,6 +1776,81 @@ sub PaintFunction()%>
       }
       cobjTypeLineCell = objSelect;
       cobjTypeLineCell.style.backgroundColor = '#C000C0';
+   }
+   function doTypeLineShow() {
+      if (!processForm()) {return;}
+      var objRow;
+      var objCell;
+      var objInput;
+      var objTypShow = document.getElementById('LSH_LinData');
+      for (var i=objTypShow.rows.length-1;i>=0;i--) {
+         objTypShow.deleteRow(i);
+      }
+      for (var i=0;i<cobjTypeLine.length;i++) {
+         objRow = objTypShow.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objInput = document.createElement('input');
+         objInput.type = 'checkbox';
+         objInput.value = '';
+         objInput.id = 'LINSLT_'+cobjTypeLine[i].lincde+'_'+cobjTypeLine[i].lcocde;
+         objInput.onFocus = function() {setSelect(this);};
+         objInput.checked = false;
+         objCell.appendChild(objInput);
+         if (cobjTypeLine[i].filnam != '' && cobjTypeLine[i].filnam != null) {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam+' - '+cobjTypeLine[i].filnam));
+         } else {
+            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
+         }
+         if (cobjTypeLine[i].sholin == '1') {
+            objInput.checked = true;
+         }
+      }
+      displayScreen('dspLShow');
+   }
+   function doLineShowCancel() {
+      if (cbolTypePulse == false) {
+         displayScreen('dspWeeks');
+      } else {
+         displayScreen('dspType');
+      }
+   }
+   function doLineShowAccept() {
+      if (!processForm()) {return;}
+      var objInput;
+      var bolFound = false;
+      for (var i=0;i<cobjTypeLine.length;i++) {
+         objInput = document.getElementById('LINSLT_'+cobjTypeLine[i].lincde+'_'+cobjTypeLine[i].lcocde);
+         cobjTypeLine[i].sholin = '0';
+         if (objInput.checked == true) {
+            cobjTypeLine[i].sholin = '1';
+            bolFound = true;
+         }
+      }
+      if (bolFound == false) {
+         alert('At least one line configuration must be selected');
+         return;
+      }
+      doActivityStart(document.body);
+      window.setTimeout('doLineShowCheck();',10);
+   }
+   function doLineShowCheck() {
+      doActivityStop();
+      displayScreen('dspType');
+      doTypeSchdPaint();
+      doTypeSchdPaintActv();
+      document.getElementById('datTypeUact').style.display = 'block';
+      doTypeUactPaint();
+      if (cstrTypeTind == '1') {
+         document.getElementById('datTypeSchd').style.width = '75%';
+         document.getElementById('datTypeUact').style.display = 'block';
+      } else {
+         document.getElementById('datTypeSchd').style.width = '100%';
+         document.getElementById('datTypeUact').style.display = 'none';
+      }
+      if (cbolTypePulse == false) {
+         cbolTypePulse = true;
+         cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
+      }
    }
    function doTypeLineAdd() {
       if (!processForm()) {return;}
@@ -1801,13 +1907,11 @@ sub PaintFunction()%>
    }
    function doTypeSchdPaint() {
       var objShfAry;
-      var objTable;
       var objRow;
       var objCell;
       var strTime;
       var intWrkCnt;
       var bolStrDay;
-
       cintTypeHsiz.length = 0;
       cintTypeBsiz.length = 0;
       var objTypHead = document.getElementById('tabHeadSchd');
@@ -1820,114 +1924,75 @@ sub PaintFunction()%>
       for (var i=objTypBody.rows.length-1;i>=0;i--) {
          objTypBody.deleteRow(i);
       }
-
       objRow = objTypHead.insertRow(-1);
-
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
       objCell.vAlign = 'center';
       objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.fontWeight = 'bold';
-      objCell.style.backgroundColor = '#40414c';
-      objCell.style.color = '#ffffff';
-      objCell.style.border = '#c0c0c0 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
+      objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
       objCell.appendChild(document.createTextNode('Date'));
-
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
       objCell.vAlign = 'center';
       objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.fontWeight = 'bold';
-      objCell.style.backgroundColor = '#40414c';
-      objCell.style.color = '#ffffff';
-      objCell.style.border = '#c0c0c0 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
+      objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
       objCell.appendChild(document.createTextNode('Time'));
       for (var i=0;i<cobjTypeLine.length;i++) {
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.fontSize = '8pt';
-         if (cobjTypeLine[i].ovrflw == '0') {
-            objCell.style.backgroundColor = '#04aa04';
-         } else {
-            objCell.style.backgroundColor = '#c00000';
+         if (cobjTypeLine[i].sholin == '1') {
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBB';
+            if (cobjTypeLine[i].ovrflw == '0') {
+               objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#04aa04;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+            } else {
+               objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#c00000;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+            }
+            objCell.innerHTML = '&nbsp;';
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 1;
+            objCell.align = 'center';
+            objCell.vAlign = 'center';
+            objCell.className = 'clsLabelBB';
+            if (cobjTypeLine[i].ovrflw == '0') {
+               objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#40414c;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+            } else {
+               objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#c00000;color:#ffffff;border:#c0c0c0 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+            }
+            if (cobjTypeLine[i].ovrflw == '0') {
+               objCell.style.cursor = 'pointer';
+               objCell.onclick = function() {doTypeLineSelect(this);};
+            }
+            objCell.setAttribute('linidx',i);
+            objCell.setAttribute('lincde',cobjTypeLine[i].lincde);
+            objCell.setAttribute('concde',cobjTypeLine[i].lcocde);
+            if (cobjTypeLine[i].filnam != '' && cobjTypeLine[i].filnam != null) {
+               objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam+' - '+cobjTypeLine[i].filnam));
+            } else {
+               objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
+            }
+            cobjTypeLine[i].pntcol = objCell.cellIndex;
          }
-         objCell.style.color = '#ffffff';
-         objCell.style.border = '#c0c0c0 1px solid';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell.innerHTML = '&nbsp;';
-
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.vAlign = 'center';
-         objCell.className = 'clsLabelBB';
-         objCell.style.fontSize = '8pt';
-         objCell.style.fontWeight = 'bold';
-         if (cobjTypeLine[i].ovrflw == '0') {
-            objCell.style.backgroundColor = '#40414c';
-         } else {
-            objCell.style.backgroundColor = '#c00000';
-         }
-         objCell.style.color = '#ffffff';
-         objCell.style.border = '#c0c0c0 1px solid';
-         objCell.style.paddingLeft = '2px';
-         objCell.style.paddingRight = '2px';
-         objCell.style.whiteSpace = 'nowrap';
-         if (cobjTypeLine[i].ovrflw == '0') {
-            objCell.style.cursor = 'pointer';
-            objCell.onclick = function() {doTypeLineSelect(this);};
-         }
-         objCell.setAttribute('linidx',i);
-         objCell.setAttribute('lincde',cobjTypeLine[i].lincde);
-         objCell.setAttribute('concde',cobjTypeLine[i].lcocde);
-         if (cobjTypeLine[i].filnam != '' && cobjTypeLine[i].filnam != null) {
-            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam+' - '+cobjTypeLine[i].filnam));
-         } else {
-            objCell.appendChild(document.createTextNode('('+cobjTypeLine[i].lincde+') '+cobjTypeLine[i].linnam+' - ('+cobjTypeLine[i].lcocde+') '+cobjTypeLine[i].lconam));
-         }
-         cobjTypeLine[i].pntcol = objCell.cellIndex;
       }
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
       objCell.vAlign = 'center';
       objCell.className = 'clsLabelBB';
-      objCell.style.fontSize = '8pt';
-      objCell.style.backgroundColor = '#40414c';
-      objCell.style.color = '#000000';
-      objCell.style.border = 'none';
-      objCell.style.paddingLeft = '4px';
-      objCell.style.paddingRight = '4px';
-      objCell.style.width = 16;
-      objCell.style.whiteSpace = 'nowrap';
+      objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#40414c;color:#000000;border:none;padding-left:4px;padding-right:4px;width:16px;white-space:nowrap;';
       objCell.innerHTML = '&nbsp;';
       intWrkCnt = 0;
       for (var i=0;i<cobjTypeDate.length;i++) {
-
          bolStrDay = true;
          for (var j=0;j<=23;j++) {
-
             if (j < 10) {
                strTime = '0'+j;
             } else {
                strTime = j;
             }
-
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
             objCell = objRow.insertCell(-1);
@@ -1935,40 +2000,31 @@ sub PaintFunction()%>
             objCell.colSpan = 1;
             objCell.align = 'center';
             objCell.vAlign = 'center';
-            objCell.style.fontSize = '8pt';
             if (bolStrDay == true) {
+               objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#c0c0ff;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;';
                objCell.style.fontWeight = 'bold';
                objCell.style.backgroundColor = '#c0c0ff';
             } else {
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#dddfff;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;';
                objCell.style.fontWeight = 'normal';
                objCell.style.backgroundColor = '#dddfff';
             }
-            objCell.style.color = '#000000';
-            objCell.style.border = '#000000 1px solid';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
             objCell.appendChild(document.createTextNode(cobjTypeDate[i].daynam));
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode(cobjTypeDate[i].daycde));
             bolStrDay = false;
             doTypeSchdPaintTime(objRow, strTime, '00', intWrkCnt);
-
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
             doTypeSchdPaintTime(objRow, strTime, '15', intWrkCnt);
-
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
             doTypeSchdPaintTime(objRow, strTime, '30', intWrkCnt);
-
             objRow = objTypBody.insertRow(-1);
             intWrkCnt++;
             doTypeSchdPaintTime(objRow, strTime, '45', intWrkCnt);
-
          }
-
       }
-
       var objHeadCells = objTypHead.rows(0).cells;
       var objBodyCells = objTypBody.rows(0).cells;
       for (i=0;i<objHeadCells.length-1;i++) {
@@ -1985,23 +2041,17 @@ sub PaintFunction()%>
       addScrollSync(document.getElementById('conHeadSchd'),document.getElementById('conBodySchd'),'horizontal');
       objTypHead.style.tableLayout = 'fixed';
       objTypBody.style.tableLayout = 'fixed';
-
    }
-
    function doTypeSchdPaintTime(objRow, strTime, strMins, intWrkCnt) {
-
       var objShfAry;
       var objCell;
       var objTable;
-      var objTabRow;
-      var objTabCell;
-      var objTabDiv;
+      var objDiv;
       var intLinIdx;
       var strWrkInd;
       var intWrkStr;
       var intWrkEnd;
       var strWrkNam;
-
       strWrkNam = '';
       for (var s=0;s<cobjTypeStck.length;s++) {
          if ((cobjTypeStck[s].stkbar-0) == intWrkCnt) {
@@ -2011,169 +2061,108 @@ sub PaintFunction()%>
             strWrkNam = strWrkNam+cobjTypeStck[s].stknam;
          }
       }
-
       objCell = objRow.insertCell(-1);
       objCell.colSpan = 1;
       objCell.align = 'center';
       objCell.vAlign = 'center';
-      objCell.style.fontSize = '8pt';
       if (strMins == '00') {
          objCell.style.fontWeight = 'bold';
       } else {
          objCell.style.fontWeight = 'normal';
       }
       if (strWrkNam == '') {
-         objCell.style.backgroundColor = '#dddfff';
+         if (strMins == '00') {
+            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+         } else {
+            objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#dddfff;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+         }
       } else {
-         objCell.style.backgroundColor = '#c0c000';
-         objCell.style.cursor = 'pointer';
+         if (strMins == '00') {
+            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#c0c000;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+         } else {
+            objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#c0c000;color:#000000;border:#000000 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;cursor:pointer;';
+         }
          objCell.title = strWrkNam;
       }
-      objCell.style.color = '#000000';
-      objCell.style.border = '#000000 1px solid';
-      objCell.style.paddingLeft = '2px';
-      objCell.style.paddingRight = '2px';
-      objCell.style.whiteSpace = 'nowrap';
       objCell.appendChild(document.createTextNode(strTime+':'+strMins));
-
       for (var k=0;k<cobjTypeLine.length;k++) {
-
-         intLinIdx = k;
-         strWrkInd = 'N';
-         objShfAry = cobjTypeLine[k].shfary;
-         for (var w=0;w<objShfAry.length;w++) {
-            if (objShfAry[w].cmocde != '*NONE' && (intWrkCnt >= objShfAry[w].barstr && intWrkCnt <= objShfAry[w].barend)) {
-               strWrkInd = 'X';
-               if (intWrkCnt == objShfAry[w].barstr) {
-                  strWrkInd = 'S';
-                  intWrkStr = objShfAry[w].barstr;
-                  intWrkEnd = objShfAry[w].barend;
-                  strWrkNam = '('+objShfAry[w].shfcde+') '+objShfAry[w].shfnam;
+         if (cobjTypeLine[k].sholin == '1') {
+            intLinIdx = k;
+            strWrkInd = 'N';
+            objShfAry = cobjTypeLine[k].shfary;
+            for (var w=0;w<objShfAry.length;w++) {
+               if (objShfAry[w].cmocde != '*NONE' && (intWrkCnt >= objShfAry[w].barstr && intWrkCnt <= objShfAry[w].barend)) {
+                  strWrkInd = 'X';
+                  if (intWrkCnt == objShfAry[w].barstr) {
+                     strWrkInd = 'S';
+                     intWrkStr = objShfAry[w].barstr;
+                     intWrkEnd = objShfAry[w].barend;
+                     strWrkNam = '('+objShfAry[w].shfcde+') '+objShfAry[w].shfnam;
+                  }
+                  break;
                }
-               break;
             }
-         }
-
-         if (strWrkInd == 'N') {
-
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'center';
-            objCell.style.fontSize = '8pt';
-            objCell.style.backgroundColor = '#f7f7f7';
-            objCell.style.color = '#000000';
-            objCell.style.borderRight = '#c7c7c7 1px solid';
-            objCell.style.paddingLeft = '2px';
-            objCell.style.paddingRight = '2px';
-            objCell.style.whiteSpace = 'nowrap';
-
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'top';
-            objCell.style.fontSize = '8pt';
-            objCell.style.backgroundColor = '#f7f7f7';
-            objCell.style.color = '#000000';
-            objCell.style.border = '#c7c7c7 1px solid';
-            objCell.style.padding = '0px';
-            objCell.style.height = '100%';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.setAttribute('linidx',intLinIdx);
-            objCell.setAttribute('baridx',intWrkCnt);
-
-            objTable = document.createElement('table');
-            objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
-            objTable.align = 'left';
-            objTable.vAlign = 'center';
-            objTable.style.fontSize = '8pt';
-            objTable.style.fontWeight = 'normal';
-            objTable.style.backgroundColor = 'transparent';
-            objTable.style.color = '#000000';
-            objTable.style.border = 'transparent 2px solid';
-            objTable.style.padding = '2px';
-            objTable.style.height = '100%';
-            objTable.cellSpacing = '2px';
-            objCell.appendChild(objTable);
-
-         } else {
-
-            if (strWrkInd == 'S') {
-
+            if (strWrkInd == 'N') {
                objCell = objRow.insertCell(-1);
-               objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
                objCell.colSpan = 1;
                objCell.align = 'center';
                objCell.vAlign = 'center';
-               objCell.style.fontSize = '8pt';
-               objCell.style.backgroundColor = '#04aa04';
-               objCell.style.color = '#000000';
-               objCell.style.borderTop = '#c7c7c7 1px solid';
-               objCell.style.borderBottom = '#c7c7c7 1px solid';
-               objCell.style.padding = '0px';
-               objCell.style.height = '100%';
-               objCell.style.whiteSpace = 'nowrap';
-
-               objDiv = document.createElement('div');
-               objDiv.align = 'center';
-               objDiv.vAlign = 'center';
-               objDiv.style.fontSize = '8pt';
-               objDiv.style.fontWeight = 'normal';
-               objDiv.style.backgroundColor = '#c0ffc0';
-               objDiv.style.color = '#000000';
-               objDiv.style.border = '#04aa04 2px solid';
-               objDiv.style.paddingLeft = '2px';
-               objDiv.style.paddingRight = '2px';
-               objDiv.style.height = '100%';
-               objDiv.style.width = '100%';
-               objDiv.style.cursor = 'pointer';
-               objDiv.innerHTML = '&nbsp;';
-               objDiv.title = strWrkNam;
-               objCell.appendChild(objDiv);
-
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#f7f7f7;color:#000000;border:#c7c7c7 1px solid;padding-left:2px;padding-right:2px;white-space:nowrap;';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'top';
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#f7f7f7;color:#000000;border:#c7c7c7 1px solid;padding:0px;height:100%;white-space:nowrap;';
+               objCell.setAttribute('linidx',intLinIdx);
+               objCell.setAttribute('baridx',intWrkCnt);
+               objTable = document.createElement('table');
+               objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
+               objTable.align = 'left';
+               objTable.vAlign = 'center';
+               objTable.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:transparent 2px solid;padding:2px;height:100%;';
+               objTable.cellSpacing = '2px';
+               objCell.appendChild(objTable);
+            } else {
+               if (strWrkInd == 'S') {
+                  objCell = objRow.insertCell(-1);
+                  objCell.rowSpan = (intWrkEnd - intWrkStr) + 1;
+                  objCell.colSpan = 1;
+                  objCell.align = 'center';
+                  objCell.vAlign = 'center';
+                  objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#04aa04;color:#000000;border-top:#c7c7c7 1px solid;border-bottom:#c7c7c7 1px solid;padding:0px;height:100%;white-space:nowrap;';
+                  objDiv = document.createElement('div');
+                  objDiv.align = 'center';
+                  objDiv.vAlign = 'center';
+                  objDiv.style.cssText = 'font-size:8pt;font-weight:normal;background-color:#c0ffc0;color:#000000;border:#04aa04 2px solid;padding-left:2px;padding-right:2px;height:100%;width:100%;cursor:pointer;';
+                  objDiv.innerHTML = '&nbsp;';
+                  objDiv.title = strWrkNam;
+                  objCell.appendChild(objDiv);
+               }
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.vAlign = 'top';
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:#c7c7c7 1px solid;padding:0px;height:100%;white-space:nowrap;';
+               objCell.setAttribute('linidx',intLinIdx);
+               objCell.setAttribute('baridx',intWrkCnt);
+               objTable = document.createElement('table');
+               objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
+               objTable.align = 'left';
+               objTable.vAlign = 'center';
+               objTable.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:transparent 2px solid;padding:2px;height:100%;';
+               objTable.cellSpacing = '2px';
+               objCell.appendChild(objTable);
             }
-
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 1;
-            objCell.align = 'center';
-            objCell.vAlign = 'top';
-            objCell.style.fontSize = '8pt';
-            objCell.style.backgroundColor = 'transparent';
-            objCell.style.color = '#000000';
-            objCell.style.border = '#c7c7c7 1px solid';
-            objCell.style.padding = '0px';
-            objCell.style.height = '100%';
-            objCell.style.whiteSpace = 'nowrap';
-            objCell.setAttribute('linidx',intLinIdx);
-            objCell.setAttribute('baridx',intWrkCnt);
-
-            objTable = document.createElement('table');
-            objTable.id = 'TABBAR_'+intLinIdx+'_'+intWrkCnt;
-            objTable.align = 'left';
-            objTable.vAlign = 'center';
-            objTable.style.fontSize = '8pt';
-            objTable.style.fontWeight = 'normal';
-            objTable.style.backgroundColor = 'transparent';
-            objTable.style.color = '#000000';
-            objTable.style.border = 'transparent 2px solid';
-            objTable.style.padding = '2px';
-            objTable.style.height = '100%';
-            objTable.cellSpacing = '2px';
-            objCell.appendChild(objTable);
-
          }
-
       }
-
    }
-
    function doTypeSchdPaintActv() {
       for (var i=0;i<cobjTypeLine.length;i++) {
-         doTypeWindPaint(i)
+         if (cobjTypeLine[i].sholin == '1') {
+            doTypeWindPaint(i)
+         }
       }
    }
-
-
    function doTypeWindPaint(intLinIdx) {
 
       //
@@ -2193,6 +2182,7 @@ sub PaintFunction()%>
       var intStrBar;
       var intEndBar;
       var intChgBar;
+      var strStyle;
 
       //
       // delete the existing paint activity rows for the line window
@@ -2215,26 +2205,11 @@ sub PaintFunction()%>
             objCell.colSpan = 1;
             objCell.align = 'left';
             objCell.vAlign = 'top';
-            objCell.style.fontSize = '8pt';
-            objCell.style.fontWeight = 'normal';
-            objCell.style.backgroundColor = 'transparent';
-            objCell.style.color = '#000000';
-            objCell.style.border = 'none';
-            objCell.style.padding = '0px';
-            objCell.style.whiteSpace = 'nowrap';
+            objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:none;padding:0px;white-space:nowrap;';
             objDiv = document.createElement('div');
             objDiv.align = 'left';
             objDiv.vAlign = 'top';
-            objDiv.style.cursor = 'pointer';
-            objDiv.style.fontSize = '10pt';
-            objDiv.style.fontWeight = 'bold';
-            objDiv.style.backgroundColor = '#ffd9ff';
-            objDiv.style.color = '#000000';
-            objDiv.style.border = '#c7c7c7 1px solid';
-            objDiv.style.paddingLeft = '4px';
-            objDiv.style.paddingRight = '4px';
-            objDiv.style.whiteSpace = 'nowrap';
-            objDiv.style.width = '1%';
+            objDiv.style.cssText = 'font-size:10pt;font-weight:bold;background-color:#ffd9ff;color:#000000;border:#c7c7c7 1px solid;padding-left:4px;padding-right:4px;width:1%;white-space:nowrap;cursor:pointer;';
             objDiv.setAttribute('actidx',-1);
             objDiv.setAttribute('wincde',objShfAry[i].wincde);
             objDiv.setAttribute('actcde','');
@@ -2265,42 +2240,36 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.vAlign = 'top';
-               objCell.style.fontSize = '8pt';
-               objCell.style.fontWeight = 'normal';
-               objCell.style.backgroundColor = 'transparent';
-               objCell.style.color = '#000000';
-               objCell.style.border = 'none';
-               objCell.style.padding = '0px';
-               objCell.style.height = '100%';
-               objCell.style.whiteSpace = 'nowrap';
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:none;padding:0px;height:100%;white-space:nowrap;';
                objDiv = document.createElement('div');
                objDiv.align = 'left';
                objDiv.vAlign = 'top';
-               objDiv.style.fontSize = '8pt';
-               objDiv.style.fontWeight = 'normal';
+               strStyle = 'font-size:8pt;font-weight:normal;';
                if (objWork.acttyp == 'T') {
-                  objDiv.style.backgroundColor = '#dddfff';
+                  strStyle = strStyle + 'background-color:#dddfff;';
                } else {
-                  objDiv.style.backgroundColor = '#ffffe0';
+                  strStyle = strStyle + 'background-color:#ffffe0;';
                }
-               objDiv.style.color = '#000000';
+               strStyle = strStyle + 'color:#000000;';
                if (objWork.winflw == '0') {
-                  objDiv.style.border = '#000000 2px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 2px solid';
+                     strStyle = strStyle + 'border:#c00000 2px solid;';
+                  } else {
+                     strStyle = strStyle + 'border:#000000 2px solid;';
                   }
                } else {
-                  objDiv.style.border = '#c000c0 2px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 2px solid';
+                     strStyle = strStyle + 'border:#c00000 2px solid;';
+                  } else {
+                     strStyle = strStyle + 'border:#c000c0 2px solid;';
                   }
                }
-               objDiv.style.whiteSpace = 'nowrap';
-               objDiv.style.width = '1%';
-               objDiv.style.height = '100%';
-               objDiv.style.padding = '2px';
+               strStyle = strStyle + 'padding:2px;width:1%;height:100%;white-space:nowrap;';
                if (objWork.wekflw == '0') {
-                  objDiv.style.cursor = 'pointer';
+                  strStyle = strStyle + 'cursor:pointer;';
+               }
+               objDiv.style.cssText = strStyle;
+               if (objWork.wekflw == '0') {
                   objDiv.onclick = function() {doTypeSchdSelect(this);};
                }
                objDiv.setAttribute('actidx',i);
@@ -2388,25 +2357,12 @@ sub PaintFunction()%>
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.vAlign = 'top';
-                  objCell.style.fontSize = '8pt';
-                  objCell.style.fontWeight = 'normal';
-                  objCell.style.backgroundColor = 'transparent';
-                  objCell.style.color = '#000000';
-                  objCell.style.border = 'none';
-                  objCell.style.padding = '0px';
-                  objCell.style.whiteSpace = 'nowrap';
-                  objImg = document.createElement('img');
                   if (objWork.acttyp == 'T') {
-                     objImg.src = cobjTico.src;
-                     objImg.style.height = '15px';
-                     objImg.style.width = '15px';
+                     objCell.style.cssText = 'font-size:8pt;background-color:transparent;border-left:#0000c0 4px solid;padding:0px;height:100%;';
                   } else {
-                     objImg.src = cobjPico.src;
-                     objImg.style.height = '15px';
-                     objImg.style.width = '23px';
+                     objCell.style.cssText = 'font-size:8pt;background-color:transparent;border-left:#c0c000 4px solid;padding:0px;height:100%;';
                   }
-                  objImg.align = 'absmiddle';
-                  objCell.appendChild(objImg);
+                  objCell.innerHTML = '&nbsp;';
                }
             } else {
                if (j == intChgBar) {
@@ -2415,43 +2371,26 @@ sub PaintFunction()%>
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.vAlign = 'top';
-                  objCell.style.fontSize = '8pt';
-                  objCell.style.fontWeight = 'normal';
-                  objCell.style.backgroundColor = 'transparent';
-                  objCell.style.color = '#000000';
-                  objCell.style.border = 'none';
-                  objCell.style.padding = '0px';
-                  objCell.style.height = '100%';
-                  objCell.style.whiteSpace = 'nowrap';
-                  objImg = document.createElement('img');
-                  objImg.src = cobjPico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '23px';
-                  objImg.align = 'absmiddle';
-                  objCell.appendChild(objImg);
-                  objCell.appendChild(document.createTextNode(' '));
+                  objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:none;padding:0px;height:100%;white-space:nowrap;';
                   objDiv = document.createElement('div');
                   objDiv.align = 'left';
                   objDiv.vAlign = 'top';
-                  objDiv.style.display = 'inline';
-                  objDiv.style.fontSize = '8pt';
-                  objDiv.style.fontWeight = 'normal';
-                  objDiv.style.backgroundColor = '#ffffe0';
-                  objDiv.style.color = '#000000';
+                  strStyle = 'display:inline;font-size:8pt;font-weight:normal;background-color:#ffffe0;color:#000000;';
                   if (objWork.winflw == '0') {
-                     objDiv.style.border = '#c7c7c7 1px solid';
                      if (objWork.wekflw == '1') {
-                        objDiv.style.border = '#c00000 1px solid';
+                        strStyle = strStyle + 'border:#c00000 1px solid;';
+                     } else {
+                        strStyle = strStyle + 'border:#c7c7c7 1px solid;';
                      }
                   } else {
-                     objDiv.style.border = '#c000c0 1px solid';
                      if (objWork.wekflw == '1') {
-                        objDiv.style.border = '#c00000 1px solid';
+                        strStyle = strStyle + 'border:#c00000 1px solid;';
+                     } else {
+                        strStyle = strStyle + 'border:#c000c0 1px solid;';
                      }
                   }
-                  objDiv.style.whiteSpace = 'nowrap';
-                  objDiv.style.width = '1%';
-                  objDiv.style.padding = '2px';
+                  strStyle = strStyle + 'padding:2px;width:1%;height:100%;white-space:nowrap;';
+                  objDiv.style.cssText = strStyle;
                   objDiv.appendChild(document.createTextNode('Material change ('+objWork.chgtim+')'));
                   objCell.appendChild(objDiv);
                }
@@ -2461,19 +2400,8 @@ sub PaintFunction()%>
                   objCell.colSpan = 1;
                   objCell.align = 'left';
                   objCell.vAlign = 'top';
-                  objCell.style.fontSize = '8pt';
-                  objCell.style.fontWeight = 'normal';
-                  objCell.style.backgroundColor = 'transparent';
-                  objCell.style.color = '#000000';
-                  objCell.style.border = 'none';
-                  objCell.style.padding = '0px';
-                  objCell.style.whiteSpace = 'nowrap';
-                  objImg = document.createElement('img');
-                  objImg.src = cobjPico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '23px';
-                  objImg.align = 'absmiddle';
-                  objCell.appendChild(objImg);
+                  objCell.style.cssText = 'font-size:8pt;background-color:transparent;border-left:#c0c000 4px solid;padding:0px;height:100%;';
+                  objCell.innerHTML = '&nbsp;';
                }
             }
             if (j == intEndBar) {
@@ -2482,52 +2410,32 @@ sub PaintFunction()%>
                objCell.colSpan = 1;
                objCell.align = 'left';
                objCell.vAlign = 'top';
-               objCell.style.fontSize = '8pt';
-               objCell.style.fontWeight = 'normal';
-               objCell.style.backgroundColor = 'transparent';
-               objCell.style.color = '#000000';
-               objCell.style.border = 'none';
-               objCell.style.padding = '0px';
-               objCell.style.whiteSpace = 'nowrap';
-               objImg = document.createElement('img');
-               if (objWork.acttyp == 'T') {
-                  objImg.src = cobjTico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '15px';
-               } else {
-                  objImg.src = cobjPico.src;
-                  objImg.style.height = '15px';
-                  objImg.style.width = '23px';
-               }
-               objImg.align = 'absmiddle';
-               objCell.appendChild(objImg);
-               objCell.appendChild(document.createTextNode(' '));
+               objCell.style.cssText = 'font-size:8pt;font-weight:normal;background-color:transparent;color:#000000;border:none;padding:0px;white-space:nowrap;';
                objDiv = document.createElement('div');
                objDiv.align = 'left';
                objDiv.vAlign = 'top';
-               objDiv.style.display = 'inline';
-               objDiv.style.fontSize = '8pt';
-               objDiv.style.fontWeight = 'normal';
+               strStyle = 'display:inline;font-size:8pt;font-weight:normal;';
                if (objWork.acttyp == 'T') {
-                  objDiv.style.backgroundColor = '#dddfff';
+                  strStyle = strStyle + 'background-color:#dddfff;';
                } else {
-                  objDiv.style.backgroundColor = '#ffffe0';
+                  strStyle = strStyle + 'background-color:#ffffe0;';
                }
-               objDiv.style.color = '#000000';
+               strStyle = strStyle + 'color:#000000;';
                if (objWork.winflw == '0') {
-                  objDiv.style.border = '#c7c7c7 1px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 1px solid';
+                     strStyle = strStyle + 'border:#c00000 1px solid;';
+                  } else {
+                     strStyle = strStyle + 'border:#c7c7c7 1px solid;';
                   }
                } else {
-                  objDiv.style.border = '#c000c0 1px solid';
                   if (objWork.wekflw == '1') {
-                     objDiv.style.border = '#c00000 1px solid';
+                     strStyle = strStyle + 'border:#c00000 1px solid;';
+                  } else {
+                     strStyle = strStyle + 'border:#c000c0 1px solid;';
                   }
                }
-               objDiv.style.whiteSpace = 'nowrap';
-               objDiv.style.width = '1%';
-               objDiv.style.padding = '2px';
+               strStyle = strStyle + 'padding:2px;width:1%;white-space:nowrap;';
+               objDiv.style.cssText = strStyle;
                objDiv.appendChild(document.createTextNode('End ('+objWork.endtim+')'));
                objCell.appendChild(objDiv);
             }
@@ -2540,7 +2448,6 @@ sub PaintFunction()%>
       doTypeSchdReSize(intLinIdx);
 
    }
-
    function doTypeSchdReSize(intLinIdx) {
       var objSchHead = document.getElementById('tabHeadSchd');
       var objSchBody = document.getElementById('tabBodySchd');
@@ -2561,10 +2468,6 @@ sub PaintFunction()%>
          objSchBody.rows(0).cells[intPntIdx].style.width = cintTypeBsiz[intPntIdx];
       }
    }
-
-
-
-
    function doTypeSchdRefresh() {
       doActivityStart(document.body);
       window.setTimeout('requestTypeReload();',10);
@@ -2644,7 +2547,6 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestProdAdd();',10);
    }
-
    function doTypeUactSelect(objSelect) {
       if (cobjTypeLineCell != null) {
          cobjTypeLineCell.style.backgroundColor = '#40414c';
@@ -2754,18 +2656,11 @@ sub PaintFunction()%>
          objCell.colSpan = 1;
          objCell.align = 'left';
          objCell.vAlign = 'center';
-         objCell.style.cursor = 'pointer';
-         objCell.style.fontSize = '8pt';
-         objCell.style.fontWeight = 'normal';
          if (objWork.acttyp == 'T') {
-            objCell.style.backgroundColor = '#dddfff';
+            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;border:#c7c7c7 1px solid;padding:2px;white-space:nowrap;cursor:pointer;';
          } else {
-            objCell.style.backgroundColor = '#ffffe0';
+            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#ffffe0;color:#000000;border:#c7c7c7 1px solid;padding:2px;white-space:nowrap;cursor:pointer;';
          }
-         objCell.style.color = '#000000';
-         objCell.style.border = '#c7c7c7 1px solid';
-         objCell.style.padding = '2px';
-         objCell.style.whiteSpace = 'nowrap';
          objCell.onclick = function() {doTypeUactSelect(this);};
          objCell.setAttribute('reqidx',i);
          objCell.setAttribute('actcde',cobjTypeUact[i].actcde);
@@ -2796,6 +2691,44 @@ sub PaintFunction()%>
             }
             objCell.appendChild(document.createElement('br'));
             objCell.appendChild(document.createTextNode('Scheduled Duration ('+objWork.schdur+')'));
+         }
+      }
+   }
+
+   ///////////////////////
+   // Tonnage Functions //
+   ///////////////////////
+   function requestTonnReport() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*RTVTON"';
+      strXML = strXML+' PSCCDE="'+fixXML(cstrTypeProd)+'" WEKCDE="'+fixXML(cstrTypeWeek)+'"/>';
+      doPostRequest('<%=strBase%>psa_psc_tonn_report.asp',function(strResponse) {checkTonnReport(strResponse);},false,streamXML(strXML));
+   }
+   function checkTonnReport(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length <= 3) {
+            return;
+         }
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'WEKTON') {
+               alert(objElements[i].getAttribute('TONMSG'));
+            }
          }
       }
    }
@@ -3315,6 +3248,7 @@ sub PaintFunction()%>
                   objActAry[objActAry.length] = new clsTypeActv();
                   objActAry[objActAry.length-1].actcde = objElements[i].getAttribute('ACTCDE');
                   objActAry[objActAry.length-1].acttyp = objElements[i].getAttribute('ACTTYP');
+                  objActAry[objActAry.length-1].schchg = objElements[i].getAttribute('SCHCHG');
                   objActAry[objActAry.length-1].chgflg = objElements[i].getAttribute('CHGFLG');
                   objActAry[objActAry.length-1].wincde = objElements[i].getAttribute('WINCDE');
                   objActAry[objActAry.length-1].winseq = objElements[i].getAttribute('WINSEQ');
@@ -3343,6 +3277,15 @@ sub PaintFunction()%>
                   objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
                   objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
                   objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+               }
+            } else if (objElements[i].nodeName == 'LININV') {
+               if (cstrActvMode == '*RTVSCH') {
+                  objInvAry = objActAry[objActAry.length-1].invary;
+                  objInvAry[objInvAry.length] = new clsTypeInvt();
+                  objInvAry[objInvAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
+                  objInvAry[objInvAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+                  objInvAry[objInvAry.length-1].invqty = objElements[i].getAttribute('INVQTY');
+                  objInvAry[objInvAry.length-1].invavl = objElements[i].getAttribute('INVAVL');
                }
             } else if (objElements[i].nodeName == 'UNSACT') {
                cobjTypeUact[cobjTypeUact.length] = new clsTypeUact();
@@ -4065,23 +4008,25 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeBack();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Reporting&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeSchdReport();">&nbsp;Schedule&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeShftReport();">&nbsp;Shift&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeTonnReport();">&nbsp;Tonnage&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=left colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=16 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=17 cellpadding="0" cellspacing="0">
                <tr>
                   <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Stock&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeStckUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td class="clsTabB" style="font-size:8pt" align=center colspan=1 nowrap><nobr>&nbsp;Line&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineShow();">&nbsp;Select&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineAdd();">&nbsp;Add&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" style="font-size:8pt" onClick="doTypeLineDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
@@ -4326,6 +4271,35 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doProdCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doProdAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspLShow" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=1 cellspacing=1 cellpadding=0>
+      <tr><td align=center colspan=1 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedLShow" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Line Selection</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table id="LSH_LinData" class="clsGrid02" align=center valign=top cols=1 cellpadding=0 cellspacing=1></table>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doLineShowCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doLineShowAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
