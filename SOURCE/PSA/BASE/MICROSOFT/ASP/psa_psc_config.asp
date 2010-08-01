@@ -1536,7 +1536,6 @@ sub PaintFunction()%>
          cobjTypeUact.length = 0;
          var objShfAry;
          var objActAry;
-         var bolFound;
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'PTYDFN') {
                cstrTypePulse = objElements[i].getAttribute('PULVAL');
@@ -1658,6 +1657,7 @@ sub PaintFunction()%>
                document.getElementById('datTypeSchd').style.width = '100%';
                document.getElementById('datTypeUact').style.display = 'none';
             }
+            document.getElementById('typPulse').style.backgroundColor = '#b0e0e6';
             if (cbolTypePulse == false) {
                cbolTypePulse = true;
                cintTypePulse = window.setTimeout('doTypePulseRequest();',30*1000);
@@ -2164,10 +2164,6 @@ sub PaintFunction()%>
       }
    }
    function doTypeWindPaint(intLinIdx) {
-
-      //
-      // definitions
-      //
       var objTypBody = document.getElementById('tabBodySchd');
       var objShfAry = cobjTypeLine[intLinIdx].shfary;
       var objActAry = cobjTypeLine[intLinIdx].actary;
@@ -2176,27 +2172,18 @@ sub PaintFunction()%>
       var objRow;
       var objCell;
       var objDiv;
-      var objImg;
       var objFont;
       var objWork;
       var intStrBar;
       var intEndBar;
       var intChgBar;
       var strStyle;
-
-      //
-      // delete the existing paint activity rows for the line window
-      //
       for (var i=1;i<=768;i++) {
          objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+i);
          for (var j=objTable.rows.length-1;j>=0;j--) {
             objTable.deleteRow(j);
          }
       }
-
-      //
-      // paint the line window start when required
-      //
       for (var i=0;i<objShfAry.length;i++) {
          if (objShfAry[i].wintyp == '1') {
             objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+objShfAry[i].barstr);
@@ -2219,10 +2206,6 @@ sub PaintFunction()%>
             objCell.appendChild(objDiv);
          }
       }
-
-      //
-      // paint the line activities
-      //
       for (var i=0;i<objActAry.length;i++) {
          objWork = objActAry[i];
          objInvAry = objWork.invary;
@@ -2441,12 +2424,7 @@ sub PaintFunction()%>
             }
          }
       }
-
-      //
-      // resize the line column
-      //
       doTypeSchdReSize(intLinIdx);
-
    }
    function doTypeSchdReSize(intLinIdx) {
       var objSchHead = document.getElementById('tabHeadSchd');
