@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package asn_dcs_processor as
+CREATE OR REPLACE package ICS_APP.asn_dcs_processor as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -32,7 +32,7 @@ create or replace package asn_dcs_processor as
           parallel polling threads. With this model it is possible to have any combination
           of single to multiple threads executing any combination of parameters. For example,
           multiple polling threads could all be executing *ALL, multiple polling threads could
-          each be executing individual Mars codes, multiple polling threads could each be 
+          each be executing individual Mars codes, multiple polling threads could each be
           executing multiple combinations of *ALL and Mars codes, or a single polling thread
           could be executing *ALL.
 
@@ -63,7 +63,7 @@ create or replace package asn_dcs_processor as
 
        **notes**
        1. This procedure is invoked from the ICS website for ASN DCS shipment cancel requests.
-    
+
     YYYY/MM   Author         Description
     -------   ------         -----------
     2005/11   Steve Gregan   Created
@@ -82,6 +82,8 @@ create or replace package asn_dcs_processor as
     2008/06   Steve Gregan   Added the material code to the DCS detail table
     2008/10   Steve Gregan   Removed LADS delivery status check from transaction lookup
                              (large order line splits have negated the existing delete logic)
+    2010/07   Ben Halicki    Truncate length of customer purchase order number to 35, instead of 10 
+                             (loaded into ASN_DCS_HDR.DCH_TRN_CUST_PON)                         
 
    *******************************************************************************/
 
@@ -98,7 +100,7 @@ end asn_dcs_processor;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body asn_dcs_processor as
+CREATE OR REPLACE package body ICS_APP.asn_dcs_processor as
 
    /*-*/
    /* Private exceptions
@@ -135,9 +137,9 @@ create or replace package body asn_dcs_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_asn_dcs_hdr_01 is 
+      cursor csr_asn_dcs_hdr_01 is
          select t01.dch_mars_cde,
-                t01.dch_pick_nbr 
+                t01.dch_pick_nbr
            from asn_dcs_hdr t01
           where (t01.dch_mars_cde = var_mars_cde or
                  var_mars_cde = '*ALL')
@@ -149,7 +151,7 @@ create or replace package body asn_dcs_processor as
                 t01.dch_pick_nbr asc;
       rcd_asn_dcs_hdr_01 csr_asn_dcs_hdr_01%rowtype;
 
-      cursor csr_asn_dcs_hdr is 
+      cursor csr_asn_dcs_hdr is
          select *
            from asn_dcs_hdr t01
           where t01.dch_mars_cde = rcd_asn_dcs_hdr_01.dch_mars_cde
@@ -157,7 +159,7 @@ create or replace package body asn_dcs_processor as
                 for update nowait;
       rcd_asn_dcs_hdr csr_asn_dcs_hdr%rowtype;
 
-      cursor csr_asn_dcs_det is 
+      cursor csr_asn_dcs_det is
          select t01.dcd_mars_cde,
                 t01.dcd_pick_nbr,
                 t01.dcd_seqn_nbr,
@@ -454,7 +456,7 @@ create or replace package body asn_dcs_processor as
                            open csr_lads_sal_ord_ref;
                            fetch csr_lads_sal_ord_ref into rcd_lads_sal_ord_ref;
                            if csr_lads_sal_ord_ref%found then
-                              rcd_asn_dcs_hdr.dch_trn_cust_pon := substr(rcd_lads_sal_ord_ref.refnr,1,10);
+                              rcd_asn_dcs_hdr.dch_trn_cust_pon := substr(rcd_lads_sal_ord_ref.refnr,1,35);
                            end if;
                            close csr_lads_sal_ord_ref;
 
@@ -624,7 +626,7 @@ create or replace package body asn_dcs_processor as
                   /*-*/
                   /* Pick type not recognised
                   /*-*/
-                  else 
+                  else
 
                      rcd_asn_dcs_hdr.dch_stat_cde := '*ERROR';
                      rcd_asn_dcs_hdr.dch_emsg_txt := 'Invalid pick type (' || rcd_asn_dcs_hdr.dch_pick_typ || ')';
@@ -862,8 +864,8 @@ create or replace package body asn_dcs_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_asn_dcs_hdr is 
-         select * 
+      cursor csr_asn_dcs_hdr is
+         select *
            from asn_dcs_hdr t01
           where t01.dch_smsg_nbr = var_smsg_nbr
                 for update nowait;
@@ -992,8 +994,8 @@ create or replace package body asn_dcs_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_asn_dcs_hdr is 
-         select * 
+      cursor csr_asn_dcs_hdr is
+         select *
            from asn_dcs_hdr t01
           where t01.dch_mars_cde = par_mars_cde
             and t01.dch_pick_nbr = par_pick_nbr
