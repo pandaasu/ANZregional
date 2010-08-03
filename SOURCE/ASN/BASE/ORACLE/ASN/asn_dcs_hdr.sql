@@ -58,7 +58,7 @@ create table asn_dcs_hdr
     dch_trn_invc_nbr varchar2(10 char) null,
     dch_trn_mars_iid varchar2(15 char) null,
     dch_trn_cust_iid varchar2(15 char) null,
-    dch_trn_cust_pon varchar2(10 char) null,
+    dch_trn_cust_pon varchar2(35 char) null,
     dch_trn_agrd_dte varchar2(14 char) null,
     dch_trn_ordr_dte varchar2(14 char) null,
     dch_trn_invc_dte varchar2(8 char) null,
