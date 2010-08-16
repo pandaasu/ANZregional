@@ -7,12 +7,12 @@ create or replace package psa_app.psa_sys_function as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : psa_smo_function
+    Package : psa_sys_function
     Owner   : psa_app
 
     Description
     -----------
-    Production Scheduling Application - Shift Model Function
+    Production Scheduling Application - System Function
 
     This package contain the system functions and procedures.
 
