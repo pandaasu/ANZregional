@@ -253,32 +253,32 @@ create or replace package body iface_app.efxcdw07_extract as
                                           nvl(rcd_extract.distributor_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.distributor_flg,' ')),' ') ||
                                           nvl(rcd_extract.outlet_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.outlet_flg,' ')),' ') ||
                                           nvl(rcd_extract.active_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.active_flg,' ')),' ') ||
-                                          nvl(rcd_extract.sales_territory_id,'0')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,'0')),' ') ||
-                                          nvl(rcd_extract.range_id,'0')||rpad(' ',10-length(nvl(rcd_extract.range_id,'0')),' ') ||
-                                          nvl(rcd_extract.cust_visit_freq_id,'0')||rpad(' ',10-length(nvl(rcd_extract.cust_visit_freq_id,'0')),' ') ||
-                                          nvl(rcd_extract.reporting_measure,'0')||rpad(' ',15-length(nvl(rcd_extract.reporting_measure,'0')),' ') ||
-                                          nvl(rcd_extract.cust_type_id,'0')||rpad(' ',10-length(nvl(rcd_extract.cust_type_id,'0')),' ') ||
-                                          nvl(rcd_extract.affiliation_id,'0')||rpad(' ',10-length(nvl(rcd_extract.affiliation_id,'0')),' ') ||
-                                          nvl(rcd_extract.distributor_id,'0')||rpad(' ',10-length(nvl(rcd_extract.distributor_id,'0')),' ') ||
-                                          nvl(rcd_extract.cust_grade_id,'0')||rpad(' ',10-length(nvl(rcd_extract.cust_grade_id,'0')),' ') ||
+                                          nvl(rcd_extract.sales_territory_id,' ')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,' ')),' ') ||
+                                          nvl(rcd_extract.range_id,' ')||rpad(' ',10-length(nvl(rcd_extract.range_id,' ')),' ') ||
+                                          nvl(rcd_extract.cust_visit_freq_id,' ')||rpad(' ',10-length(nvl(rcd_extract.cust_visit_freq_id,' ')),' ') ||
+                                          nvl(rcd_extract.reporting_measure,' ')||rpad(' ',15-length(nvl(rcd_extract.reporting_measure,' ')),' ') ||
+                                          nvl(rcd_extract.cust_type_id,' ')||rpad(' ',10-length(nvl(rcd_extract.cust_type_id,' ')),' ') ||
+                                          nvl(rcd_extract.affiliation_id,' ')||rpad(' ',10-length(nvl(rcd_extract.affiliation_id,' ')),' ') ||
+                                          nvl(rcd_extract.distributor_id,' ')||rpad(' ',10-length(nvl(rcd_extract.distributor_id,' ')),' ') ||
+                                          nvl(rcd_extract.cust_grade_id,' ')||rpad(' ',10-length(nvl(rcd_extract.cust_grade_id,' ')),' ') ||
                                           nvl(rcd_extract.cust_grade_name,' ')||rpad(' ',50-length(nvl(rcd_extract.cust_grade_name,' ')),' ') ||
                                           nvl(rcd_extract.payee_name,' ')||rpad(' ',50-length(nvl(rcd_extract.payee_name,' ')),' ') ||
                                           nvl(rcd_extract.merch_name,' ')||rpad(' ',50-length(nvl(rcd_extract.merch_name,' ')),' ') ||
                                           nvl(rcd_extract.merch_code,' ')||rpad(' ',50-length(nvl(rcd_extract.merch_code,' ')),' ') ||
                                           nvl(rcd_extract.vendor_code,' ')||rpad(' ',50-length(nvl(rcd_extract.vendor_code,' ')),' ') ||
                                           nvl(rcd_extract.vat_reg_num,' ')||rpad(' ',50-length(nvl(rcd_extract.vat_reg_num,' ')),' ') ||
-                                          nvl(rcd_extract.meals_day,'0')||rpad(' ',15-length(nvl(rcd_extract.meals_day,'0')),' ') ||
-                                          nvl(rcd_extract.lead_time,'0')||rpad(' ',15-length(nvl(rcd_extract.lead_time,'0')),' ') ||
-                                          nvl(rcd_extract.discount_pct,'0')||rpad(' ',15-length(nvl(rcd_extract.discount_pct,'0')),' ') ||
+                                          nvl(rcd_extract.meals_day,' ')||rpad(' ',15-length(nvl(rcd_extract.meals_day,' ')),' ') ||
+                                          nvl(rcd_extract.lead_time,' ')||rpad(' ',15-length(nvl(rcd_extract.lead_time,' ')),' ') ||
+                                          nvl(rcd_extract.discount_pct,' ')||rpad(' ',15-length(nvl(rcd_extract.discount_pct,' ')),' ') ||
                                           nvl(rcd_extract.corporate_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.corporate_flg,' ')),' ') ||
-                                          nvl(rcd_extract.call_week1_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day,'0')),' ') ||
-                                          nvl(rcd_extract.call_week2_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day,'0')),' ') ||
-                                          nvl(rcd_extract.call_week3_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day,'0')),' ') ||
-                                          nvl(rcd_extract.call_week4_day,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day,'0')),' ') ||
-                                          nvl(rcd_extract.call_week1_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day_seq,'0')),' ') ||
-                                          nvl(rcd_extract.call_week2_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day_seq,'0')),' ') ||
-                                          nvl(rcd_extract.call_week3_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day_seq,'0')),' ') ||
-                                          nvl(rcd_extract.call_week4_day_seq,'0')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day_seq,'0')),' ') ||
+                                          nvl(rcd_extract.call_week1_day,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day,' ')),' ') ||
+                                          nvl(rcd_extract.call_week2_day,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day,' ')),' ') ||
+                                          nvl(rcd_extract.call_week3_day,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day,' ')),' ') ||
+                                          nvl(rcd_extract.call_week4_day,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day,' ')),' ') ||
+                                          nvl(rcd_extract.call_week1_day_seq,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week1_day_seq,' ')),' ') ||
+                                          nvl(rcd_extract.call_week2_day_seq,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week2_day_seq,' ')),' ') ||
+                                          nvl(rcd_extract.call_week3_day_seq,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week3_day_seq,' ')),' ') ||
+                                          nvl(rcd_extract.call_week4_day_seq,' ')||rpad(' ',15-length(nvl(rcd_extract.call_week4_day_seq,' ')),' ') ||
                                           nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
 
       end loop;
