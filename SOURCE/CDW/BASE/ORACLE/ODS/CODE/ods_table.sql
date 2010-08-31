@@ -61,4 +61,3 @@ end ods_table;
 /**************************/
 create public synonym ods_table for ods.ods_table;
 grant execute on ods_table to ods_app;
-grant execute on ods_table to dds_app;
