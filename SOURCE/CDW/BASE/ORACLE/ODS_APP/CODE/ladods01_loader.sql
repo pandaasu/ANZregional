@@ -42,6 +42,12 @@ create or replace package body ods_app.ladods01_loader as
    pragma exception_init(application_exception, -20000);
 
    /*-*/
+   /* Private declarations
+   /*-*/
+   procedure process_record_ctl(par_record in varchar2);
+   procedure process_record_det(par_record in varchar2);
+
+   /*-*/
    /* Private definitions
    /*-*/
    var_trn_ignore boolean;
@@ -112,7 +118,7 @@ create or replace package body ods_app.ladods01_loader as
       /*-*/
       /* Truncate the load table
       /*-*/
-      ods_table.truncate(sap_bom_load);
+      ods_table.truncate('sap_bom_load');
 
    /*-------------*/
    /* End routine */
@@ -268,7 +274,7 @@ create or replace package body ods_app.ladods01_loader as
       /*-*/
       /* Insert the table row
       /*-*/
-      insert into sap_bom_load using rcd_sap_bom_load;
+      insert into sap_bom_load values rcd_sap_bom_load;
 
    /*-------------------*/
    /* Exception handler */
@@ -309,9 +315,9 @@ create or replace package body ods_app.ladods01_loader as
          var_trn_error = true then
          rollback;
       else
-         ods_table.truncate(sap_bom_data);
-         insert into sale_bom_data (select * from sap_bom_load);
-         ods_table.truncate(sap_bom_load);
+         ods_table.truncate('sap_bom_data');
+         insert into sap_bom_data (select * from sap_bom_load);
+         ods_table.truncate('sap_bom_load');
          commit;
       end if;
 
@@ -327,4 +333,4 @@ end ladods01_loader;
 /* Package Synonym/Grants */
 /**************************/
 create or replace public synonym ladods01_loader for ods_app.ladods01_loader;
-grant execute on ods_app.ladods01_loader to ods_app;
+grant execute on ods_app.ladods01_loader to public;
