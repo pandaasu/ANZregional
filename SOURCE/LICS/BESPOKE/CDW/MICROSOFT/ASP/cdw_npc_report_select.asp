@@ -74,7 +74,7 @@ sub ProcessRequest()
    call objProcedure.Execute("lics_form.clear_form")
    lngCount = clng(objForm.Fields("StreamCount").Value)
    for i = 1 to lngCount
-      call objProcedure.Execute("lics_form.set_value('CDW_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
+      call objProcedure.Execute("lics_form.set_value('ODS_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
    next
 
    '//
@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the select definition
    '//
-   strStatement = "select xml_text from table(ods_app.npc_report.select_data)"
+   strStatement = "select xml_text from table(ods_app.ods_npc_report.select_data)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
@@ -95,7 +95,7 @@ sub ProcessRequest()
    '//
    '// Retrieve any messages
    '//
-   strStatement = "select xml_text from table(psa_app.psa_gen_function.get_mesg_data)"
+   strStatement = "select xml_text from table(ods_app.ods_gen_function.get_mesg_data)"
    strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

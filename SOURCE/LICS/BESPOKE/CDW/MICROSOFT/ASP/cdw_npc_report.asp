@@ -131,7 +131,7 @@ sub PaintFunction()%>
       cobjScreens[0].bodsrl = 'no';
       cobjScreens[1].bodsrl = 'auto';
       displayScreen('dspLoad');
-      doWeekRefresh();
+      doSlctLoad();
    }
 
    ///////////////////////
@@ -170,7 +170,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestSlctLoad();',10);
    }
-   function requestSlcttLoad() {
+   function requestSlctLoad() {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><ODS_REQUEST ACTION="*SLTRPT"/>';
       doPostRequest('<%=strBase%>cdw_npc_report_select.asp',function(strResponse) {checkSlctLoad(strResponse);},false,streamXML(strXML));
    }
@@ -267,7 +267,7 @@ sub PaintFunction()%>
       if (confirm('Please confirm the NPC report\r\npress OK continue (the NPC report will be generated)\r\npress Cancel to cancel and return') == false) {
          return;
       }
-      doReportOutput(eval('document.body'),'NPC Report','*SPREADSHEET','select * from table(ods_app.npc_report.report_data(\''+objComCode.options[objComCode.selectedIndex].value+'\',\''+objBusSgmt.options[objBusSgmt.selectedIndex].value+'\','+objStrMnth.options[objStrMnth.selectedIndex].value+','+objEndMnth.options[objEndMnth.selectedIndex].value+'))');
+      doReportOutput(eval('document.body'),'NPC Report','*SPREADSHEET','select * from table(ods_app.ods_npc_report.report_data(\''+objComCode.options[objComCode.selectedIndex].value+'\',\''+objBusSgmt.options[objBusSgmt.selectedIndex].value+'\','+objStrMnth.options[objStrMnth.selectedIndex].value+','+objEndMnth.options[objEndMnth.selectedIndex].value+'))');
    }
 
 // -->
@@ -281,7 +281,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body id="dspBody" class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('cdw_npc_enquiry_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body id="dspBody" class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('cdw_npc_report_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
