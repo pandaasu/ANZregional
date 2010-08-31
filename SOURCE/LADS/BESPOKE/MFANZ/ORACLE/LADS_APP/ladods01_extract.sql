@@ -72,7 +72,7 @@ create or replace package body lads_app.ladods01_extract as
                 to_char(t01.bom_base_qty) as bom_base_qty,
                 t01.bom_base_uom,
                 t01.bom_status,
-                t01.item_sequence,
+                to_char(t01.item_sequence) as item_sequence,
                 t01.item_number,
                 t01.item_material_code,
                 t01.item_category,
@@ -142,7 +142,7 @@ create or replace package body lads_app.ladods01_extract as
                                           nvl(rcd_extract.bom_base_qty,'0')||rpad(' ',15-length(nvl(rcd_extract.bom_base_qty,'0')),' ') ||
                                           nvl(rcd_extract.bom_base_uom,' ')||rpad(' ',3-length(nvl(rcd_extract.bom_base_uom,' ')),' ') ||
                                           nvl(rcd_extract.bom_status,' ')||rpad(' ',2-length(nvl(rcd_extract.bom_status,' ')),' ') ||
-                                          nvl(rcd_extract.item_sequence,' ')||rpad(' ',15-length(nvl(rcd_extract.item_sequence,' ')),' ') ||
+                                          nvl(rcd_extract.item_sequence,'0')||rpad(' ',15-length(nvl(rcd_extract.item_sequence,'0')),' ') ||
                                           nvl(rcd_extract.item_number,' ')||rpad(' ',4-length(nvl(rcd_extract.item_number,' ')),' ') ||
                                           nvl(rcd_extract.item_material_code,' ')||rpad(' ',18-length(nvl(rcd_extract.item_material_code,' ')),' ') ||
                                           nvl(rcd_extract.item_category,' ')||rpad(' ',1-length(nvl(rcd_extract.item_category,' ')),' ') ||
