@@ -60,7 +60,7 @@ create or replace package body ods_app.ods_npc_report as
       /*-*/
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
-      obj_psa_request xmlDom.domNode;
+      obj_ods_request xmlDom.domNode;
       var_action varchar2(32);
       var_found boolean;
       var_fil_code varchar2(32);
@@ -109,7 +109,7 @@ create or replace package body ods_app.ods_npc_report as
       /*-*/
       /* Clear the message data
       /*-*/
-      psa_gen_function.clear_mesg_data;
+      ods_gen_function.clear_mesg_data;
 
       /*-*/
       /* Parse the XML input
@@ -118,13 +118,13 @@ create or replace package body ods_app.ods_npc_report as
       xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('ODS_STREAM'));
       obj_xml_document := xmlParser.getDocument(obj_xml_parser);
       xmlParser.freeParser(obj_xml_parser);
-      obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/ODS_REQUEST');
-      var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
+      obj_ods_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/ODS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_ods_request,'@ACTION'));
       xmlDom.freeDocument(obj_xml_document);
       if var_action != '*SLTRPT' then
-         psa_gen_function.add_mesg_data('Invalid request action');
+         ods_gen_function.add_mesg_data('Invalid request action');
       end if;
-      if psa_gen_function.get_mesg_count != 0 then
+      if ods_gen_function.get_mesg_count != 0 then
          return;
       end if;
 
@@ -175,7 +175,7 @@ create or replace package body ods_app.ods_npc_report as
       /*-*/
       /* Pipe the XML end
       /*-*/
-      pipe row(psa_xml_object('</ODS_RESPONSE>'));
+      pipe row(ods_xml_object('</ODS_RESPONSE>'));
 
       /*-*/
       /* Return
@@ -805,7 +805,7 @@ create or replace package body ods_app.ods_npc_report as
             end if;
             tbl_factor(rcd_data.bom_hierarchy_level) := rcd_data.item_base_qty / nvl(rcd_data.bom_base_qty,0);
             if rcd_data.item_base_uom != 'EA' then
-               var_material_uom := dw_expand_code(rcd_data.item_material_code);
+               var_material_uom := ods_expand_code(rcd_data.item_material_code);
                var_base_uom := rcd_data.item_base_uom;
                open csr_uom;
                fetch csr_uom into rcd_uom;
