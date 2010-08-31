@@ -459,10 +459,10 @@ create or replace package body ods_app.ods_npc_report as
 
 
       pipe row('<table>');
-      pipe row('<tr><td align=center colspan='||to_char(tbl_head.count)||' style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;">NPC Report - '||to_char(par_str_yyyymm)||' to '||to_char(par_end_yyyymm)||'</td></tr>');
+      pipe row('<tr><td align=center colspan='||to_char(tbl_head.count)||' style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;">NPC Report - '||to_char(par_str_yyyymm)||' to '||to_char(par_end_yyyymm)||'</td></tr>');
       pipe row('<tr>');
       for idx in 1..tbl_head.count loop
-         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-rotate:-90;">'||tbl_head(idx).head_desc||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-rotate:-90;">'||tbl_head(idx).head_desc||'</td>');
       end loop;
       pipe row('</tr>');
 
@@ -545,7 +545,7 @@ create or replace package body ods_app.ods_npc_report as
          pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
       end loop;
       for idx in 31..tbl_head.count loop
-         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-number-format:\@;">'||to_char(tbl_head(idx).head_totl)||')</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-number-format:\@;">'||to_char(tbl_head(idx).head_totl)||'</td>');
       end loop;
       pipe row('</tr>');
 
