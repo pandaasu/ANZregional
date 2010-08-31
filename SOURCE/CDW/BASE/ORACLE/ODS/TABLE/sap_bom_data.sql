@@ -40,12 +40,6 @@ create table ods.sap_bom_data
     item_eff_to_date                   date                  null);
    
 /**/
-/* Primary Key Constraint
-/**/
-alter table ods.sap_bom_data
-   add constraint sap_bom_data_pk primary key (bom_material_code, bom_alternative, bom_plant, item_sequence);
-
-/**/
 /* Comments
 /**/
 comment on table ods.sap_bom_data is 'Operational Data Store - Bill Of Material Data';
