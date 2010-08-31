@@ -59,5 +59,5 @@ end ods_table;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create public synonym ods_table for ods.ods_table;
+create or replace public synonym ods_table for ods.ods_table;
 grant execute on ods_table to ods_app;
