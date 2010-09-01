@@ -63,6 +63,11 @@ comment on column ods.sap_bom_data.item_eff_from_date is 'Component Valid From D
 comment on column ods.sap_bom_data.item_eff_to_date is 'Component Valid To Date';
 
 /**/
+/* Indexes
+/**/
+create index ods.sap_bom_data_ix01 on ods.sap_bom_data (bom_material_code, bom_alternative, bom_plant, item_sequence);
+
+/**/
 /* Synonym
 /**/
 create or replace public synonym sap_bom_data for ods.sap_bom_data;
