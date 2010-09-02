@@ -5106,12 +5106,13 @@ create or replace package body psa_app.psa_psc_function as
             rollback;
             return;
          end if;
+         var_mat_code := rcd_actv.psa_mat_code;
       end if;
 
       /*-*/
       /* Retrieve the production line data when required
       /*-*/
-      if var_action = '*CRTACT' then
+      if var_action = '*CRTACT' or (var_action = '*UPDACT' and var_src_code = '*SCH') then
          var_found := false;
          open csr_mdef;
          fetch csr_mdef into rcd_mdef;
@@ -5185,6 +5186,38 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       if var_action = '*UPDACT' then
          if var_src_code = '*SCH' then
+            rcd_actv.psa_mat_name := rcd_mdef.mde_mat_name;
+            rcd_actv.psa_mat_type := rcd_mdef.mde_mat_type;
+            rcd_actv.psa_mat_usage := rcd_mdef.mde_mat_usage;
+            rcd_actv.psa_mat_uom := rcd_mdef.mde_mat_uom;
+            rcd_actv.psa_mat_gro_weight := rcd_mdef.mde_gro_weight;
+            rcd_actv.psa_mat_net_weight := rcd_mdef.mde_net_weight;
+            rcd_actv.psa_mat_unt_case := rcd_mdef.mde_psa_ucas;
+            rcd_actv.psa_mat_sch_priority := rcd_mdef.mpr_sch_priority;
+            rcd_actv.psa_mat_cas_pallet := rcd_mdef.mpr_cas_pallet;
+            rcd_actv.psa_mat_bch_quantity := rcd_mdef.mpr_bch_quantity;
+            rcd_actv.psa_mat_yld_percent := rcd_mdef.mpr_yld_percent;
+            rcd_actv.psa_mat_yld_value := rcd_mdef.mpr_yld_value;
+            rcd_actv.psa_mat_pck_percent := rcd_mdef.mpr_pck_percent;
+            rcd_actv.psa_mat_pck_weight := rcd_mdef.mpr_pck_weight;
+            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_bch_weight;
+            rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
+            rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
+            rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_actv.psa_sch_rra_code := rcd_mlin.mli_rra_code;
+            rcd_actv.psa_sch_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_sch_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_sch_rra_wasp := rcd_mlin.mli_rra_wastage;
+            rcd_actv.psa_act_lin_code := rcd_mlin.mli_lin_code;
+            rcd_actv.psa_act_con_code := rcd_mlin.mli_con_code;
+            rcd_actv.psa_act_dft_flag := rcd_mlin.mli_dft_flag;
+            rcd_actv.psa_act_rra_code := rcd_mlin.mli_rra_code;
+            rcd_actv.psa_act_rra_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_rra_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_rra_wasp := rcd_mlin.mli_rra_wastage;
+            rcd_actv.psa_act_cal_unit := rcd_mlin.rrd_rra_units;
+            rcd_actv.psa_act_cal_effp := rcd_mlin.mli_rra_efficiency;
+            rcd_actv.psa_act_cal_wasp := rcd_mlin.mli_rra_wastage;
             rcd_actv.psa_mat_req_qty := var_req_qnty;
             rcd_actv.psa_sch_chg_flag := '0';
             rcd_actv.psa_sch_chg_mins := 0;
@@ -5199,6 +5232,38 @@ create or replace package body psa_app.psa_psc_function as
             update psa_psc_actv
                set psa_upd_user = var_upd_user,
                    psa_upd_date = var_upd_date,
+                   psa_mat_name = rcd_actv.psa_mat_name,
+                   psa_mat_type = rcd_actv.psa_mat_type,
+                   psa_mat_usage = rcd_actv.psa_mat_usage,
+                   psa_mat_uom = rcd_actv.psa_mat_uom,
+                   psa_mat_gro_weight = rcd_actv.psa_mat_gro_weight,
+                   psa_mat_net_weight = rcd_actv.psa_mat_net_weight,
+                   psa_mat_unt_case = rcd_actv.psa_mat_unt_case,
+                   psa_mat_sch_priority = rcd_actv.psa_mat_sch_priority,
+                   psa_mat_cas_pallet = rcd_actv.psa_mat_cas_pallet,
+                   psa_mat_bch_quantity = rcd_actv.psa_mat_bch_quantity,
+                   psa_mat_yld_percent = rcd_actv.psa_mat_yld_percent,
+                   psa_mat_yld_value = rcd_actv.psa_mat_yld_value,
+                   psa_mat_pck_percent = rcd_actv.psa_mat_pck_percent,
+                   psa_mat_pck_weight = rcd_actv.psa_mat_pck_weight,
+                   psa_mat_bch_weight = rcd_actv.psa_mat_bch_weight,
+                   psa_sch_lin_code = rcd_actv.psa_sch_lin_code,
+                   psa_sch_con_code = rcd_actv.psa_sch_con_code,
+                   psa_sch_dft_flag = rcd_actv.psa_sch_dft_flag,
+                   psa_sch_rra_code = rcd_actv.psa_sch_rra_code,
+                   psa_sch_rra_unit = rcd_actv.psa_sch_rra_unit,
+                   psa_sch_rra_effp = rcd_actv.psa_sch_rra_effp,
+                   psa_sch_rra_wasp = rcd_actv.psa_sch_rra_wasp,
+                   psa_act_lin_code = rcd_actv.psa_act_lin_code,
+                   psa_act_con_code = rcd_actv.psa_act_con_code,
+                   psa_act_dft_flag = rcd_actv.psa_act_dft_flag,
+                   psa_act_rra_code = rcd_actv.psa_act_rra_code,
+                   psa_act_rra_unit = rcd_actv.psa_act_rra_unit,
+                   psa_act_rra_effp = rcd_actv.psa_act_rra_effp,
+                   psa_act_rra_wasp = rcd_actv.psa_act_rra_wasp,
+                   psa_act_cal_unit = rcd_actv.psa_act_cal_unit,
+                   psa_act_cal_effp = rcd_actv.psa_act_cal_effp,
+                   psa_act_cal_wasp = rcd_actv.psa_act_cal_wasp,
                    psa_sch_chg_flag = rcd_actv.psa_sch_chg_flag,
                    psa_sch_chg_mins = rcd_actv.psa_sch_chg_mins,
                    psa_sch_ent_flag = '1',
@@ -6215,6 +6280,32 @@ create or replace package body psa_app.psa_psc_function as
            from psa_psc_actv t01
           where t01.psa_act_code = var_act_code;
 
+      cursor csr_mdef is
+         select t01.mde_mat_code,
+                t01.mde_mat_name,
+                t01.mde_mat_type,
+                t01.mde_mat_usage,
+                t01.mde_mat_uom,
+                t01.mde_gro_weight,
+                t01.mde_net_weight,
+                t01.mde_psa_ucas,
+                t01.mde_mat_status,
+                t02.mpr_prd_type,
+                t02.mpr_sch_priority,
+                t02.mpr_cas_pallet,
+                t02.mpr_bch_quantity,
+                t02.mpr_yld_percent,
+                t02.mpr_yld_value,
+                t02.mpr_pck_percent,
+                t02.mpr_pck_weight,
+                t02.mpr_bch_weight
+           from psa_mat_defn t01,
+                psa_mat_prod t02
+          where t01.mde_mat_code = t02.mpr_mat_code(+)
+            and var_pty_code = t02.mpr_prd_type(+)
+            and t01.mde_mat_code = rcd_actv.psa_mat_code;
+      rcd_mdef csr_mdef%rowtype;
+
       cursor csr_mlin is
          select t01.mli_lin_code,
                 t01.mli_con_code,
@@ -6336,14 +6427,33 @@ create or replace package body psa_app.psa_psc_function as
       /*-*/
       if rcd_actv.psa_act_type = 'P' then
          var_found := false;
-         open csr_mlin;
-         fetch csr_mlin into rcd_mlin;
-         if csr_mlin%found then
+         open csr_mdef;
+         fetch csr_mdef into rcd_mdef;
+         if csr_mdef%found then
             var_found := true;
          end if;
-         close csr_mlin;
+         close csr_mdef;
          if var_found = false then
-            psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have configuration for selected line configuration');
+            psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have production type configuration');
+         else
+            if rcd_mdef.mde_mat_status != '*ACTIVE' and rcd_mdef.mde_mat_status != '*CHG' and rcd_mdef.mde_mat_status != '*DEL' then
+               psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') must be status *ACTIVE, *CHG or *DEL');
+            end if;
+            if rcd_mdef.mpr_prd_type is null then
+               psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') is not configured for this production type');
+            end if;
+         end if;
+         if psa_gen_function.get_mesg_count = 0 then
+            var_found := false;
+            open csr_mlin;
+            fetch csr_mlin into rcd_mlin;
+            if csr_mlin%found then
+               var_found := true;
+            end if;
+            close csr_mlin;
+            if var_found = false then
+               psa_gen_function.add_mesg_data('Production schedule activity material ('||rcd_actv.psa_mat_code||') does not have configuration for selected line configuration');
+            end if;
          end if;
          if psa_gen_function.get_mesg_count != 0 then
             rollback;
@@ -6388,6 +6498,21 @@ create or replace package body psa_app.psa_psc_function as
          end if;
       else
          if var_src_code = '*SCH' or rcd_actv.psa_act_ent_flag = '0' then
+            rcd_actv.psa_mat_name := rcd_mdef.mde_mat_name;
+            rcd_actv.psa_mat_type := rcd_mdef.mde_mat_type;
+            rcd_actv.psa_mat_usage := rcd_mdef.mde_mat_usage;
+            rcd_actv.psa_mat_uom := rcd_mdef.mde_mat_uom;
+            rcd_actv.psa_mat_gro_weight := rcd_mdef.mde_gro_weight;
+            rcd_actv.psa_mat_net_weight := rcd_mdef.mde_net_weight;
+            rcd_actv.psa_mat_unt_case := rcd_mdef.mde_psa_ucas;
+            rcd_actv.psa_mat_sch_priority := rcd_mdef.mpr_sch_priority;
+            rcd_actv.psa_mat_cas_pallet := rcd_mdef.mpr_cas_pallet;
+            rcd_actv.psa_mat_bch_quantity := rcd_mdef.mpr_bch_quantity;
+            rcd_actv.psa_mat_yld_percent := rcd_mdef.mpr_yld_percent;
+            rcd_actv.psa_mat_yld_value := rcd_mdef.mpr_yld_value;
+            rcd_actv.psa_mat_pck_percent := rcd_mdef.mpr_pck_percent;
+            rcd_actv.psa_mat_pck_weight := rcd_mdef.mpr_pck_weight;
+            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_bch_weight;
             rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
             rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
             rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
@@ -6408,6 +6533,21 @@ create or replace package body psa_app.psa_psc_function as
             update psa_psc_actv
                set psa_upd_user = var_upd_user,
                    psa_upd_date = var_upd_date,
+                   psa_mat_name = rcd_actv.psa_mat_name,
+                   psa_mat_type = rcd_actv.psa_mat_type,
+                   psa_mat_usage = rcd_actv.psa_mat_usage,
+                   psa_mat_uom = rcd_actv.psa_mat_uom,
+                   psa_mat_gro_weight = rcd_actv.psa_mat_gro_weight,
+                   psa_mat_net_weight = rcd_actv.psa_mat_net_weight,
+                   psa_mat_unt_case = rcd_actv.psa_mat_unt_case,
+                   psa_mat_sch_priority = rcd_actv.psa_mat_sch_priority,
+                   psa_mat_cas_pallet = rcd_actv.psa_mat_cas_pallet,
+                   psa_mat_bch_quantity = rcd_actv.psa_mat_bch_quantity,
+                   psa_mat_yld_percent = rcd_actv.psa_mat_yld_percent,
+                   psa_mat_yld_value = rcd_actv.psa_mat_yld_value,
+                   psa_mat_pck_percent = rcd_actv.psa_mat_pck_percent,
+                   psa_mat_pck_weight = rcd_actv.psa_mat_pck_weight,
+                   psa_mat_bch_weight = rcd_actv.psa_mat_bch_weight,
                    psa_sch_lin_code = rcd_actv.psa_sch_lin_code,
                    psa_sch_con_code = rcd_actv.psa_sch_con_code,
                    psa_sch_dft_flag = rcd_actv.psa_sch_dft_flag,
