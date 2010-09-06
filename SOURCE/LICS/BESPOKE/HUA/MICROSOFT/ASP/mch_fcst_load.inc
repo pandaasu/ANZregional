@@ -257,7 +257,7 @@
          var strFileText = '';
          var strRangeText = '';
          if (thisDataFormat == '*DGRP_ACROSS_PERIOD') {
-            thisFileText = 'The data file must be a tab delimited file - Demand Group, Material Code, Plant Code, ';
+            thisFileText = 'The data file must be a tab delimited file - Demand Group/Cluster, Material Code, Plant Code, ';
             strRangeText = '(number of periods)';
          }
          if (thisDataFormat == '*DGRP_DOWN_DAY') {
