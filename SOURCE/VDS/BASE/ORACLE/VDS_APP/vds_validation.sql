@@ -1,3 +1,8 @@
+/******************/
+/* Package Header */
+/******************/
+create or replace package vds_validation as
+
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -20,13 +25,9 @@
  2007/01   Steve Gregan   Changed rule execution logic to array processing
  2010/03   Steve Gregan   Fix the email purging
  2010/06   Steve Gregan   Added rule execution exception traps
+ 2010/09   Steve Gregan   Added sender email setting
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package vds_validation as
 
    /*-*/
    /* Public declarations
@@ -1223,6 +1224,7 @@ create or replace package body vds_validation as
       /*-*/
       /* Local definitions
       /*-*/
+      var_sender varchar2(256);
       var_class vds_val_cla.vac_class%type;
       var_prt_count number;
       var_row_count number;
@@ -1257,6 +1259,14 @@ create or replace package body vds_validation as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Retrieve email sender address
+      /*-*/
+      var_sender := lics_setting_configuration.retrieve_setting('VDS_CONTROL', 'SENDER_EMAIL');
+      if var_sender is null then
+         var_sender := vds_parameter.system_code || '_' || vds_parameter.system_unit || '_' || vds_parameter.system_environment;
+      end if;
 
       /*-*/
       /* Retrieve active email groups
@@ -1296,7 +1306,7 @@ create or replace package body vds_validation as
                   /*-*/
                   /* Create the new email and create the email text header part
                   /*-*/
-                  lics_mailer.create_email(vds_parameter.system_code || '_' || vds_parameter.system_unit || '_' || vds_parameter.system_environment,
+                  lics_mailer.create_email(var_sender,
                                            rcd_email.vae_address,
                                            'VDS Validation ('||rcd_email.vae_description||')',
                                            null,
