@@ -60,6 +60,23 @@ public final class cSapLad06 implements iSapInterface {
       //
       // Retrieve any interface specific parameters
       //
+      String strEKKORetrieveBatch = (String)objParameters.get("EKKORETRIEVEBATCH");
+      int intEKKORetrieveBatch = 0;
+      try {
+         intEKKORetrieveBatch = Integer.parseInt(strEKKORetrieveBatch);
+      } catch(Throwable objThrowable) {
+         intEKKORetrieveBatch = 1000;
+      }
+      String strEKKOProcessBatch = (String)objParameters.get("EKKOPROCESSBATCH");
+      int intEKKOProcessBatch = 0;
+      try {
+         intEKKOProcessBatch = Integer.parseInt(strEKKOProcessBatch);
+      } catch(Throwable objThrowable) {
+         intEKKOProcessBatch = 1000;
+      }
+      if (intEKKORetrieveBatch < intEKKOProcessBatch) {
+         intEKKOProcessBatch = intEKKORetrieveBatch;
+      }
       String strEKKOFilters = (String)objParameters.get("EKKOFILTERS");
       if (strEKKOFilters == null) {
          strEKKOFilters = "KDATE >= '" + strSapDate + "'";
@@ -96,7 +113,7 @@ public final class cSapLad06 implements iSapInterface {
       try {
          boolean bolData = false;
          int intRowSkips = 0;
-         int intRowCount = 10000;
+         int intRowCount = intEKKORetrieveBatch;
          boolean bolRead = true;
          while (bolRead) {
             objEKKOQuery = new cSapSingleQuery(cobjSapConnection);
@@ -111,7 +128,7 @@ public final class cSapLad06 implements iSapInterface {
             if (strLogging.equals("1")) {
                System.out.println("EKKO rows (" + objEKKOResultSet.getRowCount() + ") retrieved and output: " + Calendar.getInstance().getTime());
             }
-            appendEKKOConditions(objEKKOResultSet,objEBELN,intGroup);
+            appendEKKOConditions(objEKKOResultSet,objEBELN,intEKKOProcessBatch);
             if (strLogging.equals("1")) {
                System.out.println("EKKO rows (" + objEKKOResultSet.getRowCount() + ") appended to filters: " + Calendar.getInstance().getTime());
             }
