@@ -111,7 +111,6 @@ begin
    tbl_head(tbl_head.count+1).head_code := 'F';
    tbl_head(tbl_head.count).head_desc := 'BOM plant code';
    tbl_head(tbl_head.count).head_totl := 0;
-
    tbl_head(tbl_head.count+1).head_code := 'G';
    tbl_head(tbl_head.count).head_desc := 'Fert material code';
    tbl_head(tbl_head.count).head_totl := 0;
@@ -127,7 +126,6 @@ begin
    tbl_head(tbl_head.count+1).head_code := 'K';
    tbl_head(tbl_head.count).head_desc := 'Fert UOM';
    tbl_head(tbl_head.count).head_totl := 0;
-
    tbl_head(tbl_head.count+1).head_code := 'L';
    tbl_head(tbl_head.count).head_desc := 'Item material code';
    tbl_head(tbl_head.count).head_totl := 0;
@@ -167,7 +165,6 @@ begin
    tbl_head(tbl_head.count+1).head_code := 'X';
    tbl_head(tbl_head.count).head_desc := 'Item disposal class desc';
    tbl_head(tbl_head.count).head_totl := 0;
-
    tbl_head(tbl_head.count+1).head_code := 'Y';
    tbl_head(tbl_head.count).head_desc := 'Pack weight/1000 cs';
    tbl_head(tbl_head.count).head_totl := 0;
@@ -199,16 +196,56 @@ begin
    end loop;
    close csr_heading;
 
-   pipe row('"'||replace('NPC Report - '||to_char(par_str_yyyymm)||' to '||to_char(par_end_yyyymm),'"','""')||'"');
+      /*-*/
+      /* Start the report
+      /*-*/
+      pipe row('<html');
+      pipe row('<head>');
+      pipe row('<style>br {mos-data_placement:same-cell;}</style>');
+      pipe row('<!--[if gte mso 9]><xml>');
+      pipe row(' <x:ExcelWorkbook>');
+      pipe row('  <x:ExcelWorksheets>');
+      pipe row('   <x:ExcelWorksheet>');
+      pipe row('    <x:Name>NPC_Report</x:Name>');
+      pipe row('    <x:WorksheetOptions>');
+      pipe row('     <x:Selected/>');
+      pipe row('     <x:DoNotDisplayGridlines/>');
+      pipe row('     <x:FreezePanes/>');
+      pipe row('     <x:FrozenNoSplit/>');
+      pipe row('     <x:SplitHorizontal>2</x:SplitHorizontal>');
+      pipe row('     <x:TopRowBottomPane>2</x:TopRowBottomPane>');
+      pipe row('     <x:SplitVertical>2</x:SplitVertical>');
+      pipe row('     <x:LeftColumnRightPane>2</x:LeftColumnRightPane>');
+      pipe row('     <x:ActivePane>0</x:ActivePane>');
+      pipe row('     <x:Panes>');
+      pipe row('      <x:Pane>');
+      pipe row('       <x:Number>0</x:Number>');
+      pipe row('       <x:ActiveRow>3</x:ActiveRow>');
+      pipe row('       <x:ActiveCol>1</x:ActiveCol>');
+      pipe row('      </x:Pane>');
+      pipe row('     </x:Panes>');
+      pipe row('     <x:ProtectContents>False</x:ProtectContents>');
+      pipe row('     <x:ProtectObjects>False</x:ProtectObjects>');
+      pipe row('     <x:ProtectScenarios>False</x:ProtectScenarios>');
+      pipe row('    </x:WorksheetOptions>');
+      pipe row('   </x:ExcelWorksheet>');
+      pipe row('  </x:ExcelWorksheets>');
+      pipe row('  <x:ProtectStructure>False</x:ProtectStructure>');
+      pipe row('  <x:ProtectWindows>False</x:ProtectWindows>');
+      pipe row(' </x:ExcelWorkbook>');
+      pipe row('</xml><![endif]-->');
+      pipe row('</head>');
+      pipe row('<body>');
 
-   var_output := null;
+
+
+   pipe row('<table>');
+   pipe row('<tr><td align=center colspan='||to_char(tbl_head.count)||' style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;">NPC Report - '||to_char(par_str_yyyymm)||' to '||to_char(par_end_yyyymm)||'</td></tr>');
+   pipe row('<tr>');
    for idx in 1..tbl_head.count loop
-      if not(var_output is null) then
-         var_output := var_output||',';
-      end if;
-      var_output := var_output||'"'||replace(tbl_head(idx).head_desc,'"','""')||'"';
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-rotate:-90;">'||tbl_head(idx).head_desc||'</td>');
    end loop;
-   pipe row(var_output);
+   pipe row('</tr>');
 
    open csr_report;
    loop
@@ -216,79 +253,86 @@ begin
       if csr_report%notfound then
          exit;
       end if;
-      var_output := null;
-      var_output := var_output||'"'||replace(rcd_report.sale_material_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.sale_material_desc,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.sale_material_type,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.sale_buom_qty,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.sale_buom_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.bom_plant_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.fert_material_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.fert_material_desc,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.fert_material_type,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.fert_qty,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.fert_uom,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_material_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_material_desc,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_material_type,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_qty,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_uom,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_gross_weight,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_weight_unit,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_pack_family_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_pack_family_desc,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_pack_sub_family_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_pack_sub_family_desc,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_disposal_class_code,'"','""')||'"';
-      var_output := var_output||',"'||replace(rcd_report.item_disposal_class_desc,'"','""')||'"';
+      pipe row('<tr>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||rcd_report.sale_material_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.sale_material_desc||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.sale_material_type||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||rcd_report.sale_buom_qty||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.sale_buom_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.bom_plant_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.fert_material_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.fert_material_desc||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.fert_material_type||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||rcd_report.fert_qty||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.fert_uom||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_material_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_material_desc||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_material_type||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||rcd_report.item_qty||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_uom||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||rcd_report.item_gross_weight||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_weight_unit||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_pack_family_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_pack_family_desc||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_pack_sub_family_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_pack_sub_family_desc||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_disposal_class_code||'</td>');
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;">'||rcd_report.item_disposal_class_desc||'</td>');
       if upper(trim(rcd_report.item_material_type)) = 'VERP' then
-         var_output := var_output||',"'||replace(to_char(nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0)),'"','""')||'"';
-         var_output := var_output||',"'||replace(to_char((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000),'"','""')||'"';
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',"'||replace(to_char(((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)*rcd_report.sale_buom_qty),'"','""')||'"';
-         var_output := var_output||',""';
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char(nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char(((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)*rcd_report.sale_buom_qty)||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
       elsif upper(trim(rcd_report.item_material_type)) = 'ROH' then
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',"'||replace(to_char(nvl(rcd_report.item_qty,0)),'"','""')||'"';
-         var_output := var_output||',"'||replace(to_char(nvl(rcd_report.item_qty,0)/1000),'"','""')||'"';
-         var_output := var_output||',""';
-         var_output := var_output||',"'||replace(to_char((nvl(rcd_report.item_qty,0)/1000)*(nvl(rcd_report.sale_buom_qty,0)/1000)),'"','""')||'"';
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char(nvl(rcd_report.item_qty,0))||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char(nvl(rcd_report.item_qty,0)/1000)||'</td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char((nvl(rcd_report.item_qty,0)/1000)*(nvl(rcd_report.sale_buom_qty,0)/1000))||'</td>');
       else
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',""';
-         var_output := var_output||',""';
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
+         pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
       end if;
       if upper(trim(rcd_report.item_material_type)) = 'VERP' then
          for idx in 31..tbl_head.count loop
             if rcd_report.item_disposal_class_code = tbl_head(idx).head_code then
                tbl_head(idx).head_totl := tbl_head(idx).head_totl + ((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)*rcd_report.sale_buom_qty;
-               var_output := var_output||',"'||replace(to_char(((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)*rcd_report.sale_buom_qty),'"','""')||'"';
+               pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;mso-number-format:\@;">'||to_char(((nvl(rcd_report.item_qty,0)*nvl(rcd_report.item_gross_weight,0))/1000000)*rcd_report.sale_buom_qty)||'</td>');
             else
-               var_output := var_output||',""';
+               pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
             end if;
          end loop;
       else
          for idx in 31..tbl_head.count loop
-            var_output := var_output||',""';
+            pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
          end loop;
       end if;
-      pipe row(var_output);
+      pipe row('</tr>');
    end loop;
    close csr_report;
 
-   var_output := null;
+   pipe row('<tr>');
    for idx in 1..30 loop
-      var_output := var_output||',""';
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:8pt;background-color:#ffffff;color:#000000;"></td>');
    end loop;
    for idx in 31..tbl_head.count loop
-      var_output := var_output||',"'||replace(to_char(tbl_head(idx).head_totl),'"','""')||'"';
+      pipe row('<td align=left colspan=1 style="font-family:Arial;font-size:10pt;font-weight:bold;background-color:#ccffcc;color:#000000;border:#000000 .5pt solid;mso-number-format:\@;mso-rotate:-90;">'||to_char(tbl_head(idx).head_totl)||')</td>');
    end loop;
-   pipe row(var_output);
+   pipe row('</tr>');
+
+      /*-*/
+      /* End the report
+      /*-*/
+      pipe row('</table>');
+      pipe row('</body>');
+      pipe row('</html>');
 
    return;
 
