@@ -481,9 +481,9 @@ create or replace package body ods_app.efxcdw25_loader as
 
       rcd_efex_pmt_deal.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
       rcd_efex_pmt_deal.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
-      rcd_efex_pmt_deal.efex_order_id := lics_inbound_utility.get_number('ORD_ID',null);
+      rcd_efex_pmt_deal.efex_order_id := lics_inbound_utility.get_variable('ORD_ID');
       rcd_efex_pmt_deal.details := null;
-      rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_number('DEA_VALUE',null);
+      rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_variable('DEA_VALUE');
       rcd_efex_pmt_deal.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_pmt_deal.valdtn_status := ods_constants.valdtn_unchecked;
       rcd_efex_pmt_deal.efex_mkt_id := var_trn_market;
