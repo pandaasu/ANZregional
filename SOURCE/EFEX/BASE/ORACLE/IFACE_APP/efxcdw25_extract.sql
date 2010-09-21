@@ -233,8 +233,8 @@ create or replace package body iface_app.efxcdw25_extract as
             lics_outbound_loader.append_data('DEH'||
                                              nvl(rcd_deal.payment_id,'0')||rpad(' ',10-length(nvl(rcd_deal.payment_id,'0')),' ') ||
                                              nvl(rcd_deal.sequence_num,'0')||rpad(' ',10-length(nvl(rcd_deal.sequence_num,'0')),' ') ||
-                                             nvl(rcd_deal.order_id,'0')||rpad(' ',10-length(nvl(rcd_deal.order_id,'0')),' ') ||
-                                             nvl(rcd_deal.deal_value,'0')||rpad(' ',15-length(nvl(rcd_deal.deal_value,'0')),' ') ||
+                                             nvl(rcd_deal.order_id,' ')||rpad(' ',10-length(nvl(rcd_deal.order_id,' ')),' ') ||
+                                             nvl(rcd_deal.deal_value,' ')||rpad(' ',15-length(nvl(rcd_deal.deal_value,' ')),' ') ||
                                              nvl(rcd_deal.status,' ')||rpad(' ',1-length(nvl(rcd_deal.status,' ')),' '));
             lics_outbound_loader.append_data('DED' || nvl(substr(rcd_deal.details,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_deal.details,1,2000),' ')),' '));
             if length(rcd_deal.details) > 2000 then
