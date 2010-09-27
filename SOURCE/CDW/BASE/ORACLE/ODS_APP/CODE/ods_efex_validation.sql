@@ -32,6 +32,8 @@ create or replace package ods_app.ods_efex_validation as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2010/06   Steve Gregan   Created
+    2010/09   Steve Gregan   Fixed the validate_efex_matl_matl_subgrp routine to check
+                             both valid and unchecked efex_matl_matl_subgrp rows
 
    *******************************************************************************/
 
@@ -1126,7 +1128,7 @@ create or replace package body ods_app.ods_efex_validation as
                 (select matl_grp_id from efex_matl_grp where matl_grp_id = t01.matl_grp_id and valdtn_status = ods_constants.valdtn_valid) as chk_matl_grp_id,
                 (select sgmnt_id from efex_sgmnt where sgmnt_id = t01.sgmnt_id and valdtn_status = ods_constants.valdtn_valid) as chk_sgmnt_id,
                 (select bus_unit_id from efex_bus_unit where bus_unit_id = t01.bus_unit_id and valdtn_status = ods_constants.valdtn_valid) as chk_bus_unit_id,
-                nvl((select count(*) from efex_matl_matl_subgrp where efex_matl_id = t01.efex_matl_id and sgmnt_id = t01.sgmnt_id and matl_subgrp_id != t01.matl_subgrp_id and status = 'A' and valdtn_status = ods_constants.valdtn_valid),0) as chk_count
+                nvl((select count(*) from efex_matl_matl_subgrp where efex_matl_id = t01.efex_matl_id and sgmnt_id = t01.sgmnt_id and matl_subgrp_id != t01.matl_subgrp_id and status = 'A' and (valdtn_status = ods_constants.valdtn_valid or valdtn_status = ods_constants.valdtn_unchecked)),0) as chk_count
            from efex_matl_matl_subgrp t01
           where t01.efex_mkt_id = par_market
             and t01.valdtn_status = ods_constants.valdtn_unchecked;
