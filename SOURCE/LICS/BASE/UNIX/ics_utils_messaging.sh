@@ -427,6 +427,10 @@ process_outbound()
             log_file "INFO: [process_outbound] Executing command [${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}]" "HARMLESS"
             ${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM} >> ${TMP_OUT} 2>&1
             ;;
+	$MQFT_LITE)
+            log_file "INFO: [process_outbound] Executing command [${MQFT_SEND_PATH} -srcqmgr ${S_QMGR} -srcfile ${S_FILE_NAME} -tgtqmgr ${T_QMGR} -tgtfile ${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}]" "HARMLESS"
+            ${MQFT_SEND_PATH} -srcqmgr ${S_QMGR} -srcfile ${S_FILE_NAME} -tgtqmgr ${T_QMGR} -tgtfile ${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM} >> ${TMP_OUT} 2>&1
+	    ;;		
         *)
             error_exit "ERROR: [process_outbound] Outbound type is not valid [${OUTBOUND_TYPE}]"
             ;;

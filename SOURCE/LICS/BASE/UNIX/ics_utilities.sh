@@ -12,6 +12,7 @@
 # 29-OCT-2007   T. Keon     Creation
 # 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
 # 12-JUN-2009   T. Keon     Added USE_AMI variable
+# 27-SEP-2010   B. Halicki  Added AMI_PATH variable for use with MQFT_LITE
 #
 # ---------------------------------------------------------------------------
 
@@ -267,6 +268,7 @@ initialise_utilities()
     read_variable "HK_TARG_PATH"
     read_variable "HK_TARG_QMGR"
     read_variable "USE_AMI"
+    read_variable "AMI_PATH" 
     
     set_date "NOW" $DATE_FORMAT_FILE_SHORT     # Current date & time for filenames
     load_current_os

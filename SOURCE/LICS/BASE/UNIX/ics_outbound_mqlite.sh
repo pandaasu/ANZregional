@@ -40,7 +40,7 @@ SCRIPT_PATH=${0%/*}
 # --------------------------------------------------------------------------
 setup_config()
 {
-    INTERFACE_ID="MQFT"
+    INTERFACE_ID="MQFT_LITE"
     TRNSFR_TYPE=${TRNSFR_TYPE:-$TEXT}
    
     # initialise the utlities script
@@ -49,7 +49,7 @@ setup_config()
     # set the file permissions (chmod 777)
     set_permissions $S_FILE_NAME
     DATA_FLOW_TYPE=$OUTBOUND
-    MQFT_SEND_PATH="${AMI_PATH}/bin/mqft/mqftssnd"
+    MQFT_SEND_PATH="${AMI_PATH}/shell/mqsend.sh"
     
     case $TRNSFR_TYPE in
         $TEXT)
@@ -61,9 +61,6 @@ setup_config()
         $TRIG)
             MQFT_SEND_PARAM="-trigger ${T_PROCESS}"
             ;;
-        $CMP)
-            MQFT_SEND_PARAM="-compress"
-            ;;            
         *)
             error_exit "ERROR: [setup_config] MQFT send type is not valid [${TRNSFR_TYPE}]"
             ;;
@@ -133,7 +130,7 @@ log_file "INFO: [main] Initialized [${SCRIPT_ID}] script for mqft to [${T_QMGR}]
 log_file "INFO: [main] Log file location : [${TMP_OUT}]" "HARMLESS"
 
 check_params        # Function: Check passed parameters have values
-process_outbound "${S_FILE_NAME}" $MQFT # Function: Handle file processing
+process_outbound "${S_FILE_NAME}" $MQFT_LITE # Function: Handle file processing
 clean_up_local      # Function: Remove Temporary Files
 
 log_file "INFO: [main] Completion of script [${SCRIPT_ID}] for mqft to to [${T_QMGR}]" "HARMLESS"
@@ -156,6 +153,6 @@ exit 0              # Exit: Exit script with successful flag (0)
 # 3.2     10-JAN-2008 T. Keon       Added compression option
 # 3.3     04-MAR-2008 T. Keon       Merged all outbound MQFT files into a
 #                                   single script
-# 3.4	  27-SEP-2010 B. Halicki    Moved LITE processing to ics_outbound_mqlite.sh
+# 3.4	  27-SEP-2010 B. Halicki    Modified to use AMI Lite (based on ics_outbound_mqft.sh)
 #
 # ---------------------------------------------------------------------------
