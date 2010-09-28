@@ -175,11 +175,11 @@ create or replace package body iface_app.efxcdw18_extract as
          lics_outbound_loader.append_data('HDR' ||
                                           nvl(rcd_extract.comm_id,'0')||rpad(' ',10-length(nvl(rcd_extract.comm_id,'0')),' ') ||
                                           nvl(rcd_extract.customer_id,'0')||rpad(' ',10-length(nvl(rcd_extract.customer_id,'0')),' ') ||
-                                          nvl(rcd_extract.cust_type_id,'0')||rpad(' ',10-length(nvl(rcd_extract.cust_type_id,'0')),' ') ||
-                                          nvl(rcd_extract.affiliation_id,'0')||rpad(' ',10-length(nvl(rcd_extract.affiliation_id,'0')),' ') ||
-                                          nvl(rcd_extract.sales_region_id,'0')||rpad(' ',10-length(nvl(rcd_extract.sales_region_id,'0')),' ') ||
+                                          nvl(rcd_extract.cust_type_id,' ')||rpad(' ',10-length(nvl(rcd_extract.cust_type_id,' ')),' ') ||
+                                          nvl(rcd_extract.affiliation_id,' ')||rpad(' ',10-length(nvl(rcd_extract.affiliation_id,' ')),' ') ||
+                                          nvl(rcd_extract.sales_region_id,' ')||rpad(' ',10-length(nvl(rcd_extract.sales_region_id,' ')),' ') ||
                                           nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
-                                          nvl(rcd_extract.sales_territory_id,'0')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,'0')),' ') ||
+                                          nvl(rcd_extract.sales_territory_id,' ')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,' ')),' ') ||
                                           nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
                                           nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
 
