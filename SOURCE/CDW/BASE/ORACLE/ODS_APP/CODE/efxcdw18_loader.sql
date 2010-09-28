@@ -240,11 +240,11 @@ create or replace package body ods_app.efxcdw18_loader as
 
       rcd_efex_assmnt_assgnmnt.assmnt_id := lics_inbound_utility.get_number('COM_ID',null);
       rcd_efex_assmnt_assgnmnt.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
-      rcd_efex_assmnt_assgnmnt.cust_type_id := lics_inbound_utility.get_number('CTY_ID',null);
-      rcd_efex_assmnt_assgnmnt.affltn_id := lics_inbound_utility.get_number('AFF_ID',null);
-      rcd_efex_assmnt_assgnmnt.sales_regn_id := lics_inbound_utility.get_number('SRE_ID',null);
+      rcd_efex_assmnt_assgnmnt.cust_type_id := lics_inbound_utility.get_variable('CTY_ID');
+      rcd_efex_assmnt_assgnmnt.affltn_id := lics_inbound_utility.get_variable('AFF_ID');
+      rcd_efex_assmnt_assgnmnt.sales_regn_id := lics_inbound_utility.get_variable('SRE_ID');
       rcd_efex_assmnt_assgnmnt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
-      rcd_efex_assmnt_assgnmnt.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_assmnt_assgnmnt.sales_terr_id := lics_inbound_utility.get_variable('STE_ID');
       rcd_efex_assmnt_assgnmnt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
       rcd_efex_assmnt_assgnmnt.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_assmnt_assgnmnt.valdtn_status := ods_constants.valdtn_unchecked;
