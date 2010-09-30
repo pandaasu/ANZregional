@@ -5561,6 +5561,15 @@ create or replace package body psa_app.psa_psc_function as
             for update;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_week is
+         select t01.psw_psc_week
+           from psa_psc_week t01
+          where t01.psw_psc_code = var_psc_code
+            and t01.psw_psc_week = (select distinct to_char(mars_week,'fm0000000')
+                                      from mars_date
+                                     where trunc(calendar_date) = trunc(sysdate));
+      rcd_week csr_week%rowtype;
+
       cursor csr_ptyp is
          select t01.*
            from psa_psc_prod t01
@@ -5628,6 +5637,15 @@ create or replace package body psa_app.psa_psc_function as
       if psa_gen_function.get_mesg_count != 0 then
          rollback;
          return;
+      end if;
+
+      /*-*/
+      /* Retrieve the earliest open schedule week
+      /*-*/
+      open csr_week;
+      fetch csr_week into rcd_week;
+      if csr_week%found then
+         var_wek_code := rcd_week.psw_psc_week;
       end if;
 
       /*-*/
