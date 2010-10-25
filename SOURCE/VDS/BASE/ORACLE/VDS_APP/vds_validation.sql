@@ -26,6 +26,7 @@ create or replace package vds_validation as
  2010/03   Steve Gregan   Fix the email purging
  2010/06   Steve Gregan   Added rule execution exception traps
  2010/09   Steve Gregan   Added sender email setting
+ 2010/10   Steve Gregan   Added additional logging
 
 *******************************************************************************/
 
@@ -181,6 +182,7 @@ create or replace package body vds_validation as
             /*-*/
             /* Execute the classification list query
             /*-*/
+            lics_logging.write_log('==> Executing classification ('||rcd_classification.vac_class||') list query');
             var_vir_table.delete;
             var_list := get_clob(rcd_classification.vac_lst_query);
             begin
@@ -224,6 +226,7 @@ create or replace package body vds_validation as
             /*             the current version of classification messages can belong
             /*             to different execution identifiers
             /*-*/
+            lics_logging.write_log('==> Versioning existing classification ('||rcd_classification.vac_class||') validation messages');
             update vds_val_mes
                set vam_version = vam_version + 1
              where vam_class = rcd_classification.vac_class
@@ -233,6 +236,7 @@ create or replace package body vds_validation as
             /*-*/
             /* Process and validate the classification list query
             /*-*/
+            lics_logging.write_log('==> Executing classification ('||rcd_classification.vac_class||') validation rules');
             validate(rcd_vds_val_mes.vam_execution,
                      rcd_classification.vac_group,
                      rcd_classification.vac_class);
@@ -245,6 +249,7 @@ create or replace package body vds_validation as
          /* Update to history any existing batch validation filters missing messages
          /* **note** 1. this logical classification is always processed in batch
          /*-*/
+         lics_logging.write_log('==> Versioning existing group ('||rcd_group.vag_group||') *FILTER messages');
          update vds_val_mes
             set vam_version = vam_version + 1
           where vam_class = '*FILTER'
@@ -255,6 +260,7 @@ create or replace package body vds_validation as
          /*-*/
          /* Load the validation filters missing codes
          /*-*/
+         lics_logging.write_log('==> Executing group ('||rcd_group.vag_group||') *FILTER missing code rule');
          var_sav_code := null;
          var_work := get_clob(rcd_group.vag_cod_query);
          var_test := 'select t01.vfd_code,
@@ -308,6 +314,7 @@ create or replace package body vds_validation as
          /*-*/
          /* Purge historical messages
          /*-*/
+         lics_logging.write_log('==> Purging group ('||rcd_group.vag_group||') historical messages');
          delete from vds_val_mes
           where vam_execution != con_single_code
             and vam_group = rcd_group.vag_group
@@ -317,6 +324,7 @@ create or replace package body vds_validation as
          /*-*/
          /* Purge message emails
          /*-*/
+         lics_logging.write_log('==> Purging group ('||rcd_group.vag_group||') historical emails');
          delete from vds_val_mes_ema
           where (vme_execution,
                  vme_code,
@@ -331,11 +339,13 @@ create or replace package body vds_validation as
          /*-*/
          /* Email the messages
          /*-*/
+         lics_logging.write_log('==> Sending group ('||rcd_group.vag_group||') validation emails');
          email_messages(rcd_vds_val_mes.vam_execution);
 
          /*-*/
          /* Load the statistics
          /*-*/
+         lics_logging.write_log('==> Loading group ('||rcd_group.vag_group||') statistics');
          load_statistics(rcd_group.vag_group);
 
          /*-*/
@@ -630,6 +640,9 @@ create or replace package body vds_validation as
       /* Perform the validation base rules
       /* **note** this validation is based on the classification requirements
       /*-*/
+      if par_execution != con_single_code then
+         lics_logging.write_log('====> Start retrieving classification ('||par_class||') rules');
+      end if;
       open csr_class_rule;
       loop
          fetch csr_class_rule into rcd_class_rule;
@@ -665,6 +678,9 @@ create or replace package body vds_validation as
          /*-*/
          /* Execute the validation rule query
          /*-*/
+         if par_execution != con_single_code then
+            lics_logging.write_log('======> Start rule ('||rcd_class_rule.var_rule||') execution');
+         end if;
          var_sav_trm_code := null;
          var_row_count := 0;
          begin
@@ -794,6 +810,9 @@ create or replace package body vds_validation as
             when others then
                raise_application_error(-20000, 'Rule (' || rcd_class_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
          end;
+         if par_execution != con_single_code then
+            lics_logging.write_log('======> End rule ('||rcd_class_rule.var_rule||') execution');
+         end if;
 
          /*-*/
          /* Output the previous code after messages
@@ -836,10 +855,16 @@ create or replace package body vds_validation as
 
       end loop;
       close csr_class_rule;
+      if par_execution != con_single_code then
+         lics_logging.write_log('====> End retrieving classification ('||par_class||') rules');
+      end if;
 
       /*-*/
       /* Retrieve the distinct validation type/filters
       /*-*/
+      if par_execution != con_single_code then
+         lics_logging.write_log('====> Start retrieving group ('||par_group||') type filters');
+      end if;
       open csr_type_header;
       loop
          fetch csr_type_header into rcd_type_header;
@@ -857,6 +882,9 @@ create or replace package body vds_validation as
          /* Perform the validation type rules
          /* **note** this validation is based on the type requirements
          /*-*/
+         if par_execution != con_single_code then
+            lics_logging.write_log('======> Start retrieving group ('||par_group||') type ('||rcd_type_header.vaf_type||') filter ('||rcd_type_header.vaf_filter||') rules');
+         end if;
          open csr_type_rule;
          loop
             fetch csr_type_rule into rcd_type_rule;
@@ -895,6 +923,9 @@ create or replace package body vds_validation as
             /*-*/
             /* Execute the validation rule query
             /*-*/
+            if par_execution != con_single_code then
+               lics_logging.write_log('========> Start rule ('||rcd_type_rule.var_rule||') execution');
+            end if;
             var_sav_trm_code := null;
             var_row_count := 0;
             begin
@@ -1024,6 +1055,9 @@ create or replace package body vds_validation as
                when others then
                   raise_application_error(-20000, 'Rule (' || rcd_type_rule.var_rule || ') query failed - ' || substr(SQLERRM, 1, 1024));
             end;
+            if par_execution != con_single_code then
+               lics_logging.write_log('========> End rule ('||rcd_type_rule.var_rule||') execution');
+            end if;
 
             /*-*/
             /* Output the previous code after messages
@@ -1066,9 +1100,15 @@ create or replace package body vds_validation as
 
          end loop;
          close csr_type_rule;
+         if par_execution != con_single_code then
+            lics_logging.write_log('======> End retrieving group ('||par_group||') type ('||rcd_type_header.vaf_type||') filter ('||rcd_type_header.vaf_filter||') rules');
+         end if;
 
       end loop;
       close csr_type_header;
+      if par_execution != con_single_code then
+         lics_logging.write_log('====> End retrieving group ('||par_group||') type filters');
+      end if;
 
    /*-------------*/
    /* End routine */
