@@ -47,13 +47,11 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /* Private definitions
    /*-*/
    var_interface lics_interface.int_interface%type;
-   var_dta_seq lics_temp.dat_dta_seq%type;
 
    /*-*/
    /* Private declarations
    /*-*/
    procedure read_xml_stream(par_stream in clob);
-   procedure read_xml_child(par_xml_node in xmlDom.domNode);
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -282,8 +280,10 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       /*-*/
       obj_xml_parser xmlParser.parser;
       obj_xml_document xmlDom.domDocument;
-      obj_xml_element xmlDom.domElement;
+      obj_xml_node_list xmlDom.domNodeList;
       obj_xml_node xmlDom.domNode;
+      var_dta_seq lics_temp.dat_dta_seq%type;
+      var_string varchar2(4000 char);
 
    /*-------------*/
    /* Begin block */
@@ -305,12 +305,20 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       xmlParser.freeParser(obj_xml_parser);
 
       /*-*/
-      /* Retrieve and process the primary node
+      /* Retrieve and process the stream data
       /*-*/
       var_dta_seq := 0;
-      obj_xml_element := xmlDom.getDocumentElement(obj_xml_document);
-      obj_xml_node := xmlDom.makeNode(obj_xml_element);
-      read_xml_child(obj_xml_node);
+      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/TXTSTREAM/XR');
+      for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
+         obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
+         var_string := rtrim(ltrim(xslProcessor.valueOf(obj_xml_node,'text()'),'['),']');
+         var_dta_seq := var_dta_seq + 1;
+         insert into lics_temp
+            (dat_dta_seq,
+             dat_record)
+            values(var_dta_seq,
+                   var_string);
+      end loop;
 
       /*-*/
       /* Free the XML document
@@ -326,56 +334,6 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /* End routine */
    /*-------------*/
    end read_xml_stream;
-
-   /******************************************************/
-   /* This procedure performs the read xml child routine */
-   /******************************************************/
-   procedure read_xml_child(par_xml_node in xmlDom.domNode) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      obj_xml_element xmlDom.domElement;
-      obj_xml_node xmlDom.domNode;
-      obj_xml_node_list xmlDom.domNodeList;
-      var_string varchar2(4000 char);
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Process the attribute node
-      /*-*/
-      case upper(xmlDom.getNodeName(par_xml_node))
-         when 'TXTSTREAM' then
-            null;
-         when 'XR' then
-            var_dta_seq := var_dta_seq + 1;
-         when '#CDATA-SECTION' then
-            var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
-            insert into lics_temp
-               (dat_dta_seq,
-                dat_record)
-               values(var_dta_seq,
-                      var_string);
-         else raise_application_error(-20000, 'read_xml_stream - Type (' || xmlDom.getNodeName(par_xml_node) || ') not recognised');
-      end case;
-
-      /*-*/
-      /* Process the child nodes
-      /*-*/
-      obj_xml_node_list := xmlDom.getChildNodes(par_xml_node);
-      for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
-         obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
-         read_xml_child(obj_xml_node);
-      end loop;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end read_xml_child;
 
 end lics_interface_loader;
 /
