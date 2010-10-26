@@ -19,6 +19,7 @@ create or replace package pts_app.pts_gen_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2010/10   Steve Gregan   Modified to allow more allocation days than samples
 
    *******************************************************************************/
 
@@ -41,7 +42,8 @@ create or replace package pts_app.pts_gen_function as
    function list_pet_type return pts_pty_list_type pipelined;
    function list_tes_type return pts_tty_list_type pipelined;
    function list_class(par_tab_code in varchar2, par_fld_code in number) return pts_cla_list_type pipelined;
-   function randomize_allocation(par_sam_count in number, par_pan_count in number) return pts_ran_type pipelined;
+   function randomize_allocation(par_sam_count in number, par_pan_count in number, par_use_count in number) return pts_ran_type pipelined;
+   function calculate_factorial(par_value in integer) return integer;
 
 end pts_gen_function;
 /
@@ -1506,19 +1508,22 @@ create or replace package body pts_app.pts_gen_function as
    /************************************************************/
    /* This procedure performs the randomize allocation routine */
    /************************************************************/
-   function randomize_allocation(par_sam_count in number, par_pan_count in number) return pts_ran_type pipelined is
+   function randomize_allocation(par_sam_count in number, par_pan_count in number, par_use_count in number) return pts_ran_type pipelined is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_key_code varchar2(36);
-      var_key_work varchar2(36);
       var_found boolean;
+      var_count integer;
+      var_index integer;
       var_key_table pts_ran_type := pts_ran_type();
       type typ_ckey is table of varchar2(1) index by binary_integer;
       tbl_ckey typ_ckey;
-      type typ_skey is table of varchar2(36) index by binary_integer;
+      type typ_skey is table of varchar2(72) index by binary_integer;
       tbl_skey typ_skey;
+      type typ_wkey is table of varchar2(72) index by binary_integer;
+      tbl_wkey typ_wkey;
 
       /*-*/
       /* Local constants
@@ -1531,7 +1536,7 @@ create or replace package body pts_app.pts_gen_function as
       /*-*/
       cursor csr_key_list is
          select combo
-           from (select combo
+           from (select distinct(substr(combo,1,var_count)) as combo
                    from (select replace(sys_connect_by_path(slot,'/'),'/') combo
                            from (select level lvlnum,
                                         substr(var_key_code, level, 1) slot
@@ -1567,6 +1572,12 @@ create or replace package body pts_app.pts_gen_function as
       if par_pan_count > 9999 then
          raise_application_error(-20000, 'Maximum panel count must be 9999');
       end if;
+      if par_use_count < par_sam_count then
+         raise_application_error(-20000, 'Minimum usage count must greater than or equal to the sample count');
+      end if;
+      if par_use_count > (par_sam_count * 2) then
+         raise_application_error(-20000, 'Maximum usage count must be twice the sample count');
+      end if;
 
       /*-*/
       /* Load the sample key array
@@ -1577,11 +1588,31 @@ create or replace package body pts_app.pts_gen_function as
          for idx in 1..par_sam_count loop
             var_key_code := var_key_code||substr(con_key_map,idx,1);
          end loop;
+         var_count := par_sam_count;
+         tbl_wkey.delete;
          open csr_key_list;
-         fetch csr_key_list bulk collect into tbl_skey;
+         fetch csr_key_list bulk collect into tbl_wkey;
          close csr_key_list;
+         for idx in 1..tbl_wkey.count loop
+            tbl_skey(idx) := tbl_wkey(idx);
+         end loop;
+         if (par_use_count - par_sam_count) > 0 then
+            var_count := par_use_count - par_sam_count;
+            tbl_wkey.delete;
+            open csr_key_list;
+            fetch csr_key_list bulk collect into tbl_wkey;
+            close csr_key_list;
+            var_index := 1;
+            for idx in 1..tbl_skey.count loop
+               tbl_skey(idx) := tbl_skey(idx) || tbl_wkey(var_index);
+               var_index := var_index + 1;
+               if var_index > tbl_wkey.count then
+                  var_index := 1;
+               end if;
+            end loop;
+         end if;
       else
-         var_key_table := pts_ran_type();
+         var_key_table.delete;
          for idx in 1..par_sam_count loop
             var_key_table.extend;
             var_key_table(var_key_table.last) := substr(con_key_map,idx,1);
@@ -1608,6 +1639,38 @@ create or replace package body pts_app.pts_gen_function as
                end if;
             end loop;
          end loop;
+         if (par_use_count - par_sam_count) > 0 then
+            var_count := par_use_count - par_sam_count;
+            tbl_wkey.delete;
+            for idx in 1..par_sam_count loop
+               if (idx + (var_count-1)) <= par_sam_count then
+                  tbl_wkey(tbl_wkey.count+1) := substr(con_key_map,idx,var_count);
+               else
+                  tbl_wkey(tbl_wkey.count+1) := substr(con_key_map,idx,((par_sam_count+1)-idx));
+                  tbl_wkey(tbl_wkey.count) := tbl_wkey(tbl_wkey.count) || substr(con_key_map,1,var_count-((par_sam_count+1)-idx));
+               end if;
+            end loop;
+            var_index := 1;
+            for idx in 1..tbl_skey.count loop
+               var_key_table.delete;
+               for idw in 1..length(tbl_wkey(var_index)) loop
+                  var_key_table.extend;
+                  var_key_table(var_key_table.last) := substr(tbl_wkey(var_index),idw,1);
+               end loop;
+               open csr_key_test;
+               fetch csr_key_test bulk collect into tbl_ckey;
+               close csr_key_test;
+               var_key_code := null;
+               for idw in 1..tbl_ckey.count loop
+                  var_key_code := var_key_code||tbl_ckey(idw);
+               end loop;
+               tbl_skey(idx) := tbl_skey(idx) || var_key_code;
+               var_index := var_index + 1;
+               if var_index > tbl_wkey.count then
+                  var_index := 1;
+               end if;
+            end loop;
+         end if;
       end if;
 
       /*-*/
@@ -1641,6 +1704,50 @@ create or replace package body pts_app.pts_gen_function as
    /* End routine */
    /*-------------*/
    end randomize_allocation;
+
+   /***********************************************************/
+   /* This procedure performs the calculate factorial routine */
+   /***********************************************************/
+   function calculate_factorial(par_value in integer) return integer is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return integer;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Calculate the factorial
+      /*-*/
+      var_return := 1;
+      for idx in 2..par_value loop
+         var_return := var_return * idx;
+      end loop;
+      return var_return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'PTS_GEN_FUNCTION - CALCULATE_FACTORIAL - ' || substr(SQLERRM, 1, 2048));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end calculate_factorial;
 
 /*----------------------*/
 /* Initialisation block */

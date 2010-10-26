@@ -19,6 +19,7 @@ create or replace package pts_app.pts_pet_allocation as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2010/10   Steve Gregan   Modified to allow ranking test day count greater than sample count 
 
    *******************************************************************************/
 
@@ -141,14 +142,14 @@ create or replace package body pts_app.pts_pet_allocation as
       /*-*/
       /* Local definitions
       /*-*/
-      var_key_work varchar2(36);
+      var_key_work varchar2(72);
       var_key_index number;
       var_sam_index number;
       var_day_index number;
       var_day_count number;
       type typ_scod is table of pts_tes_sample%rowtype index by binary_integer;
       tbl_scod typ_scod;
-      type typ_akey is table of varchar2(36) index by binary_integer;
+      type typ_akey is table of varchar2(72) index by binary_integer;
       tbl_akey typ_akey;
       rcd_pts_tes_allocation pts_tes_allocation%rowtype;
 
@@ -163,7 +164,7 @@ create or replace package body pts_app.pts_pet_allocation as
 
       cursor csr_allocation is
          select t01.*
-           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code))) t01;
+           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code), (select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code))) t01;
       rcd_allocation csr_allocation%rowtype;
 
       cursor csr_panel is
@@ -265,13 +266,13 @@ create or replace package body pts_app.pts_pet_allocation as
       /*-*/
       /* Local definitions
       /*-*/
-      var_key_work varchar2(36);
+      var_key_work varchar2(72);
       var_key_index number;
       var_sam_index number;
       var_switch boolean;
       type typ_scod is table of pts_tes_sample%rowtype index by binary_integer;
       tbl_scod typ_scod;
-      type typ_akey is table of varchar2(36) index by binary_integer;
+      type typ_akey is table of varchar2(72) index by binary_integer;
       tbl_akey typ_akey;
       rcd_pts_tes_allocation pts_tes_allocation%rowtype;
 
@@ -286,7 +287,7 @@ create or replace package body pts_app.pts_pet_allocation as
 
       cursor csr_allocation is
          select t01.*
-           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code))) t01;
+           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code), (select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code))) t01;
       rcd_allocation csr_allocation%rowtype;
 
       cursor csr_panel is
@@ -409,12 +410,12 @@ create or replace package body pts_app.pts_pet_allocation as
       /*-*/
       /* Local definitions
       /*-*/
-      var_key_work varchar2(36);
+      var_key_work varchar2(72);
       var_key_index number;
       var_sam_index number;
       type typ_scod is table of pts_tes_sample%rowtype index by binary_integer;
       tbl_scod typ_scod;
-      type typ_akey is table of varchar2(36) index by binary_integer;
+      type typ_akey is table of varchar2(72) index by binary_integer;
       tbl_akey typ_akey;
       rcd_pts_tes_allocation pts_tes_allocation%rowtype;
 
@@ -429,7 +430,7 @@ create or replace package body pts_app.pts_pet_allocation as
 
       cursor csr_allocation is
          select t01.*
-           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code))) t01;
+           from table(pts_gen_function.randomize_allocation((select count(*) from pts_tes_sample where tsa_tes_code = par_tes_code), (select count(*) from pts_tes_panel where tpa_tes_code = par_tes_code), par_day_count)) t01;
       rcd_allocation csr_allocation%rowtype;
 
       cursor csr_panel is
@@ -463,8 +464,11 @@ create or replace package body pts_app.pts_pet_allocation as
       open csr_sample;
       fetch csr_sample bulk collect into tbl_scod;
       close csr_sample;
-      if par_day_count != tbl_scod.count then
-         raise_application_error(-20000, 'Test code ('||to_char(par_tes_code)||') duration days and sample count must match');
+      if par_day_count < tbl_scod.count then
+         raise_application_error(-20000, 'Test code ('||to_char(par_tes_code)||') duration days must be equal or greater than the sample count');
+      end if;
+      if par_day_count > (tbl_scod.count * 2) then
+         raise_application_error(-20000, 'Test code ('||to_char(par_tes_code)||') duration days must not exceed double the sample count');
       end if;
 
       /*-*/
@@ -479,7 +483,7 @@ create or replace package body pts_app.pts_pet_allocation as
       /* Retrieve the test panel
       /* **notes** 1. The sample retrieval has been randomized so panel
       /*              does not need to be randomized
-      /*           2. The panel has been sort by pet size to introduce
+      /*           2. The panel has been sorted by pet size to introduce
       /*              the sample randomization into the pet type
       /*-*/
       var_key_index := tbl_akey.count;

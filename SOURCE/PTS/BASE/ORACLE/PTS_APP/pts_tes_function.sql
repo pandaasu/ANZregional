@@ -19,6 +19,7 @@ create or replace package pts_app.pts_tes_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2010/10   Steve Gregan   Modified to allow more allocation days than samples
 
    *******************************************************************************/
 
@@ -4083,7 +4084,6 @@ create or replace package body pts_app.pts_tes_function as
    /*-------------*/
    end report_allocation;
 
-
    /********************************************************/
    /* This procedure performs the retrieve release routine */
    /********************************************************/
@@ -4439,6 +4439,7 @@ create or replace package body pts_app.pts_tes_function as
       var_tes_code number;
       var_found boolean;
       var_day_code number;
+      var_sam_count number;
       var_output varchar2(4000 char);
 
       /*-*/
@@ -4446,12 +4447,19 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
-                t02.tty_typ_target
+                t02.tty_typ_target,
+                t02.tty_alc_proc
            from pts_tes_definition t01,
                 pts_tes_type t02
           where t01.tde_tes_type = t02.tty_tes_type(+)
             and t01.tde_tes_code = var_tes_code;
       rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_count is
+         select count(*) as sam_count
+           from pts_tes_sample t01
+          where t01.tsa_tes_code = var_tes_code;
+      rcd_count csr_count%rowtype;
 
       cursor csr_panel is
          select t01.*,
@@ -4536,6 +4544,17 @@ create or replace package body pts_app.pts_tes_function as
       end if;
 
       /*-*/
+      /* Retrieve the test sample count
+      /*-*/
+      var_sam_count := 0;
+      open csr_count;
+      fetch csr_count into rcd_count;
+      if csr_count%found then
+         var_sam_count := rcd_count.sam_count;
+      end if;
+      close csr_count;
+
+      /*-*/
       /* Start the report
       /*-*/
       var_output := '"'||'TESTCODE'||'"';
@@ -4593,7 +4612,11 @@ create or replace package body pts_app.pts_tes_function as
                end if;
                if rcd_retrieve.tde_tes_sam_count = 1 then
                   if rcd_panel.tpa_pan_status = '*MEMBER' then
-                     var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
+                     if upper(rcd_retrieve.tty_alc_proc) = 'RANKING' and var_day_code > var_sam_count then
+                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
+                     else
+                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
+                     end if;
                   else
                      var_output := var_output||',""';
                   end if;
@@ -4657,6 +4680,7 @@ create or replace package body pts_app.pts_tes_function as
       var_panel boolean;
       var_geo_zone number;
       var_index number;
+      var_sam_count number;
       var_output varchar2(4000 char);
 
       /*-*/
@@ -4678,7 +4702,8 @@ create or replace package body pts_app.pts_tes_function as
       /*-*/
       cursor csr_retrieve is
          select t01.*,
-                t02.tty_typ_target
+                t02.tty_typ_target,
+                t02.tty_alc_proc
            from pts_tes_definition t01,
                 pts_tes_type t02
           where t01.tde_tes_type = t02.tty_tes_type(+)
@@ -4816,7 +4841,8 @@ create or replace package body pts_app.pts_tes_function as
          tbl_sdta(tbl_sdta.count).tot_qnty := 0;
       end loop;
       close csr_sample;
-      if rcd_retrieve.tde_tes_sam_count = 2 then
+      var_sam_count := tbl_sdta.count;
+      if rcd_retrieve.tde_tes_sam_count = 2 or (upper(rcd_retrieve.tty_alc_proc) = 'RANKING' and rcd_retrieve.tde_tes_day_count > var_sam_count) then
          open csr_sample;
          loop
             fetch csr_sample into rcd_sample;
@@ -4924,14 +4950,26 @@ create or replace package body pts_app.pts_tes_function as
                end if;
                if rcd_retrieve.tde_tes_sam_count = 1 then
                   for idx in 1..tbl_sdta.count loop
-                     if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
-                        if tbl_sdta(idx).pan_seqn = 0 then
-                           var_index := var_index + 1;
-                           tbl_sdta(idx).pan_seqn := var_index;
+                     if upper(rcd_retrieve.tty_alc_proc) = 'RANKING' and rcd_allocation.tal_day_code > var_sam_count then
+                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_acde then
+                           if tbl_sdta(idx).pan_seqn = 0 then
+                              var_index := var_index + 1;
+                              tbl_sdta(idx).pan_seqn := var_index;
+                           end if;
+                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
                         end if;
-                        tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                        tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                        tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
+                     else
+                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
+                           if tbl_sdta(idx).pan_seqn = 0 then
+                              var_index := var_index + 1;
+                              tbl_sdta(idx).pan_seqn := var_index;
+                           end if;
+                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
+                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
+                        end if;
                      end if;
                   end loop;
                else
