@@ -1,4 +1,6 @@
-create or replace package ics_app.plant_material_extract as
+DROP PACKAGE ICS_APP.PLANT_MATERIAL_EXTRACT;
+
+CREATE OR REPLACE PACKAGE ICS_APP.plant_material_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -50,7 +52,9 @@ create or replace package ics_app.plant_material_extract as
   2008/03   T. Keon       Changed structure to match new standards   
   2008/04   T. Keon       Added option to extract data since last run only 
   2008/09   T. Keon       Changed criteria to broadcast deletes
-
+  2009/07   T. Keon       Added order by to main query to fix missing materials bug
+  2010/10   B. Halicki	  Added ERSA / ZROH to material type extract
+	
 *******************************************************************************/ 
 
   /*-*/
@@ -63,7 +67,24 @@ create or replace package ics_app.plant_material_extract as
 end plant_material_extract;
 /
 
-create or replace package body ics_app.plant_material_extract
+
+DROP PUBLIC SYNONYM PLANT_MATERIAL_EXTRACT;
+
+CREATE PUBLIC SYNONYM PLANT_MATERIAL_EXTRACT FOR ICS_APP.PLANT_MATERIAL_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO LICS_APP;
+
+
+DROP PACKAGE BODY ICS_APP.PLANT_MATERIAL_EXTRACT;
+
+CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_material_extract
 as
 /******************************************************************************
    NAME: plant_material_extract 
@@ -347,7 +368,7 @@ as
         and t02.sap_material_code = t05.sap_material_code(+)
         and t02.plant_code = t05.vltn_area(+)
         and t01.sap_material_code = t06.sap_material_code(+)
-        and t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE', 'FERT') -- all interested materials 
+        and t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE', 'FERT', 'ZROH', 'ERSA') -- all interested materials 
         and (t02.plant_code like 'AU%' OR t02.plant_code like 'NZ%')
         and t05.vltn_type(+) = '*NONE'
         and 
@@ -355,7 +376,8 @@ as
           (par_action = '*ALL' and (var_lastrun_date is null or t01.bds_lads_date >= var_lastrun_date))
           or (par_action = '*MATERIAL' and ltrim(t01.sap_material_code,'0') = ltrim(par_data,'0'))
           or (par_action = '*HISTORY' and t01.bds_lads_date >= trunc(sysdate - to_number(par_data)))
-        );  
+        )
+      order by t01.sap_material_code;
                   
     rcd_bds_material_plant_mfanz csr_bds_material_plant_mfanz%rowtype;       
           
@@ -664,15 +686,16 @@ as
 end plant_material_extract;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on ics_app.plant_material_extract to appsupport;
-grant execute on ics_app.plant_material_extract to lads_app;
-grant execute on ics_app.plant_material_extract to lics_app;
-grant execute on ics_app.plant_material_extract to ics_executor;
 
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym plant_material_extract for ics_app.plant_material_extract;
+DROP PUBLIC SYNONYM PLANT_MATERIAL_EXTRACT;
+
+CREATE PUBLIC SYNONYM PLANT_MATERIAL_EXTRACT FOR ICS_APP.PLANT_MATERIAL_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_MATERIAL_EXTRACT TO LICS_APP;
