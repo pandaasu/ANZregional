@@ -14,70 +14,70 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/06   Trevor Keon    Created 
+ 2010/10   Ben Halicki	  Added ERSA/ZROH materials for plant maintenance
 
 *******************************************************************************/
 
 /**/
 /* View creation 
 /**/
-create or replace force view manu.material_ics as
-  select ltrim(t01.sap_material_code,'0') as material_code,
-    t01.material_type as material_type,
-    t01.material_grp as material_grp,
-    decode(t01.regional_code_10,'*NONE','', ltrim(t01.regional_code_10 ,'0')) as old_material_code,
-    t01.base_uom as uom,
-    t01.order_unit as order_uom,
-    t01.gross_weight as gross_wght,
-    t01.net_weight as dclrd_wght,
-    t01.gross_weight_unit as dclrd_uom,
-    t01.interntl_article_no as ean_code,
-    t01.length as length,
-    t01.width as width,
-    t01.height as height,
-    t01.dimension_uom as uod,
-    t01.total_shelf_life as shelf_life,
-    t01.mars_intrmdt_prdct_compnt_flag as int_code,
-    t01.mars_merchandising_unit_flag as mcu_code,
-    t01.mars_prmotional_material_flag as pro_code,
-    t01.mars_retail_sales_unit_flag as rsu_code,
-    t01.mars_semi_finished_prdct_flag as sfp_code,
-    t01.mars_rprsnttv_item_flag as rep_code,
-    t01.mars_traded_unit_flag as tdu_code,
-    t01.bds_material_desc_en as material_desc,
-    t01.mars_plant_material_type as plant_orntd_matl_type,
-    nvl(t01.plant_specific_status_valid, to_date('19000101','yyyymmdd')) as eff_start_date,
-    to_char(t01.bds_unit_cost) as unit_cost,
-    t01.batch_mngmnt_reqrmnt_indctr as batch_mngmnt_rqrmnt_indctr,
-    t01.procurement_type as prcrmnt_type,
-    t01.xplant_status as x_plant_matl_sts,
-    nvl(t01.xplant_status_valid, to_date('19000101','yyyymmdd')) as x_plant_matl_sts_start,
-    t01.deletion_indctr as dltn_indctr,
-    t01.plant_specific_status as plant_sts
-  from bds_material_plant_mfanz t01
-  where t01.plant_code = 'NZ01' 
-    and 
-    (
-      t01.material_type in ('ROH', 'VERP', 'NLAG', 'PIPE')
-      or
-      (
-        t01.material_type = 'FERT'
-        and 
-        (
-          t01.mars_traded_unit_flag = 'X'
-          or t01.mars_retail_sales_unit_flag = 'X'
-          or t01.mars_intrmdt_prdct_compnt_flag = 'X'
-        )
-      )
-    ); 
+CREATE OR REPLACE FORCE VIEW manu.material AS
+   SELECT LTRIM (t01.sap_material_code, '0') AS material_code,
+          t01.material_type AS material_type,
+          t01.material_grp AS material_grp,
+          DECODE (t01.regional_code_10, '*NONE', '', LTRIM (t01.regional_code_10, '0')) AS old_material_code,
+          t01.base_uom AS uom, 
+	  t01.order_unit AS order_uom,
+          t01.gross_weight AS gross_wght, 
+  	  t01.net_weight AS dclrd_wght,
+          t01.gross_weight_unit AS dclrd_uom,
+          t01.interntl_article_no AS ean_code, 
+	  t01.LENGTH AS LENGTH,
+          t01.width AS width, 
+	  t01.height AS height, 
+	  t01.dimension_uom AS uod,
+          t01.total_shelf_life AS shelf_life,
+          t01.mars_intrmdt_prdct_compnt_flag AS int_code,
+          t01.mars_merchandising_unit_flag AS mcu_code,
+          t01.mars_prmotional_material_flag AS pro_code,
+          t01.mars_retail_sales_unit_flag AS rsu_code,
+          t01.mars_semi_finished_prdct_flag AS sfp_code,
+          t01.mars_rprsnttv_item_flag AS rep_code,
+          t01.mars_traded_unit_flag AS tdu_code,
+          t01.bds_material_desc_en AS material_desc,
+          t01.mars_plant_material_type AS plant_orntd_matl_type,
+          NVL (t01.plant_specific_status_valid,
+               TO_DATE ('19000101', 'yyyymmdd')
+              ) AS eff_start_date,
+          TO_CHAR (t01.bds_unit_cost) AS unit_cost,
+          t01.batch_mngmnt_reqrmnt_indctr AS batch_mngmnt_rqrmnt_indctr,
+          t01.procurement_type AS prcrmnt_type,
+          t01.xplant_status AS x_plant_matl_sts,
+          NVL (t01.xplant_status_valid,
+               TO_DATE ('19000101', 'yyyymmdd')
+              ) AS x_plant_matl_sts_start,
+          t01.deletion_indctr AS dltn_indctr,
+          t01.plant_specific_status AS plant_sts
+     FROM bds_material_plant_mfanz t01
+    WHERE t01.plant_code = 'NZ01'
+      AND (   t01.material_type IN
+                              ('ROH', 'VERP', 'NLAG', 'PIPE', 'ERSA', 'ZROH')
+           OR (    t01.material_type = 'FERT'
+               AND (   t01.mars_traded_unit_flag = 'X'
+                    OR t01.mars_retail_sales_unit_flag = 'X'
+                    OR t01.mars_intrmdt_prdct_compnt_flag = 'X'
+                   )
+              )
+          );
 
-/**/
-/* Authority 
-/**/
-grant select on manu.material_ics to bds_app with grant option;
-grant select on manu.material_ics to pt_app with grant option;
-grant select on manu.material_ics to manu_app with grant option;
 
-/**/
-/* Synonym 
-/**/
-create or replace public synonym material_ics for manu.material_ics;
+DROP PUBLIC SYNONYM MATERIAL;
+
+CREATE PUBLIC SYNONYM MATERIAL FOR MANU.MATERIAL;
+
+
+GRANT SELECT ON MANU.MATERIAL TO BDS_APP WITH GRANT OPTION;
+
+GRANT SELECT ON MANU.MATERIAL TO MANU_APP WITH GRANT OPTION;
+
+GRANT SELECT ON MANU.MATERIAL TO PT_APP WITH GRANT OPTION;
