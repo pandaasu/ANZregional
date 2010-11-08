@@ -20,6 +20,7 @@ create or replace package pts_app.pts_tes_function as
     -------   ------         -----------
     2009/04   Steve Gregan   Created
     2010/10   Steve Gregan   Modified to allow more allocation days than samples
+                             Modified to enter response data by market and alias codes
 
    *******************************************************************************/
 
@@ -3888,6 +3889,7 @@ create or replace package body pts_app.pts_tes_function as
       cursor csr_allocation is
          select t01.tal_day_code,
                 t01.tal_seq_numb,
+                t01.tal_mkt_code,
                 t02.tsa_rpt_code,
                 t02.tsa_mkt_code,
                 t02.tsa_mkt_acde,
@@ -4610,26 +4612,10 @@ create or replace package body pts_app.pts_tes_function as
                if csr_allocation%notfound then
                   exit;
                end if;
-               if rcd_retrieve.tde_tes_sam_count = 1 then
-                  if rcd_panel.tpa_pan_status = '*MEMBER' then
-                     if upper(rcd_retrieve.tty_alc_proc) = 'RANKING' and var_day_code > var_sam_count then
-                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
-                     else
-                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
-                     end if;
-                  else
-                     var_output := var_output||',""';
-                  end if;
+               if rcd_panel.tpa_pan_status = '*MEMBER' then
+                  var_output := var_output||',"'||replace(rcd_allocation.tal_mkt_code,'"','""')||'"';
                else
-                  if rcd_panel.tpa_pan_status = '*MEMBER' then
-                     if var_day_code = 1 then
-                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_code,'"','""')||'"';
-                     else
-                        var_output := var_output||',"'||replace(rcd_allocation.tsa_mkt_acde,'"','""')||'"';
-                     end if;
-                  else
-                     var_output := var_output||',""';
-                  end if;
+                  var_output := var_output||',""';
                end if;
                var_output := var_output||',"'||to_char(rcd_allocation.tfe_fed_qnty)||'"';
                var_output := var_output||',"'||replace(rcd_allocation.tfe_fed_text,'"','""')||'"';
@@ -4756,6 +4742,7 @@ create or replace package body pts_app.pts_tes_function as
 
       cursor csr_allocation is
          select t01.tal_day_code,
+                t01.tal_mkt_code,
                 nvl(t02.tsa_mkt_code,'*') as tsa_mkt_code,
                 nvl(t02.tsa_mkt_acde,'*') as tsa_mkt_acde,
                 nvl(t02.tsa_sam_iden,'*') as tsa_sam_iden,
@@ -4948,57 +4935,17 @@ create or replace package body pts_app.pts_tes_function as
                if csr_allocation%notfound then
                   exit;
                end if;
-               if rcd_retrieve.tde_tes_sam_count = 1 then
-                  for idx in 1..tbl_sdta.count loop
-                     if upper(rcd_retrieve.tty_alc_proc) = 'RANKING' and rcd_allocation.tal_day_code > var_sam_count then
-                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_acde then
-                           if tbl_sdta(idx).pan_seqn = 0 then
-                              var_index := var_index + 1;
-                              tbl_sdta(idx).pan_seqn := var_index;
-                           end if;
-                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                        end if;
-                     else
-                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
-                           if tbl_sdta(idx).pan_seqn = 0 then
-                              var_index := var_index + 1;
-                              tbl_sdta(idx).pan_seqn := var_index;
-                           end if;
-                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                        end if;
+               for idx in 1..tbl_sdta.count loop
+                  if tbl_sdta(idx).mkt_code = rcd_allocation.tal_mkt_code then
+                     if tbl_sdta(idx).pan_seqn = 0 then
+                        var_index := var_index + 1;
+                        tbl_sdta(idx).pan_seqn := var_index;
                      end if;
-                  end loop;
-               else
-                  if rcd_allocation.tal_day_code = 1 then
-                     for idx in 1..tbl_sdta.count loop
-                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_code then
-                           if tbl_sdta(idx).pan_seqn = 0 then
-                              var_index := var_index + 1;
-                              tbl_sdta(idx).pan_seqn := var_index;
-                           end if;
-                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                        end if;
-                     end loop;
-                  else
-                     for idx in 1..tbl_sdta.count loop
-                        if tbl_sdta(idx).mkt_code = rcd_allocation.tsa_mkt_acde then
-                           if tbl_sdta(idx).pan_seqn = 0 then
-                              var_index := var_index + 1;
-                              tbl_sdta(idx).pan_seqn := var_index;
-                           end if;
-                           tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
-                           tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
-                        end if;
-                     end loop;
+                     tbl_sdta(idx).pan_qnty := tbl_sdta(idx).pan_qnty + rcd_allocation.tfe_fed_qnty;
+                     tbl_sdta(idx).ara_qnty := tbl_sdta(idx).ara_qnty + rcd_allocation.tfe_fed_qnty;
+                     tbl_sdta(idx).tot_qnty := tbl_sdta(idx).tot_qnty + rcd_allocation.tfe_fed_qnty;
                   end if;
-               end if;
+               end loop;
             end loop;
             close csr_allocation;
 
@@ -6051,13 +5998,9 @@ create or replace package body pts_app.pts_tes_function as
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_allocation is
-         select t01.*,
-                t02.tsa_mkt_code
-           from pts_tes_allocation t01,
-                pts_tes_sample t02
-          where t01.tal_tes_code = t02.tsa_tes_code
-            and t01.tal_sam_code = t02.tsa_sam_code
-            and t01.tal_tes_code = var_tes_code
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = var_tes_code
             and t01.tal_pan_code = var_pan_code
             and t01.tal_day_code = var_day_code
           order by t01.tal_seq_numb asc;
@@ -6153,7 +6096,7 @@ create or replace package body pts_app.pts_tes_function as
                exit;
             end if;
             var_seq_numb := var_seq_numb + 1;
-            pipe row(pts_xml_object('<RESD DAYCDE="'||to_char(var_day_code)||'" RESSEQ="'||to_char(var_seq_numb)||'" MKTCDE="'||pts_to_xml(rcd_allocation.tsa_mkt_code)||'"/>'));
+            pipe row(pts_xml_object('<RESD DAYCDE="'||to_char(var_day_code)||'" RESSEQ="'||to_char(var_seq_numb)||'" MKTCDE="'||pts_to_xml(rcd_allocation.tal_mkt_code)||'"/>'));
          end loop;
          close csr_allocation;
          var_que_code := 0;
@@ -6240,6 +6183,7 @@ create or replace package body pts_app.pts_tes_function as
       var_found boolean;
       var_message boolean;
       var_exists boolean;
+      var_member boolean;
       type typ_mktcde is table of varchar2(10) index by binary_integer;
       tbl_mktcde typ_mktcde;
       type rcd_alcdat is record(day_code number,
@@ -6308,13 +6252,9 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pet_class csr_pet_class%rowtype;
 
       cursor csr_allocation is
-         select t01.*,
-                t02.tsa_mkt_code
-           from pts_tes_allocation t01,
-                pts_tes_sample t02
-          where t01.tal_tes_code = t02.tsa_tes_code
-            and t01.tal_sam_code = t02.tsa_sam_code
-            and t01.tal_tes_code = var_tes_code
+         select t01.*
+           from pts_tes_allocation t01
+          where t01.tal_tes_code = var_tes_code
             and t01.tal_pan_code = var_pan_code
           order by t01.tal_day_code asc,
                    t01.tal_seq_numb asc;
@@ -6324,7 +6264,7 @@ create or replace package body pts_app.pts_tes_function as
          select t01.*
            from pts_tes_sample t01
           where t01.tsa_tes_code = var_tes_code
-            and t01.tsa_mkt_code = var_mkt_code;
+            and (t01.tsa_mkt_code = var_mkt_code or t01.tsa_mkt_acde = var_mkt_code);
       rcd_sample csr_sample%rowtype;
 
       cursor csr_question is
@@ -6454,10 +6394,14 @@ create or replace package body pts_app.pts_tes_function as
       /* **notes** 1. Create a recruited panel when not found regardless of status
       /*-*/
       var_found := false;
+      var_member := false;
       open csr_panel;
       fetch csr_panel into rcd_panel;
       if csr_panel%found then
          var_found := true;
+         if rcd_panel.tpa_pan_status = '*MEMBER' then
+            var_member := true;
+         end if;
       end if;
       close csr_panel;
       if var_found = false then
@@ -6531,18 +6475,20 @@ create or replace package body pts_app.pts_tes_function as
       /* Save the existing allocation data
       /*-*/
       tbl_alcdat.delete;
-      open csr_allocation;
-      loop
-         fetch csr_allocation into rcd_allocation;
-         if csr_allocation%notfound then
-            exit;
-         end if;
-         tbl_alcdat(tbl_alcdat.count+1).day_code := rcd_allocation.tal_day_code;
-         tbl_alcdat(tbl_alcdat.count).seq_numb := rcd_allocation.tal_seq_numb;
-         tbl_alcdat(tbl_alcdat.count).sam_code := rcd_allocation.tal_sam_code;
-         tbl_alcdat(tbl_alcdat.count).mkt_code := rcd_allocation.tsa_mkt_code;
-       end loop;
-       close csr_allocation;
+      if var_member = true then
+         open csr_allocation;
+         loop
+            fetch csr_allocation into rcd_allocation;
+            if csr_allocation%notfound then
+               exit;
+            end if;
+            tbl_alcdat(tbl_alcdat.count+1).day_code := rcd_allocation.tal_day_code;
+            tbl_alcdat(tbl_alcdat.count).seq_numb := rcd_allocation.tal_seq_numb;
+            tbl_alcdat(tbl_alcdat.count).sam_code := rcd_allocation.tal_sam_code;
+            tbl_alcdat(tbl_alcdat.count).mkt_code := rcd_allocation.tal_mkt_code;
+          end loop;
+          close csr_allocation;
+      end if;
 
       /*-*/
       /* Clear the existing response data
@@ -6673,6 +6619,19 @@ create or replace package body pts_app.pts_tes_function as
                      else
                         var_sam_cod1 := rcd_sample.tsa_sam_code;
                         var_seq_numb := var_day_code;
+                        if var_member = true then
+                           var_exists := false;
+                           for idx in 1..tbl_alcdat.count loop
+                              if tbl_alcdat(idx).sam_code = var_sam_cod1 then
+                                 var_exists := true;
+                                 exit;
+                              end if;
+                           end loop;
+                           if var_exists = false then
+                              pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') is not allocated for this test member');
+                              var_message := true;
+                           end if;
+                        end if;
                      end if;
                      close csr_sample;
                   end if;
@@ -6693,6 +6652,19 @@ create or replace package body pts_app.pts_tes_function as
                         if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                            var_seq_numb := 1;
                         end if;
+                        if var_member = true then
+                           var_exists := false;
+                           for idx in 1..tbl_alcdat.count loop
+                              if tbl_alcdat(idx).sam_code = var_sam_cod1 then
+                                 var_exists := true;
+                                 exit;
+                              end if;
+                           end loop;
+                           if var_exists = false then
+                              pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') is not allocated for this test member');
+                              var_message := true;
+                           end if;
+                        end if;
                      end if;
                      close csr_sample;
                   end if;
@@ -6704,6 +6676,7 @@ create or replace package body pts_app.pts_tes_function as
                rcd_pts_tes_allocation.tal_day_code := var_day_code;
                rcd_pts_tes_allocation.tal_sam_code := var_sam_cod1;
                rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+               rcd_pts_tes_allocation.tal_mkt_code := var_mkt_code;
                insert into pts_tes_allocation values rcd_pts_tes_allocation;
             end if;
             if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
@@ -6765,6 +6738,19 @@ create or replace package body pts_app.pts_tes_function as
                         if upper(rcd_target.tty_alc_proc) = 'DIFFERENCE' then
                            var_seq_numb := 2;
                         end if;
+                        if var_member = true then
+                           var_exists := false;
+                           for idx in 1..tbl_alcdat.count loop
+                              if tbl_alcdat(idx).sam_code = var_sam_cod1 then
+                                 var_exists := true;
+                                 exit;
+                              end if;
+                           end loop;
+                           if var_exists = false then
+                              pts_gen_function.add_mesg_data('Day ('||to_char(var_day_code)||') market research code ('||var_mkt_code||') is not allocated for this test member');
+                              var_message := true;
+                           end if;
+                        end if;
                      end if;
                      close csr_sample;
                   end if;
@@ -6775,6 +6761,7 @@ create or replace package body pts_app.pts_tes_function as
                   rcd_pts_tes_allocation.tal_day_code := var_day_code;
                   rcd_pts_tes_allocation.tal_sam_code := var_sam_cod2;
                   rcd_pts_tes_allocation.tal_seq_numb := var_seq_numb;
+                  rcd_pts_tes_allocation.tal_mkt_code := var_mkt_code;
                   insert into pts_tes_allocation values rcd_pts_tes_allocation;
                end if;
             end if;

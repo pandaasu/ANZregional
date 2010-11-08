@@ -20,6 +20,7 @@ create or replace package pts_app.pts_pet_allocation as
     -------   ------         -----------
     2009/04   Steve Gregan   Created
     2010/10   Steve Gregan   Modified to allow ranking test day count greater than sample count 
+                             Modified to store applicable market research code with allocation
 
    *******************************************************************************/
 
@@ -245,6 +246,7 @@ create or replace package body pts_app.pts_pet_allocation as
                   rcd_pts_tes_allocation.tal_day_code := var_day_index;
                   rcd_pts_tes_allocation.tal_sam_code := tbl_scod(var_sam_index).tsa_sam_code;
                   rcd_pts_tes_allocation.tal_seq_numb := var_day_index;
+                  rcd_pts_tes_allocation.tal_mkt_code := tbl_scod(var_sam_index).tsa_mkt_code;
                   insert into pts_tes_allocation values rcd_pts_tes_allocation;
                end loop;
             end if;
@@ -384,6 +386,11 @@ create or replace package body pts_app.pts_pet_allocation as
                   rcd_pts_tes_allocation.tal_day_code := idx;
                   rcd_pts_tes_allocation.tal_sam_code := tbl_scod(var_sam_index).tsa_sam_code;
                   rcd_pts_tes_allocation.tal_seq_numb := idy;
+                  if idx = 1 then
+                     rcd_pts_tes_allocation.tal_mkt_code := tbl_scod(var_sam_index).tsa_mkt_code;
+                  else
+                     rcd_pts_tes_allocation.tal_mkt_code := tbl_scod(var_sam_index).tsa_mkt_acde;
+                  end if;
                   insert into pts_tes_allocation values rcd_pts_tes_allocation;
                end if;
             end loop;
@@ -510,6 +517,11 @@ create or replace package body pts_app.pts_pet_allocation as
                rcd_pts_tes_allocation.tal_day_code := idx;
                rcd_pts_tes_allocation.tal_sam_code := tbl_scod(var_sam_index).tsa_sam_code;
                rcd_pts_tes_allocation.tal_seq_numb := idx;
+               if idx <= tbl_scod.count then
+                  rcd_pts_tes_allocation.tal_mkt_code := tbl_scod(var_sam_index).tsa_mkt_code;
+               else
+                  rcd_pts_tes_allocation.tal_mkt_code := tbl_scod(var_sam_index).tsa_mkt_acde;
+               end if;
                insert into pts_tes_allocation values rcd_pts_tes_allocation;
             end if;
          end loop;
