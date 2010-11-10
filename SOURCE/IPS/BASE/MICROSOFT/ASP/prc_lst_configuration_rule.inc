@@ -122,9 +122,9 @@
             objCell.colSpan = 1;
             objCell.innerText = cobjRules[i].typnam+' ('+cobjRules[i].rulval+') - ';
             if (cobjRules[i].rulnot == 'F') {
-               objCell.innerText = objCell.innerText+'Standard rule';
+               objCell.innerText = objCell.innerText+'Rule Include';
             } else {
-               objCell.innerText = objCell.innerText+'Rule NOT test applied';
+               objCell.innerText = objCell.innerText+'Rule Exclude';
             }
             objCell.className = 'clsLabelFN';
          }
@@ -388,9 +388,9 @@
          objCell.colSpan = 1;
          objCell.innerText = document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typnam')+' ('+document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value+') - ';
          if (document.getElementById('sltRuleNot').selectedIndex == 0) {
-            objCell.innerText = objCell.innerText+'Standard rule';
+            objCell.innerText = objCell.innerText+'Rule Include';
          } else {
-            objCell.innerText = objCell.innerText+'Rule NOT test applied';
+            objCell.innerText = objCell.innerText+'Rule Exclude';
          }
          objCell.className = 'clsLabelFN';
       } else {
@@ -400,9 +400,9 @@
          objRow.setAttribute('rulnot',document.getElementById('sltRuleNot').options[document.getElementById('sltRuleNot').selectedIndex].value);
          objRow.cells(1).innerText = document.getElementById('sltRuleType').options[document.getElementById('sltRuleType').selectedIndex].getAttribute('typnam')+' ('+document.getElementById('sltRuleValue').options[document.getElementById('sltRuleValue').selectedIndex].value+') - ';
          if (document.getElementById('sltRuleNot').selectedIndex == 0) {
-            objRow.cells(1).innerText = objRow.cells(1).innerText+'Standard rule';
+            objRow.cells(1).innerText = objRow.cells(1).innerText+'Rule Include';
          } else {
-            objRow.cells(1).innerText = objRow.cells(1).innerText+'Rule NOT test applied';
+            objRow.cells(1).innerText = objRow.cells(1).innerText+'Rule Exclude';
          }
       }
       var objDspList = document.getElementById('dspList');
@@ -602,8 +602,8 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Rule Value:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="sltRuleNot">
-               <option value="F">Standard Rule
-               <option value="T">Rule NOT test applied
+               <option value="F">Rule Include
+               <option value="T">Rule Exclude
             </select>
          </nobr></td>
       </tr>
