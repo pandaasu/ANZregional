@@ -4954,7 +4954,9 @@ create or replace package body pts_app.pts_tes_function as
             /*-*/
             tbl_pdta.delete;
             for idx in 1..tbl_sdta.count loop
-               tbl_pdta(tbl_sdta(idx).pan_seqn) := idx;
+               if tbl_sdta(idx).pan_seqn != 0 then
+                  tbl_pdta(tbl_sdta(idx).pan_seqn) := idx;
+               end if;
             end loop;
 
          end if;
