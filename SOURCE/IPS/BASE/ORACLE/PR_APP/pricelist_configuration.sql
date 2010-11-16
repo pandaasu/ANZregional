@@ -19,6 +19,7 @@ create or replace package pricelist_configuration as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/12   Steve Gregan   Created
+    2010/11   Steve Gregan   Added report group terms
 
    *******************************************************************************/
 
@@ -28,6 +29,8 @@ create or replace package pricelist_configuration as
    procedure define_group(par_report_grp_id in number,
                           par_report_grp_name in varchar2,
                           par_status in varchar2);
+   procedure define_group_term(par_value in varchar2);
+   procedure define_group_commit;
    procedure delete_group(par_report_grp_id in number);
    procedure define_report(par_report_id in number,
                            par_report_name in varchar2,
@@ -39,6 +42,7 @@ create or replace package pricelist_configuration as
                            par_matl_alrtng in varchar2,
                            par_auto_matl_update in varchar2,
                            par_email_address in varchar2,
+                           par_copy_terms in varchar2,
                            par_user in varchar2);
    procedure define_data(par_report_item_id in number,
                          par_price_item_id in number);
@@ -57,6 +61,9 @@ create or replace package pricelist_configuration as
    procedure material_begin(par_report_id in number);
    procedure material_detail(par_matl_code in varchar2);
    procedure material_commit;
+   procedure format_group(par_report_grp_id in number);
+   procedure format_group_term(par_data_frmt in varchar2);
+   procedure format_group_commit;
    procedure format_report(par_report_id in number,
                            par_report_name_frmt in varchar2,
                            par_user in varchar2);
@@ -103,8 +110,11 @@ create or replace package body pricelist_configuration as
                            rule_vlu varchar2(200),
                            rule_not varchar2(1));
    rcd_report_grp report_grp%rowtype;
+   rcd_report_grp_term report_grp_term%rowtype;
    type typ_report_grp is table of report_grp%rowtype index by binary_integer;
+   type typ_report_grp_term is table of report_grp_term%rowtype index by binary_integer;
    tbl_report_grp typ_report_grp;
+   tbl_report_grp_term typ_report_grp_term;
    rcd_report report%rowtype;
    rcd_report_item report_item%rowtype;
    rcd_report_term report_term%rowtype;
@@ -156,6 +166,7 @@ create or replace package body pricelist_configuration as
       /* Initialise the report group
       /*-*/
       tbl_report_grp.delete;
+      tbl_report_grp_term.delete;
 
       /*-*/
       /* Set the report group variables
@@ -163,6 +174,87 @@ create or replace package body pricelist_configuration as
       tbl_report_grp(1).report_grp_id := par_report_grp_id;
       tbl_report_grp(1).report_grp_name := par_report_grp_name;
       tbl_report_grp(1).status := par_status;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end define_group;
+
+   /*********************************************************/
+   /* This procedure performs the define group term routine */
+   /*********************************************************/
+   procedure define_group_term(par_value in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the report variables
+      /**/
+      tbl_report_grp_term(tbl_report_grp_term.count+1).value := substr(rtrim(rtrim(ltrim(ltrim(par_value,chr(10)),chr(13)),chr(10)),chr(13)),1,1000);
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end define_group_term;
+
+   /***********************************************************/
+   /* This procedure performs the define group commit routine */
+   /***********************************************************/
+   procedure define_group_commit is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return common.st_result;
+      var_return_msg common.st_message_string;
+      var_id common.st_code;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_check_report_grp is 
+         select t01.*
+           from report_grp t01
+          where t01.report_grp_id = rcd_report_grp.report_grp_id;
+      rcd_check_report_grp csr_check_report_grp%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*-*/
       /* Initialise the report group identifier
@@ -179,6 +271,7 @@ create or replace package body pricelist_configuration as
             set report_grp_name = tbl_report_grp(1).report_grp_name,
                 status = tbl_report_grp(1).status
           where report_grp_id = rcd_report_grp.report_grp_id;
+         delete from report_grp_term where report_grp_id = rcd_report_grp.report_grp_id;
       else
          var_return := pricelist_object_tracking.get_new_id('REPORT_GRP', 'REPORT_GRP_ID', var_id, var_return_msg);
          if var_return != common.gc_success then
@@ -190,6 +283,17 @@ create or replace package body pricelist_configuration as
          insert into report_grp values rcd_report_grp;
       end if;
       close csr_check_report_grp;
+
+      /*-*/
+      /* Insert the new report group terms
+      /*-*/
+      for idx in 1..tbl_report_grp_term.count loop
+         rcd_report_grp_term.report_grp_id := rcd_report_grp.report_grp_id;
+         rcd_report_grp_term.sort_order := idx;
+         rcd_report_grp_term.value := tbl_report_grp_term(idx).value;
+         rcd_report_grp_term.data_frmt := null;
+         insert into report_grp_term values rcd_report_grp_term;
+      end loop;
 
       /*-*/
       /* Commit the database
@@ -219,7 +323,7 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end define_group;
+   end define_group_commit;
 
    /***********************************************************/
    /* This procedure performs the delete report group routine */
@@ -253,6 +357,8 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Delete the report group
       /*-*/
+      delete from report_grp_term
+       where report_grp_id = par_report_grp_id;
       delete from report_grp
        where report_grp_id = par_report_grp_id;
 
@@ -299,7 +405,19 @@ create or replace package body pricelist_configuration as
                            par_matl_alrtng in varchar2,
                            par_auto_matl_update in varchar2,
                            par_email_address in varchar2,
+                           par_copy_terms in varchar2,
                            par_user in varchar2) is
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_group_term is 
+         select t01.value,
+                t01.data_frmt
+           from report_grp_term t01
+          where t01.report_grp_id = par_report_grp_id
+          order by t01.sort_order asc;
+      rcd_group_term csr_group_term%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -331,6 +449,22 @@ create or replace package body pricelist_configuration as
       tbl_report(1).create_user := par_user;
       tbl_report(1).update_user := par_user;
       tbl_report(1).email_address := par_email_address;
+
+      /*-*/
+      /* Copy the report group terms when required
+      /**/
+      if par_copy_terms = 'Y' then
+         open csr_group_term;
+         loop
+            fetch csr_group_term into rcd_group_term;
+            if csr_group_term%notfound then
+               exit;
+            end if;
+            tbl_report_term(tbl_report_term.count+1).value := rcd_group_term.value;
+            tbl_report_term(tbl_report_term.count).data_frmt := rcd_group_term.data_frmt;
+         end loop;
+         close csr_group_term;
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -477,6 +611,7 @@ create or replace package body pricelist_configuration as
       /* Set the report variables
       /**/
       tbl_report_term(tbl_report_term.count+1).value := substr(rtrim(rtrim(ltrim(ltrim(par_value,chr(10)),chr(13)),chr(10)),chr(13)),1,1000);
+      tbl_report_term(tbl_report_term.count).data_frmt := null;
 
    /*-------------------*/
    /* Exception handler */
@@ -588,7 +723,8 @@ create or replace package body pricelist_configuration as
       /* 1. New reports have the following default rules created
       /*    1.1 x_plant_matl_sts = 10 (price_rule_type_id = 100)
       /*    1.2 dstrbtn_chain_sts = 20 (price_rule_type_id = 101)
-      /*    1.3 matl_type = ZREP (price_rule_type_id = 102)
+      /*     Food business requested detaile material type to be FERT instead of ZREP
+      /*    1.3 matl_type = FERT (price_rule_type_id = 102) 
       /*-*/
       var_materials := false;
       open csr_check_report;
@@ -670,7 +806,7 @@ create or replace package body pricelist_configuration as
          if csr_price_rule_type%found then
             rcd_report_rule_detl.report_rule_id := rcd_report_rule.report_rule_id;
             rcd_report_rule_detl.price_rule_type_id := rcd_price_rule_type.price_rule_type_id;
-            rcd_report_rule_detl.rule_vlu := 'ZREP';
+            rcd_report_rule_detl.rule_vlu := 'FERT';
             rcd_report_rule_detl.rule_not := 'F';
             insert into report_rule_detl values rcd_report_rule_detl;
          end if;
@@ -762,7 +898,7 @@ create or replace package body pricelist_configuration as
          rcd_report_term.report_id := rcd_report.report_id;
          rcd_report_term.sort_order := idx;
          rcd_report_term.value := tbl_report_term(idx).value;
-         rcd_report_term.data_frmt := null;
+         rcd_report_term.data_frmt := tbl_report_term(idx).data_frmt;
          insert into report_term values rcd_report_term;
       end loop;
 
@@ -1152,6 +1288,165 @@ create or replace package body pricelist_configuration as
    /* End routine */
    /*-------------*/
    end material_commit;
+
+   /****************************************************/
+   /* This procedure performs the format group routine */
+   /****************************************************/
+   procedure format_group(par_report_grp_id in number) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the report
+      /*-*/
+      tbl_report_grp.delete;
+      tbl_report_grp_term.delete;
+
+      /*-*/
+      /* Set the report group variables
+      /**/
+      tbl_report_grp(1).report_grp_id := par_report_grp_id;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end format_group;
+
+   /**************************************************************/
+   /* This procedure performs the format group term item routine */
+   /**************************************************************/
+   procedure format_group_term(par_data_frmt in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the report group variables
+      /**/
+      tbl_report_grp_term(tbl_report_grp_term.count+1).data_frmt := par_data_frmt;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end format_group_term;
+
+   /***********************************************************/
+   /* This procedure performs the format group commit routine */
+   /***********************************************************/
+   procedure format_group_commit is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return common.st_result;
+      var_return_msg common.st_message_string;
+      var_id common.st_code;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_check_report_grp is 
+         select t01.*
+           from report_grp t01
+          where t01.report_grp_id = tbl_report_grp(1).report_grp_id;
+      rcd_check_report_grp csr_check_report_grp%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the existing report group
+      /*-*/
+      open csr_check_report_grp;
+      fetch csr_check_report_grp into rcd_check_report_grp;
+      if csr_check_report_grp%notfound then
+         raise_application_error(-20000, 'Report group (' || tbl_report_grp(1).report_grp_id || ') does not exist');
+      end if;
+      close csr_check_report_grp;
+
+      /*-*/
+      /* Update the report group
+      /*-*/
+      update report_grp
+         set report_grp_name = report_grp_name
+       where report_grp_id = tbl_report_grp(1).report_grp_id;
+
+      /*-*/
+      /* Update the report group terms
+      /*-*/
+      for idx in 1..tbl_report_grp_term.count loop
+         update report_grp_term
+            set data_frmt = tbl_report_grp_term(idx).data_frmt
+          where report_grp_id = tbl_report_grp(1).report_grp_id
+            and sort_order = idx;
+      end loop;
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end format_group_commit;
 
    /*****************************************************/
    /* This procedure performs the format report routine */
