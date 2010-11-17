@@ -243,7 +243,7 @@
    cobjTextAligns[2] = new clsSelectList('Center','center');
    cobjTextAligns[3] = new clsSelectList('Justify','justify');
    var cobjDataTypes = new Array();
-   cobjDataTypes[0] = new clsSelectList('*Text*','');
+   cobjDataTypes[0] = new clsSelectList('Text','');
    cobjDataTypes[1] = new clsSelectList('Number (Text)','\\@');
    cobjDataTypes[2] = new clsSelectList('Number 0','0');
    cobjDataTypes[3] = new clsSelectList('Number 0.0','0\\.0');
