@@ -79,6 +79,10 @@
             call ProcessDefineLoad
          case "DEFINE_ACCEPT"
             call ProcessDefineAccept
+         case "FORMAT_LOAD"
+            call ProcessFormatLoad
+         case "FORMAT_ACCEPT"
+            call ProcessFormatAccept
          case "DELETE_LOAD"
             call ProcessDeleteLoad
          case "DELETE_ACCEPT"
@@ -100,6 +104,8 @@
          call PaintSelect
       case "DEFINE"
          call PaintDefine
+      case "FORMAT"
+         call PaintFormat
       case "DELETE"
          call PaintDelete
    end select
@@ -181,6 +187,23 @@ sub ProcessDefineLoad()
       end if
 
       '//
+      '// Retrieve the report group terms
+      '//
+      lngSize = 0
+      strQuery = "select"
+      strQuery = strQuery & " t01.value"
+      strQuery = strQuery & " from report_grp_term t01"
+      strQuery = strQuery & " where t01.report_grp_id = " & objForm.Fields("DTA_ReportGrpId").Value
+      strQuery = strQuery & " order by t01.sort_order asc"
+      strReturn = objSelection.Execute("GROUP_TERM", strQuery, lngSize)
+      if strReturn <> "*OK" then
+         strError = FormatError(strReturn)
+         strMode = "SELECT"
+         call ProcessSelect
+         exit sub
+      end if
+
+      '//
       '// Initialise the data fields
       '//
       call objForm.AddField("DTA_ReportGrpName", objSelection.ListValue02("GROUP",objSelection.ListLower("GROUP")))
@@ -225,6 +248,138 @@ sub ProcessDefineAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_ReportGrpName").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_Status").Value) & "'"
    strStatement = strStatement & ")"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Define the group term
+   '//
+   lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
+   for i = 1 to lngCount
+      strStatement = "pricelist_configuration.define_group_term("
+      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerText" & i).Value) & "'"
+      strStatement = strStatement & ")"
+      strReturn = objProcedure.Execute(strStatement)
+      if strReturn <> "*OK" then
+         strError = FormatError(strReturn)
+         strMode = "SELECT"
+         call ProcessSelect
+         exit sub
+      end if
+   next
+
+   '//
+   '// Commit the group define
+   '//
+   strStatement = "pricelist_configuration.define_group_commit"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'/////////////////////////////////
+'// Process format load routine //
+'/////////////////////////////////
+sub ProcessFormatLoad()
+
+   dim strQuery
+   dim lngSize
+
+   '//
+   '// Create the selection object
+   '//
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the report group terms
+   '//
+   lngSize = 0
+   strQuery = "select"
+   strQuery = strQuery & " nvl(t01.value,'*Blank Line*'),"
+   strQuery = strQuery & " replace(t01.data_frmt,'\','\\')"
+   strQuery = strQuery & " from report_grp_term t01"
+   strQuery = strQuery & " where t01.report_grp_id = " & objForm.Fields("DTA_ReportGrpId").Value
+   strQuery = strQuery & " order by t01.sort_order asc"
+   strReturn = objSelection.Execute("GROUP_TERM", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "FORMAT"
+
+end sub
+
+'///////////////////////////////////
+'// Process format accept routine //
+'///////////////////////////////////
+sub ProcessFormatAccept()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Format the report group
+   '//
+   strStatement = "pricelist_configuration.format_group("
+   strStatement = strStatement & objForm.Fields("DTA_ReportGrpId").Value & ")"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the report group term format
+   '//
+   lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
+   for i = 1 to lngCount
+      strStatement = "pricelist_configuration.format_group_term("
+      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerDat" & i).Value) & "'"
+      strStatement = strStatement & ")"
+      strReturn = objProcedure.Execute(strStatement)
+      if strReturn <> "*OK" then
+         strError = FormatError(strReturn)
+         strMode = "SELECT"
+         call ProcessSelect
+         exit sub
+      end if
+   next
+
+   '//
+   '// Commit the report group format
+   '//
+   strStatement = "pricelist_configuration.format_group_commit"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -340,6 +495,13 @@ sub PaintSelect()%>
 '//////////////////////////
 sub PaintDefine()%>
 <!--#include file="prc_lst_group_define.inc"-->
+<%end sub
+
+'//////////////////////////
+'// Paint format routine //
+'//////////////////////////
+sub PaintFormat()%>
+<!--#include file="prc_lst_group_format.inc"-->
 <%end sub
 
 '//////////////////////////

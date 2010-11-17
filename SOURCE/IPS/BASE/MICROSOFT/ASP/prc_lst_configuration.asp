@@ -348,6 +348,7 @@ sub ProcessDefineLoad()
       call objForm.AddField("DTA_AutoMatlUpdate", objSelection.ListValue07("REPORT",objSelection.ListLower("REPORT")))
       call objForm.AddField("DTA_EmailAddress", objSelection.ListValue08("REPORT",objSelection.ListLower("REPORT")))
       call objForm.AddField("DTA_UpdateUser", objSelection.ListValue09("REPORT",objSelection.ListLower("REPORT")))
+      call objForm.AddField("DTA_CopyTerms","N")
 
    else
 
@@ -362,6 +363,7 @@ sub ProcessDefineLoad()
       call objForm.AddField("DTA_AutoMatlUpdate", "N")
       call objForm.AddField("DTA_EmailAddress", "")
       call objForm.AddField("DTA_UpdateUser", "New Report")
+      call objForm.AddField("DTA_CopyTerms","Y")
 
    end if
 
@@ -400,6 +402,7 @@ sub ProcessDefineAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_MatlAlrtng").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_AutoMatlUpdate").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_EmailAddress").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_CopyTerms").Value) & "',"
    strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objProcedure.Execute(strStatement)
@@ -467,19 +470,21 @@ sub ProcessDefineAccept()
    '//
    '// Define the report term
    '//
-   lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
-   for i = 1 to lngCount
-      strStatement = "pricelist_configuration.define_term("
-      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerText" & i).Value) & "'"
-      strStatement = strStatement & ")"
-      strReturn = objProcedure.Execute(strStatement)
-      if strReturn <> "*OK" then
-         strError = FormatError(strReturn)
-         strMode = "SELECT"
-         call ProcessSelect
-         exit sub
-      end if
-   next
+   if objForm.Fields("DTA_CopyTerms").Value <> "Y" then
+      lngCount = clng(objForm.Fields("DET_RepTerCount").Value)
+      for i = 1 to lngCount
+         strStatement = "pricelist_configuration.define_term("
+         strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepTerText" & i).Value) & "'"
+         strStatement = strStatement & ")"
+         strReturn = objProcedure.Execute(strStatement)
+         if strReturn <> "*OK" then
+            strError = FormatError(strReturn)
+            strMode = "SELECT"
+            call ProcessSelect
+            exit sub
+         end if
+      next
+   end if
 
    '//
    '// Commit the define
@@ -796,7 +801,7 @@ sub ProcessFormatLoad()
    strQuery = "select"
    strQuery = strQuery & " to_char(t01.report_id),"
    strQuery = strQuery & " t01.report_name,"
-   strQuery = strQuery & " t01.report_name_frmt"
+   strQuery = strQuery & " replace(t01.report_name_frmt,'\','\\')"
    strQuery = strQuery & " from report t01"
    strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
@@ -815,8 +820,8 @@ sub ProcessFormatLoad()
    strQuery = strQuery & " to_char(t01.report_item_id),"
    strQuery = strQuery & " t02.price_item_name,"
    strQuery = strQuery & " nvl(t01.name_ovrd,t02.price_item_name),"
-   strQuery = strQuery & " t01.name_frmt,"
-   strQuery = strQuery & " t01.data_frmt"
+   strQuery = strQuery & " replace(t01.name_frmt,'\','\\'),"
+   strQuery = strQuery & " replace(t01.data_frmt,'\','\\')"
    strQuery = strQuery & " from report_item t01, price_item t02"
    strQuery = strQuery & " where t01.price_item_id = t02.price_item_id and t01.report_id = " & objForm.Fields("DTA_ReportId").Value & " and t01.report_item_type = 'D'"
    strQuery = strQuery & " order by t01.sort_order asc"
@@ -835,7 +840,7 @@ sub ProcessFormatLoad()
    strQuery = "select"
    strQuery = strQuery & " to_char(t01.report_item_id),"
    strQuery = strQuery & " t02.price_item_name,"
-   strQuery = strQuery & " t01.data_frmt"
+   strQuery = strQuery & " replace(t01.data_frmt,'\','\\')"
    strQuery = strQuery & " from report_item t01, price_item t02"
    strQuery = strQuery & " where t01.price_item_id = t02.price_item_id and t01.report_id = " & objForm.Fields("DTA_ReportId").Value & " and t01.report_item_type = 'B'"
    strQuery = strQuery & " order by t01.sort_order asc"
@@ -853,7 +858,7 @@ sub ProcessFormatLoad()
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " nvl(t01.value,'*Blank Line*'),"
-   strQuery = strQuery & " t01.data_frmt"
+   strQuery = strQuery & " replace(t01.data_frmt,'\','\\')"
    strQuery = strQuery & " from report_term t01"
    strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    strQuery = strQuery & " order by t01.sort_order asc"

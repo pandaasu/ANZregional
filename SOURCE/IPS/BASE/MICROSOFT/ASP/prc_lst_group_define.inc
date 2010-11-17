@@ -24,15 +24,8 @@
       }
    }
    function checkChange() {
-      var bolChange = false;
-      var bolReturn;
-      if (document.main.INP_ReportGrpName.value != document.main.DTA_ReportGrpName.value) {bolChange = true;}
-      if (document.main.INP_Status.value != document.main.DTA_Status.value) {bolChange = true;}
-      if (bolChange == true) {
-         bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
-         return bolReturn;
-      }
-      return true;
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
    }
    function doCancel() {
       if (checkChange() == false) {return;}
@@ -43,6 +36,7 @@
    function doAccept() {
       if (!processForm()) {return;}
       var strMessage = '';
+      var strDetail = '';
       if (document.main.INP_ReportGrpName.value == '') {
          if (strMessage != null) {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Report group name must be entered';
@@ -50,6 +44,11 @@
       if (document.main.INP_Status.value == '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Status must be selected';
+      }
+      strDetail = checkItems();
+      if (strDetail != '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + strDetail;
       }
       if (strMessage != '') {
          alert(strMessage);
@@ -74,6 +73,31 @@
    function selectStatus(strValue) {
       document.main.INP_Status.value = strValue;
    }
+
+   /////////////////////////////
+   // Group definition script //
+   /////////////////////////////
+   var cstrReportTerm = '';
+   function loadReportTerms() {<%if objSelection.ListCount("GROUP_TERM") <> 0 then%><%for i = objSelection.ListLower("GROUP_TERM") to objSelection.ListUpper("GROUP_TERM")%>
+      cstrReportTerm = <%if i > 0 then%>cstrReportTerm+<%end if%>'<%=replace(objSelection.ListValue01("GROUP_TERM",i), "'", "\'", 1, -1, 1)%>'<%if i < objSelection.ListCount("GROUP_TERM")-1 then%>+'\n'<%end if%>;<%next%><%end if%>
+      var objTxtRepGrpTerm = document.getElementById('txtRepGrpTerm');
+      objTxtRepGrpTerm.value = cstrReportTerm;
+   }
+   function checkItems() {
+      var strReturn = '';
+      var objHidden = null;
+      var objTxtRepGrpTerm = document.getElementById('txtRepGrpTerm');
+      var aryTerms = objTxtRepGrpTerm.value.split('\n');
+      for (var i=0;i<aryTerms.length;i++) {
+         objHidden = document.createElement('input');
+         objHidden.setAttribute('type','hidden');
+         objHidden.setAttribute('name','DET_RepTerText'+(i+1));
+         objHidden.setAttribute('value',aryTerms[i]);
+         document.forms['main'].appendChild(objHidden);
+      }
+      document.getElementById('DET_RepTerCount').value = aryTerms.length;
+      return strReturn;
+   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -81,7 +105,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_group_define_help.htm');parent.setHeading('<%=strHeading%> - Define Report Group');parent.showContent();showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_group_define_help.htm');parent.setHeading('<%=strHeading%> - Define Report Group');parent.showContent();loadReportTerms();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 cellpadding="1" cellspacing="0">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
@@ -104,6 +128,24 @@
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table id="tabTerm" class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <textarea class="clsInputNN" id="txtRepGrpTerm" name="txtRepGrpTerm" style="width:700px;" rows="20" wrap="off"></textarea>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
@@ -119,6 +161,7 @@
    <input type="hidden" name="DTA_ReportGrpName" value="<%=replace(objForm.Fields("DTA_ReportGrpName").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
    <input type="hidden" name="INP_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
+   <input type="hidden" name="DET_RepTerCount" value="">
 </form>
 </body>
 </html>

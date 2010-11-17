@@ -86,7 +86,7 @@
       objCell.style.color = '#ffffff';
       objCell.style.textAlign = 'center';
       objCell.style.whiteSpace = 'nowrap';
-      for (var i=0;i<cobjGroupTerm.length;i++) {
+      for (var i=0;i<cobjReportTerm.length;i++) {
          intRowCount++;
          objRow = objFormatTable.insertRow(intRowCount);
          objCell = objRow.insertCell(0);
@@ -148,19 +148,20 @@
       }
    }
    function getStyle(objObject) {
-      return 'font-family:'+objObject.style.fontFamily+';'+
-             'font-size:'+objObject.style.fontSize+';'+
-             'font-weight:'+objObject.style.fontWeight+';'+
-             'font-style:'+objObject.style.fontStyle+';'+
-             'background-color:'+objObject.style.backgroundColor+';'+
-             'color:'+objObject.style.color+';'+
-             'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'+
-             'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'+
-             'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'+
-             'text-align:'+objObject.style.textAlign+';';
-             if (objObject.style.mso-number-format) {
-                'mso-number-format:'+objObject.style.msoNumberFormat+';';
-             }
+      var strStyle = 'font-family:'+objObject.style.fontFamily+';'+
+                     'font-size:'+objObject.style.fontSize+';'+
+                     'font-weight:'+objObject.style.fontWeight+';'+
+                     'font-style:'+objObject.style.fontStyle+';'+
+                     'background-color:'+objObject.style.backgroundColor+';'+
+                     'color:'+objObject.style.color+';'+
+                     'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'+
+                     'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'+
+                     'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'+
+                     'text-align:'+objObject.style.textAlign+';';
+                     if (objObject.style.msoNumberFormat != '') {
+                        strStyle = strStyle + 'mso-number-format:'+objObject.style.msoNumberFormat+';';
+                     }
+      return strStyle;
    }
    function checkItems() {
       var strReturn = '';
@@ -242,12 +243,12 @@
    cobjTextAligns[2] = new clsSelectList('Center','center');
    cobjTextAligns[3] = new clsSelectList('Justify','justify');
    var cobjDataTypes = new Array();
-   cobjDataTypes[0] = new clsSelectList('*Text*',null);
-   cobjDataTypes[1] = new clsSelectList('Number (Text)','mso-number-format:\@');
-   cobjDataTypes[2] = new clsSelectList('Number 0','mso-number-format:0');
-   cobjDataTypes[3] = new clsSelectList('Number 0.0','mso-number-format:0\.0');
-   cobjDataTypes[4] = new clsSelectList('Number 0.00','mso-number-format:0\.00');
-   cobjDataTypes[5] = new clsSelectList('Number 0.000','mso-number-format:0\.000');
+   cobjDataTypes[0] = new clsSelectList('*Text*','');
+   cobjDataTypes[1] = new clsSelectList('Number (Text)','\\@');
+   cobjDataTypes[2] = new clsSelectList('Number 0','0');
+   cobjDataTypes[3] = new clsSelectList('Number 0.0','0\\.0');
+   cobjDataTypes[4] = new clsSelectList('Number 0.00','0\\.00');
+   cobjDataTypes[5] = new clsSelectList('Number 0.000','0\\.000');
    var cobjColors = new Array('000000','000033','000066','000099','0000CC','0000FF',
                               '003300','003333','003366','003399','0033CC','0033FF',
                               '006600','006633','006666','006699','0066CC','0066FF',
@@ -424,6 +425,7 @@
       cobjFormatterTarget.style.fontStyle = cobjFormatterSource.style.fontStyle;
       cobjFormatterTarget.style.fontSize = cobjFormatterSource.style.fontSize;
       cobjFormatterTarget.style.textAlign = cobjFormatterSource.style.textAlign;
+      cobjFormatterTarget.style.msoNumberFormat = cobjFormatterSource.style.msoNumberFormat;
       if (cstrFormatterAction == '*REPTERALL') {
          cobjFormatterTarget.innerText = 'All Terms and Conditions';
       } else {
@@ -477,6 +479,9 @@
             objSelect.options[i].selected = true;
             break;
          }
+      }
+      if (objSelect.selectedIndex == 0) {
+         cobjFormatterTarget.style.msoNumberFormat = '';
       }
       var objTableLayout = document.getElementById('tabLayout');
       var objTableFormat = document.getElementById('tabFormat');
@@ -596,8 +601,7 @@
    }
    function setDataType(objObject) {
       if (cobjFormatterTarget == null) {return;};
-      cobjFormatterTarget.style.mso-number-format = objObject.options[objObject.selectedIndex].value;
-      cobjFormatterTarget.value = objObject.options[objObject.selectedIndex].text;
+      cobjFormatterTarget.style.msoNumberFormat = objObject.options[objObject.selectedIndex].value;
    }
 // -->
 </script>
@@ -606,7 +610,7 @@
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_group_format_help.htm');parent.setHeading('<%=strHeading%> - Report Group Formatting');parent.showContent();loadGroupTerms();loadFormatting();showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('prc_lst_group_format_help.htm');parent.setHeading('<%=strHeading%> - Report Group Formatting');parent.showContent();loadReportTerms();loadFormatting();showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table id="tabLayout" class="clsGrid02" style="display:block;visibility:visible" align=center valign=top cols=1 cellpadding=1 cellspacing=0>
       <tr><td colspan=1><table id="tabFormatLayout" class="clsGrid02" align=center valign=top cellpadding=2 cellspacing=4></table></td></tr>

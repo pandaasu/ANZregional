@@ -57,6 +57,17 @@
          document.main.submit();
       }
    }
+   function doFormat() {
+      if (!processForm()) {return;}
+      if (cstrSelected == '') {
+         alert('Report group must be selected');
+         return;
+      }
+      document.main.action = '<%=strBase%><%=strTarget%>';
+      document.main.Mode.value = 'FORMAT_LOAD';
+      document.main.DTA_ReportGrpId.value = cstrSelected;
+      document.main.submit();
+   }
    function doDelete() {
       if (!processForm()) {return;}
       if (cstrSelected == '') {
@@ -88,11 +99,12 @@
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('*CREATE');">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDefine('*UPDATE');">&nbsp;Update&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doFormat();">&nbsp;Format&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doDelete();">&nbsp;Delete&nbsp;</a></nobr></td>
                </tr>
             </table>

@@ -71,6 +71,10 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Status must be selected';
       }
+      if (document.main.INP_CopyTerms.value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Copy report group terms and conditions must be selected';
+      }
       strDetail = checkItems();
       if (strDetail != '') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
@@ -87,6 +91,7 @@
       document.main.DTA_AutoMatlUpdate.value = document.main.INP_AutoMatlUpdate.value;
       document.main.DTA_EmailAddress.value = document.main.INP_EmailAddress.value;
       document.main.DTA_Status.value = document.main.INP_Status.value;
+      document.main.DTA_CopyTerms.value = document.main.INP_CopyTerms.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'DEFINE_ACCEPT';
       document.main.submit();
@@ -120,6 +125,14 @@
    }
    function selectStatus(strValue) {
       document.main.INP_Status.value = strValue;
+   }
+   function selectCopyTerms(strValue) {
+      document.main.INP_CopyTerms.value = strValue;
+      if (document.main.INP_CopyTerms.value == 'Y') {
+         document.getElementById('txtReportTerm').disabled = true;
+      } else {
+         document.getElementById('txtReportTerm').disabled = false;
+      }
    }
    function showItem() {
       var objTableItem = document.getElementById('tabItem');
@@ -648,15 +661,19 @@
             document.forms['main'].appendChild(objHidden);
          }
          document.getElementById('DET_RepOrdCount').value = objSltReportOrder.options.length;
-         var aryTerms = objTxtReportTerm.value.split('\n');
-         for (var i=0;i<aryTerms.length;i++) {
-            objHidden = document.createElement('input');
-            objHidden.setAttribute('type','hidden');
-            objHidden.setAttribute('name','DET_RepTerText'+(i+1));
-            objHidden.setAttribute('value',aryTerms[i]);
-            document.forms['main'].appendChild(objHidden);
+         if (document.main.INP_CopyTerms.value == 'Y') {
+            document.getElementById('DET_RepTerCount').value = 0;
+         } else {
+            var aryTerms = objTxtReportTerm.value.split('\n');
+            for (var i=0;i<aryTerms.length;i++) {
+               objHidden = document.createElement('input');
+               objHidden.setAttribute('type','hidden');
+               objHidden.setAttribute('name','DET_RepTerText'+(i+1));
+               objHidden.setAttribute('value',aryTerms[i]);
+               document.forms['main'].appendChild(objHidden);
+            }
+            document.getElementById('DET_RepTerCount').value = aryTerms.length;
          }
-         document.getElementById('DET_RepTerCount').value = aryTerms.length;
       }
       return strReturn;
    }
@@ -809,8 +826,14 @@
                   <td class="clsTabB" align=center colspan=2 nowrap><nobr>&nbsp;Terms and Conditions&nbsp;</nobr></td>
                </tr>
                <tr>
+                  <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Copy Report Group Terms and Conditions:&nbsp;
+                     <input type="radio" name="sltCopyTerms"<%if objForm.Fields("DTA_CopyTerms").Value = "" or objForm.Fields("DTA_CopyTerms").Value = "N" then%> checked<%end if%> value="I" onClick="javascript:selectCopyTerms('N');">No&nbsp;
+                     <input type="radio" name="sltCopyTerms"<%if objForm.Fields("DTA_CopyTerms").Value = "Y" then%> checked<%end if%> value="Y" onClick="javascript:selectCopyTerms('Y');">Yes&nbsp;
+                  &nbsp;</nobr></td>
+               </tr>
+               <tr>
                   <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
-                     <textarea class="clsInputNN" id="txtReportTerm" name="txtReportTerm" style="width:700px;" rows="20" wrap="off"></textarea>
+                     <textarea class="clsInputNN" id="txtReportTerm" name="txtReportTerm" style="width:700px;" rows="20" wrap="off"<%if objForm.Fields("DTA_CopyTerms").Value = "Y" then%>disabled="disabled"<%end if%>></textarea>
                   </nobr></td>
                </tr>
             </table>
@@ -840,11 +863,13 @@
    <input type="hidden" name="DTA_AutoMatlUpdate" value="<%=objForm.Fields("DTA_AutoMatlUpdate").Value%>">
    <input type="hidden" name="DTA_EmailAddress" value="<%=replace(objForm.Fields("DTA_EmailAddress").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
+   <input type="hidden" name="DTA_CopyTerms" value="<%=objForm.Fields("DTA_CopyTerms").Value%>">
    <input type="hidden" name="INP_ReportGrpId" value="<%=objForm.Fields("DTA_ReportGrpId").Value%>">
    <input type="hidden" name="INP_PriceMdlId" value="<%=objForm.Fields("DTA_PriceMdlId").Value%>">
    <input type="hidden" name="INP_MatlAlrtng" value="<%=objForm.Fields("DTA_MatlAlrtng").Value%>">
    <input type="hidden" name="INP_AutoMatlUpdate" value="<%=objForm.Fields("DTA_AutoMatlUpdate").Value%>">
    <input type="hidden" name="INP_Status" value="<%=objForm.Fields("DTA_Status").Value%>">
+   <input type="hidden" name="INP_CopyTerms" value="<%=objForm.Fields("DTA_CopyTerms").Value%>">
    <input type="hidden" name="DET_RepDatCount" value="">
    <input type="hidden" name="DET_RepBrkCount" value="">
    <input type="hidden" name="DET_RepOrdCount" value="">

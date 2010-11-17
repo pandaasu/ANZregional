@@ -272,21 +272,27 @@
                objObject.style.borderWidth = aryAttribute[1];
             } else if (aryAttribute[0] == 'text-align') {
                objObject.style.textAlign = aryAttribute[1];
+            } else if (aryAttribute[0] == 'mso-number-format') {
+               objObject.style.msoNumberFormat = aryAttribute[1];
             }
          }
       }
    }
    function getStyle(objObject) {
-      return 'font-family:'+objObject.style.fontFamily+';'+
-             'font-size:'+objObject.style.fontSize+';'+
-             'font-weight:'+objObject.style.fontWeight+';'+
-             'font-style:'+objObject.style.fontStyle+';'+
-             'background-color:'+objObject.style.backgroundColor+';'+
-             'color:'+objObject.style.color+';'+
-             'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'+
-             'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'+
-             'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'+
-             'text-align:'+objObject.style.textAlign+';';
+      var strStyle = 'font-family:'+objObject.style.fontFamily+';'+
+                     'font-size:'+objObject.style.fontSize+';'+
+                     'font-weight:'+objObject.style.fontWeight+';'+
+                     'font-style:'+objObject.style.fontStyle+';'+
+                     'background-color:'+objObject.style.backgroundColor+';'+
+                     'color:'+objObject.style.color+';'+
+                     'border-color:'+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+' '+objObject.style.borderColor+';'+
+                     'border-style:'+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+' '+objObject.style.borderStyle+';'+
+                     'border-width:'+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+' '+objObject.style.borderWidth+';'+
+                     'text-align:'+objObject.style.textAlign+';';
+                     if (objObject.style.msoNumberFormat != '') {
+                        strStyle = strStyle + 'mso-number-format:'+objObject.style.msoNumberFormat+';';
+                     }
+      return strStyle;
    }
    function checkItems() {
       var strReturn = '';
@@ -408,6 +414,13 @@
    cobjTextAligns[1] = new clsSelectList('Right','right');
    cobjTextAligns[2] = new clsSelectList('Center','center');
    cobjTextAligns[3] = new clsSelectList('Justify','justify');
+   var cobjDataTypes = new Array();
+   cobjDataTypes[0] = new clsSelectList('*Text*','');
+   cobjDataTypes[1] = new clsSelectList('Number (Text)','\\@');
+   cobjDataTypes[2] = new clsSelectList('Number 0','0');
+   cobjDataTypes[3] = new clsSelectList('Number 0.0','0\\.0');
+   cobjDataTypes[4] = new clsSelectList('Number 0.00','0\\.00');
+   cobjDataTypes[5] = new clsSelectList('Number 0.000','0\\.000');
    var cobjColors = new Array('000000','000033','000066','000099','0000CC','0000FF',
                               '003300','003333','003366','003399','0033CC','0033FF',
                               '006600','006633','006666','006699','0066CC','0066FF',
@@ -555,6 +568,10 @@
       for (var i=0;i<cobjTextAligns.length;i++) {
          objSelect.options[objSelect.options.length] = new Option(cobjTextAligns[i].text,cobjTextAligns[i].value);
       }
+      objSelect = document.getElementById('sltDataType');
+      for (var i=0;i<cobjDataTypes.length;i++) {
+         objSelect.options[objSelect.options.length] = new Option(cobjDataTypes[i].text,cobjDataTypes[i].value);
+      }
       cobjFormatterTarget = document.getElementById('fmtTarget');
    }
    function startFormatter(strAction,objObject) {
@@ -592,6 +609,7 @@
       cobjFormatterTarget.style.fontStyle = cobjFormatterSource.style.fontStyle;
       cobjFormatterTarget.style.fontSize = cobjFormatterSource.style.fontSize;
       cobjFormatterTarget.style.textAlign = cobjFormatterSource.style.textAlign;
+      cobjFormatterTarget.style.msoNumberFormat = cobjFormatterSource.style.msoNumberFormat;
       if (cstrFormatterAction == '*COLHEDALL') {
          cobjFormatterTarget.innerText = 'All Column Headings';
       } else if (cstrFormatterAction == '*COLDATALL') {
@@ -644,6 +662,17 @@
             break;
          }
       }
+      objSelect = document.getElementById('sltDataType');
+      objSelect.selectedIndex = 0;
+      for (var i=0;i<objSelect.options.length;i++) {
+         if (cobjFormatterSource.style.msoNumberFormat == objSelect.options[i].value) {
+            objSelect.options[i].selected = true;
+            break;
+         }
+      }
+      if (objSelect.selectedIndex == 0) {
+         cobjFormatterTarget.style.msoNumberFormat = '';
+      }
       var objTableLayout = document.getElementById('tabLayout');
       var objTableFormat = document.getElementById('tabFormat');
       var objRowFormat = document.getElementById('rowFormat');
@@ -676,6 +705,7 @@
             cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
             cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
             cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjFormatterSource.style.msoNumberFormat = cobjFormatterTarget.style.msoNumberFormat;
             cobjReportData[cobjFormatterSource.getAttribute('idx')].namefrmt = getStyle(cobjFormatterSource);
          }
       } else if (cstrFormatterAction == '*COLDATALL') {
@@ -691,6 +721,7 @@
             cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
             cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
             cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjFormatterSource.style.msoNumberFormat = cobjFormatterTarget.style.msoNumberFormat;
             cobjReportData[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
          }
       } else if (cstrFormatterAction == '*REPBRKALL') {
@@ -706,6 +737,7 @@
             cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
             cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
             cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjFormatterSource.style.msoNumberFormat = cobjFormatterTarget.style.msoNumberFormat;
             cobjReportBreak[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
          }
       } else if (cstrFormatterAction == '*REPTERALL') {
@@ -721,6 +753,7 @@
             cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
             cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
             cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjFormatterSource.style.msoNumberFormat = cobjFormatterTarget.style.msoNumberFormat;
             cobjReportTerm[cobjFormatterSource.getAttribute('idx')].datafrmt = getStyle(cobjFormatterSource);
          }
       } else {
@@ -734,6 +767,7 @@
          cobjFormatterSource.style.fontStyle = cobjFormatterTarget.style.fontStyle;
          cobjFormatterSource.style.fontSize = cobjFormatterTarget.style.fontSize;
          cobjFormatterSource.style.textAlign = cobjFormatterTarget.style.textAlign;
+            cobjFormatterSource.style.msoNumberFormat = cobjFormatterTarget.style.msoNumberFormat;
          if (cstrFormatterAction == '*REPHED') {
             cobjReport.namefrmt = getStyle(cobjFormatterSource);
          } else if (cstrFormatterAction == '*REPBRK') {
@@ -813,6 +847,10 @@
       if (cobjFormatterTarget == null) {return;};
       cobjFormatterTarget.style.textAlign = objObject.options[objObject.selectedIndex].value;
    }
+   function setDataType(objObject) {
+      if (cobjFormatterTarget == null) {return;};
+      cobjFormatterTarget.style.msoNumberFormat = objObject.options[objObject.selectedIndex].value;
+   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -868,6 +906,10 @@
                         <tr>
                            <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Alignment:&nbsp;</nobr></td>
                            <td class="clsLabelBN" align=left colspan=1 nowrap><nobr><select class="clsInputBN" name="sltTextAlign" onChange="setTextAlign(this);"></select></nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Data Type:&nbsp;</nobr></td>
+                           <td class="clsLabelBN" align=left colspan=1 nowrap><nobr><select class="clsInputBN" name="sltDataType" onChange="setDataType(this);"></select></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>
