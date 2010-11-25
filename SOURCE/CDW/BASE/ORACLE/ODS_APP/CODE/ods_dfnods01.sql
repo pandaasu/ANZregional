@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE           "ODS_DFNODS01" as
+create or replace package ods_app.ods_dfnods01 as
 
 /******************************************************************************
  System  : ODS
@@ -19,6 +19,7 @@ CREATE OR REPLACE PACKAGE           "ODS_DFNODS01" as
                           include modifications for the Snackfood rollout;
                           - Rename malt_code to malt_zrep_code
                           - Add matl_tdu_code and fcst_dtl_type_code columns
+ 2010/11   Steve Gregan   Added partitioning to the forecast detail table
 ********************************************************************************/
 
    /*-*/
@@ -29,11 +30,9 @@ CREATE OR REPLACE PACKAGE           "ODS_DFNODS01" as
    procedure on_end;
 
 end ods_dfnods01;
-
 /
 
-
-CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
+create or replace package body ods_app.ods_dfnods01 as
 
    /*-*/
    /* Private exceptions
@@ -68,11 +67,9 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
    rcd_ods_control ods_definition.idoc_control;
    rcd_fcst_hdr fcst_hdr%rowtype;
    rcd_fcst_dtl fcst_dtl%rowtype;
-
    var_loaded_record_count number;
    var_loaded_gsv number;
    var_loaded_qty number;
-
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -249,6 +246,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
                when others then
                   lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
             end;
+
             /*-*/
             /* Call the interface monitor procedure.
             /*-*/
@@ -460,6 +458,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
       rcd_fcst_dtl.currcy_code := lics_inbound_utility.get_variable('CURRCY_CODE');
       rcd_fcst_dtl.fcst_value := lics_inbound_utility.get_variable('FCST_VALUE');
       rcd_fcst_dtl.fcst_qty := lics_inbound_utility.get_variable('FCST_QTY');
+
       /*-*/
       /* Retrieve exceptions raised
       /*-*/
@@ -532,59 +531,64 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
       /*-*/
       if var_exists = false then
 
-        /*-*/
-        /* Obtain the next sequence number for fcst_hdr_code
-        /*-*/
-        open csr_fcst_hdr_seq;
-        fetch csr_fcst_hdr_seq into rcd_fcst_hdr_seq;
-        if csr_fcst_hdr_seq%notfound then
-           lics_inbound_utility.add_exception('Unable to retrieve sequence number - FCST_HDR_SEQ');
-           var_trn_error := true;
-        else
-           var_fcst_hdr_code := rcd_fcst_hdr_seq.fcst_hdr_code;
-        end if;
-        close csr_fcst_hdr_seq;
+         /*-*/
+         /* Obtain the next sequence number for fcst_hdr_code
+         /*-*/
+         open csr_fcst_hdr_seq;
+         fetch csr_fcst_hdr_seq into rcd_fcst_hdr_seq;
+         if csr_fcst_hdr_seq%notfound then
+            lics_inbound_utility.add_exception('Unable to retrieve sequence number - FCST_HDR_SEQ');
+            var_trn_error := true;
+         else
+            var_fcst_hdr_code := rcd_fcst_hdr_seq.fcst_hdr_code;
+         end if;
+         close csr_fcst_hdr_seq;
 
-        /*----------------------------------------*/
-        /* ERROR- Bypass the update when required */
-        /*----------------------------------------*/
-        if var_trn_error = true then
-           return;
-        end if;
+         /*----------------------------------------*/
+         /* ERROR- Bypass the update when required */
+         /*----------------------------------------*/
+         if var_trn_error = true then
+            return;
+         end if;
 
-        /*-*/
-        /* Insert the new forecast header record into the fcst_hdr table
-        /*-*/
-        insert into fcst_hdr
-           (fcst_hdr_code,
-            fcst_type_code,
-            fcst_version,
-            company_code,
-            sales_org_code,
-            moe_code,
-            distbn_chnl_code,
-            division_code,
-            casting_year,
-            casting_period,
-            casting_week,
-            current_fcst_flag,
-            valdtn_status,
-            batch_code)
-         values
-            (var_fcst_hdr_code,
-             rcd_fcst_hdr.fcst_type_code,
-             rcd_fcst_hdr.fcst_version,
-             rcd_fcst_hdr.company_code,
-             rcd_fcst_hdr.sales_org_code,
-             rcd_fcst_hdr.moe_code,
-             rcd_fcst_hdr.distbn_chnl_code,
-             rcd_fcst_hdr.division_code,
-             rcd_fcst_hdr.casting_year,
-             rcd_fcst_hdr.casting_period,
-             rcd_fcst_hdr.casting_week,
-             rcd_fcst_hdr.current_fcst_flag,
-             rcd_fcst_hdr.valdtn_status,
-             var_batch_code);
+         /*-*/
+         /* Insert the new forecast header record into the fcst_hdr table
+         /*-*/
+         insert into fcst_hdr
+            (fcst_hdr_code,
+             fcst_type_code,
+             fcst_version,
+             company_code,
+             sales_org_code,
+             moe_code,
+             distbn_chnl_code,
+             division_code,
+             casting_year,
+             casting_period,
+             casting_week,
+             current_fcst_flag,
+             valdtn_status,
+             batch_code)
+          values
+             (var_fcst_hdr_code,
+              rcd_fcst_hdr.fcst_type_code,
+              rcd_fcst_hdr.fcst_version,
+              rcd_fcst_hdr.company_code,
+              rcd_fcst_hdr.sales_org_code,
+              rcd_fcst_hdr.moe_code,
+              rcd_fcst_hdr.distbn_chnl_code,
+              rcd_fcst_hdr.division_code,
+              rcd_fcst_hdr.casting_year,
+              rcd_fcst_hdr.casting_period,
+              rcd_fcst_hdr.casting_week,
+              rcd_fcst_hdr.current_fcst_flag,
+              rcd_fcst_hdr.valdtn_status,
+              var_batch_code);
+
+         /*-*/
+         /* Create the forecast detail partition
+         /*-*/
+         ods_partition.check_create_list('fcst_dtl','F'||to_char(fcst_hdr_code),to_char(fcst_hdr_code));
 
       else
 
@@ -647,7 +651,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
           rcd_fcst_dtl.fcst_value,
           rcd_fcst_dtl.fcst_qty,
           var_batch_code,
-          USER,         -- Trigger removed to improve performance
+          user,
           sysdate);
 
       -- Accumulate the result to compare rather than summing from database to improve the performance
@@ -841,15 +845,16 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
      open csr_fcst_hdr_01;
      fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
      while csr_fcst_hdr_01%found loop
-        -- Delete old version of forecast from forecast detail
-        delete /*+ INDEX(FCST_DTL FCST_DTL_PK) */
-        from fcst_dtl
-        where fcst_hdr_code = rcd_fcst_hdr_01.fcst_hdr_code;
+
+         /*-*/
+         /* Drop the forecast detail partition
+         /*-*/
+         ods_partition.drop_list('fcst_dtl','F'||to_char(rcd_fcst_hdr_01.fcst_hdr_code));
+
 
         -- Delete old version of forecast from forecast header
-        delete
-        from fcst_hdr
-        where fcst_hdr_code = rcd_fcst_hdr_01.fcst_hdr_code;
+        delete from fcst_hdr
+         where fcst_hdr_code = rcd_fcst_hdr_01.fcst_hdr_code;
 
         fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
      end loop;
@@ -865,7 +870,7 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
    END delete_previous_forecast;
 
    /***************************************************************************/
-   /* This procedure performs update the current flag of the old record first*/
+   /* This procedure performs update the current flag of the old record first */
    /***************************************************************************/
    procedure update_previous_forecast IS
 
@@ -896,3 +901,9 @@ CREATE OR REPLACE PACKAGE BODY           "ODS_DFNODS01" as
 
 end ods_dfnods01;
 /
+
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym ods_dfnods01 for ods_app.ods_dfnods01;
+grant execute on ods_dfnods01 to lics_app;
