@@ -505,6 +505,7 @@ create or replace package body ods_app.ods_dfnods01 as
          lics_inbound_utility.add_exception('Missing Primary Key - DET.CASTING_PERIOD');
          var_trn_error := true;
       end if;
+
       /*----------------------------------------*/
       /* ERROR- Bypass the update when required */
       /*----------------------------------------*/
@@ -526,6 +527,7 @@ create or replace package body ods_app.ods_dfnods01 as
          var_exists := false;
       end if;
       close csr_fcst_hdr_02;
+
       /*-*/
       /* If the forecast header record does not already exist in the fcst_hdr table then insert
       /*-*/
@@ -743,25 +745,6 @@ create or replace package body ods_app.ods_dfnods01 as
    /**************************************************/
    procedure process_record_qty(par_record in varchar2) is
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-
-      /*-*/
-      /* Select reconciliation values from the fcst_dtl table
-      /*-*/
-      cursor csr_reconcile is
-         select
-            count(*) as fcst_dtl_record_count,
-            sum(t02.fcst_value) as fcst_dtl_gsv,
-            sum(t02.fcst_qty) as fcst_dtl_qty
-         from
-            fcst_hdr t01,
-            fcst_dtl t02
-         where t01.fcst_hdr_code = t02.fcst_hdr_code
-           and t01.batch_code = var_batch_code;
-      rcd_reconcile csr_reconcile%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -782,7 +765,6 @@ create or replace package body ods_app.ods_dfnods01 as
       /*-*/
       var_qty := lics_inbound_utility.get_variable('VALUE');
 
-
       /*-*/
       /* Retrieve exceptions raised
       /*-*/
@@ -799,7 +781,6 @@ create or replace package body ods_app.ods_dfnods01 as
          /* Update the current_fcst_flag field to 'I' (INVALID) for each of the forecast
          /* header records loaded
          /*-*/
-
          update fcst_hdr
          set current_fcst_flag = ods_constants.fcst_current_fcst_flag_invalid
          where batch_code = var_batch_code;
@@ -811,9 +792,9 @@ create or replace package body ods_app.ods_dfnods01 as
    /*-------------*/
    end process_record_qty;
 
-   /**************************************************/
+   /*********************************************/
    /* This procedure performs delete old record */
-   /**************************************************/
+   /*********************************************/
    procedure delete_previous_forecast is
 
       /*-*/
@@ -841,10 +822,14 @@ create or replace package body ods_app.ods_dfnods01 as
          and batch_code <> var_batch_code;
       rcd_fcst_hdr_01 csr_fcst_hdr_01%rowtype;
 
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
    begin
-     open csr_fcst_hdr_01;
-     fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
-     while csr_fcst_hdr_01%found loop
+
+      open csr_fcst_hdr_01;
+      fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
+      while csr_fcst_hdr_01%found loop
 
          /*-*/
          /* Drop the forecast detail partition
@@ -852,17 +837,22 @@ create or replace package body ods_app.ods_dfnods01 as
          ods_partition.drop_list('fcst_dtl','F'||to_char(rcd_fcst_hdr_01.fcst_hdr_code));
 
 
-        -- Delete old version of forecast from forecast header
-        delete from fcst_hdr
-         where fcst_hdr_code = rcd_fcst_hdr_01.fcst_hdr_code;
+         -- Delete old version of forecast from forecast header
+         delete from fcst_hdr
+          where fcst_hdr_code = rcd_fcst_hdr_01.fcst_hdr_code;
 
-        fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
-     end loop;
-     close csr_fcst_hdr_01;
-     -- Commit
-     commit;
+         fetch csr_fcst_hdr_01 into rcd_fcst_hdr_01;
+      end loop;
+      close csr_fcst_hdr_01;
 
+      -- Commit
+      commit;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
    exception
+
      when others then
         rollback;
         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
@@ -874,26 +864,35 @@ create or replace package body ods_app.ods_dfnods01 as
    /***************************************************************************/
    procedure update_previous_forecast IS
 
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
    begin
-     update fcst_hdr t1
-     set current_fcst_flag = 'N'
-     where exists (select *
-                   from fcst_hdr t2
-                   where
-                     t1.fcst_type_code = t2.fcst_type_code
-                     and t1.company_code = t2.company_code
-                     and t1.moe_code = t2.moe_code
-                     and t1.sales_org_code = t2.sales_org_code
-                     and t1.distbn_chnl_code = t2.distbn_chnl_code
-                     and (t1.division_code = t2.division_code or (t1.division_code is null and t2.division_code is null))
-                     and t1.casting_year = t2.casting_year
-                     and t1.casting_period = t2.casting_period
-                     and (t1.casting_week = t2.casting_week or (t1.casting_week is null and t2.casting_week is null))
-                     and batch_code = var_batch_code)
-        and batch_code <> var_batch_code
-        and current_fcst_flag = 'Y';
-      -- Don't commit here
+
+      update fcst_hdr t1
+      set current_fcst_flag = 'N'
+      where exists (select *
+                    from fcst_hdr t2
+                    where
+                      t1.fcst_type_code = t2.fcst_type_code
+                      and t1.company_code = t2.company_code
+                      and t1.moe_code = t2.moe_code
+                      and t1.sales_org_code = t2.sales_org_code
+                      and t1.distbn_chnl_code = t2.distbn_chnl_code
+                      and (t1.division_code = t2.division_code or (t1.division_code is null and t2.division_code is null))
+                      and t1.casting_year = t2.casting_year
+                      and t1.casting_period = t2.casting_period
+                      and (t1.casting_week = t2.casting_week or (t1.casting_week is null and t2.casting_week is null))
+                      and batch_code = var_batch_code)
+         and batch_code <> var_batch_code
+         and current_fcst_flag = 'Y';
+       -- Don't commit here
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
    exception
+
      when others then
         lics_inbound_utility.add_exception(substr(sqlerrm, 1, 512));
 
