@@ -280,10 +280,6 @@ create or replace package body ods_app.ods_dfnods01 as
    procedure process_record_ctl(par_record in varchar2) is
 
       /*-*/
-      /* Local cursors
-      /*-*/
-
-      /*-*/
       /* Retrieve the next sequence number, which is used for batch code
       /*-*/
       cursor csr_fcst_batch_seq is
@@ -374,10 +370,6 @@ create or replace package body ods_app.ods_dfnods01 as
       /* Local definitions
       /*-*/
       var_exists boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
 
       /*-*/
       /* Check whether forecast header record has already been inserted in the fcst_hdr table
@@ -590,7 +582,7 @@ create or replace package body ods_app.ods_dfnods01 as
          /*-*/
          /* Create the forecast detail partition
          /*-*/
-         ods_partition.check_create_list('fcst_dtl','F'||to_char(fcst_hdr_code),to_char(fcst_hdr_code));
+         ods_partition.check_create_list('fcst_dtl','F'||to_char(var_fcst_hdr_code),to_char(var_fcst_hdr_code));
 
       else
 
