@@ -51,7 +51,6 @@ create or replace package body ods_purging as
    /* Private constants
    /*-*/
    con_purging_group constant varchar2(32) := 'ODS_PURGING';
-   cnt_process_count constant number(5,0) := 10;
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -108,6 +107,7 @@ create or replace package body ods_purging as
       var_history_op number;
       var_history_fcst number;
       var_history_drft number;
+      var_history_draf number;
       var_available boolean;
 
       /*-*/
@@ -146,7 +146,13 @@ create or replace package body ods_purging as
                                                                             else mars_period-var_history_drft end
                                                                   from mars_date
                                                                  where trunc(calendar_date) = trunc(sysdate)))
-             or (t01.fcst_type_code not in('BR','ROB','OP','FCST','DRFT') and
+             or (t01.fcst_type_code = 'DRAF' and
+                 ((t01.casting_year*100)+t01.casting_period) < (select case when substr(to_char(mars_period-var_history_draf,'fm000000'),5,2) < 1 then mars_period-var_history_draf-(87*ceil(var_history_draf/13))
+                                                                            when substr(to_char(mars_period-var_history_draf,'fm000000'),5,2) > 13 then mars_period-var_history_draf-(87*ceil(var_history_draf/13))
+                                                                            else mars_period-var_history_draf end
+                                                                  from mars_date
+                                                                 where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code not in('BR','ROB','OP','FCST','DRFT','DRAF') and
                  ((t01.casting_year*100)+t01.casting_period) < (select case when substr(to_char(mars_period-var_history_default,'fm000000'),5,2) < 1 then mars_period-var_history_default-(87*ceil(var_history_default/13))
                                                                             when substr(to_char(mars_period-var_history_default,'fm000000'),5,2) > 13 then mars_period-var_history_default-(87*ceil(var_history_default/13))
                                                                             else mars_period-var_history_default end
@@ -214,7 +220,15 @@ create or replace package body ods_purging as
          var_history_drft := to_number(var_work);
       exception
          when others then
-            var_history_fcst := var_history_default;
+            var_history_drft := var_history_default;
+      end;
+
+      select dsv_value into var_work from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','DRAF'));
+      begin
+         var_history_draf := to_number(var_work);
+      exception
+         when others then
+            var_history_draf := var_history_default;
       end;
 
       /*-*/
