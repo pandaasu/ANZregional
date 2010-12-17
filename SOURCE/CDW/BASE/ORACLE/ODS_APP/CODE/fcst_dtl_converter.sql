@@ -39,6 +39,10 @@ create or replace package body fcst_dtl_converter as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
+   /*-*/
+   /* Private constants
+   /*-*/
+   con_purging_group constant varchar2(32) := 'ODS_PURGING';
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -51,7 +55,14 @@ create or replace package body fcst_dtl_converter as
       var_size number(5,0);
       var_work number(5,0);
       var_exit boolean;
-      var_hdr_code number(8);
+      var_value varchar2(64);
+      var_history_default number;
+      var_history_br number;
+      var_history_rob number;
+      var_history_op number;
+      var_history_fcst number;
+      var_history_drft number;
+      var_history_draf number;
       type rcd_fcst_dtl is table of fcst_dtl%rowtype index by binary_integer;
       tab_fcst_dtl rcd_fcst_dtl;
 
@@ -61,7 +72,48 @@ create or replace package body fcst_dtl_converter as
       cursor csr_header is 
          select t01.*
            from fcst_hdr t01
-          where t01.fcst_hdr_code in (471521, 471522)
+          where (t01.fcst_type_code = 'BR' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_br,'fm000000'),5,2) < 1 then mars_period-var_history_br-(87*ceil(var_history_br/13))
+                                                                             when substr(to_char(mars_period-var_history_br,'fm000000'),5,2) > 13 then mars_period-var_history_br-(87*ceil(var_history_br/13))
+                                                                             else mars_period-var_history_br end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'ROB' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_rob,'fm000000'),5,2) < 1 then mars_period-var_history_rob-(87*ceil(var_history_rob/13))
+                                                                             when substr(to_char(mars_period-var_history_rob,'fm000000'),5,2) > 13 then mars_period-var_history_rob-(87*ceil(var_history_rob/13))
+                                                                             else mars_period-var_history_rob end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'OP' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_op,'fm000000'),5,2) < 1 then mars_period-var_history_op-(87*ceil(var_history_op/13))
+                                                                             when substr(to_char(mars_period-var_history_op,'fm000000'),5,2) > 13 then mars_period-var_history_op-(87*ceil(var_history_op/13))
+                                                                             else mars_period-var_history_op end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'FCST' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_fcst,'fm000000'),5,2) < 1 then mars_period-var_history_fcst-(87*ceil(var_history_fcst/13))
+                                                                             when substr(to_char(mars_period-var_history_fcst,'fm000000'),5,2) > 13 then mars_period-var_history_fcst-(87*ceil(var_history_fcst/13))
+                                                                             else mars_period-var_history_fcst end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'DRFT' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_drft,'fm000000'),5,2) < 1 then mars_period-var_history_drft-(87*ceil(var_history_drft/13))
+                                                                             when substr(to_char(mars_period-var_history_drft,'fm000000'),5,2) > 13 then mars_period-var_history_drft-(87*ceil(var_history_drft/13))
+                                                                             else mars_period-var_history_drft end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code = 'DRAF' and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_draf,'fm000000'),5,2) < 1 then mars_period-var_history_draf-(87*ceil(var_history_draf/13))
+                                                                             when substr(to_char(mars_period-var_history_draf,'fm000000'),5,2) > 13 then mars_period-var_history_draf-(87*ceil(var_history_draf/13))
+                                                                             else mars_period-var_history_draf end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
+             or (t01.fcst_type_code not in ('BR','ROB','OP','FCST','DRFT','DRAF') and
+                 ((t01.casting_year*100)+t01.casting_period) >= (select case when substr(to_char(mars_period-var_history_default,'fm000000'),5,2) < 1 then mars_period-var_history_default-(87*ceil(var_history_default/13))
+                                                                             when substr(to_char(mars_period-var_history_default,'fm000000'),5,2) > 13 then mars_period-var_history_default-(87*ceil(var_history_default/13))
+                                                                             else mars_period-var_history_default end
+                                                                   from mars_date
+                                                                  where trunc(calendar_date) = trunc(sysdate)))
           order by t01.fcst_hdr_code asc;
       rcd_header csr_header%rowtype;
 
@@ -76,6 +128,65 @@ create or replace package body fcst_dtl_converter as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Retrieve the history periods
+      /*-*/
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','*DEFAULT'));
+      begin
+         var_history_default := to_number(var_value);
+      exception
+         when others then
+            var_history_default := 36;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','BR'));
+      begin
+         var_history_br := to_number(var_value);
+      exception
+         when others then
+            var_history_br := var_history_default;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','ROB'));
+      begin
+         var_history_rob := to_number(var_value);
+      exception
+         when others then
+            var_history_rob := var_history_default;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','OP'));
+      begin
+         var_history_op := to_number(var_value);
+      exception
+         when others then
+            var_history_op := var_history_default;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','FCST'));
+      begin
+         var_history_fcst := to_number(var_value);
+      exception
+         when others then
+            var_history_fcst := var_history_default;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','DRFT'));
+      begin
+         var_history_drft := to_number(var_value);
+      exception
+         when others then
+            var_history_drft := var_history_default;
+      end;
+
+      select dsv_value into var_value from table(lics_datastore.retrieve_value('ODS','ODS_FCST_PURGING','DRAF'));
+      begin
+         var_history_draf := to_number(var_value);
+      exception
+         when others then
+            var_history_draf := var_history_default;
+      end;
 
       /*-*/
       /* Retrieve rows from the source
