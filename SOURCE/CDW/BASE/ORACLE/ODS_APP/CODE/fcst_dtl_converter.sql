@@ -263,8 +263,6 @@ create or replace package body fcst_dtl_converter as
             /* Exit the loop when required
             /*-*/
             if var_exit = true then
-               -- delete from fcst_dtl where fcst_hdr_code = rcd_header.fcst_hdr_code;
-               -- commit;
                exit;
             end if;
 
@@ -300,4 +298,4 @@ create or replace package body fcst_dtl_converter as
    end execute;
 
 end fcst_dtl_converter;
-/  
+/ 
