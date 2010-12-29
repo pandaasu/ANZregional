@@ -359,7 +359,7 @@ create or replace package body dw_fcst_aggregation as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - FCST_FACT ('||par_fcst_code||') Load - Casting period ('||to_char(par_cast_yyyypp)||')');
+      lics_logging.write_log('Begin - DW_FCST_BASE ('||par_fcst_code||') Load - Casting period ('||to_char(par_cast_yyyypp)||')');
 
       /*-*/
       /* Initialise the forecast
@@ -512,8 +512,7 @@ create or replace package body dw_fcst_aggregation as
                 tgt_impact_qty,
                 dfn_adjmt_value,
                 dfn_adjmt_qty
-           from (select /*+ index(b fcst_dtl_pk) */
-                        a.company_code,
+           from (select a.company_code,
                         a.sales_org_code,
                         a.distbn_chnl_code,
                         a.division_code,
