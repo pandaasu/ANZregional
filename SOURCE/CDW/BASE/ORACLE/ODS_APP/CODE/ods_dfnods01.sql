@@ -70,6 +70,8 @@ create or replace package body ods_app.ods_dfnods01 as
    var_loaded_record_count number;
    var_loaded_gsv number;
    var_loaded_qty number;
+   type rcd_list is table of fcst_hdr%rowtype index by binary_integer;
+   tab_list rcd_list;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -87,6 +89,7 @@ create or replace package body ods_app.ods_dfnods01 as
       var_trn_start := false;
       var_trn_ignore := false;
       var_trn_error := false;
+      tab_list.delete;
 
       /*-*/
       /* Initialise the inbound definitions
@@ -303,6 +306,7 @@ create or replace package body ods_app.ods_dfnods01 as
       var_trn_start := true;
       var_trn_ignore := false;
       var_trn_error := false;
+      tab_list.delete;
 
       var_loaded_record_count := 0;
       var_loaded_gsv := 0;
@@ -370,27 +374,6 @@ create or replace package body ods_app.ods_dfnods01 as
       /* Local definitions
       /*-*/
       var_exists boolean;
-
-      /*-*/
-      /* Check whether forecast header record has already been inserted in the fcst_hdr table
-      /*-*/
-      cursor csr_fcst_hdr_02 is
-         select t01.fcst_hdr_code
-         from fcst_hdr t01
-         where t01.fcst_type_code = rcd_fcst_hdr.fcst_type_code
-           and t01.fcst_version = rcd_fcst_hdr.fcst_version
-           and t01.company_code = rcd_fcst_hdr.company_code
-           and t01.sales_org_code = rcd_fcst_hdr.sales_org_code
-           and t01.moe_code = rcd_fcst_hdr.moe_code
-           and t01.distbn_chnl_code = rcd_fcst_hdr.distbn_chnl_code
-           and ((t01.division_code = rcd_fcst_hdr.division_code) OR
-                 t01.division_code IS NULL AND rcd_fcst_hdr.division_code IS NULL)
-           and t01.casting_year = rcd_fcst_hdr.casting_year
-           and t01.casting_period = rcd_fcst_hdr.casting_period
-           and ((t01.casting_week = rcd_fcst_hdr.casting_week) OR
-                 t01.casting_week IS NULL AND rcd_fcst_hdr.casting_week IS NULL)
-           and t01.batch_code = var_batch_code;
-      rcd_fcst_hdr_02 csr_fcst_hdr_02%rowtype;
 
       /*-*/
       /* Retrieve the next sequence number, which is used for fcst_hdr_code
@@ -512,13 +495,23 @@ create or replace package body ods_app.ods_dfnods01 as
       /*-*/
       /* Check whether the forecast header record is to be inserted into the fcst_hdr table
       /*-*/
-      var_exists := true;
-      open csr_fcst_hdr_02;
-      fetch csr_fcst_hdr_02 into rcd_fcst_hdr_02;
-      if csr_fcst_hdr_02%notfound then
-         var_exists := false;
-      end if;
-      close csr_fcst_hdr_02;
+      var_exists := false;
+      for idx in 1..tab_list.count loop
+         if tab_list(idx).fcst_type_code = rcd_fcst_hdr.fcst_type_code and
+               tab_list(idx).fcst_version = rcd_fcst_hdr.fcst_version and
+               tab_list(idx).company_code = rcd_fcst_hdr.company_code and
+               tab_list(idx).sales_org_code = rcd_fcst_hdr.sales_org_code and
+               tab_list(idx).moe_code = rcd_fcst_hdr.moe_code and
+               tab_list(idx).distbn_chnl_code = rcd_fcst_hdr.distbn_chnl_code and
+               ((tab_list(idx).division_code = rcd_fcst_hdr.division_code) or (tab_list(idx).division_code is null and rcd_fcst_hdr.division_code is null)) and
+               tab_list(idx).casting_year = rcd_fcst_hdr.casting_year and
+               tab_list(idx).casting_period = rcd_fcst_hdr.casting_period and
+               ((tab_list(idx).casting_week = rcd_fcst_hdr.casting_week) or (tab_list(idx).casting_week is null and rcd_fcst_hdr.casting_week is null)) then
+            var_fcst_hdr_code := tab_list(idx).fcst_hdr_code;
+            var_exists := true;
+            exit;
+         end if;
+      end loop;
 
       /*-*/
       /* If the forecast header record does not already exist in the fcst_hdr table then insert
@@ -580,17 +573,24 @@ create or replace package body ods_app.ods_dfnods01 as
               var_batch_code);
 
          /*-*/
+         /* Append the header to the array
+         /*-*/
+         tab_list(tab_list.count+1).fcst_hdr_code := var_fcst_hdr_code;
+         tab_list(tab_list.count).fcst_type_code := rcd_fcst_hdr.fcst_type_code;
+         tab_list(tab_list.count).fcst_version := rcd_fcst_hdr.fcst_version;
+         tab_list(tab_list.count).company_code := rcd_fcst_hdr.company_code;
+         tab_list(tab_list.count).sales_org_code := rcd_fcst_hdr.sales_org_code;
+         tab_list(tab_list.count).moe_code := rcd_fcst_hdr.moe_code;
+         tab_list(tab_list.count).distbn_chnl_code := rcd_fcst_hdr.distbn_chnl_code;
+         tab_list(tab_list.count).division_code := rcd_fcst_hdr.division_code;
+         tab_list(tab_list.count).casting_year := rcd_fcst_hdr.casting_year;
+         tab_list(tab_list.count).casting_period := rcd_fcst_hdr.casting_period;
+         tab_list(tab_list.count).casting_week := rcd_fcst_hdr.casting_week;
+
+         /*-*/
          /* Create the forecast detail partition
          /*-*/
          ods_partition.check_create_list('fcst_dtl','F'||to_char(var_fcst_hdr_code),to_char(var_fcst_hdr_code));
-
-      else
-
-        /*-*/
-        /* The forecast header record already exists in the fcst_hdr table, therefore retrieve
-        /* the fcst_hdr_code, which is used for the insert into the fcst_dtl table
-        /*-*/
-        var_fcst_hdr_code := rcd_fcst_hdr_02.fcst_hdr_code;
 
       end if;
 
