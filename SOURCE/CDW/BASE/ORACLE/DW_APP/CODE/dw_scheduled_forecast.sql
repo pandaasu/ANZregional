@@ -41,7 +41,7 @@ create or replace package dw_scheduled_forecast as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_company in varchar2);
+   procedure execute(par_company in varchar2, par_date in date default null);
 
 end dw_scheduled_forecast;
 /
@@ -60,12 +60,26 @@ create or replace package body dw_scheduled_forecast as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure fcst_fact_load(par_company_code, par_date);
-   procedure demand_plng_fcst_fact_load(par_company_code, par_date);
-   procedure dcs_order_fact_load(par_company_code, par_date);
-   procedure fcst_region_fact_load(par_company_code, par_date);
-   procedure fcst_region_fact_reload(par_company_code in varchar2, par_moe_code in varchar2, par_reload_yyyypp in number);
+   procedure fcst_fact_load(par_company_code in varchar2, par_date in date);
+   procedure demand_plng_fcst_fact_load(par_company_code in varchar2, par_date in date);
+   procedure dcs_order_fact_load(par_company_code in varchar2, par_date in date);
+   procedure fcst_region_fact_load(par_company_code in varchar2, par_date in date);
+   procedure reload_fcst_region_fact(par_company_code in varchar2, par_moe_code in varchar2, par_reload_yyyypp in number);
    function get_mars_period(par_date in date, par_offset_days in number) return number;
+
+   /*-*/
+   /* Private constants
+   /*-*/
+   pc_fcst_dtl_typ_dfn_adj        constant varchar2(1) := '0';
+   pc_fcst_dtl_typ_base           constant varchar2(1) := '1';
+   pc_fcst_dtl_typ_aggr_mkt_act   constant varchar2(1) := '2';
+   pc_fcst_dtl_typ_lock           constant varchar2(1) := '3';
+   pc_fcst_dtl_typ_rcncl          constant varchar2(1) := '4';
+   pc_fcst_dtl_typ_auto_adj       constant varchar2(1) := '5';
+   pc_fcst_dtl_typ_override       constant varchar2(1) := '6';
+   pc_fcst_dtl_typ_mkt_act        constant varchar2(1) := '7';
+   pc_fcst_dtl_typ_data_driven    constant varchar2(1) := '8';
+   pc_fcst_dtl_typ_tgt_imapct     constant varchar2(1) := '9';
    
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -2175,7 +2189,7 @@ create or replace package body dw_scheduled_forecast as
         IF v_moe_code = '0009' THEN
 
            -- Get the current expected Snackfood BR casting period and compare with the received min casting period
-           v_snack_br_cast_period := get_mars_period (par_date, -56, i_log_level+1);
+           v_snack_br_cast_period := get_mars_period (par_date, -56);
 
            IF v_casting_yyyypp <= v_snack_br_cast_period THEN
               v_snack_reload := TRUE;
@@ -2217,7 +2231,7 @@ create or replace package body dw_scheduled_forecast as
             lics_logging.write_log('--> First day of period [' || rv_mars_date.mars_period || ']');
 
             -- We reload from current period so pass in last period becasue the reload function use greater than
-            v_reload_yyyypp := get_mars_period (v_aggregation_date, -20, i_log_level+1);
+            v_reload_yyyypp := get_mars_period (v_aggregation_date, -20);
             v_moe_code := '0009';
 
             reload_fcst_region_fact (par_company_code, v_moe_code, v_reload_yyyypp);
@@ -2268,7 +2282,7 @@ create or replace package body dw_scheduled_forecast as
    /*******************************************************************/
    /* This procedure performs the forecast region fact reload routine */
    /*******************************************************************/
-   procedure fcst_region_fact_reload(par_company_code in varchar2, par_moe_code in varchar2, par_reload_yyyypp in number) is
+   procedure reload_fcst_region_fact(par_company_code in varchar2, par_moe_code in varchar2, par_reload_yyyypp in number) is
 
    /*-------------*/
    /* Begin block */
@@ -2370,7 +2384,7 @@ create or replace package body dw_scheduled_forecast as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end fcst_region_fact_reload;
+   end reload_fcst_region_fact;
    
    /*******************************************************/
    /* This procedure performs the get MARS period routine */
