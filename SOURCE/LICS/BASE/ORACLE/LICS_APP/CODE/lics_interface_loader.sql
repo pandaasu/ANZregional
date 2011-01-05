@@ -54,12 +54,8 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /* Private declarations
    /*-*/
    procedure read_xml_stream(par_stream in clob);
-<<<<<<< .mine
    procedure archive_file(par_fil_name in varchar2);
    
-=======
-
->>>>>>> .r2755
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
@@ -348,7 +344,6 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /*-------------*/
    end read_xml_stream;
 
-<<<<<<< .mine
    /***************************************************************/
    /* This procedure calls the archive script on local filesystem */
    /***************************************************************/
@@ -373,6 +368,4 @@ end lics_interface_loader;
 CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
 
 
-=======
->>>>>>> .r2755
 GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
