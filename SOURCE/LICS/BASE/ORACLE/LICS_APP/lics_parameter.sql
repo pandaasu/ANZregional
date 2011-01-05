@@ -76,6 +76,7 @@ create or replace package lics_parameter as
    script_directory constant varchar2(128) := '/ics/lad/prod/bin/';
    restore_script constant varchar2(128) := '/ics/lad/prod/bin/ics_restore.sh';
    inbound_sap_script constant varchar2(128) := '/ics/lad/prod/bin/ics_inbound_sap.sh';
+   archive_script constant varchar2(128) := '/ics/test/bin/ics_archive_file.sh';
 
 end lics_parameter;
 /  
