@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_interface_loader as
+CREATE OR REPLACE PACKAGE LICS_APP.lics_interface_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -21,7 +18,8 @@ create or replace package lics_interface_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/11   Steve Gregan   Created (CHINA INTERFACE LOADER)
-
+    2011/01   Ben Halicki    Added call to archive inbound loader file on local filesystem
+    
    *******************************************************************************/
 
    /*-*/
@@ -32,9 +30,13 @@ create or replace package lics_interface_loader as
 end lics_interface_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
+
+CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
+
+
 CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
 
    /*-*/
@@ -52,7 +54,12 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /* Private declarations
    /*-*/
    procedure read_xml_stream(par_stream in clob);
+<<<<<<< .mine
+   procedure archive_file(par_fil_name in varchar2);
+   
+=======
 
+>>>>>>> .r2755
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
@@ -232,6 +239,12 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
          close csr_lics_temp;
          lics_outbound_loader.finalise_interface;
       end if;
+      
+      /* archive file on local filesystem when required */
+      if (upper(rcd_lics_interface.int_type) = '*INBOUND' or
+          upper(rcd_lics_interface.int_type) = '*PASSTHRU') then
+        archive_file(var_fil_name);
+      end if;
 
       /*-*/
       /* Return the message when required
@@ -335,11 +348,31 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /*-------------*/
    end read_xml_stream;
 
+<<<<<<< .mine
+   /***************************************************************/
+   /* This procedure calls the archive script on local filesystem */
+   /***************************************************************/
+   procedure archive_file(par_fil_name in varchar2) is
+   begin
+      
+      /**/
+      /* Execute the remote processing script
+      /**/
+      begin
+         java_utility.execute_external_procedure(lics_parameter.archive_script || ' ' || par_fil_name);
+      exception
+         when others then
+            raise_application_error(-20000, 'Archive File - External process error - ' || substr(SQLERRM, 1, 3900));
+      end;
+      
+   end archive_file;
 end lics_interface_loader;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_interface_loader for lics_app.lics_interface_loader;
-grant execute on lics_interface_loader to public;
+
+CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
+
+
+=======
+>>>>>>> .r2755
+GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
