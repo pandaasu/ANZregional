@@ -43,6 +43,7 @@
  2005/01   Steve Gregan   Created
  2005/09   Steve Gregan   Changed forecast selection to ignore current and future casting periods
  2007/01   Steve Gregan   Changed aggregation logic to allow for casting 12/13 and zero.
+ 2011/01   Steve Gregan   Fixed aggregation logic to allow for casting 12/13 and zero.
 
 *******************************************************************************/
 
@@ -351,17 +352,9 @@ create or replace package body dw_forecast_aggregation as
          select distinct t01.casting_yyyymm as casting_yyyymm
            from fcst_month t01
           where ((par_yyyymm = 999999) or
-                 (par_yyyymm != 999999 and t01.casting_yyyymm = var_previous_month))
+                 (par_yyyymm != 999999 and (t01.casting_yyyymm = var_previous_month or t01.casting_yyyymm = var_work_yyyymm)))
           order by t01.casting_yyyymm;
       rcd_fcst_month csr_fcst_month%rowtype;
-
-      cursor csr_fcst_test is
-         select distinct t01.casting_yyyymm
-           from fcst_month t01
-          where t01.fcst_type_code in (1,5)
-            and t01.fcst_price_type_code in (1,2)
-            and t01.casting_yyyymm = rcd_fcst_month.casting_yyyymm;
-      rcd_fcst_test csr_fcst_test%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -381,11 +374,14 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_MONTH_01_FACT Aggregation - Truncating the table');
          dd_table.truncate('fcst_month_01_fact');
          var_previous_month := 0;
+         var_work_yyyymm := 0;
       else
          if mod(par_yyyymm, 100) = 1 then
             var_previous_month := trunc(par_yyyymm/100)*100;
+            var_work_yyyymm := par_yyyymm - 89;
          else
             var_previous_month := par_yyyymm - 1;
+            var_work_yyyymm := par_yyyymm - 1;
          end if;
       end if;
 
@@ -405,19 +401,6 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_MONTH_01_FACT Aggregation - Deleting the data - Casting month(' || to_char(rcd_fcst_month.casting_yyyymm) || ')');
          delete fcst_month_01_fact
             where billing_yyyymm > rcd_fcst_month.casting_yyyymm;
-
-         /*-*/
-         /* Set the work month
-         /*-*/
-         var_work_yyyymm := rcd_fcst_month.casting_yyyymm;
-         if mod(rcd_fcst_month.casting_yyyymm, 100) = 0 then
-            open csr_fcst_test;
-            fetch csr_fcst_test into rcd_fcst_test;
-            if csr_fcst_test%notfound then
-               var_work_yyyymm := rcd_fcst_month.casting_yyyymm - 88;
-            end if;
-            close csr_fcst_test;
-         end if;
 
          /*-*/
          /* Insert into the forecast month fact table for each casting_yyyymm returned
@@ -489,7 +472,7 @@ create or replace package body dw_forecast_aggregation as
                        and t02.fcst_type_code in (1,5)
                        and t03.fcst_price_type_code in (1,2)
                        and t01.sap_sales_div_cust_code is not null
-                       and t01.casting_yyyymm = var_work_yyyymm
+                       and t01.casting_yyyymm = rcd_fcst_month.casting_yyyymm
                      group by t01.fcst_yyyymm,
                               t01.sap_material_code,
                               t01.sap_sales_dtl_sales_org_code,
@@ -617,17 +600,9 @@ create or replace package body dw_forecast_aggregation as
          select distinct t01.casting_yyyymm as casting_yyyymm
            from fcst_month t01
           where ((par_yyyymm = 999999) or
-                 (par_yyyymm != 999999 and t01.casting_yyyymm = var_previous_month))
+                 (par_yyyymm != 999999 and (t01.casting_yyyymm = var_previous_month or t01.casting_yyyymm = var_work_yyyymm)))
           order by t01.casting_yyyymm;
       rcd_fcst_month csr_fcst_month%rowtype;
-
-      cursor csr_fcst_test is
-         select distinct t01.casting_yyyymm
-           from fcst_month t01
-          where t01.fcst_type_code in (1,5)
-            and t01.fcst_price_type_code in (1,2)
-            and t01.casting_yyyymm = rcd_fcst_month.casting_yyyymm;
-      rcd_fcst_test csr_fcst_test%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -646,12 +621,14 @@ create or replace package body dw_forecast_aggregation as
       if par_yyyymm = 999999 then
          lics_logging.write_log('FCST_MONTH_02_FACT Aggregation - Truncating the table');
          dd_table.truncate('fcst_month_02_fact');
-         var_previous_month := 0;
+         var_work_yyyymm := 0;
       else
          if mod(par_yyyymm, 100) = 1 then
             var_previous_month := trunc(par_yyyymm/100)*100;
+            var_work_yyyymm := par_yyyymm - 89;
          else
             var_previous_month := par_yyyymm - 1;
+            var_work_yyyymm := par_yyyymm - 1;
          end if;
       end if;
 
@@ -671,19 +648,6 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_MONTH_02_FACT Aggregation - Deleting the data - Casting month(' || to_char(rcd_fcst_month.casting_yyyymm) || ')');
          delete fcst_month_02_fact
             where billing_yyyymm > rcd_fcst_month.casting_yyyymm;
-
-         /*-*/
-         /* Set the work month
-         /*-*/
-         var_work_yyyymm := rcd_fcst_month.casting_yyyymm;
-         if mod(rcd_fcst_month.casting_yyyymm, 100) = 0 then
-            open csr_fcst_test;
-            fetch csr_fcst_test into rcd_fcst_test;
-            if csr_fcst_test%notfound then
-               var_work_yyyymm := rcd_fcst_month.casting_yyyymm - 88;
-            end if;
-            close csr_fcst_test;
-         end if;
 
          /*-*/
          /* Insert into the forecast month fact table for each casting_yyyymm returned
@@ -742,7 +706,7 @@ create or replace package body dw_forecast_aggregation as
                        and t01.fcst_price_type_code = t03.fcst_price_type_code
                        and t02.fcst_type_code in (1,5)
                        and t03.fcst_price_type_code in (1,2)
-                       and t01.casting_yyyymm = var_work_yyyymm
+                       and t01.casting_yyyymm = rcd_fcst_month.casting_yyyymm
                      group by t01.fcst_yyyymm,
                               t01.sap_material_code,
                               t01.sap_sales_dtl_sales_org_code,
@@ -853,17 +817,9 @@ create or replace package body dw_forecast_aggregation as
          select distinct t01.casting_yyyypp as casting_yyyypp
            from fcst_period t01
           where ((par_yyyypp = 999999) or
-                 (par_yyyypp != 999999 and t01.casting_yyyypp = var_previous_mars_period))
+                 (par_yyyypp != 999999 and (t01.casting_yyyypp = var_previous_mars_period or t01.casting_yyyypp = var_work_yyyypp)))
           order by t01.casting_yyyypp;
       rcd_fcst_period csr_fcst_period%rowtype;
-
-      cursor csr_fcst_test is
-         select distinct t01.casting_yyyypp
-           from fcst_period t01
-          where t01.fcst_type_code in (3,6)
-            and t01.fcst_price_type_code in (1,2)
-            and t01.casting_yyyypp = rcd_fcst_period.casting_yyyypp;
-      rcd_fcst_test csr_fcst_test%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -883,11 +839,14 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_PERIOD_01_FACT Aggregation - Truncating the table');
          dd_table.truncate('fcst_period_01_fact');
          var_previous_mars_period := 0;
+         var_work_yyyypp := 0;
       else
          if mod(par_yyyypp, 100) = 1 then
             var_previous_mars_period := trunc(par_yyyypp/100)*100;
+            var_work_yyyypp := par_yyyypp - 88;
          else
             var_previous_mars_period := par_yyyypp - 1;
+            var_work_yyyypp := par_yyyypp - 1;
          end if;
       end if;
 
@@ -907,19 +866,6 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_PERIOD_01_FACT Aggregation - Deleting the data - Casting period(' || to_char(rcd_fcst_period.casting_yyyypp) || ')');
          delete fcst_period_01_fact
             where billing_yyyypp > rcd_fcst_period.casting_yyyypp;
-
-         /*-*/
-         /* Set the work period
-         /*-*/
-         var_work_yyyypp := rcd_fcst_period.casting_yyyypp;
-         if mod(rcd_fcst_period.casting_yyyypp, 100) = 0 then
-            open csr_fcst_test;
-            fetch csr_fcst_test into rcd_fcst_test;
-            if csr_fcst_test%notfound then
-               var_work_yyyypp := rcd_fcst_period.casting_yyyypp - 87;
-            end if;
-            close csr_fcst_test;
-         end if;
 
          /*-*/
          /* Insert into the forecast period fact table for each casting_yyyypp returned
@@ -991,7 +937,7 @@ create or replace package body dw_forecast_aggregation as
                        and t02.fcst_type_code in (3,6)
                        and t03.fcst_price_type_code in (1,2)
                        and t01.sap_sales_div_cust_code is not null
-                       and t01.casting_yyyypp = var_work_yyyypp
+                       and t01.casting_yyyypp = rcd_fcst_period.casting_yyyypp
                      group by t01.fcst_yyyypp,
                               t01.sap_material_code,
                               t01.sap_sales_dtl_sales_org_code,
@@ -1119,17 +1065,9 @@ create or replace package body dw_forecast_aggregation as
          select distinct t01.casting_yyyypp as casting_yyyypp
            from fcst_period t01
           where ((par_yyyypp = 999999) or
-                 (par_yyyypp != 999999 and t01.casting_yyyypp = var_previous_mars_period))
+                 (par_yyyypp != 999999 and (t01.casting_yyyypp = var_previous_mars_period or t01.casting_yyyypp = var_work_yyyypp)))
           order by t01.casting_yyyypp;
       rcd_fcst_period csr_fcst_period%rowtype;
-
-      cursor csr_fcst_test is
-         select distinct t01.casting_yyyypp
-           from fcst_period t01
-          where t01.fcst_type_code in (3,6)
-            and t01.fcst_price_type_code in (1,2)
-            and t01.casting_yyyypp = rcd_fcst_period.casting_yyyypp;
-      rcd_fcst_test csr_fcst_test%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -1149,11 +1087,14 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_PERIOD_02_FACT Aggregation - Truncating the table');
          dd_table.truncate('fcst_period_02_fact');
          var_previous_mars_period := 0;
+         var_work_yyyypp := 0;
       else
          if mod(par_yyyypp, 100) = 1 then
             var_previous_mars_period := trunc(par_yyyypp/100)*100;
+            var_work_yyyypp := par_yyyypp - 88;
          else
             var_previous_mars_period := par_yyyypp - 1;
+            var_work_yyyypp := par_yyyypp - 1;
          end if;
       end if;
 
@@ -1173,19 +1114,6 @@ create or replace package body dw_forecast_aggregation as
          lics_logging.write_log('FCST_PERIOD_02_FACT Aggregation - Deleting the data - Casting period(' || to_char(rcd_fcst_period.casting_yyyypp) || ')');
          delete fcst_period_02_fact
             where billing_yyyypp > rcd_fcst_period.casting_yyyypp;
-
-         /*-*/
-         /* Set the work period
-         /*-*/
-         var_work_yyyypp := rcd_fcst_period.casting_yyyypp;
-         if mod(rcd_fcst_period.casting_yyyypp, 100) = 0 then
-            open csr_fcst_test;
-            fetch csr_fcst_test into rcd_fcst_test;
-            if csr_fcst_test%notfound then
-               var_work_yyyypp := rcd_fcst_period.casting_yyyypp - 87;
-            end if;
-            close csr_fcst_test;
-         end if;
 
          /*-*/
          /* Insert into the forecast period fact table for each casting_yyyypp returned
@@ -1244,7 +1172,7 @@ create or replace package body dw_forecast_aggregation as
                        and t01.fcst_price_type_code = t03.fcst_price_type_code
                        and t02.fcst_type_code in (3,6)
                        and t03.fcst_price_type_code in (1,2)
-                       and t01.casting_yyyypp = var_work_yyyypp
+                       and t01.casting_yyyypp = rcd_fcst_period.casting_yyyypp
                      group by t01.fcst_yyyypp,
                               t01.sap_material_code,
                               t01.sap_sales_dtl_sales_org_code,
