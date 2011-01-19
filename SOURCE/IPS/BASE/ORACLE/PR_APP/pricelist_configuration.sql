@@ -1306,7 +1306,7 @@ create or replace package body pricelist_configuration as
       /* Insert the new report exclusion data
       /*-*/
       for idx in 1..tbl_report_excl.count loop
-         rcd_report_matl.matl_code := tbl_report_excl(idx).matl_code;
+         rcd_report_matl_exclude.matl_code := tbl_report_excl(idx).matl_code;
          insert into report_matl_exclude values rcd_report_matl_exclude;
       end loop;
 
