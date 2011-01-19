@@ -1292,7 +1292,7 @@ create or replace package body pricelist_configuration as
       /* Delete the existing report material and exclusion data
       /*-*/
       delete from report_matl where report_id = rcd_report_matl.report_id;
-      delete from report_matl_exclude where report_id = rcd_report_matl.report_id;
+      delete from report_matl_exclude where report_id = rcd_report_matl_exclude.report_id;
 
       /*-*/
       /* Insert the new report material data
