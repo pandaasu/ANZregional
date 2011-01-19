@@ -30,7 +30,11 @@
       }
    }
    function checkChange() {
-      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any rule changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
+   }
+   function checkAccept() {
+      bolReturn = confirm('Please confirm the accept\r\npress OK continue (any rule changes will be applied)\r\npress Cancel to return to the function');
       return bolReturn;
    }
    function doCancel() {
@@ -52,6 +56,7 @@
          alert(strMessage);
          return;
       }
+      if (checkAccept() == false) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'RULE_ACCEPT';
       document.main.submit();
@@ -233,6 +238,11 @@
    function deleteRule() {
       if (cobjSelected == null) {
          return;
+      }
+      if (cstrSelected == 'RH') {
+         if (confirm('Please confirm the rule deletion\r\npress OK continue (the rule and all related details will be removed from the list)\r\npress Cancel to cancel the request') == false) {return;}
+      } else {
+         if (confirm('Please confirm the rule detail deletion\r\npress OK continue (the rule detail will be removed from the list)\r\npress Cancel to cancel the request') == false) {return;}
       }
       var objTable = document.getElementById('tabRule');
       if (cstrSelected == 'RH') {

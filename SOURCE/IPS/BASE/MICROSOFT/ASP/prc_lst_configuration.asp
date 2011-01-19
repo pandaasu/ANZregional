@@ -684,7 +684,8 @@ sub ProcessMaterialLoad()
    lngSize = 0
    strQuery = "select"
    strQuery = strQuery & " to_char(t01.report_id),"
-   strQuery = strQuery & " t01.report_name"
+   strQuery = strQuery & " t01.report_name,"
+   strQuery = strQuery & " nvl(t01.auto_matl_update,'N')"
    strQuery = strQuery & " from report t01"
    strQuery = strQuery & " where t01.report_id = " & objForm.Fields("DTA_ReportId").Value
    strReturn = objSelection.Execute("REPORT", strQuery, lngSize)
@@ -694,6 +695,7 @@ sub ProcessMaterialLoad()
       call ProcessSelect
       exit sub
    end if
+   call objForm.AddField("DTA_AutoMatlUpdate", objSelection.ListValue03("REPORT",objSelection.ListLower("REPORT")))
 
    '//
    '// Retrieve the report materials
@@ -701,6 +703,19 @@ sub ProcessMaterialLoad()
    lngSize = 0
    strQuery = "select t01.value, t01.text from table(pr_app.pricelist_material.list(" & objForm.Fields("DTA_ReportId").Value & ")) t01"
    strReturn = objSelection.Execute("MATERIAL", strQuery, lngSize)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Retrieve the report exclusions
+   '//
+   lngSize = 0
+   strQuery = "select t01.value, t01.text from table(pr_app.pricelist_exclusion.list(" & objForm.Fields("DTA_ReportId").Value & ")) t01"
+   strReturn = objSelection.Execute("EXCLUSION", strQuery, lngSize)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
       strMode = "SELECT"
@@ -750,6 +765,23 @@ sub ProcessMaterialAccept()
    for i = 1 to lngCount
       strStatement = "pricelist_configuration.material_detail("
       strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepMatCod" & i).Value) & "'"
+      strStatement = strStatement & ")"
+      strReturn = objProcedure.Execute(strStatement)
+      if strReturn <> "*OK" then
+         strError = FormatError(strReturn)
+         strMode = "SELECT"
+         call ProcessSelect
+         exit sub
+      end if
+   next
+
+   '//
+   '// Define the report exclusion codes when required
+   '//
+   lngCount = clng(objForm.Fields("DET_RepExlCount").Value)
+   for i = 1 to lngCount
+      strStatement = "pricelist_configuration.material_exclude("
+      strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DET_RepExlCod" & i).Value) & "'"
       strStatement = strStatement & ")"
       strReturn = objProcedure.Execute(strStatement)
       if strReturn <> "*OK" then

@@ -84,6 +84,11 @@
          alert(strMessage);
          return;
       }
+      if (document.main.DTA_ReportId.value == '0' || document.main.DTA_ReportId.value == '') {
+         if (document.main.INP_PriceMdlId.value.substring(7) != document.main.DTA_PriceMdlId.value.substring(7)) {
+            if (confirm('Please confirm the change to the Price Model - Sales Organsation and or Distribution Channel\r\npress OK continue (materials will be reloaded from the rules)\r\npress Cancel to cancel the Accept') == false) {return;}
+         }
+      }
       document.main.DTA_ReportName.value = document.main.INP_ReportName.value;
       document.main.DTA_ReportGrpId.value = document.main.INP_ReportGrpId.value;
       document.main.DTA_PriceMdlId.value = document.main.INP_PriceMdlId.value;
