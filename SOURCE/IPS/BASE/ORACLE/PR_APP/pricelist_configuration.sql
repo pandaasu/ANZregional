@@ -20,6 +20,7 @@ create or replace package pricelist_configuration as
     -------   ------         -----------
     2008/12   Steve Gregan   Created
     2010/11   Steve Gregan   Added report group terms
+    2011/01   Steve Gregan   Added material exclusion list
 
    *******************************************************************************/
 
@@ -60,6 +61,7 @@ create or replace package pricelist_configuration as
    procedure rule_commit;
    procedure material_begin(par_report_id in number);
    procedure material_detail(par_matl_code in varchar2);
+   procedure material_exclude(par_matl_code in varchar2);
    procedure material_commit;
    procedure format_group(par_report_grp_id in number);
    procedure format_group_term(par_data_frmt in varchar2);
@@ -121,11 +123,13 @@ create or replace package body pricelist_configuration as
    rcd_report_rule report_rule%rowtype;
    rcd_report_rule_detl report_rule_detl%rowtype;
    rcd_report_matl report_matl%rowtype;
+   rcd_report_matl_exclude report_matl_exclude%rowtype;
    type typ_report is table of report%rowtype index by binary_integer;
    type typ_report_item is table of report_item%rowtype index by binary_integer;
    type typ_report_term is table of report_term%rowtype index by binary_integer;
    type typ_report_rule is table of rcd_rule index by binary_integer;
    type typ_report_matl is table of report_matl%rowtype index by binary_integer;
+   type typ_report_excl is table of report_matl_exclude%rowtype index by binary_integer;
    tbl_report typ_report;
    tbl_report_data typ_report_item;
    tbl_report_break typ_report_item;
@@ -133,6 +137,7 @@ create or replace package body pricelist_configuration as
    tbl_report_term typ_report_term;
    tbl_report_rule typ_report_rule;
    tbl_report_matl typ_report_matl;
+   tbl_report_excl typ_report_excl;
 
    /***********************************************************/
    /* This procedure performs the define report group routine */
@@ -1172,14 +1177,16 @@ create or replace package body pricelist_configuration as
    begin
 
       /*-*/
-      /* Initialise the materials
+      /* Initialise the materials and exclusions
       /*-*/
       tbl_report_matl.delete;
+      tbl_report_excl.delete;
 
       /*-*/
       /* Initialise the report identifier
       /*-*/
       rcd_report_matl.report_id := par_report_id;
+      rcd_report_matl_exclude.report_id := par_report_id;
 
    /*-------------------*/
    /* Exception handler */
@@ -1212,7 +1219,7 @@ create or replace package body pricelist_configuration as
    begin
 
       /*-*/
-      /* Initialise the rule detail
+      /* Initialise the material detail
       /*-*/
       tbl_report_matl(tbl_report_matl.count+1).matl_code := par_matl_code;
 
@@ -1236,6 +1243,41 @@ create or replace package body pricelist_configuration as
    /*-------------*/
    end material_detail;
 
+   /********************************************************/
+   /* This procedure performs the material exclude routine */
+   /********************************************************/
+   procedure material_exclude(par_matl_code in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Initialise the material exclusion
+      /*-*/
+      tbl_report_excl(tbl_report_excl.count+1).matl_code := par_matl_code;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end material_exclude;
+
    /*******************************************************/
    /* This procedure performs the material commit routine */
    /*******************************************************/
@@ -1247,9 +1289,10 @@ create or replace package body pricelist_configuration as
    begin
 
       /*-*/
-      /* Delete the existing report material data
+      /* Delete the existing report material and exclusion data
       /*-*/
       delete from report_matl where report_id = rcd_report_matl.report_id;
+      delete from report_matl_exclude where report_id = rcd_report_matl.report_id;
 
       /*-*/
       /* Insert the new report material data
@@ -1257,6 +1300,14 @@ create or replace package body pricelist_configuration as
       for idx in 1..tbl_report_matl.count loop
          rcd_report_matl.matl_code := tbl_report_matl(idx).matl_code;
          insert into report_matl values rcd_report_matl;
+      end loop;
+
+      /*-*/
+      /* Insert the new report exclusion data
+      /*-*/
+      for idx in 1..tbl_report_excl.count loop
+         rcd_report_matl.matl_code := tbl_report_excl(idx).matl_code;
+         insert into report_matl_exclude values rcd_report_matl_exclude;
       end loop;
 
       /*-*/
@@ -1823,6 +1874,13 @@ create or replace package body pricelist_configuration as
           order by t01.matl_code asc;
       rcd_copy_matl csr_copy_matl%rowtype;
 
+      cursor csr_copy_excl is 
+         select t01.*
+           from report_matl_exclude t01
+          where t01.report_id = par_copy_id
+          order by t01.matl_code asc;
+      rcd_copy_excl csr_copy_excl%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1947,6 +2005,21 @@ create or replace package body pricelist_configuration as
       close csr_copy_matl;
 
       /*-*/
+      /* Copy the report exclusions
+      /*-*/
+      open csr_copy_excl;
+      loop
+         fetch csr_copy_excl into rcd_copy_excl;
+         if csr_copy_excl%notfound then
+            exit;
+         end if;
+         rcd_report_matl_exclude.report_id := rcd_report.report_id;
+         rcd_report_matl_exclude.matl_code := rcd_copy_excl.matl_code;
+         insert into report_matl_exclude values rcd_report_matl_exclude;
+      end loop;
+      close csr_copy_excl;
+
+      /*-*/
       /* Commit the database
       /*-*/
       commit;
@@ -2068,22 +2141,23 @@ create or replace package body pricelist_configuration as
             else
 
                /*-*/
-               /* Material alerting requested and notification email address specified
+               /* Check the report materials based on the report rules
                /*-*/
                if rcd_review_report.matl_alrtng = 'Y' and not(rcd_review_report.email_address is null) then
-
-                  /*-*/
-                  /* Check the report materials based on the report rules and email recommendations
-                  /*-*/
                   lics_logging.write_log('Generating material recommendation notification for report (' || rcd_review_report.report_name || ')');
                   check_materials(rcd_review_report.report_id,'N');
-
-                  /*-*/
-                  /* Commit the database
-                  /*-*/
-                  commit;
-
                end if;
+
+               /*-*/
+               /* Update the report exclusions based on the report rules
+               /*-*/
+               lics_logging.write_log('Performing automatic exclusion update for report (' || rcd_review_report.report_name || ')');
+               load_materials(rcd_review_report.report_id);
+
+               /*-*/
+               /* Commit the database
+               /*-*/
+               commit;
 
             end if;
 
@@ -2165,6 +2239,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       cursor csr_report is 
          select t01.report_id,
+                t01.auto_matl_update,
                 t02.price_sales_org_code,
                 t03.price_distbn_chnl_code
            from report t01,
@@ -2209,9 +2284,13 @@ create or replace package body pricelist_configuration as
       close csr_report;
 
       /*-*/
-      /* Delete the existing report materials
+      /* Delete the existing report materials and exclusions as required
       /*-*/
-      delete from report_matl where report_id = par_report_id;
+      if rcd_report.auto_matl_update = 'Y' then
+         delete from report_matl where report_id = par_report_id;
+      else
+         delete from report_matl_exclude where report_id = par_report_id;
+      end if;
 
       /*-*/
       /* Build the query statement
@@ -2274,7 +2353,7 @@ create or replace package body pricelist_configuration as
       var_query :=  var_query || ' order by t1.matl_code asc';
 
       /*-*/
-      /* Load the report materials
+      /* Load the report materials and exclusions
       /*-*/
       open csr_material for var_query;
       loop
@@ -2282,9 +2361,32 @@ create or replace package body pricelist_configuration as
          if csr_material%notfound then
             exit;
          end if;
-         insert into report_matl values(rcd_report.report_id, var_matl_code);
+         if rcd_report.auto_matl_update = 'Y' then
+            insert into report_matl values(rcd_report.report_id, var_matl_code);
+         else
+            insert into report_matl_exclude values(rcd_report.report_id, var_matl_code);
+         end if;
       end loop;
       close csr_material;
+
+      /*-*/
+      /* Fix the report materials and exclusions
+      /*-*/
+      if rcd_report.auto_matl_update = 'Y' then
+         delete from report_matl_exclude
+          where report_id = par_report_id
+            and matl_code not in (select matl_code from report_matl where report_id = par_report_id);
+         delete from report_matl
+          where report_id = par_report_id
+            and matl_code in (select matl_code from report_matl_exclude where report_id = par_report_id);
+      else
+         delete from report_matl
+          where report_id = par_report_id
+            and matl_code not in (select matl_code from report_matl_exclude where report_id = par_report_id);
+         delete from report_matl_exclude
+          where report_id = par_report_id
+            and matl_code in (select matl_code from report_matl where report_id = par_report_id);
+      end if;
 
    /*-------------------*/
    /* Exception handler */
@@ -2326,6 +2428,7 @@ create or replace package body pricelist_configuration as
       type typ_matl is table of rcd_matl index by binary_integer;
       tbl_matl01 typ_matl;
       tbl_matl02 typ_matl;
+      tbl_matl03 typ_matl;
 
       /*-*/
       /* Local cursors
@@ -2378,7 +2481,7 @@ create or replace package body pricelist_configuration as
       close csr_report;
 
       /*-*/
-      /* Build the add query statement (ie. report rule materials not in the rule materials)
+      /* Build the add query statement (ie. report rule materials in materials but not in the rule materials/exclusions)
       /*-*/
       var_query := 'select t1.matl_code, t1.matl_desc
                       from matl t1, matl_by_sales_area t2
@@ -2435,7 +2538,11 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Close the query
       /*-*/
-      var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
+      if par_update = 'N' then
+         var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl_exclude t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
+      else
+         var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
+      end if;
 
       /*-*/
       /* Load the report add materials
@@ -2451,7 +2558,6 @@ create or replace package body pricelist_configuration as
          tbl_matl01(tbl_matl01.count).matl_desc := var_matl_desc;
       end loop;
       close csr_material;
-
 
       /*-*/
       /* Build the delete query statement (ie. report materials not in the report rule materials)
@@ -2533,28 +2639,107 @@ create or replace package body pricelist_configuration as
       close csr_material;
 
       /*-*/
+      /* Build the delete query statement (ie. report exclusions not in the report rule materials)
+      /*-*/
+      var_query := 'select t1.matl_code, nvl(t2.matl_desc,''*UNKNOWN'') as matl_desc
+                      from report_matl_exclude t1, matl t2
+                     where t1.matl_code = t2.matl_code(+)
+                       and t1.report_id = ' || rcd_report.report_id || '
+                       and t1.matl_code not in (select t1.matl_code
+                                                  from matl t1, matl_by_sales_area t2
+                                                 where t1.matl_code = t2.matl_code
+                                                   and t2.sales_org = '''||rcd_report.price_sales_org_code||'''
+                                                   and t2.dstrbtn_chnl = '''||rcd_report.price_distbn_chnl_code||'''';
+
+      /*-*/
+      /* Add the report rules
+      /*-*/
+      var_rule := false;
+      open csr_rule;
+      loop
+         fetch csr_rule into rcd_rule;
+         if csr_rule%notfound then
+            exit;
+         end if;
+         if var_rule = false then
+            var_query :=  var_query || ' and ((';
+         else
+            var_query :=  var_query || ' or (';
+         end if;
+         var_rule := true;
+         var_detail := false;
+         open csr_rule_detl;
+         loop
+            fetch csr_rule_detl into rcd_rule_detl;
+            if csr_rule_detl%notfound then
+               exit;
+            end if;
+            if var_detail = false then
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || 'not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            else
+               if rcd_rule_detl.rule_not = 'T' then
+                  var_query := var_query || ' and not(' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu) || ')';
+               else
+                  var_query := var_query || ' and ' || replace(rcd_rule_detl.sql_where,'<SQLVALUE>',rcd_rule_detl.rule_vlu);
+               end if;
+            end if;
+            var_detail := true;
+         end loop;
+         close csr_rule_detl;
+         var_query :=  var_query || ')';
+      end loop;
+      close csr_rule;
+      if var_rule = true then
+         var_query :=  var_query || ')';
+      end if;
+
+      /*-*/
+      /* Close the query
+      /*-*/
+      var_query :=  var_query || ') order by t1.matl_code asc';
+
+      /*-*/
+      /* Load the report delete materials
+      /*-*/
+      tbl_matl03.delete;
+      open csr_material for var_query;
+      loop
+         fetch csr_material into var_matl_code, var_matl_desc;
+         if csr_material%notfound then
+            exit;
+         end if;
+         tbl_matl03(tbl_matl03.count+1).matl_code := var_matl_code;
+         tbl_matl03(tbl_matl03.count).matl_desc := var_matl_desc;
+      end loop;
+      close csr_material;
+
+      /*-*/
       /* Log the event when no email generated
       /*-*/
-      if tbl_matl01.count = 0 and tbl_matl02.count = 0 then
-         if par_Update = 'N' then
-            lics_logging.write_log('No price list material recommendations for report (' || rcd_report.report_name || ')');
+      if tbl_matl01.count = 0 and tbl_matl02.count = 0 and tbl_matl03.count = 0 then
+         if par_update = 'N' then
+            lics_logging.write_log('No price list automatic material updates for report (' || rcd_report.report_name || ')');
          else
             lics_logging.write_log('No price list automatic material updates for report (' || rcd_report.report_name || ')');
          end if;
       end if;
 
       /*-*/
-      /* Create the notification email when recommendations exist
+      /* Create the notification email when updates exist
       /*-*/
-      if tbl_matl01.count != 0 or tbl_matl02.count != 0 then
+      if tbl_matl01.count != 0 or tbl_matl02.count != 0 or tbl_matl03.count != 0 then
 
          /*-*/
          /* Log event
          /*-*/
-         if par_Update = 'N' then
-            lics_logging.write_log('Sending price list material recommendation notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
+         if par_update = 'N' then
+            lics_logging.write_log('Sending price list automatic material exclusion notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
          else
-            lics_logging.write_log('Sending price list automatic material update notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
+            lics_logging.write_log('Sending price list automatic material inclusion notification email for report (' || rcd_report.report_name || ') to ' || rcd_report.email_address);
          end if;
 
          /*-*/
@@ -2563,22 +2748,22 @@ create or replace package body pricelist_configuration as
          if par_Update = 'N' then
             lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
                                      rcd_report.email_address,
-                                     'Price List Report - ' || rcd_report.report_name || ' - Material Recommendations',
+                                     'Price List Report - ' || rcd_report.report_name || ' - Automatic Material Exclusions',
                                      null,
                                      null);
             lics_mailer.create_part(null);
-            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Material Recommendations');
+            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Automatic Material Exclusions');
             lics_mailer.append_data(null);
             lics_mailer.append_data(null);
             lics_mailer.append_data(null);
          else
             lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
                                      rcd_report.email_address,
-                                     'Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates',
+                                     'Price List Report - ' || rcd_report.report_name || ' - Automatic Material Inclusions',
                                      null,
                                      null);
             lics_mailer.create_part(null);
-            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates');
+            lics_mailer.append_data('Price List Report - ' || rcd_report.report_name || ' - Automatic Material Inclusions');
             lics_mailer.append_data(null);
             lics_mailer.append_data(null);
             lics_mailer.append_data(null);
@@ -2587,19 +2772,19 @@ create or replace package body pricelist_configuration as
          /*-*/
          /* Create the email file and output the header data
          /*-*/
-         if par_Update = 'N' then
-            lics_mailer.create_part('Price_List_Material_Recommendations.xls');
+         if par_update = 'N' then
+            lics_mailer.create_part('Price_List_Automatic_Material_Exclusions.xls');
             lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
             lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
             lics_mailer.append_data('<tr>');
-            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Material Recommendations</td>');
+            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Automatic Material Exclusions</td>');
             lics_mailer.append_data('</tr>');
          else
-            lics_mailer.create_part('Price_List_Automatic_Material_Updates.xls');
+            lics_mailer.create_part('Price_List_Automatic_Material_Inclusions.xls');
             lics_mailer.append_data('<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"></head>');
             lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
             lics_mailer.append_data('<tr>');
-            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Automatic Material Updates</td>');
+            lics_mailer.append_data('<td align=center colspan=3 style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Price List Report - ' || rcd_report.report_name || ' - Automatic Material Inclusions</td>');
             lics_mailer.append_data('</tr>');
          end if;
 
@@ -2611,8 +2796,8 @@ create or replace package body pricelist_configuration as
          lics_mailer.append_data('<td></td>');
          lics_mailer.append_data('</tr>');
          lics_mailer.append_data('<tr>');
-         if par_Update = 'N' then
-            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Recommendation</td>');
+         if par_update = 'N' then
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Action</td>');
          else
             lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Action</td>');
          end if;
@@ -2625,10 +2810,10 @@ create or replace package body pricelist_configuration as
          /*-*/
          for idx in 1..tbl_matl01.count loop
             lics_mailer.append_data('<tr>');
-            if par_Update = 'N' then
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">ADD</td>');
+            if par_update = 'N' then
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">EXCLUSION ADDED</td>');
             else
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">ADDED</td>');
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">INCLUSION ADDED</td>');
             end if;
             lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl01(idx).matl_code||'</td>');
             lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl01(idx).matl_desc||'</td>');
@@ -2640,13 +2825,28 @@ create or replace package body pricelist_configuration as
          /*-*/
          for idx in 1..tbl_matl02.count loop
             lics_mailer.append_data('<tr>');
-            if par_Update = 'N' then
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">DELETE</td>');
+            if par_update = 'N' then
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">INCLUSION DELETED</td>');
             else
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">DELETED</td>');
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">INCLUSION DELETED</td>');
             end if;
             lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl02(idx).matl_code||'</td>');
             lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl02(idx).matl_desc||'</td>');
+            lics_mailer.append_data('</tr>');
+         end loop;
+
+         /*-*/
+         /* Append the deletions
+         /*-*/
+         for idx in 1..tbl_matl03.count loop
+            lics_mailer.append_data('<tr>');
+            if par_update = 'N' then
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">EXCLUSION DELETED</td>');
+            else
+               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;FONT-WEIGHT:bold;">EXCLUSION DELETED</td>');
+            end if;
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl03(idx).matl_code||'</td>');
+            lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:8pt;">'||tbl_matl03(idx).matl_desc||'</td>');
             lics_mailer.append_data('</tr>');
          end loop;
 
