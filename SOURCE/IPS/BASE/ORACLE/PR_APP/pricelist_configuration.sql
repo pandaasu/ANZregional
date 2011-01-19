@@ -735,10 +735,6 @@ create or replace package body pricelist_configuration as
       open csr_check_report;
       fetch csr_check_report into rcd_check_report;
       if csr_check_report%found then
-         if rcd_check_report.price_sales_org_id != tbl_report(1).price_sales_org_id or
-            rcd_check_report.price_distbn_chnl_id != tbl_report(1).price_distbn_chnl_id then
-            var_materials := true;
-         end if;
          update report
             set report_name = tbl_report(1).report_name,
                 price_sales_org_id = tbl_report(1).price_sales_org_id,
@@ -755,6 +751,12 @@ create or replace package body pricelist_configuration as
           where report_id = rcd_report.report_id;
          delete from report_term where report_id = tbl_report(1).report_id;
          delete from report_item where report_id = tbl_report(1).report_id;
+         if rcd_check_report.price_sales_org_id != tbl_report(1).price_sales_org_id or
+            rcd_check_report.price_distbn_chnl_id != tbl_report(1).price_distbn_chnl_id then
+            delete from report_matl where report_id = tbl_report(1).report_id;
+            delete from report_matl_exclude where report_id = tbl_report(1).report_id;
+            var_materials := true;
+         end if;
       else
          var_materials := true;
          var_return := pricelist_object_tracking.get_new_id('REPORT', 'REPORT_ID', var_id, var_return_msg);
