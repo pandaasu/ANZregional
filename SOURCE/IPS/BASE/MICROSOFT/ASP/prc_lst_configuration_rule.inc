@@ -30,11 +30,11 @@
       }
    }
    function checkChange() {
-      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any rule changes will be lost)\r\npress Cancel to return to the function');
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (rule changes will be lost)\r\npress Cancel to return to the function');
       return bolReturn;
    }
    function checkAccept() {
-      bolReturn = confirm('Please confirm the accept\r\npress OK continue (any rule changes will be applied)\r\npress Cancel to return to the function');
+      bolReturn = confirm('Please confirm the accept\r\npress OK continue (rule changes will be applied and materials will be reloaded from the rules)\r\npress Cancel to return to the function');
       return bolReturn;
    }
    function doCancel() {
