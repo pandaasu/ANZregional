@@ -33,6 +33,10 @@
       bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
       return bolReturn;
    }
+   function checkAccept() {
+      bolReturn = confirm('Please confirm the accept\r\npress OK continue (any changes will be applied)\r\npress Cancel to return to the function');
+      return bolReturn;
+   }
    function doCancel() {
       if (checkChange() == false) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
@@ -52,6 +56,7 @@
          alert(strMessage);
          return;
       }
+      if (checkAccept() == false) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'MATERIAL_ACCEPT';
       document.main.submit();
@@ -86,73 +91,80 @@
       objSltMaterial.options.length = 0;
       objSltMaterial.selectedIndex = -1;<%if objSelection.ListCount("MATERIAL") <> 0 then%><%for i = objSelection.ListLower("MATERIAL") to objSelection.ListUpper("MATERIAL")%>
       objSltMaterial.options[<%=i%>] = new Option('<%=replace(objSelection.ListValue02("MATERIAL",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue01("MATERIAL",i)%>');<%next%><%end if%>
+      var objSltExclusion = document.getElementById('sltExclusion');
+      objSltExclusion.options.length = 0;
+      objSltExclusion.selectedIndex = -1;<%if objSelection.ListCount("EXCLUSION") <> 0 then%><%for i = objSelection.ListLower("EXCLUSION") to objSelection.ListUpper("EXCLUSION")%>
+      objSltExclusion.options[<%=i%>] = new Option('<%=replace(objSelection.ListValue02("EXCLUSION",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue01("EXCLUSION",i)%>');<%next%><%end if%>
    }
-   function refreshMaterials() {
-      doActivityStart(document.body);
-      window.setTimeout('refreshMaterialList(\'<%=objForm.Fields("DTA_ReportId").Value%>\');',10);
-   }
-   function refreshMaterialList(strReportId) {
-      doGetRequest('<%=strBase%>prc_lst_matl_lookup.asp?QRY_ReportId='+strReportId,function(strResponse) {reloadMaterials(strResponse);},false);
-   }
-   function reloadMaterials() {
-      doActivityStart(document.body);
-      window.setTimeout('reloadMaterialList(\'<%=objForm.Fields("DTA_ReportId").Value%>\');',10);
-   }
-   function reloadMaterialList(strReportId) {
-      doGetRequest('<%=strBase%>prc_lst_matl_reload.asp?QRY_ReportId='+strReportId,function(strResponse) {reloadMaterials(strResponse);},false);
-   }
-   function reloadMaterials(strResponse) {
-      if (strResponse.substring(0,3) != '*OK') {
-         alert(strResponse);
-      } else {
-         var aryRows = strResponse.substring(3,strResponse.length).split('\n');
-         var aryColumns;
-         var objSltMaterial = document.getElementById('sltMaterial');
-         objSltMaterial.options.length = 0;
-         objSltMaterial.selectedIndex = -1;
-         for (var i=0;i<aryRows.length;i++) {
-            aryColumns = aryRows[i].split('\t');
-            objSltMaterial.options[i] = new Option(aryColumns[1],aryColumns[0]);
-         }
-      }
-      doActivityStop();
-   }
-   function deleteMaterials() {
+   function excludeMaterials() {
       var objSltMaterial = document.getElementById('sltMaterial');
-      var objWork = new Array();
-      var intIndex = 0;
+      var objSltExclusion = document.getElementById('sltExclusion');
+      var objWorkM = new Array();
+      var objWorkE = new Array();
+      for (var i=0;i<objSltExclusion.options.length;i++) {
+         objWorkE[i] = objSltExclusion[i];
+      }
       for (var i=0;i<objSltMaterial.options.length;i++) {
-         if (objSltMaterial.options[i].selected == false) {
-            objWork[intIndex] = objSltMaterial[i];
-            intIndex++;
+         if (objSltMaterial.options[i].selected == true) {
+            objWorkE[objWorkE.length] = objSltMaterial[i];
+         } else {
+            objWorkM[objWorkM.length] = objSltMaterial[i];
          }
       }
+      objWorkM.sort(sortWorkList);
       objSltMaterial.options.length = 0;
       objSltMaterial.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSltMaterial.options[i] = objWork[i];
+      for (var i=0;i<objWorkM.length;i++) {
+         objSltMaterial.options[i] = objWorkM[i];
+      }
+      objWorkE.sort(sortWorkList);
+      objSltExclusion.options.length = 0;
+      objSltExclusion.selectedIndex = -1;
+      for (var i=0;i<objWorkE.length;i++) {
+         objSltExclusion.options[i] = objWorkE[i];
       }
    }
-   function addMaterials() {
+   function includeMaterials() {
       var objSltMaterial = document.getElementById('sltMaterial');
-      var objWork = new Array();
-      var intIndex = 0;
+      var objSltExclusion = document.getElementById('sltExclusion');
+      var objWorkM = new Array();
+      var objWorkE = new Array();
       for (var i=0;i<objSltMaterial.options.length;i++) {
-         if (objSltMaterial.options[i].selected == false) {
-            objWork[intIndex] = objSltMaterial[i];
-            intIndex++;
+         objWorkM[i] = objSltMaterial[i];
+      }
+      for (var i=0;i<objSltExclusion.options.length;i++) {
+         if (objSltExclusion.options[i].selected == true) {
+            objWorkM[objWorkM.length] = objSltExclusion[i];
+         } else {
+            objWorkE[objWorkE.length] = objSltExclusion[i];
          }
       }
+      objWorkM.sort(sortWorkList);
       objSltMaterial.options.length = 0;
       objSltMaterial.selectedIndex = -1;
-      for (var i=0;i<objWork.length;i++) {
-         objSltMaterial.options[i] = objWork[i];
+      for (var i=0;i<objWorkM.length;i++) {
+         objSltMaterial.options[i] = objWorkM[i];
       }
+      objWorkE.sort(sortWorkList);
+      objSltExclusion.options.length = 0;
+      objSltExclusion.selectedIndex = -1;
+      for (var i=0;i<objWorkE.length;i++) {
+         objSltExclusion.options[i] = objWorkE[i];
+      }
+   }
+   function sortWorkList(obj01, obj02) {
+      if (obj01.value < obj02.value) {
+         return -1;
+      } else if (obj01.value > obj02.value) {
+         return 1;
+      }
+      return 0;
    }
    function checkMaterials() {
       var strReturn = '';
       var objHidden = null;
       var objSltMaterial = document.getElementById('sltMaterial');
+      var objSltExclusion = document.getElementById('sltExclusion');
       if (objSltMaterial.options.length == 0) {
          strReturn = 'The report must have at least one material';
       } else {
@@ -164,6 +176,14 @@
             document.forms['main'].appendChild(objHidden);
          }
          document.getElementById('DET_RepMatCount').value = objSltMaterial.options.length;
+         for (var i=0;i<objSltExclusion.options.length;i++) {
+            objHidden = document.createElement('input');
+            objHidden.setAttribute('type','hidden');
+            objHidden.setAttribute('name','DET_RepExlCod'+(i+1));
+            objHidden.setAttribute('value',objSltExclusion.options[i].value);
+            document.forms['main'].appendChild(objHidden);
+         }
+         document.getElementById('DET_RepExlCount').value = objSltExclusion.options.length;
       }
       return strReturn;
    }
@@ -189,19 +209,29 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+            <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
                <tr>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:reloadMaterials();">&nbsp;Reload (apply rules)&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:refreshMaterials();">&nbsp;Refresh (restart function)&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:deleteMaterials();">&nbsp;Delete&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:addMaterials();">&nbsp;Add&nbsp;</a></nobr></td>
+                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Material Inclusions&nbsp;</nobr></td>
+                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td class="clsLabelBB" align=center colspan=1 nowrap><nobr>&nbsp;Material Exclusions&nbsp;</nobr></td>
+               </tr>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="sltMaterial" name="sltMaterial" style="width:400px" multiple size=25></select>
+                  </nobr></td>
+                  <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                     <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                        <tr><td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="includeMaterials();"></nobr></td>
+                            <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="excludeMaterials();"></nobr></td></tr>
+                     </table>
+                  </nobr></td>
+                  <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                     <select class="clsInputBN" id="sltExclusion" name="sltExclusion" style="width:400px" multiple size=25></select>
+                  </nobr></td>
                </tr>
             </table>
          </nobr></td>
-      </tr>
-      <tr>
-         <td align=center colspan=2 nowrap><nobr><select class="clsInputBN" id="sltMaterial" name="sltMaterial" style="width:500px" multiple size=20></select></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -221,6 +251,7 @@
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
    <input type="hidden" name="DTA_ReportId" value="<%=objForm.Fields("DTA_ReportId").Value%>">
    <input type="hidden" name="DET_RepMatCount" value="">
+   <input type="hidden" name="DET_RepExlCount" value="">
 </form>
 </body>
 </html>
