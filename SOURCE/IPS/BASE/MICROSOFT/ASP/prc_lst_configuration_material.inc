@@ -85,7 +85,6 @@
    ////////////////////////////
    // Report material script //
    ////////////////////////////
-   var cobjSelected = null;
    function loadMaterials() {
       var objSltMaterial = document.getElementById('sltMaterial');
       objSltMaterial.options.length = 0;
@@ -113,14 +112,12 @@
       }
       objWorkM.sort(sortWorkList);
       objSltMaterial.options.length = 0;
-      objSltMaterial.selectedIndex = -1;
       for (var i=0;i<objWorkM.length;i++) {
          objSltMaterial.options[i] = objWorkM[i];
       }
       objSltMaterial.selectedIndex = -1;
       objWorkE.sort(sortWorkList);
       objSltExclusion.options.length = 0;
-      objSltExclusion.selectedIndex = -1;
       for (var i=0;i<objWorkE.length;i++) {
          objSltExclusion.options[i] = objWorkE[i];
       }
@@ -141,20 +138,18 @@
             objWorkE[objWorkE.length] = objSltExclusion[i];
          }
       }
-      objWorkM.sort(sortWorkList);
-      objSltMaterial.options.length = 0;
-      objSltMaterial.selectedIndex = -1;
-      for (var i=0;i<objWorkM.length;i++) {
-         objSltMaterial.options[i] = objWorkM[i];
-      }
-      objSltMaterial.selectedIndex = -1;
       objWorkE.sort(sortWorkList);
       objSltExclusion.options.length = 0;
-      objSltExclusion.selectedIndex = -1;
       for (var i=0;i<objWorkE.length;i++) {
          objSltExclusion.options[i] = objWorkE[i];
       }
       objSltExclusion.selectedIndex = -1;
+      objWorkM.sort(sortWorkList);
+      objSltMaterial.options.length = 0;
+      for (var i=0;i<objWorkM.length;i++) {
+         objSltMaterial.options[i] = objWorkM[i];
+      }
+      objSltMaterial.selectedIndex = -1;
    }
    function sortWorkList(obj01, obj02) {
       if (obj01.value < obj02.value) {
