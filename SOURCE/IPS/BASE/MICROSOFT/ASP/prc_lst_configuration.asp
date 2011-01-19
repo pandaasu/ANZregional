@@ -28,10 +28,10 @@
    dim objProcedure
 
    '//
-   '// Set the server script timeout to (10 minutes)
+   '// Set the server script timeout to (20 minutes)
    '// ** potentially long running process **
    '//
-   server.scriptTimeout = 600
+   server.scriptTimeout = 1200
 
    '//
    '// Initialise the script
