@@ -84,7 +84,7 @@
          alert(strMessage);
          return;
       }
-      if (document.main.DTA_ReportId.value == '0' || document.main.DTA_ReportId.value == '') {
+      if (document.main.DTA_ReportId.value != '0' && document.main.DTA_ReportId.value != '') {
          if (document.main.INP_PriceMdlId.value.substring(7) != document.main.DTA_PriceMdlId.value.substring(7)) {
             if (confirm('Please confirm the change to the Price Model - Sales Organsation and or Distribution Channel\r\npress OK continue (materials will be reloaded from the rules)\r\npress Cancel to cancel the Accept') == false) {return;}
          }
