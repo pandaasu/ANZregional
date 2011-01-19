@@ -100,7 +100,7 @@ create or replace package body pricelist_configuration as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure load_materials(par_report_id in number);
+   procedure load_materials(par_report_id in number, par_reload in varchar2);
    procedure check_materials(par_report_id in number, par_update in varchar2);
 
    /*-*/
@@ -753,8 +753,6 @@ create or replace package body pricelist_configuration as
          delete from report_item where report_id = tbl_report(1).report_id;
          if rcd_check_report.price_sales_org_id != tbl_report(1).price_sales_org_id or
             rcd_check_report.price_distbn_chnl_id != tbl_report(1).price_distbn_chnl_id then
-            delete from report_matl where report_id = tbl_report(1).report_id;
-            delete from report_matl_exclude where report_id = tbl_report(1).report_id;
             var_materials := true;
          end if;
       else
@@ -913,7 +911,7 @@ create or replace package body pricelist_configuration as
       /* Reload the report materials when required
       /*-*/
       if var_materials = true then
-         load_materials(rcd_report.report_id);
+         load_materials(rcd_report.report_id,'Y');
       end if;
 
       /*-*/
@@ -1136,7 +1134,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Reload the report materials
       /*-*/
-      load_materials(rcd_report_rule.report_id);
+      load_materials(rcd_report_rule.report_id,'Y');
 
       /*-*/
       /* Commit the database
@@ -2130,7 +2128,7 @@ create or replace package body pricelist_configuration as
                /* Update the report materials based on the report rules
                /*-*/
                lics_logging.write_log('Performing automatic material update for report (' || rcd_review_report.report_name || ')');
-               load_materials(rcd_review_report.report_id);
+               load_materials(rcd_review_report.report_id,'N');
 
                /*-*/
                /* Commit the database
@@ -2154,7 +2152,7 @@ create or replace package body pricelist_configuration as
                /* Update the report exclusions based on the report rules
                /*-*/
                lics_logging.write_log('Performing automatic exclusion update for report (' || rcd_review_report.report_name || ')');
-               load_materials(rcd_review_report.report_id);
+               load_materials(rcd_review_report.report_id,'N');
 
                /*-*/
                /* Commit the database
@@ -2224,7 +2222,7 @@ create or replace package body pricelist_configuration as
    /******************************************************/
    /* This procedure performs the load materials routine */
    /******************************************************/
-   procedure load_materials(par_report_id in number) is
+   procedure load_materials(par_report_id in number, par_reload in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -2288,10 +2286,15 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Delete the existing report materials and exclusions as required
       /*-*/
-      if rcd_report.auto_matl_update = 'Y' then
+      if par_reload = 'Y' then
          delete from report_matl where report_id = par_report_id;
-      else
          delete from report_matl_exclude where report_id = par_report_id;
+      else
+         if rcd_report.auto_matl_update = 'Y' then
+            delete from report_matl where report_id = par_report_id;
+         else
+            delete from report_matl_exclude where report_id = par_report_id;
+         end if;
       end if;
 
       /*-*/
@@ -2363,31 +2366,37 @@ create or replace package body pricelist_configuration as
          if csr_material%notfound then
             exit;
          end if;
-         if rcd_report.auto_matl_update = 'Y' then
+         if par_reload = 'Y' then
             insert into report_matl values(rcd_report.report_id, var_matl_code);
          else
-            insert into report_matl_exclude values(rcd_report.report_id, var_matl_code);
+            if rcd_report.auto_matl_update = 'Y' then
+               insert into report_matl values(rcd_report.report_id, var_matl_code);
+            else
+               insert into report_matl_exclude values(rcd_report.report_id, var_matl_code);
+            end if;
          end if;
       end loop;
       close csr_material;
 
       /*-*/
-      /* Fix the report materials and exclusions
+      /* Fix the report materials and exclusions when required
       /*-*/
-      if rcd_report.auto_matl_update = 'Y' then
-         delete from report_matl_exclude
-          where report_id = par_report_id
-            and matl_code not in (select matl_code from report_matl where report_id = par_report_id);
-         delete from report_matl
-          where report_id = par_report_id
-            and matl_code in (select matl_code from report_matl_exclude where report_id = par_report_id);
-      else
-         delete from report_matl
-          where report_id = par_report_id
-            and matl_code not in (select matl_code from report_matl_exclude where report_id = par_report_id);
-         delete from report_matl_exclude
-          where report_id = par_report_id
-            and matl_code in (select matl_code from report_matl where report_id = par_report_id);
+      if par_reload = 'N' then
+         if rcd_report.auto_matl_update = 'Y' then
+            delete from report_matl_exclude
+              where report_id = par_report_id
+               and matl_code not in (select matl_code from report_matl where report_id = par_report_id);
+            delete from report_matl
+             where report_id = par_report_id
+               and matl_code in (select matl_code from report_matl_exclude where report_id = par_report_id);
+         else
+            delete from report_matl
+             where report_id = par_report_id
+               and matl_code not in (select matl_code from report_matl_exclude where report_id = par_report_id);
+            delete from report_matl_exclude
+             where report_id = par_report_id
+               and matl_code in (select matl_code from report_matl where report_id = par_report_id);
+         end if;
       end if;
 
    /*-------------------*/
