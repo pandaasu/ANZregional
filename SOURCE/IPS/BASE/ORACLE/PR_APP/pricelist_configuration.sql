@@ -1779,6 +1779,7 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Delete the report information
       /*-*/
+      delete from report_matl_exclude where report_id = par_report_id;
       delete from report_matl where report_id = par_report_id;
       delete from report_rule_detl where report_rule_id in (select report_rule_id from report_rule where report_id = par_report_id);
       delete from report_rule where report_id = par_report_id;
