@@ -2550,11 +2550,8 @@ create or replace package body pricelist_configuration as
       /*-*/
       /* Close the query
       /*-*/
-      if par_update = 'N' then
-         var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl_exclude t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
-      else
-         var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
-      end if;
+      var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl_exclude t1 where t1.report_id = ' || rcd_report.report_id || ')';
+      var_query :=  var_query || ' and t1.matl_code not in (select t1.matl_code from report_matl t1 where t1.report_id = ' || rcd_report.report_id || ') order by t1.matl_code asc';
 
       /*-*/
       /* Load the report add materials
@@ -2757,7 +2754,7 @@ create or replace package body pricelist_configuration as
          /*-*/
          /* Create the new email and create the email text header part
          /*-*/
-         if par_Update = 'N' then
+         if par_update = 'N' then
             lics_mailer.create_email(lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment,
                                      rcd_report.email_address,
                                      'Price List Report - ' || rcd_report.report_name || ' - Automatic Material Exclusions',
