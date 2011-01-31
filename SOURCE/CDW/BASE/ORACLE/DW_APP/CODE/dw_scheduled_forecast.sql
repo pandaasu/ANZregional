@@ -15,7 +15,7 @@ create or replace package dw_scheduled_forecast as
     Dimensional Data Store - Scheduled Forecast
 
     This package contain the scheduled forecast procedures. The package exposes one
-    procedure EXECUTE that performs the forecastr aggregation based on the following parameters:
+    procedure EXECUTE that performs the forecast aggregation based on the following parameters:
 
     1. PAR_COMPANY (company code) (MANDATORY)
 
@@ -28,9 +28,6 @@ create or replace package dw_scheduled_forecast as
        be raised.
 
     3. All base tables will attempt to be aggregated and and errors logged.
-
-    4. A deadly embrace with scheduled aggregation is avoided by all data warehouse components
-       use the same process isolation locking string and sharing the same ICS stream code.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
