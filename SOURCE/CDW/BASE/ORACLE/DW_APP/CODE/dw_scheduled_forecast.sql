@@ -206,7 +206,7 @@ create or replace package body dw_scheduled_forecast as
          /* Set the scheduled forecast trace for the current company and date when required
          /* **note** Only FCST_FACT load required to trigger the data mart loading
          /*-*/
-         if var_errors = true then
+         if var_errors = false then
             lics_logging.write_log('Set the stream process - ('||var_process_code||' / '||var_process_date||')');
             lics_processing.set_trace(var_process_code, var_process_date);
          end if;
