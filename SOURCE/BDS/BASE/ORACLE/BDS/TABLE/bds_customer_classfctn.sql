@@ -18,6 +18,7 @@
  2007/09   Linden Glen    Added ZZAUCUST01 to process_customer
  2008/01   Linden Glen    Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
                                 ZZCNCUST05, ZZAUCUST01, ZZAUCUST02
+ 2011/02   Ben Halicki	  Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04
 
 *******************************************************************************/
 
@@ -51,7 +52,11 @@ create table bds_customer_classfctn
     sap_petcare_city_tier_code            varchar2(30 char)     null,
     sap_snackfood_city_tier_code          varchar2(30 char)     null,
     sap_channel_code                      varchar2(30 char)     null,
-    sap_sub_channel_code                  varchar2(30 char)     null);
+    sap_sub_channel_code                  varchar2(30 char)     null,
+    sap_th_channel_code                   varchar2(30 char)     null,
+    sap_th_sub_channel_code               varchar2(30 char)     null,
+    sap_th_sales_area_neg_code            varchar2(30 char)     null,
+    sap_th_sales_area_geo_code            varchar2(30 char)     null);
     
 /**/
 /* Primary Key Constraint
@@ -93,7 +98,10 @@ comment on column bds_customer_classfctn.sap_petcare_city_tier_code is 'SAP Petc
 comment on column bds_customer_classfctn.sap_snackfood_city_tier_code  is 'SAP Snackfood City Tier  - LADS_CLA_CHR.ATWRT - ZZCNCUST03';
 comment on column bds_customer_classfctn.sap_channel_code is 'SAP Channel  - LADS_CLA_CHR.ATWRT - ZZCNCUST04';
 comment on column bds_customer_classfctn.sap_sub_channel_code is 'SAP Sub Channel  - LADS_CLA_CHR.ATWRT - ZZCNCUST05';
-
+comment on column bds_customer_classfctn.sap_th_channel_code is 'SAP TH Local Sales Channel - LADS_CLA_CHR.ATWRT - ZZTHCUST01';
+comment on column bds_customer_classfctn.sap_th_sub_channel_code is 'SAP TH SubChannel with Shop Type - LADS_CLA_CHR.ATWRT - ZZTHCUST02';
+comment on column bds_customer_classfctn.sap_th_sales_area_neg_code is 'SAP TH Sales Area Negotiation - LADS_CLA_CHR.ATWRT - ZZTHCUST03';
+comment on column bds_customer_classfctn.sap_th_sales_area_geo_code is 'SAP TH Sales Area Geography - LADS_CLA_CHR.ATWRT - ZZTHCUST04';
 
 /**/
 /* Synonym
