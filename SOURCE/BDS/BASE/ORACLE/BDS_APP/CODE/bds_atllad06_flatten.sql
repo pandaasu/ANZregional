@@ -1,4 +1,4 @@
-CREATE OR REPLACE package BDS_APP.bds_atllad06_flatten as
+CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -45,7 +45,8 @@ CREATE OR REPLACE package BDS_APP.bds_atllad06_flatten as
  2008/01   Linden Glen    Added Z_APCHAR10 to 13 to process_material
                           Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
                                 ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 to process_customer
- 2009/04   Trevor Keon    Added Z_APCHAR14 and 15 to process_material                                
+ 2009/04   Trevor Keon    Added Z_APCHAR14 and 15 to process_material   
+ 2011/01   Ben Halicki    Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand                             
 
 *******************************************************************************/
 
@@ -57,7 +58,16 @@ CREATE OR REPLACE package BDS_APP.bds_atllad06_flatten as
 end bds_atllad06_flatten;
 /
 
-CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
+
+CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
+
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LADS_APP;
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LICS_APP;
+
+
+CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
 
    /*-*/
    /* Private exceptions
@@ -576,6 +586,10 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
                 max(case when t02.atnam = 'ZZCNCUST03' then t02.atwrt end) as sap_snackfood_city_tier_code,
                 max(case when t02.atnam = 'ZZCNCUST04' then t02.atwrt end) as sap_channel_code,
                 max(case when t02.atnam = 'ZZCNCUST05' then t02.atwrt end) as sap_sub_channel_code,
+                max(case when t02.atnam = 'ZZTHCUST01' then t02.atwrt end) as sap_th_channel_code,
+                max(case when t02.atnam = 'ZZTHCUST02' then t02.atwrt end) as sap_th_sub_channel_code,
+                max(case when t02.atnam = 'ZZTHCUST03' then t02.atwrt end) as sap_th_sales_area_neg_code,
+                max(case when t02.atnam = 'ZZTHCUST04' then t02.atwrt end) as sap_th_sales_area_geo_code,                   
                 max(t01.idoc_name) as sap_idoc_name,
                 max(t01.idoc_number) as sap_idoc_number,
                 max(t01.idoc_timestamp) as sap_idoc_timestamp,
@@ -636,7 +650,10 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
       rcd_bds_customer_classfctn.sap_snackfood_city_tier_code := rcd_lads_cus_classfctn.sap_snackfood_city_tier_code;
       rcd_bds_customer_classfctn.sap_channel_code := rcd_lads_cus_classfctn.sap_channel_code;
       rcd_bds_customer_classfctn.sap_sub_channel_code := rcd_lads_cus_classfctn.sap_sub_channel_code;
-
+      rcd_bds_customer_classfctn.sap_th_channel_code := rcd_lads_cus_classfctn.sap_th_channel_code;
+      rcd_bds_customer_classfctn.sap_th_sub_channel_code := rcd_lads_cus_classfctn.sap_th_sub_channel_code;
+      rcd_bds_customer_classfctn.sap_th_sales_area_neg_code := rcd_lads_cus_classfctn.sap_th_sales_area_neg_code;
+      rcd_bds_customer_classfctn.sap_th_sales_area_geo_code := rcd_lads_cus_classfctn.sap_th_sales_area_geo_code;
 
       /*-*/
       /* UPDATE BDS, INSERT when new record
@@ -665,7 +682,11 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
              sap_petcare_city_tier_code = rcd_bds_customer_classfctn.sap_petcare_city_tier_code,
              sap_snackfood_city_tier_code = rcd_bds_customer_classfctn.sap_snackfood_city_tier_code,
              sap_channel_code = rcd_bds_customer_classfctn.sap_channel_code,
-             sap_sub_channel_code = rcd_bds_customer_classfctn.sap_sub_channel_code
+             sap_sub_channel_code = rcd_bds_customer_classfctn.sap_sub_channel_code,
+             sap_th_channel_code = rcd_bds_customer_classfctn.sap_th_sub_channel_code,
+             sap_th_sub_channel_code = rcd_bds_customer_classfctn.sap_th_sub_channel_code,
+             sap_th_sales_area_neg_code = rcd_bds_customer_classfctn.sap_th_sales_area_neg_code,
+             sap_th_sales_area_geo_code = rcd_bds_customer_classfctn.sap_th_sales_area_geo_code
          where sap_customer_code = rcd_bds_customer_classfctn.sap_customer_code;
       if (sql%notfound) then
          insert into bds_customer_classfctn
@@ -693,7 +714,12 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
              sap_petcare_city_tier_code,
              sap_snackfood_city_tier_code,
              sap_channel_code,
-             sap_sub_channel_code)
+             sap_sub_channel_code,
+             sap_th_channel_code,
+             sap_th_sub_channel_code,
+             sap_th_sales_area_neg_code,
+             sap_th_sales_area_geo_code
+             )
           values
             (rcd_bds_customer_classfctn.sap_customer_code,
              rcd_bds_customer_classfctn.sap_idoc_name,
@@ -719,7 +745,12 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
              rcd_bds_customer_classfctn.sap_petcare_city_tier_code,
              rcd_bds_customer_classfctn.sap_snackfood_city_tier_code,
              rcd_bds_customer_classfctn.sap_channel_code,
-             rcd_bds_customer_classfctn.sap_sub_channel_code);
+             rcd_bds_customer_classfctn.sap_sub_channel_code,
+             rcd_bds_customer_classfctn.sap_th_channel_code,
+             rcd_bds_customer_classfctn.sap_th_sub_channel_code,
+             rcd_bds_customer_classfctn.sap_th_sales_area_neg_code,
+             rcd_bds_customer_classfctn.sap_th_sales_area_geo_code
+             );
       end if;
 
    /*-------------------*/
@@ -996,9 +1027,10 @@ CREATE OR REPLACE package body BDS_APP.bds_atllad06_flatten as
 end bds_atllad06_flatten;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym bds_atllad06_flatten for bds_app.bds_atllad06_flatten;
-grant execute on bds_atllad06_flatten to lics_app;
-grant execute on bds_atllad06_flatten to lads_app;
+
+CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
+
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LADS_APP;
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LICS_APP;
