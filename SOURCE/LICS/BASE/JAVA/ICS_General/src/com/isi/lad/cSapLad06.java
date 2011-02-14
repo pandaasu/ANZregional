@@ -9,7 +9,6 @@ package com.isi.lad;
 import com.isi.sap.*;
 import java.util.*;
 import java.text.*;
-import java.io.*;
 
 /**
  * This class implements the SAP to LADS Contract functionality. This functionality
@@ -36,7 +35,6 @@ public final class cSapLad06 implements iSapInterface {
       cSapSingleResultSet objEKKOResultSet = null;
       cSapSingleQuery objEKPOQuery = null;
       cSapSingleResultSet objEKPOResultSet = null;
-      int intGroup = 1000;
       ArrayList objEBELN = new ArrayList();
       String strLogging = null;
       String strIdoc = "SAPLAD02";
