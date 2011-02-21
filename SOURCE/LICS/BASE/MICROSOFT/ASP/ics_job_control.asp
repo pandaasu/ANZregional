@@ -177,12 +177,23 @@ sub ProcessForm()
    end if
 
    '//
-   '// Execute the interface/triggered backlog
+   '// Execute the file/interface/stream/triggered backlog
    '//
    lngSize = 0
    strQuery = "select * from"
    strQuery = strQuery & " (select"
-   strQuery = strQuery & " t01.hea_interface as backlog_code,"
+   strQuery = strQuery & " '*FILE_'||t01.fil_path as backlog_code,"
+   strQuery = strQuery & " max(t02.int_description) as backlog_desc,"
+   strQuery = strQuery & " max(t02.int_type) as backlog_type,"
+   strQuery = strQuery & " max(t02.int_group) as backlog_group,"
+   strQuery = strQuery & " count(*) as backlog_count"
+   strQuery = strQuery & " from lics_file t01, lics_interface t02"
+   strQuery = strQuery & " where t01.fil_path = t02.int_interface(+)"
+   strQuery = strQuery & " and t01.fil_status = '1'"
+   strQuery = strQuery & " group by t01.fil_path"
+   strQuery = strQuery & " union all"
+   strQuery = strQuery & " select"
+   strQuery = strQuery & " '*INTERFACE_'||t01.hea_interface as backlog_code,"
    strQuery = strQuery & " max(t02.int_description) as backlog_desc,"
    strQuery = strQuery & " max(t02.int_type) as backlog_type,"
    strQuery = strQuery & " max(t02.int_group) as backlog_group,"
