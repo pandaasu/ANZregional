@@ -216,7 +216,7 @@ create or replace package body lics_trigger_loader as
                 rcd_lics_triggered.tri_procedure,
                 rcd_lics_triggered.tri_timestamp,
                 rcd_lics_triggered.tri_opr_alert,
-                rcd_lics_triggered.tri_ema_group
+                rcd_lics_triggered.tri_ema_group,
                 rcd_lics_triggered.tri_log_data);
 
       /*-*/
@@ -281,7 +281,7 @@ create or replace package body lics_trigger_loader as
    end execute;
 
 end lics_trigger_loader;
-/  
+/
 
 /**************************/
 /* Package Synonym/Grants */
