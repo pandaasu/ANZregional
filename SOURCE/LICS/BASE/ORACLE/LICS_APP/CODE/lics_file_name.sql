@@ -1,28 +1,28 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_file
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - File
-
- The package implements the file functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
-create or replace package lics_file as
+create or replace package lics_file_name as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_file_name
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - File
+
+    The package implements the file name functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -32,13 +32,13 @@ create or replace package lics_file as
                           par_length in number,
                           par_extension in varchar2) return varchar2;
 
-end lics_file;
+end lics_file_name;
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lics_file as
+create or replace package body lics_file_name as
 
    /*****************************************************/
    /* This procedure performs the generate name routine */
@@ -125,11 +125,11 @@ create or replace package body lics_file as
    /*-------------*/
    end generate_name;
 
-end lics_file;
+end lics_file_name;
 /  
 
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym lics_file for lics_app.lics_file;
-grant execute on lics_file to public;
+create or replace public synonym lics_file_name for lics_app.lics_file_name;
+grant execute on lics_file_name to public;
