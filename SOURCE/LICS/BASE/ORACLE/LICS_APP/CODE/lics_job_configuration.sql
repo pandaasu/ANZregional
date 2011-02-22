@@ -1,3 +1,8 @@
+/******************/
+/* Package Header */
+/******************/
+create or replace package lics_job_configuration as
+
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -17,13 +22,9 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2005/11   Steve Gregan   Added poller functionality
+ 2011/02   Steve Gregan   End point architecture version
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_job_configuration as
 
    /**/
    /* Public declarations
@@ -147,21 +148,23 @@ create or replace package body lics_job_configuration as
       if rcd_lics_job.job_exe_history <= 0 then
          var_message := var_message || chr(13) || 'Execution history must be greater than zero';
       end if;
-      if rcd_lics_job.job_type != lics_constant.type_inbound and
+      if rcd_lics_job.job_type != lics_constant.type_file and
+         rcd_lics_job.job_type != lics_constant.type_inbound and
          rcd_lics_job.job_type != lics_constant.type_outbound and
          rcd_lics_job.job_type != lics_constant.type_passthru and
          rcd_lics_job.job_type != lics_constant.type_daemon and
          rcd_lics_job.job_type != lics_constant.type_poller and
          rcd_lics_job.job_type != lics_constant.type_procedure then
-         var_message := var_message || chr(13) || 'Job type must be *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON, *POLLER or *PROCEDURE';
+         var_message := var_message || chr(13) || 'Job type must be *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON, *POLLER or *PROCEDURE';
       end if;
-      if rcd_lics_job.job_type = lics_constant.type_inbound or
+      if rcd_lics_job.job_type = lics_constant.type_file or
+         rcd_lics_job.job_type = lics_constant.type_inbound or
          rcd_lics_job.job_type = lics_constant.type_outbound or
          rcd_lics_job.job_type = lics_constant.type_passthru or
          rcd_lics_job.job_type = lics_constant.type_daemon or
          rcd_lics_job.job_type = lics_constant.type_poller then
          if rcd_lics_job.job_int_group is null then
-            var_message := var_message || chr(13) || 'Job group must be specified for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            var_message := var_message || chr(13) || 'Job group must be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          else
             var_hash_error := false;
             var_hash_count := 0;
@@ -199,11 +202,11 @@ create or replace package body lics_job_configuration as
             end if;
          else
             if not(rcd_lics_job.job_procedure is null) then
-               var_message := var_message || chr(13) || 'Job procedure must not be specified for *INBOUND, *OUTBOUND, *PASSTHRU';
+               var_message := var_message || chr(13) || 'Job procedure must not be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU';
             end if;
          end if;
          if upper(rcd_lics_job.job_next) != 'SYSDATE' then
-            var_message := var_message || chr(13) || 'Job next must be SYSDATE for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            var_message := var_message || chr(13) || 'Job next must be SYSDATE for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          end if;
          if rcd_lics_job.job_type = lics_constant.type_poller then
             if rcd_lics_job.job_interval is null then
@@ -218,7 +221,7 @@ create or replace package body lics_job_configuration as
             end if;
          else
             if not(rcd_lics_job.job_interval is null) then
-               var_message := var_message || chr(13) || 'Job interval must not be specified for *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
+               var_message := var_message || chr(13) || 'Job interval must not be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
             end if;
          end if;
       else
@@ -395,13 +398,14 @@ create or replace package body lics_job_configuration as
       if rcd_lics_job.job_exe_history <= 0 then
          var_message := var_message || chr(13) || 'Execution history must be greater than zero';
       end if;
-      if rcd_lics_job.job_type = lics_constant.type_inbound or
+      if rcd_lics_job.job_type = lics_constant.type_file or
+         rcd_lics_job.job_type = lics_constant.type_inbound or
          rcd_lics_job.job_type = lics_constant.type_outbound or
          rcd_lics_job.job_type = lics_constant.type_passthru or
          rcd_lics_job.job_type = lics_constant.type_daemon or
          rcd_lics_job.job_type = lics_constant.type_poller then
          if rcd_lics_job.job_int_group is null then
-            var_message := var_message || chr(13) || 'Job group must be specified for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            var_message := var_message || chr(13) || 'Job group must be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          else
             var_hash_error := false;
             var_hash_count := 0;
@@ -439,11 +443,11 @@ create or replace package body lics_job_configuration as
             end if;
          else
             if not(rcd_lics_job.job_procedure is null) then
-               var_message := var_message || chr(13) || 'Job procedure must not be specified for *INBOUND, *OUTBOUND, *PASSTHRU';
+               var_message := var_message || chr(13) || 'Job procedure must not be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU';
             end if;
          end if;
          if upper(rcd_lics_job.job_next) != 'SYSDATE' then
-            var_message := var_message || chr(13) || 'Job next must be SYSDATE for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            var_message := var_message || chr(13) || 'Job next must be SYSDATE for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          end if;
          if rcd_lics_job.job_type = lics_constant.type_poller then
             if rcd_lics_job.job_interval is null then
@@ -458,7 +462,7 @@ create or replace package body lics_job_configuration as
             end if;
          else
             if not(rcd_lics_job.job_interval is null) then
-               var_message := var_message || chr(13) || 'Job interval must not be specified for *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
+               var_message := var_message || chr(13) || 'Job interval must not be specified for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
             end if;
          end if;
       else

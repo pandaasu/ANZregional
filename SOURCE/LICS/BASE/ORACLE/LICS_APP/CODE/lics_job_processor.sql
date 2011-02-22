@@ -1,32 +1,33 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_job_processor
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Job Processor
-
- The package implements the job processor functionality.
-
- 1. The job processor executes a submitted job.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2005/11   Steve Gregan   Added poller processor
- 2007/06   Steve Gregan   Changed duplicate background job behaviour
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_job_processor as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_job_processor
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Job Processor
+
+    The package implements the job processor functionality.
+
+    1. The job processor executes a submitted job.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2005/11   Steve Gregan   Added poller processor
+    2007/06   Steve Gregan   Changed duplicate background job behaviour
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -330,6 +331,19 @@ create or replace package body lics_job_processor as
       /* Process the job
       /*-*/
       case rcd_lics_job.job_type
+
+         when lics_constant.type_file then
+            if rcd_lics_job.job_int_group is null then
+               raise_application_error(-20000, 'Process Job - *FILE job must have a job group specified');
+            end if;
+            begin
+               lics_file_processor.execute(rcd_lics_job.job_int_group,
+                                           rcd_lics_job_trace.jot_job,
+                                           rcd_lics_job_trace.jot_execution);
+            exception
+               when others then
+                  add_exception(substr(SQLERRM, 1, 512));
+            end;
 
          when lics_constant.type_inbound then
             if rcd_lics_job.job_int_group is null then

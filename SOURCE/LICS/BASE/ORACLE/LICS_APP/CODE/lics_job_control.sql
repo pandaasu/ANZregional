@@ -1,33 +1,34 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_job_control
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Job Control
-
- The package implements the job control functionality.
-
- **note** This package must be owned by LICS_APP to ensure that all job
-          execution is performed by this user.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2005/11   Steve Gregan   Added poller functionality
- 2007/07   Steve Gregan   Added exception override for missing oracle jobs
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_job_control as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_job_control
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Job Control
+
+    The package implements the job control functionality.
+
+    **note** This package must be owned by LICS_APP to ensure that all job
+             execution is performed by this user.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2005/11   Steve Gregan   Added poller functionality
+    2007/07   Steve Gregan   Added exception override for missing oracle jobs
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -549,6 +550,8 @@ create or replace package body lics_job_control as
                /* Send the suspend message via the pipe when required
                /*-*/
                case rcd_lics_job_trace_01.jot_type
+                  when lics_constant.type_file then
+                     lics_pipe.send(lics_constant.queue_file || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_suspend);
                   when lics_constant.type_inbound then
                      lics_pipe.send(lics_constant.queue_inbound || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_suspend);
                   when lics_constant.type_outbound then
@@ -681,6 +684,8 @@ create or replace package body lics_job_control as
                /* Send the release message via the pipe when required
                /*-*/
                case rcd_lics_job_trace_01.jot_type
+                  when lics_constant.type_file then
+                     lics_pipe.send(lics_constant.queue_file || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_release);
                   when lics_constant.type_inbound then
                      lics_pipe.send(lics_constant.queue_inbound || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_release);
                   when lics_constant.type_outbound then
@@ -809,6 +814,8 @@ create or replace package body lics_job_control as
             /* Send the stop message via the pipe when required
             /*-*/
             case rcd_lics_job_trace_01.jot_type
+               when lics_constant.type_file then
+                  lics_pipe.send(lics_constant.queue_file || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_stop);
                when lics_constant.type_inbound then
                   lics_pipe.send(lics_constant.queue_inbound || rcd_lics_job_trace_01.jot_int_group, lics_constant.pipe_stop);
                when lics_constant.type_outbound then
