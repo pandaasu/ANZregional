@@ -35,6 +35,7 @@ create or replace package lics_passthru_loader as
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added search functionality
  2006/08   Steve Gregan   Added message name functionality
+ 2011/02   Steve Gregan   End point architecture version
 
 *******************************************************************************/
 
@@ -160,10 +161,10 @@ create or replace package body lics_passthru_loader as
       if rcd_lics_interface.int_fil_prefix is null then
          var_msg_name := var_fil_name;
       else
-         var_msg_name := lics_file.generate_name(rcd_lics_interface.int_interface,
-                                                 rcd_lics_interface.int_fil_prefix,
-                                                 rcd_lics_interface.int_fil_sequence,
-                                                 rcd_lics_interface.int_fil_extension);
+         var_msg_name := lics_file_name.generate_name(rcd_lics_interface.int_interface,
+                                                      rcd_lics_interface.int_fil_prefix,
+                                                      rcd_lics_interface.int_fil_sequence,
+                                                      rcd_lics_interface.int_fil_extension);
       end if;
 
       /*-*/

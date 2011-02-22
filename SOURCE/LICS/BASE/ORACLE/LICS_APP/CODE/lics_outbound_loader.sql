@@ -45,6 +45,7 @@ create or replace package lics_outbound_loader as
  2006/08   Steve Gregan   Added search functionality
  2006/08   Steve Gregan   Added message name functionality
  2008/03   Steve Gregan   Added append raw functionality
+ 2011/02   Steve Gregan   End point architecture version
 
 *******************************************************************************/
 
@@ -237,10 +238,10 @@ create or replace package body lics_outbound_loader as
       if not(par_fil_name is null) then
          var_fil_name := par_fil_name;
       else
-         var_fil_name := lics_file.generate_name(rcd_lics_interface.int_interface,
-                                                 rcd_lics_interface.int_fil_prefix,
-                                                 rcd_lics_interface.int_fil_sequence,
-                                                 rcd_lics_interface.int_fil_extension);
+         var_fil_name := lics_file_name.generate_name(rcd_lics_interface.int_interface,
+                                                      rcd_lics_interface.int_fil_prefix,
+                                                      rcd_lics_interface.int_fil_sequence,
+                                                      rcd_lics_interface.int_fil_extension);
       end if;
 
       /*-*/
