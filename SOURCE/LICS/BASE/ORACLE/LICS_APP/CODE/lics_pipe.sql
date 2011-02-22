@@ -1,29 +1,30 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_pipe
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Pipe
-
- The package implements the pipe functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2005/11   Steve Gregan   Added receive_timed function
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_pipe as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_pipe
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Pipe
+
+    The package implements the pipe functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2005/11   Steve Gregan   Added receive_timed function
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -137,6 +138,8 @@ create or replace package body lics_pipe as
             /* Send the message to the pipe based on type
             /*-*/
             case par_type
+               when lics_constant.type_file then
+                  update_pipe(lics_constant.queue_file || rcd_lics_job_trace_01.jot_int_group, par_message);
                when lics_constant.type_inbound then
                   update_pipe(lics_constant.queue_inbound || rcd_lics_job_trace_01.jot_int_group, par_message);
                when lics_constant.type_outbound then
