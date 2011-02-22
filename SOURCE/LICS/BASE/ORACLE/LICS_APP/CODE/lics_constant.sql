@@ -1,26 +1,27 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_constant
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Constants
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_constant as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_constant
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Constants
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /*-*/
    /* Public event constants
@@ -45,6 +46,7 @@ create or replace package lics_constant as
    /*-*/
    /* Public type constants
    /*-*/
+   type_file constant varchar2(10) := '*FILE';
    type_inbound constant varchar2(10) := '*INBOUND';
    type_outbound constant varchar2(10) := '*OUTBOUND';
    type_passthru constant varchar2(10) := '*PASSTHRU';
@@ -55,6 +57,7 @@ create or replace package lics_constant as
    /*-*/
    /* Public queue constants
    /*-*/
+   queue_file constant varchar2(10) := 'FILE_';
    queue_inbound constant varchar2(10) := 'INBOUND_';
    queue_outbound constant varchar2(10) := 'OUTBOUND_';
    queue_passthru constant varchar2(10) := 'PASSTHRU_';
@@ -78,12 +81,17 @@ create or replace package lics_constant as
    job_shutdown constant varchar2(10) := '*SHUTDOWN';
    job_loader constant varchar2(10) := '*LOADER';
    job_trigger constant varchar2(10) := '*TRIGGER';
-   job_reschedule constant varchar2(10) := '*RESCHED';
    job_working constant varchar2(1) := '1';
    job_idle constant varchar2(1) := '2';
    job_suspended constant varchar2(1) := '3';
    job_completed constant varchar2(1) := '4';
    job_aborted constant varchar2(1) := '5';
+
+   /*-*/
+   /* Public file constants
+   /*-*/
+   file_available constant varchar2(1) := '1';
+   file_error constant varchar2(1) := '2';
 
    /*-*/
    /* Public header constants
