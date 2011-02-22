@@ -16,6 +16,7 @@
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added int_search column
  2008/11   Steve Gregan   Added user invocation columns (CHINA INTERFACE LOADER)
+ 2011/02   Steve Gregan   End point architecture version
 
 *******************************************************************************/
 
@@ -41,7 +42,9 @@ create table lics_interface
     int_status                   varchar2(1 char)                not null,
     int_usr_invocation           varchar2(1 char)                null,
     int_usr_validation           varchar2(256 char)              null,
-    int_usr_message              varchar2(64 char)               null);
+    int_usr_message              varchar2(64 char)               null,
+    int_lod_type                 varchar2(10 char)               not null,
+    int_lod_group                varchar2(10 char)               not null);
 
 /**/
 /* Comments
@@ -66,6 +69,8 @@ comment on column lics_interface.int_status is 'Interface - interface status';
 comment on column lics_interface.int_usr_invocation is 'Interface - user invocation indicator (0=No or 1=Yes)';
 comment on column lics_interface.int_usr_validation is 'Interface - user invocation validation procedure';
 comment on column lics_interface.int_usr_message is 'Interface - user invocation message name (*OUTBOUND only)';
+comment on column lics_interface.int_lod_type is 'Interface - interface load type (*NONE=outbound interfaces, *PUSH=load pushing, *POLL=load polling)';
+comment on column lics_interface.int_lod_group is 'Interface - interface load group (*NONE=load type *PUSH or *NONE, group=load type *POLL)';
 
 /**/
 /* Primary Key Constraint
