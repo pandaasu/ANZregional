@@ -1,28 +1,29 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_notification
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Notification
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2007/10   Steve Gregan   Changed email timestamp to 24 hour clock
- 2007/10   Steve Gregan   Included optional site code on internal email URL
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_notification as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_notification
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Notification
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2007/10   Steve Gregan   Changed email timestamp to 24 hour clock
+    2007/10   Steve Gregan   Included optional site code on internal email URL
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -387,7 +388,6 @@ create or replace package body lics_notification as
       /* Local definitions
       /*-*/
       var_message varchar2(4000);
-      var_parameter varchar2(4000);
 
    /*-------------*/
    /* Begin block */
@@ -402,16 +402,12 @@ create or replace package body lics_notification as
       var_message := replace(var_message,chr(9),' ');
       var_message := replace(var_message,chr(10),' ');
       var_message := replace(var_message,chr(13),' ');
-
-      /*-*/
-      /* Initialise the operator alert
-      /*-*/
-      var_parameter := lics_parameter.operator_alert_script || ' "' || var_message || '"';
+      var_message := to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||' INFO '||upper(lics_control.get_ics_environment)||' '||upper(lics_control.get_ics_database)||' '||var_message;
 
       /*-*/
       /* Send the operator alert
       /*-*/
-      java_utility.execute_external_procedure(var_parameter);
+      lics_filesystem.write_log(lics_parameter.ami_logfile, var_message);
 
    /*-------------*/
    /* End routine */
@@ -537,7 +533,6 @@ create or replace package body lics_notification as
       /* Local definitions
       /*-*/
       var_message varchar2(4000);
-      var_parameter varchar2(4000);
 
    /*-------------*/
    /* Begin block */
@@ -552,16 +547,12 @@ create or replace package body lics_notification as
       var_message := replace(var_message,chr(9),' ');
       var_message := replace(var_message,chr(10),' ');
       var_message := replace(var_message,chr(13),' ');
-
-      /*-*/
-      /* Initialise the operator alert
-      /*-*/
-      var_parameter := lics_parameter.operator_alert_script || ' "' || var_message || '"';
+      var_message := to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||' INFO '||upper(lics_control.get_ics_environment)||' '||upper(lics_control.get_ics_database)||' '||var_message;
 
       /*-*/
       /* Send the operator alert
       /*-*/
-      java_utility.execute_external_procedure(var_parameter);
+      lics_filesystem.write_log(lics_parameter.ami_logfile, var_message);
 
    /*-------------*/
    /* End routine */
