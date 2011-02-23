@@ -163,6 +163,7 @@ create or replace package body lics_file_monitor as
       /*-*/
       var_title varchar2(128);
       var_message varchar2(4000);
+      var_fil_path varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -172,6 +173,18 @@ create or replace package body lics_file_monitor as
            from lics_file t01
           where t01.fil_file = rcd_lics_file.file_file;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
+
+      cursor csr_lics_interface is 
+         select t01.*
+           from lics_interface t01
+          where t01.int_interface = rcd_lics_file.fil_path;
+      rcd_lics_interface csr_lics_interface%rowtype;
+
+      cursor csr_all_directories is 
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = rcd_lics_interface.int_fil_path;
+      rcd_all_directories csr_all_directories%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -203,10 +216,38 @@ create or replace package body lics_file_monitor as
       end if;
 
       /*-*/
+      /* Retrieve the interface
+      /*-*/
+      open csr_lics_interface;
+      fetch csr_lics_interface into rcd_lics_interface;
+      if csr_lics_interface%notfound then
+         var_message := var_message || chr(13) || 'Interface (' || rcd_lics_file.fil_path || ') does not exist';
+      end if;
+      close csr_lics_interface;
+
+      /**/
+      /* Retrieve the operating system directory name from the oracle directory
+      /**/
+      open csr_all_directories;
+      fetch csr_all_directories into rcd_all_directories;
+      if csr_all_directories%notfound then
+         var_message := var_message || chr(13) || 'Directory (' || rcd_lics_interface.int_fil_path || ') does not exist';
+      end if;
+      close csr_all_directories;
+      var_fil_path := rcd_all_directories.directory_path;
+
+      /*-*/
+      /* Return the message when required
+      /*-*/
+      if not(var_message is null) then
+         return var_title || var_message;
+      end if;
+
+      /*-*/
       /* Delete the file system file
       /*-*/
       begin
-         lics_filesystem.delete_file(rcd_lics_file.fil_path, rcd_lics_file.fil_name);
+         lics_filesystem.delete_file(var_fil_path, rcd_lics_file.fil_name);
       exception
          when others then
             var_message := var_message || chr(13) || substr(SQLERRM, 1, 1536);

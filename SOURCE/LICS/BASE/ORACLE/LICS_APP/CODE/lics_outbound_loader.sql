@@ -141,8 +141,6 @@ create or replace package body lics_outbound_loader as
       /*-*/
       /* Local definitions
       /*-*/
-      var_pth_name varchar2(256);
-      var_fil_path varchar2(128);
       var_fil_name varchar2(64);
       var_msg_name varchar2(64);
 
@@ -315,20 +313,10 @@ create or replace package body lics_outbound_loader as
       var_hdr_message := 0;
 
       /**/
-      /* Set the outbound path information
-      /**/
-      var_fil_path := rcd_lics_interface.int_fil_path;
-      var_fil_name := rcd_lics_header.hea_fil_name;
-      if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then
-         var_fil_path := var_fil_path || lics_parameter.folder_delimiter;
-      end if;
-      var_pth_name := var_fil_path || var_fil_name;
-
-      /**/
       /* Open the outbound interface file 
       /**/
       begin
-         var_fil_handle := utl_file.fopen(rcd_lics_interface.int_fil_path, rcd_lics_header.hea_fil_name, 'w', 32767);
+         var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'w', 32767);
       exception
          when utl_file.access_denied then
             raise_application_error(-20000, 'Create Interface - Access denied to outbound file (' || rcd_lics_interface.int_fil_path || '-' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));

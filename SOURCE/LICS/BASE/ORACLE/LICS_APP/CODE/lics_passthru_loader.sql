@@ -368,9 +368,6 @@ create or replace package body lics_passthru_loader as
       /*-*/
       var_procedure varchar2(128);
       var_opened boolean;
-      var_pth_name varchar2(256);
-      var_fil_path varchar2(128);
-      var_fil_name varchar2(64);
       var_fil_handle utl_file.file_type;
       var_data varchar2(4000);
 
@@ -383,16 +380,6 @@ create or replace package body lics_passthru_loader as
       /* Initialise the procedure
       /**/
       var_opened := false;
-
-      /**/
-      /* Set the passthru path information
-      /**/
-      var_fil_path := rcd_lics_interface.int_fil_path;
-      var_fil_name := rcd_lics_header.hea_fil_name;
-      if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then
-         var_fil_path := var_fil_path || lics_parameter.folder_delimiter;
-      end if;
-      var_pth_name := var_fil_path || var_fil_name;
 
       /**/
       /* Open the passthru interface file 
@@ -436,7 +423,7 @@ create or replace package body lics_passthru_loader as
                when no_data_found then
                   exit;
                when others then
-                  raise_application_error(-20000, 'Receive Interface - Could not read passthru file (' || upper(rcd_lics_interface.int_fil_path) || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+                  raise_application_error(-20000, 'Receive Interface - Could not read passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
             end;
 
             /*-*/
@@ -461,7 +448,7 @@ create or replace package body lics_passthru_loader as
             utl_file.fclose(var_fil_handle);
          exception
             when others then
-               raise_application_error(-20000, 'Receive Interface - Could not close passthru file (' || upper(rcd_lics_interface.int_fil_path) || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+               raise_application_error(-20000, 'Receive Interface - Could not close passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          end;
          var_opened := false;
       end if;

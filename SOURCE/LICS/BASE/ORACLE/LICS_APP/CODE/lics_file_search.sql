@@ -1,29 +1,30 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_file_search
- Owner   : lics_app
- Author  : Steve Gregan
-
- DESCRIPTION
- -----------
- Local Interface Control System - File Serach
-
- The package implements the file search functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2005/09   Steve Gregan   Created
- 2006/08   Steve Gregan   Added search time range
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_file_search as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_file_search
+    Owner   : lics_app
+    Author  : Steve Gregan
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - File Serach
+
+    The package implements the file search functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2005/09   Steve Gregan   Created
+    2006/08   Steve Gregan   Added search time range
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -137,12 +138,12 @@ create or replace package body lics_file_search as
       /**/
       /* Execute the file search script
       /**/
-      var_return := java_utility.execute_external_function(lics_parameter.script_directory
-                                                           || 'ics_search.sh'
-                                                           || ' ' || var_file
-                                                           || ' "' || var_search || '"'
-                                                           || ' ' || var_str_time
-                                                           || ' ' || var_end_time);
+      var_return := lics_filesystem.execute_external_function(lics_parameter.script_directory
+                                                              || 'ics_search.sh'
+                                                              || ' ' || var_file
+                                                              || ' "' || var_search || '"'
+                                                              || ' ' || var_str_time
+                                                              || ' ' || var_end_time);
       if instr(var_return,'<DATA>') != 0 then
          var_return := substr(var_return,instr(var_return,'<DATA>')+6,length(var_return));
       end if;

@@ -248,18 +248,11 @@ create or replace package body lics_file_processor as
       /* Local cursors
       /*-*/
       cursor csr_lics_interface_01 is 
-         select t01.int_interface,
-                t01.int_description,
-                t01.int_type,
-                t01.int_group,
-                t01.int_fil_path,
-                t01.int_opr_alert,
-                t01.int_ema_group,
-                t01.int_procedure
+         select t01.*
            from lics_interface t01
           where t01.int_type in (lics_constant.type_inbound, lics_constant.type_passthru)
             and t01.int_lod_type = '*POLL'
-            and t01.int_group = var_search
+            and t01.int_lod_group = var_search
             and t01.int_status = lics_constant.status_active
        order by t01.int_priority asc,
                 t01.int_interface asc;
@@ -274,7 +267,7 @@ create or replace package body lics_file_processor as
       cursor csr_lics_file_01 is 
          select t01.fil_name
            from lics_file t01
-          where upper(t01.fil_path) = upper(rcd_lics_interface.int_interface)
+          where t01.fil_path = rcd_lics_interface.int_interface
             and t01.fil_status = lics_constant.file_available
        order by t01.fil_file asc;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
@@ -315,7 +308,6 @@ create or replace package body lics_file_processor as
          rcd_lics_interface.int_fil_path := rcd_lics_interface_01.int_fil_path;
          rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
-         rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
 
          /*-*/
          /* Retrieve the operating system directory name from the oracle directory
@@ -477,7 +469,7 @@ create or replace package body lics_file_processor as
                      lics_notification.log_success(var_job,
                                                    var_execution,
                                                    lics_constant.type_file,
-                                                   rcd_lics_interface.int_group,
+                                                   rcd_lics_interface.int_lod_group,
                                                    null,
                                                    rcd_lics_interface.int_interface,
                                                    rcd_lics_file.fil_file,
@@ -487,7 +479,7 @@ create or replace package body lics_file_processor as
                      lics_notification.log_error(var_job,
                                                  var_execution,
                                                  lics_constant.type_file,
-                                                 rcd_lics_interface.int_group,
+                                                 rcd_lics_interface.int_lod_group,
                                                  null,
                                                  rcd_lics_interface.int_interface,
                                                  rcd_lics_file.fil_file,

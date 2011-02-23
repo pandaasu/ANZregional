@@ -402,7 +402,7 @@ create or replace package body lics_notification as
       var_message := replace(var_message,chr(9),' ');
       var_message := replace(var_message,chr(10),' ');
       var_message := replace(var_message,chr(13),' ');
-      var_message := to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||' INFO '||upper(lics_control.get_ics_environment)||' '||upper(lics_control.get_ics_database)||' '||var_message;
+      var_message := '['||to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||'] INFO '||upper(lics_parameter.log_environment)||' '||upper(lics_parameter.log_database)||' '||var_message;
 
       /*-*/
       /* Send the operator alert
@@ -547,7 +547,7 @@ create or replace package body lics_notification as
       var_message := replace(var_message,chr(9),' ');
       var_message := replace(var_message,chr(10),' ');
       var_message := replace(var_message,chr(13),' ');
-      var_message := to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||' INFO '||upper(lics_control.get_ics_environment)||' '||upper(lics_control.get_ics_database)||' '||var_message;
+      var_message := '['||to_char(sysdate,'yyyy-mm-dd_hh24:mi:ss')||'] INFO '||upper(lics_parameter.log_environment)||' '||upper(lics_parameter.log_database)||' '||var_message;
 
       /*-*/
       /* Send the operator alert

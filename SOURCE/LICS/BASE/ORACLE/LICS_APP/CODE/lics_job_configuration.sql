@@ -129,7 +129,7 @@ create or replace package body lics_job_configuration as
       rcd_lics_job.job_exe_history := par_exe_history;
       rcd_lics_job.job_opr_alert := par_opr_alert;
       rcd_lics_job.job_ema_group := par_ema_group;
-      rcd_lics_job.job_type := par_type;
+      rcd_lics_job.job_type := upper(par_type);
       rcd_lics_job.job_int_group := upper(par_int_group);
       rcd_lics_job.job_procedure := par_procedure;
       rcd_lics_job.job_next := par_next;
@@ -379,7 +379,7 @@ create or replace package body lics_job_configuration as
       rcd_lics_job.job_exe_history := par_exe_history;
       rcd_lics_job.job_opr_alert := par_opr_alert;
       rcd_lics_job.job_ema_group := par_ema_group;
-      rcd_lics_job.job_type := par_type;
+      rcd_lics_job.job_type := upper(par_type);
       rcd_lics_job.job_int_group := upper(par_int_group);
       rcd_lics_job.job_procedure := par_procedure;
       rcd_lics_job.job_next := par_next;

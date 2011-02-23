@@ -1,29 +1,30 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_sap_processor
- Owner   : lics_app
- Author  : Steve Gregan
-
- DESCRIPTION
- -----------
- Local Interface Control System - SAP Processor
-
- The package implements the SAP processor functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2005/06   Steve Gregan   Created
- 2007/02   Steve Gregan   Added dual inbound execution
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_sap_processor as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_sap_processor
+    Owner   : lics_app
+    Author  : Steve Gregan
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - SAP Processor
+
+    The package implements the SAP processor functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2005/06   Steve Gregan   Created
+    2007/02   Steve Gregan   Added dual inbound execution
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -105,12 +106,12 @@ create or replace package body lics_sap_processor as
       /* Execute the inbound SAP script
       /**/
       lics_logging.write_log('Execute SAP data extract started');
-      java_utility.execute_external_procedure(lics_parameter.inbound_sap_script
-                                              || ' ' || upper(par_interface)
-                                              || ' ' || upper(par_config_id)
-                                              || ' ' || par_sap_user
-                                              || ' ' || par_sap_password
-                                              || ' ' || upper(par_forward));
+      lics_filesystem.execute_external_procedure(lics_parameter.inbound_sap_script
+                                                 || ' ' || upper(par_interface)
+                                                 || ' ' || upper(par_config_id)
+                                                 || ' ' || par_sap_user
+                                                 || ' ' || par_sap_password
+                                                 || ' ' || upper(par_forward));
       lics_logging.write_log('Execute SAP data extract completed');
 
       /*-*/
@@ -220,13 +221,13 @@ create or replace package body lics_sap_processor as
       /* Execute the dual inbound SAP script
       /**/
       lics_logging.write_log('Execute SAP data extract started');
-      java_utility.execute_external_procedure(lics_parameter.script_directory || par_exe_script
-                                              || ' ' || upper(par_interface)
-                                              || ' ' || upper(par_config_id)
-                                              || ' ' || par_sap_user_01
-                                              || ' ' || par_sap_password_01
-                                              || ' ' || var_sap_user_02
-                                              || ' ' || var_sap_password_02);
+      lics_filesystem.execute_external_procedure(lics_parameter.script_directory || par_exe_script
+                                                 || ' ' || upper(par_interface)
+                                                 || ' ' || upper(par_config_id)
+                                                 || ' ' || par_sap_user_01
+                                                 || ' ' || par_sap_password_01
+                                                 || ' ' || var_sap_user_02
+                                                 || ' ' || var_sap_password_02);
       lics_logging.write_log('Execute SAP data extract completed');
 
       /*-*/
