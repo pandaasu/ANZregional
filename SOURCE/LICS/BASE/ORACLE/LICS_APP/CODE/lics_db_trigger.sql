@@ -1,3 +1,8 @@
+/***********/
+/* Trigger */
+/***********/
+create or replace trigger ics_startup after startup on database
+
 /******************************************************************************/
 /* Trigger Definition                                                         */
 /******************************************************************************/
@@ -17,8 +22,6 @@
  2007/07   Steve Gregan   Changed restart jobs to dbms_job submit
 
 *******************************************************************************/
-
-create or replace trigger ics_startup after startup on database
 
    /*--------------*/
    /* Declarations */
