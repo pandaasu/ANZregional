@@ -317,9 +317,9 @@ create or replace package body lics_file_processor as
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
          rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
 
-         /**/
+         /*-*/
          /* Retrieve the operating system directory name from the oracle directory
-         /**/
+         /*-*/
          open csr_all_directories_01;
          fetch csr_all_directories_01 into rcd_all_directories_01;
          if csr_all_directories_01%notfound then

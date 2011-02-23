@@ -29,8 +29,8 @@ create or replace package lics_directory as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure create_directory(par_dir_name in varchar2);
-   procedure delete_directory(par_dir_name in varchar2);
+   procedure create_directory(par_ics_name in varchar2, par_sys_name in varchar2);
+   procedure delete_directory(par_ics_name in varchar2, par_sys_name in varchar2);
 
 end lics_directory;
 /
@@ -51,11 +51,6 @@ create or replace package body lics_directory as
    /********************************************************/
    procedure create_directory(par_ics_name in varchar2, par_sys_name in varchar2) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_ics_name varchar2(256);
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -64,12 +59,9 @@ create or replace package body lics_directory as
       /*-*/
       /* Create the new directory
       /*-*/
-      var_dir_name := par_dir_name;
-      var_dir_name := replace(var_dir_name,'.','_');
-      var_dir_name := replace(var_dir_name,' ','_');
-      lics_filesystem.create_directory(lics_parameter.ics_outbound_path||lics_parameter.ics_path_delimiter||par_sys_name);
-      execute immediate 'create directory ics_'||var_ics_name||' as '''||lics_parameter.ics_outbound_path||lics_parameter.ics_path_delimiter||var_sys_name||'''';
-      execute immediate 'grant all on directory ics_'||var_ics_name||' to lics_app';
+      lics_filesystem.create_directory(par_sys_name);
+      execute immediate 'create directory '||par_ics_name||' as '''||par_sys_name||'''';
+      execute immediate 'grant all on directory '||par_ics_name||' to lics_app';
       
    /*-------------------*/
    /* Exception handler */
@@ -99,12 +91,16 @@ create or replace package body lics_directory as
    /********************************************************/
    /* This procedure performs the delete directory routine */
    /********************************************************/
-   procedure delete_directory(par_dir_name in varchar2) is
+   procedure delete_directory(par_ics_name in varchar2, par_sys_name in varchar2) is
 
       /*-*/
-      /* Local definitions
+      /* Local cursors
       /*-*/
-      var_dir_name varchar2(256);
+      cursor csr_all_directories is 
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = upper(par_ics_name);
+      rcd_all_directories csr_all_directories%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -114,11 +110,17 @@ create or replace package body lics_directory as
       /*-*/
       /* Delete the existing directory
       /*-*/
-      var_dir_name := par_dir_name;
-      var_dir_name := replace(var_dir_name,'.','_');
-      var_dir_name := replace(var_dir_name,' ','_');
-      execute immediate 'drop_directory ics_'||var_dir_name;
-      lics_filesystem.delete_directory(lics_parameter.ics_outbound_path||lics_parameter.ics_path_delimiter||var_dir_name);
+      execute immediate 'drop_directory '||par_ics_name;
+      
+      /*-*/
+      /* Retrieve and delete the related operating system directory name from the oracle directory
+      /*-*/
+      open csr_all_directories;
+      fetch csr_all_directories into rcd_all_directories;
+      if csr_all_directories%found then
+         lics_filesystem.delete_directory(rcd_all_directories.directory_path);
+      end if;
+      close csr_all_directories;
       
    /*-------------------*/
    /* Exception handler */
