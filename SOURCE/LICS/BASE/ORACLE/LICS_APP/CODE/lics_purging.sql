@@ -1,35 +1,36 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_purging
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Purging
-
- The package implements the purging functionality.
-
- **NOTES**
- ---------
- 1. Only one instance of this package can execute at any one time to prevent
-    database lock issues.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2006/08   Steve Gregan   Added interface header search purging
- 2007/01   Steve Gregan   Modified selection and processing logic
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_purging as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_purging
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Purging
+
+    The package implements the purging functionality.
+
+    **NOTES**
+    ---------
+    1. Only one instance of this package can execute at any one time to prevent
+       database lock issues.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2006/08   Steve Gregan   Added interface header search purging
+    2007/01   Steve Gregan   Modified selection and processing logic
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -57,7 +58,7 @@ create or replace package body lics_purging as
    procedure purge_executions;
    procedure purge_events;
    procedure purge_logs;
-   procedure purge_files;
+   procedure purge_os;
 
    /*-*/
    /* Private definitions
@@ -77,7 +78,7 @@ create or replace package body lics_purging as
       /*-*/
       /* Set the commit count parameter
       /*-*/
-      var_commit_count := 1000000;
+      var_commit_count := 5000;
       if not(par_commit_count is null) then
          var_commit_count := par_commit_count;
       end if;
@@ -103,9 +104,9 @@ create or replace package body lics_purging as
       purge_logs;
 
       /*-*/
-      /* Purge the files
+      /* Purge the operating system
       /*-*/
-      purge_files;
+      purge_os;
 
    /*-------------------*/
    /* Exception handler */
@@ -448,25 +449,25 @@ create or replace package body lics_purging as
    /*-------------*/
    end purge_logs;
 
-   /***************************************************/
-   /* This procedure performs the purge files routine */
-   /***************************************************/
-   procedure purge_files is
+   /**************************************************************/
+   /* This procedure performs the purge operating system routine */
+   /**************************************************************/
+   procedure purge_os is
 
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
-      /**/
-      /* Execute the file purge script
-      /**/
-      java_utility.execute_external_procedure(lics_parameter.purge_file_script);
+      /*-*/
+      /* Execute the operating system purge script
+      /*-*/
+      lics_filesystem.execute_external_procedure(lics_parameter.purge_file_script);
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end purge_files;
+   end purge_os;
 
 end lics_purging;
 /  
