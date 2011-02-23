@@ -64,7 +64,7 @@ create or replace package body lics_file_poller as
       /*-*/
       /* Process the file system file retrieval
       /*-*/
-      lics_filesystem.retrieve_file_list(lics_parameter.ics_inbound_path);
+      lics_filesystem.retrieve_file_list(lics_parameter.inbound_directory);
       
    /*-------------------*/
    /* Exception handler */

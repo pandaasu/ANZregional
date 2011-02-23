@@ -59,7 +59,7 @@ create or replace package body lics_file_processor as
    /*-*/
    /* Private definitions
    /*-*/
-   cnt_process_count constant number(5,0) := 10;
+   cnt_process_count constant number(5,0) := 50;
    type typ_process is table of number(15,0) index by binary_integer;
    tbl_process typ_process;
    var_ctl_pipe varchar2(128);
@@ -258,16 +258,23 @@ create or replace package body lics_file_processor as
                 t01.int_procedure
            from lics_interface t01
           where t01.int_type in (lics_constant.type_inbound, lics_constant.type_passthru)
+            and t01.int_lod_type = '*POLL'
             and t01.int_group = var_search
             and t01.int_status = lics_constant.status_active
        order by t01.int_priority asc,
                 t01.int_interface asc;
       rcd_lics_interface_01 csr_lics_interface_01%rowtype;
 
+      cursor csr_all_directories_01 is 
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
+      rcd_all_directories_01 csr_all_directories_01%rowtype;
+
       cursor csr_lics_file_01 is 
          select t01.fil_name
            from lics_file t01
-          where t01.fil_path = rcd_lics_interface.int_interface
+          where upper(t01.fil_path) = upper(rcd_lics_interface.int_interface)
             and t01.fil_status = lics_constant.file_available
        order by t01.fil_file asc;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
@@ -280,12 +287,6 @@ create or replace package body lics_file_processor as
           where t01.fil_file = var_fil_file
                 for update nowait;
       rcd_lics_file_02 csr_lics_file_02%rowtype;
-
-      cursor csr_all_directories_01 is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
-      rcd_all_directories_01 csr_all_directories_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -442,7 +443,7 @@ create or replace package body lics_file_processor as
                   /*-*/
                   if var_lod_error = false then
                      begin
-                        lics_filesystem.archive_file_gzip(rcd_lics_interface.int_fil_path, rcd_lics_file.fil_name, lics_control.get_archive_path, rcd_lics_file.fil_name||'.gz', '1');
+                        lics_filesystem.archive_file_gzip(rcd_lics_interface.int_fil_path, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
                      exception
                         when others then
                            var_lod_error := true;
