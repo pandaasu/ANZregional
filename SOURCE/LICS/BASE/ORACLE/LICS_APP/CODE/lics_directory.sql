@@ -60,7 +60,7 @@ create or replace package body sys.lics_directory as
       /* Create the new directory
       /*-*/
       if substr(par_sys_name,1,5) != '/ics/' then
-         raise_application_error(-20000, Directory (' || par_sys_name || ') must start with /ics/');
+         raise_application_error(-20000, 'Directory (' || par_sys_name || ') must start with /ics/');
       end if;
       lics_filesystem.create_directory(par_sys_name);
       execute immediate 'create directory '||par_ics_name||' as '''||par_sys_name||'''';
@@ -129,7 +129,7 @@ create or replace package body sys.lics_directory as
          return;
       end if;
       if substr(rcd_all_directories.directory_path,1,5) != '/ics/' then
-         raise_application_error(-20000, Directory (' || rcd_all_directories.directory_path || ') must start with /ics/');
+         raise_application_error(-20000, 'Directory (' || rcd_all_directories.directory_path || ') must start with /ics/');
       end if;
 
       /*-*/
