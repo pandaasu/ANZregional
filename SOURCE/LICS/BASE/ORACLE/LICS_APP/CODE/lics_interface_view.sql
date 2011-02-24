@@ -1,28 +1,29 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_interface_view
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Interface View
-
- The package implements the interface view functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_interface_view as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_interface_view
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Interface View
+
+    The package implements the interface view functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -112,14 +113,6 @@ create or replace package body lics_interface_view as
       close csr_lics_header_01;
 
       /*-*/
-      /* File path must exist
-      /*-*/
-      if rcd_lics_header_01.int_fil_path != 'ICS_INBOUND'
-      and rcd_lics_header_01.int_fil_path != 'ICS_OUTBOUND' then
-         var_message := var_message || chr(13) || 'Interface file path (' || rcd_lics_header_01.int_fil_path || ') not recognised';
-      end if;
-
-      /*-*/
       /* Return the message when required
       /*-*/
       if not(var_message is null) then
@@ -140,11 +133,7 @@ create or replace package body lics_interface_view as
       /* 2. Ignore when file not found
       /**/
       begin
-         if rcd_lics_header_01.int_fil_path = 'ICS_INBOUND' then
-            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' VIEW');
-         else
-            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' VIEW');
-         end if;
+         lics_filesystem.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' VIEW');
       exception
          when others then
             return '*OK';
