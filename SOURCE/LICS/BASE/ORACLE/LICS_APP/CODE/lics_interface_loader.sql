@@ -1,4 +1,7 @@
-CREATE OR REPLACE PACKAGE LICS_APP.lics_interface_loader as
+/******************/
+/* Package Header */
+/******************/
+create or replace package lics_interface_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -15,10 +18,15 @@ CREATE OR REPLACE PACKAGE LICS_APP.lics_interface_loader as
 
     The package implements the interface loader functionality.
 
+    **NOTES**
+    1. Inbound and passthru files are placed in the interface directory and will be
+       loaded by the file processing poller.
+
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2008/11   Steve Gregan   Created (CHINA INTERFACE LOADER)
+    2008/11   Steve Gregan   Created
     2011/01   Ben Halicki    Added call to archive inbound loader file on local filesystem
+    2011/02   Steve Gregan   End point architecture version
     
    *******************************************************************************/
 
@@ -30,14 +38,10 @@ CREATE OR REPLACE PACKAGE LICS_APP.lics_interface_loader as
 end lics_interface_loader;
 /
 
-
-CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
-
-
-GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
-
-
-CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
+/****************/
+/* Package Body */
+/****************/
+create or replace package body lics_interface_loader as
 
    /*-*/
    /* Private exceptions
@@ -54,7 +58,6 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /* Private declarations
    /*-*/
    procedure read_xml_stream(par_stream in clob);
-   procedure archive_file(par_fil_name in varchar2);
    
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -67,7 +70,9 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       var_title varchar2(128);
       var_message varchar2(4000);
       var_result varchar2(4000);
+      var_fil_path varchar2(128);
       var_fil_name varchar2(64);
+      var_fil_work varchar2(64);
       var_opened boolean;
       var_instance number(15,0);
       var_fil_handle utl_file.file_type;
@@ -80,6 +85,12 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
            from lics_interface t01
           where t01.int_interface = var_interface;
       rcd_lics_interface csr_lics_interface%rowtype;
+
+      cursor csr_all_directories is 
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = rcd_lics_interface.int_fil_path;
+      rcd_all_directories csr_all_directories%rowtype;
 
       cursor csr_lics_temp is
          select t01.*
@@ -132,6 +143,17 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       end if;
       close csr_lics_interface;
 
+      /**/
+      /* Retrieve the operating system directory name from the oracle directory
+      /**/
+      open csr_all_directories;
+      fetch csr_all_directories into rcd_all_directories;
+      if csr_all_directories%notfound then
+         var_message := var_message || chr(13) || 'Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist';
+      end if;
+      close csr_all_directories;
+      var_fil_path := rcd_all_directories.directory_path;
+
       /*-*/
       /* Return the message when required
       /*-*/
@@ -144,9 +166,9 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       /*-*/
       read_xml_stream(lics_form.get_clob('LOAD_STREAM'));
 
-      /**/
+      /*-*/
       /* Perform the interface user invocation validation function when required
-      /**/
+      /*-*/
       if not(rcd_lics_interface.int_usr_validation is null) then
          open csr_lics_temp;
          loop
@@ -174,8 +196,13 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
       /* 1. INBOUND = unique file name
       /* 2. PASSTHRU = unique file name
       /* 3. OUTBOUND = unique file name or NULL(generated file name)
+      /* 4. *POLL interfaces use the ^ character to exclude from the polling mechanism
       /*-*/
       var_fil_name := rcd_lics_interface.int_interface||'_LOADER_'||to_char(localtimestamp,'yyyymmddhh24missff')||'.TXT';
+      var_fil_work := var_fil_name;
+      if upper(rcd_lics_interface.int_lod_type) = '*POLL' then
+         var_fil_work := '^'||var_fil_name;
+      end if;
       if (upper(rcd_lics_interface.int_type) = '*OUTBOUND' and
           not(rcd_lics_interface.int_fil_prefix is null)) then
          var_fil_name := null;
@@ -188,7 +215,7 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
           upper(rcd_lics_interface.int_type) = '*PASSTHRU') then
          begin
             var_opened := false;
-            var_fil_handle := utl_file.fopen(rcd_lics_interface.int_fil_path, var_fil_name, 'w', 32767);
+            var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), var_fil_work, 'w', 32767);
             var_opened := true;
             open csr_lics_temp;
             loop
@@ -210,18 +237,21 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
                         null;
                   end;
                end if;
-               raise_application_error(-20000, 'File system exception (' || rcd_lics_interface.int_fil_path || '-' || var_fil_name || ') - ' || substr(SQLERRM, 1, 1024));
+               raise_application_error(-20000, 'File system exception (' || rcd_lics_interface.int_fil_path || '-' || var_fil_work || ') - ' || substr(SQLERRM, 1, 1024));
          end;
          var_opened := false;
       end if;
 
       /*-*/
       /* Load the interface based on the interface type
+      /* **notes** 1. When the file is restored it will go to the BASE directory
       /*-*/
       if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
+         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_work);
+         lics_filesystem.archive_file_gzip(var_fil_path, var_fil_work, lics_parameter.archive_directory, var_fil_work||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
-         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
+         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_work);
+         lics_filesystem.archive_file_gzip(var_fil_path, var_fil_work, lics_parameter.archive_directory, var_fil_work||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
          var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
          open csr_lics_temp;
@@ -234,12 +264,6 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
          end loop;
          close csr_lics_temp;
          lics_outbound_loader.finalise_interface;
-      end if;
-      
-      /* archive file on local filesystem when required */
-      if (upper(rcd_lics_interface.int_type) = '*INBOUND' or
-          upper(rcd_lics_interface.int_type) = '*PASSTHRU') then
-        archive_file(var_fil_name);
       end if;
 
       /*-*/
@@ -344,28 +368,11 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
    /*-------------*/
    end read_xml_stream;
 
-   /***************************************************************/
-   /* This procedure calls the archive script on local filesystem */
-   /***************************************************************/
-   procedure archive_file(par_fil_name in varchar2) is
-   begin
-      
-      /**/
-      /* Execute the remote processing script
-      /**/
-      begin
-         java_utility.execute_external_procedure(lics_parameter.archive_script || ' ' || par_fil_name);
-      exception
-         when others then
-            raise_application_error(-20000, 'Archive File - External process error - ' || substr(SQLERRM, 1, 3900));
-      end;
-      
-   end archive_file;
 end lics_interface_loader;
 /
 
-
-CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
-
-
-GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
+/**************************/
+/* Package Synonym/Grants */
+/**************************/
+create or replace public synonym lics_interface_loader for lics_app.lics_interface_loader;
+grant execute on lics_interface_loader to public;
