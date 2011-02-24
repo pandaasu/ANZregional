@@ -30,7 +30,7 @@ create or replace package sys.lics_directory as
    /* Public declarations
    /*-*/
    procedure create_directory(par_ics_name in varchar2, par_sys_name in varchar2);
-   procedure delete_directory(par_ics_name in varchar2, par_sys_name in varchar2);
+   procedure delete_directory(par_ics_name in varchar2);
 
 end lics_directory;
 /
@@ -91,7 +91,7 @@ create or replace package body sys.lics_directory as
    /********************************************************/
    /* This procedure performs the delete directory routine */
    /********************************************************/
-   procedure delete_directory(par_ics_name in varchar2, par_sys_name in varchar2) is
+   procedure delete_directory(par_ics_name in varchar2) is
 
       /*-*/
       /* Local cursors
