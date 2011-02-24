@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package lics_directory as
+create or replace package sys.lics_directory as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -38,7 +38,7 @@ end lics_directory;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lics_directory as
+create or replace package body sys.lics_directory as
 
    /*-*/
    /* Private exceptions
@@ -153,5 +153,5 @@ end lics_directory;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym lics_directory for lics_app.lics_directory;
+create or replace public synonym lics_directory for sys.lics_directory;
 grant execute on lics_directory to lics_app;
