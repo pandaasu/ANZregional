@@ -144,4 +144,5 @@ end lics_filesystem;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
+create or replace public synonym lics_filesystem for lics_app.lics_filesystem;
 grant execute on lics_filesystem to public;
