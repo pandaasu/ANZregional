@@ -51,6 +51,11 @@ create or replace package body sys.lics_directory as
    /********************************************************/
    procedure create_directory(par_ics_name in varchar2, par_sys_name in varchar2) is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_sys_name varchar2(128);
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -59,8 +64,9 @@ create or replace package body sys.lics_directory as
       /*-*/
       /* Create the new directory
       /*-*/
+      var_sys_name := '/ics/'||par_sys_name;
       lics_filesystem.create_directory(par_sys_name);
-      execute immediate 'create directory '||par_ics_name||' as '''||par_sys_name||'''';
+      execute immediate 'create directory '||par_ics_name||' as '''||var_sys_name||'''';
       execute immediate 'grant all on directory '||par_ics_name||' to lics_app';
       
    /*-------------------*/
