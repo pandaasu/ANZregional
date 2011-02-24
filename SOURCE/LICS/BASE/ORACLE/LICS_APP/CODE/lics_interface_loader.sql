@@ -143,9 +143,9 @@ create or replace package body lics_interface_loader as
       end if;
       close csr_lics_interface;
 
-      /**/
+      /*-*/
       /* Retrieve the operating system directory name from the oracle directory
-      /**/
+      /*-*/
       open csr_all_directories;
       fetch csr_all_directories into rcd_all_directories;
       if csr_all_directories%notfound then
@@ -251,7 +251,6 @@ create or replace package body lics_interface_loader as
          lics_filesystem.archive_file_gzip(var_fil_path, var_fil_work, lics_parameter.archive_directory, var_fil_work||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
          lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_work);
-         lics_filesystem.archive_file_gzip(var_fil_path, var_fil_work, lics_parameter.archive_directory, var_fil_work||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
          var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
          open csr_lics_temp;
