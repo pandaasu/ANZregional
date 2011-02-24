@@ -371,7 +371,6 @@ create or replace package body lics_passthru_loader as
       var_data varchar2(4000);
       var_wrk_path varchar2(128);
       var_src_path varchar2(128);
-      var_tar_path varchar2(128);
 
    /*-------------*/
    /* Begin block */
@@ -456,40 +455,26 @@ create or replace package body lics_passthru_loader as
       end if;
 
       /*-*/
-      /* Move the passthru interface file to the outbound directory when required
+      /* Retrieve the operating system source directory name from the oracle directory
       /*-*/
-      if rcd_lics_interface.int_lod_type = '*POLL' then
-
-         /*-*/
-         /* Retrieve the operating system source directory name from the oracle directory
-         /*-*/
-         var_wrk_path := rcd_lics_interface.int_fil_path;
-         open csr_all_directories;
-         fetch csr_all_directories into rcd_all_directories;
-         if csr_all_directories%notfound then
-            raise_application_error(-20000, 'Execute - Source Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
-         end if;
-         close csr_all_directories;
-         var_src_path := rcd_all_directories.directory_path;
-
-         /*-*/
-         /* Retrieve the operating system target directory name from the oracle directory
-         /*-*/
-         var_wrk_path := 'ICS_OUTBOUND';
-         open csr_all_directories;
-         fetch csr_all_directories into rcd_all_directories;
-         if csr_all_directories%notfound then
-            raise_application_error(-20000, 'Execute - Source Directory (ICS_OUTBOUND) does not exist');
-         end if;
-         close csr_all_directories;
-         var_tar_path := rcd_all_directories.directory_path;
-
-         /*-*/
-         /* Mode the file to the target directory
-         /*-*/
-         lics_filesystem.move_file(var_src_path, rcd_lics_header.hea_fil_name, var_tar_path, rcd_lics_header.hea_fil_name, '0');
-
+      var_wrk_path := rcd_lics_interface.int_fil_path;
+      open csr_all_directories;
+      fetch csr_all_directories into rcd_all_directories;
+      if csr_all_directories%notfound then
+         raise_application_error(-20000, 'Receive Interface - Source directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
       end if;
+      close csr_all_directories;
+      var_src_path := rcd_all_directories.directory_path;
+
+      /*-*/
+      /* Move the passthru interface file to the outbound directory
+      /*-*/
+      begin
+         lics_filesystem.move_file(var_src_path, rcd_lics_header.hea_fil_name, lics_parameter.outbound_directory, rcd_lics_header.hea_fil_name, '0');
+      exception
+         when others then
+            raise_application_error(-20000, 'Receive Interface - Could not move passthru file to OUTBOUND directory (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+      end;
 
    /*-------------------*/
    /* Exception handler */
