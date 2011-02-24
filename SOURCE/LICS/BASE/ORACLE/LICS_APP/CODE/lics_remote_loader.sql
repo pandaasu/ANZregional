@@ -1,50 +1,51 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_remote_loader
- Owner   : lics_app
- Author  : Steve Gregan - March 2005
-
- DESCRIPTION
- -----------
- Local Interface Control System - Remote Loader
-
- The package implements the remote loader functionality.
-
- 1. The host application must supply the path and file name when creating the interface.
-    **note** the path can be either an operating system path specified in the ORA.INIT file
-             or an Oracle directory created in version 9i or later.
-
- 2. The host application must supply the operating system file processing script when
-    finalising the interface.
-    **note** the processing script must be fully path qualified and LICS_APP must have
-             access to that path. Oracle must have access to both the path and script.
-
- 3. The host application is responsible for deciding the type of exception
-    processing. The implementation can choose to abort the interface on the
-    first exception (invoke the finalise interface method) or load all exceptions
-    before aborting the interface.
-
- 4. This package has been designed as a single instance class to facilitate
-    reengineering in an object oriented language. That is, in an OO environment
-    the host would create one or more instances of this class. However, in
-    the PL/SQL environment only one instance is available at any one time.
-
- 5. All methods have been implemented as autonomous transactions so as not
-    to interfere with the commit boundaries of the host application.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2005/03   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_remote_loader as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_remote_loader
+    Owner   : lics_app
+    Author  : Steve Gregan - March 2005
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Remote Loader
+
+    The package implements the remote loader functionality.
+
+    1. The host application must supply the path and file name when creating the interface.
+       **note** the path can be either an operating system path specified in the ORA.INIT file
+                or an Oracle directory created in version 9i or later.
+
+    2. The host application must supply the operating system file processing script when
+       finalising the interface.
+       **note** the processing script must be fully path qualified and LICS_APP must have
+                access to that path. Oracle must have access to both the path and script.
+
+    3. The host application is responsible for deciding the type of exception
+       processing. The implementation can choose to abort the interface on the
+       first exception (invoke the finalise interface method) or load all exceptions
+       before aborting the interface.
+
+    4. This package has been designed as a single instance class to facilitate
+       reengineering in an object oriented language. That is, in an OO environment
+       the host would create one or more instances of this class. However, in
+       the PL/SQL environment only one instance is available at any one time.
+
+    5. All methods have been implemented as autonomous transactions so as not
+       to interfere with the commit boundaries of the host application.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2005/03   Steve Gregan   Created
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -242,7 +243,7 @@ create or replace package body lics_remote_loader as
       /* Execute the remote processing script
       /**/
       begin
-         java_utility.execute_external_procedure(par_prc_script);
+         lics_filesystem.execute_external_procedure(par_prc_script);
       exception
          when others then
             raise_application_error(-20000, 'Finalise Interface - External process error - ' || substr(SQLERRM, 1, 3900));
