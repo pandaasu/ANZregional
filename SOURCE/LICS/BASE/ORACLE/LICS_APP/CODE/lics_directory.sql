@@ -51,11 +51,6 @@ create or replace package body sys.lics_directory as
    /********************************************************/
    procedure create_directory(par_ics_name in varchar2, par_sys_name in varchar2) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_sys_name varchar2(128);
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -64,9 +59,11 @@ create or replace package body sys.lics_directory as
       /*-*/
       /* Create the new directory
       /*-*/
-      var_sys_name := '/ics/'||par_sys_name;
-      lics_filesystem.create_directory(var_sys_name);
-      execute immediate 'create directory '||par_ics_name||' as '''||var_sys_name||'''';
+      if substr(par_sys_name,1,5) != '/ics/' then
+         raise_application_error(-20000, Directory (' || par_sys_name || ') must start with /ics/');
+      end if;
+      lics_filesystem.create_directory(par_sys_name);
+      execute immediate 'create directory '||par_ics_name||' as '''||par_sys_name||'''';
       execute immediate 'grant all on directory '||par_ics_name||' to lics_app';
       
    /*-------------------*/
@@ -100,6 +97,11 @@ create or replace package body sys.lics_directory as
    procedure delete_directory(par_ics_name in varchar2) is
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_found boolean;
+
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_all_directories is 
@@ -114,19 +116,27 @@ create or replace package body sys.lics_directory as
    begin
 
       /*-*/
-      /* Delete the existing directory
-      /*-*/
-      execute immediate 'drop_directory '||par_ics_name;
-      
-      /*-*/
       /* Retrieve and delete the related operating system directory name from the oracle directory
       /*-*/
+      var_found := false;
       open csr_all_directories;
       fetch csr_all_directories into rcd_all_directories;
       if csr_all_directories%found then
-         lics_filesystem.delete_directory(rcd_all_directories.directory_path);
+         var_found := true;
       end if;
       close csr_all_directories;
+      if var_found = false then
+         return;
+      end if;
+      if substr(rcd_all_directories.directory_path,1,5) != '/ics/' then
+         raise_application_error(-20000, Directory (' || rcd_all_directories.directory_path || ') must start with /ics/');
+      end if;
+
+      /*-*/
+      /* Delete the existing directory
+      /*-*/
+      execute immediate 'drop_directory '||par_ics_name;
+      lics_filesystem.delete_directory(rcd_all_directories.directory_path);
       
    /*-------------------*/
    /* Exception handler */
