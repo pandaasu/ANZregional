@@ -1,28 +1,29 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_interface_process
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
-
- DESCRIPTION
- -----------
- Local Interface Control System - Interface Process
-
- The package implements the interface process functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_interface_process as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_interface_process
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Interface Process
+
+    The package implements the interface process functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2011/02   Steve Gregan   End point architecture version
+
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -68,7 +69,8 @@ create or replace package body lics_interface_process as
                 t01.hea_status,
                 t02.int_type,
                 t02.int_group,
-                t02.int_fil_path
+                t02.int_fil_path,
+                t02.int_lod_type
            from lics_header t01,
                 lics_interface t02
           where t01.hea_interface = t02.int_interface(+)
@@ -112,16 +114,18 @@ create or replace package body lics_interface_process as
          return var_title || var_message;
       end if;
 
-      /**/
+      /*-*/
       /* Execute the file restore script
       /* - (restores the file from archive)
-      /**/
-      if rcd_lics_header_01.int_type != '*INBOUND' then
-         if rcd_lics_header_01.int_fil_path = 'ICS_INBOUND' then
-            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' INBOUND');
-         else
+      /*-*/
+      if rcd_lics_header_01.int_type = '*PASSTHRU' then
+         if rcd_lics_header_01.int_lod_type = '*POLL' then
             java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' OUTBOUND');
+         else
+            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' INBOUND');
          end if;
+      elsif rcd_lics_header_01.int_type = '*OUTBOUND' then
+         java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' OUTBOUND');
       end if;
 
       /*-*/
@@ -160,9 +164,9 @@ create or replace package body lics_interface_process as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
