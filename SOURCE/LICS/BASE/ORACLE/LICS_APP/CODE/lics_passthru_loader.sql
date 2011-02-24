@@ -88,6 +88,8 @@ create or replace package body lics_passthru_loader as
       /*-*/
       var_fil_name varchar2(64);
       var_msg_name varchar2(64);
+      var_wrk_path varchar2(128);
+      var_src_path varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -117,14 +119,14 @@ create or replace package body lics_passthru_loader as
       open csr_lics_interface_01;
       fetch csr_lics_interface_01 into rcd_lics_interface_01;
       if csr_lics_interface_01%notfound then
-         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface  || ') does not exist');
+         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface || ') does not exist');
       end if;
       close csr_lics_interface_01;
       if rcd_lics_interface_01.int_type <> lics_constant.type_passthru then
-         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface  || ') must be type ' || lics_constant.type_passthru);
+         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface || ') must be type ' || lics_constant.type_passthru);
       end if;
       if rcd_lics_interface_01.int_status <> lics_constant.status_active then
-         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface  || ') is not active');
+         raise_application_error(-20000, 'Execute - Interface (' || rcd_lics_interface.int_interface || ') is not active');
       end if;
 
       /*-*/
@@ -142,7 +144,6 @@ create or replace package body lics_passthru_loader as
       rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
       rcd_lics_interface.int_search := rcd_lics_interface_01.int_search;
       rcd_lics_interface.int_status := rcd_lics_interface_01.int_status;
-      rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
 
       /*-*/
       /* Initialise the file/message name
@@ -296,6 +297,7 @@ create or replace package body lics_passthru_loader as
                                      'PASSTHRU LOADER ERROR - see trace messages for more details',
                                      rcd_lics_interface.int_opr_alert,
                                      rcd_lics_interface.int_ema_group);
+         raise_application_error(-20000, 'Execute - Header (' || to_char(rcd_lics_header.hea_header,'FM999999999999990') || ') load failed');
       end if;
 
       /*-*/
@@ -354,15 +356,6 @@ create or replace package body lics_passthru_loader as
    procedure receive_interface is
 
       /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_all_directories is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = var_wrk_path;
-      rcd_all_directories csr_all_directories%rowtype;
-
-      /*-*/
       /* Local definitions
       /*-*/
       var_procedure varchar2(128);
@@ -372,19 +365,28 @@ create or replace package body lics_passthru_loader as
       var_wrk_path varchar2(128);
       var_src_path varchar2(128);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_all_directories is 
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = var_wrk_path;
+      rcd_all_directories csr_all_directories%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
-      /**/
+      /*-*/
       /* Initialise the procedure
-      /**/
+      /*-*/
       var_opened := false;
 
-      /**/
+      /*-*/
       /* Open the passthru interface file 
-      /**/
+      /*-*/
       begin
          var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
       exception
@@ -399,9 +401,9 @@ create or replace package body lics_passthru_loader as
       end;
       var_opened := true;
 
-      /**/
+      /*-*/
       /* Search the passthru interface file when required
-      /**/
+      /*-*/
       if not(rcd_lics_interface.int_search is null) then
 
          /*-*/
@@ -461,7 +463,7 @@ create or replace package body lics_passthru_loader as
       open csr_all_directories;
       fetch csr_all_directories into rcd_all_directories;
       if csr_all_directories%notfound then
-         raise_application_error(-20000, 'Receive Interface - Source directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
+         raise_application_error(-20000, 'Receive Interface - Source directory (' || rcd_lics_interface.int_fil_path || ') does not exist');
       end if;
       close csr_all_directories;
       var_src_path := rcd_all_directories.directory_path;

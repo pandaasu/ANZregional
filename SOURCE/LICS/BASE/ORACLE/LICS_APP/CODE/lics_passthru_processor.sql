@@ -3,34 +3,35 @@
 /******************/
 create or replace package lics_passthru_processor as
 
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_passthru_processor
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_passthru_processor
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
 
- DESCRIPTION
- -----------
- Local Interface Control System - Passthru Processor
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Passthru Processor
 
- The package implements the passthru processor functionality.
+    The package implements the passthru processor functionality.
 
- 1. This package has been designed as a single instance class to facilitate
-    re-engineering in an object oriented language. That is, in an OO environment
-    the host would create one or more instances of this class and pass the reference
-    to the target objects. However, in the PL/SQL environment only one global instance
-    is available at any one time.
+    1. This package has been designed as a single instance class to facilitate
+       re-engineering in an object oriented language. That is, in an OO environment
+       the host would create one or more instances of this class and pass the reference
+       to the target objects. However, in the PL/SQL environment only one global instance
+       is available at any one time.
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
- 2006/08   Steve Gregan   Added message name functionality
- 2006/11   Steve Gregan   Added single processing functionality
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2006/08   Steve Gregan   Added message name functionality
+    2006/11   Steve Gregan   Added single processing functionality
+    2011/02   Steve Gregan   End point architecture version
 
-*******************************************************************************/
+   *******************************************************************************/
 
    /**/
    /* Public declarations
@@ -265,12 +266,6 @@ create or replace package body lics_passthru_processor as
           where t01.int_interface = rcd_lics_header_01.hea_interface;
       rcd_lics_interface_01 csr_lics_interface_01%rowtype;
 
-      cursor csr_all_directories_01 is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
-      rcd_all_directories_01 csr_all_directories_01%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -341,17 +336,7 @@ create or replace package body lics_passthru_processor as
       rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
       rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
       rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
-
-      /**/
-      /* Retrieve the operating system directory name from the oracle directory
-      /**/
-      open csr_all_directories_01;
-      fetch csr_all_directories_01 into rcd_all_directories_01;
-      if csr_all_directories_01%notfound then
-         raise_application_error(-20000, 'Execute Single - Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
-      end if;
-      close csr_all_directories_01;
-      rcd_lics_interface.int_fil_path := rcd_all_directories_01.directory_path;
+      rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
 
       /*-*/
       /* Update the header trace count and status
@@ -538,7 +523,8 @@ create or replace package body lics_passthru_processor as
                 t01.int_fil_extension,
                 t01.int_opr_alert,
                 t01.int_ema_group,
-                t01.int_procedure
+                t01.int_procedure,
+                t01.int_lod_type
            from lics_interface t01
           where t01.int_type = lics_constant.type_passthru
             and t01.int_group = var_search
@@ -565,12 +551,6 @@ create or replace package body lics_passthru_processor as
           where t01.hea_header = var_header
                 for update nowait;
       rcd_lics_header_02 csr_lics_header_02%rowtype;
-
-      cursor csr_all_directories_01 is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
-      rcd_all_directories_01 csr_all_directories_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -603,17 +583,7 @@ create or replace package body lics_passthru_processor as
          rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
          rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
-
-         /**/
-         /* Retrieve the operating system directory name from the oracle directory
-         /**/
-         open csr_all_directories_01;
-         fetch csr_all_directories_01 into rcd_all_directories_01;
-         if csr_all_directories_01%notfound then
-            raise_application_error(-20000, 'Select Interface - Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
-         end if;
-         close csr_all_directories_01;
-         rcd_lics_interface.int_fil_path := rcd_all_directories_01.directory_path;
+         rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
 
          /*-*/
          /* Process headers in batches (based on process count constant)
@@ -897,32 +867,34 @@ create or replace package body lics_passthru_processor as
    /*-------------*/
    begin
 
-      /**/
+      /*-*/
       /* Set the passthru path/file/message information
-      /**/
-      var_fil_path := rcd_lics_interface.int_fil_path;
+      /*-*/
+      var_fil_path := lics_parameter.outbound_directory;
       var_fil_name := rcd_lics_header.hea_fil_name;
       var_msg_name := rcd_lics_header.hea_msg_name;
-      if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then
-         var_fil_path := var_fil_path || lics_parameter.folder_delimiter;
+      if substr(var_fil_path, -1, 1) <> lics_parameter.ics_path_delimiter then
+         var_fil_path := var_fil_path || lics_parameter.ics_path_delimiter;
       end if;
       var_pth_name := var_fil_path || var_fil_name;
 
-      /**/
+      /*-*/
       /* Perform the path/file/message substitution as required
-      /**/
+      /*-*/
       var_script := rcd_lics_interface.int_procedure;
       var_script := replace(var_script,'<PATH>',var_pth_name);
       var_script := replace(var_script,'<FILE>',var_fil_name);
       var_script := replace(var_script,'<MESG>',var_msg_name);
-      var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.script_directory);
+      var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.ics_script_path);
 
-      /**/
+      /*-*/
       /* Execute the passthru send script
-      /**/
+      /* 1. Send the interface file
+      /* 2. Archive the interface file (delete the source file and replace the target file)
+      /*-*/
       begin
-         java_utility.execute_external_procedure(var_script);
-      exception
+         lics_filesystem.execute_external_procedure(var_script);
+         lics_filesystem.archive_file_gzip(lics_parameter.outbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
          when others then
             add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
       end;
