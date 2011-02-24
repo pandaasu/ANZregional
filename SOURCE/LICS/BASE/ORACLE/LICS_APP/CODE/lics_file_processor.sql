@@ -433,14 +433,16 @@ create or replace package body lics_file_processor as
                   /*-*/
                   /* Archive the interface file when required
                   /*-*/
-                  if var_lod_error = false then
-                     begin
-                        lics_filesystem.archive_file_gzip(rcd_lics_interface.int_fil_path, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
-                     exception
-                        when others then
-                           var_lod_error := true;
-                           rcd_lics_file.fil_message := 'File Archive failed - ' || substr(SQLERRM, 1, 1536);
-                     end;
+                  if upper(rcd_lics_interface.int_type) = '*INBOUND' then
+                     if var_lod_error = false then
+                        begin
+                           lics_filesystem.archive_file_gzip(rcd_lics_interface.int_fil_path, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
+                        exception
+                           when others then
+                              var_lod_error := true;
+                              rcd_lics_file.fil_message := 'File Archive failed - ' || substr(SQLERRM, 1, 1536);
+                        end;
+                     end if;
                   end if;
 
                   /*-*/
