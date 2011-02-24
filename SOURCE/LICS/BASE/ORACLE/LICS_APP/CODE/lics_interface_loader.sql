@@ -70,9 +70,7 @@ create or replace package body lics_interface_loader as
       var_title varchar2(128);
       var_message varchar2(4000);
       var_result varchar2(4000);
-      var_fil_path varchar2(128);
       var_fil_name varchar2(64);
-      var_fil_work varchar2(64);
       var_opened boolean;
       var_instance number(15,0);
       var_fil_handle utl_file.file_type;
@@ -85,12 +83,6 @@ create or replace package body lics_interface_loader as
            from lics_interface t01
           where t01.int_interface = var_interface;
       rcd_lics_interface csr_lics_interface%rowtype;
-
-      cursor csr_all_directories is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = rcd_lics_interface.int_fil_path;
-      rcd_all_directories csr_all_directories%rowtype;
 
       cursor csr_lics_temp is
          select t01.*
@@ -144,17 +136,6 @@ create or replace package body lics_interface_loader as
       close csr_lics_interface;
 
       /*-*/
-      /* Retrieve the operating system directory name from the oracle directory
-      /*-*/
-      open csr_all_directories;
-      fetch csr_all_directories into rcd_all_directories;
-      if csr_all_directories%notfound then
-         var_message := var_message || chr(13) || 'Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist';
-      end if;
-      close csr_all_directories;
-      var_fil_path := rcd_all_directories.directory_path;
-
-      /*-*/
       /* Return the message when required
       /*-*/
       if not(var_message is null) then
@@ -196,26 +177,21 @@ create or replace package body lics_interface_loader as
       /* 1. INBOUND = unique file name
       /* 2. PASSTHRU = unique file name
       /* 3. OUTBOUND = unique file name or NULL(generated file name)
-      /* 4. *POLL interfaces use the ^ character to exclude from the polling mechanism
       /*-*/
       var_fil_name := rcd_lics_interface.int_interface||'_LOADER_'||to_char(localtimestamp,'yyyymmddhh24missff')||'.TXT';
-      var_fil_work := var_fil_name;
-      if upper(rcd_lics_interface.int_lod_type) = '*POLL' then
-         var_fil_work := '^'||var_fil_name;
-      end if;
       if (upper(rcd_lics_interface.int_type) = '*OUTBOUND' and
           not(rcd_lics_interface.int_fil_prefix is null)) then
          var_fil_name := null;
       end if;
 
-      /**/
+      /*-*/
       /* Create the file on the file system when INBOUND or PASSTHRU
-      /**/
+      /*-*/
       if (upper(rcd_lics_interface.int_type) = '*INBOUND' or
           upper(rcd_lics_interface.int_type) = '*PASSTHRU') then
          begin
             var_opened := false;
-            var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), var_fil_work, 'w', 32767);
+            var_fil_handle := utl_file.fopen(lics_parameter.ics_inbound, var_fil_name, 'w', 32767);
             var_opened := true;
             open csr_lics_temp;
             loop
@@ -237,20 +213,19 @@ create or replace package body lics_interface_loader as
                         null;
                   end;
                end if;
-               raise_application_error(-20000, 'File system exception (' || rcd_lics_interface.int_fil_path || '-' || var_fil_work || ') - ' || substr(SQLERRM, 1, 1024));
+               raise_application_error(-20000, 'File system exception (' || lics_parameter.ics_inbound || '-' || var_fil_name || ') - ' || substr(SQLERRM, 1, 1024));
          end;
          var_opened := false;
       end if;
 
       /*-*/
       /* Load the interface based on the interface type
-      /* **notes** 1. When the file is restored it will go to the BASE directory
       /*-*/
       if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_work);
-         lics_filesystem.archive_file_gzip(var_fil_path, var_fil_work, lics_parameter.archive_directory, var_fil_work||'.gz', '1', '1');
+         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
+         lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '0');
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
-         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_work);
+         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
          var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
          open csr_lics_temp;
@@ -282,9 +257,9 @@ create or replace package body lics_interface_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/

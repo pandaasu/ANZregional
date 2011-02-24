@@ -25,9 +25,9 @@ create or replace package lics_interface_process as
 
    *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    function update_status(par_header in number) return varchar2;
 
 end lics_interface_process;
@@ -68,9 +68,7 @@ create or replace package body lics_interface_process as
                 t01.hea_fil_name,
                 t01.hea_status,
                 t02.int_type,
-                t02.int_group,
-                t02.int_fil_path,
-                t02.int_lod_type
+                t02.int_group
            from lics_header t01,
                 lics_interface t02
           where t01.hea_interface = t02.int_interface(+)
@@ -119,11 +117,7 @@ create or replace package body lics_interface_process as
       /* - (restores the file from archive)
       /*-*/
       if rcd_lics_header_01.int_type = '*PASSTHRU' then
-         if rcd_lics_header_01.int_lod_type = '*POLL' then
-            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' OUTBOUND');
-         else
-            java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' INBOUND');
-         end if;
+         java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' INBOUND');
       elsif rcd_lics_header_01.int_type = '*OUTBOUND' then
          java_utility.execute_external_procedure(lics_parameter.restore_script || ' ' || rcd_lics_header_01.hea_fil_name || ' OUTBOUND');
       end if;

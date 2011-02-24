@@ -223,9 +223,9 @@ create or replace package body lics_inbound_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -552,9 +552,9 @@ create or replace package body lics_inbound_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -1007,9 +1007,9 @@ create or replace package body lics_inbound_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Application exception
-      /**/
+      /*-*/
       when application_exception then
          rollback;
          add_header_exception('APPLICATION ERROR - ' || substr(SQLERRM, 1, 512));
@@ -1182,9 +1182,9 @@ create or replace package body lics_inbound_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Application exception
-      /**/
+      /*-*/
       when application_exception then
          rollback;
          add_header_exception('APPLICATION ERROR - ' || substr(SQLERRM, 1, 512));

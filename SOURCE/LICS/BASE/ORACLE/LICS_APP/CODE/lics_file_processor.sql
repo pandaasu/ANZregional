@@ -34,9 +34,9 @@ create or replace package lics_file_processor as
 
    *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    procedure execute(par_group in varchar2,
                      par_job in varchar2,
                      par_execution in number);
@@ -55,9 +55,9 @@ create or replace package body lics_file_processor as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**/
+   /*-*/
    /* Private declarations
-   /**/
+   /*-*/
    procedure select_file;
 
    /*-*/
@@ -202,9 +202,9 @@ create or replace package body lics_file_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -454,7 +454,7 @@ create or replace package body lics_file_processor as
                   if var_lod_error = false then
                      if upper(rcd_lics_interface.int_type) = '*INBOUND' then
                         begin
-                           lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
+                           lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1', '0');
                         exception
                            when others then
                               var_lod_error := true;
