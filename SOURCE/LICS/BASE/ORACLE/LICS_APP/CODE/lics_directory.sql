@@ -65,7 +65,7 @@ create or replace package body sys.lics_directory as
       /* Create the new directory
       /*-*/
       var_sys_name := '/ics/'||par_sys_name;
-      lics_filesystem.create_directory(par_sys_name);
+      lics_filesystem.create_directory(var_sys_name);
       execute immediate 'create directory '||par_ics_name||' as '''||var_sys_name||'''';
       execute immediate 'grant all on directory '||par_ics_name||' to lics_app';
       
