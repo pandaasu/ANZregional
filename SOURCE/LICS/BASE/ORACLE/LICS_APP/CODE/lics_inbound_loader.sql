@@ -39,9 +39,9 @@ create or replace package lics_inbound_loader as
 
 *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2);
 
 end lics_inbound_loader;
@@ -58,9 +58,9 @@ create or replace package body lics_inbound_loader as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**/
+   /*-*/
    /* Private declarations
-   /**/
+   /*-*/
    procedure receive_interface;
    procedure add_header_exception(par_exception in varchar2);
 

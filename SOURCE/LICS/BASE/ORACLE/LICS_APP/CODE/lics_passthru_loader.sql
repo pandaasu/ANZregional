@@ -39,9 +39,9 @@ create or replace package lics_passthru_loader as
 
 *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2);
 
 end lics_passthru_loader;
@@ -58,9 +58,9 @@ create or replace package body lics_passthru_loader as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**/
+   /*-*/
    /* Private declarations
-   /**/
+   /*-*/
    procedure receive_interface;
    procedure add_header_exception(par_exception in varchar2);
 
@@ -131,7 +131,7 @@ create or replace package body lics_passthru_loader as
 
       /*-*/
       /* Set the private variables
-      /**/
+      /*-*/
       rcd_lics_interface.int_interface := rcd_lics_interface_01.int_interface;
       rcd_lics_interface.int_description := rcd_lics_interface_01.int_description;
       rcd_lics_interface.int_type := rcd_lics_interface_01.int_type;
@@ -297,7 +297,6 @@ create or replace package body lics_passthru_loader as
                                      'PASSTHRU LOADER ERROR - see trace messages for more details',
                                      rcd_lics_interface.int_opr_alert,
                                      rcd_lics_interface.int_ema_group);
-         raise_application_error(-20000, 'Execute - Header (' || to_char(rcd_lics_header.hea_header,'FM999999999999990') || ') load failed');
       end if;
 
       /*-*/
@@ -312,9 +311,9 @@ create or replace package body lics_passthru_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -362,17 +361,6 @@ create or replace package body lics_passthru_loader as
       var_opened boolean;
       var_fil_handle utl_file.file_type;
       var_data varchar2(4000);
-      var_wrk_path varchar2(128);
-      var_src_path varchar2(128);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_all_directories is 
-         select t01.directory_path
-           from all_directories t01
-          where t01.directory_name = var_wrk_path;
-      rcd_all_directories csr_all_directories%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -388,16 +376,16 @@ create or replace package body lics_passthru_loader as
       /* Open the passthru interface file 
       /*-*/
       begin
-         var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
+         var_fil_handle := utl_file.fopen(lics_parameter.ics_inbound, rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
       exception
          when utl_file.access_denied then
-            raise_application_error(-20000, 'Receive Interface - Access denied to passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Access denied to passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when utl_file.invalid_path then
-            raise_application_error(-20000, 'Receive Interface - Invalid path to passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Invalid path to passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when utl_file.invalid_filename then
-            raise_application_error(-20000, 'Receive Interface - Invalid file name for passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Invalid file name for passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when others then
-            raise_application_error(-20000, 'Receive Interface - Could not open passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Could not open passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
       end;
       var_opened := true;
 
@@ -417,16 +405,16 @@ create or replace package body lics_passthru_loader as
          var_procedure := 'begin ' || rcd_lics_interface.int_search || '.on_data(:data); end;';
          loop
 
-            /**/
+            /*-*/
             /* Read the passthru interface file rows
-            /**/
+            /*-*/
             begin
                utl_file.get_line(var_fil_handle, var_data, lics_parameter.inbound_line_max);
             exception
                when no_data_found then
                   exit;
                when others then
-                  raise_application_error(-20000, 'Receive Interface - Could not read passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+                  raise_application_error(-20000, 'Receive Interface - Could not read passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
             end;
 
             /*-*/
@@ -451,41 +439,19 @@ create or replace package body lics_passthru_loader as
             utl_file.fclose(var_fil_handle);
          exception
             when others then
-               raise_application_error(-20000, 'Receive Interface - Could not close passthru file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+               raise_application_error(-20000, 'Receive Interface - Could not close passthru file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          end;
          var_opened := false;
       end if;
-
-      /*-*/
-      /* Retrieve the operating system source directory name from the oracle directory
-      /*-*/
-      var_wrk_path := rcd_lics_interface.int_fil_path;
-      open csr_all_directories;
-      fetch csr_all_directories into rcd_all_directories;
-      if csr_all_directories%notfound then
-         raise_application_error(-20000, 'Receive Interface - Source directory (' || rcd_lics_interface.int_fil_path || ') does not exist');
-      end if;
-      close csr_all_directories;
-      var_src_path := rcd_all_directories.directory_path;
-
-      /*-*/
-      /* Move the passthru interface file to the outbound directory
-      /*-*/
-      begin
-         lics_filesystem.move_file(var_src_path, rcd_lics_header.hea_fil_name, lics_parameter.outbound_directory, rcd_lics_header.hea_fil_name, '0');
-      exception
-         when others then
-            raise_application_error(-20000, 'Receive Interface - Could not move passthru file to OUTBOUND directory (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
-      end;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Application exception
-      /**/
+      /*-*/
       when application_exception then
          if var_opened = true then
             begin

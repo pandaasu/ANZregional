@@ -49,9 +49,9 @@ create or replace package lics_outbound_loader as
 
 *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    function create_interface(par_interface in varchar2) return number;
    function create_interface(par_interface in varchar2, par_fil_name in varchar2) return number;
    function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2) return number;
@@ -212,7 +212,7 @@ create or replace package body lics_outbound_loader as
 
       /*-*/
       /* Set the private variables
-      /**/
+      /*-*/
       rcd_lics_interface.int_interface := rcd_lics_interface_01.int_interface;
       rcd_lics_interface.int_description := rcd_lics_interface_01.int_description;
       rcd_lics_interface.int_type := rcd_lics_interface_01.int_type;
@@ -312,9 +312,9 @@ create or replace package body lics_outbound_loader as
       /*-*/
       var_hdr_message := 0;
 
-      /**/
+      /*-*/
       /* Open the outbound interface file 
-      /**/
+      /*-*/
       begin
          var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'w', 32767);
       exception
@@ -340,14 +340,14 @@ create or replace package body lics_outbound_loader as
       /**/
       lics_interface_search.initialise(rcd_lics_header.hea_header);
 
-      /**/
+      /*-*/
       /* Set the header control variable 
-      /**/
+      /*-*/
       var_hdr_control := rcd_lics_header.hea_header;
 
-      /**/
+      /*-*/
       /* Return the header number 
-      /**/
+      /*-*/
       return rcd_lics_header.hea_header;
 
    /*-------------------*/
@@ -355,9 +355,9 @@ create or replace package body lics_outbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -432,9 +432,9 @@ create or replace package body lics_outbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -509,9 +509,9 @@ create or replace package body lics_outbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -628,9 +628,9 @@ create or replace package body lics_outbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -814,9 +814,9 @@ create or replace package body lics_outbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
