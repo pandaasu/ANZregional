@@ -24,6 +24,10 @@ create or replace package lics_file_processor as
        to the target objects. However, in the PL/SQL environment only one global instance
        is available at any one time.
 
+    2. The file processor is responsible for invoking the inbound and passthru loader for
+       files that have been polled from the inbound child directories. The files are moved
+       to the inbound directory before the loaders are called.
+
     YYYY/MM   Author         Description
     -------   ------         -----------
     2011/02   Steve Gregan   End point architecture version
@@ -242,6 +246,7 @@ create or replace package body lics_file_processor as
       var_available boolean;
       var_check varchar2(4000);
       var_lod_error boolean;
+      var_src_path varchar2(128);
       var_fil_file lics_file.fil_file%type;
 
       /*-*/
@@ -304,10 +309,10 @@ create or replace package body lics_file_processor as
          rcd_lics_interface.int_interface := rcd_lics_interface_01.int_interface;
          rcd_lics_interface.int_description := rcd_lics_interface_01.int_description;
          rcd_lics_interface.int_type := rcd_lics_interface_01.int_type;
-         rcd_lics_interface.int_group := rcd_lics_interface_01.int_group;
          rcd_lics_interface.int_fil_path := rcd_lics_interface_01.int_fil_path;
          rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
+         rcd_lics_interface.int_lod_group := rcd_lics_interface_01.int_lod_group;
 
          /*-*/
          /* Retrieve the operating system directory name from the oracle directory
@@ -318,7 +323,7 @@ create or replace package body lics_file_processor as
             raise_application_error(-20000, 'Select Interface - Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
          end if;
          close csr_all_directories_01;
-         rcd_lics_interface.int_fil_path := rcd_all_directories_01.directory_path;
+         var_src_path := rcd_all_directories_01.directory_path;
 
          /*-*/
          /* Process files in batches (based on process count constant)
@@ -409,34 +414,47 @@ create or replace package body lics_file_processor as
                   rcd_lics_file.fil_file := rcd_lics_file_02.fil_file;
                   rcd_lics_file.fil_name := rcd_lics_file_02.fil_name;
                   rcd_lics_file.fil_message := null;
+                  var_lod_error := false;
+
+                  /*-*/
+                  /* Move the interface file to the INBOUND directory
+                  /*-*/
+                  begin
+                     lics_filesystem.move_file(var_src_path, rcd_lics_file.fil_name, lics_parameter.inbound_directory, rcd_lics_file.fil_name, '0');
+                  exception
+                     when others then
+                        var_lod_error := true;
+                        rcd_lics_file.fil_message := 'File move failed - ' || substr(SQLERRM, 1, 1536);
+                  end;
 
                   /*-*/
                   /* Load the interface based on the interface type
                   /*-*/
-                  var_lod_error := false;
-                  begin
-                     if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-                        lics_inbound_loader.execute(rcd_lics_interface.int_interface, rcd_lics_file.fil_name);
-                     elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
-                        lics_passthru_loader.execute(rcd_lics_interface.int_interface, rcd_lics_file.fil_name);
-                     end if;
-                  exception
-                     when others then
-                        var_lod_error := true;
+                  if var_lod_error = false then
+                     begin
                         if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-                           rcd_lics_file.fil_message := 'Inbound loader failed - ' || substr(SQLERRM, 1, 1536);
+                           lics_inbound_loader.execute(rcd_lics_interface.int_interface, rcd_lics_file.fil_name);
                         elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
-                           rcd_lics_file.fil_message := 'Passthru loader failed - ' || substr(SQLERRM, 1, 1536);
+                           lics_passthru_loader.execute(rcd_lics_interface.int_interface, rcd_lics_file.fil_name);
                         end if;
-                  end;
+                     exception
+                        when others then
+                           var_lod_error := true;
+                           if upper(rcd_lics_interface.int_type) = '*INBOUND' then
+                              rcd_lics_file.fil_message := 'Inbound loader failed - ' || substr(SQLERRM, 1, 1536);
+                           elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
+                              rcd_lics_file.fil_message := 'Passthru loader failed - ' || substr(SQLERRM, 1, 1536);
+                           end if;
+                     end;
+                  end if;
 
                   /*-*/
                   /* Archive the interface file when required
                   /*-*/
-                  if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-                     if var_lod_error = false then
+                  if var_lod_error = false then
+                     if upper(rcd_lics_interface.int_type) = '*INBOUND' then
                         begin
-                           lics_filesystem.archive_file_gzip(rcd_lics_interface.int_fil_path, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
+                           lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1');
                         exception
                            when others then
                               var_lod_error := true;
