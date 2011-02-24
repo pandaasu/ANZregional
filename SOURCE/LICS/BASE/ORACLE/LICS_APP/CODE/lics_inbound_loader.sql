@@ -131,7 +131,7 @@ create or replace package body lics_inbound_loader as
 
       /*-*/
       /* Set the private variables
-      /**/
+      /*-*/
       rcd_lics_interface.int_interface := rcd_lics_interface_01.int_interface;
       rcd_lics_interface.int_description := rcd_lics_interface_01.int_description;
       rcd_lics_interface.int_type := rcd_lics_interface_01.int_type;
@@ -295,9 +295,9 @@ create or replace package body lics_inbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -371,46 +371,46 @@ create or replace package body lics_inbound_loader as
    /*-------------*/
    begin
 
-      /**/
+      /*-*/
       /* Initialise the opened variable
-      /**/
+      /*-*/
       var_opened := false;
 
-      /**/
+      /*-*/
       /* Open the inbound interface file 
-      /**/
+      /*-*/
       begin
-         var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
+         var_fil_handle := utl_file.fopen(lics_parameter.ics_inbound, rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
       exception
          when utl_file.access_denied then
-            raise_application_error(-20000, 'Receive Interface - Access denied to inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Access denied to inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when utl_file.invalid_path then
-            raise_application_error(-20000, 'Receive Interface - Invalid path to inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Invalid path to inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when utl_file.invalid_filename then
-            raise_application_error(-20000, 'Receive Interface - Invalid file name for inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Invalid file name for inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          when others then
-            raise_application_error(-20000, 'Receive Interface - Could not open inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+            raise_application_error(-20000, 'Receive Interface - Could not open inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
       end;
       var_opened := true;
 
-      /**/
+      /*-*/
       /* Process the inbound interface file
-      /**/
+      /*-*/
       var_size := lics_parameter.inbound_array_size;
       var_work := 0;
       var_count := 0;
       loop
 
-         /**/
+         /*-*/
          /* Read the inbound interface file rows
-         /**/
+         /*-*/
          begin
             utl_file.get_line(var_fil_handle, var_data, lics_parameter.inbound_line_max);
          exception
             when no_data_found then
                exit;
             when others then
-               raise_application_error(-20000, 'Receive Interface - Could not read inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+               raise_application_error(-20000, 'Receive Interface - Could not read inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          end;
 
          /*-*/
@@ -464,7 +464,7 @@ create or replace package body lics_inbound_loader as
             utl_file.fclose(var_fil_handle);
          exception
             when others then
-               raise_application_error(-20000, 'Receive Interface - Could not close inbound file (' || rcd_lics_interface.int_fil_path || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
+               raise_application_error(-20000, 'Receive Interface - Could not close inbound file (' || lics_parameter.ics_inbound || ' - ' || rcd_lics_header.hea_fil_name || ') - ' || substr(SQLERRM, 1, 512));
          end;
          var_opened := false;
       end if;
@@ -474,9 +474,9 @@ create or replace package body lics_inbound_loader as
       /*-*/
       commit;
 
-      /**/
+      /*-*/
       /* Search the inbound interface file when required
-      /**/
+      /*-*/
       if not(rcd_lics_interface.int_search is null) then
 
          /*-*/
@@ -515,9 +515,9 @@ create or replace package body lics_inbound_loader as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Application exception
-      /**/
+      /*-*/
       when application_exception then
          if var_opened = true then
             begin
