@@ -24,9 +24,9 @@ create or replace package lics_file_monitor as
 
    *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    function retry_file(par_file in number) return varchar2;
    function delete_file(par_file in number) return varchar2;
 
@@ -66,7 +66,7 @@ create or replace package body lics_file_monitor as
       cursor csr_lics_file_01 is 
          select t01.*
            from lics_file t01
-          where t01.fil_file = rcd_lics_file.file_file;
+          where t01.fil_file = rcd_lics_file.fil_file;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
 
    /*-------------*/
@@ -82,7 +82,7 @@ create or replace package body lics_file_monitor as
 
       /*-*/
       /* Set the private variables
-      /**/
+      /*-*/
       rcd_lics_file.fil_file := par_file;
 
       /*-*/
@@ -133,9 +133,9 @@ create or replace package body lics_file_monitor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -171,7 +171,7 @@ create or replace package body lics_file_monitor as
       cursor csr_lics_file_01 is 
          select t01.*
            from lics_file t01
-          where t01.fil_file = rcd_lics_file.file_file;
+          where t01.fil_file = rcd_lics_file.fil_file;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
 
       cursor csr_lics_interface is 
@@ -199,7 +199,7 @@ create or replace package body lics_file_monitor as
 
       /*-*/
       /* Set the private variables
-      /**/
+      /*-*/
       rcd_lics_file.fil_file := par_file;
 
       /*-*/
@@ -225,9 +225,9 @@ create or replace package body lics_file_monitor as
       end if;
       close csr_lics_interface;
 
-      /**/
+      /*-*/
       /* Retrieve the operating system directory name from the oracle directory
-      /**/
+      /*-*/
       open csr_all_directories;
       fetch csr_all_directories into rcd_all_directories;
       if csr_all_directories%notfound then
@@ -282,9 +282,9 @@ create or replace package body lics_file_monitor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
