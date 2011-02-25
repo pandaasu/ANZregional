@@ -23,8 +23,8 @@
    dim strMode
    dim bolStrList
    dim bolEndList
-   dim aryIntStatus(8)
-   dim aryIntClass(8)
+   dim aryIntStatus(2)
+   dim aryIntClass(2)
    dim objForm
    dim objSecurity
    dim objSelection
@@ -166,7 +166,7 @@ sub ProcessRetry()
    '// Retry the file
    '//
    strStatement = "lics_file_monitor.retry_file("
-   strStatement = strStatement & "'" & objForm.Fields("DTA_FilFile").Value & "'"
+   strStatement = strStatemen & objForm.Fields("DTA_FilFile").Value
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -200,7 +200,7 @@ sub ProcessDelete()
    '// Deletet the file
    '//
    strStatement = "lics_file_monitor.delete_file("
-   strStatement = strStatement & "'" & objForm.Fields("DTA_FilFile").Value & "'"
+   strStatement = strStatement & objForm.Fields("DTA_FilFile").Value
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
