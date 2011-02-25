@@ -270,7 +270,7 @@ create or replace package body lics_file_processor as
       rcd_all_directories_01 csr_all_directories_01%rowtype;
 
       cursor csr_lics_file_01 is 
-         select t01.fil_name
+         select t01.fil_file
            from lics_file t01
           where t01.fil_path = rcd_lics_interface.int_interface
             and t01.fil_status = lics_constant.file_available
