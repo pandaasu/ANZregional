@@ -185,7 +185,7 @@ sub ProcessForm()
    strQuery = strQuery & " '*FILE_'||t01.fil_path as backlog_code,"
    strQuery = strQuery & " max(t02.int_description) as backlog_desc,"
    strQuery = strQuery & " max(t02.int_type) as backlog_type,"
-   strQuery = strQuery & " max(t02.int_group) as backlog_group,"
+   strQuery = strQuery & " max(t02.int_lod_group) as backlog_group,"
    strQuery = strQuery & " count(*) as backlog_count"
    strQuery = strQuery & " from lics_file t01, lics_interface t02"
    strQuery = strQuery & " where t01.fil_path = t02.int_interface(+)"
