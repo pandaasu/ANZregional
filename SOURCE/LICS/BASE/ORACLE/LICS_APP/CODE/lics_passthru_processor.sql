@@ -33,9 +33,9 @@ create or replace package lics_passthru_processor as
 
    *******************************************************************************/
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
+   /*-*/
    procedure execute(par_group in varchar2,
                      par_job in varchar2,
                      par_execution in number);
@@ -55,9 +55,9 @@ create or replace package body lics_passthru_processor as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**/
+   /*-*/
    /* Private declarations
-   /**/
+   /*-*/
    procedure select_interface;
    procedure send_interface;
    procedure add_header_exception(par_exception in varchar2);
@@ -207,9 +207,9 @@ create or replace package body lics_passthru_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -464,9 +464,9 @@ create or replace package body lics_passthru_processor as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -870,11 +870,11 @@ create or replace package body lics_passthru_processor as
       /*-*/
       /* Set the passthru path/file/message information
       /*-*/
-      var_fil_path := lics_parameter.outbound_directory;
+      var_fil_path := lics_parameter.inbound_directory;
       var_fil_name := rcd_lics_header.hea_fil_name;
       var_msg_name := rcd_lics_header.hea_msg_name;
-      if substr(var_fil_path, -1, 1) <> lics_parameter.ics_path_delimiter then
-         var_fil_path := var_fil_path || lics_parameter.ics_path_delimiter;
+      if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then
+         var_fil_path := var_fil_path || lics_parameter.folder_delimiter;
       end if;
       var_pth_name := var_fil_path || var_fil_name;
 
@@ -885,19 +885,30 @@ create or replace package body lics_passthru_processor as
       var_script := replace(var_script,'<PATH>',var_pth_name);
       var_script := replace(var_script,'<FILE>',var_fil_name);
       var_script := replace(var_script,'<MESG>',var_msg_name);
-      var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.ics_script_path);
+      var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.script_directory);
+
+      /*-*/
+      /* Execute the outbound send script
+      /*-*/
+      begin
+         lics_filesystem.execute_external_procedure(var_script);
+      exception
+         when others then
+            add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
+      end;
 
       /*-*/
       /* Execute the passthru send script
       /* 1. Send the interface file
       /* 2. Archive the interface file (delete the source file and replace the target file)
       /*-*/
-      begin
-         lics_filesystem.execute_external_procedure(var_script);
-         lics_filesystem.archive_file_gzip(lics_parameter.outbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
-         when others then
-            add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
-      end;
+   --   begin
+   --      lics_filesystem.execute_external_procedure(var_script);
+   --      lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
+   --   exception
+   --      when others then
+   --         add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
+   --   end;
 
    /*-------------------*/
    /* Exception handler */
@@ -905,7 +916,7 @@ create or replace package body lics_passthru_processor as
    exception
 
       /*-*/
-      /* Exception trap */
+      /* Exception trap
       /*-*/
       when others then
          add_header_exception('SQL ERROR - Send Interface - ' || substr(SQLERRM, 1, 1024));
