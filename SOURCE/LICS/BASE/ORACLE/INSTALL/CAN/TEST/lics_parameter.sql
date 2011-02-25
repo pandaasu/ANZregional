@@ -28,7 +28,7 @@ create or replace package lics_parameter as
    system_code constant varchar2(10) := 'ICS';
    system_unit constant varchar2(10) := 'CAN';
    system_environment constant varchar2(20) := 'CANADA_TEST';
-   system_url constant varchar2(128) := 'http://webappdev4.ap.mars/';
+   system_url constant varchar2(128) := 'http://vdsdev.bol.na.mars/';
    system_startup constant varchar2(128) := '/ics/test/bin/restart_jobs.sh';
 
    /*-*/
