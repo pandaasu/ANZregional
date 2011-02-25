@@ -21,10 +21,8 @@
    dim strReturn
    dim strHeading
    dim strMode
-   dim bolStrList
-   dim bolEndList
-   dim aryIntStatus(2)
-   dim aryIntClass(2)
+   dim aryFilStatus(2)
+   dim aryFilClass(2)
    dim objForm
    dim objSecurity
    dim objSelection
@@ -79,7 +77,7 @@
       '// Process the form data
       '//
       select case strMode
-         case "SELECT"
+         case "SEARCH"
             call ProcessSelect
          case "RETRY"
             call ProcessRetry
@@ -98,7 +96,7 @@
    select case strMode
       case "FATAL"
          call PaintFatal
-      case "SELECT"
+      case "SEARCH"
          call PaintSelect
    end select
  
@@ -125,7 +123,7 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
-   '// Execute the execution list
+   '// Execute the file list
    '//
    lngSize = 0
    strQuery = "select"
@@ -139,7 +137,7 @@ sub ProcessSelect()
    strQuery = strQuery & " t02.int_lod_group,"
    strQuery = strQuery & " t01.fil_message"
    strQuery = strQuery & " from lics_file t01, lics_interface t02"
-   strQuery = strQuery & " where  t02.fil_path = t02.int_interface(+)"
+   strQuery = strQuery & " where t01.fil_path = t02.int_interface(+)"
    strQuery = strQuery & " order by t01.fil_file asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
@@ -166,11 +164,11 @@ sub ProcessRetry()
    '// Retry the file
    '//
    strStatement = "lics_file_monitor.retry_file("
-   strStatement = strStatemen & objForm.Fields("DTA_FilFile").Value
+   strStatement = strStatement & objForm.Fields("DTA_FilFile").Value
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
-      strMode = "SELECT"
+      strMode = "SEARCH"
       strReturn = FormatError(strReturn)
       exit sub
    end if
@@ -178,7 +176,7 @@ sub ProcessRetry()
    '//
    '// Set the mode
    '//
-   strMode = "SELECT"
+   strMode = "SEARCH"
    call ProcessSelect
 
 end sub
@@ -197,14 +195,14 @@ sub ProcessDelete()
    set objFunction.Security = objSecurity
 
    '//
-   '// Deletet the file
+   '// Delete the file
    '//
    strStatement = "lics_file_monitor.delete_file("
    strStatement = strStatement & objForm.Fields("DTA_FilFile").Value
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
-      strMode = "SELECT"
+      strMode = "SEARCH"
       strReturn = FormatError(strReturn)
       exit sub
    end if
@@ -212,7 +210,7 @@ sub ProcessDelete()
    '//
    '// Set the mode
    '//
-   strMode = "SELECT"
+   strMode = "SEARCH"
    call ProcessSelect
 
 end sub
@@ -225,9 +223,9 @@ sub PaintFatal()%>
 <%end sub
 
 '//////////////////////////
-'// Paint prompt routine //
+'// Paint select routine //
 '//////////////////////////
 sub PaintSelect()%>
 <!--#include file="ics_fil_monitor_select.inc"-->
-<%end sub
+<%end sub%>
 <!--#include file="ics_std_code.inc"-->

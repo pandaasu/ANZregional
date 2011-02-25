@@ -25,7 +25,7 @@
    function doRefresh() {
       if (!processForm()) {return;}
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'SELECT';
+      document.main.Mode.value = 'SEARCH';
       document.main.submit();
    }
    function doRetry(strFile) {
@@ -103,13 +103,13 @@
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
                      <table class="clsTableBody" id="tabBody" align=left cols=10 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=8 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
+                        <tr><td class="clsLabelFB" align=center colspan=10 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%if objSelection.ListValue04 = "2" then%><a class="clsSelect" href="javascript:doRetry('<%=objSelection.ListValue01("LIST",i)%>');">Retry</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a><%else%>&nbsp;<%end if%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
-                           <td class="<%=aryIntClass(objSelection.ListValue04("LIST",i))%>" align=left colspan=1 nowrap><nobr><%=aryIntStatus(objSelection.ListValue04("LIST",i))%></nobr></td>
+                           <td class="<%=aryFilClass(objSelection.ListValue04("LIST",i))%>" align=left colspan=1 nowrap><nobr><%=aryFilStatus(objSelection.ListValue04("LIST",i))%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue05("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue06("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue07("LIST",i)%></nobr></td>
