@@ -178,6 +178,8 @@ sub ProcessInsertLoad()
    call objForm.AddField("DTA_IntUsrInvocation", "")
    call objForm.AddField("DTA_IntUsrValidation", "")
    call objForm.AddField("DTA_IntUsrMessage", "")
+   call objForm.AddField("DTA_IntLodType", "")
+   call objForm.AddField("DTA_IntLodGroup", "")
 
    '//
    '// Set the mode
@@ -222,6 +224,8 @@ sub ProcessInsertAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodGroup").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -275,7 +279,9 @@ sub ProcessUpdateLoad()
    strQuery = strQuery & " t01.int_status,"
    strQuery = strQuery & " t01.int_usr_invocation,"
    strQuery = strQuery & " t01.int_usr_validation,"
-   strQuery = strQuery & " t01.int_usr_message"
+   strQuery = strQuery & " t01.int_usr_message,"
+   strQuery = strQuery & " t01.int_lod_type,"
+   strQuery = strQuery & " t01.int_lod_group"
    strQuery = strQuery & " from lics_interface t01"
    strQuery = strQuery & " where t01.int_interface = '" & objForm.Fields("DTA_IntInterface").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -307,6 +313,8 @@ sub ProcessUpdateLoad()
    call objForm.AddField("DTA_IntUsrInvocation", objSelection.ListValue17("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntUsrValidation", objSelection.ListValue18("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntUsrMessage", objSelection.ListValue19("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntLodType", objSelection.ListValue20("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntLodGroup", objSelection.ListValue21("LIST",objSelection.ListLower("LIST")))
    '//
    '// Set the mode
    '//
@@ -350,6 +358,8 @@ sub ProcessUpdateAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodGroup").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -403,7 +413,9 @@ sub ProcessDeleteLoad()
    strQuery = strQuery & " t01.int_status,"
    strQuery = strQuery & " t01.int_usr_invocation,"
    strQuery = strQuery & " t01.int_usr_validation,"
-   strQuery = strQuery & " t01.int_usr_message"
+   strQuery = strQuery & " t01.int_usr_message,"
+   strQuery = strQuery & " t01.int_lod_type,"
+   strQuery = strQuery & " t01.int_lod_group"
    strQuery = strQuery & " from lics_interface t01"
    strQuery = strQuery & " where t01.int_interface = '" & objForm.Fields("DTA_IntInterface").Value & "'"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
@@ -435,6 +447,8 @@ sub ProcessDeleteLoad()
    call objForm.AddField("DTA_IntUsrInvocation", objSelection.ListValue17("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntUsrValidation", objSelection.ListValue18("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_IntUsrMessage", objSelection.ListValue19("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntLodType", objSelection.ListValue20("LIST",objSelection.ListLower("LIST")))
+   call objForm.AddField("DTA_IntLodGroup", objSelection.ListValue21("LIST",objSelection.ListLower("LIST")))
 
    '//
    '// Set the mode

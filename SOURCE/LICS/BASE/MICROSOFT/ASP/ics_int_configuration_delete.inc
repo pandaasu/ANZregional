@@ -94,6 +94,8 @@
    <input type="hidden" name="DTA_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
    <input type="hidden" name="DTA_IntUsrValidation" value="<%=objForm.Fields("DTA_IntUsrValidation").Value%>">
    <input type="hidden" name="DTA_IntUsrMessage" value="<%=objForm.Fields("DTA_IntUsrMessage").Value%>">
+   <input type="hidden" name="DTA_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
+   <input type="hidden" name="DTA_IntLodGroup" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>">
 </form>
 </body>
 </html>
