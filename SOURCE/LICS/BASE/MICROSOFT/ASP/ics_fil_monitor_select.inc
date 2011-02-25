@@ -55,15 +55,12 @@
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
-<!--#include file="ics_std_child.inc"-->
-<!--#include file="ics_std_number.inc"-->
-<!--#include file="ics_std_timestamp.inc"-->
 <!--#include file="ics_std_scrollable.inc"-->
 <head>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_fil_process_select_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');showError();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_fil_monitor_select_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();setScrollable('Head','Body','horizontal');showError();">
 <form name="main" action="<%=strBase%><%=strTarget%>" method="post">
    <table class="clsGrid02" align=center valign=top cols=2 height=100% width=100% cellpadding="1" cellspacing="0">
       <tr>
@@ -86,16 +83,16 @@
                      <div class="clsFixed" id="conHead">
                      <table class="clsTableHead" id="tabHead" align=left cols=11 cellpadding="0" cellspacing="1">
                         <tr>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Action&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;File&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Trace&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Identifier&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Path&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Name&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Status&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;User&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Create Time&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Type&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Group&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Job&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;User&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Start Time&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;End Time&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Status&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Message&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
                      </table>
@@ -108,17 +105,16 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=10 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=8 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                  <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><a class="clsSelect" href="javascript:doRetry('<%=objSelection.ListValue01("LIST",i)%>');">Retry</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%if objSelection.ListValue04 = "2" then%><a class="clsSelect" href="javascript:doRetry('<%=objSelection.ListValue01("LIST",i)%>');">Retry</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a><%else%>&nbsp;<%end if%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue08("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue09("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue10("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue04("LIST",i)%></nobr></td>
+                           <td class="<%=aryIntClass(objSelection.ListValue04("LIST",i))%>" align=left colspan=1 nowrap><nobr><%=aryIntStatus(objSelection.ListValue04("LIST",i))%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue05("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue06("LIST",i)%></nobr></td>
-                           <td class="<%=aryIntClass(objSelection.ListValue07("LIST",i))%>" align=left colspan=1 nowrap><nobr><%=aryIntStatus(objSelection.ListValue07("LIST",i))%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue07("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue08("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue09("LIST",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>

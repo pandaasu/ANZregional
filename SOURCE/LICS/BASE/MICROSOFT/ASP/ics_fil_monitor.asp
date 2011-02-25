@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : ICS (Interface Control System)                     //
-'// Script  : ics_fil_process.asp                                //
+'// Script  : ics_fil_monitor.asp                                //
 '// Author  : Steve Gregan                                       //
 '// Date    : February 2011                                      //
-'// Text    : This script implements the file processing         //
+'// Text    : This script implements the file monitor            //
 '//           functionality                                      //
 '//////////////////////////////////////////////////////////////////
 
@@ -39,8 +39,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "ics_fil_process.asp"
-   strHeading = "File Processing"
+   strTarget = "ics_fil_monitor.asp"
+   strHeading = "File Monitor"
    aryFilStatus(1) = "Available"
    aryFilStatus(2) = "Errors"
    aryFilClass(1) = "clsLabelFG"
@@ -64,7 +64,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("ICS_FIL_PROCESS")
+   strReturn = GetSecurityCheck("ICS_FIL_MONITOR")
    if strReturn <> "*OK" then
       strMode = "FATAL"
    else
@@ -135,9 +135,9 @@ sub ProcessSelect()
    strQuery = strQuery & " t01.fil_status,"
    strQuery = strQuery & " t01.fil_crt_user,"
    strQuery = strQuery & " to_char(t01.fil_crt_time, 'YYYY/MM/DD HH24:MI:SS'),"
-   strQuery = strQuery & " t01.fil_message,"
    strQuery = strQuery & " t02.int_type,"
-   strQuery = strQuery & " t02.int_lod_group"
+   strQuery = strQuery & " t02.int_lod_group,"
+   strQuery = strQuery & " t01.fil_message"
    strQuery = strQuery & " from lics_file t01, lics_interface t02"
    strQuery = strQuery & " where  t02.fil_path = t02.int_interface(+)"
    strQuery = strQuery & " order by t01.fil_file asc"
@@ -163,9 +163,9 @@ sub ProcessRetry()
    set objFunction.Security = objSecurity
 
    '//
-   '// Update the file
+   '// Retry the file
    '//
-   strStatement = "lics_file_process.retry_file("
+   strStatement = "lics_file_monitor.retry_file("
    strStatement = strStatement & "'" & objForm.Fields("DTA_FilFile").Value & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
@@ -197,9 +197,9 @@ sub ProcessDelete()
    set objFunction.Security = objSecurity
 
    '//
-   '// Update the file
+   '// Deletet the file
    '//
-   strStatement = "lics_file_process.delete_file("
+   strStatement = "lics_file_monitor.delete_file("
    strStatement = strStatement & "'" & objForm.Fields("DTA_FilFile").Value & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
@@ -228,6 +228,6 @@ sub PaintFatal()%>
 '// Paint prompt routine //
 '//////////////////////////
 sub PaintSelect()%>
-<!--#include file="ics_fil_process_select.inc"-->
+<!--#include file="ics_fil_monitor_select.inc"-->
 <%end sub
 <!--#include file="ics_std_code.inc"-->
