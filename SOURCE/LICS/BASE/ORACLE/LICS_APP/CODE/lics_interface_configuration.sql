@@ -23,6 +23,7 @@ create or replace package lics_interface_configuration as
  2004/01   Steve Gregan   Created
  2006/08   Steve Gregan   Added optional search procedure
  2008/11   Steve Gregan   Added user invocation functionality columns (CHINA INTERFACE LOADER)
+ 2011/02   Steve Gregan   End point architecture version
 
 *******************************************************************************/
 
@@ -44,42 +45,12 @@ create or replace package lics_interface_configuration as
                              par_ema_group in varchar2,
                              par_search in varchar2,
                              par_procedure in varchar2,
-                             par_status in varchar2) return varchar2;
-   function update_interface(par_interface in varchar2,
-                             par_description in varchar2,
-                             par_type in varchar2,
-                             par_group in varchar2,
-                             par_priority in number,
-                             par_hdr_history in number,
-                             par_dta_history in number,
-                             par_fil_path in varchar2,
-                             par_fil_prefix in varchar2,
-                             par_fil_sequence in number,
-                             par_fil_extension in varchar2,
-                             par_opr_alert in varchar2,
-                             par_ema_group in varchar2,
-                             par_search in varchar2,
-                             par_procedure in varchar2,
-                             par_status in varchar2) return varchar2;
-   function insert_interface(par_interface in varchar2,
-                             par_description in varchar2,
-                             par_type in varchar2,
-                             par_group in varchar2,
-                             par_priority in number,
-                             par_hdr_history in number,
-                             par_dta_history in number,
-                             par_fil_path in varchar2,
-                             par_fil_prefix in varchar2,
-                             par_fil_sequence in number,
-                             par_fil_extension in varchar2,
-                             par_opr_alert in varchar2,
-                             par_ema_group in varchar2,
-                             par_search in varchar2,
-                             par_procedure in varchar2,
                              par_status in varchar2,
                              par_usr_invocation in varchar2,
                              par_usr_validation in varchar2,
-                             par_usr_message in varchar2) return varchar2;
+                             par_usr_message in varchar2,
+                             par_lod_type in varchar2,
+                             par_lod_group in varchar2) return varchar2;
    function update_interface(par_interface in varchar2,
                              par_description in varchar2,
                              par_type in varchar2,
@@ -98,7 +69,9 @@ create or replace package lics_interface_configuration as
                              par_status in varchar2,
                              par_usr_invocation in varchar2,
                              par_usr_validation in varchar2,
-                             par_usr_message in varchar2) return varchar2;
+                             par_usr_message in varchar2,
+                             par_lod_type in varchar2,
+                             par_lod_group in varchar2) return varchar2;
    function delete_interface(par_interface in varchar2) return varchar2;
 
 end lics_interface_configuration;
@@ -138,122 +111,19 @@ create or replace package body lics_interface_configuration as
                              par_ema_group in varchar2,
                              par_search in varchar2,
                              par_procedure in varchar2,
-                             par_status in varchar2) return varchar2 is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Insert the interface
-      /*-*/
-      return insert_interface(par_interface,
-                              par_description,
-                              par_type,
-                              par_group,
-                              par_priority,
-                              par_hdr_history,
-                              par_dta_history,
-                              par_fil_path,
-                              par_fil_prefix,
-                              par_fil_sequence,
-                              par_fil_extension,
-                              par_opr_alert,
-                              par_ema_group,
-                              par_search,
-                              par_procedure,
-                              par_status,
-                              null,
-                              null,
-                              null);
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end insert_interface;
-
-   /*******************************************************/
-   /* This function performs the update interface routine */
-   /*******************************************************/
-   function update_interface(par_interface in varchar2,
-                             par_description in varchar2,
-                             par_type in varchar2,
-                             par_group in varchar2,
-                             par_priority in number,
-                             par_hdr_history in number,
-                             par_dta_history in number,
-                             par_fil_path in varchar2,
-                             par_fil_prefix in varchar2,
-                             par_fil_sequence in number,
-                             par_fil_extension in varchar2,
-                             par_opr_alert in varchar2,
-                             par_ema_group in varchar2,
-                             par_search in varchar2,
-                             par_procedure in varchar2,
-                             par_status in varchar2) return varchar2 is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Update the interface
-      /*-*/
-      return update_interface(par_interface,
-                              par_description,
-                              par_type,
-                              par_group,
-                              par_priority,
-                              par_hdr_history,
-                              par_dta_history,
-                              par_fil_path,
-                              par_fil_prefix,
-                              par_fil_sequence,
-                              par_fil_extension,
-                              par_opr_alert,
-                              par_ema_group,
-                              par_search,
-                              par_procedure,
-                              par_status,
-                              null,
-                              null,
-                              null);
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end update_interface;
-
-   /*******************************************************/
-   /* This function performs the insert interface routine */
-   /*******************************************************/
-   function insert_interface(par_interface in varchar2,
-                             par_description in varchar2,
-                             par_type in varchar2,
-                             par_group in varchar2,
-                             par_priority in number,
-                             par_hdr_history in number,
-                             par_dta_history in number,
-                             par_fil_path in varchar2,
-                             par_fil_prefix in varchar2,
-                             par_fil_sequence in number,
-                             par_fil_extension in varchar2,
-                             par_opr_alert in varchar2,
-                             par_ema_group in varchar2,
-                             par_search in varchar2,
-                             par_procedure in varchar2,
                              par_status in varchar2,
                              par_usr_invocation in varchar2,
                              par_usr_validation in varchar2,
-                             par_usr_message in varchar2) return varchar2 is
+                             par_usr_message in varchar2,
+                             par_lod_type in varchar2,
+                             par_lod_group in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_title varchar2(128);
       var_message varchar2(4000);
+      var_name_error boolean;
 
       /*-*/
       /* Local cursors
@@ -281,7 +151,7 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_interface := upper(par_interface);
       rcd_lics_interface.int_description := par_description;
       rcd_lics_interface.int_type := par_type;
-      rcd_lics_interface.int_group := par_group;
+      rcd_lics_interface.int_group := upper(par_group);
       rcd_lics_interface.int_priority := par_priority;
       rcd_lics_interface.int_hdr_history := par_hdr_history;
       rcd_lics_interface.int_dta_history := par_dta_history;
@@ -297,12 +167,30 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_usr_invocation := nvl(par_usr_invocation,lics_constant.status_inactive);
       rcd_lics_interface.int_usr_validation := par_usr_validation;
       rcd_lics_interface.int_usr_message := par_usr_message;
+      rcd_lics_interface.int_lod_type := upper(par_lod_type);
+      rcd_lics_interface.int_lod_group := upper(par_lod_group);
 
       /*-*/
       /* Validate the parameter values
       /*-*/
       if rcd_lics_interface.int_interface is null then
          var_message := var_message || chr(13) || 'Interface must be specified';
+      else
+         var_name_error := false;
+         for idx_count in 1..length(rcd_lics_interface.int_interface) loop
+            if substr(rcd_lics_interface.int_interface, idx_count, 1) < 'A' or substr(rcd_lics_interface.int_interface, idx_count, 1) > 'Z' then
+               if substr(rcd_lics_interface.int_interface, idx_count, 1) < '0' or substr(rcd_lics_interface.int_interface, idx_count, 1) > '9' then
+                  if substr(rcd_lics_interface.int_interface, idx_count, 1) <> '_' then
+                     if substr(rcd_lics_interface.int_interface, idx_count, 1) <> '.' then
+                        var_name_error := true;
+                     end if;
+                  end if;
+               end if;
+            end if;
+         end loop;
+         if var_name_error = true then
+            var_message := var_message || chr(13) || 'Interface - characters must be A-Z, 0-9, _(underscore), .(dot)';
+         end if;
       end if;
       if rcd_lics_interface.int_description is null then
          var_message := var_message || chr(13) || 'Description must be specified';
@@ -314,7 +202,43 @@ create or replace package body lics_interface_configuration as
       end if;
       if rcd_lics_interface.int_group is null then
          var_message := var_message || chr(13) || 'Interface group must be specified ';
+      else
+         var_name_error := false;
+         for idx_count in 1..length(rcd_lics_interface.int_group) loop
+            if substr(rcd_lics_interface.int_group, idx_count, 1) < 'A' or substr(rcd_lics_interface.int_group, idx_count, 1) > 'Z' then
+               if substr(rcd_lics_interface.int_group, idx_count, 1) < '0' or substr(rcd_lics_interface.int_group, idx_count, 1) > '9' then
+                  if substr(rcd_lics_interface.int_group, idx_count, 1) <> '_' then
+                     var_name_error := true;
+                  end if;
+               end if;
+            end if;
+         end loop;
+         if var_name_error = true then
+            var_message := var_message || chr(13) || 'Interface group - characters must be A-Z, 0-9, _(underscore)';
+         end if;
       end if;
+      if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
+         if rcd_lics_interface.int_lod_type != '*PUSH' and rcd_lics_interface.int_lod_type != '*POLL' then
+            var_message := var_message || chr(13) || 'Interface loading type must be *PUSH or *POLL for *INBOUND and *PASSTHRU';
+         else
+            if rcd_lics_interface.int_lod_type = '*POLL' then
+               if rcd_lics_interface.int_lod_group is null or rcd_lics_interface.int_lod_group = '*NONE' then
+                  var_message := var_message || chr(13) || 'Interface loading group must not be blank or *NONE for interface loading type *POLL';
+               end if;
+            else
+               if rcd_lics_interface.int_lod_group != '*NONE' then
+                  var_message := var_message || chr(13) || 'Interface loading group must be *NONE for interface loading type *PUSH';
+               end if;
+            end if;
+         end if;
+      else
+         if rcd_lics_interface.int_lod_type != '*NONE' then
+            var_message := var_message || chr(13) || 'Interface loading type must be *NONE for *OUTBOUND';
+         end if;
+         if rcd_lics_interface.int_lod_group != '*NONE' then
+            var_message := var_message || chr(13) || 'Interface loading group must be *NONE for *OUTBOUND';
+         end if;
+      end if; 
       if rcd_lics_interface.int_priority <= 0 then
          var_message := var_message || chr(13) || 'Priority must be greater than zero';
       end if;
@@ -323,9 +247,6 @@ create or replace package body lics_interface_configuration as
       end if;
       if rcd_lics_interface.int_dta_history <= 0 then
          var_message := var_message || chr(13) || 'Data history must be greater than zero';
-      end if;
-      if rcd_lics_interface.int_fil_path is null then
-         var_message := var_message || chr(13) || 'File path must be specified ';
       end if;
       if rcd_lics_interface.int_type = lics_constant.type_inbound then
          rcd_lics_interface.int_fil_prefix := null;
@@ -379,6 +300,19 @@ create or replace package body lics_interface_configuration as
       /*-*/
       /* Create the new interface
       /*-*/
+      if rcd_lics_interface.int_type = lics_constant.type_inbound then
+         rcd_lics_interface.int_fil_path := 'ICS_INBOUND';
+         if rcd_lics_interface.int_lod_type = '*POLL' then
+            rcd_lics_interface.int_fil_path := 'ICS_'||replace(rcd_lics_interface.int_interface,'.','#');
+         end if;
+      elsif rcd_lics_interface.int_type = lics_constant.type_passthru then
+         rcd_lics_interface.int_fil_path := 'ICS_INBOUND';
+         if rcd_lics_interface.int_lod_type = '*POLL' then
+            rcd_lics_interface.int_fil_path := 'ICS_'||replace(rcd_lics_interface.int_interface,'.','#');
+         end if;
+      elsif rcd_lics_interface.int_type = lics_constant.type_outbound then
+         rcd_lics_interface.int_fil_path := 'ICS_OUTBOUND';
+      end if;
       insert into lics_interface
          (int_interface,
           int_description,
@@ -398,7 +332,9 @@ create or replace package body lics_interface_configuration as
           int_status,
           int_usr_invocation,
           int_usr_validation,
-          int_usr_message)
+          int_usr_message,
+          int_lod_type,
+          int_lod_group)
          values(rcd_lics_interface.int_interface,
                 rcd_lics_interface.int_description,
                 rcd_lics_interface.int_type,
@@ -417,7 +353,18 @@ create or replace package body lics_interface_configuration as
                 rcd_lics_interface.int_status,
                 rcd_lics_interface.int_usr_invocation,
                 rcd_lics_interface.int_usr_validation,
-                rcd_lics_interface.int_usr_message);
+                rcd_lics_interface.int_usr_message,
+                rcd_lics_interface.int_lod_type,
+                rcd_lics_interface.int_lod_group);
+
+      /*-*/
+      /* Create the directory when required
+      /*-*/
+      if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
+         if rcd_lics_interface.int_lod_type = '*POLL' then
+            lics_directory.create_directory(rcd_lics_interface.int_fil_path, lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface));
+         end if;
+      end if;
 
       /*-*/
       /* Commit the database
@@ -475,13 +422,18 @@ create or replace package body lics_interface_configuration as
                              par_status in varchar2,
                              par_usr_invocation in varchar2,
                              par_usr_validation in varchar2,
-                             par_usr_message in varchar2) return varchar2 is
+                             par_usr_message in varchar2,
+                             par_lod_type in varchar2,
+                             par_lod_group in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_title varchar2(128);
       var_message varchar2(4000);
+      var_name_error boolean;
+      var_sav_type varchar2(10);
+      var_sav_path varchar2(128);
 
       /*-*/
       /* Local cursors
@@ -509,7 +461,7 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_interface := upper(par_interface);
       rcd_lics_interface.int_description := par_description;
       rcd_lics_interface.int_type := par_type;
-      rcd_lics_interface.int_group := par_group;
+      rcd_lics_interface.int_group := upper(par_group);
       rcd_lics_interface.int_priority := par_priority;
       rcd_lics_interface.int_hdr_history := par_hdr_history;
       rcd_lics_interface.int_dta_history := par_dta_history;
@@ -525,6 +477,8 @@ create or replace package body lics_interface_configuration as
       rcd_lics_interface.int_usr_invocation := nvl(par_usr_invocation,lics_constant.status_inactive);
       rcd_lics_interface.int_usr_validation := par_usr_validation;
       rcd_lics_interface.int_usr_message := par_usr_message;
+      rcd_lics_interface.int_lod_type := upper(par_lod_type);
+      rcd_lics_interface.int_lod_group := upper(par_lod_group);
 
       /*-*/
       /* Validate the parameter values
@@ -542,7 +496,43 @@ create or replace package body lics_interface_configuration as
       end if;
       if rcd_lics_interface.int_group is null then
          var_message := var_message || chr(13) || 'Interface group must be specified ';
+      else
+         var_name_error := false;
+         for idx_count in 1..length(rcd_lics_interface.int_group) loop
+            if substr(rcd_lics_interface.int_group, idx_count, 1) < 'A' or substr(rcd_lics_interface.int_group, idx_count, 1) > 'Z' then
+               if substr(rcd_lics_interface.int_group, idx_count, 1) < '0' or substr(rcd_lics_interface.int_group, idx_count, 1) > '9' then
+                  if substr(rcd_lics_interface.int_group, idx_count, 1) <> '_' then
+                     var_name_error := true;
+                  end if;
+               end if;
+            end if;
+         end loop;
+         if var_name_error = true then
+            var_message := var_message || chr(13) || 'Interface group - characters must be A-Z, 0-9, _(underscore)';
+         end if;
       end if;
+      if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
+         if rcd_lics_interface.int_lod_type != '*PUSH' and rcd_lics_interface.int_lod_type != '*POLL' then
+            var_message := var_message || chr(13) || 'Interface loading type must be *PUSH or *POLL for *INBOUND and *PASSTHRU';
+         else
+            if rcd_lics_interface.int_lod_type = '*POLL' then
+               if rcd_lics_interface.int_lod_group is null or rcd_lics_interface.int_lod_group = '*NONE' then
+                  var_message := var_message || chr(13) || 'Interface loading group must not be blank or *NONE for interface loading type *POLL';
+               end if;
+            else
+               if rcd_lics_interface.int_lod_group != '*NONE' then
+                  var_message := var_message || chr(13) || 'Interface loading group must be *NONE for interface loading type *PUSH';
+               end if;
+            end if;
+         end if;
+      else
+         if rcd_lics_interface.int_lod_type != '*NONE' then
+            var_message := var_message || chr(13) || 'Interface loading type must be *NONE for *OUTBOUND';
+         end if;
+         if rcd_lics_interface.int_lod_group != '*NONE' then
+            var_message := var_message || chr(13) || 'Interface loading group must be *NONE for *OUTBOUND';
+         end if;
+      end if; 
       if rcd_lics_interface.int_priority <= 0 then
          var_message := var_message || chr(13) || 'Priority must be greater than zero';
       end if;
@@ -599,6 +589,8 @@ create or replace package body lics_interface_configuration as
       if rcd_lics_interface.int_type != rcd_lics_interface_01.int_type then
          var_message := var_message || chr(13) || 'Interface type must be the same as the existing interface type (' || rcd_lics_interface_01.int_type || ')';
       end if;
+      var_sav_type := rcd_lics_interface_01.int_lod_type;
+      var_sav_path := rcd_lics_interface_01.int_fil_path;
 
       /*-*/
       /* Return the message when required
@@ -610,6 +602,19 @@ create or replace package body lics_interface_configuration as
       /*-*/
       /* Update the existing interface
       /*-*/
+      if rcd_lics_interface.int_type = lics_constant.type_inbound then
+         rcd_lics_interface.int_fil_path := 'ICS_INBOUND';
+         if rcd_lics_interface.int_lod_type = '*POLL' then
+            rcd_lics_interface.int_fil_path := 'ICS_'||replace(rcd_lics_interface.int_interface,'.','#');
+         end if;
+      elsif rcd_lics_interface.int_type = lics_constant.type_passthru then
+         rcd_lics_interface.int_fil_path := 'ICS_INBOUND';
+         if rcd_lics_interface.int_lod_type = '*POLL' then
+            rcd_lics_interface.int_fil_path := 'ICS_'||replace(rcd_lics_interface.int_interface,'.','#');
+         end if;
+      elsif rcd_lics_interface.int_type = lics_constant.type_outbound then
+         rcd_lics_interface.int_fil_path := 'ICS_OUTBOUND';
+      end if;
       update lics_interface
          set int_description = rcd_lics_interface.int_description,
              int_type = rcd_lics_interface.int_type,
@@ -628,8 +633,21 @@ create or replace package body lics_interface_configuration as
              int_status = rcd_lics_interface.int_status,
              int_usr_invocation = rcd_lics_interface.int_usr_invocation,
              int_usr_validation = rcd_lics_interface.int_usr_validation,
-             int_usr_message = rcd_lics_interface.int_usr_message
+             int_usr_message = rcd_lics_interface.int_usr_message,
+             int_lod_type = rcd_lics_interface.int_lod_type,
+             int_lod_group = rcd_lics_interface.int_lod_group
          where int_interface = rcd_lics_interface.int_interface;
+
+      /*-*/
+      /* Create or delete the directory when required
+      /*-*/
+      if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
+         if rcd_lics_interface.int_lod_type = '*POLL' and var_sav_type != '*POLL' then
+            lics_directory.create_directory(rcd_lics_interface.int_fil_path, lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface));
+         elsif rcd_lics_interface.int_lod_type != '*POLL' and var_sav_type = '*POLL' then
+            lics_directory.delete_directory(var_sav_path);
+         end if;
+      end if;
 
       /*-*/
       /* Commit the database
