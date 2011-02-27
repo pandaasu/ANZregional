@@ -232,9 +232,11 @@
       if (document.main.INP_IntLodType.value == '*NONE' || document.main.INP_IntLodType.value == '*PUSH') {
          document.main.INP_IntLodGroup.value = '*NONE';
          document.main.INP_IntLodGroup.readOnly = true;
+         document.main.INP_IntFilPath.value = 'ICS_INBOUND';
       } else {
          document.main.INP_IntLodGroup.value = '';
          document.main.INP_IntLodGroup.readOnly = false;
+         document.main.INP_IntFilPath.value = 'ICS_POLLING';
       }
    }
    function selectStatus(objSelect) {
@@ -285,9 +287,6 @@
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_IntGroup" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntGroup").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-
-
-
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Loading Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
@@ -304,9 +303,6 @@
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_IntLodGroup" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-
-
-
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Priority:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>

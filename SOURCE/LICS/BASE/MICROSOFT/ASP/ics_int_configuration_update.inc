@@ -38,6 +38,8 @@
       if (document.main.INP_IntUsrInvocation.value != document.main.DTA_IntUsrInvocation.value) {bolChange = true;}
       if (document.main.INP_IntUsrValidation.value != document.main.DTA_IntUsrValidation.value) {bolChange = true;}
       if (document.main.INP_IntUsrMessage.value != document.main.DTA_IntUsrMessage.value) {bolChange = true;}
+      if (document.main.INP_IntLodType.value != document.main.DTA_IntLodType.value) {bolChange = true;}
+      if (document.main.INP_IntLodGroup.value != document.main.DTA_IntLodGroup.value) {bolChange = true;}
       if (bolChange == true) {
          bolReturn = confirm('Changes have been made to this information\r\npress OK continue (changes will be lost)\r\npress Cancel to return to the function');
          return bolReturn;
@@ -61,6 +63,33 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Interface group must be entered';
       }
+      if (document.main.INP_IntType.value == '*INBOUND' || document.main.INP_IntType.value == '*PASSTHRU') {
+         if (document.main.INP_IntLodType.value != '*PUSH' && document.main.INP_IntLodType.value != '*POLL') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Interface loading type must be *PUSH or *POLL for *INBOUND and *PASSTHRU';
+         } else {
+            if (document.main.INP_IntLodType.value == '*POLL') {
+               if (document.main.INP_IntLodGroup.value == ''|| document.main.INP_IntLodGroup.value == '*NONE') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Interface loading group must not be blank or *NONE for interface loading type *POLL';
+               }
+            } else {
+               if (document.main.INP_IntLodGroup.value != '*NONE') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + 'Interface loading group must be *NONE for interface loading type *PUSH';
+               }
+            }
+         }
+      } else {
+         if (document.main.INP_IntLodType.value != '*NONE') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Interface loading type must be *NONE for *OUTBOUND';
+         }
+         if (document.main.INP_IntLodGroup.value != '*NONE') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Interface loading group must be *NONE for *OUTBOUND';
+         }
+      } 
       if (document.main.INP_IntPriority.value == '0') {
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Interface priority must not be zero';
@@ -147,6 +176,8 @@
       document.main.DTA_IntUsrInvocation.value = document.main.INP_IntUsrInvocation.value;
       document.main.DTA_IntUsrValidation.value = document.main.INP_IntUsrValidation.value;
       document.main.DTA_IntUsrMessage.value = document.main.INP_IntUsrMessage.value;
+      document.main.DTA_IntLodType.value = document.main.INP_IntLodType.value;
+      document.main.DTA_IntLodGroup.value = document.main.INP_IntLodGroup.value;
       document.main.action = '<%=strBase%><%=strTarget%>';
       document.main.Mode.value = 'UPDATE_ACCEPT';
       document.main.submit();
@@ -163,6 +194,18 @@
    }
    function selectInvocation(objSelect) {
       document.main.INP_IntUsrInvocation.value = objSelect.options[objSelect.selectedIndex].value;
+   }
+   function selectLodType(objSelect) {
+      document.main.INP_IntLodType.value = objSelect.options[objSelect.selectedIndex].value;
+      if (document.main.INP_IntLodType.value == '*NONE' || document.main.INP_IntLodType.value == '*PUSH') {
+         document.main.INP_IntLodGroup.value = '*NONE';
+         document.main.INP_IntLodGroup.readOnly = true;
+         document.main.INP_IntFilPath.value = 'ICS_INBOUND';
+      } else {
+         document.main.INP_IntLodGroup.value = '';
+         document.main.INP_IntLodGroup.readOnly = false;
+         document.main.INP_IntFilPath.value = 'ICS_POLLING';
+      }
    }
    function setSelect(objInput) {
       objInput.select();
@@ -196,6 +239,22 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_IntGroup" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntGroup").Value%>" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Loading Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" name="sltIntLodType" onChange="selectLodType(this);">
+               <option value="*NONE"<%if objForm.Fields("DTA_IntLodType").Value = "*NONE" or objForm.Fields("DTA_IntLodType").Value = "" then%> selected<%end if%>>*NONE
+               <option value="*PUSH"<%if objForm.Fields("DTA_IntLodType").Value = "*PUSH" then%> selected<%end if%>>*PUSH
+               <option value="*POLL"<%if objForm.Fields("DTA_IntLodType").Value = "*POLL" then%> selected<%end if%>>*POLL
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Loading Group:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_IntLodGroup" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -327,10 +386,14 @@
    <input type="hidden" name="DTA_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
    <input type="hidden" name="DTA_IntUsrValidation" value="<%=replace(objForm.Fields("DTA_IntUsrValidation").Value, """", "&#34;", 1, -1, 1)%>">
    <input type="hidden" name="DTA_IntUsrMessage" value="<%=replace(objForm.Fields("DTA_IntUsrMessage").Value, """", "&#34;", 1, -1, 1)%>">
+   <input type="hidden" name="DTA_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
+   <input type="hidden" name="DTA_IntLodGroup" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>">
    <input type="hidden" name="INP_IntType" value="<%=objForm.Fields("DTA_IntType").Value%>">
    <input type="hidden" name="INP_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
    <input type="hidden" name="INP_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
    <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
+   <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
+   <input type="hidden" name="INP_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
 </form>
 </body>
 </html>

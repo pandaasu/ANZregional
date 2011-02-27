@@ -178,8 +178,8 @@ sub ProcessInsertLoad()
    call objForm.AddField("DTA_IntUsrInvocation", "")
    call objForm.AddField("DTA_IntUsrValidation", "")
    call objForm.AddField("DTA_IntUsrMessage", "")
-   call objForm.AddField("DTA_IntLodType", "")
-   call objForm.AddField("DTA_IntLodGroup", "")
+   call objForm.AddField("DTA_IntLodType", "*PUSH")
+   call objForm.AddField("DTA_IntLodGroup", "*NONE")
 
    '//
    '// Set the mode
@@ -223,8 +223,8 @@ sub ProcessInsertAccept()
    strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodGroup").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
@@ -357,8 +357,8 @@ sub ProcessUpdateAccept()
    strStatement = strStatement & "'" & objForm.Fields("DTA_IntStatus").Value & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrInvocation").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrValidation").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "'"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntUsrMessage").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodType").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_IntLodGroup").Value) & "'"
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
