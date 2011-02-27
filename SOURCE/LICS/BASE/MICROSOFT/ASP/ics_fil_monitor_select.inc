@@ -67,7 +67,7 @@
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</td>
       </tr>
       <tr>
-         <td class="clsLabelUL" align=center colspan=2 nowrap><nobr>
+         <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">Refresh</a></nobr></td>
