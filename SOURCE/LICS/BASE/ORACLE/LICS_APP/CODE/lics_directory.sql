@@ -63,7 +63,7 @@ create or replace package body sys.lics_directory as
          raise_application_error(-20000, 'Directory (' || par_sys_name || ') must start with /ics/');
       end if;
       lics_filesystem.create_directory(par_sys_name);
-      execute immediate 'create directory '||par_ics_name||' as '''||par_sys_name||'''';
+      execute immediate 'create or replace directory '||par_ics_name||' as '''||par_sys_name||'''';
       execute immediate 'grant all on directory '||par_ics_name||' to lics_app';
       
    /*-------------------*/
@@ -135,8 +135,8 @@ create or replace package body sys.lics_directory as
       /*-*/
       /* Delete the existing directory
       /*-*/
-      execute immediate 'drop directory '||par_ics_name;
       lics_filesystem.delete_directory(rcd_all_directories.directory_path);
+      execute immediate 'drop directory '||par_ics_name;
       
    /*-------------------*/
    /* Exception handler */
