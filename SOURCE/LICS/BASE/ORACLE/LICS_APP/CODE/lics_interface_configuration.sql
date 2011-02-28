@@ -758,10 +758,21 @@ create or replace package body lics_interface_configuration as
       /*-*/
       delete from lics_rtg_detail
          where rde_interface = rcd_lics_interface.int_interface;
+      delete from lics_int_reference
+         where inr_interface = rcd_lics_interface.int_interface;
       delete from lics_int_sequence
          where ins_interface = rcd_lics_interface.int_interface;
       delete from lics_interface
          where int_interface = rcd_lics_interface.int_interface;
+
+      /*-*/
+      /* Delete the directory when required
+      /*-*/
+      if rcd_lics_interface_01.int_type = lics_constant.type_inbound or rcd_lics_interface_01.int_type = lics_constant.type_passthru then
+         if rcd_lics_interface_01.int_lod_type = '*POLL'then
+            lics_directory.delete_directory(rcd_lics_interface_01.int_fil_path);
+         end if;
+      end if;
 
       /*-*/
       /* Commit the database
