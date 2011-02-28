@@ -135,7 +135,7 @@ create or replace package body sys.lics_directory as
       /*-*/
       /* Delete the existing directory
       /*-*/
-      execute immediate 'drop_directory '||par_ics_name;
+      execute immediate 'drop directory '||par_ics_name;
       lics_filesystem.delete_directory(rcd_all_directories.directory_path);
       
    /*-------------------*/
