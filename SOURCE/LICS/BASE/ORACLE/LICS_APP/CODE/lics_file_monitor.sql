@@ -44,11 +44,6 @@ create or replace package body lics_file_monitor as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /*-*/
-   /* Private definitions
-   /*-*/
-   rcd_lics_file lics_file%rowtype;
-
    /*************************************************/
    /* This function performs the retry file routine */
    /*************************************************/
@@ -66,7 +61,7 @@ create or replace package body lics_file_monitor as
       cursor csr_lics_file_01 is 
          select t01.*
            from lics_file t01
-          where t01.fil_file = rcd_lics_file.fil_file;
+          where t01.fil_file = par_file;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
 
    /*-------------*/
@@ -81,21 +76,16 @@ create or replace package body lics_file_monitor as
       var_message := null;
 
       /*-*/
-      /* Set the private variables
-      /*-*/
-      rcd_lics_file.fil_file := par_file;
-
-      /*-*/
       /* File must exist with correct status
       /*-*/
       open csr_lics_file_01;
       fetch csr_lics_file_01 into rcd_lics_file_01;
       if csr_lics_file_01%notfound then
-         var_message := var_message || chr(13) || 'File (' || to_char(rcd_lics_file.fil_file,'FM999999999999990') || ') does not exist';
+         var_message := var_message || chr(13) || 'File (' || to_char(par_file,'FM999999999999990') || ') does not exist';
       end if;
       close csr_lics_file_01;
       if rcd_lics_file_01.fil_status != lics_constant.file_error then
-         var_message := var_message || chr(13) || 'File status must be error to retry';
+         var_message := var_message || chr(13) || 'File status must be error or retry';
       end if;
 
       /*-*/
@@ -110,7 +100,7 @@ create or replace package body lics_file_monitor as
       /*-*/
       update lics_file
          set fil_status = lics_constant.file_available
-         where fil_file = rcd_lics_file.fil_file
+         where fil_file = par_file
            and fil_status = lics_constant.file_error;
 
       /*-*/
@@ -171,13 +161,13 @@ create or replace package body lics_file_monitor as
       cursor csr_lics_file_01 is 
          select t01.*
            from lics_file t01
-          where t01.fil_file = rcd_lics_file.fil_file;
+          where t01.fil_file = par_file;
       rcd_lics_file_01 csr_lics_file_01%rowtype;
 
       cursor csr_lics_interface is 
          select t01.*
            from lics_interface t01
-          where t01.int_interface = rcd_lics_file.fil_path;
+          where t01.int_interface = rcd_lics_file_01.fil_path;
       rcd_lics_interface csr_lics_interface%rowtype;
 
       cursor csr_all_directories is 
@@ -198,17 +188,12 @@ create or replace package body lics_file_monitor as
       var_message := null;
 
       /*-*/
-      /* Set the private variables
-      /*-*/
-      rcd_lics_file.fil_file := par_file;
-
-      /*-*/
       /* File must exist with correct status
       /*-*/
       open csr_lics_file_01;
       fetch csr_lics_file_01 into rcd_lics_file_01;
       if csr_lics_file_01%notfound then
-         var_message := var_message || chr(13) || 'File (' || to_char(rcd_lics_file.fil_file,'FM999999999999990') || ') does not exist';
+         var_message := var_message || chr(13) || 'File (' || to_char(par_file,'FM999999999999990') || ') does not exist';
       end if;
       close csr_lics_file_01;
       if rcd_lics_file_01.fil_status != lics_constant.file_error then
@@ -221,7 +206,7 @@ create or replace package body lics_file_monitor as
       open csr_lics_interface;
       fetch csr_lics_interface into rcd_lics_interface;
       if csr_lics_interface%notfound then
-         var_message := var_message || chr(13) || 'Interface (' || rcd_lics_file.fil_path || ') does not exist';
+         var_message := var_message || chr(13) || 'Interface (' || rcd_lics_file_01.fil_path || ') does not exist';
       end if;
       close csr_lics_interface;
 
@@ -247,7 +232,7 @@ create or replace package body lics_file_monitor as
       /* Delete the file system file
       /*-*/
       begin
-         lics_filesystem.delete_file(var_fil_path, rcd_lics_file.fil_name);
+         lics_filesystem.delete_file(var_fil_path, rcd_lics_file_01.fil_name);
       exception
          when others then
             var_message := var_message || chr(13) || substr(SQLERRM, 1, 1536);
@@ -264,7 +249,7 @@ create or replace package body lics_file_monitor as
       /* Delete the existing file
       /*-*/
       delete from lics_file
-         where fil_file = rcd_lics_file.fil_file
+         where fil_file = par_file
            and fil_status = lics_constant.file_error;
 
       /*-*/
