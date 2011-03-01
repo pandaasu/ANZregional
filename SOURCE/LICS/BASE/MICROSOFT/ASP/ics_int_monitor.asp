@@ -385,12 +385,23 @@ sub ProcessForm()
    end if
 
    '//
-   '// Execute the interface/triggered backlog
+   '// Execute the file/interface/stream/triggered backlog
    '//
    lngSize = 0
    strQuery = "select * from"
    strQuery = strQuery & " (select"
-   strQuery = strQuery & " t01.hea_interface as backlog_code,"
+   strQuery = strQuery & " '(*FILE) '||t01.fil_path as backlog_code,"
+   strQuery = strQuery & " max(t02.int_description) as backlog_desc,"
+   strQuery = strQuery & " max(t02.int_type) as backlog_type,"
+   strQuery = strQuery & " max(t02.int_lod_group) as backlog_group,"
+   strQuery = strQuery & " count(*) as backlog_count"
+   strQuery = strQuery & " from lics_file t01, lics_interface t02"
+   strQuery = strQuery & " where t01.fil_path = t02.int_interface(+)"
+   strQuery = strQuery & " and t01.fil_status = '1'"
+   strQuery = strQuery & " group by t01.fil_path"
+   strQuery = strQuery & " union all"
+   strQuery = strQuery & " select"
+   strQuery = strQuery & " '(*INTERFACE) '||t01.hea_interface as backlog_code,"
    strQuery = strQuery & " max(t02.int_description) as backlog_desc,"
    strQuery = strQuery & " max(t02.int_type) as backlog_type,"
    strQuery = strQuery & " max(t02.int_group) as backlog_group,"
@@ -401,7 +412,17 @@ sub ProcessForm()
    strQuery = strQuery & " group by t01.hea_interface"
    strQuery = strQuery & " union all"
    strQuery = strQuery & " select"
-   strQuery = strQuery & " '*TRIGGER_'||t01.tri_group as backlog_code,"
+   strQuery = strQuery & " '(*STREAM) '||t01.sta_job_group as backlog_code,"
+   strQuery = strQuery & " t01.sta_job_group||' - Stream procedures' as backlog_desc,"
+   strQuery = strQuery & " '*STREAMED' as backlog_type,"
+   strQuery = strQuery & " t01.sta_job_group as backlog_group,"
+   strQuery = strQuery & " count(*) as backlog_count"
+   strQuery = strQuery & " from lics_str_action t01"
+   strQuery = strQuery & " where t01.sta_status = '*CREATED'"
+   strQuery = strQuery & " group by t01.sta_job_group"
+   strQuery = strQuery & " union all"
+   strQuery = strQuery & " select"
+   strQuery = strQuery & " '(*TRIGGER) '||t01.tri_group as backlog_code,"
    strQuery = strQuery & " t01.tri_group||' - Triggered procedures' as backlog_desc,"
    strQuery = strQuery & " '*TRIGGERED' as backlog_type,"
    strQuery = strQuery & " t01.tri_group as backlog_group,"
