@@ -50,10 +50,10 @@ alter table lics_file
 /**/
 /* Indexes
 /**/
-create unique index lics_file_ix01 on lics_file
-   (fil_path, fil_name);
-create index lics_file_ix02 on lics_file
-   (fil_path, fil_status, fil_file);
+--create unique index lics_file_ix01 on lics_file
+--   (fil_path, fil_name);
+--create index lics_file_ix02 on lics_file
+--   (fil_path, fil_status, fil_file);
 
 /**/
 /* Authority
