@@ -454,7 +454,7 @@ create or replace package body lics_file_processor as
                   if var_lod_error = false then
                      if upper(rcd_lics_interface.int_type) = '*INBOUND' then
                         begin
-                           lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1', '0');
+                           lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, rcd_lics_file.fil_name, lics_parameter.archive_directory, rcd_lics_file.fil_name||'.gz', '1', '1');
                         exception
                            when others then
                               var_lod_error := true;
