@@ -236,7 +236,7 @@
          <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=objForm.Fields("DTA_IntType").Value%></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Group:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Processing Group:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_IntGroup" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntGroup").Value%>" onFocus="setSelect(this);">
          </nobr></td>
