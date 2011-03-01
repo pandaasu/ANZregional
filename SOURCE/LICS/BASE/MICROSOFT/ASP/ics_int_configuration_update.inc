@@ -392,7 +392,6 @@
    <input type="hidden" name="INP_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
    <input type="hidden" name="INP_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
    <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
-   <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
    <input type="hidden" name="INP_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
 </form>
 </body>
