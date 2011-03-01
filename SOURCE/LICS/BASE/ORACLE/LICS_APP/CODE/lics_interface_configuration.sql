@@ -363,6 +363,7 @@ create or replace package body lics_interface_configuration as
       if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
          if rcd_lics_interface.int_lod_type = '*POLL' then
             lics_directory.create_directory(rcd_lics_interface.int_fil_path, lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface));
+            lics_filesystem.execute_external_procedure(replace(lics_parameter.file_attribute_command,'<FILE>',lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface)));
          end if;
       end if;
 
@@ -644,6 +645,7 @@ create or replace package body lics_interface_configuration as
       if rcd_lics_interface.int_type = lics_constant.type_inbound or rcd_lics_interface.int_type = lics_constant.type_passthru then
          if rcd_lics_interface.int_lod_type = '*POLL' and var_sav_type != '*POLL' then
             lics_directory.create_directory(rcd_lics_interface.int_fil_path, lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface));
+            lics_filesystem.execute_external_procedure(replace(lics_parameter.file_attribute_command,'<FILE>',lics_parameter.inbound_directory||lower(rcd_lics_interface.int_interface)));
          elsif rcd_lics_interface.int_lod_type != '*POLL' and var_sav_type = '*POLL' then
             lics_directory.delete_directory(var_sav_path);
          end if;
