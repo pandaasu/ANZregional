@@ -105,7 +105,7 @@
                      <table class="clsTableBody" id="tabBody" align=left cols=10 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
                         <tr><td class="clsLabelFB" align=center colspan=10 nowrap><nobr>&nbsp;NO DETAIL FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
-                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%if objSelection.ListValue04 = "2" then%><a class="clsSelect" href="javascript:doRetry('<%=objSelection.ListValue01("LIST",i)%>');">Retry</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a><%else%>&nbsp;<%end if%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%if objSelection.ListValue04("LIST",i) = "2" then%><a class="clsSelect" href="javascript:doRetry('<%=objSelection.ListValue01("LIST",i)%>');">Retry</a>&nbsp;/&nbsp;<a class="clsSelect" href="javascript:doDelete('<%=objSelection.ListValue01("LIST",i)%>');">Delete</a><%else%>&nbsp;<%end if%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
@@ -114,7 +114,7 @@
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue06("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue07("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue08("LIST",i)%></nobr></td>
-                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=objSelection.ListValue09("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=center colspan=1 nowrap><nobr><%=replace(replace(replace(objSelection.ListValue09("LIST",i), "<", "&lt;", 1, -1, 1), ">", "&gt;", 1, -1, 1), chr(13), "", 1, -1, 1)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>
