@@ -15,3 +15,9 @@ create index lics_hdr_trace_ix01 on lics_hdr_trace
 
 create index lics_dta_message_ix01 on lics_dta_message
    (dam_header, dam_dta_seq, dam_msg_seq);
+
+create unique index lics_file_ix01 on lics_file
+   (fil_path, fil_name);
+
+create index lics_file_ix02 on lics_file
+   (fil_path, fil_status, fil_file);
