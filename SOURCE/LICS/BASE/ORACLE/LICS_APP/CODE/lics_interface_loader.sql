@@ -223,7 +223,7 @@ create or replace package body lics_interface_loader as
       /*-*/
       if upper(rcd_lics_interface.int_type) = '*INBOUND' then
          lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
-         lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '0');
+         lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
          lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
