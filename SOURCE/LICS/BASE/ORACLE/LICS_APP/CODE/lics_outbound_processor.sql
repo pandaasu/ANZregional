@@ -888,27 +888,6 @@ create or replace package body lics_outbound_processor as
             add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
       end;
 
-
-
-     -- if upper(rcd_lics_interface.int_lod_type = '*EPA') then
-     --    var_script := replace(var_script,'<AMI_PATH>',lics_parameter.ami_path);
-     -- else
-     --    var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.ics_script_path||lics_parameter.ics_path_delimiter);
-     -- end if;
-
-      /*-*/
-      /* Execute the outbound send script
-      /* 1. Send the interface file
-      /* 2. Archive the interface file (delete the source file and replace the target file)
-      /*-*/
-     -- begin
-     --    lics_filesystem.execute_external_procedure(var_script);
-     --    lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
-     -- exception
-     --    when others then
-     --       add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
-     -- end;
-
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/

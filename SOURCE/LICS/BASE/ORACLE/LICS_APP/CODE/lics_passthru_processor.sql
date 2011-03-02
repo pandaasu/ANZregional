@@ -897,19 +897,6 @@ create or replace package body lics_passthru_processor as
             add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
       end;
 
-      /*-*/
-      /* Execute the passthru send script
-      /* 1. Send the interface file
-      /* 2. Archive the interface file (delete the source file and replace the target file)
-      /*-*/
-   --   begin
-   --      lics_filesystem.execute_external_procedure(var_script);
-   --      lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
-   --   exception
-   --      when others then
-   --         add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
-   --   end;
-
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
