@@ -252,13 +252,13 @@ public final class cFileSystem {
     */
    public static void deleteFile(String strSrcPath, String strSrcFile) throws Exception {
       File objSrcFile = new File(strSrcPath, strSrcFile);
-		if (!objSrcFile.exists()) {
-			throw new Exception("Delete File Failed - Source file (" + strSrcPath + ":" + strSrcFile + ") does not exist");
-		} else if (!objSrcFile.isFile()) {
-			throw new Exception("Delete File Failed - Source file (" + strSrcPath + ":" + strSrcFile + ") is not a file");
-		}
-		if (!objSrcFile.delete()) {
-			throw new Exception("Delete File Failed - Source file deletion failed");
+		if (objSrcFile.exists()) {
+			if (!objSrcFile.isFile()) {
+				throw new Exception("Delete File Failed - Source file (" + strSrcPath + ":" + strSrcFile + ") is not a file");
+			}
+			if (!objSrcFile.delete()) {
+				throw new Exception("Delete File Failed - Source file deletion failed");
+			}
 		}
    }
 
@@ -585,9 +585,6 @@ public final class cFileSystem {
 				if (!objFile.mkdir()) {
 					throw new Exception("Create Directory Failed - Unable to create directory (" + strPath + ")");
 				}
-				objFile.setReadable(true, false);
-				objFile.setWritable(true, false);
-				objFile.setExecutable(true, false);
 			} catch(Exception objException) {
 				throw new Exception("Create Directory Failed - " + objException.getMessage());
 			}
