@@ -430,7 +430,7 @@
    <input type="hidden" name="DTA_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
    <input type="hidden" name="DTA_IntLodGroup" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>">
    <input type="hidden" name="INP_IntType" value="<%=objForm.Fields("DTA_IntType").Value%>">
-   <input type="hidden" name="INO_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
+   <input type="hidden" name="INP_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
    <input type="hidden" name="INP_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
    <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
    <input type="hidden" name="INP_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
