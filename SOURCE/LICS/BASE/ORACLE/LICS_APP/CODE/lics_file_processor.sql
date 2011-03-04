@@ -492,7 +492,7 @@ create or replace package body lics_file_processor as
                                                    rcd_lics_interface.int_lod_group,
                                                    null,
                                                    rcd_lics_interface.int_interface,
-                                                   rcd_lics_file.fil_file,
+                                                   null,
                                                    null,
                                                    'FILE PROCESSOR SUCCESS');
                   else
@@ -502,7 +502,7 @@ create or replace package body lics_file_processor as
                                                  rcd_lics_interface.int_lod_group,
                                                  null,
                                                  rcd_lics_interface.int_interface,
-                                                 rcd_lics_file.fil_file,
+                                                 null,
                                                  null,
                                                  'FILE PROCESSOR ERROR - see file message for more details',
                                                  rcd_lics_interface.int_opr_alert,
