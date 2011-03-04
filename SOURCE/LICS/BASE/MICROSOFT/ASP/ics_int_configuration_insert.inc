@@ -197,10 +197,9 @@
    }
    function selectType(objSelect) {
       document.main.INP_IntType.value = objSelect.options[objSelect.selectedIndex].value;
-      var objReference = eval('document.all("INP_IntFilPath")');
       var objIntLodType = document.getElementById('sltIntLodType')
       if (document.main.INP_IntType.value == '*OUTBOUND') {
-         objReference.value = 'ICS_OUTBOUND';
+         document.main.INP_IntFilPath.value  = 'ICS_OUTBOUND';
          document.main.INP_IntLodType.value = '*NONE';
          document.main.INP_IntLodGroup.value = '*NONE';
          objIntLodType.selectedIndex = 0;
@@ -213,7 +212,7 @@
          document.main.sltIntLodType.readOnly = true;
          document.main.INP_IntLodGroup.readOnly = true;
       } else {
-         objReference.value = 'ICS_INBOUND';
+         document.main.INP_IntFilPath.value = 'ICS_INBOUND';
          document.main.INP_IntLodType.value = '*PUSH';
          document.main.INP_IntLodGroup.value = '*NONE';
          objIntLodType.selectedIndex = 0;
@@ -319,12 +318,6 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface Data History (days):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_IntDtaHistory" size="5" maxlength="5" value="<%=objForm.Fields("DTA_IntDtaHistory").Value%>" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
-         </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface File Path:&nbsp;</nobr></td>
-         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="INP_IntFilPath" size="64" maxlength="128" readonly value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
          </nobr></td>
       </tr>
       <tr>
@@ -437,6 +430,7 @@
    <input type="hidden" name="DTA_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">
    <input type="hidden" name="DTA_IntLodGroup" value="<%=objForm.Fields("DTA_IntLodGroup").Value%>">
    <input type="hidden" name="INP_IntType" value="<%=objForm.Fields("DTA_IntType").Value%>">
+   <input type="hidden" name="INO_IntFilPath" value="<%=objForm.Fields("DTA_IntFilPath").Value%>">
    <input type="hidden" name="INP_IntStatus" value="<%=objForm.Fields("DTA_IntStatus").Value%>">
    <input type="hidden" name="INP_IntUsrInvocation" value="<%=objForm.Fields("DTA_IntUsrInvocation").Value%>">
    <input type="hidden" name="INP_IntLodType" value="<%=objForm.Fields("DTA_IntLodType").Value%>">

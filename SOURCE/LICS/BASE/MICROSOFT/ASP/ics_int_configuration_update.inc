@@ -276,10 +276,6 @@
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface File Path:&nbsp;</nobr></td>
-         <td class="clsLabelBB" align=left valign=center colspan=1 nowrap><nobr><%=objForm.Fields("DTA_IntFilPath").Value%></nobr></td>
-      </tr>
-      <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Interface File Prefix:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="INP_IntFilPrefix" size="10" maxlength="10" value="<%=objForm.Fields("DTA_IntFilPrefix").Value%>" onFocus="setSelect(this);">
