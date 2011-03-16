@@ -602,7 +602,7 @@ sub PaintFunction()%>
                   document.getElementById('FILL_YldValu').innerHTML = objElements[i].getAttribute('MPRYVL');
                   document.getElementById('FILL_PckValu').innerHTML = objElements[i].getAttribute('MPRPWE');
                   document.getElementById('FILL_BchValu').innerHTML = objElements[i].getAttribute('MPRBWE');
-                  document.getElementById('FILL_PbwValu').innerHTML = objElements[i].getAttribute('MPRPBW');
+                  document.getElementById('FILL_PbwValu').value = objElements[i].getAttribute('MPRPBW');
                   document.getElementById('FILL_ComMatl').value = '';
                   document.getElementById('FILL_ComQnty').value = '';
                   objFillPrdLine.style.display = 'block';
