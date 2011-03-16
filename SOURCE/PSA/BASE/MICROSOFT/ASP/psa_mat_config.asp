@@ -602,6 +602,7 @@ sub PaintFunction()%>
                   document.getElementById('FILL_YldValu').innerHTML = objElements[i].getAttribute('MPRYVL');
                   document.getElementById('FILL_PckValu').innerHTML = objElements[i].getAttribute('MPRPWE');
                   document.getElementById('FILL_BchValu').innerHTML = objElements[i].getAttribute('MPRBWE');
+                  document.getElementById('FILL_PbwValu').innerHTML = objElements[i].getAttribute('MPRPBW');
                   document.getElementById('FILL_ComMatl').value = '';
                   document.getElementById('FILL_ComQnty').value = '';
                   objFillPrdLine.style.display = 'block';
@@ -1069,6 +1070,10 @@ sub PaintFunction()%>
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Filling pack weight percentage must be in range 1 to 100';
          }
+         if (document.getElementById('FILL_PbwValu').value == '' || document.getElementById('FILL_PbwValu').value < 1) {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'PSA batch weight must be greater than zero';
+         }
          objLines.length = 0;
          for (var i=0;i<objFillLinList.rows.length;i++) {
             objRow = objFillLinList.rows[i];
@@ -1436,7 +1441,8 @@ sub PaintFunction()%>
          strXML = strXML+' MPRREQ="'+fixXML(objFillReqFlag.options[objFillReqFlag.selectedIndex].value)+'"';
          strXML = strXML+' MPRBQY="'+fixXML(document.getElementById('FILL_BchQnty').value)+'"';
          strXML = strXML+' MPRYPC="'+fixXML(document.getElementById('FILL_YldPcnt').value)+'"';
-         strXML = strXML+' MPRRPC="'+fixXML(document.getElementById('FILL_PckPcnt').value)+'">';
+         strXML = strXML+' MPRRPC="'+fixXML(document.getElementById('FILL_PckPcnt').value)+'"';
+         strXML = strXML+' MPRPBW="'+fixXML(document.getElementById('FILL_PbwValu').value)+'">';
          for (var i=0;i<objFillLinList.rows.length;i++) {
             objRow = objFillLinList.rows[i];
             if (objRow.getAttribute('lincde') != null && objRow.getAttribute('lincde') != '*NONE') {
@@ -2057,18 +2063,20 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table class="clsGrid02" align=center valign=top cols=4 cellpadding=0 cellspacing=1>
+                     <table class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><a class="clsSelect" onClick="doRecalculate('*FILL');">Recalculate</a></nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Yield Value</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Pack Weight Value</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Batch Weight Value</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>PSA Batch Weight Value</nobr></td>
                         </tr>
                         <tr>
                            <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap>&nbsp;</td>
                            <td id="FILL_YldValu" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td id="FILL_PckValu" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
                            <td id="FILL_BchValu" class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap></td>
+                           <td class="clsLabelBN" style="padding-left:2px;padding-right:2px;" align="center" valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="FILL_PbwValu" size="9" maxlength="9" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,3,false);"></nobr></td>
                         </tr>
                      </table>
                   </nobr></td>
