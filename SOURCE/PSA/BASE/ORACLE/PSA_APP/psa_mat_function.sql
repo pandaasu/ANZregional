@@ -19,6 +19,7 @@ create or replace package psa_app.psa_mat_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2011/03   Steve Gregan   Added PSA batch weight override
 
    *******************************************************************************/
 
@@ -277,6 +278,7 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_pck_percent := 100;
                   rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                   rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  rcd_psa_mat_prod.mpr_psa_weight := 0;
                   insert into psa_mat_prod values rcd_psa_mat_prod;
                else
                   rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
@@ -294,6 +296,7 @@ create or replace package body psa_app.psa_mat_function as
                   rcd_psa_mat_prod.mpr_pck_percent := 0;
                   rcd_psa_mat_prod.mpr_pck_weight := 0;
                   rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  rcd_psa_mat_prod.mpr_psa_weight := 0;
                   insert into psa_mat_prod values rcd_psa_mat_prod;
                end if;
             elsif rcd_psa_mat_defn.mde_mat_usage = 'MPO' then
@@ -312,6 +315,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_percent := 100;
                rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                rcd_psa_mat_prod.mpr_bch_weight := 0;
+               rcd_psa_mat_prod.mpr_psa_weight := 0;
                insert into psa_mat_prod values rcd_psa_mat_prod;
             elsif rcd_psa_mat_defn.mde_mat_usage = 'PCH' then
                rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
@@ -329,6 +333,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_percent := 0;
                rcd_psa_mat_prod.mpr_pck_weight := 0;
                rcd_psa_mat_prod.mpr_bch_weight := 0;
+               rcd_psa_mat_prod.mpr_psa_weight := 0;
                insert into psa_mat_prod values rcd_psa_mat_prod;
             end if;
 
@@ -754,7 +759,8 @@ create or replace package body psa_app.psa_mat_function as
                 to_char(nvl(t01.mpr_yld_value,0)) as mpr_yld_value,
                 to_char(nvl(t01.mpr_pck_percent,100),'fm990.00') as mpr_pck_percent,
                 to_char(nvl(t01.mpr_pck_weight,0),'fm999999990.000') as mpr_pck_weight,
-                to_char(nvl(t01.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight
+                to_char(nvl(t01.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight,
+                to_char(nvl(t01.mpr_psa_weight,0),'fm999999990.000') as mpr_psa_weight
            from psa_mat_prod t01,
                 psa_prd_type t02
           where t01.mpr_prd_type = t02.pty_prd_type(+)
@@ -876,6 +882,7 @@ create or replace package body psa_app.psa_mat_function as
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight %:</font> '||rcd_prod.mpr_pck_percent;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Pack Weight:</font> '||rcd_prod.mpr_pck_weight;
                var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Batch Weight:</font> '||rcd_prod.mpr_bch_weight;
+               var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">PSA Batch Weight:</font> '||rcd_prod.mpr_psa_weight;
                pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||rcd_prod.pty_prd_name||'</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
             elsif rcd_prod.mpr_prd_type = '*PACK' then
                pipe row('<tr><td align=center colspan=15></td></tr>');
@@ -1221,7 +1228,8 @@ create or replace package body psa_app.psa_mat_function as
                 to_char(nvl(t02.mpr_yld_value,0)) as mpr_yld_value,
                 to_char(nvl(t02.mpr_pck_percent,100),'fm990.00') as mpr_pck_percent,
                 to_char(nvl(t02.mpr_pck_weight,0),'fm999999990.000') as mpr_pck_weight,
-                to_char(nvl(t02.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight
+                to_char(nvl(t02.mpr_bch_weight,0),'fm999999990.000') as mpr_bch_weight,
+                to_char(nvl(t02.mpr_psa_weight,0),'fm999999990.000') as mpr_psa_weight
            from psa_prd_type t01,
                 psa_mat_prod t02
           where t01.pty_prd_type = t02.mpr_prd_type(+)
@@ -1380,7 +1388,8 @@ create or replace package body psa_app.psa_mat_function as
          var_output := var_output||' MPRYVL="'||psa_to_xml(rcd_prod.mpr_yld_value)||'"';
          var_output := var_output||' MPRPPC="'||psa_to_xml(rcd_prod.mpr_pck_percent)||'"';
          var_output := var_output||' MPRPWE="'||psa_to_xml(rcd_prod.mpr_pck_weight)||'"';
-         var_output := var_output||' MPRBWE="'||psa_to_xml(rcd_prod.mpr_bch_weight)||'"/>';
+         var_output := var_output||' MPRBWE="'||psa_to_xml(rcd_prod.mpr_bch_weight)||'"';
+         var_output := var_output||' MPRPBW="'||psa_to_xml(rcd_prod.mpr_psa_weight)||'"/>';
          pipe row(psa_xml_object(var_output));
 
          /*-*/
@@ -1763,6 +1772,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_percent := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRRPC'));
                rcd_psa_mat_prod.mpr_pck_weight := round(rcd_retrieve.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
                rcd_psa_mat_prod.mpr_bch_weight := round(rcd_psa_mat_prod.mpr_yld_value * rcd_psa_mat_prod.mpr_pck_weight * (rcd_psa_mat_prod.mpr_pck_percent / 100), 3);
+               rcd_psa_mat_prod.mpr_psa_weight := psa_to_number(xslProcessor.valueOf(obj_pty_node,'@MPRPBW'));
             elsif rcd_psa_mat_prod.mpr_prd_type = '*PACK' then
                rcd_psa_mat_prod.mpr_sch_priority := 1;
                rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
@@ -1774,6 +1784,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_percent := 0;
                rcd_psa_mat_prod.mpr_pck_weight := 0;
                rcd_psa_mat_prod.mpr_bch_weight := 0;
+               rcd_psa_mat_prod.mpr_psa_weight := 0;
             elsif rcd_psa_mat_prod.mpr_prd_type = '*FORM' then
                rcd_psa_mat_prod.mpr_sch_priority := 1;
                rcd_psa_mat_prod.mpr_req_flag := psa_from_xml(xslProcessor.valueOf(obj_pty_node,'@MPRREQ'));
@@ -1785,6 +1796,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_pck_percent := 0;
                rcd_psa_mat_prod.mpr_pck_weight := 0;
                rcd_psa_mat_prod.mpr_bch_weight := 0;
+               rcd_psa_mat_prod.mpr_psa_weight := 0;
             end if;
             insert into psa_mat_prod values rcd_psa_mat_prod;
             open csr_type;

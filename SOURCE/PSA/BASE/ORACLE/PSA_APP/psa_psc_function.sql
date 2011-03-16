@@ -19,6 +19,7 @@ create or replace package psa_app.psa_psc_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2011/03   Steve Gregan   Added PSA batch weight override
 
    *******************************************************************************/
 
@@ -3037,7 +3038,7 @@ create or replace package body psa_app.psa_psc_function as
                 t03.mpr_yld_value,
                 t03.mpr_pck_percent,
                 t03.mpr_pck_weight,
-                t03.mpr_bch_weight
+                t03.mpr_psa_weight
            from psa_req_detail t01,
                 psa_mat_defn t02,
                 psa_mat_prod t03
@@ -3636,7 +3637,7 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_mat_yld_value := rcd_reqd.mpr_yld_value;
             rcd_actv.psa_mat_pck_percent := rcd_reqd.mpr_pck_percent;
             rcd_actv.psa_mat_pck_weight := rcd_reqd.mpr_pck_weight;
-            rcd_actv.psa_mat_bch_weight := rcd_reqd.mpr_bch_weight;
+            rcd_actv.psa_mat_bch_weight := rcd_reqd.mpr_psa_weight;
             rcd_actv.psa_mat_sap_qty := rcd_reqd.rde_mat_qnty;
             rcd_actv.psa_mat_req_qty := rcd_reqd.rde_mat_qnty;
             rcd_actv.psa_mat_req_plt_qty := 0;
@@ -4965,7 +4966,7 @@ create or replace package body psa_app.psa_psc_function as
                 t02.mpr_yld_value,
                 t02.mpr_pck_percent,
                 t02.mpr_pck_weight,
-                t02.mpr_bch_weight
+                t02.mpr_psa_weight
            from psa_mat_defn t01,
                 psa_mat_prod t02
           where t01.mde_mat_code = t02.mpr_mat_code(+)
@@ -5200,7 +5201,7 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_mat_yld_value := rcd_mdef.mpr_yld_value;
             rcd_actv.psa_mat_pck_percent := rcd_mdef.mpr_pck_percent;
             rcd_actv.psa_mat_pck_weight := rcd_mdef.mpr_pck_weight;
-            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_bch_weight;
+            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_psa_weight;
             rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
             rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
             rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
@@ -5352,7 +5353,7 @@ create or replace package body psa_app.psa_psc_function as
          rcd_actv.psa_mat_yld_value := rcd_mdef.mpr_yld_value;
          rcd_actv.psa_mat_pck_percent := rcd_mdef.mpr_pck_percent;
          rcd_actv.psa_mat_pck_weight := rcd_mdef.mpr_pck_weight;
-         rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_bch_weight;
+         rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_psa_weight;
          rcd_actv.psa_mat_sap_qty := 0;
          rcd_actv.psa_mat_req_qty := 0;
          rcd_actv.psa_mat_req_plt_qty := 0;
@@ -6316,7 +6317,7 @@ create or replace package body psa_app.psa_psc_function as
                 t02.mpr_yld_value,
                 t02.mpr_pck_percent,
                 t02.mpr_pck_weight,
-                t02.mpr_bch_weight
+                t02.mpr_psa_weight
            from psa_mat_defn t01,
                 psa_mat_prod t02
           where t01.mde_mat_code = t02.mpr_mat_code(+)
@@ -6530,7 +6531,7 @@ create or replace package body psa_app.psa_psc_function as
             rcd_actv.psa_mat_yld_value := rcd_mdef.mpr_yld_value;
             rcd_actv.psa_mat_pck_percent := rcd_mdef.mpr_pck_percent;
             rcd_actv.psa_mat_pck_weight := rcd_mdef.mpr_pck_weight;
-            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_bch_weight;
+            rcd_actv.psa_mat_bch_weight := rcd_mdef.mpr_psa_weight;
             rcd_actv.psa_sch_lin_code := rcd_mlin.mli_lin_code;
             rcd_actv.psa_sch_con_code := rcd_mlin.mli_con_code;
             rcd_actv.psa_sch_dft_flag := rcd_mlin.mli_dft_flag;
