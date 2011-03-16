@@ -12,6 +12,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2009/12   Steve Gregan   Created
+ 2011/03   Steve Gregan   Added PSA batch weight override
 
 *******************************************************************************/
 
@@ -30,7 +31,8 @@ create table psa.psa_mat_prod
     mpr_yld_value                   number                        null,
     mpr_pck_percent                 number                        null,
     mpr_pck_weight                  number                        null,
-    mpr_bch_weight                  number                        null);
+    mpr_bch_weight                  number                        null,
+    mpr_psa_weight                  number                        null);
 
 /**/
 /* Comments
@@ -48,6 +50,7 @@ comment on column psa.psa_mat_prod.mpr_yld_value is 'Yield value';
 comment on column psa.psa_mat_prod.mpr_pck_percent is 'Pack weight percentage';
 comment on column psa.psa_mat_prod.mpr_pck_weight is 'Pack weight';
 comment on column psa.psa_mat_prod.mpr_bch_weight is 'Batch weight';
+comment on column psa.psa_mat_prod.mpr_psa_weight is 'PSA batch weight';
 
 /**/
 /* Primary Key Constraint
