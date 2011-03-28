@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2007/10   Steve Gregan   Created
+ 2011/03   Steve Gregan   Added additional indexes
 
 *******************************************************************************/
 
@@ -84,6 +85,12 @@ create index sap_inv_trace_ix01 on sap_inv_trace
    (company_code, billing_doc_num, billing_doc_line_num);
 create index sap_inv_trace_ix02 on sap_inv_trace
    (company_code, creatn_date);
+create index sap_inv_trace_ix03 on sap_inv_trace
+   (company_code, purch_order_doc_num, purch_order_doc_line_num);
+create index sap_inv_trace_ix04 on sap_inv_trace
+   (company_code, order_doc_num, order_doc_line_num);
+create index sap_inv_trace_ix05 on sap_inv_trace
+   (company_code, dlvry_doc_num, dlvry_doc_line_num);
 
 /**/
 /* Authority
