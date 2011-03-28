@@ -22,6 +22,7 @@ create or replace package dw_alignment as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/06   Steve Gregan   Created
+    2011/03   Steve Gregan   Added invoice trace lookup for closed documents
 
    *******************************************************************************/
 
@@ -57,6 +58,7 @@ create or replace package body dw_alignment as
       /*-*/
       var_delivered boolean;
       var_invoiced boolean;
+      var_trace boolean;
 
       /*-*/
       /* Local cursors
@@ -91,6 +93,15 @@ create or replace package body dw_alignment as
             and t01.doc_number = rcd_purch_base.purch_order_doc_num
             and t01.doc_line = rcd_purch_base.purch_order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
+      cursor csr_sap_inv_trace is
+         select t01.trace_status
+           from sap_inv_trace t01
+          where t01.company_code = par_company_code
+            and t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
+            and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num
+            and t01.trace_status = '*ACTIVE';
+      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -233,15 +244,25 @@ create or replace package body dw_alignment as
          /*-*/
          if var_invoiced = true then
             rcd_purch_base.purch_order_line_status := '*CLOSED';
-         end if;
-         open csr_sap_doc_status;
-         fetch csr_sap_doc_status into rcd_sap_doc_status;
-         if csr_sap_doc_status%found then
-            if rcd_sap_doc_status.doc_status = '*CLOSED' then
-               rcd_purch_base.purch_order_line_status := '*CLOSED';
+         else
+            open csr_sap_doc_status;
+            fetch csr_sap_doc_status into rcd_sap_doc_status;
+            if csr_sap_doc_status%found then
+               if rcd_sap_doc_status.doc_status = '*CLOSED' then
+                  var_trace := false;
+                  open csr_sap_inv_trace;
+                  fetch csr_sap_inv_trace into rcd_sap_inv_trace;
+                  if csr_sap_inv_trace%found then
+                     var_trace := true;
+                  end if;
+                  close csr_sap_inv_trace;
+                  if var_trace = false then
+                     rcd_purch_base.purch_order_line_status := '*CLOSED';
+                  end if;
+               end if;
             end if;
+            close csr_sap_doc_status;
          end if;
-         close csr_sap_doc_status;
 
          /*-*/
          /* Calculate the outstanding values when required
@@ -319,6 +340,7 @@ create or replace package body dw_alignment as
       /*-*/
       var_delivered boolean;
       var_invoiced boolean;
+      var_trace boolean;
 
       /*-*/
       /* Local cursors
@@ -353,6 +375,20 @@ create or replace package body dw_alignment as
             and t01.doc_number = rcd_order_base.order_doc_num
             and t01.doc_line = rcd_order_base.order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
+      cursor csr_sap_inv_trace is
+         select t01.trace_status
+           from sap_inv_trace t01
+          where t01.company_code = par_company_code
+            and t01.order_doc_num = rcd_order_base.order_doc_num
+            and t01.order_doc_line_num = rcd_order_base.order_doc_line_num
+            and t01.trace_status = '*ACTIVE'
+            and not(t01.trace_seqn in (select billing_trace_seqn
+                                         from dw_sales_base
+                                        where t01.company_code = par_company_code
+                                          and t01.order_doc_num = rcd_order_base.order_doc_num
+                                          and t01.order_doc_line_num = rcd_order_base.order_doc_line_num));
+      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -497,7 +533,16 @@ create or replace package body dw_alignment as
          fetch csr_sap_doc_status into rcd_sap_doc_status;
          if csr_sap_doc_status%found then
             if rcd_sap_doc_status.doc_status = '*CLOSED' then
-               rcd_order_base.order_line_status := '*CLOSED';
+               var_trace := false;
+               open csr_sap_inv_trace;
+               fetch csr_sap_inv_trace into rcd_sap_inv_trace;
+               if csr_sap_inv_trace%found then
+                  var_trace := true;
+               end if;
+               close csr_sap_inv_trace;
+               if var_trace = false then
+                  rcd_order_base.order_line_status := '*CLOSED';
+               end if;
             end if;
          end if;
          close csr_sap_doc_status;
@@ -577,6 +622,7 @@ create or replace package body dw_alignment as
       /* Local variables
       /*-*/
       var_invoiced boolean;
+      var_trace boolean;
 
       /*-*/
       /* Local cursors
@@ -603,6 +649,15 @@ create or replace package body dw_alignment as
             and t01.doc_number = rcd_dlvry_base.dlvry_doc_num
             and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
+
+      cursor csr_sap_inv_trace is
+         select t01.trace_status
+           from sap_inv_trace t01
+          where t01.company_code = par_company_code
+            and t01.dlvry_doc_num = rcd_dlvry_base.dlvry_doc_num
+            and t01.dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num
+            and t01.trace_status = '*ACTIVE';
+      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -687,15 +742,25 @@ create or replace package body dw_alignment as
          /*-*/
          if var_invoiced = true then
             rcd_dlvry_base.dlvry_line_status := '*CLOSED';
-         end if;
-         open csr_sap_doc_status;
-         fetch csr_sap_doc_status into rcd_sap_doc_status;
-         if csr_sap_doc_status%found then
-            if rcd_sap_doc_status.doc_status = '*CLOSED' then
-               rcd_dlvry_base.dlvry_line_status := '*CLOSED';
+         else
+            open csr_sap_doc_status;
+            fetch csr_sap_doc_status into rcd_sap_doc_status;
+            if csr_sap_doc_status%found then
+               if rcd_sap_doc_status.doc_status = '*CLOSED' then
+                  var_trace := false;
+                  open csr_sap_inv_trace;
+                  fetch csr_sap_inv_trace into rcd_sap_inv_trace;
+                  if csr_sap_inv_trace%found then
+                     var_trace := true;
+                  end if;
+                  close csr_sap_inv_trace;
+                  if var_trace = false then
+                     rcd_dlvry_base.dlvry_line_status := '*CLOSED';
+                  end if;
+               end if;
             end if;
+            close csr_sap_doc_status;
          end if;
-         close csr_sap_doc_status;
 
          /*-------------------*/
          /* DLVRY_BASE Update */
