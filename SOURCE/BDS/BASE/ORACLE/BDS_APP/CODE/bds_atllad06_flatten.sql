@@ -1,3 +1,6 @@
+--
+-- BDS_ATLLAD06_FLATTEN  (Package) 
+--
 CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -46,7 +49,9 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
                           Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
                                 ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 to process_customer
  2009/04   Trevor Keon    Added Z_APCHAR14 and 15 to process_material   
- 2011/01   Ben Halicki    Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand                             
+ 2011/01   Ben Halicki    Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand 
+ 2011/03   Ben Halicki    Added Z_APCHAR16, Z_APCHAR17, Z_APCHAR18, Z_APCHAR19, Z_APCHAR20, Z_APCHAR21, 
+                                Z_APVERP01, Z_APVERP02, Z_APCHAR22, Z_APCHAR23
 
 *******************************************************************************/
 
@@ -59,6 +64,9 @@ end bds_atllad06_flatten;
 /
 
 
+--
+-- BDS_ATLLAD06_FLATTEN  (Synonym) 
+--
 CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
 
 
@@ -67,6 +75,9 @@ GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LADS_APP;
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LICS_APP;
 
 
+--
+-- BDS_ATLLAD06_FLATTEN  (Package Body) 
+--
 CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
 
    /*-*/
@@ -263,6 +274,16 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
                 max(case when t02.atnam = 'Z_APCHAR13' then t02.atwrt end) as sap_nz_must_win_ctgry_code,
                 max(case when t02.atnam = 'Z_APCHAR14' then t02.atwrt end) as sap_au_snk_activity_name,
                 max(case when t02.atnam = 'Z_APCHAR15' then t02.atwrt end) as sap_china_forecast_group,
+                max(case when t02.atnam = 'Z_APCHAR16' then t02.atwrt end) as sap_hk_sub_ctgry_code,
+                max(case when t02.atnam = 'Z_APCHAR17' then t02.atwrt end) as sap_hk_line_code,
+                max(case when t02.atnam = 'Z_APCHAR18' then t02.atwrt end) as sap_hk_product_sgmnt_code,
+                max(case when t02.atnam = 'Z_APCHAR19' then t02.atwrt end) as sap_hk_type_code,
+                max(case when t02.atnam = 'Z_APCHAR20' then t02.atwrt end) as sap_strgy_grp_code,
+                max(case when t02.atnam = 'Z_APCHAR21' then t02.atwrt end) as sap_th_boi_code,
+                max(case when t02.atnam = 'Z_APCHAR22' then t02.atwrt end) as sap_nz_launch_ranking_code,
+                max(case when t02.atnam = 'Z_APCHAR23' then t02.atwrt end) as sap_nz_selectively_grow_code,
+                max(case when t02.atnam = 'Z_APVERP01' then t02.atwrt end) as sap_pack_dspsal_class,
+                max(case when t02.atnam = 'Z_APVERP02' then t02.atwrt end) as sap_th_boi_grp_code,
                 max(case when t02.atnam = 'CLFROH01' then t02.atwrt end) as sap_raw_family_code,
                 max(case when t02.atnam = 'CLFROH02' then t02.atwrt end) as sap_raw_sub_family_code,
                 max(case when t02.atnam = 'CLFROH03' then t02.atwrt end) as sap_raw_group_code,
@@ -358,6 +379,16 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
       rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code := rcd_lads_mat_classfctn.sap_nz_must_win_ctgry_code;
       rcd_bds_material_classfctn.sap_au_snk_activity_name := rcd_lads_mat_classfctn.sap_au_snk_activity_name;
       rcd_bds_material_classfctn.sap_china_forecast_group := rcd_lads_mat_classfctn.sap_china_forecast_group;      
+      rcd_bds_material_classfctn.sap_hk_sub_ctgry_code := rcd_lads_mat_classfctn.sap_hk_sub_ctgry_code;  
+      rcd_bds_material_classfctn.sap_hk_line_code := rcd_lads_mat_classfctn.sap_hk_sub_ctgry_code;        
+      rcd_bds_material_classfctn.sap_hk_product_sgmnt_code := rcd_lads_mat_classfctn.sap_hk_product_sgmnt_code;    
+      rcd_bds_material_classfctn.sap_hk_type_code := rcd_lads_mat_classfctn.sap_hk_type_code;            
+      rcd_bds_material_classfctn.sap_strgy_grp_code := rcd_lads_mat_classfctn.sap_strgy_grp_code;          
+      rcd_bds_material_classfctn.sap_th_boi_code := rcd_lads_mat_classfctn.sap_th_boi_code;            
+      rcd_bds_material_classfctn.sap_pack_dspsal_class := rcd_lads_mat_classfctn.sap_pack_dspsal_class;     
+      rcd_bds_material_classfctn.sap_th_boi_grp_code := rcd_lads_mat_classfctn.sap_th_boi_grp_code;      
+      rcd_bds_material_classfctn.sap_nz_launch_ranking_code := rcd_lads_mat_classfctn.sap_nz_launch_ranking_code;
+      rcd_bds_material_classfctn.sap_nz_selectively_grow_code := rcd_lads_mat_classfctn.sap_nz_selectively_grow_code;   
 
       /*-*/
       /* UPDATE BDS, INSERT when new record
@@ -415,7 +446,17 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              sap_nz_sop_business_code = rcd_bds_material_classfctn.sap_nz_sop_business_code,
              sap_nz_must_win_ctgry_code = rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code,
              sap_au_snk_activity_name = rcd_bds_material_classfctn.sap_au_snk_activity_name,
-             sap_china_forecast_group = rcd_bds_material_classfctn.sap_china_forecast_group
+             sap_china_forecast_group = rcd_bds_material_classfctn.sap_china_forecast_group,
+             sap_hk_sub_ctgry_code = rcd_bds_material_classfctn.sap_hk_sub_ctgry_code,       
+             sap_hk_line_code = rcd_bds_material_classfctn.sap_hk_line_code,            
+             sap_hk_product_sgmnt_code = rcd_bds_material_classfctn.sap_hk_product_sgmnt_code,   
+             sap_hk_type_code = rcd_bds_material_classfctn.sap_hk_type_code,            
+             sap_strgy_grp_code = rcd_bds_material_classfctn.sap_strgy_grp_code,          
+             sap_th_boi_code = rcd_bds_material_classfctn.sap_th_boi_code,             
+             sap_pack_dspsal_class = rcd_bds_material_classfctn.sap_pack_dspsal_class,     
+             sap_th_boi_grp_code = rcd_bds_material_classfctn.sap_th_boi_grp_code,
+             sap_nz_launch_ranking_code = rcd_bds_material_classfctn.sap_nz_launch_ranking_code,
+             sap_nz_selectively_grow_code = rcd_bds_material_classfctn.sap_nz_selectively_grow_code         
          where sap_material_code = rcd_bds_material_classfctn.sap_material_code;
       if (sql%notfound) then
          insert into bds_material_classfctn
@@ -472,7 +513,18 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              sap_nz_sop_business_code,
              sap_nz_must_win_ctgry_code,
              sap_au_snk_activity_name,
-             sap_china_forecast_group)
+             sap_china_forecast_group,
+             sap_hk_sub_ctgry_code,        
+             sap_hk_line_code,             
+             sap_hk_product_sgmnt_code,    
+             sap_hk_type_code,             
+             sap_strgy_grp_code,           
+             sap_th_boi_code,
+             sap_pack_dspsal_class,      
+             sap_th_boi_grp_code,
+             sap_nz_launch_ranking_code,
+             sap_nz_selectively_grow_code          
+            )
            values
             (rcd_bds_material_classfctn.sap_material_code,
              rcd_bds_material_classfctn.sap_idoc_name,
@@ -527,7 +579,18 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              rcd_bds_material_classfctn.sap_nz_sop_business_code,
              rcd_bds_material_classfctn.sap_nz_must_win_ctgry_code,
              rcd_bds_material_classfctn.sap_au_snk_activity_name,
-             rcd_bds_material_classfctn.sap_china_forecast_group);
+             rcd_bds_material_classfctn.sap_china_forecast_group,
+             rcd_bds_material_classfctn.sap_hk_sub_ctgry_code,        
+             rcd_bds_material_classfctn.sap_hk_line_code,             
+             rcd_bds_material_classfctn.sap_hk_product_sgmnt_code,    
+             rcd_bds_material_classfctn.sap_hk_type_code,             
+             rcd_bds_material_classfctn.sap_strgy_grp_code,           
+             rcd_bds_material_classfctn.sap_th_boi_code,              
+             rcd_bds_material_classfctn.sap_pack_dspsal_class,      
+             rcd_bds_material_classfctn.sap_th_boi_grp_code,
+             rcd_bds_material_classfctn.sap_nz_launch_ranking_code,
+             rcd_bds_material_classfctn.sap_nz_selectively_grow_code                            
+             );
       end if;
 
 
@@ -1028,6 +1091,9 @@ end bds_atllad06_flatten;
 /
 
 
+--
+-- BDS_ATLLAD06_FLATTEN  (Synonym) 
+--
 CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
 
 
