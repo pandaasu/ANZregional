@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package site_app.ladwgb04_extract as
+--
+-- LADWGB04_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE SITE_APP.ladwgb04_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -12,7 +12,7 @@ create or replace package site_app.ladwgb04_extract as
 
     Description
     -----------
-    China CustomerSales Force Geography Hierarchy - LADS to WGB
+    China Customer Standard Hierarchy - LADS to WGB
 
 
 
@@ -21,9 +21,9 @@ create or replace package site_app.ladwgb04_extract as
        ## - Number of days changes to extract
        0 - Full extract (default)
 
-    This package extracts the LADS customer sales force geography hierarchy that have been modified within the last
+    This package extracts the LADS customer standard hierarchy that have been modified within the last
     history number of days and sends the extract file to the Wrigleys Golden Bear environment.
-    The ICS interface LADWGB03 has been created for this purpose.
+    The ICS interface LADWGB04 has been created for this purpose.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -39,10 +39,20 @@ create or replace package site_app.ladwgb04_extract as
 end ladwgb04_extract;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body site_app.ladwgb04_extract as
+
+--
+-- LADWGB04_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB04_EXTRACT FOR SITE_APP.LADWGB04_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB04_EXTRACT TO PUBLIC;
+
+
+--
+-- LADWGB04_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY SITE_APP.ladwgb04_extract as
 
    /*-*/
    /* Private exceptions
@@ -102,7 +112,7 @@ create or replace package body site_app.ladwgb04_extract as
                 decode(trim(t01.sap_distbn_chnl_code_level_5),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_5),'"','""')||'";') as sap_distbn_chnl_code_level_5,
                 decode(trim(t01.sap_division_code_level_5),null,';','"'||replace(trim(t01.sap_division_code_level_5),'"','""')||'";') as sap_division_code_level_5,
                 decode(trim(t01.cust_hier_sort_level_5),null,'','"'||replace(trim(t01.cust_hier_sort_level_5),'"','""')||'"') as cust_hier_sort_level_5
-           from sales_force_geo_hier t01
+           from std_hier t01
           where t01.sap_sales_org_code = '135';
       rcd_extract csr_extract%rowtype;
 
@@ -117,7 +127,6 @@ create or replace package body site_app.ladwgb04_extract as
       var_start := true;
 
 
-
       /*-*/
       /* Define number of days to extract
       /*-*/
@@ -126,6 +135,7 @@ create or replace package body site_app.ladwgb04_extract as
       else
          var_history := par_history;
       end if;
+
 
       /*-*/
       /* Open cursor for output
@@ -234,8 +244,11 @@ create or replace package body site_app.ladwgb04_extract as
 end ladwgb04_extract;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym ladwgb04_extract for site_app.ladwgb04_extract;
-grant execute on ladwgb04_extract to public;
+
+--
+-- LADWGB04_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB04_EXTRACT FOR SITE_APP.LADWGB04_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB04_EXTRACT TO PUBLIC;

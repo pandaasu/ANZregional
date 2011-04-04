@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package site_app.ladwgb05_extract as
+--
+-- LADWGB05_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE SITE_APP.ladwgb05_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -12,7 +12,7 @@ create or replace package site_app.ladwgb05_extract as
 
     Description
     -----------
-    China Vendor Data - LADS to WGB
+    China Customer Sales Force Geography Hierarchy - LADS to WGB
 
 
 
@@ -21,14 +21,13 @@ create or replace package site_app.ladwgb05_extract as
        ## - Number of days changes to extract
        0 - Full extract (default)
 
-    This package extracts the LADS vendor that have been modified within the last
+    This package extracts the LADS customer sales force geography hierarchy that have been modified within the last
     history number of days and sends the extract file to the Wrigleys Golden Bear environment.
-    The ICS interface LADWGB05 has been created for this purpose.
+    The ICS interface LADWGB03 has been created for this purpose.
 
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
-    2010/02   Steve Gregan   Added new interface fields
 
    *******************************************************************************/
 
@@ -40,10 +39,20 @@ create or replace package site_app.ladwgb05_extract as
 end ladwgb05_extract;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body site_app.ladwgb05_extract as
+
+--
+-- LADWGB05_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB05_EXTRACT FOR SITE_APP.LADWGB05_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB05_EXTRACT TO PUBLIC;
+
+
+--
+-- LADWGB05_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY SITE_APP.ladwgb05_extract as
 
    /*-*/
    /* Private exceptions
@@ -69,28 +78,42 @@ create or replace package body site_app.ladwgb05_extract as
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select decode(trim(t01.vendor_code),null,';','"'||replace(trim(t01.vendor_code),'"','""')||'";') as vendor_code,
-                decode(trim(t02.vendor_name),null,';','"'||replace(trim(t02.vendor_name),'"','""')||'";') as vendor_name,
-                decode(trim(t01.group_key),null,';','"'||replace(trim(t01.group_key),'"','""')||'";') as group_key,
-                decode(trim(t01.representative_name),null,';','"'||replace(trim(t01.representative_name),'"','""')||'";') as representative_name,
-                decode(trim(t01.deletion_flag),null,';','"'||replace(trim(t01.deletion_flag),'"','""')||'";') as deletion_flag,
-                decode(trim(t03.bank_number),null,';','"'||replace(trim(t03.bank_number),'"','""')||'";') as bank_number,
-                decode(trim(t03.bank_account_number),null,';','"'||replace(trim(t03.bank_account_number),'"','""')||'";') as bank_account_number,
-                decode(trim(t03.bank_name),null,';','"'||replace(trim(t03.bank_name),'"','""')||'";') as bank_name,
-                decode(trim(t03.bank_branch),null,';','"'||replace(trim(t03.bank_branch),'"','""')||'";') as bank_branch,
-                decode(trim(t03.location),null,'','"'||replace(trim(t03.location),'"','""')||'"') as location
-           from bds_vend_header t01,
-                (select t01.vendor_code,
-                        max(ltrim(t01.name ||' '|| t01.name_02)) as vendor_name
-                   from bds_addr_vendor t01
-                  where t01.address_version = 'I'
-                    and t01.country = 'CN'
-                    and t01.language_ISO = 'ZH'
-                  group by t01.vendor_code) t02,
-                bds_vend_bank t03
-          where t01.vendor_code = t02.vendor_code
-            and t01.vendor_code = t03.vendor_code
-            and trunc(t01.bds_lads_date) >= trunc(sysdate) - var_history;
+         select decode(trim(t01.sap_hier_cust_code),null,';','"'||replace(trim(t01.sap_hier_cust_code),'"','""')||'";') as sap_hier_cust_code,
+                decode(trim(t01.sap_sales_org_code),null,';','"'||replace(trim(t01.sap_sales_org_code),'"','""')||'";') as sap_sales_org_code,
+                decode(trim(t01.sap_distbn_chnl_code),null,';','"'||replace(trim(t01.sap_distbn_chnl_code),'"','""')||'";') as sap_distbn_chnl_code,
+                decode(trim(t01.sap_division_code),null,';','"'||replace(trim(t01.sap_division_code),'"','""')||'";') as sap_division_code,
+                decode(trim(t01.sap_cust_code_level_1),null,';','"'||replace(trim(t01.sap_cust_code_level_1),'"','""')||'";') as sap_cust_code_level_1,
+                decode(trim(t01.cust_name_en_level_1),null,';','"'||replace(trim(t01.cust_name_en_level_1),'"','""')||'";') as cust_name_en_level_1,
+                decode(trim(t01.sap_sales_org_code_level_1),null,';','"'||replace(trim(t01.sap_sales_org_code_level_1),'"','""')||'";') as sap_sales_org_code_level_1,
+                decode(trim(t01.sap_distbn_chnl_code_level_1),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_1),'"','""')||'";') as sap_distbn_chnl_code_level_1,
+                decode(trim(t01.sap_division_code_level_1),null,';','"'||replace(trim(t01.sap_division_code_level_1),'"','""')||'";') as sap_division_code_level_1,
+                decode(trim(t01.cust_hier_sort_level_1),null,';','"'||replace(trim(t01.cust_hier_sort_level_1),'"','""')||'";') as cust_hier_sort_level_1,
+                decode(trim(t01.sap_cust_code_level_2),null,';','"'||replace(trim(t01.sap_cust_code_level_2),'"','""')||'";') as sap_cust_code_level_2,
+                decode(trim(t01.cust_name_en_level_2),null,';','"'||replace(trim(t01.cust_name_en_level_2),'"','""')||'";') as cust_name_en_level_2,
+                decode(trim(t01.sap_sales_org_code_level_2),null,';','"'||replace(trim(t01.sap_sales_org_code_level_2),'"','""')||'";') as sap_sales_org_code_level_2,
+                decode(trim(t01.sap_distbn_chnl_code_level_2),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_2),'"','""')||'";') as sap_distbn_chnl_code_level_2,
+                decode(trim(t01.sap_division_code_level_2),null,';','"'||replace(trim(t01.sap_division_code_level_2),'"','""')||'";') as sap_division_code_level_2,
+                decode(trim(t01.cust_hier_sort_level_2),null,';','"'||replace(trim(t01.cust_hier_sort_level_2),'"','""')||'";') as cust_hier_sort_level_2,
+                decode(trim(t01.sap_cust_code_level_3),null,';','"'||replace(trim(t01.sap_cust_code_level_3),'"','""')||'";') as sap_cust_code_level_3,
+                decode(trim(t01.cust_name_en_level_3),null,';','"'||replace(trim(t01.cust_name_en_level_3),'"','""')||'";') as cust_name_en_level_3,
+                decode(trim(t01.sap_sales_org_code_level_3),null,';','"'||replace(trim(t01.sap_sales_org_code_level_3),'"','""')||'";') as sap_sales_org_code_level_3,
+                decode(trim(t01.sap_distbn_chnl_code_level_3),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_3),'"','""')||'";') as sap_distbn_chnl_code_level_3,
+                decode(trim(t01.sap_division_code_level_3),null,';','"'||replace(trim(t01.sap_division_code_level_3),'"','""')||'";') as sap_division_code_level_3,
+                decode(trim(t01.cust_hier_sort_level_3),null,';','"'||replace(trim(t01.cust_hier_sort_level_3),'"','""')||'";') as cust_hier_sort_level_3,
+                decode(trim(t01.sap_cust_code_level_4),null,';','"'||replace(trim(t01.sap_cust_code_level_4),'"','""')||'";') as sap_cust_code_level_4,
+                decode(trim(t01.cust_name_en_level_4),null,';','"'||replace(trim(t01.cust_name_en_level_4),'"','""')||'";') as cust_name_en_level_4,
+                decode(trim(t01.sap_sales_org_code_level_4),null,';','"'||replace(trim(t01.sap_sales_org_code_level_4),'"','""')||'";') as sap_sales_org_code_level_4,
+                decode(trim(t01.sap_distbn_chnl_code_level_4),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_4),'"','""')||'";') as sap_distbn_chnl_code_level_4,
+                decode(trim(t01.sap_division_code_level_4),null,';','"'||replace(trim(t01.sap_division_code_level_4),'"','""')||'";') as sap_division_code_level_4,
+                decode(trim(t01.cust_hier_sort_level_4),null,';','"'||replace(trim(t01.cust_hier_sort_level_4),'"','""')||'";') as cust_hier_sort_level_4,
+                decode(trim(t01.sap_cust_code_level_5),null,';','"'||replace(trim(t01.sap_cust_code_level_5),'"','""')||'";') as sap_cust_code_level_5,
+                decode(trim(t01.cust_name_en_level_5),null,';','"'||replace(trim(t01.cust_name_en_level_5),'"','""')||'";') as cust_name_en_level_5,
+                decode(trim(t01.sap_sales_org_code_level_5),null,';','"'||replace(trim(t01.sap_sales_org_code_level_5),'"','""')||'";') as sap_sales_org_code_level_5,
+                decode(trim(t01.sap_distbn_chnl_code_level_5),null,';','"'||replace(trim(t01.sap_distbn_chnl_code_level_5),'"','""')||'";') as sap_distbn_chnl_code_level_5,
+                decode(trim(t01.sap_division_code_level_5),null,';','"'||replace(trim(t01.sap_division_code_level_5),'"','""')||'";') as sap_division_code_level_5,
+                decode(trim(t01.cust_hier_sort_level_5),null,'','"'||replace(trim(t01.cust_hier_sort_level_5),'"','""')||'"') as cust_hier_sort_level_5
+           from sales_force_geo_hier t01
+          where t01.sap_sales_org_code = '135';
       rcd_extract csr_extract%rowtype;
 
    /*-------------*/
@@ -135,16 +158,40 @@ create or replace package body site_app.ladwgb05_extract as
          /*-*/
          /* Append data lines
          /*-*/
-         lics_outbound_loader.append_data(rcd_extract.vendor_code ||
-                                          rcd_extract.vendor_name ||
-                                          rcd_extract.group_key ||
-                                          rcd_extract.representative_name ||
-                                          rcd_extract.deletion_flag ||
-                                          rcd_extract.bank_number ||
-                                          rcd_extract.bank_account_number ||
-                                          rcd_extract.bank_name ||
-                                          rcd_extract.bank_branch ||
-                                          rcd_extract.location);
+         lics_outbound_loader.append_data(rcd_extract.sap_hier_cust_code ||
+                                          rcd_extract.sap_sales_org_code ||
+                                          rcd_extract.sap_distbn_chnl_code ||
+                                          rcd_extract.sap_division_code ||
+                                          rcd_extract.sap_cust_code_level_1 ||
+                                          rcd_extract.cust_name_en_level_1 ||
+                                          rcd_extract.sap_sales_org_code_level_1 ||
+                                          rcd_extract.sap_distbn_chnl_code_level_1 ||
+                                          rcd_extract.sap_division_code_level_1 ||
+                                          rcd_extract.cust_hier_sort_level_1 ||
+                                          rcd_extract.sap_cust_code_level_2 ||
+                                          rcd_extract.cust_name_en_level_2 ||
+                                          rcd_extract.sap_sales_org_code_level_2 ||
+                                          rcd_extract.sap_distbn_chnl_code_level_2 ||
+                                          rcd_extract.sap_division_code_level_2 ||
+                                          rcd_extract.cust_hier_sort_level_2 ||
+                                          rcd_extract.sap_cust_code_level_3 ||
+                                          rcd_extract.cust_name_en_level_3 ||
+                                          rcd_extract.sap_sales_org_code_level_3 ||
+                                          rcd_extract.sap_distbn_chnl_code_level_3 ||
+                                          rcd_extract.sap_division_code_level_3 ||
+                                          rcd_extract.cust_hier_sort_level_3 ||
+                                          rcd_extract.sap_cust_code_level_4 ||
+                                          rcd_extract.cust_name_en_level_4 ||
+                                          rcd_extract.sap_sales_org_code_level_4 ||
+                                          rcd_extract.sap_distbn_chnl_code_level_4 ||
+                                          rcd_extract.sap_division_code_level_4 ||
+                                          rcd_extract.cust_hier_sort_level_4 ||
+                                          rcd_extract.sap_cust_code_level_5 ||
+                                          rcd_extract.cust_name_en_level_5 ||
+                                          rcd_extract.sap_sales_org_code_level_5 ||
+                                          rcd_extract.sap_distbn_chnl_code_level_5 ||
+                                          rcd_extract.sap_division_code_level_5 ||
+                                          rcd_extract.cust_hier_sort_level_5);
 
       end loop;
       close csr_extract;
@@ -197,8 +244,11 @@ create or replace package body site_app.ladwgb05_extract as
 end ladwgb05_extract;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym ladwgb05_extract for site_app.ladwgb05_extract;
-grant execute on ladwgb05_extract to public;
+
+--
+-- LADWGB05_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB05_EXTRACT FOR SITE_APP.LADWGB05_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB05_EXTRACT TO PUBLIC;

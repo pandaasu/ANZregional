@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package site_app.ladwgb01_extract as
+--
+-- LADWGB01_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE SITE_APP.ladwgb01_extract as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -41,10 +41,20 @@ create or replace package site_app.ladwgb01_extract as
 end ladwgb01_extract;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body site_app.ladwgb01_extract as
+
+--
+-- LADWGB01_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB01_EXTRACT FOR SITE_APP.LADWGB01_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB01_EXTRACT TO PUBLIC;
+
+
+--
+-- LADWGB01_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY SITE_APP.ladwgb01_extract as
 
    /*-*/
    /* Private exceptions
@@ -66,18 +76,18 @@ create or replace package body site_app.ladwgb01_extract as
       var_instance number(15,0);
       var_start boolean;
 
-      /*-*/ 
+      /*-*/
       /* Local cursors
       /*-*/
       cursor csr_extract is
-         select decode(trim(t01.sap_material_code),null,';','"'||replace(trim(t01.sap_material_code),'"','""')||'";') as sap_material_code,
-                decode(trim(t01.material_division),null,';','"'||replace(trim(t01.material_division),'"','""')||'";') as material_division,
-                decode(trim(t02.sap_brand_flag_code),null,';','"'||replace(trim(t02.sap_brand_flag_code),'"','""')||'";') as sap_brand_flag_code,
-                decode(trim(t02.sap_brand_flag_lng_dsc),null,';','"'||replace(trim(t02.sap_brand_flag_lng_dsc),'"','""')||'";') as sap_brand_flag_desc,
-                decode(trim(t01.bds_material_desc_zh),null,';','"'||replace(trim(t01.bds_material_desc_zh),'"','""')||'";') as bds_material_desc_zh,
-                decode(trim(t01.bds_material_desc_en),null,';','"'||replace(trim(t01.bds_material_desc_en),'"','""')||'";') as bds_material_desc_en,
-                decode(trim(t03.dstrbtn_chain_status),null,';','"'||replace(trim(t03.dstrbtn_chain_status),'"','""')||'";') as dstrbtn_chain_status,
-                decode(trim(t04.kbetr),null,'','"'||to_char(t04.kbetr,'fm00000.00000')||'"') as list_price
+         select ltrim(t01.sap_material_code,'0') as sap_material_code,
+                trim(t01.material_division) as material_division,
+                trim(t02.sap_brand_flag_code) as sap_brand_flag_code,
+                trim(t02.sap_brand_flag_lng_dsc) as sap_brand_flag_desc,
+                trim(t01.bds_material_desc_zh) as bds_material_desc_zh,
+                trim(t01.bds_material_desc_en) as bds_material_desc_en,
+                trim(t03.dstrbtn_chain_status) as dstrbtn_chain_status,
+                trim(t04.kbetr) as list_price
            from bds_material_hdr t01,
                 bds_material_classfctn_en t02,
                 bds_material_dstrbtn_chain t03,
@@ -97,11 +107,11 @@ create or replace package body site_app.ladwgb01_extract as
             and t01.sap_material_code = t03.sap_material_code
             and t01.sap_material_code = t04.matnr(+)
             and t01.material_type in ('ZHIE','FERT')
-            and t01.mars_traded_unit_flag = 'X'
+            --and t01.mars_traded_unit_flag = 'X'/*marked by Danny to include node material*/
             and t03.sales_organisation = '135'
             and t03.dstrbtn_channel = '10'
             and t03.dstrbtn_chain_delete_indctr is null
-            and t03.dstrbtn_chain_status in ('20','99')
+            and t03.dstrbtn_chain_status in ('20','30','50','99')
             and t03.bds_dstrbtn_chain_valid <= trunc(sysdate)
             and trunc(t01.bds_lads_date) >= trunc(sysdate) - var_history;
       rcd_extract csr_extract%rowtype;
@@ -148,13 +158,13 @@ create or replace package body site_app.ladwgb01_extract as
          /*-*/
          /* Append data lines
          /*-*/
-         lics_outbound_loader.append_data(rcd_extract.sap_material_code ||
-                                          rcd_extract.material_division ||
-                                          rcd_extract.sap_brand_flag_code ||
-                                          rcd_extract.sap_brand_flag_desc ||
-                                          rcd_extract.bds_material_desc_zh ||
-                                          rcd_extract.bds_material_desc_en ||
-                                          rcd_extract.dstrbtn_chain_status ||
+         lics_outbound_loader.append_data(rcd_extract.sap_material_code || ',' ||
+                                          rcd_extract.material_division || ',' ||
+                                          rcd_extract.sap_brand_flag_code || ',' ||
+                                          rcd_extract.sap_brand_flag_desc || ',' ||
+                                          rcd_extract.bds_material_desc_zh || ',' ||
+                                          rcd_extract.bds_material_desc_en || ',' ||
+                                          rcd_extract.dstrbtn_chain_status || ',' ||
                                           rcd_extract.list_price);
 
       end loop;
@@ -208,8 +218,11 @@ create or replace package body site_app.ladwgb01_extract as
 end ladwgb01_extract;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym ladwgb01_extract for site_app.ladwgb01_extract;
-grant execute on ladwgb01_extract to public;
+
+--
+-- LADWGB01_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADWGB01_EXTRACT FOR SITE_APP.LADWGB01_EXTRACT;
+
+
+GRANT EXECUTE ON SITE_APP.LADWGB01_EXTRACT TO PUBLIC;
