@@ -385,9 +385,9 @@ create or replace package body dw_alignment as
             and t01.trace_status = '*ACTIVE'
             and not(t01.trace_seqn in (select billing_trace_seqn
                                          from dw_sales_base
-                                        where t01.company_code = par_company_code
-                                          and t01.order_doc_num = rcd_order_base.order_doc_num
-                                          and t01.order_doc_line_num = rcd_order_base.order_doc_line_num));
+                                        where company_code = par_company_code
+                                          and order_doc_num = rcd_order_base.order_doc_num
+                                          and order_doc_line_num = rcd_order_base.order_doc_line_num));
       rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
