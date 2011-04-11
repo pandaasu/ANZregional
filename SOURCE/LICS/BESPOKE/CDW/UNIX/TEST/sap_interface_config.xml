@@ -15,7 +15,7 @@
                SapSystem="02"
                OdsConnection="jdbc:oracle:thin:@wodu003.ap.mars:1521:ap0066t"
                OdsUserId="cdw_reader"
-               OdsPassword="cdw_reader"
+               OdsPassword="cdwreader"
                OdsCompany="147"
                OdsTransactions="*SALES_ORDER_DELETED,*PURCHASE_ORDER_DELETED,*DELIVERY_DELETED,*SALES_ORDER_LINE_STATUS,*DELIVERY_LINE_STATUS"
                Logging="0"/>
@@ -31,7 +31,7 @@
                SapSystem="02"
                OdsConnection="jdbc:oracle:thin:@wodu003.ap.mars:1521:ap0066t"
                OdsUserId="cdw_reader"
-               OdsPassword="cdw_reader"
+               OdsPassword="cdwreader"
                OdsCompany="149"
                OdsTransactions="*SALES_ORDER_DELETED,*PURCHASE_ORDER_DELETED,*DELIVERY_DELETED,*SALES_ORDER_LINE_STATUS,*DELIVERY_LINE_STATUS"
                Logging="0"/>
