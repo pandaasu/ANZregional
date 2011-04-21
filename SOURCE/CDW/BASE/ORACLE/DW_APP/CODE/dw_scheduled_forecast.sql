@@ -476,6 +476,10 @@ create or replace package body dw_scheduled_forecast as
        v_division_code := rv_forecast.division_code;
        v_moe_code := rv_forecast.moe_code;
 
+       -- Check and create the required partition.
+       var_partition_code := par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code;
+       dds_dw_partition.check_create_list('fcst_fact', var_partition_code, var_partition_code);
+
       /* -----------------------------------------------------------------------------------
        Check to see if the forecast type is weekly i.e. FCST. If it is then process
        weekly forecast, if not then bypass this section as the forecast is a period forecast.
@@ -560,6 +564,7 @@ create or replace package body dw_scheduled_forecast as
 
            INSERT INTO fcst_fact
              (
+             partition_code,
              company_code,
              sales_org_code,
              distbn_chnl_code,
@@ -610,6 +615,7 @@ create or replace package body dw_scheduled_forecast as
              dfn_adjmt_qty
              )
              SELECT
+               t1.company_code||'_'||t1.moe_code||'_'||t1.fcst_type_code,
                t1.company_code,
                t1.sales_org_code,
                t1.distbn_chnl_code,
@@ -860,6 +866,7 @@ create or replace package body dw_scheduled_forecast as
 
               INSERT INTO fcst_fact
                 (
+                 partition_code,
                  company_code,
                  sales_org_code,
                  distbn_chnl_code,
@@ -910,6 +917,7 @@ create or replace package body dw_scheduled_forecast as
                  dfn_adjmt_qty
                 )
                 SELECT
+                  t1.company_code||'_'||t1.moe_code||'_'||t1.fcst_type_code,
                   t1.company_code,
                   t1.sales_org_code,
                   t1.distbn_chnl_code,
