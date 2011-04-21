@@ -12,6 +12,8 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2010/12   Steve Gregan   Created
+ 2011/04   Steve Gregan   Added partitioning
+                          Changed MOE CODE to not null constraint
 
 *******************************************************************************/
 
@@ -19,7 +21,8 @@
 /* Table creation
 /**/
 create table dds.demand_plng_fcst_fact
-   (company_code                      varchar2(10 char)    not null,
+   (partition_code                    varchar2(32 char)    not null,
+    company_code                      varchar2(10 char)    not null,
     sales_org_code                    varchar2(4 char)     not null,
     distbn_chnl_code                  varchar2(2 char)     not null,
     division_code                     varchar2(2 char)     null,
@@ -47,7 +50,7 @@ create table dds.demand_plng_fcst_fact
     fcst_qty                          number(16,2)         not null,
     fcst_qty_gross_tonnes             number(16,6)         not null,
     fcst_qty_net_tonnes               number(16,6)         not null,
-    moe_code                          varchar2(4 char)     null,
+    moe_code                          varchar2(4 char)     not null,
     matl_tdu_code                     varchar2(18 char)    null,
     base_value                        number(16,2)         null,
     base_qty                          number(16,2)         null,
@@ -69,14 +72,14 @@ create table dds.demand_plng_fcst_fact
     tgt_impact_qty                    number(16,2)         null,
     dfn_adjmt_value                   number(16,2)         null,
     dfn_adjmt_qty                     number(16,2)         null)
-   partition by list (company_code)
-      (partition COM147 VALUES ('147'),
-       partition COM149 VALUES ('149'));
+   partition by list (partition_code)
+      (partition the_rest values(DEFAULT));
 
 /**/
 /* Comments
 /**/
 comment on table dds.demand_plng_fcst_fact is 'Demand Planning Forecast Base Fact Table';
+comment on column dds.demand_plng_fcst_fact.partition_code is 'Partition code company code, moe code, forecast type code, casting period';
 comment on column dds.demand_plng_fcst_fact.company_code is 'Company Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.demand_plng_fcst_fact.sales_org_code is 'Sales Organisation Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.demand_plng_fcst_fact.distbn_chnl_code is 'Distribution Channel Code - Source Data ODS.FCST_HDR.DISTBN_CHNL_CODE';

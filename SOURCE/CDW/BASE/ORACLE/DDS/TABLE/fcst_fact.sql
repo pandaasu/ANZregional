@@ -12,14 +12,17 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2010/12   Steve Gregan   Created
+ 2011/04   Steve Gregan   Added partitioning
+                          Changed MOE CODE to not null constraint
 
 *******************************************************************************/
 
 /**/
 /* Table creation
 /**/
-create table dds.fcst_fact
-   (company_code                      varchar2(10 char)    not null,
+create table dds.test_fcst_fact
+   (partition_code                    varchar2(32 char)    not null,
+    company_code                      varchar2(10 char)    not null,
     sales_org_code                    varchar2(4 char)     not null,
     distbn_chnl_code                  varchar2(2 char)     not null,
     division_code                     varchar2(2 char)     null,
@@ -45,7 +48,7 @@ create table dds.fcst_fact
     fcst_qty                          number(16,2)         not null,
     fcst_qty_gross_tonnes             number(16,6)         not null,
     fcst_qty_net_tonnes               number(16,6)         not null,
-    moe_code                          varchar2(4 char)     null,
+    moe_code                          varchar2(4 char)     not null,
     matl_tdu_code                     varchar2(18 char)    null,
     base_value                        number(16,2)         not null,
     base_qty                          number(16,2)         not null,
@@ -67,14 +70,14 @@ create table dds.fcst_fact
     tgt_impact_qty                    number(16,2)         not null,
     dfn_adjmt_value                   number(16,2)         not null,
     dfn_adjmt_qty                     number(16,2)         not null)
-   partition by list (company_code)
-      (partition COM147 VALUES ('147'),
-       partition COM149 VALUES ('149'));
+   partition by list (partition_code)
+      (partition the_rest values(DEFAULT));
 
 /**/
 /* Comments
 /**/
 comment on table dds.fcst_fact is 'Forecast Fact Table';
+comment on column dds.fcst_fact.partition_code is 'Partition code company code, moe code, forecast type code';
 comment on column dds.fcst_fact.company_code is 'Company Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.fcst_fact.sales_org_code is 'Sales Organisation Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
 comment on column dds.fcst_fact.distbn_chnl_code is 'Distribution Channel Code - Source Data ODS.FCST_HDR.DISTBN_CHNL_CODE';
@@ -127,28 +130,28 @@ comment on column dds.fcst_fact.dfn_adjmt_qty is 'Demand Financials Adjustment T
 /**/
 /* Indexes
 /**/
-create bitmap index dds.fcst_fact_i1 on dds.fcst_fact (FCST_YYYYPP, COMPANY_CODE) local;
-create bitmap index dds.fcst_fact_i2 on dds.fcst_fact (FCST_YYYYPPW, COMPANY_CODE) local;
-create index dds.fcst_fact_i3 on dds.fcst_fact (MATL_ZREP_CODE) local;
-create index dds.fcst_fact_i4 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, FCST_YYYYPPW) local;
-create index dds.fcst_fact_i5 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, FCST_YYYYPP) local;
-create index dds.fcst_fact_i6 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, FCST_YYYYPPW) local;
+create bitmap index dds.fcst_fact_i1 on dds.fcst_fact (fcst_yyyypp, company_code) local;
+create bitmap index dds.fcst_fact_i2 on dds.fcst_fact (fcst_yyyyppw, company_code) local;
+create index dds.fcst_fact_i3 on dds.fcst_fact (matl_zrep_code) local;
+create index dds.fcst_fact_i4 on dds.fcst_fact (company_code, fcst_type_code, sales_org_code, distbn_chnl_code, division_code, moe_code, fcst_yyyyppw) local;
+create index dds.fcst_fact_i5 on dds.fcst_fact (company_code, fcst_type_code, sales_org_code, distbn_chnl_code, division_code, moe_code, fcst_yyyypp) local;
+create index dds.fcst_fact_i6 on dds.fcst_fact (company_code, fcst_type_code, fcst_yyyyppw) local;
 
 /**/
 /* Authority
 /**/
-GRANT SELECT ON FCST_FACT_new TO APPSUPPORT;
-GRANT SELECT ON FCST_FACT_new TO BO_USER;
-GRANT SELECT ON FCST_FACT_new TO BW_READER;
-GRANT SELECT ON FCST_FACT_new TO CDW_READER_ROLE;
-GRANT SELECT ON FCST_FACT_new TO DDS_APP WITH GRANT OPTION;
-GRANT DELETE, INSERT, UPDATE ON FCST_FACT_new TO DDS_APP;
-GRANT DELETE, INSERT, SELECT, UPDATE ON FCST_FACT_new TO DDS_MAINT;
-GRANT SELECT ON FCST_FACT_new TO DDS_SELECT;
-GRANT SELECT ON FCST_FACT_new TO DDS_USER;
-GRANT SELECT ON FCST_FACT_new TO DW_APP;
-GRANT SELECT ON FCST_FACT_new TO KPI_APP;
-GRANT DELETE, INSERT, SELECT, UPDATE ON FCST_FACT_new TO ODS_APP;
+grant select on fcst_fact_new to appsupport;
+grant select on fcst_fact_new to bo_user;
+grant select on fcst_fact_new to bw_reader;
+grant select on fcst_fact_new to cdw_reader_role;
+grant select on fcst_fact_new to dds_app with grant option;
+grant delete, insert, update on fcst_fact_new to dds_app;
+grant delete, insert, select, update on fcst_fact_new to dds_maint;
+grant select on fcst_fact_new to dds_select;
+grant select on fcst_fact_new to dds_user;
+grant select on fcst_fact_new to dw_app;
+grant select on fcst_fact_new to kpi_app;
+grant delete, insert, select, update on fcst_fact_new to ods_app;
 
 /**/
 /* Synonym
