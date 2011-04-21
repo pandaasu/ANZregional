@@ -19,6 +19,8 @@ create or replace package dw_process_poller as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2008/08   Steve Gregan   Created
+    2011/04   Steve Gregan   Added new flag base triggers
+    2011/04   Steve Gregan   Added new flattening trigger
 
    *******************************************************************************/
 
@@ -175,7 +177,7 @@ create or replace package body dw_process_poller as
          end if;
 
          /*-*/
-         /* Check and process the company data mart trigger
+         /* Check and process the company data mart trigger and base flag file trigger
          /*-*/
          var_return := lics_processing.check_group('DATAMART_TRIGGER_'||var_company,
                                                    to_char(var_polling_date,'yyyymmdd'),
@@ -185,28 +187,75 @@ create or replace package body dw_process_poller as
          end if;
 
          /*-*/
-         /* Check and process the company flag file trigger
+         /* Check the flag file triggers
+         /* 1. Australian company works of server time
+         /* 2. New Zealand company must wait until midnight Australian time as the BOXI
+         /*    server uses sysdate-1 (australian time) as the processing date
          /*-*/
-         var_return := lics_processing.check_group('FLAGFILE_TRIGGER_'||var_company,
-                                                   to_char(var_polling_date,'yyyymmdd'),
-                                                   'FLAGFILE_'||var_company||'_FIRED');
-         if var_return = true then
-            lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
+         if rcd_company.company_timezone_code = 'Australia/NSW' or
+            trunc(sysdate) > var_polling_date then
+
+            /*-*/
+            /* Check and process the company flag base trigger
+            /*-*/
+            var_return := lics_processing.check_group('FLAGBASE_TRIGGER_'||var_company,
+                                                      to_char(var_polling_date,'yyyymmdd'),
+                                                      'FLAGBASE_'||var_company||'_FIRED');
+            if var_return = true then
+               lics_stream_loader.execute('DW_FLAGBASE_STREAM_'||var_company,null);
+            end if
+
+            /*-*/
+            /* Check and process the company flag file trigger
+            /*-*/
+            var_return := lics_processing.check_group('FLAGFILE_TRIGGER_'||var_company,
+                                                      to_char(var_polling_date,'yyyymmdd'),
+                                                      'FLAGFILE_'||var_company||'_FIRED');
+            if var_return = true then
+               lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
+            end if;
+
+         end if;
+
+         /*-*/
+         /* Check and process the consolidated flag file trigger when required
+         /*-*/
+         if par_consolidated = 'Y' then
+
+            /*-*/
+            /* Check the consolidated flag file triggers
+            /* 1. Australian company works of server time
+            /* 2. New Zealand company must wait until midnight Australian time as the BOXI
+            /*    server uses sysdate-1 (australian time) as the processing date
+            /*-*/
+            if rcd_company.company_timezone_code = 'Australia/NSW' or
+               trunc(sysdate) > var_polling_date then
+
+               /*-*/
+               /* Check and process the consolidated flag base trigger
+               /*-*/
+               var_return := lics_processing.check_group('FLAGBASE_TRIGGER_CON',
+                                                         to_char(var_polling_date,'yyyymmdd'),
+                                                         'FLAGBASE_CON_FIRED');
+               if var_return = true then
+                  lics_stream_loader.execute('DW_FLAGBASE_STREAM_CON',null);
+               end if;
+
+               /*-*/
+               /* Check and process the consolidated flag file trigger
+               /*-*/
+               var_return := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
+                                                         to_char(var_polling_date,'yyyymmdd'),
+                                                         'FLAGFILE_CON_FIRED');
+               if var_return = true then
+                  lics_stream_loader.execute('DW_FLAGFILE_STREAM_CON',null);
+               end if;
+
+            end if;
+
          end if;
 
       end loop;
-
-      /*-*/
-      /* Check and process the consolidated flag file trigger when required
-      /*-*/
-      if par_consolidated = 'Y' then
-         var_return := lics_processing.check_group('FLAGFILE_TRIGGER_CON',
-                                                   to_char(var_polling_date,'yyyymmdd'),
-                                                   'FLAGFILE_CON_FIRED');
-         if var_return = true then
-            lics_stream_loader.execute('DW_FLAGFILE_STREAM_CON',null);
-         end if;
-      end if;
 
    /*-------------------*/
    /* Exception handler */
