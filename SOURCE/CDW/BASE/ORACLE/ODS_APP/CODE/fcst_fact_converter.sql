@@ -3,7 +3,7 @@
 /******************************************************************************/
 /**
  Package : fcst_fact_converter
- Owner   : ods
+ Owner   : dw_app
 
  Description
  -----------
@@ -50,12 +50,21 @@ create or replace package body fcst_fact_converter as
       var_size number(5,0);
       var_work number(5,0);
       var_exit boolean;
-      type rcd_fcst_fact is table of fcst_fact%rowtype index by binary_integer;
+      type rcd_fcst_fact is table of dds.fcst_fact_new%rowtype index by binary_integer;
       tab_fcst_fact rcd_fcst_fact;
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_partition is 
+         select 'COM'||t01.company_code||'_'||nvl(t01.moe_code,'NULL')||'_'||t01.fcst_type_code as partition_name,
+                t01.company_code||nvl(t01.moe_code,'NULL')||t01.fcst_type_code as partition_code
+           from fcst_fact t01
+          group by t01.company_code,
+                   t01.moe_code,
+                   t01.fcst_type_code;
+      rcd_partition csr_partition%rowtype;
+
       cursor csr_source is 
          select t01.*
            from fcst_fact t01;
@@ -65,6 +74,19 @@ create or replace package body fcst_fact_converter as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Retrieve and create the required partitions
+      /*-*/
+      open csr_partition;
+      loop
+         fetch csr_partition into rcd_partition;
+         if csr_partition%notfound then
+            exit;
+         end if;
+         dds_dw_partition.check_create_list('fcst_fact_new', rcd_partition.partition_name, rcd_partition.partition_code);
+      end loop;
+      close csr_partition;
 
       /*-*/
       /* Retrieve and load the bulk source array
@@ -84,6 +106,7 @@ create or replace package body fcst_fact_converter as
          /*-*/
          if var_exit = false then
             var_work := var_work + 1;
+            tab_fcst_fact(var_work).partition_code := rcd_source.company_code||nvl(rcd_source.moe_code,'NULL')||rcd_source.fcst_type_code;
             tab_fcst_fact(var_work).company_code := rcd_source.company_code;
             tab_fcst_fact(var_work).sales_org_code := rcd_source.sales_org_code;
             tab_fcst_fact(var_work).distbn_chnl_code := rcd_source.distbn_chnl_code;
@@ -110,7 +133,7 @@ create or replace package body fcst_fact_converter as
             tab_fcst_fact(var_work).fcst_qty := rcd_source.fcst_qty;
             tab_fcst_fact(var_work).fcst_qty_gross_tonnes := rcd_source.fcst_qty_gross_tonnes;
             tab_fcst_fact(var_work).fcst_qty_net_tonnes := rcd_source.fcst_qty_net_tonnes;
-            tab_fcst_fact(var_work).moe_code := rcd_source.moe_code;
+            tab_fcst_fact(var_work).moe_code := nvl(rcd_source.moe_code,'NONE');
             tab_fcst_fact(var_work).matl_tdu_code := rcd_source.matl_tdu_code;
             tab_fcst_fact(var_work).base_value := rcd_source.base_value;
             tab_fcst_fact(var_work).base_qty := rcd_source.base_qty;
@@ -132,6 +155,7 @@ create or replace package body fcst_fact_converter as
             tab_fcst_fact(var_work).tgt_impact_qty := rcd_source.tgt_impact_qty;
             tab_fcst_fact(var_work).dfn_adjmt_value := rcd_source.dfn_adjmt_value;
             tab_fcst_fact(var_work).dfn_adjmt_qty := rcd_source.dfn_adjmt_qty;
+
          end if;
 
          /*-*/

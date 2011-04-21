@@ -50,12 +50,21 @@ create or replace package body fcst_plng_converter as
       var_size number(5,0);
       var_work number(5,0);
       var_exit boolean;
-      type rcd_demand_plng_fcst_fact is table of demand_plng_fcst_fact%rowtype index by binary_integer;
+      type rcd_demand_plng_fcst_fact is table of dds.demand_plng_fcst_fact_new%rowtype index by binary_integer;
       tab_demand_plng_fcst_fact rcd_demand_plng_fcst_fact;
 
       /*-*/
       /* Local cursors
       /*-*/
+      cursor csr_partition is 
+         select 'COM'||t01.company_code||'_'||nvl(t01.moe_code,'NULL')||'_'||t01.fcst_type_code||'_'||to_char(t01.casting_yyyypp) as partition_name,
+                t01.company_code||nvl(t01.moe_code,'NULL')||t01.fcst_type_code||to_char(t01.casting_yyyypp) as partition_code
+           from demand_plng_fcst_fact t01
+          group by t01.company_code,
+                   t01.moe_code,
+                   t01.fcst_type_code;
+      rcd_partition csr_partition%rowtype;
+
       cursor csr_source is 
          select t01.*
            from demand_plng_fcst_fact t01;
@@ -65,6 +74,19 @@ create or replace package body fcst_plng_converter as
    /* Begin block */
    /*-------------*/
    begin
+
+      /*-*/
+      /* Retrieve and create the required partitions
+      /*-*/
+      open csr_partition;
+      loop
+         fetch csr_partition into rcd_partition;
+         if csr_partition%notfound then
+            exit;
+         end if;
+         dds_dw_partition.check_create_list('demand_plng_fcst_fact_new', rcd_partition.partition_name, rcd_partition.partition_code);
+      end loop;
+      close csr_partition;
 
       /*-*/
       /* Retrieve and load the bulk source array
@@ -84,6 +106,7 @@ create or replace package body fcst_plng_converter as
          /*-*/
          if var_exit = false then
             var_work := var_work + 1;
+            tab_demand_plng_fcst_fact(var_work).partition_code := rcd_source.company_code||nvl(rcd_source.moe_code,'NULL')||rcd_source.fcst_type_code||to_char(rcd_source.casting_yyyypp);
             tab_demand_plng_fcst_fact(var_work).company_code := rcd_source.company_code;
             tab_demand_plng_fcst_fact(var_work).sales_org_code := rcd_source.sales_org_code;
             tab_demand_plng_fcst_fact(var_work).distbn_chnl_code := rcd_source.distbn_chnl_code;
