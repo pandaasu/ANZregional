@@ -79,7 +79,7 @@ create or replace package body dds_dw_partition as
       open csr_partition;
       fetch csr_partition into rcd_partition;
       if csr_partition%notfound then
-         var_sql := 'alter table ' || var_table || ' add partition ' || var_partition || ' values (''' || par_value || ''')';
+         var_sql := 'alter table '||var_table||' split partition the_rest values('''||par_value||''') into (partition '||var_partition||', partition the_rest)';
          execute immediate var_sql;
       end if;
       close csr_partition;
