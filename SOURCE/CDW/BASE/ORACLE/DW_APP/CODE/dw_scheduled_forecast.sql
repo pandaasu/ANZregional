@@ -348,6 +348,8 @@ create or replace package body dw_scheduled_forecast as
       v_moe_code                   fcst_hdr.moe_code%TYPE;
       v_adjust_min_casting_yyyypp  NUMBER(6);
       v_adjust_min_casting_yyyyppw NUMBER(7);
+      var_partition_name varchar2(30);
+      var_partition_code varchar2(32);
 
       /*-*/
       /* Local cursors
@@ -477,8 +479,9 @@ create or replace package body dw_scheduled_forecast as
        v_moe_code := rv_forecast.moe_code;
 
        -- Check and create the required partition.
-       var_partition_code := par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code;
-       dds_dw_partition.check_create_list('fcst_fact', var_partition_code, var_partition_code);
+       var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code
+       var_partition_code := par_company_code||v_moe_code||v_fcst_type_code;
+       dds_dw_partition.check_create_list('fcst_fact', var_partition_name, var_partition_code);
 
       /* -----------------------------------------------------------------------------------
        Check to see if the forecast type is weekly i.e. FCST. If it is then process
@@ -615,7 +618,7 @@ create or replace package body dw_scheduled_forecast as
              dfn_adjmt_qty
              )
              SELECT
-               t1.company_code||'_'||t1.moe_code||'_'||t1.fcst_type_code,
+               t1.company_code||t1.moe_code||t1.fcst_type_code,
                t1.company_code,
                t1.sales_org_code,
                t1.distbn_chnl_code,
@@ -917,7 +920,7 @@ create or replace package body dw_scheduled_forecast as
                  dfn_adjmt_qty
                 )
                 SELECT
-                  t1.company_code||'_'||t1.moe_code||'_'||t1.fcst_type_code,
+                  t1.company_code||t1.moe_code||t1.fcst_type_code,
                   t1.company_code,
                   t1.sales_org_code,
                   t1.distbn_chnl_code,
@@ -1145,6 +1148,8 @@ create or replace package body dw_scheduled_forecast as
       v_min_casting_yyyyppw VARCHAR2(7);
       v_min_casting_yyyypp VARCHAR2(6);
       v_moe_code fcst_hdr.moe_code%TYPE;
+      var_partition_name varchar2(30);
+      var_partition_code varchar2(32);
 
       /*-*/
       /* Local cursors
@@ -1230,7 +1235,8 @@ create or replace package body dw_scheduled_forecast as
          casting_year AS casting_yyyy,
          casting_period AS casting_pp,
          casting_week AS casting_w,
-         (casting_year || LPAD(casting_period,2,0) || casting_week) AS casting_yyyyppw
+         (casting_year || LPAD(casting_period,2,0) || casting_week) AS casting_yyyyppw,
+         (casting_year || LPAD(casting_period,2,0)) AS casting_yyyypp
        FROM fcst_hdr
        WHERE company_code = par_company_code
          AND moe_code = v_moe_code
@@ -1272,6 +1278,7 @@ create or replace package body dw_scheduled_forecast as
        v_distbn_chnl_code := rv_forecast.distbn_chnl_code;
        v_division_code := rv_forecast.division_code;
        v_moe_code := rv_forecast.moe_code;
+
 
       /* -----------------------------------------------------------------------------------
        Check to see if the forecast type is weekly i.e. FCST. If it is then process
@@ -1358,12 +1365,18 @@ create or replace package body dw_scheduled_forecast as
 
            lics_logging.write_log('--> Delete count: ' || TO_CHAR(SQL%ROWCOUNT));
 
+           -- Check and create the required partition.
+           var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_week.casting_yyyypp)
+           var_partition_code := par_company_code||v_moe_code||v_fcst_type_code||to_char(rv_casting_week.casting_yyyypp);
+           dds_dw_partition.check_create_list('demand_plng_fcst_fact', var_partition_name, var_partition_code);
+
            -- Insert the forecast into the demand_plng_fcast_fact table.
            lics_logging.write_log('--> Inserting into DEMAND_PLNG_FCST_FACT based' ||
              ' on Casting Week [' || rv_casting_week.casting_yyyyppw || '].');
 
            INSERT INTO demand_plng_fcst_fact
              (
+             partition_code,
              company_code,
              sales_org_code,
              distbn_chnl_code,
@@ -1416,6 +1429,7 @@ create or replace package body dw_scheduled_forecast as
              dfn_adjmt_qty
              )
              SELECT
+               t1.company_code||t1.moe_code||t1.fcst_type_code||to_char(t1.casting_yyyypp),
                t1.company_code,
                t1.sales_org_code,
                t1.distbn_chnl_code,
@@ -1674,11 +1688,17 @@ create or replace package body dw_scheduled_forecast as
 
              lics_logging.write_log('--> Delete Count: ' || TO_CHAR(SQL%ROWCOUNT));
 
+             -- Check and create the required partition.
+             var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_period.casting_yyyypp)
+             var_partition_code := par_company_code||v_moe_code||v_fcst_type_code||to_char(rv_casting_period.casting_yyyypp);
+             dds_dw_partition.check_create_list('demand_plng_fcst_fact', var_partition_name, var_partition_code);
+
              -- Insert the forecast into the demand_plng_fcst_fact table.
              lics_logging.write_log('--> Inserting into DEMAND_PLNG_FCST_FACT based' ||
                ' on Casting Period [' || rv_casting_period.casting_yyyypp || '].');
              INSERT INTO demand_plng_fcst_fact
              (
+             partition_code,
              company_code,
              sales_org_code,
              distbn_chnl_code,
@@ -1731,6 +1751,7 @@ create or replace package body dw_scheduled_forecast as
              dfn_adjmt_qty
              )
              SELECT
+               t1.company_code||t1.moe_code||t1.fcst_type_code||to_char(t1.casting_yyyypp),
                t1.company_code,
                t1.sales_org_code,
                t1.distbn_chnl_code,
