@@ -62,7 +62,8 @@ create or replace package body fcst_plng_converter as
            from demand_plng_fcst_fact t01
           group by t01.company_code,
                    t01.moe_code,
-                   t01.fcst_type_code;
+                   t01.fcst_type_code,
+                   t01.casting_yyyypp;
       rcd_partition csr_partition%rowtype;
 
       cursor csr_source is 
@@ -135,7 +136,7 @@ create or replace package body fcst_plng_converter as
             tab_demand_plng_fcst_fact(var_work).fcst_qty := rcd_source.fcst_qty;
             tab_demand_plng_fcst_fact(var_work).fcst_qty_gross_tonnes := rcd_source.fcst_qty_gross_tonnes;
             tab_demand_plng_fcst_fact(var_work).fcst_qty_net_tonnes := rcd_source.fcst_qty_net_tonnes;
-            tab_demand_plng_fcst_fact(var_work).moe_code := rcd_source.moe_code;
+            tab_demand_plng_fcst_fact(var_work).moe_code := nvl(rcd_source.moe_code,'NULL');
             tab_demand_plng_fcst_fact(var_work).matl_tdu_code := rcd_source.matl_tdu_code;
             tab_demand_plng_fcst_fact(var_work).base_value := rcd_source.base_value;
             tab_demand_plng_fcst_fact(var_work).base_qty := rcd_source.base_qty;

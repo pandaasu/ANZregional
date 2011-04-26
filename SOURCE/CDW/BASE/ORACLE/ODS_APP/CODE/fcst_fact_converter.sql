@@ -133,7 +133,7 @@ create or replace package body fcst_fact_converter as
             tab_fcst_fact(var_work).fcst_qty := rcd_source.fcst_qty;
             tab_fcst_fact(var_work).fcst_qty_gross_tonnes := rcd_source.fcst_qty_gross_tonnes;
             tab_fcst_fact(var_work).fcst_qty_net_tonnes := rcd_source.fcst_qty_net_tonnes;
-            tab_fcst_fact(var_work).moe_code := nvl(rcd_source.moe_code,'NONE');
+            tab_fcst_fact(var_work).moe_code := nvl(rcd_source.moe_code,'NULL');
             tab_fcst_fact(var_work).matl_tdu_code := rcd_source.matl_tdu_code;
             tab_fcst_fact(var_work).base_value := rcd_source.base_value;
             tab_fcst_fact(var_work).base_qty := rcd_source.base_qty;
