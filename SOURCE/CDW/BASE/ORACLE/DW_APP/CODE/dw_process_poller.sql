@@ -203,7 +203,7 @@ create or replace package body dw_process_poller as
                                                       'FLAGBASE_'||var_company||'_FIRED');
             if var_return = true then
                lics_stream_loader.execute('DW_FLAGBASE_STREAM_'||var_company,null);
-            end if
+            end if;
 
             /*-*/
             /* Check and process the company flag file trigger

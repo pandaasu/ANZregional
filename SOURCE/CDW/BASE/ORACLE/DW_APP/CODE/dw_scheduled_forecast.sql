@@ -479,7 +479,7 @@ create or replace package body dw_scheduled_forecast as
        v_moe_code := rv_forecast.moe_code;
 
        -- Check and create the required partition.
-       var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code
+       var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code;
        var_partition_code := par_company_code||v_moe_code||v_fcst_type_code;
        dds_dw_partition.check_create_list('fcst_fact', var_partition_name, var_partition_code);
 
@@ -1366,7 +1366,7 @@ create or replace package body dw_scheduled_forecast as
            lics_logging.write_log('--> Delete count: ' || TO_CHAR(SQL%ROWCOUNT));
 
            -- Check and create the required partition.
-           var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_week.casting_yyyypp)
+           var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_week.casting_yyyypp);
            var_partition_code := par_company_code||v_moe_code||v_fcst_type_code||to_char(rv_casting_week.casting_yyyypp);
            dds_dw_partition.check_create_list('demand_plng_fcst_fact', var_partition_name, var_partition_code);
 
@@ -1689,7 +1689,7 @@ create or replace package body dw_scheduled_forecast as
              lics_logging.write_log('--> Delete Count: ' || TO_CHAR(SQL%ROWCOUNT));
 
              -- Check and create the required partition.
-             var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_period.casting_yyyypp)
+             var_partition_name := 'COM'||par_company_code||'_'||v_moe_code||'_'||v_fcst_type_code||'_'||to_char(rv_casting_period.casting_yyyypp);
              var_partition_code := par_company_code||v_moe_code||v_fcst_type_code||to_char(rv_casting_period.casting_yyyypp);
              dds_dw_partition.check_create_list('demand_plng_fcst_fact', var_partition_name, var_partition_code);
 
