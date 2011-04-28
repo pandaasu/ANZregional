@@ -90,6 +90,9 @@ create or replace package body ods_app.ods_dfnods01 as
       var_trn_ignore := false;
       var_trn_error := false;
       tab_list.delete;
+      var_loaded_record_count := 0;
+      var_loaded_gsv := 0;
+      var_loaded_qty := 0;
 
       /*-*/
       /* Initialise the inbound definitions
@@ -264,7 +267,7 @@ create or replace package body ods_app.ods_dfnods01 as
                                             rcd_fcst_hdr.casting_year,
                                             rcd_fcst_hdr.casting_period);
 
-      		exception
+            exception
                when others then
                   lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
             end;
@@ -307,7 +310,6 @@ create or replace package body ods_app.ods_dfnods01 as
       var_trn_ignore := false;
       var_trn_error := false;
       tab_list.delete;
-
       var_loaded_record_count := 0;
       var_loaded_gsv := 0;
       var_loaded_qty := 0;
@@ -826,8 +828,8 @@ create or replace package body ods_app.ods_dfnods01 as
          /*-*/
          /* Drop the forecast detail partition
          /*-*/
+         ods_partition.truncate_list('fcst_dtl','F'||to_char(rcd_fcst_hdr_01.fcst_hdr_code));
          ods_partition.drop_list('fcst_dtl','F'||to_char(rcd_fcst_hdr_01.fcst_hdr_code));
-
 
          -- Delete old version of forecast from forecast header
          delete from fcst_hdr
