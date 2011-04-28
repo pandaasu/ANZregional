@@ -187,6 +187,7 @@ create or replace package body ods_app.ods_dfnods01 as
       /*-*/
       when others then
          lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         var_trn_error := true;
 
    /*-------------*/
    /* End routine */
@@ -206,6 +207,7 @@ create or replace package body ods_app.ods_dfnods01 as
       /*-*/
       /* Complete the transaction
       /*-*/
+      tab_list.delete;
       complete_transaction;
 
    /*-------------*/
@@ -237,42 +239,53 @@ create or replace package body ods_app.ods_dfnods01 as
             -- NOTE: Do this and include in the commit to avoid any error in delete section and can't rollback
             --       committed forecast.
             update_previous_forecast;
-            -- Commit the insert and update first to avoid running out of rollback segment space
-            commit;
+            if var_trn_error = true then
+               rollback;
+            else
+               -- Commit the insert and update first to avoid running out of rollback segment space
+               commit;
 
-            -- Now delete previous sent forecast with same group and casting period/week
-            delete_previous_forecast;
+               -- Now delete previous sent forecast with same group and casting period/week
+               delete_previous_forecast;
+               if var_trn_error = true then
+                  rollback;
+               else
 
-            /*-*/
-            /* Call the ODS_VALIDATION procedure.
-            /*-*/
-            begin
-              lics_pipe.spray('*DAEMON','OV','*WAKE');
-            exception
-               when others then
-                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-            end;
+                  /*-*/
+                  /* Call the ODS_VALIDATION procedure.
+                  /*-*/
+                  begin
+                    lics_pipe.spray('*DAEMON','OV','*WAKE');
+                  exception
+                     when others then
+                        lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+                  end;
 
-            /*-*/
-            /* Call the interface monitor procedure.
-            /*-*/
-            begin
-               ods_dfnods01_monitor.execute(rcd_fcst_hdr.fcst_type_code,
-                                            rcd_fcst_hdr.fcst_version,
-                                            rcd_fcst_hdr.company_code,
-                                            rcd_fcst_hdr.sales_org_code,
-                                            rcd_fcst_hdr.moe_code,
-                                            rcd_fcst_hdr.distbn_chnl_code,
-                                            rcd_fcst_hdr.division_code,
-                                            rcd_fcst_hdr.casting_year,
-                                            rcd_fcst_hdr.casting_period);
+                  /*-*/
+                  /* Call the interface monitor procedure.
+                  /*-*/
+                  begin
+                     ods_dfnods01_monitor.execute(rcd_fcst_hdr.fcst_type_code,
+                                                  rcd_fcst_hdr.fcst_version,
+                                                  rcd_fcst_hdr.company_code,
+                                                  rcd_fcst_hdr.sales_org_code,
+                                                  rcd_fcst_hdr.moe_code,
+                                                  rcd_fcst_hdr.distbn_chnl_code,
+                                                  rcd_fcst_hdr.division_code,
+                                                  rcd_fcst_hdr.casting_year,
+                                                  rcd_fcst_hdr.casting_period);
 
-            exception
-               when others then
-                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-            end;
+                  exception
+                     when others then
+                        lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+                  end;
+
+               end if;
+
+            end if;
 
          end if;
+
       end if;
 
    /*-------------*/
@@ -850,6 +863,7 @@ create or replace package body ods_app.ods_dfnods01 as
      when others then
         rollback;
         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+         var_trn_error := true;
 
    END delete_previous_forecast;
 
@@ -889,6 +903,7 @@ create or replace package body ods_app.ods_dfnods01 as
 
      when others then
         lics_inbound_utility.add_exception(substr(sqlerrm, 1, 512));
+         var_trn_error := true;
 
    end update_previous_forecast;
 
