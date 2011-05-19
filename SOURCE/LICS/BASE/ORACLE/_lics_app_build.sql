@@ -48,7 +48,6 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_datastore.sql;
 @^pro_path\lics_datastore_type.sql;
 @^pro_path\lics_documentation.sql;
-@^pro_path\lics_file.sql;
 @^pro_path\lics_file_search.sql;
 @^pro_path\lics_form.sql;
 @^pro_path\lics_group_configuration.sql;
