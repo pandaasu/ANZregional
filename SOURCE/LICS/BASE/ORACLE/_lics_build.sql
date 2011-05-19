@@ -48,6 +48,7 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_event.sql;
 @^tab_path\lics_event_sequence.sql;
 @^tab_path\lics_execution_sequence.sql;
+@^tab_path\lics_file.sql;
 @^tab_path\lics_group.sql;
 @^tab_path\lics_grp_interface.sql;
 @^tab_path\lics_hdr_message.sql;
