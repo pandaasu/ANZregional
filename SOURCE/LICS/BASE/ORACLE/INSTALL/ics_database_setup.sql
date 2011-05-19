@@ -39,4 +39,6 @@ Please create the following a new database on [server name] ...
 
    - Please compile lics_db_trigger using SYS.
 
+   - Please compile lics_directory using SYS (for ICS V2)
+
    - please grant create public synonym rights to LICS
