@@ -88,6 +88,7 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_security_type.sql;
 @^pro_path\lics_setting_configuration.sql;
 @^pro_path\lics_spreadsheet.sql;
+@^pro_path\lics_spreadsheet_type.sql;
 @^pro_path\lics_stream_loader.sql;
 @^pro_path\lics_stream_poller.sql;
 @^pro_path\lics_stream_processor.sql;
