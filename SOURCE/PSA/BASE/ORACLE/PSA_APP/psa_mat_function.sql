@@ -20,6 +20,8 @@ create or replace package psa_app.psa_mat_function as
     -------   ------         -----------
     2009/12   Steve Gregan   Created
     2011/03   Steve Gregan   Added PSA batch weight override
+    2011/06   Steve Gregan   Included RSU materials in master update
+                             Added packing efficiency and wastage overrides
 
    *******************************************************************************/
 
@@ -127,7 +129,7 @@ create or replace package body psa_app.psa_mat_function as
             and t04.lli_lin_code = t05.lde_lin_code(+)
             and t01.plant_code = 'NZ01'
             and (t01.special_procurement_type is null or t01.special_procurement_type != '50')
-            and ((t01.material_type = 'FERT' and t01.plant_specific_status = '20' and (t01.mars_traded_unit_flag = 'X' or t01.mars_intrmdt_prdct_compnt_flag = 'X')) or
+            and ((t01.material_type = 'FERT' and t01.plant_specific_status = '20' and (t01.mars_traded_unit_flag = 'X' or t01.mars_intrmdt_prdct_compnt_flag = 'X' or t01.mars_retail_sales_unit_flag = 'X')) or
                  (t01.material_type = 'VERP' and t01.plant_specific_status = '20' and (substr(t01.bds_material_desc_en,1,3) in ('PCH','RLS') or substr(t01.bds_material_desc_en,1,6) in ('GUSSET'))))
           order by t01.sap_material_code asc;
       rcd_bds_data csr_bds_data%rowtype;
@@ -151,7 +153,7 @@ create or replace package body psa_app.psa_mat_function as
                                             and (special_procurement_type is null or special_procurement_type != '50')
                                             and material_type = 'FERT'
                                             and plant_specific_status = '20'
-                                            and (mars_traded_unit_flag = 'X' or mars_intrmdt_prdct_compnt_flag = 'X')))
+                                            and (mars_traded_unit_flag = 'X' or mars_intrmdt_prdct_compnt_flag = 'X' or mars_retail_sales_unit_flag = 'X')))
           order by t01.mde_mat_code asc;
       rcd_psa_fert csr_psa_fert%rowtype;
 
@@ -925,6 +927,8 @@ create or replace package body psa_app.psa_mat_function as
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate:</font> '||rcd_line.mli_rra_code;
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Efficiency %:</font> '||rcd_line.rrd_rra_efficiency;
                   var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Run Rate Wastage %:</font> '||rcd_line.rrd_rra_wastage;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Efficiency %:</font> '||rcd_line.mli_rra_efficiency;
+                  var_work := var_work||' <font style="BACKGROUND-COLOR:#FFFFFF;COLOR:#4040FF;">Override Wastage %:</font> '||rcd_line.mli_rra_wastage;
                   if var_lin_flag = false then
                      pipe row('<tr><td align=center colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>Lines</td><td align=left colspan=14 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td></tr>');
                   else
@@ -1799,6 +1803,7 @@ create or replace package body psa_app.psa_mat_function as
                rcd_psa_mat_prod.mpr_psa_weight := 0;
             end if;
             insert into psa_mat_prod values rcd_psa_mat_prod;
+            var_pty_code := rcd_psa_mat_prod.mpr_prd_type;
             open csr_type;
             fetch csr_type into rcd_type;
             if csr_type%notfound then

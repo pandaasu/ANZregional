@@ -19,6 +19,7 @@ create or replace package psa_app.psa_stk_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2011/06   Steve Gregan   Modified to tab separated file load
 
    *******************************************************************************/
 
@@ -73,7 +74,7 @@ create or replace package body psa_app.psa_stk_function as
                         t01.sth_stk_type,
                         t01.sth_upd_user
                    from psa_stk_header t01
-                  where (var_str_code is null or t01.sth_stk_code >= var_str_code)
+                  where (var_str_code is null or t01.sth_stk_code <= var_str_code)
                   order by t01.sth_stk_code desc) t01
           where rownum <= var_pag_size;
 
@@ -241,18 +242,6 @@ create or replace package body psa_app.psa_stk_function as
       var_output varchar2(2000 char);
       var_stk_type varchar2(10);
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_detail is
-         select t01.*
-           from psa_mat_defn t01
-          where t01.mde_mat_type = var_stk_type
-            and t01.mde_mat_usage in ('MPO','PCH','RLS')
-            and t01.mde_mat_status in ('*CHG','*DEL','*ACTIVE')
-          order by t01.mde_mat_code asc;
-      rcd_detail csr_detail%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -291,23 +280,10 @@ create or replace package body psa_app.psa_stk_function as
       pipe row(psa_xml_object('<?xml version="1.0" encoding="UTF-8"?><PSA_RESPONSE>'));
 
       /*-*/
-      /* Pipe the stocktake XML
+      /* Pipe the requirement XML
       /*-*/
       var_output := '<STKHDR STKCDE="STOCK_'||var_stk_type||'_'||psa_to_xml(to_char(sysdate,'yyyymmddhh24miss'))||'" STKNAM="" STKTIM="'||psa_to_xml(to_char(sysdate,'yyyy/mm/dd hh24:mi'))||'"/>';
       pipe row(psa_xml_object(var_output));
-
-      /*-*/
-      /* Pipe the detail data XML
-      /*-*/
-      open csr_detail;
-      loop
-         fetch csr_detail into rcd_detail;
-         if csr_detail%notfound then
-            exit;
-         end if;
-         pipe row(psa_xml_object('<STKDET MATCDE="'||psa_to_xml(rcd_detail.mde_mat_code)||'" MATNAM="'||psa_to_xml(rcd_detail.mde_mat_name)||'" MATTYP="'||psa_to_xml(rcd_detail.mde_mat_type)||'" MATUSG="'||psa_to_xml(rcd_detail.mde_mat_usage)||'" MATQTY=""/>'));
-      end loop;
-      close csr_detail;
 
       /*-*/
       /* Pipe the XML end
@@ -355,8 +331,20 @@ create or replace package body psa_app.psa_stk_function as
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_found boolean;
+      var_det_line varchar2(15);
+      var_det_data varchar2(2000);
+      var_det_char varchar2(1);
+      var_det_valu varchar2(2000);
+      var_det_indx number;
+      var_det_mesg boolean;
       var_det_code varchar2(32);
+      var_det_name varchar2(128);
+      var_det_qtxt varchar2(64);
       var_det_qnty number;
+      type typ_detl is table of psa_stk_detail%rowtype index by binary_integer;
+      tbl_detl typ_detl;
+      type typ_code is table of varchar2(32) index by varchar2(32);
+      tbl_code typ_code;
       rcd_psa_stk_header psa_stk_header%rowtype;
       rcd_psa_stk_detail psa_stk_detail%rowtype;
 
@@ -428,30 +416,105 @@ create or replace package body psa_app.psa_stk_function as
       end if;
 
       /*-*/
-      /* Retrieve the stocktake details
+      /* Retrieve the file text stream
       /*-*/
-      obj_det_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/STKDET');
+      tbl_detl.delete;
+      tbl_code.delete;
+      obj_det_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/TXTSTREAM/XR');
       for idx in 0..xmlDom.getLength(obj_det_list)-1 loop
+         var_det_line := to_char(idx+1);
+         var_det_mesg := false;
          obj_det_node := xmlDom.item(obj_det_list,idx);
-         var_det_code := psa_from_xml(xslProcessor.valueOf(obj_det_node,'@MATCDE'));
-         var_det_qnty := psa_to_number(xslProcessor.valueOf(obj_det_node,'@MATQTY'));
-         open csr_material;
-         fetch csr_material into rcd_material;
-         if csr_material%notfound then
-            psa_gen_function.add_mesg_data('Material code ('||var_det_code||') does not exist');
-         else
-            if rcd_material.mde_mat_type != rcd_psa_stk_header.sth_stk_type then
-               psa_gen_function.add_mesg_data('Material code ('||var_det_code||') type must be '||rcd_psa_stk_header.sth_stk_type);
+         var_det_data := rtrim(ltrim(xslProcessor.valueOf(obj_det_node,'text()'),'['),']');
+         if not(var_det_data is null) then
+            var_det_valu := null;
+            var_det_indx := 1;
+            var_det_code := null;
+            var_det_name := null;
+            var_det_qtxt := null;
+            for idy in 1..length(var_det_data) loop
+               var_det_char := substr(var_det_data,idy,1);
+               if var_det_char = chr(9) then
+                  if var_det_indx = 1 then
+                     var_det_code := rtrim(ltrim(var_det_valu,'"'),'"');
+                  elsif var_det_indx = 2 then
+                     var_det_name := rtrim(ltrim(var_det_valu,'"'),'"');
+                  elsif var_det_indx = 3 then
+                     var_det_qnty := rtrim(ltrim(var_det_valu,'"'),'"');
+                  end if;
+                  var_det_indx := var_det_indx + 1;
+                  var_det_valu := null;
+               else
+                  var_det_valu := var_det_valu||var_det_char;
+               end if;
+            end loop;
+            if not(var_det_valu is null) then
+               if var_det_indx = 1 then
+                  var_det_code := rtrim(ltrim(var_det_valu,'"'),'"');
+               elsif var_det_indx = 2 then
+                  var_det_name := rtrim(ltrim(var_det_valu,'"'),'"');
+               elsif var_det_indx = 3 then
+                  var_det_qtxt := replace(rtrim(ltrim(var_det_valu,'"'),'"'),',',null);
+               end if;
             end if;
-            if rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_status != '*DEL' and rcd_material.mde_mat_status != '*ACTIVE' then
-               psa_gen_function.add_mesg_data('Material code ('||var_det_code||') status must be *CHG, *DEL or *ACTIVE');
+            if var_det_code is null then
+               psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code - is not specified');
+               var_det_mesg := true;
+            elsif tbl_code.exists(var_det_code) = true then
+               psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') - is already in the stocktake');
+               var_det_mesg := true;
+            else
+               tbl_code(var_det_code) := var_det_code;
+               open csr_material;
+               fetch csr_material into rcd_material;
+               if csr_material%notfound then
+                  psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') - does not exist');
+                  var_det_mesg := true;
+               else
+                  if rcd_material.mde_mat_type != rcd_psa_stk_header.sth_stk_type then
+                     psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') type must be '||rcd_psa_stk_header.sth_stk_type);
+                     var_det_mesg := true;
+                  end if;
+                  if not(rcd_material.mde_mat_usage in ('MPO','PCH','RLS')) then
+                     psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') usage must be MPO, PCH or RLS');
+                     var_det_mesg := true;
+                  end if;
+                  if rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_status != '*DEL' and rcd_material.mde_mat_status != '*ACTIVE' then
+                     psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') status must be *CHG, *DEL or *ACTIVE');
+                     var_det_mesg := true;
+                  end if;
+               end if;
+               close csr_material;
             end if;
-         end if;
-         close csr_material;
-         if var_det_qnty is null or var_det_qnty < 0 then
-            psa_gen_function.add_mesg_data('Material quantity ('||xslProcessor.valueOf(obj_det_node,'@MATQTY')||') must be a number greater than or equal to zero');
+            begin
+               if substr(var_det_qtxt,length(var_det_qtxt),1) = '-' then
+                  var_det_qnty := to_number('-' || substr(var_det_qtxt,1,length(var_det_qtxt) - 1));
+               else
+                  var_det_qnty := to_number(var_det_qtxt);
+               end if;
+            exception
+               when others then
+                  null;
+            end;
+            if var_det_qnty is null then
+               psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material quantity - invalid number');
+               var_det_mesg := true;
+            elsif var_det_qnty < 0 then
+               psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material quantity must be a number greater than or equal to zero');
+               var_det_mesg := true;
+            end if;
+            if var_det_mesg = false and var_det_qnty > 0 then
+               tbl_detl(tbl_detl.count+1).std_stk_code := rcd_psa_stk_header.sth_stk_code;
+               tbl_detl(tbl_detl.count).std_mat_code := var_det_code;
+               tbl_detl(tbl_detl.count).std_mat_qnty := var_det_qnty;
+            end if;
          end if;
       end loop;
+      if psa_gen_function.get_mesg_count = 0 then
+         if tbl_detl.count = 0 then
+            psa_gen_function.add_mesg_data('At least one material with quantity must exist in the stocktake file');
+         end if;
+      end if;
       if psa_gen_function.get_mesg_count != 0 then
          return;
       end if;
@@ -472,17 +535,13 @@ create or replace package body psa_app.psa_stk_function as
       end if;
 
       /*-*/
-      /* Retrieve and insert the stocktake detail data
+      /* Retrieve and insert the detail data when required
       /*-*/
-      obj_det_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/STKDET');
-      for idx in 0..xmlDom.getLength(obj_det_list)-1 loop
-         obj_det_node := xmlDom.item(obj_det_list,idx);
-         rcd_psa_stk_detail.std_stk_code := rcd_psa_stk_header.sth_stk_code;
-         rcd_psa_stk_detail.std_mat_code := psa_from_xml(xslProcessor.valueOf(obj_det_node,'@MATCDE'));
-         rcd_psa_stk_detail.std_mat_qnty := psa_to_number(xslProcessor.valueOf(obj_det_node,'@MATQTY'));
-         if rcd_psa_stk_detail.std_mat_qnty > 0 then
-            insert into psa_stk_detail values rcd_psa_stk_detail;
-         end if;
+      for idx in 1..tbl_detl.count loop
+         rcd_psa_stk_detail.std_stk_code := tbl_detl(idx).std_stk_code;
+         rcd_psa_stk_detail.std_mat_code := tbl_detl(idx).std_mat_code;
+         rcd_psa_stk_detail.std_mat_qnty := tbl_detl(idx).std_mat_qnty;
+         insert into psa_stk_detail values rcd_psa_stk_detail;
       end loop;
 
       /*-*/
@@ -712,7 +771,7 @@ create or replace package body psa_app.psa_stk_function as
       /*-*/
       /* Pipe the stocktake XML
       /*-*/
-      var_output := '<STKHDR STKCDE="'||psa_to_xml(rcd_retrieve.sth_stk_code||' - (Created by '||rcd_retrieve.sth_upd_user||' on '||to_char(rcd_retrieve.sth_upd_date,'yyyy/mm/dd')||')')||'"';
+      var_output := '<STKHDR STKCDE="'||psa_to_xml(rcd_retrieve.sth_stk_code||' - (Loaded by '||rcd_retrieve.sth_upd_user||' on '||to_char(rcd_retrieve.sth_upd_date,'yyyy/mm/dd')||')')||'"';
       var_output := var_output||' STKNAM="'||psa_to_xml(rcd_retrieve.sth_stk_name)||'"';
       var_output := var_output||' STKTIM="'||psa_to_xml(rcd_retrieve.sth_stk_time)||'"/>';
       pipe row(psa_xml_object(var_output));
