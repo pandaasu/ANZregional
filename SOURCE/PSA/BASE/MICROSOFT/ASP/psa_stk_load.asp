@@ -427,142 +427,44 @@ sub PaintFunction()%>
          cstrDefineCode = '';
          document.getElementById('DEF_StkName').value = '';
          document.getElementById('DEF_StkTime').value = '';
-         var objTabHead = document.getElementById('tabHeadMatl');
-         var objTabBody = document.getElementById('tabBodyMatl');
-         objTabHead.style.tableLayout = 'auto';
-         objTabBody.style.tableLayout = 'auto';
-         var objRow;
-         var objCell;
-         var objInput;
-         for (var i=objTabHead.rows.length-1;i>=0;i--) {
-            objTabHead.deleteRow(i);
-         }
-         for (var i=objTabBody.rows.length-1;i>=0;i--) {
-            objTabBody.deleteRow(i);
-         }
-         objRow = objTabHead.insertRow(-1);
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Material&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'left';
-         objCell.innerHTML = '&nbsp;Name&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Type&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Usage&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Quantity&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
-         objCell = objRow.insertCell(-1);
-         objCell.colSpan = 1;
-         objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;';
-         objCell.className = 'clsLabelHB';
-         objCell.style.whiteSpace = 'nowrap';
+         document.getElementById('DEF_StkFile').value = '';
+         var strStkHedr = '1';
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STKHDR') {
                cstrDefineCode = objElements[i].getAttribute('STKCDE');
                document.getElementById('DEF_StkName').value = objElements[i].getAttribute('STKNAM');
                document.getElementById('DEF_StkTime').value = objElements[i].getAttribute('STKTIM');
-            } else if (objElements[i].nodeName == 'STKDET') {
-               objRow = objTabBody.insertRow(-1);
-               objRow.setAttribute('matcde',objElements[i].getAttribute('MATCDE'));
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MATCDE')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MATNAM')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MATTYP')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('MATUSG')+'&nbsp;';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objCell = objRow.insertCell(-1);
-               objCell.colSpan = 1;
-               objCell.align = 'center';
-               objCell.className = 'clsLabelFN';
-               objCell.style.whiteSpace = 'nowrap';
-               objInput = document.createElement('input');
-               objInput.type = 'text';
-               objInput.value = objElements[i].getAttribute('MATQTY');
-               objInput.id = objElements[i].getAttribute('MATCDE')+'_QTY';
-               objInput.size = 9;
-               objInput.maxLength = 9;
-               objInput.align = 'left';
-               objInput.className = 'clsInputBN';
-               objInput.onfocus = function() {setSelect(this);};
-               objInput.onblur = function() {validateNumber(this,0,false);};
-               objCell.appendChild(objInput);
             }
          }
-         if (objTabBody.rows.length == 0) {
-            objRow = objTabBody.insertRow(-1);
-            objCell = objRow.insertCell(-1);
-            objCell.colSpan = 5;
-            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
-            objCell.className = 'clsLabelFB';
-            objCell.style.whiteSpace = 'nowrap';
-            setScrollable('HeadMatl','BodyMatl','horizontal');
-            objTabHead.rows(0).cells[5].style.width = 16;
-            objTabHead.style.tableLayout = 'auto';
-            objTabBody.style.tableLayout = 'auto';
+         var objStkHedr = document.getElementsByName('DEF_StkHedr');
+         if (strStkHedr == '1') {
+            objStkHedr[0].checked = false;
+            objStkHedr[1].checked = true;
          } else {
-            setScrollable('HeadMatl','BodyMatl','horizontal');
-            objTabHead.rows(0).cells[5].style.width = 16;
-            objTabHead.style.tableLayout = 'fixed';
-            objTabBody.style.tableLayout = 'fixed';
+            objStkHedr[0].checked = true;
+            objStkHedr[1].checked = false;
          }
          document.getElementById('DEF_StkName').focus();
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
+      if (document.getElementById('DEF_StkFile').value == '') {
+         alert('Stocktake file must be specified');
+         return;
+      }
+      var objStkHedr = document.getElementsByName('DEF_StkHedr');
+      var strStkHedr = '*NO';
+      if (objStkHedr[1].checked == true) {
+         strStkHedr = '*YES';
+      }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF" STKTYP="'+fixXML(cstrDefineType)+'"';
       strXML = strXML+' STKCDE="'+fixXML(cstrDefineCode)+'"';
       strXML = strXML+' STKNAM="'+fixXML(document.getElementById('DEF_StkName').value)+'"';
       strXML = strXML+' STKTIM="'+fixXML(document.getElementById('DEF_StkTime').value)+'"';
       strXML = strXML+'>';
-      var objTable = document.getElementById('tabBodyMatl');
-      var objRow;
-      for (var i=0;i<objTable.rows.length;i++) {
-         objRow = objTable.rows[i];
-         if (document.getElementById(objRow.getAttribute('matcde')+'_QTY').value != '' && document.getElementById(objRow.getAttribute('matcde')+'_QTY').value != '0') {
-            strXML = strXML+'<STKDET MATCDE="'+fixXML(objRow.getAttribute('matcde'))+'" MATQTY="'+fixXML(document.getElementById(objRow.getAttribute('matcde')+'_QTY').value)+'"/>';
-         }
-      }
+      strXML = strXML+loadStreamXML(document.getElementById('DEF_StkFile').value,strStkHedr);
       strXML = strXML+'</PSA_REQUEST>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -809,7 +711,7 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% height=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
+   <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Stocktake Define</nobr></td>
@@ -829,31 +731,26 @@ sub PaintFunction()%>
             <input class="clsInputNN" type="text" name="DEF_StkTime" size="16" maxlength="16" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
-      </tr>
-      </table></nobr></td></tr>
-      <tr height=100%>
-         <td align=center colspan=2 nowrap><nobr>
-            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
-               <tr>
-                  <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsFixed" id="conHeadMatl">
-                     <table class="clsTableHead" id="tabHeadMatl" align=left cols=1 cellpadding="0" cellspacing="1">
-                     </table>
-                     </div>
-                  </nobr></td>
-               </tr>
-               <tr height=100%>
-                  <td align=center colspan=1 nowrap><nobr>
-                     <div class="clsScroll" id="conBodyMatl">
-                     <table class="clsTableBody" id="tabBodyMatl" align=left cols=1 cellpadding="0" cellspacing="1"></table>
-                     </div>
-                  </nobr></td>
-               </tr>
-            </table>
+     <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stocktake Data File:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="file" name="DEF_StkFile" size="64" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Stocktake Data Header:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left colspan=1 nowrap><nobr>
+            <input type="radio" name="DEF_StkHedr" value="*NO">File contains no header line (all data lines used)&nbsp;
+            <input type="radio" name="DEF_StkHedr" checked value="*YES">File contains header line (first data line is ignored)&nbsp;
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <font class="clsWorking">&nbsp;The text file must be a tab delimited file (material code, material description, material quantity)&nbsp;</font>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>

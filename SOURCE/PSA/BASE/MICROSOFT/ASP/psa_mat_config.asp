@@ -706,7 +706,7 @@ sub PaintFunction()%>
                         objRow.setAttribute('ptycde',strPrdType);
                         objRow.setAttribute('lincde','*NONE');
                         objCell = objRow.insertCell(-1);
-                        objCell.colSpan = 7;
+                        objCell.colSpan = 5;
                         objCell.align = 'center';
                         objCell.vAlign = 'center';
                         objCell.className = 'clsLabelHB';
@@ -799,7 +799,7 @@ sub PaintFunction()%>
                objCell.className = 'clsLabelBN';
                objCell.innerHTML = '';
                objCell.style.whiteSpace = 'nowrap';
-               if (strPrdType == '*FILL') {
+               if (strPrdType == '*FILL' || strPrdType == '*PACK') {
                   objCell = objRow.insertCell(-1);
                   objCell.colSpan = 1;
                   objCell.align = 'left';
@@ -1222,6 +1222,15 @@ sub PaintFunction()%>
                   if (objSelect.selectedIndex == -1 || objSelect.options[objSelect.selectedIndex].value == '*NONE') {
                      if (strMessage != '') {strMessage = strMessage + '\r\n';}
                      strMessage = strMessage + 'Packing line configuration ('+objRow.getAttribute('lincde')+' / '+objRow.getAttribute('lcocde')+') run rate must be selected';
+                  } else {
+                     if (document.getElementById('LCOEFF_'+intRowCnt).value == '' || document.getElementById('LCOEFF_'+intRowCnt).value < 0 || document.getElementById('LCOEFF_'+intRowCnt).value > 100) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing line configuration ('+objRow.getAttribute('lincde')+' / '+objRow.getAttribute('lcocde')+') override efficiency percentage must be in range 0 to 100';
+                     }
+                     if (document.getElementById('LCOWAS_'+intRowCnt).value == '' || document.getElementById('LCOWAS_'+intRowCnt).value < 0 || document.getElementById('LCOWAS_'+intRowCnt).value > 100) {
+                        if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                        strMessage = strMessage + 'Packing line configuration ('+objRow.getAttribute('lincde')+' / '+objRow.getAttribute('lcocde')+') override wastage percentage must be in range 0 to 100';
+                     }
                   }
                }
             }
@@ -1503,8 +1512,8 @@ sub PaintFunction()%>
                      strXML = strXML+' LCODFT="'+fixXML('1')+'"';
                   }
                   strXML = strXML+' LCORRA="'+fixXML(objSelect.options[objSelect.selectedIndex].value)+'"';
-                  strXML = strXML+' LCOEFF="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rraeff'))+'"';
-                  strXML = strXML+' LCOWAS="'+fixXML(objSelect.options[objSelect.selectedIndex].getAttribute('rrawas'))+'"';
+                  strXML = strXML+' LCOEFF="'+fixXML(document.getElementById('LCOEFF_'+intRowCnt).value)+'"';
+                  strXML = strXML+' LCOWAS="'+fixXML(document.getElementById('LCOWAS_'+intRowCnt).value)+'"';
                   strXML = strXML+'/>';
                }
             }
@@ -1661,7 +1670,7 @@ sub PaintFunction()%>
          document.getElementById('LCORRA_'+strLinCnt).disabled = true;
          document.getElementById('RRAEFF_'+strLinCnt).disabled = true;
          document.getElementById('RRAWAS_'+strLinCnt).disabled = true;
-         if (strPtyCde == '*FILL') {
+         if (strPtyCde == '*FILL' || strPtyCde == '*PACK') {
             document.getElementById('LCOEFF_'+strLinCnt).disabled = true;
             document.getElementById('LCOWAS_'+strLinCnt).disabled = true;
          }
@@ -1673,7 +1682,7 @@ sub PaintFunction()%>
          document.getElementById('LCORRA_'+strLinCnt).disabled = false;
          document.getElementById('RRAEFF_'+strLinCnt).disabled = false;
          document.getElementById('RRAWAS_'+strLinCnt).disabled = false;
-         if (strPtyCde == '*FILL') {
+         if (strPtyCde == '*FILL' || strPtyCde == '*PACK') {
             document.getElementById('LCOEFF_'+strLinCnt).disabled = false;
             document.getElementById('LCOWAS_'+strLinCnt).disabled = false;
          }
@@ -1685,7 +1694,7 @@ sub PaintFunction()%>
       var strLinCnt = objSelect.parentNode.parentNode.getAttribute('lincnt');
       document.getElementById('RRAEFF_'+strLinCnt).innerHTML = objSelect.options[objSelect.selectedIndex].getAttribute('rraeff');
       document.getElementById('RRAWAS_'+strLinCnt).innerHTML = objSelect.options[objSelect.selectedIndex].getAttribute('rrawas');
-      if (strPtyCde == '*FILL') {
+      if (strPtyCde == '*FILL' || strPtyCde == '*PACK') {
          document.getElementById('LCOEFF_'+strLinCnt).value = objSelect.options[objSelect.selectedIndex].getAttribute('rraeff');
          document.getElementById('LCOWAS_'+strLinCnt).value = objSelect.options[objSelect.selectedIndex].getAttribute('rrawas');
       }
@@ -2154,15 +2163,18 @@ sub PaintFunction()%>
                </tr>
                <tr>
                   <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-                     <table id="PACK_LinList" class="clsGrid02" align=center valign=top cols=5 cellpadding=0 cellspacing=1>
+                     <table id="PACK_LinList" class="clsGrid02" align=center valign=top cols=7 cellpadding=0 cellspacing=1>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="3" nowrap><nobr>Packing Line Configurations</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Run Rate</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="2" nowrap><nobr>Override</nobr></td>
                         </tr>
                         <tr>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="left" valign="center" colspan="1" nowrap><nobr>Line Configuration</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Default</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Run Rate</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
+                           <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Efficiency %</nobr></td>
                            <td class="clsLabelBB" style="background-color:#efefef;color:#000000;border:#708090 1px solid;padding-left:2px;padding-right:2px;" align="center" valign="center" colspan="1" nowrap><nobr>Wastage %</nobr></td>
                         </tr>
