@@ -575,14 +575,14 @@ sub PaintFunction()%>
                if (cstrDefineType != 'FERT') {
                   document.getElementById('DEF_PsaUcas').disabled = true;
                }
-               if (cstrDefineUsag == 'TDU') {
+               if (cstrDefineUsag == 'TDU' || cstrDefineUsag == 'RSU') {
                   document.getElementById('TDU_Data').style.display = 'block';
                }
             } else if (objElements[i].nodeName == 'MATPTY') {
                strPrdType = objElements[i].getAttribute('PTYCDE');
                strLinCode = '';
                if (objElements[i].getAttribute('PTYCDE') == '*FILL') {
-                  if (cstrDefineUsag == 'TDU') {
+                  if (cstrDefineUsag == 'TDU' || cstrDefineUsag == 'RSU') {
                      if (objElements[i].getAttribute('MPRMAT') != '*NONE') {
                         document.getElementById('FILL_Data').style.display = 'block';
                         cstrTduFill = '1';
@@ -611,7 +611,7 @@ sub PaintFunction()%>
                      objFillPrdLine.style.display = 'none';
                   }
                } else if (objElements[i].getAttribute('PTYCDE') == '*PACK') {
-                  if (cstrDefineUsag == 'TDU') {
+                  if (cstrDefineUsag == 'TDU' || cstrDefineUsag == 'RSU') {
                      if (objElements[i].getAttribute('MPRMAT') != '*NONE') {
                         document.getElementById('PACK_Data').style.display = 'block';
                         cstrTduPack = '1';
@@ -1002,6 +1002,18 @@ sub PaintFunction()%>
             bolPack = true;
          }
          bolComp = true;
+      } else if (cstrDefineUsag == 'RSU') {
+         if (document.getElementById('DEF_TduFill').checked == false && document.getElementById('DEF_TduPack').checked == false) {
+            alert('RSU material must have Filling and/or Packing selected');
+            return;
+         }
+         if (document.getElementById('DEF_TduFill').checked == true) {
+            bolFill = true;
+         }
+         if (document.getElementById('DEF_TduPack').checked == true) {
+            bolPack = true;
+         }
+         bolComp = true;
       } else if (cstrDefineUsag == 'MPO') {
          bolFill = true;
          bolComp = true;
@@ -1273,16 +1285,28 @@ sub PaintFunction()%>
                         objComps[objComps.length] = objRow.getAttribute('comcde');
                      } else {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU filling and packing';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU filling and packing';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for RSU filling and packing';
+                        }
                      }
                      if (objRow.getAttribute('comcde') != cstrDefineCode) {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must be the same as the material for TDU filling and packing';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must be the same as the material for TDU filling and packing';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must be the same as the material for RSU filling and packing';
+                        }
                      }
                      intRowCnt = objRow.getAttribute('comcnt');
                      if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value != 1) {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be 1 for TDU filling and packing';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be 1 for TDU filling and packing';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be 1 for RSU filling and packing';
+                        }
                      }
                   }
                }
@@ -1302,16 +1326,28 @@ sub PaintFunction()%>
                         objComps[objComps.length] = objRow.getAttribute('comcde');
                      } else {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU packing only';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for TDU packing only';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') already specified for RSU packing only';
+                        }
                      }
                      if (objRow.getAttribute('comcde') == cstrDefineCode) {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must not be the same as the material for TDU packing only';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must not be the same as the material for TDU packing only';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') must not be the same as the material for RSU packing only';
+                        }
                      }
                      intRowCnt = objRow.getAttribute('comcnt');
                      if (document.getElementById('COMQTY_'+intRowCnt).value == '' || document.getElementById('COMQTY_'+intRowCnt).value < 1) {
                         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-                        strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero for TDU packing only';
+                        if (cstrDefineUsag == 'TDU') {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero for TDU packing only';
+                        } else {
+                           strMessage = strMessage + 'Packing component ('+objRow.getAttribute('comcde')+') quantity must be greater than zero for RSU packing only';
+                        }
                      }
                   }
                }
@@ -1761,6 +1797,7 @@ sub PaintFunction()%>
          var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
          strXML = strXML+'<PSA_REQUEST ACTION="*CHKCOM"';
          strXML = strXML+' PTYCDE="'+fixXML(strType)+'"';
+         strXML = strXML+' MATUSG="'+fixXML(cstrDefineUsag)+'"';
          strXML = strXML+' COMCDE="'+fixXML(strComCode)+'"';
          strXML = strXML+' COMQTY="'+fixXML(strComQnty)+'"';
          strXML = strXML+'/>';
