@@ -20,6 +20,7 @@ create or replace package psa_app.psa_stk_function as
     -------   ------         -----------
     2009/12   Steve Gregan   Created
     2011/06   Steve Gregan   Modified to tab separated file load
+                             Added RSU material usage to stocktake
 
    *******************************************************************************/
 
@@ -475,8 +476,8 @@ create or replace package body psa_app.psa_stk_function as
                      psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') type must be '||rcd_psa_stk_header.sth_stk_type);
                      var_det_mesg := true;
                   end if;
-                  if not(rcd_material.mde_mat_usage in ('MPO','PCH','RLS')) then
-                     psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') usage must be MPO, PCH or RLS');
+                  if not(rcd_material.mde_mat_usage in ('RSU','MPO','PCH','RLS')) then
+                     psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material code ('||var_det_code||') usage must be RSU, MPO, PCH or RLS');
                      var_det_mesg := true;
                   end if;
                   if rcd_material.mde_mat_status != '*CHG' and rcd_material.mde_mat_status != '*DEL' and rcd_material.mde_mat_status != '*ACTIVE' then

@@ -107,7 +107,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.gross_weight,
                 t01.net_weight,
                 t01.bds_pce_factor_from_base_uom,
-                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO','TDU'),'VERP',decode(substr(t01.bds_material_desc_en,1,3),'GUS','GUSSET',substr(t01.bds_material_desc_en,1,3)),'*NONE') material_usage,
+                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO',t01.mars_retail_sales_unit_flag,'X','RSU','TDU'),'VERP',decode(substr(t01.bds_material_desc_en,1,3),'GUS','GUSSET',substr(t01.bds_material_desc_en,1,3)),'*NONE') material_usage,
                 t02.sap_prodctn_line_code,
                 t03.*,
                 t04.lli_lin_code,
@@ -145,7 +145,7 @@ create or replace package body psa_app.psa_mat_function as
          select t01.*
            from psa_mat_defn t01
           where t01.mde_mat_type = 'FERT'
-            and t01.mde_mat_usage in ('TDU','MPO')
+            and t01.mde_mat_usage in ('TDU','MPO','RSU')
             and (t01.mde_mat_status != '*INACTIVE' and t01.mde_mat_status != '*DEL')
             and not(t01.mde_sap_code in (select sap_material_code
                                            from bds.bds_material_plant_mfanz
@@ -267,6 +267,41 @@ create or replace package body psa_app.psa_mat_function as
             insert into psa_mat_defn values rcd_psa_mat_defn;
 
             if rcd_psa_mat_defn.mde_mat_usage = 'TDU' then
+               if rcd_bds_data.lde_prd_type is null or rcd_bds_data.lde_prd_type = '*FILL' then
+                  rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+                  rcd_psa_mat_prod.mpr_prd_type := '*FILL';
+                  rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_req_flag := '1';
+                  rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+                  rcd_psa_mat_prod.mpr_cas_pallet := 0;
+                  rcd_psa_mat_prod.mpr_bch_quantity := 0;
+                  rcd_psa_mat_prod.mpr_yld_percent := 100;
+                  rcd_psa_mat_prod.mpr_yld_value := 0;
+                  rcd_psa_mat_prod.mpr_pck_percent := 100;
+                  rcd_psa_mat_prod.mpr_pck_weight := round(rcd_psa_mat_defn.mde_net_weight / rcd_psa_mat_defn.mde_psa_ucas, 3);
+                  rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  rcd_psa_mat_prod.mpr_psa_weight := 0;
+                  insert into psa_mat_prod values rcd_psa_mat_prod;
+               else
+                  rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
+                  rcd_psa_mat_prod.mpr_prd_type := '*PACK';
+                  rcd_psa_mat_prod.mpr_sch_priority := 1;
+                  rcd_psa_mat_prod.mpr_req_flag := '1';
+                  rcd_psa_mat_prod.mpr_dft_line := null;
+                  if rcd_bds_data.lde_prd_type = '*PACK' then
+                     rcd_psa_mat_prod.mpr_dft_line := rcd_bds_data.lli_lin_code;
+                  end if;
+                  rcd_psa_mat_prod.mpr_cas_pallet := 0;
+                  rcd_psa_mat_prod.mpr_bch_quantity := 0;
+                  rcd_psa_mat_prod.mpr_yld_percent := 0;
+                  rcd_psa_mat_prod.mpr_yld_value := 1;
+                  rcd_psa_mat_prod.mpr_pck_percent := 0;
+                  rcd_psa_mat_prod.mpr_pck_weight := 0;
+                  rcd_psa_mat_prod.mpr_bch_weight := 0;
+                  rcd_psa_mat_prod.mpr_psa_weight := 0;
+                  insert into psa_mat_prod values rcd_psa_mat_prod;
+               end if;
+            elsif rcd_psa_mat_defn.mde_mat_usage = 'RSU' then
                if rcd_bds_data.lde_prd_type is null or rcd_bds_data.lde_prd_type = '*FILL' then
                   rcd_psa_mat_prod.mpr_mat_code := rcd_psa_mat_defn.mde_mat_code;
                   rcd_psa_mat_prod.mpr_prd_type := '*FILL';
@@ -745,7 +780,7 @@ create or replace package body psa_app.psa_mat_function as
            from psa_mat_defn t01
           where t01.mde_mat_status in ('*ACTIVE','*CHG','*DEL')
           order by t01.mde_mat_type asc,
-                   decode(t01.mde_mat_usage,'TDU','1','MPO','2','PCH','3','RLS','4','GUSSET','5',t01.mde_mat_usage) asc,
+                   decode(t01.mde_mat_usage,'TDU','1','RSU','2','MPO','3','PCH','4','RLS','5','GUSSET','6',t01.mde_mat_usage) asc,
                    t01.mde_mat_code asc;
       rcd_defn csr_defn%rowtype;
 
@@ -1239,6 +1274,7 @@ create or replace package body psa_app.psa_mat_function as
           where t01.pty_prd_type = t02.mpr_prd_type(+)
             and rcd_retrieve.mde_mat_code = t02.mpr_mat_code(+)
             and ((rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'TDU' and t01.pty_prd_type in ('*FILL','*PACK')) or
+                 (rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'RSU' and t01.pty_prd_type in ('*FILL','*PACK')) or
                  (rcd_retrieve.mde_mat_type = 'FERT' and rcd_retrieve.mde_mat_usage = 'MPO' and t01.pty_prd_type in ('*FILL')) or
                  (rcd_retrieve.mde_mat_type = 'VERP' and rcd_retrieve.mde_mat_usage = 'PCH' and t01.pty_prd_type in ('*FORM')))
           order by t01.pty_prd_type asc;
@@ -1626,6 +1662,7 @@ create or replace package body psa_app.psa_mat_function as
       var_bolComp := false;
       var_bolRflg := false;
       if (rcd_retrieve.mde_mat_usage = 'TDU' or
+          rcd_retrieve.mde_mat_usage = 'RSU' or
           rcd_retrieve.mde_mat_usage = 'MPO' or
           rcd_retrieve.mde_mat_usage = 'PCH') then
          obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/MATPTY');
@@ -1713,6 +1750,16 @@ create or replace package body psa_app.psa_mat_function as
             if var_bolRflg = false then
                psa_gen_function.add_mesg_data('TDU material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling or Packing selected for requirements');
             end if;
+         elsif rcd_retrieve.mde_mat_usage = 'RSU' then
+            if var_bolFill = false and var_bolPack = false then
+               psa_gen_function.add_mesg_data('RSU material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling and/or Packing data');
+            end if;
+            if var_bolForm = true then
+               psa_gen_function.add_mesg_data('RSU material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Forming data');
+            end if;
+            if var_bolRflg = false then
+               psa_gen_function.add_mesg_data('RSU material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling or Packing selected for requirements');
+            end if;
          elsif rcd_retrieve.mde_mat_usage = 'MPO' then
             if var_bolFill = false then
                psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Filling data');
@@ -1731,7 +1778,7 @@ create or replace package body psa_app.psa_mat_function as
                psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must NOT have Filling or Packing data');
             end if;
             if var_bolRflg = false then
-               psa_gen_function.add_mesg_data('MPO material ('||rcd_psa_mat_defn.mde_mat_code||') must have Forming selected for requirements');
+               psa_gen_function.add_mesg_data('PCH material ('||rcd_psa_mat_defn.mde_mat_code||') must have Forming selected for requirements');
             end if;
          end if;
       end if;
@@ -2073,6 +2120,7 @@ create or replace package body psa_app.psa_mat_function as
       var_output varchar2(2000 char);
       var_found boolean;
       var_pty_code varchar2(32);
+      var_mat_usag varchar2(32);
       var_com_code varchar2(32);
       var_com_qnty varchar2(32);
 
@@ -2109,6 +2157,7 @@ create or replace package body psa_app.psa_mat_function as
       obj_psa_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST');
       var_action := upper(xslProcessor.valueOf(obj_psa_request,'@ACTION'));
       var_pty_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@PTYCDE'));
+      var_mat_usag := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@MATUSG'));
       var_com_code := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMCDE'));
       var_com_qnty := psa_from_xml(xslProcessor.valueOf(obj_psa_request,'@COMQTY'));
       xmlDom.freeDocument(obj_xml_document);
@@ -2140,8 +2189,11 @@ create or replace package body psa_app.psa_mat_function as
             if var_pty_code = '*FILL' and (rcd_retrieve.mde_mat_type != 'VERP' or rcd_retrieve.mde_mat_usage != 'PCH') then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / PCH for filling component');
             end if;
-            if var_pty_code = '*PACK' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'MPO') then
-               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO for packing component');
+            if var_pty_code = '*PACK' and var_mat_usag = 'TDU' and (rcd_retrieve.mde_mat_type != 'FERT' or (rcd_retrieve.mde_mat_usage != 'RSU' and rcd_retrieve.mde_mat_usage != 'MPO')) then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO or FERT / RSU for packing component');
+            end if;
+            if var_pty_code = '*PACK' and var_mat_usag = 'RSU' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'RSU') then
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO or FERT / RSU for packing component');
             end if;
             if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or (rcd_retrieve.mde_mat_usage != 'RLS' and rcd_retrieve.mde_mat_usage != 'GUSSET')) then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS or VERP / GUSSET for forming component');

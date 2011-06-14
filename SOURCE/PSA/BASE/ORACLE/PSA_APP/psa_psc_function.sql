@@ -20,6 +20,7 @@ create or replace package psa_app.psa_psc_function as
     -------   ------         -----------
     2009/12   Steve Gregan   Created
     2011/03   Steve Gregan   Added PSA batch weight override
+    2011/06   Steve Gregan   Added RSU to SAP data interface
 
    *******************************************************************************/
 
@@ -6890,6 +6891,7 @@ create or replace package body psa_app.psa_psc_function as
       var_log_prefix varchar2(256);
       var_log_search varchar2(256);
       var_int_date varchar2(14);
+      var_use_flag boolean;
       var_count integer;
       type typ_outp is table of varchar2(4000) index by binary_integer;
       tbl_outp typ_outp;
@@ -6907,6 +6909,7 @@ create or replace package body psa_app.psa_psc_function as
       cursor csr_data is
          select t01.*,
                 t02.mde_sap_code,
+                t02.mde_mat_usage,
                 t02.mde_mat_uom
            from psa_psc_actv t01,
                 psa_mat_defn t02
@@ -7009,10 +7012,16 @@ create or replace package body psa_app.psa_psc_function as
          if csr_data%notfound then
             exit;
          end if;
-         var_count := var_count + 1;
-         tbl_outp(tbl_outp.count + 1) := 'CTL009'||var_int_date;
-         tbl_outp(tbl_outp.count + 1) := 'HDR'||rcd_data.mde_sap_code||rpad(' ',18-length(rcd_data.mde_sap_code),' ')||'NZ01NZ01      '||to_char(rcd_data.psa_mat_sch_qty,'fm000000000000000')||rcd_data.mde_mat_uom||rpad(' ',3-length(rcd_data.mde_mat_uom),' ')||'0001';
-         tbl_outp(tbl_outp.count + 1) := 'DET0010    '||to_char(rcd_data.psa_act_end_time,'yyyymmddhh24miss')||to_char(rcd_data.psa_act_str_time,'yyyymmddhh24miss');
+         var_use_flag := true;
+         if rcd_data.mde_mat_usage = 'RSU' and psa_prd_type != '*FILL' then
+            var_use_flag := false;
+         end if;
+         if var_use_flag = true then
+            var_count := var_count + 1;
+            tbl_outp(tbl_outp.count + 1) := 'CTL009'||var_int_date;
+            tbl_outp(tbl_outp.count + 1) := 'HDR'||rcd_data.mde_sap_code||rpad(' ',18-length(rcd_data.mde_sap_code),' ')||'NZ01NZ01      '||to_char(rcd_data.psa_mat_sch_qty,'fm000000000000000')||rcd_data.mde_mat_uom||rpad(' ',3-length(rcd_data.mde_mat_uom),' ')||'0001';
+            tbl_outp(tbl_outp.count + 1) := 'DET0010    '||to_char(rcd_data.psa_act_end_time,'yyyymmddhh24miss')||to_char(rcd_data.psa_act_str_time,'yyyymmddhh24miss');
+         end if;
       end loop;
       close csr_data;
 
