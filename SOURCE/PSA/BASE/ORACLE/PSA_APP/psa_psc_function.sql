@@ -7013,7 +7013,7 @@ create or replace package body psa_app.psa_psc_function as
             exit;
          end if;
          var_use_flag := true;
-         if rcd_data.mde_mat_usage = 'RSU' and psa_prd_type != '*FILL' then
+         if rcd_data.mde_mat_usage = 'RSU' and rcd_data.psa_prd_type != '*FILL' then
             var_use_flag := false;
          end if;
          if var_use_flag = true then
