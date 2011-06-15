@@ -1805,6 +1805,7 @@ create or replace package body psa_app.psa_mat_function as
       /* Retrieve and insert the material child data when required
       /*-*/
       if (rcd_retrieve.mde_mat_usage = 'TDU' or
+          rcd_retrieve.mde_mat_usage = 'RSU' or
           rcd_retrieve.mde_mat_usage = 'MPO' or
           rcd_retrieve.mde_mat_usage = 'PCH') then
          obj_pty_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PSA_REQUEST/MATPTY');
@@ -2193,7 +2194,7 @@ create or replace package body psa_app.psa_mat_function as
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO or FERT / RSU for packing component');
             end if;
             if var_pty_code = '*PACK' and var_mat_usag = 'RSU' and (rcd_retrieve.mde_mat_type != 'FERT' or rcd_retrieve.mde_mat_usage != 'RSU') then
-               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / MPO or FERT / RSU for packing component');
+               psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be FERT / RSU for packing component');
             end if;
             if var_pty_code = '*FORM' and (rcd_retrieve.mde_mat_type != 'VERP' or (rcd_retrieve.mde_mat_usage != 'RLS' and rcd_retrieve.mde_mat_usage != 'GUSSET')) then
                psa_gen_function.add_mesg_data('Material ('||var_com_code||') must be VERP / RLS or VERP / GUSSET for forming component');
