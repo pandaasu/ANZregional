@@ -107,7 +107,7 @@ create or replace package body psa_app.psa_mat_function as
                 t01.gross_weight,
                 t01.net_weight,
                 t01.bds_pce_factor_from_base_uom,
-                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO',t01.mars_retail_sales_unit_flag,'X','RSU','TDU'),'VERP',decode(substr(t01.bds_material_desc_en,1,3),'GUS','GUSSET',substr(t01.bds_material_desc_en,1,3)),'*NONE') material_usage,
+                decode(t01.material_type,'FERT',decode(t01.mars_intrmdt_prdct_compnt_flag,'X','MPO',decode(t01.mars_retail_sales_unit_flag,'X','RSU','TDU')),'VERP',decode(substr(t01.bds_material_desc_en,1,3),'GUS','GUSSET',substr(t01.bds_material_desc_en,1,3)),'*NONE') material_usage,
                 t02.sap_prodctn_line_code,
                 t03.*,
                 t04.lli_lin_code,
