@@ -326,7 +326,7 @@ create or replace package body psa_app.psa_req_function as
       var_confirm varchar2(32);
       var_found boolean;
       var_det_data varchar2(2000);
-      var_det_char varchar2(1);
+      var_det_char varchar2(1 char);
       var_det_valu varchar2(2000);
       var_det_indx number;
       var_det_mesg boolean;
@@ -453,7 +453,7 @@ create or replace package body psa_app.psa_req_function as
                   elsif var_det_indx = 2 then
                      var_det_name := rtrim(ltrim(var_det_valu,'"'),'"');
                   elsif var_det_indx = 3 then
-                     var_det_qnty := rtrim(ltrim(var_det_valu,'"'),'"');
+                     var_det_qtxt := replace(rtrim(ltrim(var_det_valu,'"'),'"'),',',null);
                   end if;
                   var_det_indx := var_det_indx + 1;
                   var_det_valu := null;

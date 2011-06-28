@@ -334,12 +334,12 @@ create or replace package body psa_app.psa_stk_function as
       var_found boolean;
       var_det_line varchar2(15);
       var_det_data varchar2(2000);
-      var_det_char varchar2(1);
+      var_det_char varchar2(1 char);
       var_det_valu varchar2(2000);
       var_det_indx number;
       var_det_mesg boolean;
       var_det_code varchar2(32);
-      var_det_name varchar2(128);
+      var_det_name varchar2(128 char);
       var_det_qtxt varchar2(64);
       var_det_qnty number;
       type typ_detl is table of psa_stk_detail%rowtype index by binary_integer;
@@ -433,6 +433,7 @@ create or replace package body psa_app.psa_stk_function as
             var_det_code := null;
             var_det_name := null;
             var_det_qtxt := null;
+            var_det_qnty := null;
             for idy in 1..length(var_det_data) loop
                var_det_char := substr(var_det_data,idy,1);
                if var_det_char = chr(9) then
@@ -441,7 +442,7 @@ create or replace package body psa_app.psa_stk_function as
                   elsif var_det_indx = 2 then
                      var_det_name := rtrim(ltrim(var_det_valu,'"'),'"');
                   elsif var_det_indx = 3 then
-                     var_det_qnty := rtrim(ltrim(var_det_valu,'"'),'"');
+                     var_det_qtxt := replace(rtrim(ltrim(var_det_valu,'"'),'"'),',',null);
                   end if;
                   var_det_indx := var_det_indx + 1;
                   var_det_valu := null;
@@ -495,12 +496,10 @@ create or replace package body psa_app.psa_stk_function as
                end if;
             exception
                when others then
-                  null;
+                  psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material quantity - invalid number');
+                  var_det_mesg := true;
             end;
-            if var_det_qnty is null then
-               psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material quantity - invalid number');
-               var_det_mesg := true;
-            elsif var_det_qnty < 0 then
+            if var_det_mesg = false and var_det_qnty < 0 then
                psa_gen_function.add_mesg_data('Line ('||var_det_line||') Material quantity must be a number greater than or equal to zero');
                var_det_mesg := true;
             end if;
