@@ -2285,7 +2285,7 @@ sub PaintFunction()%>
                      }
                      objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
-                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                      } else if (cstrTypeCode == '*PACK') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                      } else if (cstrTypeCode == '*FORM') {
@@ -2306,9 +2306,9 @@ sub PaintFunction()%>
                      }
                      objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
-                        objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pouches ('+objWork.schpch+') Mixes ('+objWork.schmix+')'));
+                        objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
                         objDiv.appendChild(document.createElement('br'));
-                        objDiv.appendChild(document.createTextNode('Actual Cases ('+objWork.actcas+') Pouches ('+objWork.actpch+') Mixes ('+objWork.actmix+')'));
+                        objDiv.appendChild(document.createTextNode('Actual Pouches ('+objWork.actpch+')'));
                      } else if (cstrTypeCode == '*PACK') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                         objDiv.appendChild(document.createElement('br'));
