@@ -746,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              sap_snackfood_city_tier_code = rcd_bds_customer_classfctn.sap_snackfood_city_tier_code,
              sap_channel_code = rcd_bds_customer_classfctn.sap_channel_code,
              sap_sub_channel_code = rcd_bds_customer_classfctn.sap_sub_channel_code,
-             sap_th_channel_code = rcd_bds_customer_classfctn.sap_th_sub_channel_code,
+             sap_th_channel_code = rcd_bds_customer_classfctn.sap_th_channel_code,
              sap_th_sub_channel_code = rcd_bds_customer_classfctn.sap_th_sub_channel_code,
              sap_th_sales_area_neg_code = rcd_bds_customer_classfctn.sap_th_sales_area_neg_code,
              sap_th_sales_area_geo_code = rcd_bds_customer_classfctn.sap_th_sales_area_geo_code
