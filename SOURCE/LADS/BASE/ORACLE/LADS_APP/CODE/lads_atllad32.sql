@@ -38,6 +38,16 @@ CREATE OR REPLACE PACKAGE LADS_APP.lads_atllad32 as
 end lads_atllad32;
 /
 
+
+--
+-- LADS_ATLLAD32  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADS_ATLLAD32 FOR LADS_APP.LADS_ATLLAD32;
+
+
+GRANT EXECUTE ON LADS_APP.LADS_ATLLAD32 TO LICS_APP;
+
+
 --
 -- LADS_ATLLAD32  (Package Body) 
 --
@@ -98,7 +108,7 @@ CREATE OR REPLACE PACKAGE BODY LADS_APP.lads_atllad32 as
       lics_inbound_utility.set_definition('HDR','TPLNR',40);
       lics_inbound_utility.set_definition('HDR','PLTXT',40);
       lics_inbound_utility.set_definition('HDR','EQFNR',30);
-      lics_inbound_utility.set_definition('HDR','SWERK',30);
+      lics_inbound_utility.set_definition('HDR','SWERK',4);
       
       /*-*/
       /* Start the IDOC acknowledgement
@@ -269,11 +279,11 @@ CREATE OR REPLACE PACKAGE BODY LADS_APP.lads_atllad32 as
       /* Complete the previous transaction
       /*-*/
       complete_transaction;
-
+      
       /*-*/
       /* Reset the transaction variables
       /*-*/
-      var_trn_start := true;
+      var_trn_start := false;
       var_trn_ignore := false;
       var_trn_error := false;
 
@@ -338,6 +348,16 @@ CREATE OR REPLACE PACKAGE BODY LADS_APP.lads_atllad32 as
    /*-------------*/
    begin
 
+      /*-*/
+      /* Complete the previous transaction
+      /*-*/
+      complete_transaction;
+      
+      /*-*/
+      /* Update the transaction variables
+      /*-*/
+      var_trn_start := true;
+
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
@@ -378,11 +398,6 @@ CREATE OR REPLACE PACKAGE BODY LADS_APP.lads_atllad32 as
       /*-*/
       if rcd_lads_flc_hdr.tplnr is null then
          lics_inbound_utility.add_exception('Missing Primary Key - HDR.TPLNR');
-         var_trn_error := true;
-      end if;
-
-      if rcd_lads_flc_hdr.swerk is null then
-         lics_inbound_utility.add_exception('Field - HDR.SWERK - Must not be null');
          var_trn_error := true;
       end if;
 
@@ -464,3 +479,4 @@ CREATE PUBLIC SYNONYM LADS_ATLLAD32 FOR LADS_APP.LADS_ATLLAD32;
 
 
 GRANT EXECUTE ON LADS_APP.LADS_ATLLAD32 TO LICS_APP;
+
