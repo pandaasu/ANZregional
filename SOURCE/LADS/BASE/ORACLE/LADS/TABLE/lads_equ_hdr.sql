@@ -1,0 +1,114 @@
+--
+-- LADS_EQU_HDR  (Table) 
+--
+CREATE TABLE LADS.LADS_EQU_HDR
+(
+  EQUNR           VARCHAR2(18 CHAR)             NOT NULL,
+  SHTXT           VARCHAR2(40 CHAR)                 NULL,
+  TPLNR           VARCHAR2(40 CHAR)                 NULL,
+  EQFNR           VARCHAR2(30 CHAR)                 NULL,
+  SWERK           VARCHAR2(4 CHAR)                  NULL,
+  IDOC_NAME       VARCHAR2(30 CHAR)             NOT NULL,
+  IDOC_NUMBER     NUMBER(16)                    NOT NULL,
+  IDOC_TIMESTAMP  VARCHAR2(14 CHAR)             NOT NULL,
+  LADS_DATE       DATE                          NOT NULL,
+  LADS_STATUS     VARCHAR2(2 CHAR)              NOT NULL,
+  LADS_FLATTENED  VARCHAR2(1 CHAR)              NOT NULL
+)
+TABLESPACE LADS_DATA
+PCTUSED    40
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            FREELISTS        1
+            FREELIST GROUPS  1
+            BUFFER_POOL      DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.EQUNR IS 'SAP equipment code';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.SHTXT IS 'Equipment description';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.TPLNR IS 'Functional location code';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.EQFNR IS 'Sort field';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.SWERK IS 'Plant code';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.IDOC_NAME IS 'SAP IDoc name';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.IDOC_NUMBER IS 'SAP IDoc number';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.IDOC_TIMESTAMP IS 'SAP IDoc timestamp';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.LADS_DATE IS 'LADS date loaded';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.LADS_STATUS IS 'LADS status (1=valid, 2=error, 3=orphan)';
+
+COMMENT ON COLUMN LADS.LADS_EQU_HDR.LADS_FLATTENED IS 'LADS Flattened Status - 0 Unflattened, 1 Flattened to BDS, 2 Excluded/Skipped';
+
+
+--
+-- LADS_EQU_HDR_PK  (Index) 
+--
+CREATE UNIQUE INDEX LADS.LADS_EQU_HDR_PK ON LADS.LADS_EQU_HDR
+(EQUNR)
+LOGGING
+TABLESPACE LADS_DATA
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            FREELISTS        1
+            FREELIST GROUPS  1
+            BUFFER_POOL      DEFAULT
+           )
+NOPARALLEL;
+
+
+--
+-- LADS_EQU_HDR  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADS_EQU_HDR FOR LADS.LADS_EQU_HDR;
+
+
+-- 
+-- Non Foreign Key Constraints for Table LADS_EQU_HDR 
+-- 
+ALTER TABLE LADS.LADS_EQU_HDR ADD (
+  CONSTRAINT LADS_EQU_HDR_PK
+ PRIMARY KEY
+ (EQUNR)
+    USING INDEX 
+    TABLESPACE LADS_DATA
+    PCTFREE    10
+    INITRANS   2
+    MAXTRANS   255
+    STORAGE    (
+                INITIAL          64K
+                MINEXTENTS       1
+                MAXEXTENTS       UNLIMITED
+                PCTINCREASE      0
+                FREELISTS        1
+                FREELIST GROUPS  1
+               ));
+
+GRANT SELECT, UPDATE ON LADS.LADS_EQU_HDR TO BDS_APP;
+
+GRANT SELECT ON LADS.LADS_EQU_HDR TO ICS_READER;
+
+GRANT DELETE, INSERT, SELECT, UPDATE ON LADS.LADS_EQU_HDR TO LADS_APP;
