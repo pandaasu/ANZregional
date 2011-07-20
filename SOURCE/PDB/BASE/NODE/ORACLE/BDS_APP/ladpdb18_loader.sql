@@ -1,7 +1,7 @@
 --
--- LADPDB19_LOADER  (Package) 
+-- LADPDB18_LOADER  (Package) 
 --
-CREATE OR REPLACE PACKAGE BDS_APP.ladpdb19_loader
+CREATE OR REPLACE PACKAGE BDS_APP.ladpdb18_loader
 as
 
 /******************************************************************************/
@@ -9,17 +9,17 @@ as
 /******************************************************************************/
 /**
  System  : Plant Database
- Package : ladpdb19_loader
+ Package : ladpdb18_loader
  Owner   : bds_app
  Author  : Ben Halicki
 
  Description
  -----------
- Plant Database - Plant Maintenance Functional Locations Interface
+ Plant Database - Plant Maintenance Equipment Master Interface
 
  dd-mmm-yyyy   Author              Description
  -----------   ------              -----------
- 05-04-2010   Ben Halicki          Created this package
+ 20-05-2010   Ben Halicki          Created this package
 
 *******************************************************************************/
 
@@ -30,25 +30,25 @@ as
    procedure on_data (par_record in varchar2);
    procedure on_end;
 
-end ladpdb19_loader;
+end ladpdb18_loader;
 /
 
 
 --
--- LADPDB19_LOADER  (Synonym) 
+-- LADPDB18_LOADER  (Synonym) 
 --
-CREATE PUBLIC SYNONYM LADPDB19_LOADER FOR BDS_APP.LADPDB19_LOADER;
+CREATE PUBLIC SYNONYM LADPDB18_LOADER FOR BDS_APP.LADPDB18_LOADER;
 
 
-GRANT EXECUTE ON BDS_APP.LADPDB19_LOADER TO APPSUPPORT;
+GRANT EXECUTE ON BDS_APP.LADPDB18_LOADER TO APPSUPPORT;
 
-GRANT EXECUTE ON BDS_APP.LADPDB19_LOADER TO LICS_APP;
+GRANT EXECUTE ON BDS_APP.LADPDB18_LOADER TO LICS_APP;
 
 
 --
--- LADPDB19_LOADER  (Package Body) 
+-- LADPDB18_LOADER  (Package Body) 
 --
-CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
+CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb18_loader as
 
   /*-*/
   /* Private exceptions
@@ -70,14 +70,14 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
   var_trn_error   boolean;
 
   /* global constants */
-  con_intfc varchar2(20) := 'LADPDB19';
+  con_intfc varchar2(20) := 'LADPDB18';
 
   type idoc_control is record(idoc_name varchar2(30),
                               idoc_number number(16,0),
                               idoc_timestamp varchar2(14));
 
-  rcd_lads_control            idoc_control;
-  rcd_bds_functnl_locn_hdr    bds_functnl_locn_hdr%rowtype;
+  rcd_lads_control              idoc_control;
+  rcd_bds_equipment_plant_hdr   bds_equipment_plant_hdr%rowtype;
 
   /************************************************/
   /* This procedure performs the on start routine */
@@ -107,9 +107,10 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
 
     /*-*/
     lics_inbound_utility.set_definition('HDR','ID',3);
-    lics_inbound_utility.set_definition('HDR','FUNCTNL_LOCN_CODE',40);
-    lics_inbound_utility.set_definition('HDR','FUNCTNL_LOCN_DESC',40);
+    lics_inbound_utility.set_definition('HDR','SAP_EQUIPMENT_CODE',18);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE',4);
+    lics_inbound_utility.set_definition('HDR','EQUIPMENT_DESC',40);
+    lics_inbound_utility.set_definition('HDR','FUNCTNL_LOCN_CODE',40);
     lics_inbound_utility.set_definition('HDR','SORT_FIELD',30);
     lics_inbound_utility.set_definition('HDR','SAP_IDOC_NAME',20);
     lics_inbound_utility.set_definition('HDR','SAP_IDOC_NUMBER',16);
@@ -283,15 +284,16 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
        var_trn_error := true;
     end if;
 
-    rcd_bds_functnl_locn_hdr.functnl_locn_code := lics_inbound_utility.get_variable('FUNCTNL_LOCN_CODE');
-    rcd_bds_functnl_locn_hdr.functnl_locn_desc := lics_inbound_utility.get_variable('FUNCTNL_LOCN_DESC');
-    rcd_bds_functnl_locn_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
-    rcd_bds_functnl_locn_hdr.sort_field := lics_inbound_utility.get_variable('SORT_FIELD');
-    rcd_bds_functnl_locn_hdr.sap_idoc_name := rcd_lads_control.idoc_name;
-    rcd_bds_functnl_locn_hdr.sap_idoc_number := rcd_lads_control.idoc_number;
-    rcd_bds_functnl_locn_hdr.sap_idoc_timestamp := rcd_lads_control.idoc_timestamp;
-    rcd_bds_functnl_locn_hdr.bds_lads_date := sysdate;
-    rcd_bds_functnl_locn_hdr.bds_lads_status := '1';
+    rcd_bds_equipment_plant_hdr.sap_equipment_code := lics_inbound_utility.get_variable('SAP_EQUIPMENT_CODE');
+    rcd_bds_equipment_plant_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
+    rcd_bds_equipment_plant_hdr.equipment_desc := lics_inbound_utility.get_variable('EQUIPMENT_DESC');
+    rcd_bds_equipment_plant_hdr.functnl_locn_code := lics_inbound_utility.get_variable('FUNCTNL_LOCN_CODE');
+    rcd_bds_equipment_plant_hdr.sort_field := lics_inbound_utility.get_variable('SORT_FIELD');
+    rcd_bds_equipment_plant_hdr.sap_idoc_name := rcd_lads_control.idoc_name;
+    rcd_bds_equipment_plant_hdr.sap_idoc_number := rcd_lads_control.idoc_number;
+    rcd_bds_equipment_plant_hdr.sap_idoc_timestamp := rcd_lads_control.idoc_timestamp;
+    rcd_bds_equipment_plant_hdr.bds_lads_date := sysdate;
+    rcd_bds_equipment_plant_hdr.bds_lads_status := '1';
 
     /*-*/
     /* Retrieve exceptions raised
@@ -307,8 +309,8 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
     /*-*/
     /* Validate the primary keys
     /*-*/
-    if ( rcd_bds_functnl_locn_hdr.functnl_locn_code is null ) then
-      lics_inbound_utility.add_exception('Missing Primary Key - HDR.functnl_locn_code');
+    if ( rcd_bds_equipment_plant_hdr.sap_equipment_code is null ) then
+      lics_inbound_utility.add_exception('Missing Primary Key - HDR.sap_equipment_code');
       var_trn_error := true;
     end if;
 
@@ -329,11 +331,12 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
     begin
 
         /* update tables based on primary key */
-        insert into bds_functnl_locn_hdr
+        insert into bds_equipment_plant_hdr
         (
-            functnl_locn_code,
-            functnl_locn_desc,
+            sap_equipment_code,
             plant_code,
+            equipment_desc,
+            functnl_locn_code,
             sort_field,
             sap_idoc_name,
             sap_idoc_number,
@@ -343,31 +346,32 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
         )
         values
         (
-            rcd_bds_functnl_locn_hdr.functnl_locn_code,
-            rcd_bds_functnl_locn_hdr.functnl_locn_desc,
-            rcd_bds_functnl_locn_hdr.plant_code,
-            rcd_bds_functnl_locn_hdr.sort_field,
-            rcd_bds_functnl_locn_hdr.sap_idoc_name,
-            rcd_bds_functnl_locn_hdr.sap_idoc_number,
-            rcd_bds_functnl_locn_hdr.sap_idoc_timestamp,
-            rcd_bds_functnl_locn_hdr.bds_lads_date,
-            rcd_bds_functnl_locn_hdr.bds_lads_status
+            rcd_bds_equipment_plant_hdr.sap_equipment_code,
+            rcd_bds_equipment_plant_hdr.plant_code,
+            rcd_bds_equipment_plant_hdr.equipment_desc,
+            rcd_bds_equipment_plant_hdr.functnl_locn_code,
+            rcd_bds_equipment_plant_hdr.sort_field,
+            rcd_bds_equipment_plant_hdr.sap_idoc_name,
+            rcd_bds_equipment_plant_hdr.sap_idoc_number,
+            rcd_bds_equipment_plant_hdr.sap_idoc_timestamp,
+            rcd_bds_equipment_plant_hdr.bds_lads_date,
+            rcd_bds_equipment_plant_hdr.bds_lads_status
         );
 
     exception
     when dup_val_on_index then
 
-        update bds_functnl_locn_hdr set
-            functnl_locn_code = rcd_bds_functnl_locn_hdr.functnl_locn_code,
-            functnl_locn_desc = rcd_bds_functnl_locn_hdr.functnl_locn_desc,
-            plant_code = rcd_bds_functnl_locn_hdr.plant_code,
-            sort_field = rcd_bds_functnl_locn_hdr.sort_field,
-            sap_idoc_name = rcd_bds_functnl_locn_hdr.sap_idoc_name,
-            sap_idoc_number = rcd_bds_functnl_locn_hdr.sap_idoc_number,
-            sap_idoc_timestamp = rcd_bds_functnl_locn_hdr.sap_idoc_timestamp,
-            bds_lads_date = rcd_bds_functnl_locn_hdr.bds_lads_date,
-            bds_lads_status = rcd_bds_functnl_locn_hdr.bds_lads_status
-        where functnl_locn_code = rcd_bds_functnl_locn_hdr.functnl_locn_code;
+        update bds_equipment_plant_hdr set
+            plant_code = rcd_bds_equipment_plant_hdr.plant_code,
+            equipment_desc = rcd_bds_equipment_plant_hdr.equipment_desc,
+            functnl_locn_code = rcd_bds_equipment_plant_hdr.functnl_locn_code,
+            sort_field = rcd_bds_equipment_plant_hdr.sort_field,
+            sap_idoc_name = rcd_bds_equipment_plant_hdr.sap_idoc_name,
+            sap_idoc_number = rcd_bds_equipment_plant_hdr.sap_idoc_number,
+            sap_idoc_timestamp = rcd_bds_equipment_plant_hdr.sap_idoc_timestamp,
+            bds_lads_date = rcd_bds_equipment_plant_hdr.bds_lads_date,
+            bds_lads_status = rcd_bds_equipment_plant_hdr.bds_lads_status
+        where sap_equipment_code = rcd_bds_equipment_plant_hdr.sap_equipment_code;
 
     end;
 
@@ -376,16 +380,16 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb19_loader as
   /*-------------*/
   end process_record_hdr;
 
-end ladpdb19_loader;
+end ladpdb18_loader;
 /
 
 
 --
--- LADPDB19_LOADER  (Synonym) 
+-- LADPDB18_LOADER  (Synonym) 
 --
-CREATE PUBLIC SYNONYM LADPDB19_LOADER FOR BDS_APP.LADPDB19_LOADER;
+CREATE PUBLIC SYNONYM LADPDB18_LOADER FOR BDS_APP.LADPDB18_LOADER;
 
 
-GRANT EXECUTE ON BDS_APP.LADPDB19_LOADER TO APPSUPPORT;
+GRANT EXECUTE ON BDS_APP.LADPDB18_LOADER TO APPSUPPORT;
 
-GRANT EXECUTE ON BDS_APP.LADPDB19_LOADER TO LICS_APP;
+GRANT EXECUTE ON BDS_APP.LADPDB18_LOADER TO LICS_APP;
