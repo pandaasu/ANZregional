@@ -44,6 +44,16 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad32_flatten as
 end bds_atllad32_flatten;
 /
 
+
+--
+-- BDS_ATLLAD32_FLATTEN  (Synonym) 
+--
+CREATE PUBLIC SYNONYM BDS_ATLLAD32_FLATTEN FOR BDS_APP.BDS_ATLLAD32_FLATTEN;
+
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD32_FLATTEN TO LADS_APP;
+
+
 --
 -- BDS_ATLLAD32_FLATTEN  (Package Body) 
 --
@@ -163,7 +173,7 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad32_flatten as
       delete from bds_functnl_locn_hdr where functnl_locn_code = par_tplnr;
       
       /*-*/
-      /* Retrieve the LADS stock balance header
+      /* Retrieve the LADS functional location header
       /*-*/
       open csr_lads_flc_hdr;
       fetch csr_lads_flc_hdr into rcd_lads_flc_hdr;
@@ -506,5 +516,6 @@ end bds_atllad32_flatten;
 -- BDS_ATLLAD32_FLATTEN  (Synonym) 
 --
 CREATE PUBLIC SYNONYM BDS_ATLLAD32_FLATTEN FOR BDS_APP.BDS_ATLLAD32_FLATTEN;
+
 
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD32_FLATTEN TO LADS_APP;
