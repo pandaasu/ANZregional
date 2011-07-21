@@ -52,6 +52,7 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
  2011/01   Ben Halicki    Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand 
  2011/03   Ben Halicki    Added Z_APCHAR16, Z_APCHAR17, Z_APCHAR18, Z_APCHAR19, Z_APCHAR20, Z_APCHAR21, 
                                 Z_APVERP01, Z_APVERP02, Z_APCHAR22, Z_APCHAR23
+ 2011/07   Edward Rousseau Bugfix for ZZTHCUST01 (was picking up data for ZZTHCUST02) ref CR 73958
 
 *******************************************************************************/
 
