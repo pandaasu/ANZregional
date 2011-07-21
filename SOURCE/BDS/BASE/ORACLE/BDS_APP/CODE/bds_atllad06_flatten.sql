@@ -38,21 +38,21 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
    1. This package must raise an exception on failure to exclude database activity from parent commit
 
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2006/11   Linden Glen    Created
- 2006/11   Linden Glen    Added Raws and Packs classification columns
- 2006/12   Linden Glen    Removed ltrim of '0' from material code
- 2007/04   Steve Gregan   Removed ltrim of '0' from customer code
- 2007/09   Linden Glen    Added ZZAUCUST01 to process_customer
- 2008/01   Linden Glen    Added Z_APCHAR10 to 13 to process_material
-                          Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
+ YYYY/MM   Author           Description
+ -------   ------           -----------
+ 2006/11   Linden Glen      Created
+ 2006/11   Linden Glen      Added Raws and Packs classification columns
+ 2006/12   Linden Glen      Removed ltrim of '0' from material code
+ 2007/04   Steve Gregan     Removed ltrim of '0' from customer code
+ 2007/09   Linden Glen      Added ZZAUCUST01 to process_customer
+ 2008/01   Linden Glen      Added Z_APCHAR10 to 13 to process_material
+                            Added CLFFERT109, ZZCNCUST01, ZZCNCUST02, ZZCNCUST03, ZZCNCUST04,
                                 ZZCNCUST05, ZZAUCUST01, ZZAUCUST02 to process_customer
- 2009/04   Trevor Keon    Added Z_APCHAR14 and 15 to process_material   
- 2011/01   Ben Halicki    Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand 
- 2011/03   Ben Halicki    Added Z_APCHAR16, Z_APCHAR17, Z_APCHAR18, Z_APCHAR19, Z_APCHAR20, Z_APCHAR21, 
+ 2009/04   Trevor Keon      Added Z_APCHAR14 and 15 to process_material   
+ 2011/01   Ben Halicki      Added ZZTHCUST01, ZZTHCUST02, ZZTHCUST03, ZZTHCUST04 for Atlas Thailand 
+ 2011/03   Ben Halicki      Added Z_APCHAR16, Z_APCHAR17, Z_APCHAR18, Z_APCHAR19, Z_APCHAR20, Z_APCHAR21, 
                                 Z_APVERP01, Z_APVERP02, Z_APCHAR22, Z_APCHAR23
- 2011/07   Edward Rousseau Bugfix for ZZTHCUST01 (was picking up data for ZZTHCUST02) ref CR 73958
+ 2011/07   Edward Rousseau  Bugfix for ZZTHCUST01 (was picking up data for ZZTHCUST02) ref CR 73958
 
 *******************************************************************************/
 
@@ -63,7 +63,6 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
 
 end bds_atllad06_flatten;
 /
-
 
 --
 -- BDS_ATLLAD06_FLATTEN  (Synonym) 
