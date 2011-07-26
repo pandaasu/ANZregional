@@ -1,28 +1,29 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_measure
- Owner   : lics_app
- Author  : Steve Gregan
-
- DESCRIPTION
- -----------
- Local Interface Control System - Measure
-
- The package implements the measure functionality.
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2007/08   Steve Gregan   Created
-
-*******************************************************************************/
-
 /******************/
 /* Package Header */
 /******************/
 create or replace package lics_measure as
+
+/******************************************************************************/
+/* Package Definition                                                         */
+/******************************************************************************/
+/**
+    System  : lics
+    Package : lics_measure
+    Owner   : lics_app
+    Author  : Steve Gregan
+
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Measure
+
+    The package implements the measure functionality.
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2007/08   Steve Gregan   Created
+    2011/06   Ben Halicki    Removed BOSS monitoring functionality (no longer used)
+
+*******************************************************************************/
 
    /*-*/
    /* Public parent declarations
@@ -58,7 +59,7 @@ create or replace package body lics_measure as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_backlog is 
+      cursor csr_backlog is
          select *
            from (select t01.hea_interface as backlog_code,
                         max(t02.int_description) as backlog_desc,
@@ -103,9 +104,6 @@ create or replace package body lics_measure as
          /* Output the type backlog when required
          /*-*/
          if var_sav_type is null or var_sav_type != rcd_backlog.backlog_type then
-            if not(var_sav_type is null) then
-               boss_app.boss_collector.put_number('ICS_BACKLOG', var_sav_type, 'ICS ' || var_sav_type || ' Backlog', var_sav_count, false);
-            end if;
             var_sav_type := rcd_backlog.backlog_type;
             var_sav_count := 0;
          end if;
@@ -113,24 +111,11 @@ create or replace package body lics_measure as
          /*-*/
          /* Output the interface backlog
          /*-*/
-         boss_app.boss_collector.put_number(var_sav_type, rcd_backlog.backlog_code, rcd_backlog.backlog_desc, rcd_backlog.backlog_count, false);
          var_sav_count := var_sav_count + 1;
          var_tot_count := var_tot_count + 1;
 
       end loop;
       close csr_backlog;
-
-      /*-*/
-      /* Output the type backlog when required
-      /*-*/
-      if not(var_sav_type is null) then
-         boss_app.boss_collector.put_number('ICS_BACKLOG', var_sav_type, 'ICS ' || var_sav_type || ' Backlog', var_sav_count, false);
-      end if;
-
-      /*-*/
-      /* Output the total backlog
-      /*-*/
-      boss_app.boss_collector.put_number(null, 'ICS_BACKLOG', 'ICS Total Backlog', var_tot_count, false);
 
    /*-------------*/
    /* End routine */
