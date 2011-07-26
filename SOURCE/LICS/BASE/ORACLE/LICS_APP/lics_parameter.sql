@@ -1,55 +1,57 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lics
- Package : lics_parameter
- Owner   : lics_app
- Author  : Steve Gregan - January 2004
+CREATE OR REPLACE package LICS_APP.lics_parameter as
 
- DESCRIPTION
- -----------
- Local Interface Control System - Parameters
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lics
+    Package : lics_parameter
+    Owner   : lics_app
+    Author  : Steve Gregan - January 2004
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2004/01   Steve Gregan   Created
+    DESCRIPTION
+    -----------
+    Local Interface Control System - Parameters
 
-*******************************************************************************/
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2004/01   Steve Gregan   Created
+    2011/02   Steve Gregan   End point architecture version
 
-/****************************************************************************/
-/* ENSURE THIS IS FILE CONTAINS THE CORRECT INFORMATION FOR THE ENVIRONMENT */
-/****************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_parameter as
+   *******************************************************************************/
 
    /*-*/
-   /* Public system parameters
+   /* Public parameters
    /*-*/
    system_code constant varchar2(10) := 'ICS';
-   system_unit constant varchar2(10) := 'MFANZ';
-   system_environment constant varchar2(20) := 'LAD_PRODUCTION';
+   system_unit constant varchar2(10) := 'EPA';
+   system_environment constant varchar2(20) := 'EPA_DEVELOPMENT';
    system_url constant varchar2(128) := 'http://mfanz-lad.ap.mars/';
-   system_startup constant varchar2(128) := '/ics/lad/prod/bin/restart_jobs.sh';
+   log_environment constant varchar2(128) := 'DEVP';
+   log_database constant varchar2(128) := 'DB1252T.AP.MARS';
+   ics_path constant varchar2(128) := '/ics/devp/';
+   ami_path constant varchar2(128) := '/opt/apps/mqft_light/test/shell/';
+   folder_delimiter constant varchar2(1) := '/';
+   file_attribute_command constant varchar2(64) := '/bin/chmod 777 <FILE>';
 
    /*-*/
-   /* Public environment parameters
+   /* Public directory parameters
    /*-*/
-   folder_delimiter constant varchar2(1) := '/';
+   ics_inbound constant varchar2(128) := 'ICS_INBOUND';
+   ics_outbound constant varchar2(128) := 'ICS_OUTBOUND';
+   inbound_directory constant varchar2(128) := ics_path||'inbound'||folder_delimiter;
+   outbound_directory constant varchar2(128) := ics_path||'outbound'||folder_delimiter;
+   archive_directory constant varchar2(128) := ics_path||'archive'||folder_delimiter;
+   view_directory constant varchar2(128) := ics_path||'webview'||folder_delimiter;
+   script_directory constant varchar2(128) := ics_path||'bin'||folder_delimiter;
+   log_directory constant varchar2(128) := ics_path||'log'||folder_delimiter;
+   ami_logfile constant varchar2(128) := log_directory||'ics_integration.log';
 
    /*-*/
    /* Public fatal parameters
    /*-*/
    fatal_opr_alert constant varchar2(256) := null;
-   fatal_ema_group constant varchar2(64) := '"Global ISI ICS-LADS Application Support"@esosn1';
-
-   /*-*/
-   /* Public operator parameters
-   /*-*/
-   operator_alert_script constant varchar2(64) := '/ics/lad/prod/bin/ics_tivoli_alert.sh';
+   fatal_ema_group constant varchar2(64) := '"ISI ICS Test Group"@esosn1';
 
    /*-*/
    /* Public email parameters
@@ -68,21 +70,13 @@ create or replace package lics_parameter as
    /*-*/
    purge_event_history_days constant number(5,0) := 14;
    purge_log_history_days constant number(5,0) := 14;
-   purge_file_script constant varchar2(128) := '/ics/lad/prod/bin/ics_cleanup.sh';
 
    /*-*/
    /* Public script parameters
    /*-*/
-   script_directory constant varchar2(128) := '/ics/lad/prod/bin/';
-   restore_script constant varchar2(128) := '/ics/lad/prod/bin/ics_restore.sh';
-   inbound_sap_script constant varchar2(128) := '/ics/lad/prod/bin/ics_inbound_sap.sh';
-   archive_script constant varchar2(128) := '/ics/test/bin/ics_archive_file.sh';
+   purge_file_script constant varchar2(128) := script_directory||'ics_cleanup.sh';
+   restore_script constant varchar2(128) := script_directory||'ics_restore.sh';
+   inbound_sap_script constant varchar2(128) := script_directory||'ics_inbound_sap.sh';
 
 end lics_parameter;
-/  
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create public synonym lics_parameter for lics_app.lics_parameter;
-grant execute on lics_parameter to public;
+/
