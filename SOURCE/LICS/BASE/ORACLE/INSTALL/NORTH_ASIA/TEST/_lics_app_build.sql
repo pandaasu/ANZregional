@@ -72,7 +72,7 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_notification.sql;
 @^pro_path\lics_outbound_loader.sql;
 @^pro_path\lics_outbound_processor.sql;
-@^pro_path\lics_parameter.sql;
+@D:\Vivian\LADS\Source Repository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST\lics_parameter.sql;
 @^pro_path\lics_passthru_loader.sql;
 @^pro_path\lics_passthru_processor.sql;
 @^pro_path\lics_pipe.sql;
