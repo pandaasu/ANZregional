@@ -45,8 +45,8 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_buffer.sql;
 @^pro_path\lics_constant.sql;
 @^pro_path\lics_daemon_processor.sql;
-@^pro_path\lics_datastore.sql;
 @^pro_path\lics_datastore_type.sql;
+@^pro_path\lics_datastore.sql;
 @^pro_path\lics_documentation.sql;
 @^pro_path\lics_file_search.sql;
 @^pro_path\lics_filesystem.sql;
@@ -83,12 +83,12 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_router.sql;
 @^pro_path\lics_routing_configuration.sql;
 @^pro_path\lics_sap_processor.sql;
+@^pro_path\lics_security_type.sql;
 @^pro_path\lics_security.sql;
 @^pro_path\lics_security_configuration.sql;
-@^pro_path\lics_security_type.sql;
 @^pro_path\lics_setting_configuration.sql;
-@^pro_path\lics_spreadsheet.sql;
 @^pro_path\lics_spreadsheet_type.sql;
+@^pro_path\lics_spreadsheet.sql;
 @^pro_path\lics_stream_loader.sql;
 @^pro_path\lics_stream_poller.sql;
 @^pro_path\lics_stream_processor.sql;
