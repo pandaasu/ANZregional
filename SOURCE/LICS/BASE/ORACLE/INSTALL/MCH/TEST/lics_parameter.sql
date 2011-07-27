@@ -26,9 +26,9 @@ create or replace package lics_parameter as
    /* Public system parameters
    /*-*/
    system_code constant varchar2(10) := 'ICS';
-   system_unit constant varchar2(10) := 'MFANZ';
-   system_environment constant varchar2(20) := 'BATHURST_TEST';
-   system_url constant varchar2(128) := 'http://plant.bth.ap.mars/';
+   system_unit constant varchar2(10) := 'MCH';
+   system_environment constant varchar2(20) := 'MCH_PLANT_TEST';
+   system_url constant varchar2(128) := 'http://plant.hua.ap.mars/';
    system_startup constant varchar2(128) := '/ics/test/bin/restart_jobs.sh';
 
    /*-*/
@@ -40,7 +40,7 @@ create or replace package lics_parameter as
    /* Public fatal parameters
    /*-*/
    fatal_opr_alert constant varchar2(256) := null;
-   fatal_ema_group constant varchar2(64) := '"ISI ICS Test Group"@esosn1';
+   fatal_ema_group constant varchar2(64) := '"ISI ICS Test Group"@effem.com';
 
    /*-*/
    /* Public operator parameters
@@ -50,7 +50,7 @@ create or replace package lics_parameter as
    /*-*/
    /* Public email parameters
    /*-*/
-   email_smtp_host constant varchar2(64) := 'esosn1.ap.mars';
+   email_smtp_host constant varchar2(64) := 'smtp.ap.mars';
    email_smtp_port constant number(2,0) := 25;
 
    /*-*/
