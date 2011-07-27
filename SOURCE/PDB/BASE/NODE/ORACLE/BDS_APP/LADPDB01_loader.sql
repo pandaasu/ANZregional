@@ -18,6 +18,7 @@ AS
  01-Jun-2007   Steve Gregan        Created
  01-Jul-2007   Jeff Phillipson     Modified table definitions
  18-Oct-2007   JP                  Added delete of procedure order with the same cntl_rec_id
+ 27-Jul-2011   Steve Gregan        Commented out call to recipe conversion procedure - refer Ben Halicki
 *******************************************************************************/
 
    /*-*/
@@ -300,15 +301,15 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.Ladpdb01_Loader AS
          /* **note** - releases transaction lock
          /*-*/
          COMMIT;
-         /*-*/
-         /* call recipe conversion procedure
-         /*-*/
-         BEGIN
-            Recipe_Conversion.EXECUTE(rcd_hdr.cntl_rec_id);
-         EXCEPTION
-            WHEN OTHERS THEN
-               lics_inbound_utility.add_exception(SUBSTR(SQLERRM, 1, 512));
-         END;
+      --   /*-*/
+      --   /* call recipe conversion procedure
+      --   /*-*/
+      --   BEGIN
+      --      Recipe_Conversion.EXECUTE(rcd_hdr.cntl_rec_id);
+      --   EXCEPTION
+      --      WHEN OTHERS THEN
+      --         lics_inbound_utility.add_exception(SUBSTR(SQLERRM, 1, 512));
+      --   END;
 
       END IF;
 
