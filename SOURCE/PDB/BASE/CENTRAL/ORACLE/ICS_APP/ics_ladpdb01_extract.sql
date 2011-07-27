@@ -230,15 +230,17 @@ AS
       /*-*/
       cursor csr_intfc is
          select 
-            t01.dsv_group as site_code,
-            t02.dsv_value as intfc_extn
+            t01.dsv_group as site_code
          from
-            table (lics_datastore.retrieve_group('PDB','VALID_PLANTS',rcd_lads_ctl_rec_hpi.plant)) t01,
-            table (lics_datastore.retrieve_value('PDB','PCH','INTFC_EXTN')) t02
-         where
-            t01.dsv_group = t02.dsv_group;
-
+            table (lics_datastore.retrieve_group('PDB','VALID_PLANTS',rcd_lads_ctl_rec_hpi.plant)) t01;
       rcd_intfc csr_intfc%rowtype;
+
+      cursor csr_extn is
+         select 
+            t01.dsv_value as intfc_extn
+         from
+            table (lics_datastore.retrieve_value('PDB',rcd_intfc.site_code,'INTFC_EXTN')) t01;
+      rcd_extn csr_extn%rowtype;
 
       CURSOR csr_lads_ctl_rec_hpi_01
       IS
@@ -384,14 +386,20 @@ AS
       /* retrieve interface details from lics data store configuration */
       open csr_intfc;
       fetch csr_intfc into rcd_intfc;
-      
         if csr_intfc%NOTFOUND then
             var_ignore:=TRUE;
         end if;
-      
-        var_interface := con_intfc || rcd_intfc.intfc_extn;
-      
       close csr_intfc;
+
+      IF NOT var_ignore then
+         open csr_extn;
+         fetch csr_extn into rcd_extn;
+           if csr_extn%NOTFOUND then
+               var_ignore:=TRUE;
+           end if;
+           var_interface := con_intfc || rcd_extn.intfc_extn;
+         close csr_extn;
+      end if;
         
       /*-*/
       IF NOT var_ignore
