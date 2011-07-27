@@ -26,8 +26,8 @@ create or replace package lics_parameter as
    /* Public system parameters
    /*-*/
    system_code constant varchar2(10) := 'ICS';
-   system_unit constant varchar2(10) := 'MFANZ';
-   system_environment constant varchar2(20) := 'BATHURST_TEST';
+   system_unit constant varchar2(10) := 'MCH';
+   system_environment constant varchar2(20) := 'MCH_PLANT_TEST';
    system_url constant varchar2(128) := 'http://plant.bth.ap.mars/';
    system_startup constant varchar2(128) := '/ics/test/bin/restart_jobs.sh';
 
