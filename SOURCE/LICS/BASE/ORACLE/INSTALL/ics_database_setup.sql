@@ -18,8 +18,6 @@ Please create the following a new database on [server name] ...
 
       execute dbms_java.grant_permission('DBEC','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
       execute dbms_java.grant_permission('DBEC','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
-      execute dbms_java.grant_permission('IU_APP','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
-      execute dbms_java.grant_permission('IU_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/[dir]/-','read,write,execute,delete');
       execute dbms_java.grant_permission('LICS_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
       commit;
