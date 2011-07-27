@@ -19,8 +19,8 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define pro_path = C:\ISI_REPOSITORY\SOURCE\ISI_LICS\BASE\ORACLE\LICS_APP\CODE
-define spl_path = C:\ISI_REPOSITORY\SOURCE\ISI_LICS\BASE\ORACLE
+define pro_path = D:\Vivian\LADS\Source Repository\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE
+define spl_path = D:\Vivian\LADS\Source Repository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST
 define database = db1296t.ap.mars
 define codeuser = lics_app
 define code_password = kwi9s92a

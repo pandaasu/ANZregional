@@ -19,8 +19,8 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define tab_path = C:\<PATH>\LICS\TABLE
-define spl_path = C:\<PATH>
+define tab_path = D:\Vivian\LADS\Source Repository\SOURCE\LICS\BASE\ORACLE\LICS\TABLE
+define spl_path = D:\Vivian\LADS\Source Repository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST
 define database = db1296t.ap.mars
 define datauser = lics
 define data_password = wksi3s03
