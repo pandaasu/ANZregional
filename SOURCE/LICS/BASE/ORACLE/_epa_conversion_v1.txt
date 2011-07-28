@@ -1,0 +1,71 @@
+
+/*-*/
+/* Connect to the database (LICS)
+/*-*/
+connect lics/xxxxxx@ap0052t.ap.mars
+
+/*-*/
+/* Modify the LICS_TRIGGERED table
+/*-*/
+alter table lics_triggered add tri_log_data varchar2(512 char) null;
+comment on column lics_triggered.tri_log_data is 'Triggered - log data';
+
+/*-*/
+/* Modify the LICS_INTERFACE table
+/*-*/
+alter table lics_interface add 
+   (int_usr_invocation varchar2(1 char) null,
+    int_usr_validation varchar2(256 char) null,
+    int_usr_message varchar2(64 char) null,
+    int_lod_type varchar2(10 char) null,
+    int_lod_group varchar2(10 char) null);
+comment on column lics_interface.int_usr_invocation is 'Interface - user invocation indicator (0=No or 1=Yes)';
+comment on column lics_interface.int_usr_validation is 'Interface - user invocation validation procedure';
+comment on column lics_interface.int_usr_message is 'Interface - user invocation message name (*OUTBOUND only)';
+comment on column lics_interface.int_lod_type is 'Interface - interface load type (*NONE=outbound interfaces, *PUSH=load pushing, *POLL=load polling)';
+comment on column lics_interface.int_lod_group is 'Interface - interface load group (*NONE=load type *PUSH or *NONE, group=load type *POLL)';
+update lics_interface set int_usr_invocation = '0', int_usr_validation = null, int_usr_message = null, int_lod_type = '*PUSH', int_lod_group = '*NONE' where int_type != '*OUTBOUND';
+update lics_interface set int_usr_invocation = '0', int_usr_validation = null, int_usr_message = null, int_lod_type = '*NONE', int_lod_group = '*NONE' where int_type = '*OUTBOUND';
+commit;
+alter table lics_interface modify (int_lod_type varchar2(10 char) not null, int_lod_group varchar2(10 char) not null);
+
+/*-*/
+/* Create the LICS_FILE table
+/*-*/
+create table lics_file
+   (fil_file                     number(15,0)                    not null,
+    fil_path                     varchar2(64 char)               not null,
+    fil_name                     varchar2(256 char)              not null,
+    fil_status                   varchar2(1 char)                not null,
+    fil_crt_user                 varchar2(30 char)               not null,
+    fil_crt_time                 date                            not null,
+    fil_message                  varchar2(2000 char)             null);
+comment on table lics_file is 'LICS File Table';
+comment on column lics_file.fil_file is 'File - file sequence number (sequence generated)';
+comment on column lics_file.fil_path is 'File - file path';
+comment on column lics_file.fil_name is 'File - file name';
+comment on column lics_file.fil_status is 'File - file status';
+comment on column lics_file.fil_crt_user is 'File - creation user';
+comment on column lics_file.fil_crt_time is 'File - creation time';
+comment on column lics_file.fil_message is 'File - file message';
+alter table lics_file
+   add constraint lics_file_pk primary key (fil_file);
+create unique index lics_file_ix01 on lics_file
+   (fil_path, fil_name);
+create index lics_file_ix02 on lics_file
+   (fil_path, fil_status, fil_file);
+grant select, insert, update, delete on lics_file to lics_app;
+create or replace public synonym lics_file for lics.lics_file;
+
+/*-*/
+/* Create the file sequence
+/*-*/
+create sequence lics_file_sequence
+   increment by 1
+   start with 1
+   maxvalue 999999999999999
+   minvalue 1
+   nocycle
+   nocache;
+grant select on lics_file_sequence to lics_app;
+create or replace public synonym lics_file_sequence for lics.lics_file_sequence;
