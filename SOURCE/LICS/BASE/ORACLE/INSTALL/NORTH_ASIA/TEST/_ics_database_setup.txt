@@ -39,8 +39,6 @@ Please create the following a new database on [server name] ...
 
       grant execute on dbms_pipe to lics_app;
       grant execute on dbms_lock to lics_app;
-
-   - please grant create public synonym rights to LICS
    
    - please ensure 'oracle' user is added to MQM group on local filesystem
 
