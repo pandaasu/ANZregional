@@ -71,8 +71,8 @@ Steps to create a new ICS instance
 
            CREATE_DIRECTORY
 
-8. Compile the LICS schema objects using the script ==> _lics_build.sql
+8. Compile the LICS schema objects using the script ==> @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST\_lics_build.sql
 
-9. Compile the LICS_APP schema objects using the script ==> _lics_app_build.sql
+9. Compile the LICS_APP schema objects using the script ==> @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST\_lics_app_build.sql
 
 
