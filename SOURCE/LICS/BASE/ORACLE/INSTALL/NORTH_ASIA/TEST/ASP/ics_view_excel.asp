@@ -1,0 +1,100 @@
+<%@ language = VBScript%>
+<% option explicit %>
+<%
+'//////////////////////////////////////////////////////////////////
+'// System  : ICS (Interface Control System)                     //
+'// Script  : ics_view_excel.asp                                 //
+'// Author  : Steve Gregan                                       //
+'// Date    : May 2005                                           //
+'// Text    : This script implements the view excel              //
+'//////////////////////////////////////////////////////////////////
+
+   '//
+   '// Declare the variables
+   '//
+   dim i
+   dim j
+   dim strReturn
+   dim objForm
+   dim objSecurity
+   dim objQuery
+
+   '//
+   '// Set the server script timeout to (10 minutes)
+   '// ** potentially long running process **
+   '//
+   server.scriptTimeout = 600
+
+   '//
+   '// Retrieve the security information
+   '//
+   strReturn = GetSecurity()
+   if strReturn = "*OK" then
+
+      '//
+      '// Get the form data
+      '//
+      GetForm()
+
+      '//
+      '// Process the request
+      '//
+      call ProcessRequest
+
+   end if
+
+   '//
+   '// Paint response
+   '//
+   call PaintResponse
+ 
+   '//
+   '// Destroy references
+   '//
+   set objForm = nothing
+   set objSecurity = nothing
+   set objQuery = nothing
+
+'/////////////////////////////
+'// Process request routine //
+'/////////////////////////////
+sub ProcessRequest
+
+   dim strQuery
+   dim lngcount
+
+   '//
+   '// Create the query object
+   '//
+   set objQuery = Server.CreateObject("ICS_QUERY.Object")
+   set objQuery.Security = objSecurity
+
+   '//
+   '// Retrieve view data (first 100 rows)
+   '//
+   lngCount = 100
+   if objForm.Fields("SRC_Rows").Value = "A" then
+      lngCount = 0
+   end if
+   strQuery = "select * from " & objForm.Fields("SRC_Owner").Value & "." & objForm.Fields("SRC_Name").Value
+   if trim(objForm.Fields("SRC_Where").Value) <> "" then
+      strQuery = strQuery & " where " & objForm.Fields("SRC_Where").Value
+   end if
+   strReturn = objQuery.Execute("DATA", strQuery, lngCount)
+   if strReturn <> "*OK" then
+      strReturn = FormatError(strReturn)
+      exit sub
+   end if
+   Response.Buffer = true
+   Response.ContentType = "application/vnd.ms-excel"
+   Response.AddHeader "content-disposition", "attachment; filename=" & objForm.Fields("SRC_Name").Value & ".xls"
+
+end sub
+
+'////////////////////////////
+'// Paint response routine //
+'////////////////////////////
+sub PaintResponse()%>
+<!--#include file="ics_view_excel.inc"-->
+<%end sub%>
+<!--#include file="ics_std_code.inc"-->

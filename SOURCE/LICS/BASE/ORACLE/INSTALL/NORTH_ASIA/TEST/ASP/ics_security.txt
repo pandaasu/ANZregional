@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Security -->
+<!-- -->
+<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=licscell;Data Source=ap0112t.ap.mars;">
+
+   <!-- -->
+   <!-- Authorised Support users -->
+   <!-- -->
+   <User identifier="gregaste" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_menu.txt"/>
+   <User identifier="hendemeg" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_menu.txt"/>
+   <User identifier="mandasun" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_menu.txt"/>
+   <User identifier="glenlin" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_menu.txt"/>
+   <User identifier="*guest" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_guest.txt"/>
+
+   <!-- -->
+   <!-- GRD Users -->
+   <!-- -->
+   <User identifier="mitchala" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_grd.txt"/>
+   <User identifier="palmejim" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_grd.txt"/>
+
+   <!-- -->
+   <!-- Hermes Users -->
+   <!-- -->
+   <User identifier="leeplu" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="xingdan" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="luojed" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="zhoujoy" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="darlijoh" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="lvden" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="muratton" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="mengjen" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="chanmar1" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="zhangliv" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/>
+   <User identifier="Qiansar" menu="d:\Inetpub\IISWebs\test.clio.ap.mars\ics_hermes.txt"/> 
+   
+</security>
