@@ -5,34 +5,40 @@
 /* Date    : August 2011                                          */
 /*                                                                */
 /******************************************************************/
+/*  A. Scan for <SOURCE_PATH> and replace with your local path to the source repository up to but not including \SOURCE (eg. D:\Vivian\LADS\SourceRepository)
+/*  B. Scan for <DATABASE> and replace with the database name (eg. DB1296T.AP.MARS)
+/*  C. Scan for <LICS_PASSWORD> and replace with the LICS password
+/*  D. Scan for <INSTALLATION> and replace with the installation folder in the source repository (eg. NORTH_ASIA from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
+/*  E. Scan for <ENVIRONMENT> and replace with the environment folder in the source repository (eg. TEST from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
+/******************************************************************/
 
-/**/
+/*-*/
 /* Set the echo off
-/**/
+/*-*/
 set echo off;
 
-/**/
+/*-*/
 /* Set the define character
-/**/
+/*-*/
 set define ^;
 
-/**/
+/*-*/
 /* Define the work variables
-/**/
-define tab_path = ...local path to repository...\SOURCE\LICS\BASE\ORACLE\LICS\TABLE
-define spl_path = ...local path to repository...\SOURCE\LICS\BASE\ORACLE\INSTALL\...Installation....\...Environment... (eg. NORTH_ASIA\TEST)
-define database = db9999x.ap.mars
-define datauser = lics
-define data_password = xxxxxx
+/*-*/
+define tab_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS\TABLE
+define spl_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\<INSTALLATION>\<ENVIRONMENT>
+define database = <DATABASE>
+define datauser = LICS
+define data_password = <LICS_PASSWORD>
 
-/**/
+/*-*/
 /* Start the spool process
-/**/
+/*-*/
 spool ^spl_path\_lics_build.log
 
-/**/
+/*-*/
 /* Compile the tables
-/**/
+/*-*/
 prompt CONNECTING (LICS) ...
 
 connect ^datauser/^data_password@^database
@@ -90,21 +96,21 @@ prompt CREATING LICS INDEXES ...
 
 @^tab_path\_create_indexes.sql;
 
-/**/
+/*-*/
 /* Undefine the work variables
-/**/
+/*-*/
 undefine tab_path
 undefine spl_path
 undefine database
 undefine datauser
 undefine data_password
 
-/**/
+/*-*/
 /* Stop the spool process
-/**/
+/*-*/
 spool off;
 
-/**/
+/*-*/
 /* Set the define character
-/**/
+/*-*/
 set define &;

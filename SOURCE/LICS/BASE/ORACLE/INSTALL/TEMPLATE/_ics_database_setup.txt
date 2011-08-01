@@ -1,7 +1,17 @@
 
-Please create the following a new database on [server name] ...
+DBA WO for a new ICS instance
+=============================
 
-   db9999x.ap.mars - ICS (Interface Control System) Environment
+Copy this script and perform the following scan/replace to localise...
+
+   A. Scan for <SERVER> and replace with the server name
+   B. Scan for <ICS_FILE_SYSTEM> and replace with the ICS file system path for the installation (eg. /ics/lad/test)
+   C. Scan for <ENVIRONMENT> and replace with the environment name (eg. Test, Production, etc)
+
+
+Please create the following a new database on <SERVER> ...
+
+   Database Name - ICS (Interface Control System) <ENVIRONMENT> Environment
 
    **DATABASE NOTES** 
 
@@ -16,19 +26,19 @@ Please create the following a new database on [server name] ...
 
    - Please execute the following commands .....
 
-      execute dbms_java.grant_permission('DBEC','java.io.FilePermission','/ics/lad/test/-','read,write,execute,delete');
+      execute dbms_java.grant_permission('DBEC','java.io.FilePermission','<ICS_FILE_SYSTEM>/-','read,write,execute,delete');
       execute dbms_java.grant_permission('DBEC','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
-      execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/lad/test/-','read,write,execute,delete');
+      execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','<ICS_FILE_SYSTEM>/-','read,write,execute,delete');
       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/bin/chmod','execute');
       execute dbms_java.grant_permission('LICS_APP','java.lang.RuntimePermission','*','readFileDescriptor,writeFileDescriptor');
       commit;
 
-      create directory ics_bin as '/ics/lad/test/bin';
-      create directory ics_config as '/ics/lad/test/config';
-      create directory ics_inbound as '/ics/lad/test/inbound';
-      create directory ics_outbound as '/ics/lad/test/outbound';
-      create directory ics_archive as '/ics/lad/test/archive';
-      create directory ics_view as '/ics/lad/test/webview';
+      create directory ics_bin as '<ICS_FILE_SYSTEM>/bin';
+      create directory ics_config as '<ICS_FILE_SYSTEM>/config';
+      create directory ics_inbound as '<ICS_FILE_SYSTEM>/inbound';
+      create directory ics_outbound as '<ICS_FILE_SYSTEM>/outbound';
+      create directory ics_archive as '<ICS_FILE_SYSTEM>/archive';
+      create directory ics_view as '<ICS_FILE_SYSTEM>/webview';
 
       grant all on directory ics_bin to lics_app;
       grant all on directory ics_config to lics_app;

@@ -23,17 +23,28 @@ create or replace package lics_parameter as
 
    *******************************************************************************/
 
+/*-*/
+/*  A. Scan for <SYSTEM> and replace with the installation system code (eg. ICS, CARE, VENUS, PROMAX, etc))
+/*  B. Scan for <ICS_FILE_SYSTEM> and replace with the ICS file system path for the installation (eg. /ics/lad/test)
+/*  C. Scan for <DATABASE> and replace with the database name (eg. DB1296T.AP.MARS)
+/*  D. Scan for <INSTALLATION> and replace with the installation name (eg. NORTH_ASIA)
+/*  E. Scan for <ENVIRONMENT> and replace with the environment name (eg. TEST)
+/*  F. Scan for <WEBSITE> and replace with the website URL (eg. http://test-isc.clio.ap.mars/)
+/*  G. Scan for <AMI_PATH> and replace with the AMI software path on the file system (eg. /opt/apps/mqft_light/test/shell/)
+/*  H. Scan for <ICS_EMAIL> and replace with the ICS notification email address (eg. "ISI ICS Test Group"@smtp.ap.mars)
+/*-*/
+
    /*-*/
    /* Public parameters
    /*-*/
-   system_code constant varchar2(10) := 'ICS';
-   system_unit constant varchar2(10) := 'NORTH_ASIA';
-   system_environment constant varchar2(20) := 'TEST';
-   system_url constant varchar2(128) := 'http://test-isc.clio.ap.mars/';
-   log_environment constant varchar2(128) := 'TEST';
-   log_database constant varchar2(128) := 'DB9999x.AP.MARS';
-   ics_path constant varchar2(128) := '/ics/lad/test/';
-   ami_path constant varchar2(128) := '/opt/apps/mqft_light/test/shell/';
+   system_code constant varchar2(10) := '<SYSTEM>';
+   system_unit constant varchar2(10) := '<INSTALLATION>';
+   system_environment constant varchar2(20) := '<ENVIRONMENT>';
+   system_url constant varchar2(128) := '<WEBSITE>';
+   log_environment constant varchar2(128) := '<ENVIRONMENT>';
+   log_database constant varchar2(128) := '<DATABASE>';
+   ics_path constant varchar2(128) := '<ICS_FILE_SYSTEM>/';
+   ami_path constant varchar2(128) := '<AMI_PATH>';
    folder_delimiter constant varchar2(1) := '/';
    file_attribute_command constant varchar2(64) := '/bin/chmod 777 <FILE>';
 
@@ -54,7 +65,7 @@ create or replace package lics_parameter as
    /* Public fatal parameters
    /*-*/
    fatal_opr_alert constant varchar2(256) := null;
-   fatal_ema_group constant varchar2(64) := '"ISI ICS Test Group"@smtp.ap.mars';
+   fatal_ema_group constant varchar2(64) := '<ICS_EMAIL>';
 
    /*-*/
    /* Public email parameters

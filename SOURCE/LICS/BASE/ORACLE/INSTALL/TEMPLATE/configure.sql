@@ -1,40 +1,47 @@
 
-/**/
+/*-*/
+/*  A. Scan for <DATABASE> and replace with the database name (eg. DB1296T.AP.MARS)
+/*  B. Scan for <LICS_APP_PASSWORD> and replace with the LICS_APP password
+/*  C. Scan for <ICS_EMAIL> and replace with the ICS notification email address (eg. "ISI ICS Test Group"@smtp.ap.mars)
+/*-*/
+
+
+/*-*/
 /* Set the define character
-/**/
+/*-*/
 set define ^;
 
-/**/
+/*-*/
 /* Define the work variables
-/**/
-define database = db9999x.ap.mars
+/*-*/
+define database = <DATABASE>
 define datauser = lics_app
-define data_password = xxxxxx
+define data_password = <LICS_APP_PASSWORD>
 
-/**/
+/*-*/
 /* Create the configuration data
-/**/
+/*-*/
 prompt CONNECTING ...
 
 connect ^datauser/^data_password@^database
 
 prompt CREATING JOB CONFIGURATION ...
 
-insert into lics_job values('ICS_FILE_POLLER','ICS File Poller',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*POLLER','ICSFILE','lics_file_poller.execute','sysdate',10,'1');
-insert into lics_job values('ICS_STREAM_POLLER','ICS Stream Poller',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*POLLER','ICSSTREAM','lics_stream_poller.execute','sysdate',30,'1');
-insert into lics_job values('FILE_REF01','File Reference Loader (Loader 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*FILE','FP_REF#01',null,'sysdate',null,'1');
-insert into lics_job values('FILE_REF02','File Reference Loader (Loader 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*FILE','FP_REF#02',null,'sysdate',null,'1');
-insert into lics_job values('FILE_FAC01','File Factory Loader (Loader 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*FILE','FP_FAC#01',null,'sysdate',null,'1');
-insert into lics_job values('FILE_FAC02','File Factory Loader (Loader 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*FILE','FP_FAC#02',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF01','Inbound Reference Interfaces (Processor 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#01',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF02','Inbound Reference Interfaces (Processor 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#02',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF03','Inbound Reference Interfaces (Processor 03)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#03',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_REF04','Inbound Reference Interfaces (Processor 04)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_REF#04',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_FAC01','Inbound Factory Interfaces (Processor 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_FAC#01',null,'sysdate',null,'1');
-insert into lics_job values('INBOUND_FAC02','Inbound Factory Interfaces (Processor 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*INBOUND','IB_FAC#02',null,'sysdate',null,'1');
-insert into lics_job values('OUTBOUND_NORM01','Inbound Interfaces (Normal Priority Processor 01)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*OUTBOUND','OB_NORM#01',null,'sysdate',null,'1');
-insert into lics_job values('OUTBOUND_NORM02','Inbound Interfaces (Normal Priority Processor 02)',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*OUTBOUND','OB_NORM#02',null,'sysdate',null,'1');
-insert into lics_job values('LICS_PURGING','LICS Purging - DAILY 7:00',null,20,null,'"ISI ICS Test Group"@smtp.ap.mars','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('ICS_FILE_POLLER','ICS File Poller',null,20,null,'<ICS_EMAIL>','*POLLER','ICSFILE','lics_file_poller.execute','sysdate',10,'1');
+insert into lics_job values('ICS_STREAM_POLLER','ICS Stream Poller',null,20,null,'<ICS_EMAIL>','*POLLER','ICSSTREAM','lics_stream_poller.execute','sysdate',30,'1');
+insert into lics_job values('FILE_REF01','File Reference Loader (Loader 01)',null,20,null,'<ICS_EMAIL>','*FILE','FP_REF#01',null,'sysdate',null,'1');
+insert into lics_job values('FILE_REF02','File Reference Loader (Loader 02)',null,20,null,'<ICS_EMAIL>','*FILE','FP_REF#02',null,'sysdate',null,'1');
+insert into lics_job values('FILE_FAC01','File Factory Loader (Loader 01)',null,20,null,'<ICS_EMAIL>','*FILE','FP_FAC#01',null,'sysdate',null,'1');
+insert into lics_job values('FILE_FAC02','File Factory Loader (Loader 02)',null,20,null,'<ICS_EMAIL>','*FILE','FP_FAC#02',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF01','Inbound Reference Interfaces (Processor 01)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_REF#01',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF02','Inbound Reference Interfaces (Processor 02)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_REF#02',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF03','Inbound Reference Interfaces (Processor 03)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_REF#03',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_REF04','Inbound Reference Interfaces (Processor 04)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_REF#04',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_FAC01','Inbound Factory Interfaces (Processor 01)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_FAC#01',null,'sysdate',null,'1');
+insert into lics_job values('INBOUND_FAC02','Inbound Factory Interfaces (Processor 02)',null,20,null,'<ICS_EMAIL>','*INBOUND','IB_FAC#02',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_NORM01','Inbound Interfaces (Normal Priority Processor 01)',null,20,null,'<ICS_EMAIL>','*OUTBOUND','OB_NORM#01',null,'sysdate',null,'1');
+insert into lics_job values('OUTBOUND_NORM02','Inbound Interfaces (Normal Priority Processor 02)',null,20,null,'<ICS_EMAIL>','*OUTBOUND','OB_NORM#02',null,'sysdate',null,'1');
+insert into lics_job values('LICS_PURGING','LICS Purging - DAILY 7:00',null,20,null,'<ICS_EMAIL>','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...

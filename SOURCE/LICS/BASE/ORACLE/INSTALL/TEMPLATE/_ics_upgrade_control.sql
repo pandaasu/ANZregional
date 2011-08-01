@@ -1,78 +1,178 @@
 
-Steps to create a new ICS instance
-==================================
+Steps to upgrade an existing ICS instance with V2 functionality
+===============================================================
 
+Copy this script and perform the following scan/replace to localise...
+
+   A. Scan for <SOURCE_PATH> and replace with your local path to the source repository up to but not including \SOURCE (eg. D:\Vivian\LADS\SourceRepository)
+   B. Scan for <ICS_FILE_SYSTEM> and replace with the ICS file system path for the installation (eg. /ics/lad/test)
+   C. Scan for <DATABASE> and replace with the database name (eg. DB1296T.AP.MARS)
+   D. Scan for <LICS_APP_PASSWORD> and replace with the LICS_APP password
+   E. Scan for <INSTALLATION> and replace with the installation folder in the source repository (eg. NORTH_ASIA from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
+   F. Scan for <ENVIRONMENT> and replace with the environment folder in the source repository (eg. TEST from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
 
 1. Create a WO for the DBA with the following...
 
-   1.1. The database setup instructions from ==> _ics_database_setup.txt
+   1.1. The DBA needs to connect as LICS when executing the following commands.
 
-   1.2. The following scripts from the repository directory (D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE)
+        1.1.2. Check the LICS_TRIGGERED table for column (tri_log_data)
 
-          lics_db_trigger.sql
+               If the column DOES NOT exist then add the following to the WO...
+
+                  /*-*/
+                  /* Modify the LICS_TRIGGERED table
+                  /*-*/
+                  alter table lics_triggered add tri_log_data varchar2(512 char) null;
+                  comment on column lics_triggered.tri_log_data is 'Triggered - log data';
+
+        1.1.3. Check the LICS_INTERFACE table for columns (int_usr_invocation, int_usr_validation and int_usr_message) and do ONLY ONE of the following...
+
+               If the columns DO NOT exist then add the following to the WO...
+
+                  /*-*/
+                  /* Modify the LICS_INTERFACE table
+                  /*-*/
+                  alter table lics_interface add 
+                     (int_usr_invocation varchar2(1 char) null,
+                      int_usr_validation varchar2(256 char) null,
+                      int_usr_message varchar2(64 char) null,
+                      int_lod_type varchar2(10 char) null,
+                      int_lod_group varchar2(10 char) null);
+                  comment on column lics_interface.int_usr_invocation is 'Interface - user invocation indicator (0=No or 1=Yes)';
+                  comment on column lics_interface.int_usr_validation is 'Interface - user invocation validation procedure';
+                  comment on column lics_interface.int_usr_message is 'Interface - user invocation message name (*OUTBOUND only)';
+                  comment on column lics_interface.int_lod_type is 'Interface - interface load type (*NONE=outbound interfaces, *PUSH=load pushing, *POLL=load polling)';
+                  comment on column lics_interface.int_lod_group is 'Interface - interface load group (*NONE=load type *PUSH or *NONE, group=load type *POLL)';
+                  update lics_interface set int_usr_invocation = '0', int_usr_validation = null, int_usr_message = null, int_lod_type = '*PUSH', int_lod_group = '*NONE' where int_type != '*OUTBOUND';
+                  update lics_interface set int_usr_invocation = '0', int_usr_validation = null, int_usr_message = null, int_lod_type = '*NONE', int_lod_group = '*NONE' where int_type = '*OUTBOUND';
+                  commit;
+                  alter table lics_interface modify (int_lod_type varchar2(10 char) not null, int_lod_group varchar2(10 char) not null);
+
+               Otherwise the columns DO exist so add the following to the WO...
+
+                  /*-*/
+                  /* Modify the LICS_INTERFACE table
+                  /*-*/
+                  alter table lics_interface add 
+                     (int_lod_type varchar2(10 char) null,
+                      int_lod_group varchar2(10 char) null);
+                  comment on column lics_interface.int_lod_type is 'Interface - interface load type (*NONE=outbound interfaces, *PUSH=load pushing, *POLL=load polling)';
+                  comment on column lics_interface.int_lod_group is 'Interface - interface load group (*NONE=load type *PUSH or *NONE, group=load type *POLL)';
+                  update lics_interface set int_lod_type = '*PUSH', int_lod_group = '*NONE' where int_type != '*OUTBOUND';
+                  update lics_interface set int_lod_type = '*NONE', int_lod_group = '*NONE' where int_type = '*OUTBOUND';
+                  commit;
+                  alter table lics_interface modify (int_lod_type varchar2(10 char) not null, int_lod_group varchar2(10 char) not null);
+
+        1.1.4. Add the following to the WO...
+
+               /*-*/
+               /* Create the LICS_FILE table
+               /*-*/
+               create table lics_file
+                  (fil_file                     number(15,0)                    not null,
+                   fil_path                     varchar2(64 char)               not null,
+                   fil_name                     varchar2(256 char)              not null,
+                   fil_status                   varchar2(1 char)                not null,
+                   fil_crt_user                 varchar2(30 char)               not null,
+                   fil_crt_time                 date                            not null,
+                   fil_message                  varchar2(2000 char)             null);
+               comment on table lics_file is 'LICS File Table';
+               comment on column lics_file.fil_file is 'File - file sequence number (sequence generated)';
+               comment on column lics_file.fil_path is 'File - file path';
+               comment on column lics_file.fil_name is 'File - file name';
+               comment on column lics_file.fil_status is 'File - file status';
+               comment on column lics_file.fil_crt_user is 'File - creation user';
+               comment on column lics_file.fil_crt_time is 'File - creation time';
+               comment on column lics_file.fil_message is 'File - file message';
+               alter table lics_file
+                  add constraint lics_file_pk primary key (fil_file);
+               create unique index lics_file_ix01 on lics_file
+                  (fil_path, fil_name);
+               create index lics_file_ix02 on lics_file
+                  (fil_path, fil_status, fil_file);
+               grant select, insert, update, delete on lics_file to lics_app;
+               create or replace public synonym lics_file for lics.lics_file;
+
+               /*-*/
+               /* Create the file sequence
+               /*-*/
+               create sequence lics_file_sequence
+                  increment by 1
+                  start with 1
+                  maxvalue 999999999999999
+                  minvalue 1
+                  nocycle
+                  nocache;
+               grant select on lics_file_sequence to lics_app;
+               create or replace public synonym lics_file_sequence for lics.lics_file_sequence;
+
+   1.2. The DBA needs to connect as SYS when executing the following commands.
+
+        1.2.1. Add the following to the WO...
+
+               /*-*/
+               /* Create the java permissions and directory objects
+               /*-*/
+               execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/bin/chmod','execute');
+               commit;
+               create directory ics_bin as '<ICS_FILE_SYSTEM>/bin';
+               create directory ics_config as '<ICS_FILE_SYSTEM>/config';
+               create directory ics_archive as '<ICS_FILE_SYSTEM>/archive';
+               grant all on directory ics_bin to lics_app;
+               grant all on directory ics_config to lics_app;
+               grant all on directory ics_archive to lics_app;
+
+   1.3. The following script from the repository directory (<SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE)
+
           lics_directory.sql
 
-2. DBA creates a new database based on instructions in ==> _ics_database_setup.txt
+2. Before the DBA performs the WO the following actions need to be taken by the ICS support team...
 
-3. Check that the database has been created as requested...
+   2.1. The ICS jobs need to be stopped until the upgrade is completed.
 
-   3.1. Connect to the database as LICS_APP.
+   2.2. All AMI message feeds need to be stopped until the upgrade is completed.
 
-   3.2. Check the java permissions have been created using the statement ==> select * from user_java_policy;
+3. DBA performs the WO as above.
+
+4. Check that the database has been updated as requested...
+
+   4.1. Connect to the database as LICS_APP.
+
+   4.2. Check the java permissions have been created using the statement ==> select * from user_java_policy;
+
+        The following row should be returned...
+
+        GRANT   LICS_APP   SYS   java.io.FilePermission        /bin/chmod            execute         ENABLED
+
+   4.3. Check the oracle directories have been created using the statement ==> select * from all_directories;
 
         The following rows should be returned...
 
-        GRANT   LICS_APP   SYS   java.io.FilePermission        /bin/chmod        execute                                  ENABLED
-	GRANT   LICS_APP   SYS   java.io.FilePermission        /ics/lad/test/-   read,write,execute,delete                ENABLED
-	GRANT   LICS_APP   SYS   java.lang.RuntimePermission   *                 readFileDescriptor,writeFileDescriptor   ENABLED
+	   ICS_ARCHIVE   <ICS_FILE_SYSTEM>/archive
+	   ICS_CONFIG    <ICS_FILE_SYSTEM>/config
+	   ICS_BIN       <ICS_FILE_SYSTEM>/bin
 
-   3.3. Check the oracle directories have been created using the statement ==> select * from all_directories;
+5. Load the ICS java classes into the LICS_APP schema using the following commands...
 
-        The following rows should be returned...
+      loadjava -f -v -r -u lics_app/<LICS_APP_PASSWORD>@<DATABASE> <SOURCE_PATH>\SOURCE\LICS\BASE\JAVA\ICS_General\build\classes\com\isi\ics\cExternalProcess.class
+      loadjava -f -v -r -u lics_app/<LICS_APP_PASSWORD>@<DATABASE> <SOURCE_PATH>\SOURCE\LICS\BASE\JAVA\ICS_General\build\classes\com\isi\ics\cFileSystem.class
 
-	   ICS_ARCHIVE   /ics/lad/test/archive
-	   ICS_CONFIG    /ics/lad/test/config
-	   ICS_BIN       /ics/lad/test/bin
-	   ICS_VIEW      /ics/lad/test/webview
-	   ICS_INBOUND   /ics/lad/test/inbound
-	   ICS_OUTBOUND  /ics/lad/test/outbound
+6. Connect as LICS_APP using SQL+ and compile the file system package as follows...
 
-   3.4. Check the LICS_APP authority to dbms_pipe using the statement ==> desc dbms_pipe;
+      @<SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE\lics_filesystem.sql;
 
-        The following data should be returned...
+7. DBA to connect as SYS using SQL+ and compile the following package script send in 1.2 ...
 
-           CREATE_PIPE (FUNCTION)
+      @...DBA local path to WO file...\lics_directory.sql;
 
-   3.5. Check the LICS_APP authority to dbms_lock using the statement ==> desc dbms_lock;
+8. Check that the SYS packages were created correctly...
 
-        The following data should be returned...
+   8.1. Connect to the database as LICS_APP.
 
-           ALLOCATE_UNIQUE
+   8.2. Check the LICS_APP authority to lics_directory using the statement ==> desc lics_directory;
 
-4. Load the ICS java classes into the LICS_APP schema using the following commands...
+        The description of package lics_directory should be returned to indicate that the package has been created and is available to LICS_APP.
 
-      loadjava -f -v -r -u lics_app/kwi9s92a@db1296t.ap.mars D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\JAVA\ICS_General\build\classes\com\isi\ics\cExternalProcess.class
-      loadjava -f -v -r -u lics_app/kwi9s92a@db1296t.ap.mars D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\JAVA\ICS_General\build\classes\com\isi\ics\cFileSystem.class
-
-5. Connect as LICS_APP using SQL+ and compile the file system package as follows...
-
-      @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE\lics_filesystem.sql;
-
-6. DBA to connect as SYS using SQL+ and compile the following trigger and package scripts send in 1.2 ...
-
-      @dba_pc_local_path\lics_db_trigger.sql;
-      @dba_pc_local_path\lics_directory.sql;
-
-7. Check that the SYS packages were created correctly...
-
-   7.1. Check the LICS_APP authority to lics_directory using the statement ==> desc lics_directory;
-
-        The following data should be returned...
-
-           CREATE_DIRECTORY
-
-8. Compile the LICS schema objects using the script ==> @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST\_lics_build.sql
-
-9. Compile the LICS_APP schema objects using the script ==> @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST\_lics_app_build.sql
+9. Recompile the LICS_APP schema objects using the script ==> @<SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\<INSTALLATION>\<ENVIRONMENT>\_lics_app_build.sql
 
 
