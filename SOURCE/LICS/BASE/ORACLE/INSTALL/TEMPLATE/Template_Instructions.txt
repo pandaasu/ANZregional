@@ -1,0 +1,25 @@
+
+Template Instructions
+=====================
+
+1. Create a new installation folder in the source repository under the Your_Source_Repository_Path\SOURCE\LICS\BASE\ORACLE\INSTALL folder (eg. NORTH_ASIA)
+
+2. Create a new environment folder in the source repository under the new or existing installation folder (eg. TEST)
+
+3. Copy the following template files into the new environment folder...
+
+      _ics_build_control.sql;
+      _ics_database_setup.txt
+      _lics_app_build.sql
+      _lics_build.sql
+      configure.sql
+      lics_parameter.sql
+
+4. Perform the required scan/replace instructions in each file.
+
+5. Add and commit the new folders and files to the source repository.
+
+6. The scripts are now ready to create the new ICS installation. Follow the instructions in the _ics_build_control.sql file.
+
+
+
