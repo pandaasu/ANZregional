@@ -20,7 +20,7 @@ function GetInstallation()
    '//
    '// Returns the installation string
    '//
-   GetInstallation = "NORTH_ASIA" 
+   GetInstallation = "ISC_EFEX" 
 
 end function
 
