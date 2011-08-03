@@ -174,12 +174,16 @@ Copy this script and perform the following scan/replace to localise...
         The description of package lics_directory should be returned to indicate that the package has been created and is available to LICS_APP.
 
 9. Connect as LICS_APP using SQL+ and execute the following...
-
+      drop package lics_file;
       drop type lics_store_table;
       drop type lics_datastore_table;
       drop type lics_security_table;
       drop type lics_stream_table;
 
 10. Recompile the LICS_APP schema objects using the script ==> @D:\Vivian\LADS\SourceRepository\SOURCE\LICS\BASE\ORACLE\INSTALL\ISC_EFEX\TEST\_lics_app_build.sql
+
+Notes: Maybe DBA need to run those two command
+	grant execute on dbms_pipe to lics_app;
+        grant execute on dbms_lock to lics_app;
 
 
