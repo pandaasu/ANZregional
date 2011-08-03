@@ -175,6 +175,7 @@ Copy this script and perform the following scan/replace to localise...
 
 9. Connect as LICS_APP using SQL+ and execute the following...
 
+      drop package lics_file;
       drop type lics_store_table;
       drop type lics_datastore_table;
       drop type lics_security_table;
