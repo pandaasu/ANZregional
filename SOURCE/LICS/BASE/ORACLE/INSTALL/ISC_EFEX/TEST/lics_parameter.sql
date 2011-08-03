@@ -45,7 +45,7 @@ create or replace package lics_parameter as
    log_environment constant varchar2(128) := 'TEST';
    log_database constant varchar2(128) := 'DB1310T.AP.MARS';
    ics_path constant varchar2(128) := '/ics/efex/test/';
-   ami_path constant varchar2(128) := '<AMI_PATH>';
+   ami_path constant varchar2(128) := '/opt/apps/mqft_light/test/shell';
    folder_delimiter constant varchar2(1) := '/';
    file_attribute_command constant varchar2(64) := '/bin/chmod 777 <FILE>';
 
