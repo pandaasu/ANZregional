@@ -1,0 +1,554 @@
+
+================ODS=================
+
+/*-*/
+/* Connect as ODS
+/*-*/
+connect ods/odssilverd@ap0066t.ap.mars
+
+--
+-- COMPILE THE PARTITION PACKAGE
+--
+
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\ODS\CODE\ods_partition.sql;
+
+--
+-- CREATE FCST_DTL PARTITIONED TABLE
+--
+
+create table ods.fcst_dtl_new
+   (fcst_hdr_code                     number(8)            not null,
+    fcst_dtl_code                     number               not null,
+    fcst_year                         number(4)            not null,
+    fcst_period                       number(2)            not null,
+    fcst_week                         number(1)            null,
+    demand_plng_grp_code              varchar2(10 char)    null,
+    cntry_code                        varchar2(3 char)     null,
+    region_code                       varchar2(3 char)     null,
+    multi_mkt_acct_code               varchar2(30 char)    null,
+    banner_code                       varchar2(5 char)     null,
+    cust_buying_grp_code              varchar2(30 char)    null,
+    acct_assgnmnt_grp_code            varchar2(2 char)     null,
+    pos_format_grpg_code              varchar2(30 char)    null,
+    distbn_route_code                 varchar2(3 char)     null,
+    cust_code                         varchar2(10 char)    null,
+    matl_zrep_code                    varchar2(18 char)    not null,
+    currcy_code                       varchar2(3 char)     not null,
+    fcst_value                        number(13,4)         not null,
+    fcst_qty                          number(13,4)         not null,
+    fcst_dtl_lupdp                    varchar2(8 char)     not null,
+    fcst_dtl_lupdt                    date                 not null,
+    batch_code                        number(5)            not null,
+    matl_tdu_code                     varchar2(18 char)    null,
+    fcst_dtl_type_code                varchar2(1 char)     null)
+   partition by list (fcst_hdr_code)
+   (partition the_rest values (default));
+comment on table ods.fcst_dtl_new is 'Forecast Detail Table';
+comment on column ods.fcst_dtl_new.fcst_hdr_code is 'Forecast Header Code (Internal Data Warehouse surrogate key)';
+comment on column ods.fcst_dtl_new.fcst_dtl_code is 'Forecast Detail Code (Internal Data Warehouse surrogate key)';
+comment on column ods.fcst_dtl_new.fcst_year is 'Forecast Year';
+comment on column ods.fcst_dtl_new.fcst_period is 'Forecast Period';
+comment on column ods.fcst_dtl_new.fcst_week is 'Forecast Week';
+comment on column ods.fcst_dtl_new.demand_plng_grp_code is 'Demand Planning Group Code';
+comment on column ods.fcst_dtl_new.cntry_code is 'Country Code';
+comment on column ods.fcst_dtl_new.region_code is 'Region Code';
+comment on column ods.fcst_dtl_new.multi_mkt_acct_code is 'Multi-Market Account Code';
+comment on column ods.fcst_dtl_new.banner_code is 'Banner Code';
+comment on column ods.fcst_dtl_new.cust_buying_grp_code is 'Customer Buying Group Code';
+comment on column ods.fcst_dtl_new.acct_assgnmnt_grp_code is 'Account Assignment Group Code';
+comment on column ods.fcst_dtl_new.pos_format_grpg_code is 'POS Format Grouping Code';
+comment on column ods.fcst_dtl_new.distbn_route_code is 'Distribution Route Code';
+comment on column ods.fcst_dtl_new.cust_code is 'Customer Code';
+comment on column ods.fcst_dtl_new.matl_zrep_code is 'Material Code';
+comment on column ods.fcst_dtl_new.currcy_code is 'Currency Code';
+comment on column ods.fcst_dtl_new.fcst_value is 'Forecast Value';
+comment on column ods.fcst_dtl_new.fcst_qty is 'Forecast Quantity';
+comment on column ods.fcst_dtl_new.fcst_dtl_lupdp is 'Last Updated Person';
+comment on column ods.fcst_dtl_new.fcst_dtl_lupdt is 'Last Updated Time';
+comment on column ods.fcst_dtl_new.batch_code is 'Batch Code';
+comment on column ods.fcst_dtl_new.matl_tdu_code is 'Material TDU Level Code';
+comment on column ods.fcst_dtl_new.fcst_dtl_type_code is 'Forecast Detail Type Code';
+grant select on ods.fcst_dtl_new to ods_select;
+grant select on ods.fcst_dtl_new to cdw_reader_role;
+grant select, insert, update, delete on ods.fcst_dtl_new to ods_app;
+grant select on ods.fcst_dtl_new to appsupport;
+grant select on ods.fcst_dtl_new to bo_user;
+grant select, insert, update, delete on ods.fcst_dtl_new to lics_app;
+grant select on ods.fcst_dtl_new to dw_app;
+
+--
+-- LOAD FCST_DTL PARTITIONED DATA
+--
+
+variable jobnum number;
+exec dbms_job.submit(:jobnum,'fcst_dtl_converter.execute;',sysdate,null);
+commit;
+
+--
+-- DROP OR RENAME OLD FCST_DTL TABLE, CONSTRAINTS AND INDEXES
+--
+
+drop table fcst_dtl purge;
+--OR
+--alter table fcst_dtl rename to fcst_dtl_old;
+--alter table fcst_dtl_old rename constraint fcst_dtl_pk to fcst_dtl_old_pk;
+--alter table fcst_dtl_old rename constraint fcst_dtl_fk to fcst_dtl_old_fk;
+--alter index fcst_dtl_pk rename to fcst_dtl_old_pk;
+--alter index fcst_dtl_idx01 rename to fcst_dtl_old_idx01;
+
+--
+-- RENAME FCST_DTL_NEW TABLE
+--
+
+alter table fcst_dtl_new rename to fcst_dtl;
+
+--
+-- CREATE FCST_DTL CONSTRAINTS AND INDEXES
+--
+
+alter table ods.fcst_dtl add constraint fcst_dtl_pk primary key (fcst_hdr_code, fcst_dtl_code) using index local;
+alter table ods.fcst_dtl add constraint fcst_dtl_fk foreign key (fcst_hdr_code) references fcst_hdr (fcst_hdr_code);
+create index ods.fcst_dtl_idx01 on ods.fcst_dtl (matl_zrep_code) local;
+create or replace public synonym fcst_dtl for ods.fcst_dtl;
+
+--
+-- GATHER TABLE STATS
+--
+
+exec dbms_stats.gather_table_stats(ownname => 'ODS', tabname => 'FCST_DTL', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', cascade => TRUE);
+
+
+
+==============ODS_APP===============
+
+/*-*/
+/* Connect as ODS_APP
+/*-*/
+connect ods_app/odsgold@ap0066t.ap.mars
+
+-- COMPILE PACKAGES
+
+set define ^;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\ODS_APP\CODE\ods_dfnods01.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\ODS_APP\CODE\ods_purging.sql;
+grant execute on ods_constants to dw_app;
+
+
+
+
+================DDS=================
+
+/*-*/
+/* Connect as DDS
+/*-*/
+connect dds/ddssilver@ap0066t.ap.mars
+
+--
+-- CREATE FCST_FACT PARTITIONED TABLE
+--
+
+create table dds.fcst_fact_new
+   (partition_code                    varchar2(32 char)    not null,
+    company_code                      varchar2(10 char)    not null,
+    sales_org_code                    varchar2(4 char)     not null,
+    distbn_chnl_code                  varchar2(2 char)     not null,
+    division_code                     varchar2(2 char)     null,
+    fcst_type_code                    varchar2(4 char)     not null,
+    fcst_yyyypp                       number(6,0)          not null,
+    fcst_yyyyppw                      number(7,0)          null,
+    demand_plng_grp_code              varchar2(10 char)    null,
+    cntry_code                        varchar2(3 char)     null,
+    region_code                       varchar2(3 char)     null,
+    multi_mkt_acct_code               varchar2(30 char)    null,
+    banner_code                       varchar2(5 char)     null,
+    cust_buying_grp_code              varchar2(30 char)    null,
+    acct_assgnmnt_grp_code            varchar2(2 char)     null,
+    pos_format_grpg_code              varchar2(30 char)    null,
+    distbn_route_code                 varchar2(3 char)     null,
+    cust_code                         varchar2(10 char)    null,
+    matl_zrep_code                    varchar2(18 char)    not null,
+    currcy_code                       varchar2(3 char)     not null,
+    fcst_value                        number(16,2)         not null,
+    fcst_value_aud                    number(16,2)         not null,
+    fcst_value_usd                    number(16,2)         not null,
+    fcst_value_eur                    number(16,2)         not null,
+    fcst_qty                          number(16,2)         not null,
+    fcst_qty_gross_tonnes             number(16,6)         not null,
+    fcst_qty_net_tonnes               number(16,6)         not null,
+    moe_code                          varchar2(4 char)     not null,
+    matl_tdu_code                     varchar2(18 char)    null,
+    base_value                        number(16,2)         not null,
+    base_qty                          number(16,2)         not null,
+    aggreg_mkt_actvty_value           number(16,2)         not null,
+    aggreg_mkt_actvty_qty             number(16,2)         not null,
+    lock_value                        number(16,2)         not null,
+    lock_qty                          number(16,2)         not null,
+    rcncl_value                       number(16,2)         not null,
+    rcncl_qty                         number(16,2)         not null,
+    auto_adjmt_value                  number(16,2)         not null,
+    auto_adjmt_qty                    number(16,2)         not null,
+    override_value                    number(16,2)         not null,
+    override_qty                      number(16,2)         not null,
+    mkt_actvty_value                  number(16,2)         not null,
+    mkt_actvty_qty                    number(16,2)         not null,
+    data_driven_event_value           number(16,2)         not null,
+    data_driven_event_qty             number(16,2)         not null,
+    tgt_impact_value                  number(16,2)         not null,
+    tgt_impact_qty                    number(16,2)         not null,
+    dfn_adjmt_value                   number(16,2)         not null,
+    dfn_adjmt_qty                     number(16,2)         not null)
+   partition by list (partition_code)
+      (partition the_rest values(DEFAULT));
+comment on table dds.fcst_fact_new is 'Forecast Fact Table';
+comment on column dds.fcst_fact_new.partition_code is 'Partition code company code, moe code, forecast type code';
+comment on column dds.fcst_fact_new.company_code is 'Company Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
+comment on column dds.fcst_fact_new.sales_org_code is 'Sales Organisation Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
+comment on column dds.fcst_fact_new.distbn_chnl_code is 'Distribution Channel Code - Source Data ODS.FCST_HDR.DISTBN_CHNL_CODE';
+comment on column dds.fcst_fact_new.division_code is 'Division Code - Source Data ODS.FCST_HDR.DIVISION_CODE';
+comment on column dds.fcst_fact_new.fcst_type_code is 'Forecast Type Code - Source Data ODS.FCST_HDR.FCST_TYPE_CODE';
+comment on column dds.fcst_fact_new.fcst_yyyypp is 'Forecast YYYYPP - Source Data ODS.FCST_DTL.FCST_YEAR | FCST_PERIOD';
+comment on column dds.fcst_fact_new.fcst_yyyyppw is 'Forecast YYYYPPW - Source Data ODS.FCST_DTL.FCST_YEAR | FCST_PERIOD | FCST_WEEK';
+comment on column dds.fcst_fact_new.demand_plng_grp_code is 'Demand Planning Group Code - Source Data ODS.FCST_DTL.DEMAND_PLNG_GRP_CODE';
+comment on column dds.fcst_fact_new.cntry_code is 'Country Code - Source Data ODS.FCST_DTL.CNTRY_CODE';
+comment on column dds.fcst_fact_new.region_code is 'Region Code - Source Data ODS.FCST_DTL.REGION_CODE';
+comment on column dds.fcst_fact_new.multi_mkt_acct_code is 'Multi-Market Account Code - Source Data ODS.FCST_DTL.MULTI_MKT_ACCT_CODE';
+comment on column dds.fcst_fact_new.banner_code is 'Banner Code - Source Data ODS.FCST_DTL.BANNER_CODE';
+comment on column dds.fcst_fact_new.cust_buying_grp_code is 'Customer Buying Group Code - Source Data ODS.FCST_DTL.CUST_BUYING_GRP_CODE';
+comment on column dds.fcst_fact_new.acct_assgnmnt_grp_code is 'Account Assignment Group - Source Data ODS.FCST_DTL.ACCT_ASSGNMNT_GRP_CODE';
+comment on column dds.fcst_fact_new.pos_format_grpg_code is 'POS Format Grouping Code - Source Data ODS.FCST_DTL.POS_FORMAT_GRPG_CODE';
+comment on column dds.fcst_fact_new.distbn_route_code is 'Distribution Route Code - Source Data ODS.FCST_DTL.DISTBN_ROUTE_CODE';
+comment on column dds.fcst_fact_new.cust_code is 'Customer Code - Source Data ODS.FCST_DTL.CUST_CODE';
+comment on column dds.fcst_fact_new.matl_zrep_code is 'Material Code - Source Data ODS.FCST_DTL.MATL_CODE';
+comment on column dds.fcst_fact_new.currcy_code is 'Currency Code - Source Data ODS.FCST_DTL.CURRCY_CODE';
+comment on column dds.fcst_fact_new.fcst_value is 'Forecast Value (Market) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.fcst_value_aud is 'Forecast Value (AUD) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.fcst_value_usd is 'Forecast Value (USD) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.fcst_value_eur is 'Forecast Value (EUR) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.fcst_qty is 'Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.fcst_qty_gross_tonnes is 'Forecast Quantity Gross Tonnes - Source Data ODS.SAP_MAT_HDR.BRGEW';
+comment on column dds.fcst_fact_new.fcst_qty_net_tonnes is 'Forecast Quantity Net Tonnes - Source Data ODS.SAP_MAT_HDR.NTGEW';
+comment on column dds.fcst_fact_new.moe_code is 'MOE Code - Source Data ODS.FCST_HDR.MOE_CODE';
+comment on column dds.fcst_fact_new.matl_tdu_code is 'Material TDU Level Code - Source Data ODS.FCST_DTL.MATL_TDU_CODE';
+comment on column dds.fcst_fact_new.base_value is 'Base Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.base_qty is 'Base Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.aggreg_mkt_actvty_value is 'Aggregate Market Activity Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.aggreg_mkt_actvty_qty is 'Aggregate Market Activity Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.lock_value is 'Lock Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.lock_qty is 'Lock Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.rcncl_value is 'Reconcile Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.rcncl_qty is 'Reconcile Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.auto_adjmt_value is 'Auto-adjustment Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.auto_adjmt_qty is 'Auto-adjustment Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.override_value is 'Override Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.override_qty is 'Override Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.mkt_actvty_value is 'Market Activity Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.mkt_actvty_qty is 'Market Activity Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.data_driven_event_value is 'Data Driven Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.data_driven_event_qty is 'Data Driven Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.tgt_impact_value is 'Target Impacts Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.tgt_impact_qty is 'Target Impacts Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.fcst_fact_new.dfn_adjmt_value is 'Demand Financials Adjustment Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.fcst_fact_new.dfn_adjmt_qty is 'Demand Financials Adjustment Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+GRANT SELECT ON FCST_FACT_new TO APPSUPPORT;
+GRANT SELECT ON FCST_FACT_new TO BO_USER;
+GRANT SELECT ON FCST_FACT_new TO BW_READER;
+GRANT SELECT ON FCST_FACT_new TO CDW_READER_ROLE;
+GRANT SELECT ON FCST_FACT_new TO DDS_APP WITH GRANT OPTION;
+GRANT DELETE, INSERT, UPDATE ON FCST_FACT_new TO DDS_APP;
+GRANT DELETE, INSERT, SELECT, UPDATE ON FCST_FACT_new TO DDS_MAINT;
+GRANT SELECT ON FCST_FACT_new TO DDS_SELECT;
+GRANT SELECT ON FCST_FACT_new TO DDS_USER;
+GRANT DELETE, SELECT, INSERT, UPDATE ON FCST_FACT_new TO DW_APP;
+GRANT SELECT ON FCST_FACT_new TO KPI_APP;
+GRANT DELETE, INSERT, SELECT, UPDATE ON FCST_FACT_new TO ODS_APP;
+
+
+
+===============DW_APP=================
+
+/*-*/
+/* Connect as DW_APP
+/*-*/
+connect dw_app/dwgold@ap0066t.ap.mars
+
+--
+-- LOAD FCST_FACT PARTITIONED DATA
+--
+
+set define ^;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\ODS_APP\CODE\fcst_fact_converter.sql;
+
+variable jobnum number;
+exec dbms_job.submit(:jobnum,'fcst_fact_converter.execute;',sysdate,null);
+commit;
+
+
+================DDS=================
+
+/*-*/
+/* Connect as DDS
+/*-*/
+connect dds/ddssilver@ap0066t.ap.mars
+
+--
+-- DROP OR RENAME OLD FCST_FACT TABLE, CONSTRAINTS AND INDEXES
+--
+
+drop table fcst_fact purge;
+--OR
+--alter table fcst_fact rename to fcst_fact_old;
+--drop index fcst_fact_i1;
+--drop index fcst_fact_i2;
+--drop index fcst_fact_i3;
+--drop index fcst_fact_i4;
+--drop index fcst_fact_i5;
+--drop index fcst_fact_i6;
+
+--
+-- RENAME FCST_FACT_NEW TABLE
+--
+
+alter table fcst_fact_new rename to fcst_fact;
+
+--
+-- CREATE FCST_FACT CONSTRAINTS AND INDEXES
+--
+
+create bitmap index dds.fcst_fact_i1 on dds.fcst_fact (FCST_YYYYPP, COMPANY_CODE) local;
+create bitmap index dds.fcst_fact_i2 on dds.fcst_fact (FCST_YYYYPPW, COMPANY_CODE) local;
+create index dds.fcst_fact_i3 on dds.fcst_fact (MATL_ZREP_CODE) local;
+create index dds.fcst_fact_i4 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, FCST_YYYYPPW) local;
+create index dds.fcst_fact_i5 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, FCST_YYYYPP) local;
+create index dds.fcst_fact_i6 on dds.fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, FCST_YYYYPPW) local;
+create or replace public synonym fcst_fact for dds.fcst_fact;
+
+--
+-- GATHER TABLE STATS
+--
+
+exec dbms_stats.gather_table_stats(ownname => 'DDS', tabname => 'FCST_FACT', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', cascade => TRUE);
+
+
+--
+-- CREATE DEMAND_PLNG_FCST_FACT PARTITIONED TABLE
+--
+
+create table dds.demand_plng_fcst_fact_new
+   (partition_code                    varchar2(32 char)    not null,
+    company_code                      varchar2(10 char)    not null,
+    sales_org_code                    varchar2(4 char)     not null,
+    distbn_chnl_code                  varchar2(2 char)     not null,
+    division_code                     varchar2(2 char)     null,
+    fcst_type_code                    varchar2(4 char)     not null,
+    casting_yyyypp                    number(6,0)          not null,
+    casting_yyyyppw                   number(7,0)          null,
+    fcst_yyyypp                       number(6,0)          not null,
+    fcst_yyyyppw                      number(7,0)          null,
+    demand_plng_grp_code              varchar2(10 char)    null,
+    cntry_code                        varchar2(3 char)     null,
+    region_code                       varchar2(3 char)     null,
+    multi_mkt_acct_code               varchar2(30 char)    null,
+    banner_code                       varchar2(5 char)     null,
+    cust_buying_grp_code              varchar2(30 char)    null,
+    acct_assgnmnt_grp_code            varchar2(2 char)     null,
+    pos_format_grpg_code              varchar2(30 char)    null,
+    distbn_route_code                 varchar2(3 char)     null,
+    cust_code                         varchar2(10 char)    null,
+    matl_zrep_code                    varchar2(18 char)    not null,
+    currcy_code                       varchar2(3 char)     not null,
+    fcst_value                        number(16,2)         not null,
+    fcst_value_aud                    number(16,2)         not null,
+    fcst_value_usd                    number(16,2)         not null,
+    fcst_value_eur                    number(16,2)         not null,
+    fcst_qty                          number(16,2)         not null,
+    fcst_qty_gross_tonnes             number(16,6)         not null,
+    fcst_qty_net_tonnes               number(16,6)         not null,
+    moe_code                          varchar2(4 char)     not null,
+    matl_tdu_code                     varchar2(18 char)    null,
+    base_value                        number(16,2)         null,
+    base_qty                          number(16,2)         null,
+    aggreg_mkt_actvty_value           number(16,2)         null,
+    aggreg_mkt_actvty_qty             number(16,2)         null,
+    lock_value                        number(16,2)         null,
+    lock_qty                          number(16,2)         null,
+    rcncl_value                       number(16,2)         null,
+    rcncl_qty                         number(16,2)         null,
+    auto_adjmt_value                  number(16,2)         null,
+    auto_adjmt_qty                    number(16,2)         null,
+    override_value                    number(16,2)         null,
+    override_qty                      number(16,2)         null,
+    mkt_actvty_value                  number(16,2)         null,
+    mkt_actvty_qty                    number(16,2)         null,
+    data_driven_event_value           number(16,2)         null,
+    data_driven_event_qty             number(16,2)         null,
+    tgt_impact_value                  number(16,2)         null,
+    tgt_impact_qty                    number(16,2)         null,
+    dfn_adjmt_value                   number(16,2)         null,
+    dfn_adjmt_qty                     number(16,2)         null)
+   partition by list (partition_code)
+      (partition the_rest values(DEFAULT));
+comment on table dds.demand_plng_fcst_fact_new is 'Demand Planning Forecast Base Fact Table';
+comment on column dds.demand_plng_fcst_fact_new.partition_code is 'Partition code company code, moe code, forecast type code, casting period';
+comment on column dds.demand_plng_fcst_fact_new.company_code is 'Company Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
+comment on column dds.demand_plng_fcst_fact_new.sales_org_code is 'Sales Organisation Code - Source Data ODS.FCST_HDR.SALES_ORG_CODE';
+comment on column dds.demand_plng_fcst_fact_new.distbn_chnl_code is 'Distribution Channel Code - Source Data ODS.FCST_HDR.DISTBN_CHNL_CODE';
+comment on column dds.demand_plng_fcst_fact_new.division_code is 'Division Code - Source Data ODS.FCST_HDR.DIVISION_CODE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_type_code is 'Forecast Type Code - Source Data ODS.FCST_HDR.FCST_TYPE_CODE';
+comment on column dds.demand_plng_fcst_fact_new.casting_yyyypp is 'Casting YYYYPP - Source Data ODS.FCST_HDR.CASTING_YEAR | CASTING_PERIOD';
+comment on column dds.demand_plng_fcst_fact_new.casting_yyyyppw is 'Casting YYYYPPW - Source Data ODS.FCST_HDR.CASTING_YEAR | CASTING_PERIOD | CASTING_WEEK';
+comment on column dds.demand_plng_fcst_fact_new.fcst_yyyypp is 'Forecast YYYYPP - Source Data ODS.FCST_DTL.FCST_YEAR | FCST_PERIOD';
+comment on column dds.demand_plng_fcst_fact_new.fcst_yyyyppw is 'Forecast YYYYPPW - Source Data ODS.FCST_DTL.FCST_YEAR | FCST_PERIOD | FCST_WEEK';
+comment on column dds.demand_plng_fcst_fact_new.demand_plng_grp_code is 'Demand Planning Group Code - Source Data ODS.FCST_DTL.DEMAND_PLNG_GRP_CODE';
+comment on column dds.demand_plng_fcst_fact_new.cntry_code is 'Country Code - Source Data ODS.FCST_DTL.CNTRY_CODE';
+comment on column dds.demand_plng_fcst_fact_new.region_code is 'Region Code - Source Data ODS.FCST_DTL.REGION_CODE';
+comment on column dds.demand_plng_fcst_fact_new.multi_mkt_acct_code is 'Multi-Market Account Code - Source Data ODS.FCST_DTL.MULTI_MKT_ACCT_CODE';
+comment on column dds.demand_plng_fcst_fact_new.banner_code is 'Banner Code - Source Data ODS.FCST_DTL.BANNER_CODE';
+comment on column dds.demand_plng_fcst_fact_new.cust_buying_grp_code is 'Customer Buying Group Code - Source Data ODS.FCST_DTL.CUST_BUYING_GRP_CODE';
+comment on column dds.demand_plng_fcst_fact_new.acct_assgnmnt_grp_code is 'Account Assignment Group - Source Data ODS.FCST_DTL.ACCT_ASSGNMNT_GRP_CODE';
+comment on column dds.demand_plng_fcst_fact_new.pos_format_grpg_code is 'POS Format Grouping Code - Source Data ODS.FCST_DTL.POS_FORMAT_GRPG_CODE';
+comment on column dds.demand_plng_fcst_fact_new.distbn_route_code is 'Distribution Route Code - Source Data ODS.FCST_DTL.DISTBN_ROUTE_CODE';
+comment on column dds.demand_plng_fcst_fact_new.cust_code is 'Customer Code - Source Data ODS.FCST_DTL.CUST_CODE';
+comment on column dds.demand_plng_fcst_fact_new.matl_zrep_code is 'Material Code - Source Data ODS.FCST_DTL.MATL_CODE';
+comment on column dds.demand_plng_fcst_fact_new.currcy_code is 'Currency Code - Source Data ODS.FCST_DTL.CURRCY_CODE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_value is 'Forecast Value (Market) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_value_aud is 'Forecast Value (AUD) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_value_usd is 'Forecast Value (USD) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_value_eur is 'Forecast Value (EUR) - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.fcst_qty is 'Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.fcst_qty_gross_tonnes is 'Forecast Quantity Gross Tonnes - Source Data ODS.SAP_MAT_HDR.BRGEW';
+comment on column dds.demand_plng_fcst_fact_new.fcst_qty_net_tonnes is 'Forecast Quantity Net Tonnes - Source Data ODS.SAP_MAT_HDR.NTGEW';
+comment on column dds.demand_plng_fcst_fact_new.moe_code is 'MOE Code - Source Data ODS.FCST_HDR.MOE_CODE';
+comment on column dds.demand_plng_fcst_fact_new.matl_tdu_code is 'Material TDU Level Code - Source Data ODS.FCST_DTL.MATL_TDU_CODE';
+comment on column dds.demand_plng_fcst_fact_new.base_value is 'Base Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.base_qty is 'Base Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.aggreg_mkt_actvty_value is 'Aggregate Market Activity Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.aggreg_mkt_actvty_qty is 'Aggregate Market Activity Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.lock_value is 'Lock Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.lock_qty is 'Lock Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.rcncl_value is 'Reconcile Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.rcncl_qty is 'Reconcile Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.auto_adjmt_value is 'Auto-adjustment Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.auto_adjmt_qty is 'Auto-adjustment Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.override_value is 'Override Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.override_qty is 'Override Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.mkt_actvty_value is 'Market Activity Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.mkt_actvty_qty is 'Market Activity Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.data_driven_event_value is 'Data Driven Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.data_driven_event_qty is 'Data Driven Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.tgt_impact_value is 'Target Impacts Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.tgt_impact_qty is 'Target Impacts Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+comment on column dds.demand_plng_fcst_fact_new.dfn_adjmt_value is 'Demand Financials Adjustment Type Forecast Value - Source Data ODS.FCST_DTL.FCST_VALUE';
+comment on column dds.demand_plng_fcst_fact_new.dfn_adjmt_qty is 'Demand Financials Adjustment Type Forecast Quantity - Source Data ODS.FCST_DTL.FCST_QTY';
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO APPSUPPORT;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO BO_USER;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO BW_READER;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO CDW_READER_ROLE;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO DDS_APP WITH GRANT OPTION;
+GRANT DELETE, INSERT, UPDATE ON DEMAND_PLNG_FCST_FACT_new TO DDS_APP;
+GRANT DELETE, INSERT, SELECT, UPDATE ON DEMAND_PLNG_FCST_FACT_new TO DDS_MAINT;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO DDS_SELECT;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO DDS_USER;
+GRANT DELETE, SELECT, INSERT, UPDATE ON DEMAND_PLNG_FCST_FACT_new TO DW_APP;
+GRANT SELECT ON DEMAND_PLNG_FCST_FACT_new TO KPI_APP;
+GRANT DELETE, INSERT, SELECT, UPDATE ON DEMAND_PLNG_FCST_FACT_new TO ODS_APP;
+
+
+
+===============DW_APP=================
+
+/*-*/
+/* Connect as DW_APP
+/*-*/
+connect dw_app/dwgold@ap0066t.ap.mars
+
+--
+-- LOAD FCST_FACT PARTITIONED DATA
+--
+
+set define ^;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\ODS_APP\CODE\fcst_plng_converter.sql;
+
+variable jobnum number;
+exec dbms_job.submit(:jobnum,'fcst_plng_converter.execute;',sysdate,null);
+commit;
+
+
+================DDS=================
+
+/*-*/
+/* Connect as DDS
+/*-*/
+connect dds/ddssilver@ap0066t.ap.mars
+
+--
+-- DROP OR RENAME OLD DEMAND_PLNG_FCST_FACT TABLE, CONSTRAINTS AND INDEXES
+--
+
+drop table demand_plng_fcst_fact purge;
+--OR
+--alter table demand_plng_fcst_fact rename to demand_plng_fcst_fact_old;
+--drop index demand_plng_fcst_fact_i1;
+--drop index demand_plng_fcst_fact_i2;
+--drop index demand_plng_fcst_fact_i3;
+--drop index demand_plng_fcst_fact_i4;
+--drop index demand_plng_fcst_fact_i5;
+--drop index demand_plng_fcst_fact_i6;
+
+--
+-- RENAME DEMAND_PLNG_FCST_FACT_NEW TABLE
+--
+
+alter table demand_plng_fcst_fact_new rename to demand_plng_fcst_fact;
+
+--
+-- CREATE DEMAND_PLNG_FCST_FACT CONSTRAINTS AND INDEXES
+--
+
+create bitmap index dds.demand_plng_fcst_fact_i1 on dds.demand_plng_fcst_fact (CASTING_YYYYPP, FCST_YYYYPP, COMPANY_CODE) local;
+create index dds.demand_plng_fcst_fact_i2 on dds.demand_plng_fcst_fact (MATL_ZREP_CODE) local;
+create bitmap index dds.demand_plng_fcst_fact_i3 on dds.demand_plng_fcst_fact (COMPANY_CODE, CASTING_YYYYPPW, FCST_YYYYPPW, CASTING_YYYYPP, FCST_YYYYPP) local;
+create index dds.demand_plng_fcst_fact_i4 on dds.demand_plng_fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, CASTING_YYYYPPW) local;
+create index dds.demand_plng_fcst_fact_i5 on dds.demand_plng_fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, SALES_ORG_CODE, DISTBN_CHNL_CODE, DIVISION_CODE, MOE_CODE, CASTING_YYYYPP) local;
+create index dds.demand_plng_fcst_fact_i6 on dds.demand_plng_fcst_fact (COMPANY_CODE, FCST_TYPE_CODE, CASTING_YYYYPPW) local;
+create or replace public synonym demand_plng_fcst_fact for dds.demand_plng_fcst_fact;
+
+--
+-- GATHER TABLE STATS
+--
+
+exec dbms_stats.gather_table_stats(ownname => 'DDS', tabname => 'DEMAND_PLNG_FCST_FACT', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', cascade => TRUE);
+
+
+GRANT DELETE, SELECT, INSERT, UPDATE ON fcst_local_region_fact TO DW_APP;
+GRANT DELETE, SELECT, INSERT, UPDATE ON dcs_sales_order_fact TO DW_APP;
+
+
+==============DW_APP===============
+
+
+/*-*/
+/* Connect as DW_APP
+/*-*/
+connect dw_app/dwgold@ap0066t.ap.mars
+
+-- COMPILE PACKAGES
+
+set define ^;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\DW_APP\CODE\dw_fcst_aggregation.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\DW_APP\CODE\dw_scheduled_forecast.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\DW_APP\CODE\dw_process_poller.sql;
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\DW_APP\CODE\dw_flag_base_creation.sql;
+
+
+
+--57309753 rows at 500000 / minute = 115 minutes = 1 hour 55 minutes
+
+
+--8000000 rows at 500000 / minute = 16 minutes
+
+
+--182933786 rows at 500000 / minute = 366 minutes = 6 hours 6 minutes
+
+
+
+

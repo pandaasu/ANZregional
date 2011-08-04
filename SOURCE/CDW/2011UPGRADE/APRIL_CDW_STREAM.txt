@@ -1,0 +1,226 @@
+
+LICS STREAM
+===========
+
+delete from lics_str_header;
+delete from lics_str_task;
+delete from lics_str_event;
+
+--insert into lics_str_header values('DW_FLATTENING_STREAM','Flattening stream - Global','1',user,sysdate);
+
+insert into lics_str_header values('DW_ALIGNMENT_STREAM_147','Alignment aggregation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_ALIGNMENT_STREAM_149','Alignment aggregation stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_FLAGBASE_STREAM_147','Flag base stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_FLAGBASE_STREAM_149','Flag base stream - Company 149','1',user,sysdate);
+insert into lics_str_header values('DW_FLAGBASE_STREAM_CON','Flag base stream - Consolidated','1',user,sysdate);
+
+insert into lics_str_header values('DW_DATAMART_STREAM_147','Data Mart stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_DATAMART_STREAM_149','Data Mart stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_FLAGFILE_STREAM_147','Flag file stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_FLAGFILE_STREAM_149','Flag file stream - Company 149','1',user,sysdate);
+insert into lics_str_header values('DW_FLAGFILE_STREAM_CON','Flag file stream - Consolidated','1',user,sysdate);
+
+insert into lics_str_header values('DW_FORECAST_STREAM_147','Forecast aggregation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_FORECAST_STREAM_149','Forecast aggregation stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_MART01_STREAM_147','Data mart 01 stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_MART01_STREAM_149','Data mart 01 stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_SCHEDULED_STREAM_147','Scheduled aggregation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_SCHEDULED_STREAM_149','Scheduled aggregation stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_TRIGGERED_STREAM_147','Triggered aggregation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_TRIGGERED_STREAM_149','Triggered aggregation stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('DW_INVENTORY_STREAM_147','Inventory aggregation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('DW_INVENTORY_STREAM_149','Inventory aggregation stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('EFEX_CDW_STREAM_147','Efex CDW stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('EFEX_CDW_STREAM_149','Efex CDW stream - Company 149','1',user,sysdate);
+
+insert into lics_str_header values('EFEX_CDW_VALIDATION_STREAM_147','Efex CDW Validation stream - Company 147','1',user,sysdate);
+insert into lics_str_header values('EFEX_CDW_VALIDATION_STREAM_149','Efex CDW Validation stream - Company 149','1',user,sysdate);
+
+
+--insert into lics_str_task values('DW_FLATTENING','BASE','*TOP',1,'Flattening task - Global');
+
+insert into lics_str_task values('DW_ALIGNMENT_STREAM_147','BASE_TABLE','*TOP',1,'Alignment aggregation task - Company 147');
+insert into lics_str_task values('DW_ALIGNMENT_STREAM_149','BASE_TABLE','*TOP',1,'Alignment aggregation task - Company 149');
+
+insert into lics_str_task values('DW_FLAGBASE_STREAM_147','FLAG_BASE','*TOP',1,'Flag base task - Company 147');
+insert into lics_str_task values('DW_FLAGBASE_STREAM_149','FLAG_BASE','*TOP',1,'Flag base task - Company 149');
+insert into lics_str_task values('DW_FLAGBASE_STREAM_CON','FLAG_BASE','*TOP',1,'Flag base task - Consolidated');
+
+insert into lics_str_task values('DW_DATAMART_STREAM_147','BASE_FCST','*TOP',1,'Forecast aggregation task - Company 147');
+insert into lics_str_task values('DW_DATAMART_STREAM_147','DATA_MART','BASE_FCST',1,'Data mart 01 refresh tasks - Company 147');
+insert into lics_str_task values('DW_DATAMART_STREAM_149','BASE_FCST','*TOP',1,'Forecast aggregation task - Company 149');
+insert into lics_str_task values('DW_DATAMART_STREAM_149','DATA_MART','BASE_FCST',1,'Data mart 01 refresh tasks - Company 149');
+
+insert into lics_str_task values('DW_FLAGFILE_STREAM_147','FLAG_FILE','*TOP',1,'Flag file task - Company 147');
+insert into lics_str_task values('DW_FLAGFILE_STREAM_149','FLAG_FILE','*TOP',1,'Flag file task - Company 149');
+insert into lics_str_task values('DW_FLAGFILE_STREAM_CON','FLAG_FILE','*TOP',1,'Flag file task - Consolidated');
+
+insert into lics_str_task values('DW_FORECAST_STREAM_147','BASE_TABLE','*TOP',1,'Forecast aggregation task - Company 147');
+insert into lics_str_task values('DW_FORECAST_STREAM_149','BASE_TABLE','*TOP',1,'Forecast aggregation task - Company 149');
+
+insert into lics_str_task values('DW_MART01_STREAM_147','DATA_MART','*TOP',1,'Data mart 01 task - Company 147');
+insert into lics_str_task values('DW_MART01_STREAM_149','DATA_MART','*TOP',1,'Data mart 01 task - Company 149');
+
+insert into lics_str_task values('DW_SCHEDULED_STREAM_147','BASE_TABLE','*TOP',1,'Scheduled aggregation task - Company 147');
+insert into lics_str_task values('DW_SCHEDULED_STREAM_147','FCST_TABLE','*TOP',2,'Scheduled forecast task - Company 147');
+insert into lics_str_task values('DW_SCHEDULED_STREAM_147','SAP_PULL','BASE_TABLE',1,'Scheduled SAP retrieval task - Company 147');
+
+insert into lics_str_task values('DW_SCHEDULED_STREAM_149','BASE_TABLE','*TOP',1,'Scheduled aggregation task - Company 149');
+insert into lics_str_task values('DW_SCHEDULED_STREAM_149','FCST_TABLE','*TOP',2,'Scheduled forecast task - Company 149');
+insert into lics_str_task values('DW_SCHEDULED_STREAM_149','SAP_PULL','BASE_TABLE',1,'Scheduled SAP retrieval task - Company 149');
+
+insert into lics_str_task values('DW_TRIGGERED_STREAM_147','BASE_TABLE','*TOP',1,'Sales aggregation task - Company 147');
+insert into lics_str_task values('DW_TRIGGERED_STREAM_149','BASE_TABLE','*TOP',1,'Sales aggregation task - Company 149');
+
+insert into lics_str_task values('DW_INVENTORY_STREAM_147','BASE_TABLE','*TOP',1,'Inventory aggregation task - Company 147');
+insert into lics_str_task values('DW_INVENTORY_STREAM_149','BASE_TABLE','*TOP',1,'Inventory aggregation task - Company 149');
+
+insert into lics_str_task values('EFEX_CDW_STREAM_147','VALIDATION','*TOP',1,'Efex Validation - Company 147');
+insert into lics_str_task values('EFEX_CDW_STREAM_147','AGGREGATION','VALIDATION',1,'Efex Aggregation tasks - Company 147');
+insert into lics_str_task values('EFEX_CDW_STREAM_149','VALIDATION','*TOP',1,'Efex Validation - Company 149');
+insert into lics_str_task values('EFEX_CDW_STREAM_149','AGGREGATION','VALIDATION',1,'Efex Aggregation tasks - Company 149');
+
+insert into lics_str_task values('EFEX_CDW_VALIDATION_STREAM_147','VALIDATION','*TOP',1,'Efex Validation - Company 147');
+insert into lics_str_task values('EFEX_CDW_VALIDATION_STREAM_149','VALIDATION','*TOP',1,'Efex Validation - Company 149');
+
+
+--insert into lics_str_event values('DW_FLATTENING','BASE','BASE_147',1,'Flattening event - Global','DW_FLATTENING','dw_app.dw_flattening.execute(''*REBUILD'',''*ALL'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_ALIGNMENT_STREAM_147','BASE_TABLE','BASE_147',1,'Alignment aggregation event - Company 147','DW_LOCK_147','dw_app.dw_scheduled_aggregation.sap_alignment(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_ALIGNMENT_STREAM_149','BASE_TABLE','BASE_149',1,'Alignment aggregation event - Company 149','DW_LOCK_149','dw_app.dw_scheduled_aggregation.sap_alignment(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_FLAGBASE_STREAM_147','FLAG_BASE','FB_147',1,'Flag base event - Company 147','FB_LOCK_147','dw_app.dw_flag_base_creation.execute(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_FLAGBASE_STREAM_149','FLAG_BASE','FB_149',1,'Flag base event - Company 149','FB_LOCK_149','dw_app.dw_flag_base_creation.execute(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_FLAGBASE_STREAM_CON','FLAG_BASE','FB_CON',1,'Flag base event - Consolidated','FB_LOCK_CON','dw_app.dw_flag_base_creation.execute(''CON'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_DATAMART_STREAM_147','BASE_FCST','FCST_147',1,'Forecast aggregation event - Company 147','DW_FCST_147','dw_app.dw_fcst_aggregation.execute(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_DATAMART_STREAM_147','DATA_MART','DM01_147',1,'Data mart 01 refresh event - Company 147','DM01_LOCK_147','dw_app.dw_mart_aggregation.execute(''dw_app.dw_mart_sales01.refresh(''''147'''')'',''DATAMARTSALES01_147'',''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_DATAMART_STREAM_149','BASE_FCST','FCST_149',1,'Forecast aggregation event - Company 149','DW_FCST_149','dw_app.dw_fcst_aggregation.execute(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_DATAMART_STREAM_149','DATA_MART','DM01_149',1,'Data mart 01 refresh event - Company 149','DM01_LOCK_149','dw_app.dw_mart_aggregation.execute(''dw_app.dw_mart_sales01.refresh(''''149'''')'',''DATAMARTSALES01_149'',''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_FLAGFILE_STREAM_147','FLAG_FILE','FF_147',1,'Flag file event - Company 147','FF_LOCK_147','dw_app.dw_flag_file_creation.execute(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_FLAGFILE_STREAM_149','FLAG_FILE','FF_149',1,'Flag file event - Company 149','FF_LOCK_149','dw_app.dw_flag_file_creation.execute(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_FLAGFILE_STREAM_CON','FLAG_FILE','FF_CON',1,'Flag file event - Consolidated','FF_LOCK_CON','dw_app.dw_flag_file_creation.execute(''CON'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_FORECAST_STREAM_147','BASE_TABLE','BASE_147',1,'Forecast aggregation event - Company 147','DW_FCST_147','dw_app.dw_fcst_aggregation.execute(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_FORECAST_STREAM_149','BASE_TABLE','BASE_149',1,'Forecast aggregation event - Company 149','DW_FCST_149','dw_app.dw_fcst_aggregation.execute(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_MART01_STREAM_147','DATA_MART','DM01_147',1,'Data mart 01 event - Company 147','DM01_LOCK_147','dw_app.dw_mart_aggregation.execute(''dw_app.dw_mart_sales01.refresh(''''147'''')'',''DATAMARTSALES01_147'',''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_MART01_STREAM_149','DATA_MART','DM01_149',1,'Data mart 01 event - Company 149','DM01_LOCK_149','dw_app.dw_mart_aggregation.execute(''dw_app.dw_mart_sales01.refresh(''''149'''')'',''DATAMARTSALES01_149'',''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_SCHEDULED_STREAM_147','BASE_TABLE','BASE_147',1,'Scheduled aggregation event - Company 147','DW_LOCK_147','dw_app.dw_scheduled_aggregation.execute(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_SCHEDULED_STREAM_147','FCST_TABLE','FCST_147',1,'Scheduled forecast event - Company 147','FCST_LOCK_147','dw_app.dw_scheduled_forecast.execute(''147'',null)','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_SCHEDULED_STREAM_147','SAP_PULL','SAP_147',1,'Scheduled SAP retrieval event - Company 147','SAP_LOCK_147','dw_app.dw_scheduled_aggregation.sap_retrieval(''147'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_SCHEDULED_STREAM_149','BASE_TABLE','BASE_149',1,'Scheduled aggregation event - Company 149','DW_LOCK_149','dw_app.dw_scheduled_aggregation.execute(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_SCHEDULED_STREAM_149','FCST_TABLE','FCST_149',1,'Scheduled forecast event - Company 149','FCST_LOCK_149','dw_app.dw_scheduled_forecast.execute(''149'',null)','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_SCHEDULED_STREAM_149','SAP_PULL','SAP_149',1,'Scheduled SAP retrieval event - Company 149','SAP_LOCK_149','dw_app.dw_scheduled_aggregation.sap_retrieval(''149'')','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_TRIGGERED_STREAM_147','BASE_TABLE','BASE_147',1,'Sales aggregation event - Company 147','DW_LOCK_147','*SUPPLIED','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_TRIGGERED_STREAM_149','BASE_TABLE','BASE_149',1,'Sales aggregation event - Company 149','DW_LOCK_149','*SUPPLIED','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('DW_INVENTORY_STREAM_147','BASE_TABLE','BASE_147',1,'Inventory aggregation event - Company 147','INVT_LOCK_147','dw_app.dw_scheduled_inventory.execute(''147'',null)','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('DW_INVENTORY_STREAM_149','BASE_TABLE','BASE_149',1,'Inventory aggregation event - Company 149','INVT_LOCK_149','dw_app.dw_scheduled_inventory.execute(''149'',null)','DWP','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('EFEX_CDW_STREAM_147','AGGREGATION','AGGREGATION_147',1,'Efex Aggregation event - Company 147','EFEX_AGGREGATION_147','ods_app.scheduled_efex_aggregation.run_efex_aggregation(sysdate,1,''147'')','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('EFEX_CDW_STREAM_147','VALIDATION','VALIDATION_147',1,'Efex Validation event - Company 147','EFEX_VALIDATION_147','ods_app.ods_efex_validation.execute(1)','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('EFEX_CDW_STREAM_149','AGGREGATION','AGGREGATION_149',1,'Efex Aggregation event - Company 149','EFEX_AGGREGATION_149','ods_app.scheduled_efex_aggregation.run_efex_aggregation(sysdate,5,''149'')','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('EFEX_CDW_STREAM_149','VALIDATION','VALIDATION_149',1,'Efex Validation event - Company 149','EFEX_VALIDATION_149','ods_app.ods_efex_validation.execute(5)','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+insert into lics_str_event values('EFEX_CDW_VALIDATION_STREAM_147','VALIDATION','VALIDATION_147',1,'Efex Validation event - Company 147','EFEX_VALIDATION_147','ods_app.ods_efex_validation.execute(1)','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+insert into lics_str_event values('EFEX_CDW_VALIDATION_STREAM_149','VALIDATION','VALIDATION_149',1,'Efex Validation event - Company 149','EFEX_VALIDATION_149','ods_app.ods_efex_validation.execute(5)','EFEX','*NONE','"MFANZ CDW Support Dev"@smtp.ap.mars');
+
+commit;
+
+
+LICS PROCESS
+============
+
+delete from lics_pro_group;
+delete from lics_pro_process;
+delete from lics_pro_check;
+
+
+insert into lics_pro_group values('FLAGBASE_TRIGGER_147','Flag Base Trigger Company 147');
+insert into lics_pro_group values('FLAGBASE_TRIGGER_149','Flag Base Trigger Company 149');
+insert into lics_pro_group values('FLAGBASE_TRIGGER_CON','Flag Base Trigger Consolidated');
+insert into lics_pro_group values('DATAMART_TRIGGER_147','Data Mart Trigger Company 147');
+insert into lics_pro_group values('DATAMART_TRIGGER_149','Data Mart Trigger Company 149');
+insert into lics_pro_group values('FLAGFILE_TRIGGER_147','Flag File Trigger Company 147');
+insert into lics_pro_group values('FLAGFILE_TRIGGER_149','Flag File Trigger Company 149');
+insert into lics_pro_group values('FLAGFILE_TRIGGER_CON','Flag File Trigger Consolidated');
+
+
+--insert into lics_pro_process values('FLATTENING_COMPLETED','Lookup Flattening Trigger Completed');
+--insert into lics_pro_process values('FLATTENING_FIRED','Lookup Flattening Trigger Fired');
+
+insert into lics_pro_process values('FLAGBASE_147','Flag Base Creation Company 147');
+insert into lics_pro_process values('FLAGBASE_147_FIRED','Flag Base Trigger Fired Company 147');
+insert into lics_pro_process values('FLAGBASE_149','Flag Base Creation Company 149');
+insert into lics_pro_process values('FLAGBASE_149_FIRED','Flag Base Trigger Fired Company 149');
+insert into lics_pro_process values('FLAGBASE_CON_FIRED','Flag Base Trigger Fired Consolidated');
+insert into lics_pro_process values('DATAMARTSALES01_147','Data Mart Sales 01 Company 147');
+insert into lics_pro_process values('DATAMARTSALES01_149','Data Mart Sales 01 Company 149');
+insert into lics_pro_process values('DATAMARTSALES02_147','Data Mart Sales 02 Company 147');
+insert into lics_pro_process values('DATAMARTSALES02_149','Data Mart Sales 02 Company 149');
+insert into lics_pro_process values('DATAMART_147_FIRED','Data Mart Trigger Fired Company 147');
+insert into lics_pro_process values('DATAMART_149_FIRED','Data Mart Trigger Fired Company 149');
+insert into lics_pro_process values('FLAGFILE_147','Flag File Creation Company 147');
+insert into lics_pro_process values('FLAGFILE_147_FIRED','Flag File Trigger Fired Company 147');
+insert into lics_pro_process values('FLAGFILE_149','Flag File Creation Company 149');
+insert into lics_pro_process values('FLAGFILE_149_FIRED','Flag File Trigger Fired Company 149');
+insert into lics_pro_process values('FLAGFILE_CON_FIRED','Flag File Trigger Fired Consolidated');
+insert into lics_pro_process values('FORECAST_AGGREGATION_147','Forecast Aggregation Company 147');
+insert into lics_pro_process values('FORECAST_AGGREGATION_149','Forecast Aggregation Company 149');
+insert into lics_pro_process values('SCHEDULED_FORECAST_147','Scheduled Forecast Company 147');
+insert into lics_pro_process values('SCHEDULED_FORECAST_149','Scheduled Forecast Company 149');
+insert into lics_pro_process values('SAP_ALIGNMENT_147','SAP Alignment Company 147');
+insert into lics_pro_process values('SAP_ALIGNMENT_149','SAP Alignment Company 149');
+insert into lics_pro_process values('SCHEDULED_AGGREGATION_147','Scheduled Aggregation Company 147');
+insert into lics_pro_process values('SCHEDULED_AGGREGATION_149','Scheduled Aggregation Company 149');
+insert into lics_pro_process values('TRIGGERED_AGGREGATION_147','Triggered Aggregation Company 147');
+insert into lics_pro_process values('TRIGGERED_AGGREGATION_149','Triggered Aggregation Company 149');
+
+
+insert into lics_pro_check values('FLAGBASE_TRIGGER_147','FLAGBASE_147_FIRED','N');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_147','SAP_ALIGNMENT_147','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_147','SCHEDULED_AGGREGATION_147','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_147','SCHEDULED_FORECAST_147','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_147','TRIGGERED_AGGREGATION_147','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_149','FLAGBASE_149_FIRED','N');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_149','SAP_ALIGNMENT_149','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_149','SCHEDULED_AGGREGATION_149','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_149','SCHEDULED_FORECAST_149','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_149','TRIGGERED_AGGREGATION_149','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_CON','FLAGBASE_147','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_CON','FLAGBASE_149','Y');
+insert into lics_pro_check values('FLAGBASE_TRIGGER_CON','FLAGBASE_CON_FIRED','N');
+insert into lics_pro_check values('DATAMART_TRIGGER_147','DATAMART_147_FIRED','N');
+insert into lics_pro_check values('DATAMART_TRIGGER_147','SAP_ALIGNMENT_147','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_147','SCHEDULED_AGGREGATION_147','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_147','SCHEDULED_FORECAST_147','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_147','TRIGGERED_AGGREGATION_147','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_149','DATAMART_149_FIRED','N');
+insert into lics_pro_check values('DATAMART_TRIGGER_149','SAP_ALIGNMENT_149','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_149','SCHEDULED_AGGREGATION_149','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_149','SCHEDULED_FORECAST_149','Y');
+insert into lics_pro_check values('DATAMART_TRIGGER_149','TRIGGERED_AGGREGATION_149','Y');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_147','DATAMARTSALES01_147','Y');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_147','FLAGFILE_147_FIRED','N');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_149','DATAMARTSALES01_149','Y');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_149','FLAGFILE_149_FIRED','N');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_CON','FLAGFILE_147','Y');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_CON','FLAGFILE_149','Y');
+insert into lics_pro_check values('FLAGFILE_TRIGGER_CON','FLAGFILE_CON_FIRED','N');
+
+commit;
+
+
+
+exec lics_app.lics_stream_loader.execute('DW_SCHEDULED_STREAM_147',null);

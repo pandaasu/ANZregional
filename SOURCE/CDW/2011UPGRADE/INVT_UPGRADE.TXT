@@ -1,0 +1,52 @@
+
+/*-*/
+/* Connect as ODS
+/*-*/
+connect ods/odssilver@ap0066t.ap.mars
+
+-- GRANT ACCESS
+grant select, insert, update, delete on ods.temp_stk_bal_hdr to dw_app;
+grant select, insert, update, delete on ods.temp_mat_pid to dw_app;
+grant select, insert, update, delete on ods.temp_mat_pch to dw_app;
+
+
+/*-*/
+/* Connect as ODS
+/*-*/
+connect dds/ddssilver@ap0066t.ap.mars
+
+-- GRANT ACCESS
+grant select, insert, update, delete on dds.inv_baln_fact to dw_app;
+grant select, insert, update, delete on dds.intransit_fact to dw_app;
+grant select, insert, update, delete on dds.prodn_plan_fact to dw_app;
+grant select, insert, update, delete on dds.proc_plan_order_fact to dw_app;
+grant select, insert, update, delete on dds.purch_order_bifg_fact to dw_app;
+
+
+/*-*/
+/* Connect as DW_APP
+/*-*/
+connect dw_app/dwgold@ap0066t.ap.mars
+
+-- COMPILE PACKAGES
+@C:\ISI_SVN\ISI_REGIONAL\SOURCE\CDW\BASE\ORACLE\DW_APP\CODE\dw_scheduled_inventory.sql;
+
+/*-*/
+/* Connect as LICS_APP
+/*-*/
+connect lics_app/licsgold@ap0066t.ap.mars
+
+insert into lics_das_group values('ODS','ODS_INVT_PURGING',' ODS Inventory Purging','LICS_APP',sysdate);
+insert into lics_das_code values('ODS','ODS_INVT_PURGING','*DEFAULT','Default','*SINGLE','*UPPER','LICS_APP',sysdate);
+insert into lics_das_code values('ODS','ODS_INVT_PURGING','INV_BALN_FACT','Default','*SINGLE','*UPPER','LICS_APP',sysdate);
+insert into lics_das_code values('ODS','ODS_INVT_PURGING','PRODN_PLAN_FACT','Default','*SINGLE','*UPPER','LICS_APP',sysdate);
+insert into lics_das_value values('ODS','ODS_INVT_PURGING','*DEFAULT',1,'36');
+insert into lics_das_value values('ODS','ODS_INVT_PURGING','INV_BALN_FACT',1,'36');
+insert into lics_das_value values('ODS','ODS_INVT_PURGING','PRODN_PLAN_FACT',1,'36');
+
+
+
+
+
+exec lics_app.lics_stream_loader.execute('DW_INVENTORY_STREAM_147',null);
+exec lics_app.lics_stream_loader.execute('DW_INVENTORY_STREAM_149',null);

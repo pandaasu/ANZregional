@@ -1,0 +1,47 @@
+
+
+DDS
+---
+drop view dds.outstanding_order_fact_old;
+drop table dds.dlvry_fact_old purge;
+drop table dds.order_fact_old purge;
+drop table dds.purch_order_fact_old purge;
+drop table dds.sales_fact_old purge;
+drop table dds.sales_month_01_fact_old purge;
+drop table dds.sales_period_01_fact_old purge;
+drop table dds.dw_mart_sales02_hdr purge;
+drop table dds.dw_mart_sales02_det purge;
+
+ODS
+---
+drop table ods.sales_fact purge;
+
+ODS_APP
+-------
+drop table ods.pmx_prom_hdr_bu_22072008 purge;
+drop table ods.deleted_promotions_22072008 purge;
+drop table ods.dlvry_fact_test purge;
+drop table ods.dlvry_tmp purge;
+drop table ods.intransit_fact_bck purge;
+drop table ods.last_year_active_promotions purge;
+drop table ods.outstanding_order_fact_bck purge;
+
+drop package ods_app.triggered_aggregation;
+drop package ods_app.scheduled_aggregation;
+drop package ods_app.history_aggregation;
+drop package ods_app.his_update_sales_pkg;
+drop package ods_app.update_mfanz_icb_flag;
+drop package ods_app.ods_dfnods01_backup;
+drop package ods_app.ods_dfnods01_v2;
+
+
+delete aggregation daemons
+--------------------------
+AGGREGATION_DAEMON_01
+AGGREGATION_DAEMON_02
+FLAG_FILE_DAEMON_01
+FLAG_FILE_PROC_01
+
+
+
+
