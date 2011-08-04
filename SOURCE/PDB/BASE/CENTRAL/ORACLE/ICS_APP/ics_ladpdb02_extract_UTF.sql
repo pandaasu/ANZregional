@@ -169,7 +169,7 @@ as
 
     cursor csr_trigger is
         select dsv_value as intfc_trigger 
-          from table (retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
+          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
     rcd_trigger csr_trigger%rowtype;       
              
   begin
