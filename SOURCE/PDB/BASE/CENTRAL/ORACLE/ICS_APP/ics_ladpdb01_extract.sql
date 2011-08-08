@@ -28,6 +28,7 @@ as
  17-JUN-2010 Ben Halicki    Modified for Atlas Thailand implementation
  14-OCT-2010 Ben Halicki    Added code to retrieve interface extension from data store configuration,
                                 based on plant code of process order
+ 27-Aug-2011 Steve Gregan   Add site_code
                                 
 *******************************************************************************/
 
