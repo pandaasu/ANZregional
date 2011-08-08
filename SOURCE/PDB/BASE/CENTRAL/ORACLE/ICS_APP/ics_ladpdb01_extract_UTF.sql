@@ -30,6 +30,7 @@ as
                                 based on plant code of process order
  27-Aug-2011 Steve Gregan   Add site_code
  08-Aug-2011 Vivian Huang   Change to process UTF-8 (Chinese charater)
+ 08-Aug-2011 Ben Halicki    Added option to enable sequences or MQFT triggering
                                 
 *******************************************************************************/
 
@@ -256,6 +257,11 @@ AS
          from
             table (lics_datastore.retrieve_value('PDB',rcd_intfc.site_code,'INTFC_EXTN')) t01;
       rcd_extn csr_extn%rowtype;
+      
+      cursor csr_trigger is
+        select dsv_value as intfc_trigger 
+          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site_code,'INTFC_TRIGGER')) t01;
+      rcd_trigger csr_trigger%rowtype; 
 
       CURSOR csr_lads_ctl_rec_hpi_01
       IS
@@ -414,17 +420,27 @@ AS
            end if;
            var_interface := con_intfc || rcd_extn.intfc_extn;
          close csr_extn;
+      
+        open csr_trigger;
+        fetch csr_trigger into rcd_trigger;
+           if csr_trigger%notfound then
+              rcd_trigger.intfc_trigger := 'Y';
+           end if;
+        close csr_trigger;
       end if;
-        
+             
       /*-*/
       IF NOT var_ignore
       THEN
-         var_instance :=
-            lics_outbound_loader.create_interface (var_interface,
-                                                   NULL,
-                                                   var_interface
-                                                  );
-            
+      
+         if ( lics_outbound_loader.is_created = false ) then
+             if upper(rcd_trigger.intfc_trigger) = 'Y' then
+                var_instance := lics_outbound_loader.create_interface(var_interface, null, var_interface);
+             else
+                var_instance := lics_outbound_loader.create_interface(var_interface);
+             end if;
+         end if;
+                  
          FOR idx IN 1 .. tbl_recipe_header.COUNT
          LOOP
             var_output := 'HDR';
