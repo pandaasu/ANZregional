@@ -28,6 +28,8 @@ as
  17-JUN-2010 Ben Halicki    Modified for Atlas Thailand implementation
  14-OCT-2010 Ben Halicki    Added code to retrieve interface extension from data store configuration,
                                 based on plant code of process order
+ 27-Aug-2011 Steve Gregan   Add site_code
+ 08-Aug-2011 Vivian Huang   Change to process UTF-8 (Chinese charater)
                                 
 *******************************************************************************/
 
@@ -38,6 +40,19 @@ as
    
 end ICS_LADPDB01_EXTRACT;
 /
+
+
+--
+-- ICS_LADPDB01_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM ICS_LADPDB01_EXTRACT FOR ICS_APP.ICS_LADPDB01_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO LICS_APP;
 
 
 --
@@ -230,15 +245,17 @@ AS
       /*-*/
       cursor csr_intfc is
          select 
-            t01.dsv_group as site_code,
-            t02.dsv_value as intfc_extn
+            t01.dsv_group as site_code
          from
-            table (lics_datastore.retrieve_group('PDB','VALID_PLANTS',rcd_lads_ctl_rec_hpi.plant)) t01,
-            table (lics_datastore.retrieve_value('PDB','PCH','INTFC_EXTN')) t02
-         where
-            t01.dsv_group = t02.dsv_group;
-
+            table (lics_datastore.retrieve_group('PDB','VALID_PLANTS',rcd_lads_ctl_rec_hpi.plant)) t01;
       rcd_intfc csr_intfc%rowtype;
+
+      cursor csr_extn is
+         select 
+            t01.dsv_value as intfc_extn
+         from
+            table (lics_datastore.retrieve_value('PDB',rcd_intfc.site_code,'INTFC_EXTN')) t01;
+      rcd_extn csr_extn%rowtype;
 
       CURSOR csr_lads_ctl_rec_hpi_01
       IS
@@ -384,14 +401,20 @@ AS
       /* retrieve interface details from lics data store configuration */
       open csr_intfc;
       fetch csr_intfc into rcd_intfc;
-      
         if csr_intfc%NOTFOUND then
             var_ignore:=TRUE;
         end if;
-      
-        var_interface := con_intfc || rcd_intfc.intfc_extn;
-      
       close csr_intfc;
+
+      IF NOT var_ignore then
+         open csr_extn;
+         fetch csr_extn into rcd_extn;
+           if csr_extn%NOTFOUND then
+               var_ignore:=TRUE;
+           end if;
+           var_interface := con_intfc || rcd_extn.intfc_extn;
+         close csr_extn;
+      end if;
         
       /*-*/
       IF NOT var_ignore
@@ -431,19 +454,15 @@ AS
                || RPAD (NVL (tbl_recipe_header (idx).test_flag, ' '), 1, ' ');
             var_output :=
                   var_output
-               || RPAD (NVL (tbl_recipe_header (idx).recipe_text, ' '),
-                        40,
-                        ' '
-                       );
+               || nvl(tbl_recipe_header (idx).recipe_text,' ')||rpad(' ',40-length(nvl(tbl_recipe_header (idx).recipe_text,' ')),' ');
+            
             var_output :=
                   var_output
                || RPAD (NVL (tbl_recipe_header (idx).material, ' '), 18, ' ');
             var_output :=
                   var_output
-               || RPAD (NVL (tbl_recipe_header (idx).material_text, ' '),
-                        40,
-                        ' '
-                       );
+               || nvl(tbl_recipe_header (idx).material_text,' ')||rpad(' ',40-length(nvl(tbl_recipe_header (idx).material_text,' ')),' ');
+
             var_output :=
                   var_output
                || RPAD (NVL (TO_CHAR (tbl_recipe_header (idx).quantity), 0),
@@ -554,9 +573,9 @@ AS
                || RPAD (NVL (tbl_recipe_bom (idx).material_code, ' '), 18,
                         ' ');
             var_output :=
-                  var_output
-               || RPAD (NVL (tbl_recipe_bom (idx).material_desc, ' '), 40,
-                        ' ');
+                var_output
+                    || nvl(tbl_recipe_bom (idx).material_desc,' ')
+                    || rpad(' ',40-length(nvl(tbl_recipe_bom (idx).material_desc,' ')),' ');
             var_output :=
                   var_output
                || RPAD (NVL (TO_CHAR (tbl_recipe_bom (idx).material_qty), -1),
@@ -3426,4 +3445,3 @@ GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO APPSUPPORT;
 GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO LADS_APP;
 
 GRANT EXECUTE ON ICS_APP.ICS_LADPDB01_EXTRACT TO LICS_APP;
-
