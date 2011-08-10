@@ -23,6 +23,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB08_EXTRACT as
       - *MFA = Wyong 
       - *WGI = Wanganui 
       - *PCH = Pak Chong Thailand
+      - *MCH = HUA Plant DB (China)
 
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
@@ -31,6 +32,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB08_EXTRACT as
   2010/06   Ben Halicki    Modified for use with Atlas Thailand implementation
   2010/10   Ben Halicki    Updated to remove hard coded plants and move to configuration
                             via data store configuration
+  2011/08   Vivian Huang   Modified for outbound interface trigger
                             
 *******************************************************************************/
 
@@ -59,12 +61,15 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB08_EXTRACT as
   /*-*/
 --  function execute_extract return boolean;
   function execute_extract(par_site in varchar2) return boolean;
-  procedure execute_send(par_interface in varchar2);
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2);
   
   /*-*/
   /* Global variables 
   /*-*/
   var_interface varchar2(32 char);
+  var_lastrun_date date;
+  var_start_date date;
+  var_update_lastrun boolean := false;
   var_plant_code bds_refrnc_plant.plant_code%type;
 
   /*-*/  
@@ -106,6 +111,12 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB08_EXTRACT as
             (var_site = '*ALL' or '*' || t01.dsv_group = var_site);
   
     rcd_intfc csr_intfc%rowtype;
+
+    cursor csr_trigger is
+        select dsv_value as intfc_trigger 
+          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
+    rcd_trigger csr_trigger%rowtype;     
+
          
   begin
 
@@ -128,7 +139,17 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB08_EXTRACT as
         /* to send to the specified site(s) 
         /*-*/           
         if ( var_start = true ) then
-            execute_send(var_intfc);
+           open csr_trigger;
+           fetch csr_trigger into rcd_trigger;
+           if csr_trigger%notfound then
+              rcd_trigger.intfc_trigger := 'Y';
+           end if;
+           close csr_trigger;
+           execute_send(var_intfc, rcd_trigger.intfc_trigger);
+        end if;
+        
+        if ( var_update_lastrun = true ) then
+            lics_last_run_control.set_last_run(var_intfc,var_start_date);
         end if;
         
     end loop;
@@ -350,7 +371,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB08_EXTRACT as
   
   end execute_extract;
   
-  procedure execute_send(par_interface in varchar2) is
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2) is
   
     /*-*/
     /* Local variables 
@@ -361,7 +382,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB08_EXTRACT as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-        var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          if upper(par_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(par_interface);
+          end if;
       end if;
       
       lics_outbound_loader.append_data(tbl_definition(idx).value);
