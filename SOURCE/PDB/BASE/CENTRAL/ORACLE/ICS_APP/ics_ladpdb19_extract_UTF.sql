@@ -45,6 +45,7 @@ CREATE OR REPLACE PACKAGE ICS_APP."ICS_LADPDB19_EXTRACT" as
       - *MFA = Wyong 
       - *WGI = Wanganui 
       - *PCH = Pak Chong Thailand
+      - *MCH = HUA Plant DB (China)
 
   YYYY/MM    Author       Version    Description 
   -------    ------       -------    ----------- 
