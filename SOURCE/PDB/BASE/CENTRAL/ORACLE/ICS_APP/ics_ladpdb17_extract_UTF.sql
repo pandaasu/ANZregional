@@ -1,7 +1,7 @@
 --
 -- ICS_LADPDB17_EXTRACT  (Package) 
 --
-CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB17_EXTRACT as
+CREATE OR REPLACE PACKAGE ICS_APP."ICS_LADPDB17_EXTRACT" as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -47,7 +47,8 @@ CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB17_EXTRACT as
   YYYY/MM    Author       Version    Description 
   -------    ------       -------    ----------- 
   2010/06   Ben Halicki   1.0        Created this package
-
+  2011/08   Ben Halicki   1.0        Added MQFT trigger logic
+  
 *******************************************************************************/ 
 
   /*-*/
@@ -65,7 +66,7 @@ end ICS_LADPDB17_EXTRACT;
 --
 -- ICS_LADPDB17_EXTRACT  (Package Body) 
 --
-CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB17_EXTRACT
+CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB17_EXTRACT" 
 as
 /******************************************************************************
    NAME: ICS_LADPDB17_EXTRACT 
@@ -81,7 +82,7 @@ as
   /* Private declarations 
   /*-*/
   function execute_extract(par_action in varchar2, par_data in varchar2, par_site in varchar2) return boolean;
-  procedure execute_send(par_interface in varchar2);
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2);
   
   /*-*/
   /* Global variables 
@@ -142,6 +143,11 @@ as
             (var_site = '*ALL' or '*' || t01.dsv_group = var_site);
   
     rcd_intfc csr_intfc%rowtype;
+    
+    cursor csr_trigger is
+        select dsv_value as intfc_trigger 
+          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
+    rcd_trigger csr_trigger%rowtype;
      
   begin
   
@@ -188,7 +194,13 @@ as
         /* to send to the specified site(s) 
         /*-*/           
         if ( var_start = true ) then
-            execute_send(var_intfc);
+           open csr_trigger;
+           fetch csr_trigger into rcd_trigger;
+           if csr_trigger%notfound then
+              rcd_trigger.intfc_trigger := 'Y';
+           end if;
+           close csr_trigger;
+           execute_send(var_intfc, rcd_trigger.intfc_trigger);
         end if;
         
         if ( var_update_lastrun = true ) then
@@ -412,7 +424,8 @@ as
     
   END;
   
-  procedure execute_send(par_interface in varchar2) is
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2) is
+    
     /* local variable declaration */
     var_instance number(15,0);
     
@@ -421,8 +434,11 @@ as
         
         /* create outbound loader */
         if (lics_outbound_loader.is_created = false) then
-            -- check definition of lics_outbound_loader
-            var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          if upper(par_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(par_interface);
+          end if;
         end if;  
         
         lics_outbound_loader.append_data(tbl_definition(idx).value);

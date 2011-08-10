@@ -1,7 +1,7 @@
 --
 -- ICS_LADPDB13_EXTRACT  (Package) 
 --
-CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB13_EXTRACT as
+CREATE OR REPLACE PACKAGE ICS_APP."ICS_LADPDB13_EXTRACT" as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -54,6 +54,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.ICS_LADPDB13_EXTRACT as
   -------   ------         ----------- 
   2008/04   Trevor Keon    Created 
   2010/08   Ben Halicki    Modified to remove hard coded plant configurations
+  2011/08   Ben Halicki    Added MQFT trigger logic
 
 *******************************************************************************/
 
@@ -70,7 +71,7 @@ end ICS_LADPDB13_EXTRACT;
 --
 -- ICS_LADPDB13_EXTRACT  (Package Body) 
 --
-CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
+CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB13_EXTRACT" as
 
   /*-*/
   /* Private exceptions 
@@ -82,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
   /* Private declarations 
   /*-*/
   function execute_extract(par_action in varchar2, par_data in varchar2, par_alt_data in varchar2) return boolean;
-  procedure execute_send(par_interface in varchar2);
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2);
   
   /*-*/
   /* Global variables 
@@ -152,6 +153,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
             (var_site = '*ALL' or '*' || t01.dsv_group = var_site);
   
     rcd_intfc csr_intfc%rowtype;
+
+    cursor csr_trigger is
+        select dsv_value as intfc_trigger 
+          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
+    rcd_trigger csr_trigger%rowtype;  
          
   begin
 
@@ -199,7 +205,13 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
         /* to send to the specified site(s) 
         /*-*/           
         if ( var_start = true ) then
-            execute_send(var_intfc);
+           open csr_trigger;
+           fetch csr_trigger into rcd_trigger;
+           if csr_trigger%notfound then
+              rcd_trigger.intfc_trigger := 'Y';
+           end if;
+           close csr_trigger;
+           execute_send(var_intfc, rcd_trigger.intfc_trigger);
         end if;
         
         if ( var_update_lastrun = true ) then
@@ -370,7 +382,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
     
   end execute_extract;
   
-  procedure execute_send(par_interface in varchar2) is
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2) is
   
     /*-*/
     /* Local variables 
@@ -381,7 +393,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ICS_LADPDB13_EXTRACT as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-        var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          if upper(par_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(par_interface);
+          end if;
       end if;
       
       lics_outbound_loader.append_data(tbl_definition(idx).value);
@@ -403,10 +419,6 @@ end ICS_LADPDB13_EXTRACT;
 --
 CREATE PUBLIC SYNONYM ICS_LADPDB13_EXTRACT FOR ICS_APP.ICS_LADPDB13_EXTRACT;
 
-
-GRANT EXECUTE ON ICS_APP.ICS_LADPDB13_EXTRACT TO ICS_EXECUTOR;
-
-GRANT EXECUTE ON ICS_APP.ICS_LADPDB13_EXTRACT TO LADS_APP;
 
 GRANT EXECUTE ON ICS_APP.ICS_LADPDB13_EXTRACT TO LICS_APP;
 
