@@ -1,3 +1,8 @@
+--
+-- LADPDB02_LOADER  (Package) 
+--
+CREATE OR REPLACE PACKAGE BDS_APP.ladpdb02_loader as
+
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -17,9 +22,9 @@
   04-Mar-2008  Jeff Phillipson  Added pkg instruction table entry 
   06-Mar-2008  Trevor Keon      Altered to support changes to 
                                 plant_material_extract 
+  10-Aug-2011  Ben Halicki      Included additional fields for China Plant DB
+  
 *******************************************************************************/
-
-create or replace package bds_app.ladpdb02_loader as
 
   /*-*/
   /* Public declarations 
@@ -28,10 +33,25 @@ create or replace package bds_app.ladpdb02_loader as
   procedure on_data (par_record in varchar2);
   procedure on_end;
    
-end ladpdb02_loader; 
+end ladpdb02_loader;
 /
 
-create or replace package body bds_app.ladpdb02_loader as
+
+--
+-- LADPDB02_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADPDB02_LOADER FOR BDS_APP.LADPDB02_LOADER;
+
+
+GRANT EXECUTE ON BDS_APP.LADPDB02_LOADER TO APPSUPPORT;
+
+GRANT EXECUTE ON BDS_APP.LADPDB02_LOADER TO LICS_APP;
+
+
+--
+-- LADPDB02_LOADER  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY BDS_APP.ladpdb02_loader as
 
   /*-*/
   /* Private exceptions 
@@ -57,8 +77,8 @@ create or replace package body bds_app.ladpdb02_loader as
   var_trn_ignore  boolean;
   var_trn_error   boolean;
     
-  rcd_hdr bds_material_plant_mfanz_test%rowtype;
-  rcd_pkg bds_material_pkg_instr_det_t%rowtype;
+  rcd_hdr bds_material_plant_local%rowtype;
+  rcd_pkg bds_material_pkg_instr_det%rowtype;
   rcd_uom bds_material_uom%rowtype;
 
   var_material_code rcd_hdr.sap_material_code%type;
@@ -94,6 +114,8 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','ID',3);
     lics_inbound_utility.set_definition('HDR','PLANT_CODE', 4);
     lics_inbound_utility.set_definition('HDR','BDS_MATERIAL_DESC_EN', 40);
+    lics_inbound_utility.set_definition('HDR','BDS_MATERIAL_DESC_TH', 40);
+    lics_inbound_utility.set_definition('HDR','BDS_MATERIAL_DESC_ZH', 40);
     lics_inbound_utility.set_definition('HDR','MATERIAL_TYPE', 4);
     lics_inbound_utility.set_definition('HDR','MATERIAL_GRP', 9);
     lics_inbound_utility.set_definition('HDR','BASE_UOM', 3);
@@ -108,6 +130,7 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','DIMENSION_UOM', 3);
     lics_inbound_utility.set_definition('HDR','INTERNTL_ARTICLE_NO', 18);
     lics_inbound_utility.set_definition('HDR','TOTAL_SHELF_LIFE', 38);
+    lics_inbound_utility.set_definition('HDR','PRD_SHELF_LIFE_INDCTR',1);
     lics_inbound_utility.set_definition('HDR','MARS_PLAN_ITEM_FLAG', 6);
     lics_inbound_utility.set_definition('HDR','MARS_INTRMDT_PRDCT_COMPNT_FLAG', 1);
     lics_inbound_utility.set_definition('HDR','MARS_MERCHANDISING_UNIT_FLAG', 1);
@@ -132,10 +155,13 @@ create or replace package body bds_app.ladpdb02_loader as
     lics_inbound_utility.set_definition('HDR','COMPONENT_SCRAP_PERCNTG', 38);
     lics_inbound_utility.set_definition('HDR','BACKFLUSH_INDCTR', 1);
     lics_inbound_utility.set_definition('HDR','MARS_RPRSNTTV_ITEM_CODE', 18);
+    lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_8', 18);
     lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_10', 18);
+    lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_14', 18);
     lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_17', 18);
     lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_18', 18);
     lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_19', 18);
+    lics_inbound_utility.set_definition('HDR','REGIONAL_CODE_20', 18);
     lics_inbound_utility.set_definition('HDR','BDS_UNIT_COST', 38);
     lics_inbound_utility.set_definition('HDR','FUTURE_PLANNED_PRICE_1', 38);
     lics_inbound_utility.set_definition('HDR','VLTN_CLASS', 4);
@@ -339,14 +365,14 @@ create or replace package body bds_app.ladpdb02_loader as
     /*-*/
     /* Local cursors 
     /*-*/
-    cursor csr_bds_material_plant_mfanz is
+    cursor csr_bds_material_plant_local is
       select t01.sap_material_code as sap_material_code,
         min(t01.msg_timestamp) as msg_timestamp
-      from bds_material_plant_mfanz_test t01
+      from bds_material_plant_local t01
       where t01.sap_material_code = rcd_hdr.sap_material_code
       group by t01.sap_material_code;
       
-    rcd_bds_material_plant_mfanz csr_bds_material_plant_mfanz%rowtype;
+    rcd_bds_material_plant_local csr_bds_material_plant_local%rowtype;
     
   /*-------------*/
   /* Begin block */
@@ -379,20 +405,20 @@ create or replace package body bds_app.ladpdb02_loader as
     /*-*/
     /* Validate message sequence  
     /*-*/
-    open csr_bds_material_plant_mfanz;
-    fetch csr_bds_material_plant_mfanz into rcd_bds_material_plant_mfanz;
+    open csr_bds_material_plant_local;
+    fetch csr_bds_material_plant_local into rcd_bds_material_plant_local;
     
-    if ( csr_bds_material_plant_mfanz%found ) then      
-      if ( rcd_hdr.msg_timestamp >= rcd_bds_material_plant_mfanz.msg_timestamp ) then
-        delete from bds_material_pkg_instr_det_t where sap_material_code = rcd_hdr.sap_material_code;
+    if ( csr_bds_material_plant_local%found ) then      
+      if ( rcd_hdr.msg_timestamp >= rcd_bds_material_plant_local.msg_timestamp ) then
+        delete from bds_material_pkg_instr_det where sap_material_code = rcd_hdr.sap_material_code;
         delete from bds_material_uom where sap_material_code = rcd_hdr.sap_material_code;
-        delete from bds_material_plant_mfanz_test where sap_material_code = rcd_hdr.sap_material_code;        
+        delete from bds_material_plant_local where sap_material_code = rcd_hdr.sap_material_code;        
       else
         var_trn_ignore := true;
       end if;
     end if;   
      
-    close csr_bds_material_plant_mfanz;
+    close csr_bds_material_plant_local;
     
   /*-------------*/
   /* End routine */
@@ -426,6 +452,8 @@ create or replace package body bds_app.ladpdb02_loader as
     /*--------------------------------------*/
     rcd_hdr.plant_code := lics_inbound_utility.get_variable('PLANT_CODE');
     rcd_hdr.bds_material_desc_en := lics_inbound_utility.get_variable('BDS_MATERIAL_DESC_EN');
+    rcd_hdr.bds_material_desc_th := lics_inbound_utility.get_variable('BDS_MATERIAL_DESC_TH');
+    rcd_hdr.bds_material_desc_zh := lics_inbound_utility.get_variable('BDS_MATERIAL_DESC_ZH');
     rcd_hdr.material_type := lics_inbound_utility.get_variable('MATERIAL_TYPE');
     rcd_hdr.material_grp := lics_inbound_utility.get_variable('MATERIAL_GRP');
     rcd_hdr.base_uom := lics_inbound_utility.get_variable('BASE_UOM');
@@ -440,6 +468,7 @@ create or replace package body bds_app.ladpdb02_loader as
     rcd_hdr.dimension_uom := lics_inbound_utility.get_variable('DIMENSION_UOM');
     rcd_hdr.interntl_article_no := lics_inbound_utility.get_variable('INTERNTL_ARTICLE_NO');
     rcd_hdr.total_shelf_life := lics_inbound_utility.get_number('TOTAL_SHELF_LIFE',null);
+    rcd_hdr.prd_shelf_life_indctr := lics_inbound_utility.get_variable('PRD_SHELF_LIFE_INDCTR');
     rcd_hdr.mars_plan_item_flag := lics_inbound_utility.get_variable('MARS_PLAN_ITEM_FLAG');
     rcd_hdr.mars_intrmdt_prdct_compnt_flag := lics_inbound_utility.get_variable('MARS_INTRMDT_PRDCT_COMPNT_FLAG');
     rcd_hdr.mars_merchandising_unit_flag := lics_inbound_utility.get_variable('MARS_MERCHANDISING_UNIT_FLAG');
@@ -464,10 +493,13 @@ create or replace package body bds_app.ladpdb02_loader as
     rcd_hdr.component_scrap_percntg := lics_inbound_utility.get_number('COMPONENT_SCRAP_PERCNTG',null);
     rcd_hdr.backflush_indctr := lics_inbound_utility.get_variable('BACKFLUSH_INDCTR');
     rcd_hdr.mars_rprsnttv_item_code := lics_inbound_utility.get_variable('MARS_RPRSNTTV_ITEM_CODE');
+    rcd_hdr.regional_code_8 := lics_inbound_utility.get_variable('REGIONAL_CODE_8');
     rcd_hdr.regional_code_10 := lics_inbound_utility.get_variable('REGIONAL_CODE_10');
+    rcd_hdr.regional_code_14 := lics_inbound_utility.get_variable('REGIONAL_CODE_14');
     rcd_hdr.regional_code_17 := lics_inbound_utility.get_variable('REGIONAL_CODE_17');
     rcd_hdr.regional_code_18 := lics_inbound_utility.get_variable('REGIONAL_CODE_18');
     rcd_hdr.regional_code_19 := lics_inbound_utility.get_variable('REGIONAL_CODE_19');
+    rcd_hdr.regional_code_20 := lics_inbound_utility.get_variable('REGIONAL_CODE_20');
     rcd_hdr.bds_unit_cost := lics_inbound_utility.get_number('BDS_UNIT_COST',null);
     rcd_hdr.future_planned_price_1 := lics_inbound_utility.get_number('FUTURE_PLANNED_PRICE_1',null);
     rcd_hdr.vltn_class := lics_inbound_utility.get_variable('VLTN_CLASS');
@@ -519,11 +551,13 @@ create or replace package body bds_app.ladpdb02_loader as
       return;
     end if;
     
-    insert into bds_material_plant_mfanz_test
+    insert into bds_material_plant_local
     (
       sap_material_code,
       plant_code,
       bds_material_desc_en,
+      bds_material_desc_th,
+      bds_material_desc_zh,
       material_type,
       material_grp,
       base_uom,
@@ -538,6 +572,7 @@ create or replace package body bds_app.ladpdb02_loader as
       dimension_uom,
       interntl_article_no,
       total_shelf_life,
+      prd_shelf_life_indctr,
       mars_plan_item_flag,
       mars_intrmdt_prdct_compnt_flag,
       mars_merchandising_unit_flag,
@@ -562,10 +597,13 @@ create or replace package body bds_app.ladpdb02_loader as
       component_scrap_percntg,
       backflush_indctr,
       mars_rprsnttv_item_code,
+      regional_code_8,
       regional_code_10,
+      regional_code_14,
       regional_code_17,
       regional_code_18,
       regional_code_19,
+      regional_code_20,
       bds_unit_cost,
       future_planned_price_1,
       vltn_class,
@@ -592,6 +630,8 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.sap_material_code,
       rcd_hdr.plant_code,
       rcd_hdr.bds_material_desc_en,
+      rcd_hdr.bds_material_desc_th,
+      rcd_hdr.bds_material_desc_zh,
       rcd_hdr.material_type,
       rcd_hdr.material_grp,
       rcd_hdr.base_uom,
@@ -606,6 +646,7 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.dimension_uom,
       rcd_hdr.interntl_article_no,
       rcd_hdr.total_shelf_life,
+      rcd_hdr.prd_shelf_life_indctr,
       rcd_hdr.mars_plan_item_flag,
       rcd_hdr.mars_intrmdt_prdct_compnt_flag,
       rcd_hdr.mars_merchandising_unit_flag,
@@ -630,10 +671,13 @@ create or replace package body bds_app.ladpdb02_loader as
       rcd_hdr.component_scrap_percntg,
       rcd_hdr.backflush_indctr,
       rcd_hdr.mars_rprsnttv_item_code,
+      rcd_hdr.regional_code_8,
       rcd_hdr.regional_code_10,
+      rcd_hdr.regional_code_14,
       rcd_hdr.regional_code_17,
       rcd_hdr.regional_code_18,
       rcd_hdr.regional_code_19,
+      rcd_hdr.regional_code_20,
       rcd_hdr.bds_unit_cost,
       rcd_hdr.future_planned_price_1,
       rcd_hdr.vltn_class,
@@ -694,10 +738,18 @@ create or replace package body bds_app.ladpdb02_loader as
     
     var_country_code := nvl(lics_inbound_utility.get_number('COUNTRY_CODE', null), 0);
     
-    if ( var_country_code = 147 ) then
+    if ( var_country_code = 135 ) then
+      rcd_hdr.sales_text_135 := lics_inbound_utility.get_variable('SALES_TEXT');
+    elsif ( var_country_code = 147 ) then
       rcd_hdr.sales_text_147 := lics_inbound_utility.get_variable('SALES_TEXT');
     elsif ( var_country_code = 149 ) then
       rcd_hdr.sales_text_149 := lics_inbound_utility.get_variable('SALES_TEXT');
+    elsif ( var_country_code = 163 ) then
+      rcd_hdr.sales_text_163 := lics_inbound_utility.get_variable('SALES_TEXT');
+    elsif ( var_country_code = 164 ) then
+      rcd_hdr.sales_text_164 := lics_inbound_utility.get_variable('SALES_TEXT');
+    elsif ( var_country_code = 234 ) then
+      rcd_hdr.sales_text_234 := lics_inbound_utility.get_variable('SALES_TEXT');
     else
       lics_inbound_utility.add_exception('Invalid country code - var_country_code');
       var_trn_error := true;
@@ -720,14 +772,34 @@ create or replace package body bds_app.ladpdb02_loader as
     /*------------------------------*/
     /* UPDATE - Update the database */
     /*------------------------------*/
-    if ( var_country_code = 147 ) then    
-      update bds_material_plant_mfanz_test
+    if ( var_country_code = 135 ) then
+      update bds_material_plant_local
+      set sales_text_135 = rcd_hdr.sales_text_135
+      where sap_material_code = rcd_hdr.sap_material_code
+        and plant_code = rcd_hdr.plant_code;
+    elsif ( var_country_code = 147 ) then    
+      update bds_material_plant_local
       set sales_text_147 = rcd_hdr.sales_text_147
       where sap_material_code = rcd_hdr.sap_material_code
         and plant_code = rcd_hdr.plant_code;
     elsif ( var_country_code = 149 ) then
-      update bds_material_plant_mfanz_test
+      update bds_material_plant_local
       set sales_text_149 = rcd_hdr.sales_text_149
+      where sap_material_code = rcd_hdr.sap_material_code
+        and plant_code = rcd_hdr.plant_code;
+    elsif ( var_country_code = 163 ) then
+      update bds_material_plant_local
+      set sales_text_163 = rcd_hdr.sales_text_163
+      where sap_material_code = rcd_hdr.sap_material_code
+        and plant_code = rcd_hdr.plant_code;
+    elsif ( var_country_code = 164 ) then
+      update bds_material_plant_local
+      set sales_text_164 = rcd_hdr.sales_text_164
+      where sap_material_code = rcd_hdr.sap_material_code
+        and plant_code = rcd_hdr.plant_code;
+    elsif ( var_country_code = 234 ) then
+      update bds_material_plant_local
+      set sales_text_234 = rcd_hdr.sales_text_234
       where sap_material_code = rcd_hdr.sap_material_code
         and plant_code = rcd_hdr.plant_code;
     end if;
@@ -854,7 +926,7 @@ create or replace package body bds_app.ladpdb02_loader as
     /*      - validate the IDOC sequence when locking row exists 
     /*      - lock and commit cycle encompasses transaction child procedure execution 
     /*-*/
-    insert into bds_material_pkg_instr_det_t
+    insert into bds_material_pkg_instr_det
     (
       sap_material_code,
       pkg_instr_table_usage,
@@ -1067,16 +1139,16 @@ create or replace package body bds_app.ladpdb02_loader as
   /*-------------*/
   end process_record_uom;  
   
-end ladpdb02_loader; 
+end ladpdb02_loader;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on bds_app.ladpdb02_loader to appsupport;
-grant execute on bds_app.ladpdb02_loader to lics_app;
 
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym ladpdb02_loader for bds_app.ladpdb02_loader;
+--
+-- LADPDB02_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LADPDB02_LOADER FOR BDS_APP.LADPDB02_LOADER;
+
+
+GRANT EXECUTE ON BDS_APP.LADPDB02_LOADER TO APPSUPPORT;
+
+GRANT EXECUTE ON BDS_APP.LADPDB02_LOADER TO LICS_APP;
