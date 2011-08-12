@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<!-- -->
-<!-- ISC CARE TEST Interface Control System Security -->
-<!-- -->
-<security connectionString="Provider=MSDAORA;User Id=lics_app;Password=..PWD..;Data Source=db1314t.ap.mars;" encryptedPassword="ZYYYZY339W53"/> 
