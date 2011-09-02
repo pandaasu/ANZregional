@@ -44,9 +44,9 @@ create or replace package lics_parameter as
    system_url constant varchar2(128) := 'http://dev-isc.care.ap.mars';
    log_environment constant varchar2(128) := 'TEST';
    log_database constant varchar2(128) := 'DB1314T.AP.MARS';
-   ics_path constant varchar2(128) := '/ics/cuc/test';
+   ics_path constant varchar2(128) := '/sil/care/test';
    ami_path constant varchar2(128) := '/opt/apps/mqft_light/test/shell/';
-   folder_delimiter constant varchar2(1) := '/';
+   folder_delimiter constant varchar2(1) := '/';/sil/care/test
    file_attribute_command constant varchar2(64) := '/bin/chmod 777 <FILE>';
 
    /*-*/
