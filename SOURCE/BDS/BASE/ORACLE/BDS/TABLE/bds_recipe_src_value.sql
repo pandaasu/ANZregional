@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2007/03   Steve Gregan   Created
+ 2011/09   Ben Halicki	  Converted fields to use CHAR datatype to support unicode
 
 *******************************************************************************/
 
@@ -26,12 +27,12 @@ create table bds_recipe_src_value
     operation                          varchar2(4)              null,
     phase                              varchar2(4)              null,
     seq                                varchar2(4)              null,
-    src_tag                            varchar2(40)             null,
-    src_desc                           varchar2(2000)           null,
-    src_val                            varchar2(30)             null,
-    src_uom                            varchar2(20)             null,
-    machine_code                       varchar2(4)              null,
-    detail_desc                        varchar2(4000)           null,
+    src_tag                            varchar2(40 char)        null,
+    src_desc                           varchar2(2000 char)      null,
+    src_val                            varchar2(30 char)        null,
+    src_uom                            varchar2(20 char)        null,
+    machine_code                       varchar2(4 char)         null,
+    detail_desc                        varchar2(4000 char)      null,
     plant                              varchar2(4)              null);
 
 /*-*/

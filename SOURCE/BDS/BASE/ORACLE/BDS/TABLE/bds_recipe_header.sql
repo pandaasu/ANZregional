@@ -15,6 +15,7 @@
  -------   ------         -----------
  2007/03   Steve Gregan   Created
  2007/07   Steve Gregan   Included material to the primary key
+ 2011/09   Ben Halicki	  Converted fields to CHAR datatype to handle unicode
 
 *******************************************************************************/
 
@@ -27,9 +28,9 @@ create table bds_recipe_header
     plant                              varchar2(4)              not null,
     cntl_rec_status                    varchar2(5)              null,
     test_flag                          varchar2(1)              null,
-    recipe_text                        varchar2(40)             null,
-    material                           varchar2(18)             not null,
-    material_text                      varchar2(40)             null,
+    recipe_text                        varchar2(40 char)        null,
+    material                           varchar2(18 char)        not null,
+    material_text                      varchar2(40 char)        null,
     quantity                           number                   null,
     insplot                            varchar2(12)             null,
     uom                                varchar2(4)              null,
