@@ -14,6 +14,8 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/04   Trevor Keon    Created 
+ 2011/09   Ben Halicki	  Modified some varchar2 datatypes from BYTE to CHAR
+							for unicode
 
 *******************************************************************************/
 create table bds.bds_recipe_header
@@ -23,9 +25,9 @@ create table bds.bds_recipe_header
   plant_code          varchar2(4 byte) not null,
   cntl_rec_status     varchar2(5 byte),
   test_flag           varchar2(1 byte),
-  recipe_text         varchar2(40 byte),
-  material            varchar2(18 byte) not null,
-  material_text       varchar2(40 byte),
+  recipe_text         varchar2(40 char),
+  material            varchar2(18 char) not null,
+  material_text       varchar2(40 char),
   quantity            number,
   insplot             varchar2(12 byte),
   uom                 varchar2(4 byte),

@@ -14,7 +14,8 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/04   Trevor Keon    Created 
-
+ 2011/09   Ben Halicki	  Modified varchar2 datatype on some fields from
+							BYTE to CHAR for unicode
 *******************************************************************************/
 create table bds.bds_recipe_bom
 (
@@ -23,8 +24,8 @@ create table bds.bds_recipe_bom
   operation       varchar2(4 byte),
   phase           varchar2(4 byte),
   seq             varchar2(4 byte),
-  material_code   varchar2(18 byte),
-  material_desc   varchar2(40 byte),
+  material_code   varchar2(18 char),
+  material_desc   varchar2(40 char),
   material_qty    number,
   material_uom    varchar2(4 byte),
   material_prnt   varchar2(18 byte),

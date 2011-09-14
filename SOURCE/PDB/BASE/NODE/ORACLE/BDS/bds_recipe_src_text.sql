@@ -14,7 +14,9 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/04   Trevor Keon    Created 
-
+ 2011/09   Ben Halicki	  Modified some varchar2 datatypes from BYTE to CHAR
+							for unicode
+							
 *******************************************************************************/
 
 /**/
@@ -27,10 +29,10 @@ create table bds.bds_recipe_src_text
   operation           varchar2(4 byte),
   phase               varchar2(4 byte),
   seq                 varchar2(4 byte),
-  src_text            varchar2(4000 byte),
-  src_type            varchar2(10 byte),
-  machine_code        varchar2(4 byte),
-  detail_desc         varchar2(4000 byte),
+  src_text            varchar2(4000 char),
+  src_type            varchar2(10 char),
+  machine_code        varchar2(4 char),
+  detail_desc         varchar2(4000 char),
   plant_code          varchar2(4 byte)
 );
 
