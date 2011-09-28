@@ -73,7 +73,7 @@ insert into lics_sec_link values('ICS_CONFIG',4,'*OPT','ICS_GRP_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',5,'*OPT','ICS_ROU_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',6,'*OPT','ICS_SET_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',8,'*OPT','ICS_DAS_CONFIG');
-insert into lics_sec_link values('ICS_CONFIG',9,'*OPT','ICS_INT_PROCESS')
+insert into lics_sec_link values('ICS_CONFIG',9,'*OPT','ICS_INT_PROCESS');
 insert into lics_sec_link values('ICS_CONFIG',10,'*OPT','ICS_INT_LOADER');
 insert into lics_sec_link values('ICS_CONFIG',11,'*OPT','ICS_LCK_MONITOR');
 
