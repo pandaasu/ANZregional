@@ -27,7 +27,7 @@ set define ^;
 /*-*/
 define pro_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE
 define spl_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\<INSTALLATION>\<ENVIRONMENT>
-define database = db9999x.ap.mars
+define database = <DATABASE>
 define codeuser = LICS_APP
 define code_password = <LICS_APP_PASSWORD>
 
