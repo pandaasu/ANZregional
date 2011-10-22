@@ -114,6 +114,8 @@ Copy this script and perform the following scan/replace to localise...
                /* Create the java permissions and directory objects
                /*-*/
                execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/bin/chmod','execute');
+               execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cuc/prod/inbound/*','read');
+	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cuc/prod/inbound/*','write');
                commit;
                create directory ics_bin as '/ics/cuc/prod/bin';
                create directory ics_config as '/ics/cuc/prod/config';
