@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_inbound_loader as
+--
+-- LICS_INBOUND_LOADER  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_inbound_loader as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -36,6 +36,7 @@ create or replace package lics_inbound_loader as
  2006/08   Steve Gregan   Added search functionality
  2006/08   Steve Gregan   Added message name functionality
  2011/02   Steve Gregan   End point architecture version
+ 2011/10   Ben Halicki    Added manual interface loader user tracing
 
 *******************************************************************************/
 
@@ -43,14 +44,27 @@ create or replace package lics_inbound_loader as
    /* Public declarations
    /*-*/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2);
+   procedure execute(par_interface in varchar2, par_fil_name in varchar2, par_usr_name in varchar2);
 
 end lics_inbound_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_inbound_loader as
+
+--
+-- LICS_INBOUND_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_INBOUND_LOADER FOR LICS_APP.LICS_INBOUND_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_LOADER TO PUBLIC;
+
+
+--
+-- LICS_INBOUND_LOADER  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_inbound_loader as
 
    /*-*/
    /* Private exceptions
@@ -78,15 +92,40 @@ create or replace package body lics_inbound_loader as
    /***********************************************/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2) is
 
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Create the interface with user specified by current database user
+      /*-*/
+      execute(par_interface, par_fil_name, null);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute(par_interface in varchar2, par_fil_name in varchar2, par_usr_name in varchar2) is
+
       /*-*/
       /* Autonomous transaction
       /*-*/
       pragma autonomous_transaction;
 
       /*-*/
+      /* Local definitions
+      /*-*/
+      var_usr_name  varchar2(20);
+
+      /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.int_interface,
                 t01.int_description,
                 t01.int_type,
@@ -109,7 +148,8 @@ create or replace package body lics_inbound_loader as
       /* Set the interface variable
       /*-*/
       rcd_lics_interface.int_interface := par_interface;
-
+      var_usr_name := upper(par_usr_name);
+      
       /*-*/
       /* Retrieve the requested interface
       /* notes - must exist
@@ -149,11 +189,17 @@ create or replace package body lics_inbound_loader as
       select lics_header_sequence.nextval into rcd_lics_header.hea_header from dual;
       rcd_lics_header.hea_interface := rcd_lics_interface.int_interface;
       rcd_lics_header.hea_trc_count := 1;
-      rcd_lics_header.hea_crt_user := user;
       rcd_lics_header.hea_crt_time := sysdate;
       rcd_lics_header.hea_fil_name := par_fil_name;
       rcd_lics_header.hea_msg_name := par_fil_name;
       rcd_lics_header.hea_status := lics_constant.header_load_working;
+      
+      if (par_usr_name is null) then
+        rcd_lics_header.hea_crt_user := user;
+      else
+        rcd_lics_header.hea_crt_user := var_usr_name;
+      end if;
+      
       insert into lics_header
          (hea_header,
           hea_interface,
@@ -356,7 +402,7 @@ create or replace package body lics_inbound_loader as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_data_01 is 
+      cursor csr_lics_data_01 is
          select t01.dat_header,
                 t01.dat_dta_seq,
                 t01.dat_record,
@@ -377,7 +423,7 @@ create or replace package body lics_inbound_loader as
       var_opened := false;
 
       /*-*/
-      /* Open the inbound interface file 
+      /* Open the inbound interface file
       /*-*/
       begin
          var_fil_handle := utl_file.fopen(lics_parameter.ics_inbound, rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
@@ -616,10 +662,15 @@ create or replace package body lics_inbound_loader as
    end add_header_exception;
 
 end lics_inbound_loader;
-/  
+/
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_inbound_loader for lics_app.lics_inbound_loader;
-grant execute on lics_inbound_loader to public;
+
+--
+-- LICS_INBOUND_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_INBOUND_LOADER FOR LICS_APP.LICS_INBOUND_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_LOADER TO PUBLIC;

@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_passthru_loader as
+--
+-- LICS_PASSTHRU_LOADER  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_passthru_loader as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -36,21 +36,35 @@ create or replace package lics_passthru_loader as
  2006/08   Steve Gregan   Added search functionality
  2006/08   Steve Gregan   Added message name functionality
  2011/02   Steve Gregan   End point architecture version
-
+ 2011/10   Ben Halicki    Added manual interface loader user tracing
+ 
 *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2);
+   procedure execute(par_interface in varchar2, par_fil_name in varchar2, par_usr_name in varchar2);
 
 end lics_passthru_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_passthru_loader as
+
+--
+-- LICS_PASSTHRU_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_PASSTHRU_LOADER FOR LICS_APP.LICS_PASSTHRU_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_PASSTHRU_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_PASSTHRU_LOADER TO PUBLIC;
+
+
+--
+-- LICS_PASSTHRU_LOADER  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_passthru_loader as
 
    /*-*/
    /* Private exceptions
@@ -78,6 +92,26 @@ create or replace package body lics_passthru_loader as
    /***********************************************/
    procedure execute(par_interface in varchar2, par_fil_name in varchar2) is
 
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Create the interface with user specified by current database user
+      /*-*/
+      execute(par_interface, par_fil_name, null);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end execute;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute(par_interface in varchar2, par_fil_name in varchar2, par_usr_name in varchar2) is
+
       /*-*/
       /* Autonomous transaction
       /*-*/
@@ -90,11 +124,12 @@ create or replace package body lics_passthru_loader as
       var_msg_name varchar2(64);
       var_wrk_path varchar2(128);
       var_src_path varchar2(128);
-
+      var_usr_name varchar2(10);
+      
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.*
            from lics_interface t01
           where t01.int_interface = rcd_lics_interface.int_interface;
@@ -109,7 +144,8 @@ create or replace package body lics_passthru_loader as
       /* Set the interface variable
       /*-*/
       rcd_lics_interface.int_interface := par_interface;
-
+      var_usr_name := upper(par_usr_name);
+      
       /*-*/
       /* Retrieve the requested passthru interface
       /* notes - must exist
@@ -165,11 +201,18 @@ create or replace package body lics_passthru_loader as
       select lics_header_sequence.nextval into rcd_lics_header.hea_header from dual;
       rcd_lics_header.hea_interface := rcd_lics_interface.int_interface;
       rcd_lics_header.hea_trc_count := 1;
-      rcd_lics_header.hea_crt_user := user;
+      rcd_lics_header.hea_crt_user := var_usr_name;
       rcd_lics_header.hea_crt_time := sysdate;
       rcd_lics_header.hea_fil_name := var_fil_name;
       rcd_lics_header.hea_msg_name := var_msg_name;
       rcd_lics_header.hea_status := lics_constant.header_load_working;
+      
+      if (par_usr_name is null) then
+        rcd_lics_header.hea_crt_user := user;
+      else
+        rcd_lics_header.hea_crt_user := var_usr_name;
+      end if;
+      
       insert into lics_header
          (hea_header,
           hea_interface,
@@ -373,7 +416,7 @@ create or replace package body lics_passthru_loader as
       var_opened := false;
 
       /*-*/
-      /* Open the passthru interface file 
+      /* Open the passthru interface file
       /*-*/
       begin
          var_fil_handle := utl_file.fopen(lics_parameter.ics_inbound, rcd_lics_header.hea_fil_name, 'r', lics_parameter.inbound_line_max);
@@ -550,10 +593,15 @@ create or replace package body lics_passthru_loader as
    end add_header_exception;
 
 end lics_passthru_loader;
-/  
+/
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_passthru_loader for lics_app.lics_passthru_loader;
-grant execute on lics_passthru_loader to public;
+
+--
+-- LICS_PASSTHRU_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_PASSTHRU_LOADER FOR LICS_APP.LICS_PASSTHRU_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_PASSTHRU_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_PASSTHRU_LOADER TO PUBLIC;

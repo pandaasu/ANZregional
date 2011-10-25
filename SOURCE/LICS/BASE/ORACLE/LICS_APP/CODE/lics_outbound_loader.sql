@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_outbound_loader as
+--
+-- LICS_OUTBOUND_LOADER  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_outbound_loader as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -46,7 +46,8 @@ create or replace package lics_outbound_loader as
  2006/08   Steve Gregan   Added message name functionality
  2008/03   Steve Gregan   Added append raw functionality
  2011/02   Steve Gregan   End point architecture version
-
+ 2011/10   Ben Halicki    Added manual interface loader user tracing
+ 
 *******************************************************************************/
 
    /*-*/
@@ -55,6 +56,7 @@ create or replace package lics_outbound_loader as
    function create_interface(par_interface in varchar2) return number;
    function create_interface(par_interface in varchar2, par_fil_name in varchar2) return number;
    function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2) return number;
+   function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2, par_usr_name in varchar2) return number;
    procedure append_data(par_record in varchar2);
    procedure append_raw(par_record in raw);
    procedure add_exception(par_exception in varchar2);
@@ -65,10 +67,22 @@ create or replace package lics_outbound_loader as
 end lics_outbound_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_outbound_loader as
+
+--
+-- LICS_OUTBOUND_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_OUTBOUND_LOADER FOR LICS_APP.LICS_OUTBOUND_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_LOADER TO PUBLIC;
+
+
+--
+-- LICS_OUTBOUND_LOADER  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_outbound_loader as
 
    /*-*/
    /* Private exceptions
@@ -101,7 +115,7 @@ create or replace package body lics_outbound_loader as
       /*-*/
       /* Create the interface with generated file name
       /*-*/
-      return create_interface(par_interface, null);
+      return create_interface(par_interface, null, null, null);
 
    /*-------------*/
    /* End routine */
@@ -121,7 +135,7 @@ create or replace package body lics_outbound_loader as
       /*-*/
       /* Create the interface with generated file name
       /*-*/
-      return create_interface(par_interface, par_fil_name, null);
+      return create_interface(par_interface, par_fil_name, null, null);
 
    /*-------------*/
    /* End routine */
@@ -133,6 +147,26 @@ create or replace package body lics_outbound_loader as
    /*******************************************************/
    function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2) return number is
 
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Create the interface with generated file name
+      /*-*/
+      return create_interface(par_interface, par_fil_name, par_msg_name, null);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end create_interface;
+
+   /*******************************************************/
+   /* This function performs the create interface routine */
+   /*******************************************************/
+   function create_interface(par_interface in varchar2, par_fil_name in varchar2, par_msg_name in varchar2, par_usr_name in varchar2) return number is
+
       /*-*/
       /* Autonomous transaction
       /*-*/
@@ -143,11 +177,12 @@ create or replace package body lics_outbound_loader as
       /*-*/
       var_fil_name varchar2(64);
       var_msg_name varchar2(64);
+      var_usr_name varchar2(10);
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.int_interface,
                 t01.int_description,
                 t01.int_type,
@@ -172,7 +207,8 @@ create or replace package body lics_outbound_loader as
       /* Set the interface variable
       /*-*/
       rcd_lics_interface.int_interface := par_interface;
-
+      var_usr_name := upper(par_usr_name);
+      
       /*-*/
       /* Re-initialise the package
       /*-*/
@@ -257,11 +293,17 @@ create or replace package body lics_outbound_loader as
       /*-*/
       rcd_lics_header.hea_interface := rcd_lics_interface.int_interface;
       rcd_lics_header.hea_trc_count := 1;
-      rcd_lics_header.hea_crt_user := user;
       rcd_lics_header.hea_crt_time := sysdate;
       rcd_lics_header.hea_fil_name := var_fil_name;
       rcd_lics_header.hea_msg_name := var_msg_name;
       rcd_lics_header.hea_status := lics_constant.header_load_working;
+      
+      if (par_usr_name is null) then
+        rcd_lics_header.hea_crt_user := user;
+      else
+        rcd_lics_header.hea_crt_user := var_usr_name;
+      end if;      
+      
       insert into lics_header
          (hea_header,
           hea_interface,
@@ -313,7 +355,7 @@ create or replace package body lics_outbound_loader as
       var_hdr_message := 0;
 
       /*-*/
-      /* Open the outbound interface file 
+      /* Open the outbound interface file
       /*-*/
       begin
          var_fil_handle := utl_file.fopen(upper(rcd_lics_interface.int_fil_path), rcd_lics_header.hea_fil_name, 'w', 32767);
@@ -341,12 +383,12 @@ create or replace package body lics_outbound_loader as
       lics_interface_search.initialise(rcd_lics_header.hea_header);
 
       /*-*/
-      /* Set the header control variable 
+      /* Set the header control variable
       /*-*/
       var_hdr_control := rcd_lics_header.hea_header;
 
       /*-*/
-      /* Return the header number 
+      /* Return the header number
       /*-*/
       return rcd_lics_header.hea_header;
 
@@ -898,10 +940,15 @@ begin
    var_hdr_control := null;
 
 end lics_outbound_loader;
-/  
+/
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_outbound_loader for lics_app.lics_outbound_loader;
-grant execute on lics_outbound_loader to public;
+
+--
+-- LICS_OUTBOUND_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_OUTBOUND_LOADER FOR LICS_APP.LICS_OUTBOUND_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_LOADER TO LICS_APP_EXEC;
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_LOADER TO PUBLIC;

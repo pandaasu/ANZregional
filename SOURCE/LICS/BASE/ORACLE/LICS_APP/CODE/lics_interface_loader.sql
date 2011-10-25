@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_interface_loader as
+--
+-- LICS_INTERFACE_LOADER  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_interface_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -22,26 +22,38 @@ create or replace package lics_interface_loader as
     1. Inbound and passthru files are placed in the interface directory and will be
        loaded by the file processing poller.
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2008/11   Steve Gregan   Created
-    2011/01   Ben Halicki    Added call to archive inbound loader file on local filesystem
-    2011/02   Steve Gregan   End point architecture version
-    
+    YYYY/MM   Author            Description
+    -------   ------            -----------
+    2008/11   Steve Gregan      Created
+    2011/01   Ben Halicki       Added call to archive inbound loader file on local filesystem
+    2011/02   Steve Gregan      End point architecture version
+    2011/10   Trevor Keon
+              Ben Halicki       Added manual interface loader user tracing
+
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   function execute(par_interface in varchar2) return varchar2;
-
+   function execute(par_interface in varchar2, par_usr_name in varchar2) return varchar2;
+   
 end lics_interface_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_interface_loader as
+
+--
+-- LICS_INTERFACE_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
+
+
+--
+-- LICS_INTERFACE_LOADER  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_interface_loader as
 
    /*-*/
    /* Private exceptions
@@ -53,16 +65,18 @@ create or replace package body lics_interface_loader as
    /* Private definitions
    /*-*/
    var_interface lics_interface.int_interface%type;
-
+   var_dta_seq lics_temp.dat_dta_seq%type;
+   
    /*-*/
    /* Private declarations
    /*-*/
    procedure read_xml_stream(par_stream in clob);
+   procedure read_xml_child(par_xml_node in xmlDom.domNode);
    
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   function execute(par_interface in varchar2) return varchar2 is
+   function execute(par_interface in varchar2, par_usr_name in varchar2) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -71,6 +85,7 @@ create or replace package body lics_interface_loader as
       var_message varchar2(4000);
       var_result varchar2(4000);
       var_fil_name varchar2(64);
+      var_usr_name varchar2(10);
       var_opened boolean;
       var_instance number(15,0);
       var_fil_handle utl_file.file_type;
@@ -107,6 +122,11 @@ create or replace package body lics_interface_loader as
       var_interface := upper(par_interface);
       if var_interface is null then
          var_message := var_message || chr(13) || 'Interface must be specified';
+      end if;
+      
+      var_usr_name := upper(par_usr_name);
+      if var_usr_name is null then
+         var_message := var_message || chr(13) || 'User name must be specified';
       end if;
 
       /*-*/
@@ -150,20 +170,25 @@ create or replace package body lics_interface_loader as
       /*-*/
       /* Perform the interface user invocation validation function when required
       /*-*/
-      if not(rcd_lics_interface.int_usr_validation is null) then
-         open csr_lics_temp;
-         loop
-            fetch csr_lics_temp into rcd_lics_temp;
-            if csr_lics_temp%notfound then
-               exit;
-            end if;
-            execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_data(:data); end;' using out var_result, rcd_lics_temp.dat_record;
-            if not(var_result is null) then
-               var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' || var_result;
-            end if;
-         end loop;
-         close csr_lics_temp;
-      end if;
+       if not(rcd_lics_interface.int_usr_validation is null) then
+          execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_start; end;' using out var_result;
+          if var_result is null then
+             open csr_lics_temp;
+             loop
+                fetch csr_lics_temp into rcd_lics_temp;
+                if csr_lics_temp%notfound then
+                   exit;
+                end if;
+                execute immediate 'begin :result := ' || rcd_lics_interface.int_usr_validation || '.on_data(:data); end;' using out var_result, rcd_lics_temp.dat_record;
+                if not(var_result is null) then
+                   var_message := var_message || chr(13) || 'File record (' || to_char(rcd_lics_temp.dat_dta_seq) || ') - ' || var_result;
+                end if;
+             end loop;
+             close csr_lics_temp;
+          else
+             var_message := var_message || chr(13) || var_result;
+          end if;
+       end if;      
 
       /*-*/
       /* Return the message when required
@@ -222,12 +247,12 @@ create or replace package body lics_interface_loader as
       /* Load the interface based on the interface type
       /*-*/
       if upper(rcd_lics_interface.int_type) = '*INBOUND' then
-         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
+         lics_inbound_loader.execute(rcd_lics_interface.int_interface, var_fil_name, var_usr_name);
          lics_filesystem.archive_file_gzip(lics_parameter.inbound_directory, var_fil_name, lics_parameter.archive_directory, var_fil_name||'.gz', '1', '1');
       elsif upper(rcd_lics_interface.int_type) = '*PASSTHRU' then
-         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name);
+         lics_passthru_loader.execute(rcd_lics_interface.int_interface, var_fil_name, var_usr_name);
       elsif upper(rcd_lics_interface.int_type) = '*OUTBOUND' then
-         var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message);
+         var_instance := lics_outbound_loader.create_interface(rcd_lics_interface.int_interface, var_fil_name, rcd_lics_interface.int_usr_message, var_usr_name);
          open csr_lics_temp;
          loop
             fetch csr_lics_temp into rcd_lics_temp;
@@ -342,11 +367,64 @@ create or replace package body lics_interface_loader as
    /*-------------*/
    end read_xml_stream;
 
+   /******************************************************/
+   /* This procedure performs the read xml child routine */
+   /******************************************************/
+   procedure read_xml_child(par_xml_node in xmlDom.domNode) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_element xmlDom.domElement;
+      obj_xml_node xmlDom.domNode;
+      obj_xml_node_list xmlDom.domNodeList;
+      var_string varchar2(4000 char);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Process the attribute node
+      /*-*/
+      case upper(xmlDom.getNodeName(par_xml_node))
+         when 'TXTSTREAM' then
+            null;
+         when 'XR' then
+            var_dta_seq := var_dta_seq + 1;
+         when '#CDATA-SECTION' then
+            var_string := rtrim(ltrim(xmlDom.getNodeValue(par_xml_node),'['),']');
+            insert into lics_temp
+               (dat_dta_seq,
+                dat_record)
+               values(var_dta_seq,
+                      var_string);
+         else raise_application_error(-20000, 'read_xml_stream - Type (' || xmlDom.getNodeName(par_xml_node) || ') not recognised');
+      end case;
+
+      /*-*/
+      /* Process the child nodes
+      /*-*/
+      obj_xml_node_list := xmlDom.getChildNodes(par_xml_node);
+      for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
+         obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
+         read_xml_child(obj_xml_node);
+      end loop;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end read_xml_child;
+
 end lics_interface_loader;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_interface_loader for lics_app.lics_interface_loader;
-grant execute on lics_interface_loader to public;
+
+--
+-- LICS_INTERFACE_LOADER  (Synonym) 
+--
+CREATE PUBLIC SYNONYM LICS_INTERFACE_LOADER FOR LICS_APP.LICS_INTERFACE_LOADER;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INTERFACE_LOADER TO PUBLIC;
