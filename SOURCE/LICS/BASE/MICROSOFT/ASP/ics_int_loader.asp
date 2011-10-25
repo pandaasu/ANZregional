@@ -95,7 +95,7 @@
    else
       call PaintResponse
    end if
- 
+
    '//
    '// Destroy references
    '//
@@ -170,7 +170,8 @@ sub ProcessSubmit()
    '//
    strStatement = "lics_interface_loader."
    strStatement = strStatement & "execute("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("SLT_Interface").Value) & "')"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("SLT_Interface").Value) & "',"
+   strStatement = strStatement & "'" & GetUser() & "')"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
