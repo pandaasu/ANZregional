@@ -41,7 +41,7 @@ create or replace package lics_parameter as
    system_code constant varchar2(10) := 'CAD';
    system_unit constant varchar2(10) := 'HUA';
    system_environment constant varchar2(20) := 'TEST';
-   system_url constant varchar2(128) := 'test.CAD.hua.ap.mars/ics';
+   system_url constant varchar2(128) := 'test.CAD.hua.ap.mars/ics/';
    log_environment constant varchar2(128) := 'TEST';
    log_database constant varchar2(128) := 'DB1324T.AP.MARS';
    ics_path constant varchar2(128) := '/ics/cad/test/';
