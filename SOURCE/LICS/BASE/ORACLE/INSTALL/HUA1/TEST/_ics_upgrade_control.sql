@@ -115,9 +115,9 @@ Copy this script and perform the following scan/replace to localise...
                /*-*/
                execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/bin/chmod','execute');
                commit;
-               create directory ics_bin as '/ics/CAD/test/bin';
-               create directory ics_config as '/ics/CAD/test/config';
-               create directory ics_archive as '/ics/CAD/test/archive';
+               create directory ics_bin as '/ics/cad/test/bin';
+               create directory ics_config as '/ics/cad/test/config';
+               create directory ics_archive as '/ics/cad/test/archive';
                grant all on directory ics_bin to lics_app;
                grant all on directory ics_config to lics_app;
                grant all on directory ics_archive to lics_app;
@@ -148,9 +148,9 @@ Copy this script and perform the following scan/replace to localise...
 
         The following rows should be returned...
 
-	   ICS_ARCHIVE   /ics/CAD/test/archive
-	   ICS_CONFIG    /ics/CAD/test/config
-	   ICS_BIN       /ics/CAD/test/bin
+	   ICS_ARCHIVE   /ics/cad/test/archive
+	   ICS_CONFIG    /ics/cad/test/config
+	   ICS_BIN       /ics/cad/test/bin
 
 5. Load the ICS java classes into the LICS_APP schema using the following commands...
 

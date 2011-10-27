@@ -44,7 +44,7 @@ create or replace package lics_parameter as
    system_url constant varchar2(128) := 'test.CAD.hua.ap.mars/ics';
    log_environment constant varchar2(128) := 'TEST';
    log_database constant varchar2(128) := 'DB1324T.AP.MARS';
-   ics_path constant varchar2(128) := '/ics/CAD/test/';
+   ics_path constant varchar2(128) := '/ics/cad/test/';
    ami_path constant varchar2(128) := '/opt/apps/mqft_light/test/shell/';
    folder_delimiter constant varchar2(1) := '/';
    file_attribute_command constant varchar2(64) := '/bin/chmod 777 <FILE>';
