@@ -114,10 +114,16 @@ Copy this script and perform the following scan/replace to localise...
                /* Create the java permissions and directory objects
                /*-*/
                execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/bin/chmod','execute');
+	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','execute');
+               execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','read');
+	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','write');
+	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','delete');
                commit;
                create directory ics_bin as '/ics/cad/test/bin';
                create directory ics_config as '/ics/cad/test/config';
                create directory ics_archive as '/ics/cad/test/archive';
+               create directory ics_outbound as '/ics/cad/test/outbound';
+               create directory ics_inbound as '/ics/cad/test/inbound';
                grant all on directory ics_bin to lics_app;
                grant all on directory ics_config to lics_app;
                grant all on directory ics_archive to lics_app;
