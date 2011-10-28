@@ -1,0 +1,693 @@
+CONNECTING (LICS_APP) ...
+Connected.
+CREATING LICS_APP PROCEDURES ...
+
+Package created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+grant execute on lics_security_configuration to ics_app
+                                                *
+ERROR at line 1:
+ORA-01917: 用户或角色 'ICS_APP' 不存在 
+
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Function created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+
+
+Package created.
+
+
+Package body created.
+
+
+Synonym created.
+
+
+Grant succeeded.
+

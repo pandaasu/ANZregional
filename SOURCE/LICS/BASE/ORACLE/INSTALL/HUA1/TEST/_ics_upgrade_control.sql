@@ -118,6 +118,7 @@ Copy this script and perform the following scan/replace to localise...
                execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','read');
 	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','write');
 	       execute dbms_java.grant_permission('LICS_APP','java.io.FilePermission','/ics/cad/test/-','delete');
+               execute dbms_java.grant_permission( 'DBEC', 'SYS:java.io.FilePermission', '/ics/cad/test/bin/-', 'execute' );
                commit;
                create directory ics_bin as '/ics/cad/test/bin';
                create directory ics_config as '/ics/cad/test/config';
