@@ -86,6 +86,7 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_temp.sql;
 @^tab_path\lics_triggered.sql;
 @^tab_path\lics_triggered_sequence.sql;
+@^tab_path\lics_alert.sql;
 
 prompt CREATING LICS CONSTRAINTS ...
 

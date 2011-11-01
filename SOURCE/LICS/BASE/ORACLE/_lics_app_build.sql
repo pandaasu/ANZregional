@@ -96,6 +96,8 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_trigger_loader.sql;
 @^pro_path\lics_trigger_processor.sql;
 @^pro_path\lics_trigger_submitter.sql;
+@^pro_path\lics_alerting.sql;
+@^pro_path\lics_alerting_configuration.sql;
 
 /**/
 /* Undefine the work variables

@@ -29,6 +29,7 @@ insert into lics_job values('INBOUND_HIGH','Inbound Interfaces (High Priority)',
 insert into lics_job values('INBOUND_NORMAL','Inbound Interfaces (Normal Priority)',null,20,null,'"ISI ICS Test Group"@esosn1','*INBOUND','IB_NORM',null,'sysdate',null,'1');
 insert into lics_job values('INBOUND_SERIAL','Inbound Serial Interfaces',null,20,null,'"ISI ICS Test Group"@esosn1','*INBOUND','IB_SERIAL',null,'sysdate',null,'1');
 insert into lics_job values('LICS_PURGING','LICS Purging',null,20,null,'"ISI ICS Test Group"@esosn1','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('LICS_ALERTING','LICS Alerting',null,20,null,'"ISI ICS Test Group"@esosn1','*PROCEDURE',null,'lics_alerting.execute','sysdate','sysdate+1/96','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...
@@ -64,6 +65,7 @@ insert into lics_sec_link values('ICS_CONFIG',8,'*OPT','ICS_DAS_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',9,'*OPT','ICS_INT_PROCESS')
 insert into lics_sec_link values('ICS_CONFIG',10,'*OPT','ICS_INT_LOADER');
 insert into lics_sec_link values('ICS_CONFIG',11,'*OPT','ICS_LCK_MONITOR');
+insert into lics_sec_link values('ICS_CONFIG',12,'*OPT','ICS_ALE_CONFIG');
 
 insert into lics_sec_menu values('GUEST','Guest');
 insert into lics_sec_link values('GUEST',1,'*MNU','ICS_MONITOR');
@@ -93,6 +95,7 @@ insert into lics_sec_option values('ICS_ROU_CONFIG','Routing Configuration','ics
 insert into lics_sec_option values('ICS_SET_CONFIG','Setting Configuration','ics_set_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_STR_CONFIG','Stream Configuration','ics_stream_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_DAS_CONFIG','Data Store Configuration','ics_das_configuration.asp?Mode=SELECT','1');
+insert into lics_sec_option values('ICS_ALE_CONFIG','Alerting Configuration','ics_alerting_configuration.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_INT_LOADER','Interface Loader','ics_int_loader.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_INT_PROCESS','Interface Processing','ics_int_process.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_LCK_MONITOR','Lock Monitoring','ics_loc_monitor.asp?Mode=SELECT','1');
