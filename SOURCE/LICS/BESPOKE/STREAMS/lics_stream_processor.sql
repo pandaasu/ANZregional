@@ -166,7 +166,7 @@ create or replace package body lics_stream_processor as
          /*-*/
          /* Update the current event to *COMPLETED
          /*-*/
-         update lics_str_event
+         update lics_str_exe_event
             set ste_exe_status = '*COMPLETED'
           where ste_exe_seqn = rcd_event.sta_exe_seqn
             and ste_tsk_code = rcd_event.sta_tsk_code
@@ -178,8 +178,8 @@ create or replace package body lics_stream_processor as
          /*-*/
          /* Update the current event to *FAILED
          /*-*/
-         update lics_str_event
-            set ste_exe_status = '*FAILED'
+         update lics_str_exe_event
+            set ste_exe_status = '*FAILED',
                 ste_exe_message = var_error
           where ste_exe_seqn = rcd_event.ste_exe_seqn
             and ste_tsk_code = rcd_event.ste_tsk_code

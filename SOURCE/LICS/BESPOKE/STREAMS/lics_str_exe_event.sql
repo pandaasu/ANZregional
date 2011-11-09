@@ -41,7 +41,7 @@ create table lics_str_exe_event
 comment on table lics_str_exe_event is 'LICS Stream Execution Event Table';
 comment on column lics_str_exe_event.ste_exe_seqn is 'Stream event - execution sequence';
 comment on column lics_str_exe_event.ste_exe_status is 'Stream event - execution status';
-comment on column lics_str_exe_event.ste_message is 'Stream event - execution message';
+comment on column lics_str_exe_event.ste_exe_message is 'Stream event - execution message';
 comment on column lics_str_exe_event.ste_str_code is 'Stream event - stream code';
 comment on column lics_str_exe_event.ste_tsk_code is 'Stream event - task code';
 comment on column lics_str_exe_event.ste_evt_code is 'Stream event - event code';
