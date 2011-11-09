@@ -100,7 +100,7 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_alerting as
       /*-*/
       /*  Start logging
       /**/ 
-      lics_logging.start_log('LICS_ALERTING',NULL);
+      lics_logging.start_log('LICS_ALERTING','LICS_ALERTING');
       
       /*-*/
       /*  Retrieve last run control date/time
@@ -178,7 +178,7 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_alerting as
       when others then
 
          if (not lics_logging.is_created ) then
-            lics_logging.start_log('LICS_ALERTING', null);
+            lics_logging.start_log('LICS_ALERTING', 'LICS_ALERTING');
          end if;
       
          lics_logging.write_log('Exception raised - ' || SQLERRM);
