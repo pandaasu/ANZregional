@@ -233,7 +233,7 @@ create or replace package body lics_stream_loader as
          rcd_lics_str_exe_event.ste_evt_text := rcd_event.ste_evt_text;
          rcd_lics_str_exe_event.ste_evt_lock := rcd_event.ste_evt_lock;
          if upper(trim(rcd_event.ste_evt_lock)) = '*NONE' then
-            rcd_lics_str_exe_event.ste_evt_lock := '*LOCK:' || to_char(var_str_seqn) || ':' || rcd_event.ste_tsk_code || ':' || rcd_event.ste_evt_code;
+            rcd_lics_str_exe_event.ste_evt_lock := '*LOCK:' || to_char(var_exe_seqn) || ':' || rcd_event.ste_tsk_code || ':' || rcd_event.ste_evt_code;
          end if;
          rcd_lics_str_exe_event.ste_evt_proc := rcd_event.ste_evt_proc;
          if upper(trim(rcd_event.ste_evt_proc)) = '*SUPPLIED' then

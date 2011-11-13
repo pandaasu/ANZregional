@@ -100,7 +100,7 @@ create or replace package body lics_stream_poller as
       rcd_stream_process csr_stream_process%rowtype;
 
       cursor csr_stream_open is
-         select t01.sth_exe_seqn,
+         select t01.sth_exe_seqn
            from (select t01.sth_exe_seqn,
                         t01.sth_exe_status,
                         t01.sth_str_code,
@@ -112,7 +112,7 @@ create or replace package body lics_stream_poller as
             and not(t01.sth_str_code in (select sth_str_code
                                            from lics_str_exe_header
                                           where sth_str_code = t01.sth_str_code
-                                            and sth_exe_status in ('*OPENED','*OPNCANCEL','*OPNPAUSED'))
+                                            and sth_exe_status in ('*OPENED','*OPNCANCEL','*OPNPAUSED')))
           order by t01.sth_exe_seqn asc;
       rcd_stream_open csr_stream_open%rowtype;
 
@@ -121,19 +121,23 @@ create or replace package body lics_stream_poller as
                 t01.ste_tsk_code,
                 t01.ste_evt_code
            from (select t01.*,
+                        t02.stt_tsk_seqn,
                         rank() over (partition by t01.ste_evt_lock
                                          order by t01.ste_exe_seqn asc,
-                                                  t01.ste_tsk_seqn asc,
+                                                  t02.stt_tsk_seqn asc,
                                                   t01.ste_evt_seqn asc) as lckseq
-                   from lics_str_exe_event t01
-                  where t01.ste_exe_status = '*QUEUED') t01
+                   from lics_str_exe_event t01,
+                        lics_str_exe_task t02
+                  where t01.ste_exe_seqn = t02.stt_exe_seqn
+                    and t01.ste_tsk_code = t02.stt_tsk_code
+                    and t01.ste_exe_status = '*QUEUED') t01
           where t01.lckseq = 1
             and not(t01.ste_evt_lock in (select ste_evt_lock
                                            from lics_str_exe_event
                                           where ste_evt_lock = t01.ste_evt_lock
                                             and ste_exe_status = '*OPENED'))
           order by t01.ste_exe_seqn asc,
-                   t01.ste_tsk_seqn asc,
+                   t01.stt_tsk_seqn asc,
                    t01.ste_evt_seqn asc;
       rcd_submit_event csr_submit_event%rowtype;
 
@@ -178,7 +182,7 @@ create or replace package body lics_stream_poller as
       open csr_stream_process;
       loop
          fetch csr_stream_process into rcd_stream_process;
-         if csr_open_stream%notfound then
+         if csr_stream_process%notfound then
             exit;
          end if;
          stream_process(rcd_stream_process.sth_exe_seqn);
@@ -262,11 +266,11 @@ create or replace package body lics_stream_poller as
             /*-*/
             /* Update the stream event and commit
             /*-*/
-            Update lics_str_exe_event
+            update lics_str_exe_event
                set ste_exe_status = '*OPENED'
-             where ste_exe_seqn = rcd_action.ste_exe_seqn
-               and ste_tsk_code = rcd_action.ste_tsk_code
-               and ste_evt_code = rcd_action.ste_evt_code;
+             where ste_exe_seqn = rcd_event.ste_exe_seqn
+               and ste_tsk_code = rcd_event.ste_tsk_code
+               and ste_evt_code = rcd_event.ste_evt_code;
             commit;
 
             /*-*/
@@ -407,7 +411,7 @@ create or replace package body lics_stream_poller as
             var_available := false;
       end;
       if csr_stream%isopen then
-         close csr_event;
+         close csr_stream;
       end if;
 
       /*-*/
@@ -470,7 +474,7 @@ create or replace package body lics_stream_poller as
                      /* Fail the current task and all decendent tasks
                      /*-*/
                      ptbl_task.delete;
-                     task_failed(rcd_open_task.stt_exe_seqn, rcd_open_task.stt_tsk_code);
+                     task_fail(rcd_open_task.stt_exe_seqn, rcd_open_task.stt_tsk_code);
 
                   end if;
 
@@ -559,9 +563,9 @@ create or replace package body lics_stream_poller as
                                                   (select count(*)
                                                      from lics_str_exe_task t11
                                                     where t11.stt_exe_seqn = t01.sth_exe_seqn) as tot_count,
-                                                  (select sum(decode(t01.stt_exe_status,'*COMPLETED',1,'*FAILED',1,'*CANCELLED',1,0))
+                                                  (select sum(decode(t11.stt_exe_status,'*COMPLETED',1,'*FAILED',1,'*CANCELLED',1,0))
                                                      from lics_str_exe_task t11
-                                                    where t11.stt_exe_seqn = t01.sth_exe_seqn) as com_count,
+                                                    where t11.stt_exe_seqn = t01.sth_exe_seqn) as com_count
                                              from lics_str_exe_header t01
                                             where t01.sth_exe_seqn = rcd_stream.sth_exe_seqn) t01
                                     where t01.tot_count = t01.com_count);
@@ -579,9 +583,9 @@ create or replace package body lics_stream_poller as
                                                   (select count(*)
                                                      from lics_str_exe_task t11
                                                     where t11.stt_exe_seqn = t01.sth_exe_seqn) as tot_count,
-                                                  (select sum(decode(t01.stt_exe_status,'*COMPLETED',1,'*FAILED',1,'*CANCELLED',1,0))
+                                                  (select sum(decode(t11.stt_exe_status,'*COMPLETED',1,'*FAILED',1,'*CANCELLED',1,0))
                                                      from lics_str_exe_task t11
-                                                    where t11.stt_exe_seqn = t01.sth_exe_seqn) as com_count,
+                                                    where t11.stt_exe_seqn = t01.sth_exe_seqn) as com_count
                                              from lics_str_exe_header t01
                                             where t01.sth_exe_seqn = rcd_stream.sth_exe_seqn) t01
                                     where t01.tot_count = t01.com_count);
@@ -677,7 +681,7 @@ create or replace package body lics_stream_poller as
             var_available := false;
       end;
       if csr_stream%isopen then
-         close csr_event;
+         close csr_stream;
       end if;
 
       /*-*/
@@ -818,7 +822,7 @@ create or replace package body lics_stream_poller as
             var_available := false;
       end;
       if csr_stream%isopen then
-         close csr_event;
+         close csr_stream;
       end if;
 
       /*-*/
@@ -976,7 +980,7 @@ create or replace package body lics_stream_poller as
             var_available := false;
       end;
       if csr_stream%isopen then
-         close csr_event;
+         close csr_stream;
       end if;
 
       /*-*/
@@ -1086,7 +1090,7 @@ create or replace package body lics_stream_poller as
             var_available := false;
       end;
       if csr_stream%isopen then
-         close csr_event;
+         close csr_stream;
       end if;
 
       /*-*/

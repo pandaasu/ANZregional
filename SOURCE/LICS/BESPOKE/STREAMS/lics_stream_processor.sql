@@ -121,7 +121,7 @@ create or replace package body lics_stream_processor as
          raise_application_error(-20000, 'Stream execution event not found (' || to_char(par_stream) || '/' || par_task || '/' || par_event || ')');
       end if;
       close csr_event;
-      if rcd_event.ste_status != '*OPENED' then
+      if rcd_event.ste_exe_status != '*OPENED' then
          raise_application_error(-20000, 'Stream execution event is not *OPENED (' || to_char(par_stream) || '/' || par_task || '/' || par_event || ')');
       end if;
 
@@ -168,9 +168,9 @@ create or replace package body lics_stream_processor as
          /*-*/
          update lics_str_exe_event
             set ste_exe_status = '*COMPLETED'
-          where ste_exe_seqn = rcd_event.sta_exe_seqn
-            and ste_tsk_code = rcd_event.sta_tsk_code
-            and ste_evt_code = rcd_event.sta_evt_code;
+          where ste_exe_seqn = rcd_event.ste_exe_seqn
+            and ste_tsk_code = rcd_event.ste_tsk_code
+            and ste_evt_code = rcd_event.ste_evt_code;
          commit;
 
       else
