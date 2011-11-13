@@ -38,6 +38,7 @@ create or replace package lics_stream_processor as
    function callback_alert return varchar2;
    function callback_email return varchar2;
    function callback_parameter(par_code in varchar2) return varchar2;
+   function callback_is_cancelled return boolean;
 
 end lics_stream_processor;
 /
@@ -363,6 +364,49 @@ create or replace package body lics_stream_processor as
    /* End routine */
    /*-------------*/
    end callback_parameter;
+
+   /************************************************************/
+   /* This function performs the callback is cancelled routine */
+   /************************************************************/
+   function callback_is_cancelled return boolean is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_stream is 
+         select t01.*
+           from lics_str_exe_header t01
+          where t01.sth_exe_seqn = var_stream;
+      rcd_stream csr_stream%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the stream status
+      /*-*/
+      var_return := false;
+      open csr_stream;
+      fetch csr_stream into rcd_stream;
+      if csr_stream%found then
+         if rcd_stream.sth_exe_status = '*OPNCANCEL' then
+            var_return := true;
+         end if;
+      end if;
+      close csr_stream;
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_is_cancelled;
 
 end lics_stream_processor;
 /
