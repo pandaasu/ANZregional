@@ -42,6 +42,7 @@ insert into lics_job values('INBOUND_FAC02','Inbound Factory Interfaces (Process
 insert into lics_job values('OUTBOUND_NORM01','Inbound Interfaces (Normal Priority Processor 01)',null,20,null,'<ICS_EMAIL>','*OUTBOUND','OB_NORM#01',null,'sysdate',null,'1');
 insert into lics_job values('OUTBOUND_NORM02','Inbound Interfaces (Normal Priority Processor 02)',null,20,null,'<ICS_EMAIL>','*OUTBOUND','OB_NORM#02',null,'sysdate',null,'1');
 insert into lics_job values('LICS_PURGING','LICS Purging - DAILY 7:00',null,20,null,'<ICS_EMAIL>','*PROCEDURE',null,'lics_purging.execute','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job values('LICS_ALERTING','LICS Alerting',null,20,null,'<ICS_EMAIL>','*PROCEDURE',null,'lics_alerting.execute','sysdate','sysdate+1/96','1');
 commit;
 
 prompt CREATING SECURITY CONFIGURATION ...
