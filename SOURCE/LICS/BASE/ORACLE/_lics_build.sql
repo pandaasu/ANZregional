@@ -39,6 +39,7 @@ connect ^datauser/^data_password@^database
 
 prompt CREATING LICS TABLES ...
 
+@^tab_path\lics_alert.sql;
 @^tab_path\lics_das_code.sql;
 @^tab_path\lics_das_group.sql;
 @^tab_path\lics_das_system.sql;
@@ -86,7 +87,6 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_temp.sql;
 @^tab_path\lics_triggered.sql;
 @^tab_path\lics_triggered_sequence.sql;
-@^tab_path\lics_alert.sql;
 
 prompt CREATING LICS CONSTRAINTS ...
 
