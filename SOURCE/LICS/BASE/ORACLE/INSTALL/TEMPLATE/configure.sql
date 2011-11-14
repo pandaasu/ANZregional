@@ -48,7 +48,6 @@ prompt CREATING SECURITY CONFIGURATION ...
 
 insert into lics_sec_user values('*GUEST','Guest','GUEST','1');
 insert into lics_sec_user values('HALICBEN','Ben Halicki','ICS_ADMIN','1');
-insert into lics_sec_user values('HUANGVIV','Vivian Huang','ICS_ADMIN','1');
 
 insert into lics_sec_menu values('*SECURITY','Security');
 insert into lics_sec_link values('*SECURITY',1,'*OPT','ICS_USR_CONFIG');
@@ -76,6 +75,7 @@ insert into lics_sec_link values('ICS_CONFIG',8,'*OPT','ICS_DAS_CONFIG');
 insert into lics_sec_link values('ICS_CONFIG',9,'*OPT','ICS_INT_PROCESS');
 insert into lics_sec_link values('ICS_CONFIG',10,'*OPT','ICS_INT_LOADER');
 insert into lics_sec_link values('ICS_CONFIG',11,'*OPT','ICS_LCK_MONITOR');
+insert into lics_sec_link values('ICS_CONFIG',12,'*OPT','ICS_ALE_CONFIG');
 
 insert into lics_sec_menu values('GUEST','Guest');
 insert into lics_sec_link values('GUEST',1,'*MNU','ICS_MONITOR');
@@ -108,6 +108,7 @@ insert into lics_sec_option values('ICS_DAS_CONFIG','Data Store Configuration','
 insert into lics_sec_option values('ICS_INT_LOADER','Interface Loader','ics_int_loader.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_INT_PROCESS','Interface Processing','ics_int_process.asp?Mode=SELECT','1');
 insert into lics_sec_option values('ICS_LCK_MONITOR','Lock Monitoring','ics_loc_monitor.asp?Mode=SELECT','1');
+insert into lics_sec_option values('ICS_ALE_CONFIG','Alerting Configuration','ics_alerting_configuration.asp?Mode=SELECT','1');
 
 commit;
 
