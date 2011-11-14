@@ -42,6 +42,8 @@ prompt CREATING LICS_APP PROCEDURES ...
 /**/
 /* Ensure correct lics_parameter.sql file is used
 /**/
+@^pro_path\lics_alerting.sql;
+@^pro_path\lics_alerting_configuration.sql;
 @^pro_path\lics_buffer.sql;
 @^pro_path\lics_constant.sql;
 @^pro_path\lics_daemon_processor.sql;
@@ -96,8 +98,6 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_trigger_loader.sql;
 @^pro_path\lics_trigger_processor.sql;
 @^pro_path\lics_trigger_submitter.sql;
-@^pro_path\lics_alerting.sql;
-@^pro_path\lics_alerting_configuration.sql;
 
 /**/
 /* Undefine the work variables
