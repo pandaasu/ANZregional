@@ -111,7 +111,7 @@ create or replace package body lics_stream_loader as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_stream in varchar2, par_procedure in varchar2) is
+   procedure execute(par_stream in varchar2, par_text in varchar2, par_procedure in varchar2) is
 
       /*-*/
       /* Autonomous transaction
@@ -126,6 +126,7 @@ create or replace package body lics_stream_loader as
       rcd_lics_str_exe_depend lics_str_exe_depend%rowtype;
       rcd_lics_str_exe_event lics_str_exe_event%rowtype;
       rcd_lics_str_exe_param lics_str_exe_param%rowtype;
+      var_text lics_str_exe_header.sth_exe_text%type;
       var_procedure lics_str_exe_event.ste_evt_proc%type;
       var_exe_seqn number;
 
@@ -157,6 +158,10 @@ create or replace package body lics_stream_loader as
       if par_stream is null then
          raise_application_error(-20000, 'Parameter stream must be supplied');
       end if;
+      if par_text is null then
+         raise_application_error(-20000, 'Parameter text must be supplied');
+      end if;
+      var_text := par_text;
       var_procedure := par_procedure;
 
       /*-*/
@@ -182,6 +187,7 @@ create or replace package body lics_stream_loader as
       /*-*/
       insert into lics_str_exe_header
          select var_exe_seqn,
+                var_text,
                 '*PENDING',
                 '*NONE',
                 sysdate,

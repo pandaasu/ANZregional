@@ -22,6 +22,7 @@
 /**/
 create table lics_str_exe_header
    (sth_exe_seqn          number                       not null,
+    sth_exe_text          varchar2(128 char)           not null,
     sth_exe_status        varchar2(10 char)            not null,
     sth_exe_request       varchar2(10 char)            not null,
     sth_exe_load          date                         not null,
@@ -38,6 +39,7 @@ create table lics_str_exe_header
 /**/
 comment on table lics_str_exe_header is 'LICS Stream Execution Header Table';
 comment on column lics_str_exe_header.sth_exe_seqn is 'Stream header - execution sequence';
+comment on column lics_str_exe_header.sth_exe_text is 'Stream header - execution text';
 comment on column lics_str_exe_header.sth_exe_status is 'Stream header - execution status';
 comment on column lics_str_exe_header.sth_exe_request is 'Stream header - execution request';
 comment on column lics_str_exe_header.sth_exe_load is 'Stream header - execution load time';
