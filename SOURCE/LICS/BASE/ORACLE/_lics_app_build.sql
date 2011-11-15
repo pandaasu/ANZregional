@@ -54,6 +54,7 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_filesystem.sql;
 @^pro_path\lics_file_name.sql;
 @^pro_path\lics_file_processor.sql;
+@^pro_path\lics_file_poller.sql;
 @^pro_path\lics_form.sql;
 @^pro_path\lics_group_configuration.sql;
 @^pro_path\lics_inbound_loader.sql;
