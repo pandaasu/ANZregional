@@ -1,3 +1,8 @@
+/******************/
+/* Package Header */
+/******************/
+create or replace package lads_atllad10 as
+
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -21,11 +26,6 @@
  2011/12   Ben Halicki    Fixed issue calling execute_after procedure
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lads_atllad10 as
 
    /*-*/
    /* Public declarations
