@@ -18,6 +18,7 @@
                           Changed IDOC timestamp check from < to <=
  2007/01   Linden Glen    Changed call to Monitor to loop based on Z_TABGRP
  2008/05   Trevor Keon    Added calls to monitor before and after procedure
+ 2011/12   Ben Halicki    Fixed issue calling monitor after procedure
 
 *******************************************************************************/
 
