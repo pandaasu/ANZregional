@@ -53,7 +53,7 @@ create or replace package body lics_stream_configuration as
    rcd_lics_str_header lics_str_header%rowtype;
    rcd_lics_str_task lics_str_task%rowtype;
    rcd_lics_str_event lics_str_event%rowtype;
-   rcd_lics_str_dependent lics_str_dependent%rowtype;
+   rcd_lics_str_depend lics_str_depend%rowtype;
 
    /**************************************************/
    /* This procedure performs the get stream routine */
@@ -71,7 +71,8 @@ create or replace package body lics_stream_configuration as
           start with t01.stt_tsk_pcde = '*TOP'
         connect by prior t01.stt_str_code = t01.stt_str_code
                 and prior t01.stt_tsk_code = t01.stt_tsk_pcde
-          order siblings by t01.stt_tsk_seqn;
+          order siblings by t01.stt_tsk_type asc,
+                            t01.stt_tsk_seqn asc;
       rcd_task csr_task%rowtype;
 
       cursor csr_event is
@@ -110,16 +111,29 @@ create or replace package body lics_stream_configuration as
          if csr_task%notfound then
             exit;
          end if;
-         pipe row(lics_stream_object(rcd_task.level,
-                                     'T',
-                                     rcd_task.stt_tsk_pcde,
-                                     rcd_task.stt_tsk_code,
-                                     rcd_task.stt_tsk_text,
-                                     null,
-                                     null,
-                                     null,
-                                     null,
-                                     null));
+         if rcd_task.stt_tsk_type = '*EXEC' then
+            pipe row(lics_stream_object(rcd_task.level,
+                                        'T',
+                                        rcd_task.stt_tsk_pcde,
+                                        rcd_task.stt_tsk_code,
+                                        rcd_task.stt_tsk_text,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null));
+         else
+            pipe row(lics_stream_object(rcd_task.level,
+                                        'G',
+                                        rcd_task.stt_tsk_pcde,
+                                        rcd_task.stt_tsk_code,
+                                        rcd_task.stt_tsk_text,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null));
+         end if;
 
          /*-*/
          /* Pipe the stream event nodes
@@ -156,9 +170,9 @@ create or replace package body lics_stream_configuration as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -256,7 +270,7 @@ create or replace package body lics_stream_configuration as
             var_tsk_seqn := var_tsk_seqn + 1;
             rcd_lics_str_task.stt_str_code := rcd_lics_str_header.sth_str_code;
             rcd_lics_str_task.stt_tsk_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
-            rcd_lics_str_task.stt_tsk_pcde := '*TOP';
+            rcd_lics_str_task.stt_tsk_pcde := upper(xslProcessor.valueOf(obj_xml_node,'@PARENT'));
             rcd_lics_str_task.stt_tsk_seqn := var_tsk_seqn;
             rcd_lics_str_task.stt_tsk_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
             rcd_lics_str_task.stt_tsk_type := '*GATE';
@@ -278,10 +292,10 @@ create or replace package body lics_stream_configuration as
             insert into lics_str_event values rcd_lics_str_event;
          end if;
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'D' then
-            rcd_lics_str_dependent.std_str_code := rcd_lics_str_task.stt_str_code;
-            rcd_lics_str_dependent.std_tsk_code := rcd_lics_str_task.stt_tsk_code;
-            rcd_lics_str_dependent.std_dep_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
-            insert into lics_str_dependent values rcd_lics_str_dependent;
+            rcd_lics_str_depend.std_str_code := rcd_lics_str_task.stt_str_code;
+            rcd_lics_str_depend.std_tsk_code := rcd_lics_str_task.stt_tsk_code;
+            rcd_lics_str_depend.std_dep_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
+            insert into lics_str_depend values rcd_lics_str_depend;
          end if;
       end loop;
 
@@ -300,9 +314,9 @@ create or replace package body lics_stream_configuration as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -349,13 +363,13 @@ create or replace package body lics_stream_configuration as
                    t01.ste_evt_seqn asc;
       rcd_copy_event csr_copy_event%rowtype;
 
-      cursor csr_copy_dependent is 
+      cursor csr_copy_depend is 
          select t01.*
-           from lics_str_gate t01
+           from lics_str_depend t01
           where t01.std_str_code = par_copy
           order by t01.std_tsk_code asc,
                    t01.std_dep_code asc;
-      rcd_copy_dependent csr_copy_dependent%rowtype;
+      rcd_copy_depend csr_copy_depend%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -392,6 +406,7 @@ create or replace package body lics_stream_configuration as
          rcd_lics_str_task.stt_tsk_pcde := rcd_copy_task.stt_tsk_pcde;
          rcd_lics_str_task.stt_tsk_seqn := rcd_copy_task.stt_tsk_seqn;
          rcd_lics_str_task.stt_tsk_text := rcd_copy_task.stt_tsk_text;
+         rcd_lics_str_task.stt_tsk_type := rcd_copy_task.stt_tsk_type;
          insert into lics_str_task values rcd_lics_str_task;
       end loop;
       close csr_copy_task;
@@ -422,18 +437,18 @@ create or replace package body lics_stream_configuration as
       /*-*/
       /* Copy the stream dependents
       /*-*/
-      open csr_copy_dependent;
+      open csr_copy_depend;
       loop
-         fetch csr_copy_dependent into rcd_copy_dependent;
-         if csr_copy_dependent%notfound then
+         fetch csr_copy_depend into rcd_copy_depend;
+         if csr_copy_depend%notfound then
             exit;
          end if;
-         rcd_lics_str_dependent.std_str_code := rcd_lics_str_header.sth_str_code;
-         rcd_lics_str_dependent.std_tsk_code := rcd_copy_dependent.std_tsk_code;
-         rcd_lics_str_dependent.std_dep_code := rcd_copy_dependent.std_dep_code;
-         insert into lics_str_dependent values rcd_lics_str_dependent;
+         rcd_lics_str_depend.std_str_code := rcd_lics_str_header.sth_str_code;
+         rcd_lics_str_depend.std_tsk_code := rcd_copy_depend.std_tsk_code;
+         rcd_lics_str_depend.std_dep_code := rcd_copy_depend.std_dep_code;
+         insert into lics_str_depend values rcd_lics_str_depend;
       end loop;
-      close csr_copy_dependent;
+      close csr_copy_depend;
 
       /*-*/
       /* Commit the database
@@ -445,9 +460,9 @@ create or replace package body lics_stream_configuration as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/
@@ -478,7 +493,7 @@ create or replace package body lics_stream_configuration as
       /*-*/
       /* Delete the stream data
       /*-*/
-      delete from lics_str_dependent where std_str_code = upper(par_code);
+      delete from lics_str_depend where std_str_code = upper(par_code);
       delete from lics_str_event where ste_str_code = upper(par_code);
       delete from lics_str_task where stt_str_code = upper(par_code);
       delete from lics_str_header where sth_str_code = upper(par_code);
@@ -493,9 +508,9 @@ create or replace package body lics_stream_configuration as
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
 
          /*-*/

@@ -163,7 +163,7 @@ create or replace package body lics_stream_poller as
       open csr_stream_request;
       loop
          fetch csr_stream_request into rcd_stream_request;
-         if csr_stream_open%notfound then
+         if csr_stream_request%notfound then
             exit;
          end if;
          if rcd_stream_request.sth_exe_request = '*CANCEL' then

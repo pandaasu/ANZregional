@@ -29,7 +29,7 @@ create or replace package lics_stream_loader as
    /*-*/
    procedure clear_parameters;
    procedure set_parameter(par_code in varchar2, par_value in varchar2);
-   procedure execute(par_stream in varchar2, par_procedure in varchar2);
+   procedure execute(par_stream in varchar2, par_text in varchar2, par_procedure in varchar2);
 
 end lics_stream_loader;
 /
