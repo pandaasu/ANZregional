@@ -14,7 +14,11 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2004/01   Steve Gregan   Created
+ 2006/12   Linden Glen    Updated locking strategy
+                          Changed IDOC timestamp check from < to <=
+ 2007/01   Linden Glen    Changed call to Monitor to loop based on Z_TABGRP
  2008/05   Trevor Keon    Added calls to monitor before and after procedure
+ 2011/12   Ben Halicki    Fixed issue calling execute_after procedure
 
 *******************************************************************************/
 
@@ -203,6 +207,20 @@ create or replace package body lads_atllad10 as
       con_ack_group constant varchar2(32) := 'LADS_IDOC_ACK';
       con_ack_code constant varchar2(32) := 'ATLLAD10';
       var_accepted boolean;
+      var_index number(8,0);
+      
+      type typ_definition is table of lads_ref_hdr.z_tabname%type index by binary_integer;
+      tbl_definition typ_definition;
+
+      /*-*/
+      /* Local Cursor
+      /*-*/
+      cursor csr_lads_ref_grp is
+         select t01.z_tabname as z_tabname
+         from lads_ref_hdr t01
+         where (t01.z_tabgrp = rcd_lads_ref_hdr.z_tabgrp or
+                t01.z_tabname = rcd_lads_ref_hdr.z_tabname)
+           and nvl(t01.lads_flattened,'0') = '0';
 
    /*-------------*/
    /* Begin block */
@@ -219,33 +237,84 @@ create or replace package body lads_atllad10 as
 
       /*-*/
       /* Commit/rollback the IDOC as required
-      /* Execute the interface monitor when required
+      /* Execute the interface monitor/flattening when required
       /*-*/
       if var_trn_ignore = true then
+
+         /*-*/
+         /* Set the transaction accepted indicator and rollback the IDOC transaction
+         /* **note** - releases transaction lock
+         /*-*/
          var_accepted := true;
          rollback;
+
       elsif var_trn_error = true then
+
+         /*-*/
+         /* Set the transaction accepted indicator and rollback the IDOC transaction
+         /* **note** - releases transaction lock
+         /*-*/
          var_accepted := false;
          rollback;
+
       else
+
+         /*-*/
+         /* Set the transaction accepted indicator
+         /*-*/
          var_accepted := true;
+         tbl_definition.delete;
+
+         /*-*/
+         /* Execute the interface monitor/flattening
+         /* **note** - savepoint is established to ensure IDOC transaction commit
+         /*          - child procedure can see IDOC transaction data as part of same commit cycle
+         /*          - child procedure must NOT issue commit/rollback
+         /*          - child procedure must raise an exception on failure
+         /*          - update the LADS flattened flag on success
+         /*          - savepoint is used for child procedure failure
+         /*-*/
+         savepoint transaction_savepoint;
+
+         /*-*/
+         /* Execute the monitor for each Z_TABNAME in the Z_TABGRP (Table Group) just loaded.
+         /* **note** - A single IDOC can contain multiple HDR records for various tables, however,
+         /*            if they belong to the same Z_TABGRP they are not split by a CTL record.
+         /*-*/
+         open csr_lads_ref_grp;
+         fetch csr_lads_ref_grp bulk collect into tbl_definition;   
+         close csr_lads_ref_grp;   
          
-         begin
-            lads_atllad10_monitor.execute_before(rcd_lads_ref_hdr.z_tabname);
-         exception
-            when others then
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;
-         
+         for idx in 1..tbl_definition.count
+         loop
+            begin
+               lads_atllad10_monitor.execute_before(tbl_definition(idx));
+            exception
+               when others then
+                  rollback to transaction_savepoint;
+                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+                  exit;
+            end;
+         end loop;
+
+         /*-*/
+         /* Commit the IDOC transaction and successful monitor code
+         /* **note** - releases transaction lock
+         /*-*/
          commit;
          
-         begin
-            lads_atllad10_monitor.execute_after(rcd_lads_ref_hdr.z_tabname);
-         exception
-            when others then
-               lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
-         end;         
+         for idx in 1..tbl_definition.count
+         loop
+            begin
+               lads_atllad10_monitor.execute_after(tbl_definition(idx));
+            exception
+               when others then
+                  lics_inbound_utility.add_exception(substr(SQLERRM, 1, 512));
+                  exit;
+            end;
+         end loop;
       end if;
+
 
       /*-*/
       /* Add the IDOC acknowledgement
@@ -339,20 +408,11 @@ create or replace package body lads_atllad10 as
       /*-*/
       /* Local definitions
       /*-*/
-      var_exists boolean;
+      var_idoc_timestamp lads_ref_hdr.idoc_timestamp%type;
 
       /*-*/
-      /* Local cursors
+      /* Local Cursors
       /*-*/
-      cursor csr_lads_ref_hdr_01 is
-         select
-            t01.z_tabname,
-            t01.idoc_number,
-            t01.idoc_timestamp
-         from lads_ref_hdr t01
-         where t01.z_tabname = rcd_lads_ref_hdr.z_tabname;
-      rcd_lads_ref_hdr_01 csr_lads_ref_hdr_01%rowtype;
-
       cursor csr_lads_ref_dat_01 is
          select
             nvl(max(t01.datseq),0) as maxseq
@@ -389,6 +449,7 @@ create or replace package body lads_atllad10 as
       rcd_lads_ref_hdr.idoc_timestamp := rcd_lads_control.idoc_timestamp;
       rcd_lads_ref_hdr.lads_date := sysdate;
       rcd_lads_ref_hdr.lads_status := '1';
+      rcd_lads_ref_hdr.lads_flattened := '0';
 
       /*-*/
       /* Retrieve exceptions raised
@@ -423,28 +484,72 @@ create or replace package body lads_atllad10 as
          var_trn_error := true;
       end if;
 
+      /*----------------------------------------*/
+      /* ERROR- Bypass the update when required */
+      /*----------------------------------------*/
+
+      if var_trn_error = true then
+         return;
+      end if;
+
+
+      /*----------------------------------------*/
+      /* LOCK- Lock the interface transaction   */
+      /*----------------------------------------*/
+
       /*-*/
-      /* Validate the IDOC sequence when primary key supplied
+      /* Lock the IDOC transaction
+      /* **note** - attempt to lock the transaction header row (oracle default wait behaviour)
+      /*              - insert/insert (not exists) - first holds lock and second fails on first commit with duplicate index
+      /*              - update/update (exists) - logic goes to update and default wait behaviour
+      /*          - validate the IDOC sequence when locking row exists
+      /*          - lock and commit cycle encompasses transaction child procedure execution
       /*-*/
-      if var_chg_only = false then
-         if not(rcd_lads_ref_hdr.z_tabname is null) then
-            var_exists := true;
-            open csr_lads_ref_hdr_01;
-            fetch csr_lads_ref_hdr_01 into rcd_lads_ref_hdr_01;
-            if csr_lads_ref_hdr_01%notfound then
-               var_exists := false;
-            end if;
-            close csr_lads_ref_hdr_01;
-            if var_exists = true then
-               if rcd_lads_ref_hdr.idoc_timestamp > rcd_lads_ref_hdr_01.idoc_timestamp then
+      begin
+         insert into lads_ref_hdr
+            (z_tabgrp,
+             z_tabname,
+             z_tabhie,
+             z_chngonly,
+             z_keylen,
+             z_walen,
+             idoc_name,
+             idoc_number,
+             idoc_timestamp,
+             lads_date,
+             lads_status,
+             lads_flattened)
+         values
+            (rcd_lads_ref_hdr.z_tabgrp,
+             rcd_lads_ref_hdr.z_tabname,
+             rcd_lads_ref_hdr.z_tabhie,
+             rcd_lads_ref_hdr.z_chngonly,
+             rcd_lads_ref_hdr.z_keylen,
+             rcd_lads_ref_hdr.z_walen,
+             rcd_lads_ref_hdr.idoc_name,
+             rcd_lads_ref_hdr.idoc_number,
+             rcd_lads_ref_hdr.idoc_timestamp,
+             rcd_lads_ref_hdr.lads_date,
+             rcd_lads_ref_hdr.lads_status,
+             rcd_lads_ref_hdr.lads_flattened);
+      exception
+         when dup_val_on_index then
+            update lads_ref_hdr
+               set lads_status = lads_status
+             where z_tabname = rcd_lads_ref_hdr.z_tabname
+             returning idoc_timestamp into var_idoc_timestamp;
+            if sql%found and var_idoc_timestamp <= rcd_lads_ref_hdr.idoc_timestamp then
+               if var_chg_only = false then
                   delete from lads_ref_dat where z_tabname = rcd_lads_ref_hdr.z_tabname;
                   delete from lads_ref_fld where z_tabname = rcd_lads_ref_hdr.z_tabname;
-               else
-                  var_trn_ignore := true;
                end if;
+            else
+               var_trn_ignore := true;
             end if;
-         end if;
-      else
+      end;
+
+      if var_chg_only = true then
+
          open csr_lads_ref_dat_01;
          fetch csr_lads_ref_dat_01 into rcd_lads_ref_dat_01;
          if csr_lads_ref_dat_01%notfound then
@@ -452,21 +557,15 @@ create or replace package body lads_atllad10 as
          end if;
          close csr_lads_ref_dat_01;
          rcd_lads_ref_dat.datseq := rcd_lads_ref_dat_01.maxseq;
+
       end if;
+
 
       /*--------------------------------------------*/
       /* IGNORE - Ignore the data row when required */
       /*--------------------------------------------*/
 
       if var_trn_ignore = true then
-         return;
-      end if;
-
-      /*----------------------------------------*/
-      /* ERROR- Bypass the update when required */
-      /*----------------------------------------*/
-
-      if var_trn_error = true then
          return;
       end if;
 
@@ -484,34 +583,9 @@ create or replace package body lads_atllad10 as
          idoc_number = rcd_lads_ref_hdr.idoc_number,
          idoc_timestamp = rcd_lads_ref_hdr.idoc_timestamp,
          lads_date = rcd_lads_ref_hdr.lads_date,
-         lads_status = rcd_lads_ref_hdr.lads_status
+         lads_status = rcd_lads_ref_hdr.lads_status,
+         lads_flattened = rcd_lads_ref_hdr.lads_flattened
       where z_tabname = rcd_lads_ref_hdr.z_tabname;
-      if sql%notfound then
-         insert into lads_ref_hdr
-            (z_tabgrp,
-             z_tabname,
-             z_tabhie,
-             z_chngonly,
-             z_keylen,
-             z_walen,
-             idoc_name,
-             idoc_number,
-             idoc_timestamp,
-             lads_date,
-             lads_status)
-         values
-            (rcd_lads_ref_hdr.z_tabgrp,
-             rcd_lads_ref_hdr.z_tabname,
-             rcd_lads_ref_hdr.z_tabhie,
-             rcd_lads_ref_hdr.z_chngonly,
-             rcd_lads_ref_hdr.z_keylen,
-             rcd_lads_ref_hdr.z_walen,
-             rcd_lads_ref_hdr.idoc_name,
-             rcd_lads_ref_hdr.idoc_number,
-             rcd_lads_ref_hdr.idoc_timestamp,
-             rcd_lads_ref_hdr.lads_date,
-             rcd_lads_ref_hdr.lads_status);
-      end if;
 
    /*-------------*/
    /* End routine */
