@@ -51,6 +51,7 @@ create or replace package body lics_stream_configuration as
    /* Private definitions
    /*-*/
    rcd_lics_str_header lics_str_header%rowtype;
+   rcd_lics_str_param lics_str_param%rowtype;
    rcd_lics_str_task lics_str_task%rowtype;
    rcd_lics_str_event lics_str_event%rowtype;
    rcd_lics_str_depend lics_str_depend%rowtype;
@@ -63,17 +64,38 @@ create or replace package body lics_stream_configuration as
       /*-*/
       /* Cursor definitions
       /*-*/
+      cursor csr_header is 
+         select t01.*
+           from lics_str_header t01
+          where t01.sth_str_code = upper(par_code);
+      rcd_header csr_header%rowtype;
+
       cursor csr_task is
          select level,
                  t01.*
            from lics_str_task t01
-          where t01.stt_str_code = upper(par_code)
+          where t01.stt_str_code = rcd_header.sth_str_code
           start with t01.stt_tsk_pcde = '*TOP'
         connect by prior t01.stt_str_code = t01.stt_str_code
                 and prior t01.stt_tsk_code = t01.stt_tsk_pcde
           order siblings by t01.stt_tsk_type asc,
                             t01.stt_tsk_seqn asc;
       rcd_task csr_task%rowtype;
+
+      cursor csr_param is
+         select t01.*
+           from lics_str_param t01
+          where t01.stp_str_code = rcd_header.sth_str_code
+          order by t01.stp_par_code asc;
+      rcd_param csr_param%rowtype;
+
+      cursor csr_depend is
+         select t01.*
+           from lics_str_depend t01
+          where t01.std_str_code = rcd_task.stt_str_code
+            and t01.std_tsk_code = rcd_task.stt_tsk_code
+          order by t01.std_dep_code asc;
+      rcd_depend csr_depend%rowtype;
 
       cursor csr_event is
          select t01.*
@@ -91,12 +113,17 @@ create or replace package body lics_stream_configuration as
       /*-*/
       /* Pipe the stream root node
       /*-*/
+      open csr_header;
+      fetch csr_header into rcd_header;
+      if csr_header%notfound then
+         exit;
+      end if;
       pipe row(lics_stream_object(0,
                                   'S',
-                                  '*ROOT',
+                                  rcd_header.sth_str_code,
                                   '*TOP',
-                                  'Stream Root',
-                                  null,
+                                  rcd_header.sth_str_text,
+                                  rcd_header.sth_status,
                                   null,
                                   null,
                                   null,
@@ -122,6 +149,24 @@ create or replace package body lics_stream_configuration as
                                         null,
                                         null,
                                         null));
+            open csr_event;
+            loop
+               fetch csr_event into rcd_event;
+               if csr_event%notfound then
+                  exit;
+               end if;
+               pipe row(lics_stream_object(rcd_task.level+1,
+                                           'E',
+                                           rcd_event.ste_tsk_code,
+                                           rcd_event.ste_evt_code,
+                                           rcd_event.ste_evt_text,
+                                           rcd_event.ste_evt_lock,
+                                           rcd_event.ste_evt_proc,
+                                           rcd_event.ste_job_group,
+                                           rcd_event.ste_opr_alert,
+                                           rcd_event.ste_ema_group));
+            end loop;
+            close csr_event;
          else
             pipe row(lics_stream_object(rcd_task.level,
                                         'G',
@@ -133,29 +178,26 @@ create or replace package body lics_stream_configuration as
                                         null,
                                         null,
                                         null));
-         end if;
+            open csr_depend;
+            loop
+               fetch csr_depend into rcd_depend;
+               if csr_depend%notfound then
+                  exit;
+               end if;
+               pipe row(lics_stream_object(rcd_task.level,
+                                           'D',
+                                           rcd_depend.std_tsk_code,
+                                           rcd_depend.std_dep_code,
+                                           null,
+                                           null,
+                                           null,
+                                           null,
+                                           null,
+                                           null));
+            end loop;
+            close csr_depend;
 
-         /*-*/
-         /* Pipe the stream event nodes
-         /*-*/
-         open csr_event;
-         loop
-            fetch csr_event into rcd_event;
-            if csr_event%notfound then
-               exit;
-            end if;
-            pipe row(lics_stream_object(rcd_task.level+1,
-                                        'E',
-                                        rcd_event.ste_tsk_code,
-                                        rcd_event.ste_evt_code,
-                                        rcd_event.ste_evt_text,
-                                        rcd_event.ste_evt_lock,
-                                        rcd_event.ste_evt_proc,
-                                        rcd_event.ste_job_group,
-                                        rcd_event.ste_opr_alert,
-                                        rcd_event.ste_ema_group));
-         end loop;
-         close csr_event;
+         end if;
 
       end loop;
       close csr_task;
@@ -252,7 +294,7 @@ create or replace package body lics_stream_configuration as
       /* Retrieve and process the stream nodes
       /*-*/
       var_tsk_seqn := 0;
-      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/ICS_STREAM/NODES/NODE');
+      obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/ICS_STREAM/NODE');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'T' then

@@ -51,7 +51,7 @@ comment on column lics_str_event.ste_ema_group is 'Stream event - email group';
 /* Primary Key Constraint
 /**/
 alter table lics_str_event
-   add constraint lics_str_event_pk primary key (ste_str_code, ste_tsk_code, ste_evt_code);
+   add constraint lics_str_event_pk primary key (ste_str_code, ste_evt_code);
 
 /**/
 /* Authority
