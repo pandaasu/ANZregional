@@ -212,9 +212,7 @@ create or replace package body lics_stream_configuration as
                                               null));
                end loop;
                close csr_depend;
-
             end if;
-
          end loop;
          close csr_task;
 
