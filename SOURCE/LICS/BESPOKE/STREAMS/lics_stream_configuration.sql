@@ -115,92 +115,110 @@ create or replace package body lics_stream_configuration as
       /*-*/
       open csr_header;
       fetch csr_header into rcd_header;
-      if csr_header%notfound then
-         exit;
-      end if;
-      pipe row(lics_stream_object(0,
-                                  'S',
-                                  rcd_header.sth_str_code,
-                                  '*TOP',
-                                  rcd_header.sth_str_text,
-                                  rcd_header.sth_status,
-                                  null,
-                                  null,
-                                  null,
-                                  null));
+      if csr_header%found then
+         pipe row(lics_stream_object(0,
+                                     'S',
+                                     rcd_header.sth_str_code,
+                                     '*TOP',
+                                     rcd_header.sth_str_text,
+                                     rcd_header.sth_status,
+                                     null,
+                                     null,
+                                     null,
+                                     null));
+         open csr_param;
+         loop
+            fetch csr_param into rcd_param;
+            if csr_param%notfound then
+               exit;
+            end if;
+            pipe row(lics_stream_object(0,
+                                        'P',
+                                        rcd_param.stp_str_code,
+                                        rcd_param.stp_par_code,
+                                        rcd_param.stp_par_text,
+                                        rcd_param.stp_par_value,
+                                        null,
+                                        null,
+                                        null,
+                                        null));
+         end loop;
+         close csr_param;
 
-      /*-*/
-      /* Pipe the stream task nodes
-      /*-*/
-      open csr_task;
-      loop
-         fetch csr_task into rcd_task;
-         if csr_task%notfound then
-            exit;
-         end if;
-         if rcd_task.stt_tsk_type = '*EXEC' then
-            pipe row(lics_stream_object(rcd_task.level,
-                                        'T',
-                                        rcd_task.stt_tsk_pcde,
-                                        rcd_task.stt_tsk_code,
-                                        rcd_task.stt_tsk_text,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null));
-            open csr_event;
-            loop
-               fetch csr_event into rcd_event;
-               if csr_event%notfound then
-                  exit;
-               end if;
-               pipe row(lics_stream_object(rcd_task.level+1,
-                                           'E',
-                                           rcd_event.ste_tsk_code,
-                                           rcd_event.ste_evt_code,
-                                           rcd_event.ste_evt_text,
-                                           rcd_event.ste_evt_lock,
-                                           rcd_event.ste_evt_proc,
-                                           rcd_event.ste_job_group,
-                                           rcd_event.ste_opr_alert,
-                                           rcd_event.ste_ema_group));
-            end loop;
-            close csr_event;
-         else
-            pipe row(lics_stream_object(rcd_task.level,
-                                        'G',
-                                        rcd_task.stt_tsk_pcde,
-                                        rcd_task.stt_tsk_code,
-                                        rcd_task.stt_tsk_text,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null));
-            open csr_depend;
-            loop
-               fetch csr_depend into rcd_depend;
-               if csr_depend%notfound then
-                  exit;
-               end if;
+         /*-*/
+         /* Pipe the stream task nodes
+         /*-*/
+         open csr_task;
+         loop
+            fetch csr_task into rcd_task;
+            if csr_task%notfound then
+               exit;
+            end if;
+            if rcd_task.stt_tsk_type = '*EXEC' then
                pipe row(lics_stream_object(rcd_task.level,
-                                           'D',
-                                           rcd_depend.std_tsk_code,
-                                           rcd_depend.std_dep_code,
-                                           null,
+                                           'T',
+                                           rcd_task.stt_tsk_pcde,
+                                           rcd_task.stt_tsk_code,
+                                           rcd_task.stt_tsk_text,
                                            null,
                                            null,
                                            null,
                                            null,
                                            null));
-            end loop;
-            close csr_depend;
+               open csr_event;
+               loop
+                  fetch csr_event into rcd_event;
+                  if csr_event%notfound then
+                     exit;
+                  end if;
+                  pipe row(lics_stream_object(rcd_task.level+1,
+                                              'E',
+                                              rcd_event.ste_tsk_code,
+                                              rcd_event.ste_evt_code,
+                                              rcd_event.ste_evt_text,
+                                              rcd_event.ste_evt_lock,
+                                              rcd_event.ste_evt_proc,
+                                              rcd_event.ste_job_group,
+                                              rcd_event.ste_opr_alert,
+                                              rcd_event.ste_ema_group));
+               end loop;
+               close csr_event;
+            else
+               pipe row(lics_stream_object(rcd_task.level,
+                                           'G',
+                                           rcd_task.stt_tsk_pcde,
+                                           rcd_task.stt_tsk_code,
+                                           rcd_task.stt_tsk_text,
+                                           null,
+                                           null,
+                                           null,
+                                           null,
+                                           null));
+               open csr_depend;
+               loop
+                  fetch csr_depend into rcd_depend;
+                  if csr_depend%notfound then
+                     exit;
+                  end if;
+                  pipe row(lics_stream_object(rcd_task.level,
+                                              'D',
+                                              rcd_depend.std_tsk_code,
+                                              rcd_depend.std_dep_code,
+                                              null,
+                                              null,
+                                              null,
+                                              null,
+                                              null,
+                                              null));
+               end loop;
+               close csr_depend;
 
-         end if;
+            end if;
 
-      end loop;
-      close csr_task;
+         end loop;
+         close csr_task;
+
+      end if;
 
       /*-*/
       /* Return
@@ -240,8 +258,6 @@ create or replace package body lics_stream_configuration as
       obj_xml_stream xmlDom.domNode;
       obj_xml_node_list xmlDom.domNodeList;
       obj_xml_node xmlDom.domNode;
-      var_tsk_seqn number;
-      var_evt_seqn number;
 
       /*-*/
       /* Local cursors
@@ -284,7 +300,9 @@ create or replace package body lics_stream_configuration as
                 sth_upd_time = rcd_lics_str_header.sth_upd_time
           where sth_str_code = rcd_lics_str_header.sth_str_code;
          delete from lics_str_event where ste_str_code = rcd_lics_str_header.sth_str_code;
+         delete from lics_str_depend where std_str_code = rcd_lics_str_header.sth_str_code;
          delete from lics_str_task where stt_str_code = rcd_lics_str_header.sth_str_code;
+         delete from lics_str_param where stp_str_code = rcd_lics_str_header.sth_str_code;
       else
          insert into lics_str_header values rcd_lics_str_header;
       end if;
@@ -293,38 +311,39 @@ create or replace package body lics_stream_configuration as
       /*-*/
       /* Retrieve and process the stream nodes
       /*-*/
-      var_tsk_seqn := 0;
       obj_xml_node_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/ICS_STREAM/NODE');
       for idx in 0..xmlDom.getLength(obj_xml_node_list)-1 loop
          obj_xml_node := xmlDom.item(obj_xml_node_list,idx);
+         if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'P' then
+            rcd_lics_str_param.stp_str_code := rcd_lics_str_header.sth_str_code;
+            rcd_lics_str_param.stp_par_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
+            rcd_lics_str_param.stp_par_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
+            rcd_lics_str_param.stp_par_value := xslProcessor.valueOf(obj_xml_node,'@VALUE');
+            insert into lics_str_param values rcd_lics_str_param;
+         end if;
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'T' then
-            var_tsk_seqn := var_tsk_seqn + 1;
             rcd_lics_str_task.stt_str_code := rcd_lics_str_header.sth_str_code;
             rcd_lics_str_task.stt_tsk_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
             rcd_lics_str_task.stt_tsk_pcde := upper(xslProcessor.valueOf(obj_xml_node,'@PARENT'));
-            rcd_lics_str_task.stt_tsk_seqn := var_tsk_seqn;
+            rcd_lics_str_task.stt_tsk_seqn := to_number(xslProcessor.valueOf(obj_xml_node,'@SEQN'));
             rcd_lics_str_task.stt_tsk_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
             rcd_lics_str_task.stt_tsk_type := '*EXEC';
             insert into lics_str_task values rcd_lics_str_task;
-            var_evt_seqn := 0;
          end if;
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'G' then
-            var_tsk_seqn := var_tsk_seqn + 1;
             rcd_lics_str_task.stt_str_code := rcd_lics_str_header.sth_str_code;
             rcd_lics_str_task.stt_tsk_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
             rcd_lics_str_task.stt_tsk_pcde := upper(xslProcessor.valueOf(obj_xml_node,'@PARENT'));
-            rcd_lics_str_task.stt_tsk_seqn := var_tsk_seqn;
+            rcd_lics_str_task.stt_tsk_seqn := to_number(xslProcessor.valueOf(obj_xml_node,'@SEQN'));
             rcd_lics_str_task.stt_tsk_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
             rcd_lics_str_task.stt_tsk_type := '*GATE';
             insert into lics_str_task values rcd_lics_str_task;
-            var_evt_seqn := 0;
          end if;
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'E' then
-            var_evt_seqn := var_evt_seqn + 1;
             rcd_lics_str_event.ste_str_code := rcd_lics_str_task.stt_str_code;
             rcd_lics_str_event.ste_tsk_code := rcd_lics_str_task.stt_tsk_code;
             rcd_lics_str_event.ste_evt_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
-            rcd_lics_str_event.ste_evt_seqn := var_evt_seqn;
+            rcd_lics_str_event.ste_evt_seqn := to_number(xslProcessor.valueOf(obj_xml_node,'@SEQN'));
             rcd_lics_str_event.ste_evt_text := xslProcessor.valueOf(obj_xml_node,'@TEXT');
             rcd_lics_str_event.ste_evt_lock := upper(xslProcessor.valueOf(obj_xml_node,'@LOCK'));
             rcd_lics_str_event.ste_evt_proc := xslProcessor.valueOf(obj_xml_node,'@PROC');
@@ -334,8 +353,8 @@ create or replace package body lics_stream_configuration as
             insert into lics_str_event values rcd_lics_str_event;
          end if;
          if upper(xslProcessor.valueOf(obj_xml_node,'@TYPE')) = 'D' then
-            rcd_lics_str_depend.std_str_code := rcd_lics_str_task.stt_str_code;
-            rcd_lics_str_depend.std_tsk_code := rcd_lics_str_task.stt_tsk_code;
+            rcd_lics_str_depend.std_str_code := rcd_lics_str_header.sth_str_code;
+            rcd_lics_str_depend.std_tsk_code := upper(xslProcessor.valueOf(obj_xml_node,'@PARENT'));
             rcd_lics_str_depend.std_dep_code := upper(xslProcessor.valueOf(obj_xml_node,'@CODE'));
             insert into lics_str_depend values rcd_lics_str_depend;
          end if;
@@ -390,6 +409,13 @@ create or replace package body lics_stream_configuration as
           where t01.sth_str_code = par_copy;
       rcd_copy_stream csr_copy_stream%rowtype;
 
+      cursor csr_copy_param is 
+         select t01.*
+           from lics_str_param t01
+          where t01.stp_str_code = par_copy
+          order by t01.stp_par_code asc;
+      rcd_copy_param csr_copy_param%rowtype;
+
       cursor csr_copy_task is 
          select t01.*
            from lics_str_task t01
@@ -433,6 +459,23 @@ create or replace package body lics_stream_configuration as
       rcd_lics_str_header.sth_upd_user := par_user;
       rcd_lics_str_header.sth_upd_time := sysdate;
       insert into lics_str_header values rcd_lics_str_header;
+
+      /*-*/
+      /* Copy the stream parameters
+      /*-*/
+      open csr_copy_param;
+      loop
+         fetch csr_copy_param into rcd_copy_param;
+         if csr_copy_param%notfound then
+            exit;
+         end if;
+         rcd_lics_str_param.stp_str_code := rcd_lics_str_header.sth_str_code;
+         rcd_lics_str_param.stp_par_code := rcd_copy_param.stp_par_code;
+         rcd_lics_str_param.stp_par_text := rcd_copy_param.stp_par_text;
+         rcd_lics_str_param.stp_par_value := rcd_copy_param.stp_par_value;
+         insert into lics_str_param values rcd_lics_str_param;
+      end loop;
+      close csr_copy_param;
 
       /*-*/
       /* Copy the stream tasks
@@ -538,6 +581,7 @@ create or replace package body lics_stream_configuration as
       delete from lics_str_depend where std_str_code = upper(par_code);
       delete from lics_str_event where ste_str_code = upper(par_code);
       delete from lics_str_task where stt_str_code = upper(par_code);
+      delete from lics_str_param where stp_str_code = upper(par_code);
       delete from lics_str_header where sth_str_code = upper(par_code);
 
       /*-*/

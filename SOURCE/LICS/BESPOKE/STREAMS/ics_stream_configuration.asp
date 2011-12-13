@@ -170,22 +170,6 @@ sub ProcessDefineLoad()
    if objForm.Fields("DTA_StreamCode").Value <> "*NEW" then
 
       '//
-      '// Retrieve the stream header
-      '//
-      strQuery = "select t01.sth_str_code,"
-      strQuery = strQuery & " t01.sth_str_text,"
-      strQuery = strQuery & " t01.sth_status"
-      strQuery = strQuery & " from lics_str_header t01"
-      strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
-      strReturn = objSelection.Execute("STREAM", strQuery, 0)
-      if strReturn <> "*OK" then
-         strError = FormatError(strReturn)
-         strMode = "SELECT"
-         call ProcessSelect
-         exit sub
-      end if
-
-      '//
       '// Retrieve the stream nodes
       '//
       strQuery = "select "
@@ -212,8 +196,6 @@ sub ProcessDefineLoad()
       '// Initialise the data fields
       '//
       call objForm.AddField("DTA_StreamAction", "*UPDATE")
-      call objForm.AddField("DTA_StreamText", objSelection.ListValue02("STREAM",objSelection.ListLower("STREAM")))
-      call objForm.AddField("DTA_StreamStatus", objSelection.ListValue03("STREAM",objSelection.ListLower("STREAM")))
 
    else
 
@@ -221,9 +203,6 @@ sub ProcessDefineLoad()
       '// Initialise the data fields
       '//
       call objForm.AddField("DTA_StreamAction", "*CREATE")
-      call objForm.UpdateField("DTA_StreamCode", "")
-      call objForm.AddField("DTA_StreamText", "")
-      call objForm.AddField("DTA_StreamStatus", "1")
 
    end if
 
