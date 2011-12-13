@@ -78,71 +78,52 @@
    var cintMode = null;
    var cobjGate = null;
    function loadStream() {
-      var objData = new Array();
-
-  //    var objData = new Array();<%if objSelection.ListCount("NODES") = 0 then%>
-  //    objData[0] = new clsData('0','S','*ROOT','*TOP','Stream Root','','','','','');<%else%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
-  //    objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
-
-      objData[0] = new clsData('0','S','*ROOT','*TOP','Stream Root','1','','','','');
-      objData[1] = new clsData('1','T','*TOP','T1','Task T1','','','','','');
-      objData[2] = new clsData('2','E','T1','T1E1','Event T1E1','','','','','');
-      objData[3] = new clsData('2','E','T1','T1E2','Event T1E2','','','','','');
-      objData[4] = new clsData('2','T','T1','T2','Task T2','','','','','');
-      objData[5] = new clsData('3','E','T2','T2E1','Event T2E1','','','','','');
-      objData[6] = new clsData('2','T','T1','T3','Task T3','','','','','');
-      objData[7] = new clsData('3','E','T3','T3E1','Event T3E1','','','','','');
-      objData[8] = new clsData('1','T','*TOP','T4','Task T4','','','','','');
-      objData[9] = new clsData('2','E','T4','T4E1','Event T4E1','','','','','');
-      objData[10] = new clsData('2','E','T4','T4E2','Event T4E2','','','','','');
-      objData[11] = new clsData('1','G','*TOP','G1','Gate G1','','','','','');
-      objData[12] = new clsData('2','T','G1','T5','Task T5','','','','','');
-      objData[13] = new clsData('3','E','T5','T5E1','Event T5E1','','','','','');
-      objData[14] = new clsData('3','E','T5','T5E2','Event T5E2','','','','','');
-      objData[15] = new clsData('2','T','G1','T6','Task T6','','','','','');
-      objData[16] = new clsData('3','E','T6','T6E1','Event T6E1','','','','','');
-      objData[17] = new clsData('3','E','T6','T6E2','Event T6E2','','','','','');
-      objData[18] = new clsData('3','T','T6','T7','Task T7','','','','','');
-      objData[19] = new clsData('4','E','T7','T7E1','Event T7E1','','','','','');
-      objData[20] = new clsData('3','T','T6','T8','Task T8','','','','','');
-      objData[21] = new clsData('4','E','T8','T8E1','Event T8E1','','','','','');
-      objData[22] = new clsData('1','G','*TOP','G2','Gate G2','','','','','');
-      objData[23] = new clsData('2','T','G2','T9','Task T9','','','','','');
-      objData[24] = new clsData('3','E','T9','T9E1','Event T9E1','','','','','');
-      objData[25] = new clsData('3','E','T9','T9E2','Event T9E2','','','','','');
+      var objData = new Array();<%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
+      objData[0] = new clsData('0','S','','*TOP','','1','','','','');
+      addHeader();<%else%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
+      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
       var intPidx = 0;
       var intTidx = 0;
       var objParent = new Array();
       var objWork = null;
+      var objParam = null;
       var objTask = null;
       var objGate = null;
+      var objDepend = null;
       var objEvent = null;
       for (var i=0;i<objData.length;i++) {
          objWork = objData[i];
          if (objWork.strtyp == 'S') {
+            cobjStream = new clsStream(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck);
             intPidx = 0;
             intTidx = 0;
-            cobjStream = new clsStream(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intTidx] = cobjStream;
+         } else if (objWork.strtyp == 'P') {
+            objParam = new clsParam(objWork.strcod,objWork.strtxt,objWork.strlck);
+            intPidx = objWork.strdep;
+            objParent[intPidx].parary[objParent[intPidx].parary.length] = objParam;
          } else if (objWork.strtyp == 'T') {
+            objTask = new clsTask(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
-            objTask = new clsTask(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intPidx].tskary[objParent[intPidx].tskary.length] = objTask;
             objParent[intTidx] = objTask;
          } else if (objWork.strtyp == 'G') {
+            objGate = new clsGate(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
-            objGate = new clsGate(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intPidx].gteary[objParent[intPidx].gteary.length] = objGate;
             objParent[intTidx] = objGate;
+         } else if (objWork.strtyp == 'D') {
+            objDepend = new clsDepend(objWork.strcod);
+            intPidx = objWork.strdep;
+            objParent[intPidx].depary[objParent[intPidx].depary.length] = objDepend;
          } else if (objWork.strtyp == 'E') {
             objEvent = new clsEvent(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck,objWork.strprc,objWork.strgrp,objWork.stralt,objWork.strema);
             intPidx = objWork.strdep - 1;
             objParent[intPidx].evtary[objParent[intPidx].evtary.length] = objEvent;
          }
-      }<%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
-      addHeader();<%else%>
+      }
       paintStream();<%end if%>
    }
    function clsData(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
@@ -159,8 +140,8 @@
    }
    function clsStream(strType,strParent,strCode,strText,strStat) {
       this.strtyp = 'S';
-      this.strpar = '*ROOT';
-      this.strcod = '*TOP';
+      this.strpar = strParent;
+      this.strcod = strCode;
       this.strtxt = strText;
       this.strsts = strStat;
       this.strlef = 0;
@@ -1647,7 +1628,7 @@
       strXML = strXML+'>';
       if (cobjStream.parary.length > 0) {
          for (var i=0;i<cobjStream.parary.length;i++) {
-            strXML = strXML+'<PARAM';
+            strXML = strXML+'<NODE TYPE="P"';
             strXML = strXML+' CODE="'+fixAttribute(cobjStream.parary[i].strcod)+'"';
             strXML = strXML+' TEXT="'+fixAttribute(cobjStream.parary[i].strtxt)+'"';
             strXML = strXML+' VALUE="'+fixAttribute(cobjStream.parary[i].strval)+'"';
@@ -1655,15 +1636,15 @@
         }
       }
       for (var i=0;i<cobjStream.tskary.length;i++) {
-         strXML = strXML + editTask(cobjStream.tskary[i]);
+         strXML = strXML + editTask(cobjStream.tskary[i],(i+1));
       }
       for (var i=0;i<cobjStream.gteary.length;i++) {
-         strXML = strXML + editGate(cobjStream.gteary[i]);
+         strXML = strXML + editGate(cobjStream.gteary[i],(i+1));
       }
       strXML = strXML+'</ICS_STREAM>';
       return strXML;
    }
-   function editTask(objTask) {
+   function editTask(objTask,intSeqn) {
       if (objTask.evtary.length == 0) {
          if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'At least one event must be created for task('+objTask.strtxt+')';
@@ -1673,16 +1654,17 @@
       strXML = strXML+' CODE="'+fixAttribute(objTask.strcod)+'"';
       strXML = strXML+' PARENT="'+fixAttribute(objTask.strpar)+'"';
       strXML = strXML+' TEXT="'+fixAttribute(objTask.strtxt)+'"';
+      strXML = strXML+' SEQN="'+intSeqn+'"';
       strXML = strXML+'/>';
       for (var i=0;i<objTask.evtary.length;i++) {
-         strXML = strXML + editEvent(objTask.evtary[i]);
+         strXML = strXML + editEvent(objTask.evtary[i],(i+1));
       }
       for (var i=0;i<objTask.tskary.length;i++) {
-         strXML = strXML + editTask(objTask.tskary[i], null);
+         strXML = strXML + editTask(objTask.tskary[i],(i+1));
       }
       return strXML;
    }
-   function editGate(objGate) {
+   function editGate(objGate,intSeqn) {
       if (objGate.tskary.length == 0) {
          if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'At least one task must be created for gate ('+objGate.strtxt+')';
@@ -1698,6 +1680,7 @@
       strXML = strXML+' CODE="'+fixAttribute(objGate.strcod)+'"';
       strXML = strXML+' PARENT="'+fixAttribute(objGate.strpar)+'"';
       strXML = strXML+' TEXT="'+fixAttribute(objGate.strtxt)+'"';
+      strXML = strXML+' SEQN="'+intSeqn+'"';
       strXML = strXML+'/>';
       for (var i=0;i<objGate.depary.length;i++) {
          strXML = strXML+'<NODE';
@@ -1707,11 +1690,11 @@
          strXML = strXML+'/>'
       }
       for (var i=0;i<objGate.tskary.length;i++) {
-         strXML = strXML + editTask(objGate.tskary[i]);
+         strXML = strXML + editTask(objGate.tskary[i],(i+1));
       }
       return strXML;
    }
-   function editEvent(objEvent) {
+   function editEvent(objEvent,intSeqn) {
       var strXML = '<NODE';
       strXML = strXML+' TYPE="'+objEvent.strtyp+'"';
       strXML = strXML+' CODE="'+fixAttribute(objEvent.strcod)+'"';
@@ -1722,6 +1705,7 @@
       strXML = strXML+' GROUP="'+fixAttribute(objEvent.strgrp)+'"';
       strXML = strXML+' ALERT="'+fixAttribute(objEvent.stralt)+'"';
       strXML = strXML+' EMAIL="'+fixAttribute(objEvent.strema)+'"';
+      strXML = strXML+' SEQN="'+intSeqn+'"';
       strXML = strXML+'/>';
       return strXML;
    }

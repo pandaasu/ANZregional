@@ -175,7 +175,7 @@ sub ProcessDefineLoad()
       strQuery = "select "
       strQuery = strQuery & " to_char(t01.str_depth),"
       strQuery = strQuery & " t01.str_type,"
-      strQuery = strQuery & " t01.str_parent,"
+      strQuery = strQuery & " t01.str_pcde,"
       strQuery = strQuery & " t01.str_code,"
       strQuery = strQuery & " t01.str_text,"
       strQuery = strQuery & " t01.str_lock,"
