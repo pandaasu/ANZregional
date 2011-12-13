@@ -19,14 +19,13 @@
    dim strStatus
    dim strCharset
    dim strReturn
+   dim strError
    dim strHeading
    dim strMode
-   dim aryStrStatus(2)
-   dim aryStrClass(2)
    dim objForm
    dim objSecurity
    dim objSelection
-   dim objFunction
+   dim objProcedure
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -37,12 +36,9 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "ics_fil_monitor.asp"
-   strHeading = "File Monitor"
-   aryStrStatus(1) = "Available"
-   aryStrStatus(2) = "Errors"
-   aryStrClass(1) = "clsLabelFG"
-   aryStrClass(2) = "clsLabelFR"
+   strTarget = "ics_stream_monitor.asp"
+   strHeading = "Stream Monitor"
+   strError = ""
 
    '//
    '// Get the base string
@@ -77,12 +73,10 @@
       '// Process the form data
       '//
       select case strMode
-         case "SEARCH"
+         case "SELECT"
             call ProcessSelect
-         case "RETRY"
-            call ProcessRetry
-         case "DELETE"
-            call ProcessDelete
+         case "REVIEW"
+            call ProcessReview
          case else
             strMode = "FATAL"
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
@@ -96,8 +90,10 @@
    select case strMode
       case "FATAL"
          call PaintFatal
-      case "SEARCH"
+      case "SELECT"
          call PaintSelect
+      case "REVIEW"
+         call PaintReview
    end select
  
    '//
@@ -106,7 +102,7 @@
    set objForm = nothing
    set objSecurity = nothing
    set objSelection = nothing
-   set objFunction = nothing
+   set objProcedure = nothing
 
 '////////////////////////////
 '// Process select routine //
@@ -147,71 +143,51 @@ sub ProcessSelect()
 
 end sub
 
-'///////////////////////////
-'// Process retry routine //
-'///////////////////////////
-sub ProcessRetry()
+'////////////////////////////
+'// Process review routine //
+'////////////////////////////
+sub ProcessReview()
 
-   dim strStatement
-
-   '//
-   '// Create the function object
-   '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
+   dim strQuery
 
    '//
-   '// Retry the file
+   '// Create the selection object
    '//
-   strStatement = "lics_file_monitor.retry_file("
-   strStatement = strStatement & objForm.Fields("DTA_FilFile").Value
-   strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
+   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
+   set objSelection.Security = objSecurity
+
+   '//
+   '// Retrieve the stream instance nodes
+   '//
+   strQuery = "select "
+   strQuery = strQuery & " to_char(t01.str_depth),"
+   strQuery = strQuery & " t01.str_type,"
+   strQuery = strQuery & " t01.str_dt001,"
+   strQuery = strQuery & " t01.str_dt002,"
+   strQuery = strQuery & " t01.str_dt003,"
+   strQuery = strQuery & " t01.str_dt004,"
+   strQuery = strQuery & " t01.str_dt005,"
+   strQuery = strQuery & " t01.str_dt006,"
+   strQuery = strQuery & " t01.str_dt007,"
+   strQuery = strQuery & " t01.str_dt008,"
+   strQuery = strQuery & " t01.str_dt009,"
+   strQuery = strQuery & " t01.str_dt010,"
+   strQuery = strQuery & " t01.str_dt011,"
+   strQuery = strQuery & " t01.str_dt012,"
+   strQuery = strQuery & " t01.str_dt013"
+   strQuery = strQuery & " from table(lics_app.lics_stream_monitor.get_nodes(" & objForm.Fields("DTA_StreamSeqn").Value & ")) t01"
+   strReturn = objSelection.Execute("NODES", strQuery, 0)
    if strReturn <> "*OK" then
-      strMode = "SEARCH"
-      strReturn = FormatError(strReturn)
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
       exit sub
    end if
 
    '//
    '// Set the mode
    '//
-   strMode = "SEARCH"
-   call ProcessSelect
-
-end sub
-
-'////////////////////////////
-'// Process delete routine //
-'////////////////////////////
-sub ProcessDelete()
-
-   dim strStatement
-
-   '//
-   '// Create the function object
-   '//
-   set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
-   set objFunction.Security = objSecurity
-
-   '//
-   '// Delete the file
-   '//
-   strStatement = "lics_file_monitor.delete_file("
-   strStatement = strStatement & objForm.Fields("DTA_FilFile").Value
-   strStatement = strStatement & ")"
-   strReturn = objFunction.Execute(strStatement)
-   if strReturn <> "*OK" then
-      strMode = "SEARCH"
-      strReturn = FormatError(strReturn)
-      exit sub
-   end if
-
-   '//
-   '// Set the mode
-   '//
-   strMode = "SEARCH"
-   call ProcessSelect
+   strMode = "REVIEW"
 
 end sub
 
@@ -223,9 +199,16 @@ sub PaintFatal()%>
 <%end sub
 
 '//////////////////////////
-'// Paint select routine //
+'// Paint prompt routine //
 '//////////////////////////
 sub PaintSelect()%>
-<!--#include file="ics_fil_monitor_select.inc"-->
+<!--#include file="ics_stream_monitor_select.inc"-->
+<%end sub
+
+'//////////////////////////
+'// Paint review routine //
+'//////////////////////////
+sub PaintReview()%>
+<!--#include file="ics_stream_monitor_review.inc"-->
 <%end sub%>
 <!--#include file="ics_std_code.inc"-->

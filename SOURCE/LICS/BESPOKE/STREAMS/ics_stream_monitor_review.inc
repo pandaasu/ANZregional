@@ -546,13 +546,6 @@
       objEvent.strbot = (objEvent.strtop-0) + objDiv.offsetHeight;
       objParent.strwrk = objEvent.strbot;
    }
-   function fixAttribute(strText) {
-      var strReturn = strText;
-      strReturn = strReturn.replace(/</g,'&lt;');
-      strReturn = strReturn.replace(/>/g,'&gt;');
-      strReturn = strReturn.replace(/"/g,'&#34;');
-      return strReturn;
-   }
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -582,6 +575,7 @@
          </nobr></td>
       </tr>
    </table>
+   <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
 </form>
 </body>
 </html>
