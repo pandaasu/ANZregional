@@ -77,10 +77,10 @@
    var cstrTargetType = null;
    var cintMode = null;
    var cobjGate = null;
-   function loadStream() {
-      var objData = new Array();<%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
-      objData[0] = new clsData('0','S','','*TOP','','1','','','','');
-      addHeader();<%else%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
+   function loadStream() {<%if objForm.Fields("DTA_StreamAction").Value = "*CREATE" then%>
+      cobjStream = new clsStream('S','','*TOP','','1');
+      addHeader();<%else%>
+      var objData = new Array();<%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
       objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
       var intPidx = 0;
       var intTidx = 0;
@@ -251,6 +251,8 @@
       objDiv.setAttribute('objref',cobjStream);
       objDiv.setAttribute('bakcol','#ccffff');
       objDiv.onclick = function() {setSelected(this);};
+      objDiv.appendChild(document.createTextNode(cobjStream.strpar));
+      objDiv.appendChild(document.createElement('br'));
       objDiv.appendChild(document.createTextNode(cobjStream.strtxt));
       if (cobjStream.parary.length > 0) {
          objDiv.appendChild(document.createElement('br'));
