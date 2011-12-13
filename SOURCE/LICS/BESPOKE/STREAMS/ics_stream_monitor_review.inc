@@ -1,0 +1,587 @@
+<html>
+<script language="javascript">
+<!--
+   function showError() {<%if strReturn <> "*OK" then%>
+      alert('<%=strReturn%>');<%else%>return;<%end if%>
+   }
+   function document.onmouseover() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButton') {
+         objElement.className = 'clsButtonX';
+      }
+      if (objElement.className == 'clsButtonN') {
+         objElement.className = 'clsButtonNX';
+      }
+      if (objElement.className == 'clsSelect') {
+         objElement.className = 'clsSelectX';
+      }
+   }
+   function document.onmouseout() {
+      var objElement = window.event.srcElement;
+      if (objElement.className == 'clsButtonX') {
+         objElement.className = 'clsButton';
+      }
+      if (objElement.className == 'clsButtonNX') {
+         objElement.className = 'clsButtonN';
+      }
+      if (objElement.className == 'clsSelectX') {
+         objElement.className = 'clsSelect';
+      }
+   }
+   function doBack() {
+      document.main.action = '<%=strBase%><%=strTarget%>';
+      document.main.Mode.value = 'SELECT';
+      document.main.submit();
+   }
+   function doRefresh() {
+      document.main.action = '<%=strBase%><%=strTarget%>';
+      document.main.Mode.value = 'REFRESH';
+      document.main.submit();
+   }
+   function processForm() {
+      if (checkInput() == true) {
+         alert('Input data errors exist');
+         return false;
+      }
+      return true;
+   }
+   function setSelect(objInput) {
+      objInput.select();
+   }
+// -->
+</script>
+<script language="javascript">
+<!--
+   //////////////////////////////
+   // Stream definition script //
+   //////////////////////////////
+   var cobjStream = null;
+   function loadStream() {
+      var objData = new Array();<%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
+      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
+      var intPidx = 0;
+      var intTidx = 0;
+      var objParent = new Array();
+      var objWork = null;
+      var objParam = null;
+      var objTask = null;
+      var objGate = null;
+      var objDepend = null;
+      var objEvent = null;
+      for (var i=0;i<objData.length;i++) {
+         objWork = objData[i];
+         if (objWork.strtyp == 'S') {
+            cobjStream = new clsStream(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck);
+            intPidx = 0;
+            intTidx = 0;
+            objParent[intTidx] = cobjStream;
+         } else if (objWork.strtyp == 'P') {
+            objParam = new clsParam(objWork.strcod,objWork.strtxt,objWork.strlck);
+            intPidx = objWork.strdep;
+            objParent[intPidx].parary[objParent[intPidx].parary.length] = objParam;
+         } else if (objWork.strtyp == 'T') {
+            objTask = new clsTask(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            intPidx = objWork.strdep - 1;
+            intTidx = objWork.strdep - 0;
+            objParent[intPidx].tskary[objParent[intPidx].tskary.length] = objTask;
+            objParent[intTidx] = objTask;
+         } else if (objWork.strtyp == 'G') {
+            objGate = new clsGate(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            intPidx = objWork.strdep - 1;
+            intTidx = objWork.strdep - 0;
+            objParent[intPidx].gteary[objParent[intPidx].gteary.length] = objGate;
+            objParent[intTidx] = objGate;
+         } else if (objWork.strtyp == 'D') {
+            objDepend = new clsDepend(objWork.strcod);
+            intPidx = objWork.strdep;
+            objParent[intPidx].depary[objParent[intPidx].depary.length] = objDepend;
+         } else if (objWork.strtyp == 'E') {
+            objEvent = new clsEvent(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck,objWork.strprc,objWork.strgrp,objWork.stralt,objWork.strema);
+            intPidx = objWork.strdep - 1;
+            objParent[intPidx].evtary[objParent[intPidx].evtary.length] = objEvent;
+         }
+      }
+      paintStream();
+   }
+   function clsData(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
+      this.strdep = strDepth;
+      this.strtyp = strType;
+      this.strpar = strParent;
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strlck = strLock;
+      this.strprc = strProc;
+      this.strgrp = strGroup;
+      this.stralt = strAlert;
+      this.strema = strEmail;
+   }
+   function clsStream(strType,strParent,strCode,strText,strStat) {
+      this.strtyp = 'S';
+      this.strpar = strParent;
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strsts = strStat;
+      this.strlef = 0;
+      this.strrig = 0;
+      this.strtop = 0;
+      this.strbot = 0;
+      this.strwrk = 0;
+      this.strlil = 0;
+      this.strlit = 0;
+      this.strlib = 0;
+      this.parary = new Array();
+      this.tskary = new Array();
+      this.gteary = new Array();
+   }
+   function clsTask(strType,strParent,strCode,strText) {
+      this.strtyp = strType;
+      this.strpar = strParent;
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strlef = 0;
+      this.strrig = 0;
+      this.strtop = 0;
+      this.strbot = 0;
+      this.strwrk = 0;
+      this.strlil = 0;
+      this.strlit = 0;
+      this.strlib = 0;
+      this.tskary = new Array();
+      this.evtary = new Array();
+   }
+   function clsGate(strType,strParent,strCode,strText) {
+      this.strtyp = strType;
+      this.strpar = strParent;
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strlef = 0;
+      this.strrig = 0;
+      this.strtop = 0;
+      this.strbot = 0;
+      this.strwrk = 0;
+      this.strlil = 0;
+      this.strlit = 0;
+      this.strlib = 0;
+      this.tskary = new Array();
+      this.depary = new Array();
+   }
+   function clsEvent(strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
+      this.strtyp = strType;
+      this.strpar = strParent;
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strlck = strLock;
+      this.strprc = strProc;
+      this.strgrp = strGroup;
+      this.stralt = strAlert;
+      this.strema = strEmail;
+      this.strlef = 0;
+      this.strrig = 0;
+      this.strtop = 0;
+      this.strbot = 0;
+   }
+   function clsParam(strCode,strText,strValue) {
+      this.strcod = strCode;
+      this.strtxt = strText;
+      this.strval = strValue;
+   }
+   function clsDepend(strCode) {
+      this.strcod = strCode;
+      this.strgat = null;
+   }
+   function paintStream() {
+      var objCanvas = document.getElementById('divStream');
+      while(objCanvas.firstChild) {
+         objCanvas.removeChild(objCanvas.firstChild);
+      }
+      var objDiv;
+      cobjStream.strlef = 4;
+      cobjStream.strrig = 4;
+      cobjStream.strtop = 4;
+      cobjStream.strbot = 4;
+      cobjStream.strwrk = 4;
+      cobjStream.strlil = 0;
+      cobjStream.strlit = 0;
+      cobjStream.strlib = 0;
+      objDiv = document.createElement('div');
+      objDiv.align = 'center';
+      objDiv.vAlign = 'top';
+      objDiv.style.position = 'absolute';
+      objDiv.style.fontFamily = 'Verdana,sans-serif';
+      objDiv.style.fontSize = '8pt';
+      objDiv.style.fontWeight = 'bold';
+      objDiv.style.whiteSpace = 'normal';
+      objDiv.style.backgroundColor = '#ccffff';
+      objDiv.style.color = '#000000';
+      objDiv.style.border = '#888888 1px solid';
+      objDiv.style.padding = '3px';
+      objDiv.style.top = cobjStream.strtop + 'px';
+      objDiv.style.left = cobjStream.strlef + 'px';
+      objDiv.style.height = 'auto';
+      objDiv.style.width = 'auto';
+      objDiv.style.overflow = 'hidden';
+      objDiv.style.cursor = 'pointer';
+      objDiv.setAttribute('parref',null);
+      objDiv.setAttribute('objref',cobjStream);
+      objDiv.setAttribute('bakcol','#ccffff');
+      objDiv.onclick = function() {setSelected(this);};
+      objDiv.appendChild(document.createTextNode(cobjStream.strpar));
+      objDiv.appendChild(document.createElement('br'));
+      objDiv.appendChild(document.createTextNode(cobjStream.strtxt));
+      if (cobjStream.parary.length > 0) {
+         objDiv.appendChild(document.createElement('br'));
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'normal';
+         objFont.appendChild(document.createTextNode('Parameters'));
+         objDiv.appendChild(objFont);
+         for (var i=0;i<cobjStream.parary.length;i++) {
+            objDiv.appendChild(document.createElement('br'));
+            objFont = document.createElement('font');
+            objFont.style.fontFamily = 'Verdana,sans-serif';
+            objFont.style.fontSize = '8pt';
+            objFont.style.fontWeight = 'normal';
+            if (cobjStream.parary[i].strval != '') {
+               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' ('+cobjStream.parary[i].strval+')'));
+            } else {
+               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' (*SUPPLIED)'));
+            }
+            objDiv.appendChild(objFont);
+         }
+      }
+      objCanvas.appendChild(objDiv);
+      cobjStream.strrig = (cobjStream.strlef-0) + objDiv.offsetWidth;
+      cobjStream.strbot = (cobjStream.strtop-0) + objDiv.offsetHeight;
+      if (cobjStream.tskary.length != 0 || cobjStream.gteary.length != 0) {
+         cobjStream.strlil = (cobjStream.strlef-0) + objDiv.offsetWidth;
+         cobjStream.strlit = (cobjStream.strtop-0) + 8;
+         cobjStream.strlib = (cobjStream.strtop-0) + 8;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = cobjStream.strlit + 'px';
+         objDiv.style.left = cobjStream.strlil + 'px';
+         objDiv.style.height = '1px';
+         objDiv.style.width = '8px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         cobjStream.strlil = (cobjStream.strlil-0) + 8;
+      }
+      for (var i=0;i<cobjStream.tskary.length;i++) {
+         paintTask(objCanvas,cobjStream,cobjStream.tskary[i]);
+      }
+      for (var i=0;i<cobjStream.gteary.length;i++) {
+         paintGate(objCanvas,cobjStream,cobjStream.gteary[i]);
+      }
+   }
+   function paintTask(objCanvas,objParent,objTask) {
+      var objDiv;
+      objTask.strlef = (objParent.strlil-0) + 8;
+      objTask.strrig = (objParent.strlil-0) + 8;
+      objTask.strtop = objParent.strwrk;
+      objTask.strbot = objParent.strwrk;
+      objTask.strwrk = objParent.strwrk;
+      objTask.strlil = 0;
+      objTask.strlit = 0;
+      objTask.strlib = 0;
+      if (objParent.strwrk > objParent.strtop) {
+         objTask.strtop = (objParent.strwrk-0) + 8;
+         objTask.strbot = (objParent.strwrk-0) + 8;
+         objTask.strwrk = (objParent.strwrk-0) + 8;
+         objParent.strlib = (objParent.strwrk-0) + 16;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = (objParent.strlit-0) + 'px';
+         objDiv.style.left = (objParent.strlil-0) + 'px';
+         objDiv.style.height = (objParent.strlib - objParent.strlit) + 'px';
+         objDiv.style.width = '1px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         objParent.strlit = objParent.strlib;
+      }
+      objDiv = document.createElement('div');
+      objDiv.style.position = 'absolute';
+      objDiv.style.backgroundColor = '#888888';
+      objDiv.style.border = 'none';
+      objDiv.style.padding = '0px';
+      objDiv.style.top = (objParent.strlit-0) + 'px';
+      objDiv.style.left = (objParent.strlil-0) + 'px';
+      objDiv.style.height = '1px';
+      objDiv.style.width = '8px';
+      objDiv.style.overflow = 'hidden';
+      objCanvas.appendChild(objDiv);
+      objDiv = document.createElement('div');
+      objDiv.align = 'center';
+      objDiv.vAlign = 'top';
+      objDiv.style.position = 'absolute';
+      objDiv.style.fontFamily = 'Verdana,sans-serif';
+      objDiv.style.fontSize = '8pt';
+      objDiv.style.fontWeight = 'bold';
+      objDiv.style.whiteSpace = 'normal';
+      objDiv.style.backgroundColor = '#e6e6fa';
+      objDiv.style.color = '#000000';
+      objDiv.style.border = '#888888 1px solid';
+      objDiv.style.padding = '3px';
+      objDiv.style.top = (objTask.strtop-0) + 'px';
+      objDiv.style.left = (objTask.strlef-0) + 'px';
+      objDiv.style.height = 'auto';
+      objDiv.style.width = 'auto';
+      objDiv.style.overflow = 'hidden';
+      objDiv.style.cursor = 'pointer';
+      objDiv.setAttribute('parref',objParent);
+      objDiv.setAttribute('objref',objTask);
+      objDiv.setAttribute('bakcol','#e6e6fa');
+      objDiv.onclick = function() {setSelected(this);};
+      objDiv.appendChild(document.createTextNode('('+objTask.strcod+') '+objTask.strtxt));
+      objCanvas.appendChild(objDiv);
+      objTask.strrig = (objTask.strlef-0) + objDiv.offsetWidth;
+      objTask.strbot = (objTask.strtop-0) + objDiv.offsetHeight;
+      if (objTask.evtary.length != 0 || objTask.tskary.length != 0) {
+         objTask.strlil = (objTask.strlef-0) + objDiv.offsetWidth;
+         objTask.strlit = (objTask.strtop-0) + 8;
+         objTask.strlib = (objTask.strtop-0) + 8;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = objTask.strlit + 'px';
+         objDiv.style.left = objTask.strlil + 'px';
+         objDiv.style.height = '1px';
+         objDiv.style.width = '8px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         objTask.strlil = (objTask.strlil-0) + 8;
+      }
+      for (var i=0;i<objTask.evtary.length;i++) {
+         paintEvent(objCanvas,objTask,objTask.evtary[i]);
+      }
+      for (var i=0;i<objTask.tskary.length;i++) {
+         paintTask(objCanvas,objTask,objTask.tskary[i]);
+      }
+      if (objTask.strbot > objTask.strwrk) {
+         objParent.strwrk = objTask.strbot;
+      } else {
+         objParent.strwrk = objTask.strwrk;
+      }
+   }
+   function paintGate(objCanvas,objParent,objGate) {
+      var objDiv;
+      objGate.strlef = (objParent.strlil-0) + 8;
+      objGate.strrig = (objParent.strlil-0) + 8;
+      objGate.strtop = objParent.strwrk;
+      objGate.strbot = objParent.strwrk;
+      objGate.strwrk = objParent.strwrk;
+      objGate.strlil = 0;
+      objGate.strlit = 0;
+      objGate.strlib = 0;
+      if (objParent.strwrk > objParent.strtop) {
+         objGate.strtop = (objParent.strwrk-0) + 8;
+         objGate.strbot = (objParent.strwrk-0) + 8;
+         objGate.strwrk = (objParent.strwrk-0) + 8;
+         objParent.strlib = (objParent.strwrk-0) + 16;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = (objParent.strlit-0) + 'px';
+         objDiv.style.left = (objParent.strlil-0) + 'px';
+         objDiv.style.height = (objParent.strlib - objParent.strlit) + 'px';
+         objDiv.style.width = '1px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         objParent.strlit = objParent.strlib;
+      }
+      objDiv = document.createElement('div');
+      objDiv.style.position = 'absolute';
+      objDiv.style.backgroundColor = '#888888';
+      objDiv.style.border = 'none';
+      objDiv.style.padding = '0px';
+      objDiv.style.top = (objParent.strlit-0) + 'px';
+      objDiv.style.left = (objParent.strlil-0) + 'px';
+      objDiv.style.height = '1px';
+      objDiv.style.width = '8px';
+      objDiv.style.overflow = 'hidden';
+      objCanvas.appendChild(objDiv);
+      objDiv = document.createElement('div');
+      objDiv.align = 'center';
+      objDiv.vAlign = 'top';
+      objDiv.style.position = 'absolute';
+      objDiv.style.fontFamily = 'Verdana,sans-serif';
+      objDiv.style.fontSize = '8pt';
+      objDiv.style.fontWeight = 'bold';
+      objDiv.style.whiteSpace = 'normal';
+      objDiv.style.backgroundColor = '#f0fff0';
+      objDiv.style.color = '#000000';
+      objDiv.style.border = '#888888 1px solid';
+      objDiv.style.padding = '3px';
+      objDiv.style.top = (objGate.strtop-0) + 'px';
+      objDiv.style.left = (objGate.strlef-0) + 'px';
+      objDiv.style.height = 'auto';
+      objDiv.style.width = 'auto';
+      objDiv.style.overflow = 'hidden';
+      objDiv.style.cursor = 'pointer';
+      objDiv.setAttribute('parref',objParent);
+      objDiv.setAttribute('objref',objGate);
+      objDiv.setAttribute('bakcol','#f0fff0');
+      objDiv.onclick = function() {setSelected(this);};
+      objDiv.appendChild(document.createTextNode(objGate.strtxt));
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode('Dependencies'));
+      objDiv.appendChild(objFont);
+      for (var i=0;i<objGate.depary.length;i++) {
+         objDiv.appendChild(document.createElement('br'));
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'normal';
+         objFont.appendChild(document.createTextNode(objGate.depary[i].strcod));
+         objDiv.appendChild(objFont);
+      }
+      objCanvas.appendChild(objDiv);
+      objGate.strrig = (objGate.strlef-0) + objDiv.offsetWidth;
+      objGate.strbot = (objGate.strtop-0) + objDiv.offsetHeight;
+      if (objGate.tskary.length != 0) {
+         objGate.strlil = (objGate.strlef-0) + objDiv.offsetWidth;
+         objGate.strlit = (objGate.strtop-0) + 8;
+         objGate.strlib = (objGate.strtop-0) + 8;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = objGate.strlit + 'px';
+         objDiv.style.left = objGate.strlil + 'px';
+         objDiv.style.height = '1px';
+         objDiv.style.width = '8px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         objGate.strlil = (objGate.strlil-0) + 8;
+      }
+      for (var i=0;i<objGate.tskary.length;i++) {
+         paintTask(objCanvas,objGate,objGate.tskary[i]);
+      }
+      if (objGate.strbot > objGate.strwrk) {
+         objParent.strwrk = objGate.strbot;
+      } else {
+         objParent.strwrk = objGate.strwrk;
+      }
+   }
+   function paintEvent(objCanvas,objParent,objEvent) {
+      var objDiv;
+      objEvent.strlef = (objParent.strlil-0) + 8;
+      objEvent.strrig = (objParent.strlil-0) + 8;
+      objEvent.strtop = objParent.strwrk;
+      objEvent.strbot = objParent.strwrk;
+      if (objParent.strwrk > objParent.strtop) {
+         objEvent.strtop = (objParent.strwrk-0) + 8;
+         objEvent.strbot = (objParent.strwrk-0) + 8;
+         objParent.strlib = (objParent.strwrk-0) + 16;
+         objDiv = document.createElement('div');
+         objDiv.style.position = 'absolute';
+         objDiv.style.backgroundColor = '#888888';
+         objDiv.style.border = 'none';
+         objDiv.style.padding = '0px';
+         objDiv.style.top = (objParent.strlit-0) + 'px';
+         objDiv.style.left = (objParent.strlil-0) + 'px';
+         objDiv.style.height = (objParent.strlib - objParent.strlit) + 'px';
+         objDiv.style.width = '1px';
+         objDiv.style.overflow = 'hidden';
+         objCanvas.appendChild(objDiv);
+         objParent.strlit = objParent.strlib;
+      }
+      objDiv = document.createElement('div');
+      objDiv.style.position = 'absolute';
+      objDiv.style.backgroundColor = '#888888';
+      objDiv.style.border = 'none';
+      objDiv.style.padding = '0px';
+      objDiv.style.top = (objParent.strlit-0) + 'px';
+      objDiv.style.left = (objParent.strlil-0) + 'px';
+      objDiv.style.height = '1px';
+      objDiv.style.width = '8px';
+      objDiv.style.overflow = 'hidden';
+      objCanvas.appendChild(objDiv);
+      objDiv = document.createElement('div');
+      objDiv.align = 'center';
+      objDiv.vAlign = 'top';
+      objDiv.style.position = 'absolute';
+      objDiv.style.fontFamily = 'Verdana,sans-serif';
+      objDiv.style.fontSize = '8pt';
+      objDiv.style.fontWeight = 'bold';
+      objDiv.style.whiteSpace = 'normal';
+      objDiv.style.backgroundColor = '#fffacd';
+      objDiv.style.color = '#000000';
+      objDiv.style.border = '#888888 1px solid';
+      objDiv.style.padding = '3px';
+      objDiv.style.top = (objEvent.strtop-0) + 'px';
+      objDiv.style.left = (objEvent.strlef-0) + 'px';
+      objDiv.style.height = 'auto';
+      objDiv.style.width = 'auto';
+      objDiv.style.overflow = 'hidden';
+      objDiv.style.cursor = 'pointer';
+      objDiv.setAttribute('parref',objParent);
+      objDiv.setAttribute('objref',objEvent);
+      objDiv.setAttribute('bakcol','#fffacd');
+      objDiv.onclick = function() {setSelected(this);};
+      objDiv.appendChild(document.createTextNode(objEvent.strtxt));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(' Procedure: '+objEvent.strprc + ' Lock: '+objEvent.strlck + ' Job Group: '+objEvent.strgrp));
+      objDiv.appendChild(objFont);
+      objCanvas.appendChild(objDiv);
+      objEvent.strrig = (objEvent.strlef-0) + objDiv.offsetWidth;
+      objEvent.strbot = (objEvent.strtop-0) + objDiv.offsetHeight;
+      objParent.strwrk = objEvent.strbot;
+   }
+   function fixAttribute(strText) {
+      var strReturn = strText;
+      strReturn = strReturn.replace(/</g,'&lt;');
+      strReturn = strReturn.replace(/>/g,'&gt;');
+      strReturn = strReturn.replace(/"/g,'&#34;');
+      return strReturn;
+   }
+// -->
+</script>
+<!--#include file="ics_std_input.inc"-->
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
+   <link rel="stylesheet" type="text/css" href="ics_style.css">
+</head>
+<body class="clsBody02" scroll="nonr" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('ics_stream_monitor_review_help.htm');parent.setHeading('<%=strHeading%> - Stream Review');parent.showContent();loadStream();showError();">
+<form name="main" action="<%=strBase%><%=strTarget%>" method="post">
+   <table id="dspStream" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doBack();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" href="javascript:doRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100% >
+         <td align=center colspan=2 nowrap><nobr>
+            <div id="divStream" class="clsScroll01" style="background-color=#ffffff;"></div>
+         </nobr></td>
+      </tr>
+   </table>
+</form>
+</body>
+</html>
