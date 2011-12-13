@@ -40,7 +40,7 @@
    }
    function doAccept() {
       if (!processForm()) {return;}
-      cstrMessage = null;
+      cstrMessage = '';
       checkStream();
       if (cstrMessage != '') {
          alert(cstrMessage);
@@ -77,14 +77,13 @@
    var cstrTargetType = null;
    var cintMode = null;
    var cobjGate = null;
+   function loadStream() {
+      var objData = new Array();
 
-  // function loadStream() {
   //    var objData = new Array();<%if objSelection.ListCount("NODES") = 0 then%>
   //    objData[0] = new clsData('0','S','*ROOT','*TOP','Stream Root','','','','','');<%else%><%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
   //    objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%><%end if%>
-  // }
-   function loadStream() {
-      var objData = new Array();
+
       objData[0] = new clsData('0','S','*ROOT','*TOP','Stream Root','1','','','','');
       objData[1] = new clsData('1','T','*TOP','T1','Task T1','','','','','');
       objData[2] = new clsData('2','E','T1','T1E1','Event T1E1','','','','','');
@@ -123,22 +122,22 @@
          if (objWork.strtyp == 'S') {
             intPidx = 0;
             intTidx = 0;
-            cobjStream = new clsStream(objWork.strdep,objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            cobjStream = new clsStream(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intTidx] = cobjStream;
          } else if (objWork.strtyp == 'T') {
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
-            objTask = new clsTask(objWork.strdep,objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            objTask = new clsTask(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intPidx].tskary[objParent[intPidx].tskary.length] = objTask;
             objParent[intTidx] = objTask;
          } else if (objWork.strtyp == 'G') {
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
-            objGate = new clsGate(objWork.strdep,objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            objGate = new clsGate(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
             objParent[intPidx].gteary[objParent[intPidx].gteary.length] = objGate;
             objParent[intTidx] = objGate;
          } else if (objWork.strtyp == 'E') {
-            objEvent = new clsEvent(objWork.strdep,objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck,objWork.strprc,objWork.strgrp,objWork.stralt,objWork.strema);
+            objEvent = new clsEvent(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck,objWork.strprc,objWork.strgrp,objWork.stralt,objWork.strema);
             intPidx = objWork.strdep - 1;
             objParent[intPidx].evtary[objParent[intPidx].evtary.length] = objEvent;
          }
@@ -158,8 +157,7 @@
       this.stralt = strAlert;
       this.strema = strEmail;
    }
-   function clsStream(strDepth,strType,strParent,strCode,strText,strStat) {
-      this.strdep = '0';
+   function clsStream(strType,strParent,strCode,strText,strStat) {
       this.strtyp = 'S';
       this.strpar = '*ROOT';
       this.strcod = '*TOP';
@@ -177,8 +175,7 @@
       this.tskary = new Array();
       this.gteary = new Array();
    }
-   function clsTask(strDepth,strType,strParent,strCode,strText) {
-      this.strdep = strDepth;
+   function clsTask(strType,strParent,strCode,strText) {
       this.strtyp = strType;
       this.strpar = strParent;
       this.strcod = strCode;
@@ -194,8 +191,7 @@
       this.tskary = new Array();
       this.evtary = new Array();
    }
-   function clsGate(strDepth,strType,strParent,strCode,strText) {
-      this.strdep = strDepth;
+   function clsGate(strType,strParent,strCode,strText) {
       this.strtyp = strType;
       this.strpar = strParent;
       this.strcod = strCode;
@@ -211,8 +207,7 @@
       this.tskary = new Array();
       this.depary = new Array();
    }
-   function clsEvent(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
-      this.strdep = strDepth;
+   function clsEvent(strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
       this.strtyp = strType;
       this.strpar = strParent;
       this.strcod = strCode;
@@ -227,9 +222,10 @@
       this.strtop = 0;
       this.strbot = 0;
    }
-   function clsParam(strCode,strText) {
+   function clsParam(strCode,strText,strValue) {
       this.strcod = strCode;
       this.strtxt = strText;
+      this.strval = strValue;
    }
    function clsDepend(strCode) {
       this.strcod = strCode;
@@ -289,7 +285,11 @@
             objFont.style.fontFamily = 'Verdana,sans-serif';
             objFont.style.fontSize = '8pt';
             objFont.style.fontWeight = 'normal';
-            objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt));
+            if (cobjStream.parary[i].strval != '') {
+               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' ('+cobjStream.parary[i].strval+')'));
+            } else {
+               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' (*SUPPLIED)'));
+            }
             objDiv.appendChild(objFont);
          }
       }
@@ -387,7 +387,7 @@
       objDiv.setAttribute('objref',objTask);
       objDiv.setAttribute('bakcol','#e6e6fa');
       objDiv.onclick = function() {setSelected(this);};
-      objDiv.appendChild(document.createTextNode(objTask.strtxt));
+      objDiv.appendChild(document.createTextNode('('+objTask.strcod+') '+objTask.strtxt));
       if (cstrSelectCode == objTask.strcod) {
          setSelected(objDiv);
       }
@@ -744,7 +744,7 @@
       objYarra[intIndx-1] = objWork[intIndx];
       objYarra[intIndx] = objWork[intIndx-1];
       objWork.length = 0;
-      for (i=0;i<objYarra.length;i++) {
+      for (var i=0;i<objYarra.length;i++) {
          objWork[i] = objYarra[i];
       }
       paintStream();
@@ -789,7 +789,7 @@
       objYarra[intIndx+1] = objWork[intIndx];
       objYarra[intIndx] = objWork[intIndx+1];
       objWork.length = 0;
-      for (i=0;i<objYarra.length;i++) {
+      for (var i=0;i<objYarra.length;i++) {
          objWork[i] = objYarra[i];
       }
       paintStream();
@@ -844,6 +844,7 @@
          objWork = objTargetObject.evtary;
       }
       objWork[objWork.length] = objSelectObject;
+      objSelectObject.strpar = objTargetObject.strcod;
       cobjTarget.style.backgroundColor = cobjTarget.getAttribute('bakcol');
       cstrTargetType = null;
       cstrTargetCode = null;
@@ -908,7 +909,6 @@
       var strStrText;
       var strStrStat;
       var strMessage = '';
-      var bolFound;
       strStrCode = document.getElementById('INP_StrCode').value.toUpperCase();
       strStrText = document.getElementById('INP_StrText').value;
       strStrStat = document.getElementById('INP_StrStat').options[document.getElementById('INP_StrStat').selectedIndex].value;
@@ -920,9 +920,10 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Stream text must be entered';
       }
-      for (i=0;i<cobjStream.parary.length;i++) {
+      for (var i=0;i<cobjStream.parary.length;i++) {
          cobjStream.parary[i].strcod = document.getElementById('INP_ParCode' + i).value.toUpperCase();
          cobjStream.parary[i].strtxt = document.getElementById('INP_ParText' + i).value;
+         cobjStream.parary[i].strval = document.getElementById('INP_ParValu' + i).value;
          if (cobjStream.parary[i].strcod == '') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Parameter code must be entered';
@@ -931,10 +932,10 @@
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Parameter text must be entered';
          }
-         bolFound = false;
-         for (j=0;j<cobjStream.parary.length;j++) {
+         var bolFound = false;
+         for (var j=0;j<cobjStream.parary.length;j++) {
             if (i != j && cobjStream.parary[i].strcod == cobjStream.parary[j].strcod) {
-               bolFound == true;
+               bolFound = true;
                break;
             }
          }
@@ -952,7 +953,7 @@
       } else {
          objSelectObject = cobjSelect.getAttribute('objref');
       }
-      objSelectObject.strcod = strStrCode;
+      objSelectObject.strpar = strStrCode;
       objSelectObject.strtxt = strStrText;
       objSelectObject.strsts = strStrStat;
       cstrSelectCode = strStrCode;
@@ -1059,7 +1060,7 @@
          return;
       }
       if (cintMode == 'A') {
-         objSelectObject.tskary[objSelectObject.tskary.length] = new clsTask('0','T',objSelectObject.strcod,strTskCode,strTskText);
+         objSelectObject.tskary[objSelectObject.tskary.length] = new clsTask('T',objSelectObject.strcod,strTskCode,strTskText);
       } else {
          objSelectObject.strcod = strTskCode;
          objSelectObject.strtxt = strTskText;
@@ -1116,7 +1117,7 @@
       document.getElementById('INP_GteCode').value = '';
       document.getElementById('INP_GteText').value = '';
       document.getElementById('INP_GteCode').focus();
-      cobjGate = new clsGate('0','G','','','');
+      cobjGate = new clsGate('G','','','');
       paintDepend();
    }
    function cancelGate() {
@@ -1165,16 +1166,16 @@
             }
          }
       }
-      for (i=0;i<cobjGate.depary.length;i++) {
+      for (var i=0;i<cobjGate.depary.length;i++) {
          cobjGate.depary[i].strcod = document.getElementById('INP_DepCode' + i).value.toUpperCase();
          if (cobjGate.depary[i].strcod == '') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Task code must be entered';
          }
-         bolFound = false;
-         for (j=0;j<cobjGate.depary.length;j++) {
+         var bolFound = false;
+         for (var j=0;j<cobjGate.depary.length;j++) {
             if (i != j && cobjGate.depary[i].strcod == cobjGate.depary[j].strcod) {
-               bolFound == true;
+               bolFound = true;
                break;
             }
          }
@@ -1196,7 +1197,7 @@
          objSelectObject.strcod = strGteCode;
          objSelectObject.strtxt = strGteText;
          objSelectObject.depary.length = cobjGate.depary.length;
-         for (i=0;i<cobjGate.depary.length;i++) {
+         for (var i=0;i<cobjGate.depary.length;i++) {
             objSelectObject.depary[i] = cobjGate.depary[i];
          }
          cstrSelectCode = strGteCode;
@@ -1339,7 +1340,7 @@
          return;
       }
       if (cintMode == 'A') {
-         objSelectObject.evtary[objSelectObject.evtary.length] = new clsEvent('0','E',objSelectObject.strcod,strEvtCode,strEvtText,strEvtLock,strEvtProc,strJobGroup,strOprAlert,strEmaGroup);
+         objSelectObject.evtary[objSelectObject.evtary.length] = new clsEvent('E',objSelectObject.strcod,strEvtCode,strEvtText,strEvtLock,strEvtProc,strJobGroup,strOprAlert,strEmaGroup);
       } else {
          objSelectObject.strcod = strEvtCode;
          objSelectObject.strtxt = strEvtText;
@@ -1395,7 +1396,7 @@
          objDspEvent.style.display = 'none';
          objDspEvent.style.visibility = 'hidden';
          document.getElementById('hedHeader').innerText = 'Update Stream';
-         document.getElementById('INP_StrCode').value = objSelectObject.strcod;
+         document.getElementById('INP_StrCode').value = objSelectObject.strpar;
          document.getElementById('INP_StrCode').disabled = true;
          document.getElementById('INP_StrText').value = objSelectObject.strtxt;
          document.getElementById('INP_StrText').focus();
@@ -1496,70 +1497,74 @@
       paintStream();
    }
    function addParam() {
-      for (i=0;i<cobjStream.parary.length;i++) {
+      for (var i=0;i<cobjStream.parary.length;i++) {
          cobjStream.parary[i].strcod = document.getElementById('INP_ParCode' + i).value.toUpperCase();
          cobjStream.parary[i].strtxt = document.getElementById('INP_ParText' + i).value;
+         cobjStream.parary[i].strval = document.getElementById('INP_ParValu' + i).value;
       }
-      cobjStream.parary[cobjStream.parary.length] = new clsParam('','');
+      cobjStream.parary[cobjStream.parary.length] = new clsParam('','','');
       paintParam();
    }
    function deleteParam(lngIndex) {
-      for (i=0;i<cobjStream.parary.length;i++) {
+      for (var i=0;i<cobjStream.parary.length;i++) {
          cobjStream.parary[i].strcod = document.getElementById('INP_ParCode' + i).value.toUpperCase();
          cobjStream.parary[i].strtxt = document.getElementById('INP_ParText' + i).value;
+         cobjStream.parary[i].strval = document.getElementById('INP_ParValu' + i).value;
       }
       var objYarra = new Array();
       var j = 0;
-      for (i=0;i<cobjStream.parary.length;i++) {
+      for (var i=0;i<cobjStream.parary.length;i++) {
          if (i != lngIndex) {
             objYarra[j] = cobjStream.parary[i];
             j++;
          }
       }
       cobjStream.parary.length = cobjStream.parary.length - 1;
-      for (i=0;i<objYarra.length;i++) {
+      for (var i=0;i<objYarra.length;i++) {
          cobjStream.parary[i] = objYarra[i];
       }
       paintParam();
    }
    function paintParam() {
-      var strText = '<table align=center border=0 cellpadding=0 cellspacing=2 cols=3>';
+      var strText = '<table align=center border=0 cellpadding=0 cellspacing=2 cols=4>';
       strText = strText + '<tr>';
       strText = strText + '<td class="clsLabelBN" align=left colspan=1 nowrap><nobr>&nbsp;<a class="clsSelect" href="javascript:addParam();">Add</a>&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Code&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Text&nbsp;</nobr></td>';
+      strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Value&nbsp;</nobr></td>';
       strText = strText + '</tr>';
-      for (i=0;i<cobjStream.parary.length;i++) {
+      for (var i=0;i<cobjStream.parary.length;i++) {
          strText = strText + '<tr>';
          strText = strText + '<td class="clsLabelBB" align=left colspan=1 valign=center nowrap><nobr>&nbsp;<a class="clsSelect" href="javascript:deleteParam(' + i + ');">Delete&nbsp;</a></nobr></td>';
          strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_ParCode' + i + '" size="32" maxlength="32" value="' + cobjStream.parary[i].strcod + '" onFocus="setSelect(this);"></nobr></td>';
          strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr><input class="clsInputNN" type="text" name="INP_ParText' + i + '" size="64" maxlength="128" value="' + cobjStream.parary[i].strtxt + '" onFocus="setSelect(this);"></nobr></td>';
+         strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr><input class="clsInputNN" type="text" name="INP_ParValu' + i + '" size="64" maxlength="64" value="' + cobjStream.parary[i].strval + '" onFocus="setSelect(this);"></nobr></td>';
          strText = strText + '</tr>';
       }
       strText = strText + '</table>';
       document.getElementById('tabParam').innerHTML = strText;
    }
    function addDepend() {
-      for (i=0;i<cobjGate.depary.length;i++) {
+      for (var i=0;i<cobjGate.depary.length;i++) {
          cobjGate.depary[i].strcod = document.getElementById('INP_DepCode' + i).value.toUpperCase();
       }
       cobjGate.depary[cobjGate.depary.length] = new clsDepend('');
       paintDepend();
    }
    function deleteDepend(lngIndex) {
-      for (i=0;i<cobjGate.depary.length;i++) {
+      for (var i=0;i<cobjGate.depary.length;i++) {
          cobjGate.depary[i].strcod = document.getElementById('INP_DepCode' + i).value.toUpperCase();
       }
       var objYarra = new Array();
       var j = 0;
-      for (i=0;i<cobjGate.depary.length;i++) {
+      for (var i=0;i<cobjGate.depary.length;i++) {
          if (i != lngIndex) {
             objYarra[j] = cobjGate.depary[i];
             j++;
          }
       }
       cobjGate.depary.length = cobjGate.depary.length - 1;
-      for (i=0;i<objYarra.length;i++) {
+      for (var i=0;i<objYarra.length;i++) {
          cobjGate.depary[i] = objYarra[i];
       }
       paintDepend();
@@ -1570,7 +1575,7 @@
       strText = strText + '<td class="clsLabelBN" align=left colspan=1 nowrap><nobr>&nbsp;<a class="clsSelect" href="javascript:addDepend();">Add</a>&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Task&nbsp;</nobr></td>';
       strText = strText + '</tr>';
-      for (i=0;i<cobjGate.depary.length;i++) {
+      for (var i=0;i<cobjGate.depary.length;i++) {
          strText = strText + '<tr>';
          strText = strText + '<td class="clsLabelBB" align=left colspan=1 valign=center nowrap><nobr>&nbsp;<a class="clsSelect" href="javascript:deleteDepend(' + i + ');">Delete&nbsp;</a></nobr></td>';
          strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="INP_DepCode' + i + '" size="32" maxlength="32" value="' + cobjGate.depary[i].strcod + '" onFocus="setSelect(this);"></nobr></td>';
@@ -1580,58 +1585,63 @@
       document.getElementById('tabDepend').innerHTML = strText;
    }
    function editStream(strXML) {
-      if (cobjStream.strcod == '') {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+      if (cobjStream.strpar == '') {
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'Stream code must be entered';
       }
       if (cobjStream.strtxt == '') {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'Stream text must be entered';
       }
       if (cobjStream.tskary.length == 0) {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'Stream must have at least one task';
       }
       var bolFound = false;
       for (var i=0;i<cobjStream.gteary.length;i++) {
-         for (j=0;j<cobjStream.gteary[i].depary.length;j++) {
+         for (var j=0;j<cobjStream.gteary[i].depary.length;j++) {
             cobjStream.gteary[i].depary[j].strgat = null;
-            bolFound = false;
-            for (var k=0;k<cobjStream.gteary.length;k++) {
-               bolFound = editDepend(cobjStream.gteary[k],cobjStream.gteary[i].depary[j].strcod);
-               if (bolFound == true) {
-                  cobjStream.gteary[i].depary[j].strgat = cobjStream.gteary[k].strcod;
-                  break;
+            bolFound = editDepend(cobjStream,cobjStream.gteary[i].depary[j].strcod);
+            if (bolFound == false) {
+               for (var k=0;k<cobjStream.gteary.length;k++) {
+                  bolFound = editDepend(cobjStream.gteary[k],cobjStream.gteary[i].depary[j].strcod);
+                  if (bolFound == true) {
+                     cobjStream.gteary[i].depary[j].strgat = cobjStream.gteary[k].strcod;
+                     break;
+                  }
                }
+            }
+            if (bolFound == false) {
+               if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
+               cstrMessage = cstrMessage + 'Gate ('+cobjStream.gteary[i].strtxt+') dependency ('+cobjStream.gteary[i].depary[j].strcod+') does not exist';
             }
          }
       }
-
-      var bolFound = false;
       for (var i=0;i<cobjStream.gteary.length;i++) {
-         for (j=0;j<cobjStream.gteary[i].depary.length;j++) {
+         for (var j=0;j<cobjStream.gteary[i].depary.length;j++) {
             if (cobjStream.gteary[i].depary[j].strgat != null) {
                if (cobjStream.gteary[i].depary[j].strgat == cobjStream.gteary[i].strcod) {
-                  if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+                  if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
                   cstrMessage = cstrMessage + 'Gate ('+cobjStream.gteary[i].strtxt+') cannot be both dependent on and the parent of task ('+cobjStream.gteary[i].depary[j].strcod+')';
                } else {
-
                   bolFound = false;
                   for (var k=0;k<cobjStream.gteary.length;k++) {
-                    
-                     if (cobjStream.gteary[k].strcod != cobjStream.gteary[i].strcod && ) {
-                        bolFound = true;
-                        break;
+                     if (cobjStream.gteary[k].strcod == cobjStream.gteary[i].depary[j].strgat) {
+                        for (var l=0;l<cobjStream.gteary[k].depary.length;l++) {
+                           if (cobjStream.gteary[k].depary[l].strgat == cobjStream.gteary[i].strcod) {
+                              if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
+                              cstrMessage = cstrMessage + 'Gate ('+cobjStream.gteary[i].strtxt+') has cross dependency with gate ('+cobjStream.gteary[k].strtxt+') task ('+cobjStream.gteary[k].depary[l].strcod+')';
+                           }
+                        }
                      }
                   }
                }
             }
          }
       }
-
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<ICS_STREAM';
-      strXML = strXML+' CODE="'+fixAttribute(cobjStream.strcod)+'"';
+      strXML = strXML+' CODE="'+fixAttribute(cobjStream.strpar)+'"';
       strXML = strXML+' TEXT="'+fixAttribute(cobjStream.strtxt)+'"';
       strXML = strXML+' STATUS="'+fixAttribute(cobjStream.strsts)+'"';
       strXML = strXML+'>';
@@ -1640,35 +1650,23 @@
             strXML = strXML+'<PARAM';
             strXML = strXML+' CODE="'+fixAttribute(cobjStream.parary[i].strcod)+'"';
             strXML = strXML+' TEXT="'+fixAttribute(cobjStream.parary[i].strtxt)+'"';
+            strXML = strXML+' VALUE="'+fixAttribute(cobjStream.parary[i].strval)+'"';
             strXML = strXML+'/>'
         }
       }
       for (var i=0;i<cobjStream.tskary.length;i++) {
-         strXML = strXML + editTask(cobjStream.tskary[i], null);
+         strXML = strXML + editTask(cobjStream.tskary[i]);
       }
       for (var i=0;i<cobjStream.gteary.length;i++) {
          strXML = strXML + editGate(cobjStream.gteary[i]);
       }
       strXML = strXML+'</ICS_STREAM>';
-      edit
       return strXML;
    }
-   function editTask(objTask, objGate) {
+   function editTask(objTask) {
       if (objTask.evtary.length == 0) {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'At least one event must be created for task('+objTask.strtxt+')';
-      }
-      if (objGate != null) {
-         var bolFound = false;
-         for (var i=0;i<objGate.depary.length;i++) {
-            if (objGate.depary[i].strcod == objTask.strcod) {
-               bolFound = true;
-            }
-         }
-         if (bolFound == true) {
-            if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
-            cstrMessage = cstrMessage + 'Gate ('+objGate.strtxt+') cannot be both dependent on and the parent of task ('+objTask.strtxt+')';
-         }
       }
       var strXML = '<NODE';
       strXML = strXML+' TYPE="'+objTask.strtyp+'"';
@@ -1686,11 +1684,11 @@
    }
    function editGate(objGate) {
       if (objGate.tskary.length == 0) {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'At least one task must be created for gate ('+objGate.strtxt+')';
       }
       if (objGate.depary.length == 0) {
-         if (cstrMessage != '') {cstrMessage = strMessage + '\r\n';}
+         if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'At least dependancy task must be specified for gate ('+objGate.strtxt+')';
       }
       for (var i=0;i<objGate.depary.length;i++) {
@@ -1709,7 +1707,7 @@
          strXML = strXML+'/>'
       }
       for (var i=0;i<objGate.tskary.length;i++) {
-         strXML = strXML + editTask(objGate.tskary[i], objGate);
+         strXML = strXML + editTask(objGate.tskary[i]);
       }
       return strXML;
    }
@@ -1730,7 +1728,7 @@
    function editDepend(objParent,strCode) {
       var bolFound = false;
       for (var i=0;i<objParent.tskary.length;i++) {
-         if (objParent.tskary[i].strcod.toUpperCase() == strCode) {
+         if (objParent.tskary[i].strcod == strCode) {
             bolFound = true;
             break;
          }
