@@ -1,4 +1,7 @@
-create or replace package ics_app.plant_process_order_extract
+--
+-- PLANT_PROCESS_ORDER_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE ICS_APP.plant_process_order_extract
 as
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -22,7 +25,8 @@ as
  28-Feb-2008 Trevor Keon    Changed schema to ICS_APP from SITE_APP
  10-Dec-2008 Trevor Keon    Added check for missing ',' when doing to_number with FM999G999G999D999 
                             format using convert_to_number. 
-
+ 2011/12   B. Halicki    Added trigger option for sending to systems without V2
+  
 *******************************************************************************/
 
    /*-*/
@@ -32,7 +36,24 @@ as
 end plant_process_order_extract;
 /
 
-create or replace package body ics_app.plant_process_order_extract as
+
+--
+-- PLANT_PROCESS_ORDER_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LICS_APP;
+
+
+--
+-- PLANT_PROCESS_ORDER_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_process_order_extract as
 
    /*-*/
    /* Private exceptions
@@ -54,8 +75,9 @@ create or replace package body ics_app.plant_process_order_extract as
    /*-*/
    /* Private definitions
    /*-*/
-   var_zordine boolean;
-   var_interface varchar2(32 char);
+   var_zordine      boolean;
+   var_interface    varchar2(32 char);
+   var_trigger      varchar2(32 char);
    rcd_lads_ctl_rec_hpi lads_ctl_rec_hpi%rowtype;
    rcd_lads_ctl_rec_tpi lads_ctl_rec_tpi%rowtype;
    type rcd_recipe_header is record(proc_order varchar2(12 char),
@@ -288,33 +310,51 @@ create or replace package body ics_app.plant_process_order_extract as
       var_ignore := false;
       if rcd_lads_ctl_rec_hpi.plant = 'AU10' then
          var_interface := 'LADPDB01.1';
+         var_trigger := 'Y';
       elsif rcd_lads_ctl_rec_hpi.plant = 'NZ01' then
          var_interface := 'LADPDB01.2';
+         var_trigger := 'Y';         
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU20' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU21' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU22' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU23' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU24' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU25' then
          var_interface := 'LADPDB01.3';
+         var_trigger := 'N';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU30' then
          var_interface := 'LADPDB01.4';
+         var_trigger := 'Y';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU40' then
          var_interface := 'LADPDB01.5';
+         var_trigger := 'Y';
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU45' then
          var_interface := 'LADPDB01.6';
+         var_trigger := 'Y';
       else
          raise_application_error(-20000, 'Execute - Control recipe id (' || to_char(rcd_lads_ctl_rec_hpi.cntl_rec_id) || ') plant (' || rcd_lads_ctl_rec_hpi.plant || ') not defined for plant database interface');
       end if;
       
       /*-*/
       if not var_ignore then
-          var_instance := lics_outbound_loader.create_interface(var_interface,null,var_interface);
+          
+          if upper(var_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(var_interface, null, var_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(var_interface);
+          end if;
+      
+          --var_instance := lics_outbound_loader.create_interface(var_interface,null,var_interface);
 
           for idx in 1..tbl_recipe_header.count loop
              var_output := 'HDR';
@@ -951,13 +991,13 @@ create or replace package body ics_app.plant_process_order_extract as
       row_recipe_bom.material_qty := null;
       
       begin
-		   if instr(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'E') > 0 then
-			    row_recipe_bom.material_qty := to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
-			else
+           if instr(rcd_lads_ctl_rec_vpi.pppi_material_quantity,'E') > 0 then
+                row_recipe_bom.material_qty := to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
+            else
              row_recipe_bom.material_qty := convert_to_number(rcd_lads_ctl_rec_vpi.pppi_material_quantity);
          end if;
 
-		  exception
+          exception
          when others then
             raise_application_error(-20000, 'Process ZACBRQ1 (ZATLASA) - Field - MATERIAL_QTY - Unable to convert (' || rcd_lads_ctl_rec_vpi.pppi_material_quantity || ') to a number');
       end;
@@ -1301,12 +1341,12 @@ create or replace package body ics_app.plant_process_order_extract as
          row_recipe_src_text.operation := rcd_lads_ctl_rec_vpi.pppi_operation;
          row_recipe_src_text.phase := rcd_lads_ctl_rec_vpi.pppi_phase;
 
-	     /********************************/
-	     /* Jeff Phillipson - 28/10/2004 */
+         /********************************/
+         /* Jeff Phillipson - 28/10/2004 */
 
          row_recipe_src_text.seq := substr(rcd_lads_ctl_rec_tpi.proc_instr_number,1,4);
 
-	     /********************************/
+         /********************************/
 
          var_work01 := rcd_lads_ctl_rec_vpi.z_src_description;
          if not(var_text01 is null) then
@@ -1423,12 +1463,12 @@ create or replace package body ics_app.plant_process_order_extract as
          row_recipe_src_value.operation := rcd_lads_ctl_rec_vpi.pppi_operation;
          row_recipe_src_value.phase := rcd_lads_ctl_rec_vpi.pppi_phase;
 
-	    /********************************/
-	    /* Jeff Phillipson - 28/10/2004 */
+        /********************************/
+        /* Jeff Phillipson - 28/10/2004 */
 
          row_recipe_src_value.seq := substr(rcd_lads_ctl_rec_tpi.proc_instr_number,1,4);
 
-	    /********************************/
+        /********************************/
 
          row_recipe_src_value.src_tag := rcd_lads_ctl_rec_vpi.z_src_id;
          var_work01 := rcd_lads_ctl_rec_vpi.z_src_description;
@@ -1616,7 +1656,7 @@ create or replace package body ics_app.plant_process_order_extract as
       row_recipe_bom.seq := substr(rcd_lads_ctl_rec_tpi.proc_instr_number,1,4);
       row_recipe_bom.material_uom := trim(substr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,var_space + 1));
       row_recipe_bom.plant := row_recipe_header.plant;
-	    row_recipe_bom.bf_item := null;
+        row_recipe_bom.bf_item := null;
 
       /*-*/
       /* seperate out qty and uom values
@@ -1626,7 +1666,7 @@ create or replace package body ics_app.plant_process_order_extract as
       row_recipe_bom.last_pan_size := null;
       
       if rcd_lads_ctl_rec_vpi.z_ps_no_of_pans = 0 then
-		    row_recipe_bom.pan_size_flag := 'N';
+            row_recipe_bom.pan_size_flag := 'N';
         var_space := instr(rcd_lads_ctl_rec_vpi.z_ps_material_qty_char,' ');
         
         begin
@@ -1837,17 +1877,17 @@ create or replace package body ics_app.plant_process_order_extract as
          /* get material qty using first and last pan qty
          /*-*/
         begin
-			    /*-*/
-			    /* check on the type of number ie 1,0000 ot 1.098+E2 etc
-			    /*-*/
-			    if instr(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char),'E') > 0 then
-				    row_recipe_bom.material_qty := (to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char)) + to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char)));
-				  else
+                /*-*/
+                /* check on the type of number ie 1,0000 ot 1.098+E2 etc
+                /*-*/
+                if instr(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char),'E') > 0 then
+                    row_recipe_bom.material_qty := (to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char)) + to_number(trim(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char)));
+                  else
                var_space := instr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,' ');
                var_space1 := instr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,' ');
                row_recipe_bom.material_qty := (convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char,1,var_space -1))) * 1) + convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 -1)));
           end if;
-			  exception
+              exception
             when others then
                raise_application_error(-20000, 'Process ZPHBRQ1 - Field - PAN_SIZE * PAN_QTY - Unable to convert (' || rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char || ' or ' || rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char ||') to a number');
         end;
@@ -1868,11 +1908,11 @@ create or replace package body ics_app.plant_process_order_extract as
          /*-*/
          row_recipe_bom.last_pan_size := null;
          begin
-		    /*-*/
-		    /* Changed the variable name from var_space to var_space1
-		    /* Added by JP 26 May 2006
-		    /* For the first time a Proc Order was sent with a smaller numerical value length for last_pan_size
-		    /*-*/
+            /*-*/
+            /* Changed the variable name from var_space to var_space1
+            /* Added by JP 26 May 2006
+            /* For the first time a Proc Order was sent with a smaller numerical value length for last_pan_size
+            /*-*/
             row_recipe_bom.last_pan_size := convert_to_number(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_last_pan_in_char,1,var_space1 - 1)));
          exception
             when others then
@@ -1881,9 +1921,9 @@ create or replace package body ics_app.plant_process_order_extract as
       end if;
 
       if var_space  = 0 then
-	      row_recipe_bom.material_uom := null;
-	  else
-	      row_recipe_bom.material_uom := upper(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char, var_space + 1)));
+          row_recipe_bom.material_uom := null;
+      else
+          row_recipe_bom.material_uom := upper(trim(substr(rcd_lads_ctl_rec_vpi.z_ps_first_pan_in_char, var_space + 1)));
       end if;
 
       /*-*/
@@ -1958,14 +1998,15 @@ create or replace package body ics_app.plant_process_order_extract as
 end plant_process_order_extract;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on ics_app.plant_process_order_extract to appsupport;
-grant execute on ics_app.plant_process_order_extract to lads_app;
-grant execute on ics_app.plant_process_order_extract to lics_app;
 
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym plant_process_order_extract for ics_app.plant_process_order_extract;
+--
+-- PLANT_PROCESS_ORDER_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LICS_APP;

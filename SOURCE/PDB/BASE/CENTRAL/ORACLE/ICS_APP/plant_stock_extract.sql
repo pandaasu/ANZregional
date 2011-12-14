@@ -1,4 +1,7 @@
-create or replace package ics_app.plant_stock_extract as
+--
+-- PLANT_STOCK_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE ICS_APP.plant_stock_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -27,7 +30,8 @@ create or replace package ics_app.plant_stock_extract as
   2008/03   Trevor Keon    Created 
   2008/10   Trevor Keon    Changed to use lads stock balance view and be a 
                             full refresh of the data
-
+  2011/12   B. Halicki    Added trigger option for sending to systems without V2
+  
 *******************************************************************************/
 
   /*-*/
@@ -38,10 +42,26 @@ create or replace package ics_app.plant_stock_extract as
 end plant_stock_extract;
 /
 
-/****************/ 
-/* Package Body */ 
-/****************/ 
-create or replace package body ics_app.plant_stock_extract as
+
+--
+-- PLANT_STOCK_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_STOCK_EXTRACT FOR ICS_APP.PLANT_STOCK_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO LICS_APP;
+
+
+--
+-- PLANT_STOCK_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_stock_extract as
 
   /*-*/
   /* Private exceptions 
@@ -53,7 +73,7 @@ create or replace package body ics_app.plant_stock_extract as
   /* Private declarations 
   /*-*/
   function execute_extract(par_site in varchar2) return boolean;
-  procedure execute_send(par_interface in varchar2);
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2);
   
   /*-*/
   /* Global variables 
@@ -108,22 +128,22 @@ create or replace package body ics_app.plant_stock_extract as
     /* to send to the specified site(s) 
     /*-*/  
     if ( par_site in ('*ALL','*MFA') and execute_extract('MFA') = true ) then   
-        execute_send('LADPDB14.1'); 
+        execute_send('LADPDB14.1','Y'); 
     end if;    
     if ( par_site in ('*ALL','*WGI') and execute_extract('WGI') = true ) then   
-        execute_send('LADPDB14.2'); 
+        execute_send('LADPDB14.2','Y'); 
     end if;    
     if ( par_site in ('*ALL','*WOD') and execute_extract('WOD') = true ) then   
-        execute_send('LADPDB14.3'); 
+        execute_send('LADPDB14.3','N'); 
     end if;    
     if ( par_site in ('*ALL','*BTH') and execute_extract('BTH') = true ) then 
-        execute_send('LADPDB14.4'); 
+        execute_send('LADPDB14.4','Y'); 
     end if;    
     if ( par_site in ('*ALL','*MCA') and execute_extract('MCA') = true ) then   
-        execute_send('LADPDB14.5'); 
+        execute_send('LADPDB14.5','Y'); 
     end if;
     if ( par_site in ('*ALL','*SCO') and execute_extract('SCO') = true ) then  
-        execute_send('LADPDB14.6');
+        execute_send('LADPDB14.6','Y');
     end if;
       
   /*-------------------*/
@@ -242,7 +262,7 @@ create or replace package body ics_app.plant_stock_extract as
         || rpad(nvl(to_char(rcd_bds_stock_balance.stock_best_before_date),' '),8,' ')   
         || rpad(nvl(to_char(rcd_bds_stock_balance.consignment_cust_vend),' '),10,' ')
         || rpad(nvl(to_char(rcd_bds_stock_balance.rcv_isu_storage_location_code),' '),4,' ')
-        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_type_code),' '),6,' ');
+        || rpad(nvl(to_char(rcd_bds_stock_balance.stock_type_code),' '),2,' ');
 
     end loop;
     close csr_bds_stock_balance;
@@ -251,7 +271,7 @@ create or replace package body ics_app.plant_stock_extract as
     
   end execute_extract;
   
-  procedure execute_send(par_interface in varchar2) is
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2) is
   
     /*-*/
     /* Local variables 
@@ -262,7 +282,11 @@ create or replace package body ics_app.plant_stock_extract as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-        var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          if upper(par_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(par_interface);
+          end if;
       end if;
       
       lics_outbound_loader.append_data(tbl_definition(idx).value);
@@ -278,15 +302,17 @@ create or replace package body ics_app.plant_stock_extract as
 end plant_stock_extract;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on ics_app.plant_stock_extract to appsupport;
-grant execute on ics_app.plant_stock_extract to lads_app;
-grant execute on ics_app.plant_stock_extract to lics_app;
-grant execute on ics_app.plant_stock_extract to ics_executor;
 
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym plant_stock_extract for ics_app.plant_stock_extract;
+--
+-- PLANT_STOCK_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_STOCK_EXTRACT FOR ICS_APP.PLANT_STOCK_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_STOCK_EXTRACT TO LICS_APP;
