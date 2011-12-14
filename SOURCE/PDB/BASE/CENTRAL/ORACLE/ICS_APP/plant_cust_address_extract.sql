@@ -1,4 +1,7 @@
-create or replace package ics_app.plant_cust_address_extract as
+--
+-- PLANT_CUST_ADDRESS_EXTRACT  (Package) 
+--
+CREATE OR REPLACE PACKAGE ICS_APP.plant_cust_address_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -40,7 +43,8 @@ create or replace package ics_app.plant_cust_address_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
-
+  2011/12   B. Halicki    Added trigger option for sending to systems without V2
+  
 *******************************************************************************/
 
   /*-*/
@@ -52,10 +56,26 @@ create or replace package ics_app.plant_cust_address_extract as
 end plant_cust_address_extract;
 /
 
-/****************/ 
-/* Package Body */ 
-/****************/ 
-create or replace package body ics_app.plant_cust_address_extract as
+
+--
+-- PLANT_CUST_ADDRESS_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_CUST_ADDRESS_EXTRACT FOR ICS_APP.PLANT_CUST_ADDRESS_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO LICS_APP;
+
+
+--
+-- PLANT_CUST_ADDRESS_EXTRACT  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_cust_address_extract as
 
   /*-*/
   /* Private exceptions 
@@ -67,7 +87,7 @@ create or replace package body ics_app.plant_cust_address_extract as
   /* Private declarations 
   /*-*/
   function execute_extract(par_action in varchar2, par_data in varchar2) return boolean;
-  procedure execute_send(par_interface in varchar2);
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2);
   
   /*-*/
   /* Global variables 
@@ -158,22 +178,22 @@ create or replace package body ics_app.plant_cust_address_extract as
     /*-*/ 
     if ( var_start = true ) then    
       if ( par_site in ('*ALL','*MFA') ) then
-        execute_send('LADPDB03.1'); 
+        execute_send('LADPDB03.1','Y'); 
       end if;    
       if ( par_site in ('*ALL','*WGI') ) then
-        execute_send('LADPDB03.2');
+        execute_send('LADPDB03.2','N');
       end if;    
       if ( par_site in ('*ALL','*WOD') ) then
-        execute_send('LADPDB03.3');
+        execute_send('LADPDB03.3','Y');
       end if;    
       if ( par_site in ('*ALL','*BTH') ) then
-        execute_send('LADPDB03.4'); 
+        execute_send('LADPDB03.4','N'); 
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
-        execute_send('LADPDB03.5');   
+        execute_send('LADPDB03.5','N');   
       end if;
       if ( par_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB03.6');   
+        execute_send('LADPDB03.6','N');   
       end if;
     end if; 
     
@@ -359,7 +379,7 @@ create or replace package body ics_app.plant_cust_address_extract as
     
   end execute_extract;
   
-  procedure execute_send(par_interface in varchar2) is
+  procedure execute_send(par_interface in varchar2, par_trigger in varchar2) is
   
     /*-*/
     /* Local variables 
@@ -370,7 +390,11 @@ create or replace package body ics_app.plant_cust_address_extract as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-        var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          if upper(par_trigger) = 'Y' then
+             var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
+          else
+             var_instance := lics_outbound_loader.create_interface(par_interface);
+          end if;
       end if;
       
       lics_outbound_loader.append_data(tbl_definition(idx).value);
@@ -386,15 +410,17 @@ create or replace package body ics_app.plant_cust_address_extract as
 end plant_cust_address_extract;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on ics_app.plant_cust_address_extract to appsupport;
-grant execute on ics_app.plant_cust_address_extract to lads_app;
-grant execute on ics_app.plant_cust_address_extract to lics_app;
-grant execute on ics_app.plant_cust_address_extract to ics_executor;
 
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym plant_cust_address_extract for ics_app.plant_cust_address_extract;
+--
+-- PLANT_CUST_ADDRESS_EXTRACT  (Synonym) 
+--
+CREATE PUBLIC SYNONYM PLANT_CUST_ADDRESS_EXTRACT FOR ICS_APP.PLANT_CUST_ADDRESS_EXTRACT;
+
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO APPSUPPORT;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO ICS_EXECUTOR;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO LADS_APP;
+
+GRANT EXECUTE ON ICS_APP.PLANT_CUST_ADDRESS_EXTRACT TO LICS_APP;
