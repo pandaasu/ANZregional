@@ -238,16 +238,6 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.ics_ladwms06_extract as
       lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
       lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
 
---      /*-*/
---      /* TEST ENVIRONMENT (security defined against this tag on gateway)
---      /*-*/
---      -- lics_outbound_loader.append_data('<CTL_NAME>MCHNDHLB2BT2</CTL_NAME>');
-
---      /*-*/
---      /* PRODUCTION ENVIRONMENT (security defined against this tag on gateway)
---      /*-*/
---      lics_outbound_loader.append_data('<CTL_NAME>ACHNDHLP1</CTL_NAME>');
-
       lics_outbound_loader.append_data('</CTL>');
 
       /*-*/
