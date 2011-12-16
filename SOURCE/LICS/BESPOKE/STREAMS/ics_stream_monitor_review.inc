@@ -58,7 +58,7 @@
    var cobjStream = null;
    function loadStream() {
       var objData = new Array();<%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
-      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=objSelection.ListValue03("NODES",i)%>','<%=objSelection.ListValue04("NODES",i)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue06("NODES",i)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=objSelection.ListValue08("NODES",i)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
+      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=replace(objSelection.ListValue03("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue04("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue06("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue08("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>,,'<%=replace(objSelection.ListValue11("NODES",i), "'", "\'", 1, -1, 1)%>,'<%=replace(objSelection.ListValue12("NODES",i), "'", "\'", 1, -1, 1)%>,'<%=replace(objSelection.ListValue13("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
       var intPidx = 0;
       var intTidx = 0;
       var objParent = new Array();
@@ -71,56 +71,66 @@
       for (var i=0;i<objData.length;i++) {
          objWork = objData[i];
          if (objWork.strtyp == 'S') {
-            cobjStream = new clsStream(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck);
+            cobjStream = new clsStream(objWork.strtyp,objWork.str001,objWork.str002,objWork.str003,objWork.str004,objWork.str005,objWork.str006,objWork.str007,objWork.str008,objWork.str009);
             intPidx = 0;
             intTidx = 0;
             objParent[intTidx] = cobjStream;
          } else if (objWork.strtyp == 'P') {
-            objParam = new clsParam(objWork.strcod,objWork.strtxt,objWork.strlck);
+            objParam = new clsParam(objWork.str001,objWork.str002,objWork.str003);
             intPidx = objWork.strdep;
             objParent[intPidx].parary[objParent[intPidx].parary.length] = objParam;
          } else if (objWork.strtyp == 'T') {
-            objTask = new clsTask(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            objTask = new clsTask(objWork.strtyp,objWork.str001,objWork.str002,objWork.str003);
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
             objParent[intPidx].tskary[objParent[intPidx].tskary.length] = objTask;
             objParent[intTidx] = objTask;
          } else if (objWork.strtyp == 'G') {
-            objGate = new clsGate(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt);
+            objGate = new clsGate(objWork.strtyp,objWork.str001,objWork.str002,objWork.str003);
             intPidx = objWork.strdep - 1;
             intTidx = objWork.strdep - 0;
             objParent[intPidx].gteary[objParent[intPidx].gteary.length] = objGate;
             objParent[intTidx] = objGate;
          } else if (objWork.strtyp == 'D') {
-            objDepend = new clsDepend(objWork.strcod);
+            objDepend = new clsDepend(objWork.str002);
             intPidx = objWork.strdep;
             objParent[intPidx].depary[objParent[intPidx].depary.length] = objDepend;
          } else if (objWork.strtyp == 'E') {
-            objEvent = new clsEvent(objWork.strtyp,objWork.strpar,objWork.strcod,objWork.strtxt,objWork.strlck,objWork.strprc,objWork.strgrp,objWork.stralt,objWork.strema);
+            objEvent = new clsEvent(objWork.strtyp,objWork.str001,objWork.str002,objWork.str003,objWork.str004,objWork.str005,objWork.str006,objWork.str007,objWork.str008,objWork.str009);
             intPidx = objWork.strdep - 1;
             objParent[intPidx].evtary[objParent[intPidx].evtary.length] = objEvent;
          }
       }
       paintStream();
    }
-   function clsData(strDepth,strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
+   function clsData(strDepth,strType,str001,str002,str003,str004,str005,str006,str007,str008,str009,str010,str011,str012,str013) {
       this.strdep = strDepth;
       this.strtyp = strType;
-      this.strpar = strParent;
-      this.strcod = strCode;
-      this.strtxt = strText;
-      this.strlck = strLock;
-      this.strprc = strProc;
-      this.strgrp = strGroup;
-      this.stralt = strAlert;
-      this.strema = strEmail;
+      this.str001 = str001;
+      this.str002 = str002;
+      this.str003 = str003;
+      this.str004 = str004;
+      this.str005 = str005;
+      this.str006 = str006;
+      this.str007 = str007;
+      this.str008 = str008;
+      this.str009 = str009;
+      this.str010 = str010;
+      this.str011 = str011;
+      this.str012 = str012;
+      this.str013 = str013;
    }
-   function clsStream(strType,strParent,strCode,strText,strStat) {
-      this.strtyp = 'S';
-      this.strpar = strParent;
-      this.strcod = strCode;
-      this.strtxt = strText;
-      this.strsts = strStat;
+   function clsStream(strtyp,str001,str002,str003,str004,str005,str006,str007,str008,str009) {
+      this.strtyp = strtyp;
+      this.strcod = str001;
+      this.strtxt = str002;
+      this.strsqn = str003;
+      this.stretx = str004;
+      this.strsts = str005;
+      this.strrqs = str006;
+      this.strlod = str007;
+      this.strstr = str008;
+      this.strend = str009;
       this.strlef = 0;
       this.strrig = 0;
       this.strtop = 0;
@@ -133,11 +143,11 @@
       this.tskary = new Array();
       this.gteary = new Array();
    }
-   function clsTask(strType,strParent,strCode,strText) {
-      this.strtyp = strType;
-      this.strpar = strParent;
-      this.strcod = strCode;
-      this.strtxt = strText;
+   function clsTask(strtyp,str001,str002,str003) {
+      this.strtyp = strtyp;
+      this.strcod = str001;
+      this.strtxt = str002;
+      this.strsts = str003;
       this.strlef = 0;
       this.strrig = 0;
       this.strtop = 0;
@@ -149,11 +159,11 @@
       this.tskary = new Array();
       this.evtary = new Array();
    }
-   function clsGate(strType,strParent,strCode,strText) {
-      this.strtyp = strType;
-      this.strpar = strParent;
-      this.strcod = strCode;
-      this.strtxt = strText;
+   function clsGate(strtyp,str001,str002,str003) {
+      this.strtyp = strtyp;
+      this.strcod = str001;
+      this.strtxt = str002;
+      this.strsts = str003;
       this.strlef = 0;
       this.strrig = 0;
       this.strtop = 0;
@@ -165,29 +175,29 @@
       this.tskary = new Array();
       this.depary = new Array();
    }
-   function clsEvent(strType,strParent,strCode,strText,strLock,strProc,strGroup,strAlert,strEmail) {
-      this.strtyp = strType;
-      this.strpar = strParent;
-      this.strcod = strCode;
-      this.strtxt = strText;
-      this.strlck = strLock;
-      this.strprc = strProc;
-      this.strgrp = strGroup;
-      this.stralt = strAlert;
-      this.strema = strEmail;
+   function clsEvent(strtyp,str001,str002,str003,str004,str005,str006,str007,str008,str009) {
+      this.strtyp = strtyp;
+      this.strcod = str001;
+      this.strtxt = str002;
+      this.strlck = str003;
+      this.strprc = str004;
+      this.strgrp = str005;
+      this.stralt = str006;
+      this.strema = str007;
+      this.strsts = str008;
+      this.strmsg = str009;
       this.strlef = 0;
       this.strrig = 0;
       this.strtop = 0;
       this.strbot = 0;
    }
-   function clsParam(strCode,strText,strValue) {
-      this.strcod = strCode;
-      this.strtxt = strText;
-      this.strval = strValue;
+   function clsParam(str001,str002,str003) {
+      this.strcod = str001;
+      this.strtxt = str002;
+      this.strval = str003;
    }
-   function clsDepend(strCode) {
-      this.strcod = strCode;
-      this.strgat = null;
+   function clsDepend(str001) {
+      this.strcod = str001;
    }
    function paintStream() {
       var objCanvas = document.getElementById('divStream');
@@ -195,6 +205,7 @@
          objCanvas.removeChild(objCanvas.firstChild);
       }
       var objDiv;
+      var objFont;
       cobjStream.strlef = 4;
       cobjStream.strrig = 4;
       cobjStream.strtop = 4;
@@ -225,7 +236,7 @@
       objDiv.setAttribute('objref',cobjStream);
       objDiv.setAttribute('bakcol','#ccffff');
       objDiv.onclick = function() {setSelected(this);};
-      objDiv.appendChild(document.createTextNode(cobjStream.strpar));
+      objDiv.appendChild(document.createTextNode(cobjStream.strcod));
       objDiv.appendChild(document.createElement('br'));
       objDiv.appendChild(document.createTextNode(cobjStream.strtxt));
       if (cobjStream.parary.length > 0) {
@@ -245,11 +256,75 @@
             if (cobjStream.parary[i].strval != '') {
                objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' ('+cobjStream.parary[i].strval+')'));
             } else {
-               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' (*SUPPLIED)'));
+               objFont.appendChild(document.createTextNode('('+cobjStream.parary[i].strcod+') '+cobjStream.parary[i].strtxt+' (*NONE)'));
             }
             objDiv.appendChild(objFont);
          }
       }
+      objDiv.appendChild(document.createElement('br'));
+      objDiv.appendChild(document.createTextNode('(+cobjStream.strsqn + ') ' + cobjStream.stretx));
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode('Status: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(cobjStream.strsts));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Request: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(cobjStream.strrqs));
+      objDiv.appendChild(objFont);
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode('Loaded: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(cobjStream.strlod));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Started: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(cobjStream.strstr));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Ended: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(cobjStream.strend));
+      objDiv.appendChild(objFont);
       objCanvas.appendChild(objDiv);
       cobjStream.strrig = (cobjStream.strlef-0) + objDiv.offsetWidth;
       cobjStream.strbot = (cobjStream.strtop-0) + objDiv.offsetHeight;
@@ -279,6 +354,7 @@
    }
    function paintTask(objCanvas,objParent,objTask) {
       var objDiv;
+      var objFont;
       objTask.strlef = (objParent.strlil-0) + 8;
       objTask.strrig = (objParent.strlil-0) + 8;
       objTask.strtop = objParent.strwrk;
@@ -339,6 +415,19 @@
       objDiv.setAttribute('bakcol','#e6e6fa');
       objDiv.onclick = function() {setSelected(this);};
       objDiv.appendChild(document.createTextNode('('+objTask.strcod+') '+objTask.strtxt));
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode('Status: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objTask.strsts));
+      objDiv.appendChild(objFont);
       objCanvas.appendChild(objDiv);
       objTask.strrig = (objTask.strlef-0) + objDiv.offsetWidth;
       objTask.strbot = (objTask.strtop-0) + objDiv.offsetHeight;
@@ -373,6 +462,7 @@
    }
    function paintGate(objCanvas,objParent,objGate) {
       var objDiv;
+      var objFont;
       objGate.strlef = (objParent.strlil-0) + 8;
       objGate.strrig = (objParent.strlil-0) + 8;
       objGate.strtop = objParent.strwrk;
@@ -437,6 +527,19 @@
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode('Status: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objGate.strsts));
+      objDiv.appendChild(objFont);
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
       objFont.style.fontWeight = 'normal';
       objFont.appendChild(document.createTextNode('Dependencies'));
       objDiv.appendChild(objFont);
@@ -480,6 +583,7 @@
    }
    function paintEvent(objCanvas,objParent,objEvent) {
       var objDiv;
+      var objFont;
       objEvent.strlef = (objParent.strlil-0) + 8;
       objEvent.strrig = (objParent.strlil-0) + 8;
       objEvent.strtop = objParent.strwrk;
@@ -538,9 +642,67 @@
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
-      objFont.style.fontWeight = 'normal';
-      objFont.appendChild(document.createTextNode(' Procedure: '+objEvent.strprc + ' Lock: '+objEvent.strlck + ' Job Group: '+objEvent.strgrp));
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' - Procedure: '));
       objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strprc));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Lock: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strlck));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Job Group: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strgrp));
+      objDiv.appendChild(objFont);
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode('Status: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strsts));
+      objDiv.appendChild(objFont);
+      if (objEvent.strmsg != '') {
+         objDiv.appendChild(document.createElement('br'));
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'bold';
+         objFont.appendChild(document.createTextNode('Error: '));
+         objDiv.appendChild(objFont);
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'normal';
+         objFont.appendChild(document.createTextNode(objEvent.strmsg));
+         objDiv.appendChild(objFont);
+      }
       objCanvas.appendChild(objDiv);
       objEvent.strrig = (objEvent.strlef-0) + objDiv.offsetWidth;
       objEvent.strbot = (objEvent.strtop-0) + objDiv.offsetHeight;

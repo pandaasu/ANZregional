@@ -119,12 +119,17 @@
                <tr>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsFixed" id="conHead">
-                     <table class="clsTableHead" id="tabHead" align=left cols=5 cellpadding="0" cellspacing="1">
+                     <table class="clsTableHead" id="tabHead" align=left cols=10 cellpadding="0" cellspacing="1">
                         <tr>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Instance&nbsp;</nobr></td>
-                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Stream&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Text&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Status&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Request&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Load&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Start&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;End&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Stream&nbsp;</nobr></td>
+                           <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp;Text&nbsp;</nobr></td>
                            <td class="clsLabelHB" align=center colspan=1 nowrap><nobr>&nbsp</nobr></td>
                         </tr>
                      </table>
@@ -134,13 +139,18 @@
                <tr height=100%>
                   <td align=center colspan=1 nowrap><nobr>
                      <div class="clsScroll" id="conBody">
-                     <table class="clsTableBody" id="tabBody" align=left cols=4 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
-                        <tr><td class="clsLabelFB" align=center colspan=2 nowrap><nobr>&nbsp;NO STREAM INSTANCES FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
+                     <table class="clsTableBody" id="tabBody" align=left cols=9 cellpadding="0" cellspacing="1"><%if objSelection.ListCount("LIST") = 0 then%>
+                        <tr><td class="clsLabelFB" align=center colspan=9 nowrap><nobr>&nbsp;NO STREAM INSTANCES FOUND&nbsp</nobr></td></tr><%else%><%for i = objSelection.ListLower("LIST") to objSelection.ListUpper("LIST")%>
                         <tr>
                            <td class="clsList" align=left colspan=1 onClick="doSelect(this,'<%=objSelection.ListValue01("LIST",i)%>');" nowrap><nobr><%=objSelection.ListValue01("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue02("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue03("LIST",i)%></nobr></td>
                            <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue04("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue05("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue06("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue07("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue08("LIST",i)%></nobr></td>
+                           <td class="clsLabelFN" align=left colspan=1 nowrap><nobr><%=objSelection.ListValue09("LIST",i)%></nobr></td>
                         </tr><%next%><%end if%>
                      </table>
                      </div>

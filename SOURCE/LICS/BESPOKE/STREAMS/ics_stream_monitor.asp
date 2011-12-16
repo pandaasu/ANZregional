@@ -119,26 +119,24 @@ sub ProcessSelect()
    set objSelection.Security = objSecurity
 
    '//
-   '// Execute the file list
+   '// Retrieve the stream instances
    '//
    lngSize = 0
    strQuery = "select"
-   strQuery = strQuery & " to_char(t01.fil_file,'FM999999999999990'),"
-   strQuery = strQuery & " t01.fil_path,"
-   strQuery = strQuery & " t01.fil_name,"
-   strQuery = strQuery & " t01.fil_status,"
-   strQuery = strQuery & " t01.fil_crt_user,"
-   strQuery = strQuery & " to_char(t01.fil_crt_time, 'YYYY/MM/DD HH24:MI:SS'),"
-   strQuery = strQuery & " t02.int_type,"
-   strQuery = strQuery & " t02.int_lod_group,"
-   strQuery = strQuery & " t01.fil_message"
-   strQuery = strQuery & " from lics_file t01, lics_interface t02"
-   strQuery = strQuery & " where t01.fil_path = t02.int_interface(+)"
-   strQuery = strQuery & " order by t01.fil_file asc"
+   strQuery = strQuery & " to_char(t01.sth_exe_seqn),"
+   strQuery = strQuery & " t01.sth_exe_text,"
+   strQuery = strQuery & " t01.sth_exe_status,"
+   strQuery = strQuery & " t01.sth_exe_request,"
+   strQuery = strQuery & " to_char(t01.sth_exe_load,'yyyy/mm/dd hh24:mi:ss'),"
+   strQuery = strQuery & " to_char(t01.sth_exe_start,'yyyy/mm/dd hh24:mi:ss'),"
+   strQuery = strQuery & " to_char(t01.sth_exe_end,'yyyy/mm/dd hh24:mi:ss'),"
+   strQuery = strQuery & " t01.sth_str_code,"
+   strQuery = strQuery & " t01.sth_str_text"
+   strQuery = strQuery & " from lics_str_exe_header t01"
+   strQuery = strQuery & " order by t01.sth_exe_seqn desc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
       strMode = "FATAL"
-      exit sub
    end if
 
 end sub

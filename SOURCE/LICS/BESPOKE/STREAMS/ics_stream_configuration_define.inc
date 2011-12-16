@@ -221,6 +221,7 @@
       cobjTarget = null;
       cobjGate = null;
       var objDiv;
+      var objFont;
       cobjStream.strlef = 4;
       cobjStream.strrig = 4;
       cobjStream.strtop = 4;
@@ -411,6 +412,7 @@
    }
    function paintGate(objCanvas,objParent,objGate) {
       var objDiv;
+      var objFont;
       objGate.strlef = (objParent.strlil-0) + 8;
       objGate.strrig = (objParent.strlil-0) + 8;
       objGate.strtop = objParent.strwrk;
@@ -524,6 +526,7 @@
    }
    function paintEvent(objCanvas,objParent,objEvent) {
       var objDiv;
+      var objFont;
       objEvent.strlef = (objParent.strlil-0) + 8;
       objEvent.strrig = (objParent.strlil-0) + 8;
       objEvent.strtop = objParent.strwrk;
@@ -582,8 +585,38 @@
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' - Procedure: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
       objFont.style.fontWeight = 'normal';
-      objFont.appendChild(document.createTextNode(' Procedure: '+objEvent.strprc + ' Lock: '+objEvent.strlck + ' Job Group: '+objEvent.strgrp));
+      objFont.appendChild(document.createTextNode(objEvent.strprc));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Lock: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strlck));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(' Job Group: '));
+      objDiv.appendChild(objFont);
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'normal';
+      objFont.appendChild(document.createTextNode(objEvent.strgrp));
       objDiv.appendChild(objFont);
       if (cstrSelectCode == objEvent.strcod) {
          setSelected(objDiv);
