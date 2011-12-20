@@ -157,8 +157,8 @@ create or replace package body lics_stream_monitor as
                                            rcd_task.stt_tsk_code,
                                            rcd_task.stt_tsk_text,
                                            rcd_task.stt_exe_status,
-                                           null,
-                                           null,
+                                           to_char(rcd_task.stt_exe_start,'yyyy/mm/dd hh24:mi:ss'),
+                                           to_char(rcd_task.stt_exe_end,'yyyy/mm/dd hh24:mi:ss'),
                                            null,
                                            null,
                                            null,
@@ -183,11 +183,11 @@ create or replace package body lics_stream_monitor as
                                               rcd_event.ste_opr_alert,
                                               rcd_event.ste_ema_group,
                                               rcd_event.ste_exe_status,
-                                              rcd_event.ste_exe_message,
-                                              null,
-                                              null,
-                                              null,
-                                              null));
+                                              to_char(rcd_event.ste_exe_queued,'yyyy/mm/dd hh24:mi:ss'),
+                                              to_char(rcd_event.ste_exe_open,'yyyy/mm/dd hh24:mi:ss'),
+                                              to_char(rcd_event.ste_exe_start,'yyyy/mm/dd hh24:mi:ss'),
+                                              to_char(rcd_event.ste_exe_end,'yyyy/mm/dd hh24:mi:ss'),
+                                              rcd_event.ste_exe_message));
                end loop;
                close csr_event;
             else
@@ -196,8 +196,8 @@ create or replace package body lics_stream_monitor as
                                            rcd_task.stt_tsk_code,
                                            rcd_task.stt_tsk_text,
                                            rcd_task.stt_exe_status,
-                                           null,
-                                           null,
+                                           to_char(rcd_task.stt_exe_start,'yyyy/mm/dd hh24:mi:ss'),
+                                           to_char(rcd_task.stt_exe_end,'yyyy/mm/dd hh24:mi:ss'),
                                            null,
                                            null,
                                            null,

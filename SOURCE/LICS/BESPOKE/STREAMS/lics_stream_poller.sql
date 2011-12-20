@@ -267,7 +267,8 @@ create or replace package body lics_stream_poller as
             /* Update the stream event and commit
             /*-*/
             update lics_str_exe_event
-               set ste_exe_status = '*OPENED'
+               set ste_exe_status = '*OPENED',
+                   ste_exe_open = sysdate
              where ste_exe_seqn = rcd_event.ste_exe_seqn
                and ste_tsk_code = rcd_event.ste_tsk_code
                and ste_evt_code = rcd_event.ste_evt_code;
@@ -494,7 +495,8 @@ create or replace package body lics_stream_poller as
                      /* Set the task to *COMPLETED
                      /*-*/
                      update lics_str_exe_task
-                        set stt_exe_status = '*COMPLETED'
+                        set stt_exe_status = '*COMPLETED',
+                            stt_exe_end = sysdate
                       where stt_exe_seqn = rcd_open_task.stt_exe_seqn
                         and stt_tsk_code = rcd_open_task.stt_tsk_code;
 
@@ -507,7 +509,8 @@ create or replace package body lics_stream_poller as
                      /* Set the task to *CANCELLED
                      /*-*/
                      update lics_str_exe_task
-                        set stt_exe_status = '*CANCELLED'
+                        set stt_exe_status = '*CANCELLED',
+                            stt_exe_end = sysdate
                       where stt_exe_seqn = rcd_open_task.stt_exe_seqn
                         and stt_tsk_code = rcd_open_task.stt_tsk_code;
 
@@ -726,7 +729,8 @@ create or replace package body lics_stream_poller as
             /* Set the child task to *OPENED
             /*-*/
             update lics_str_exe_task
-               set stt_exe_status = '*OPENED'
+               set stt_exe_status = '*OPENED',
+                   stt_exe_start = sysdate
              where stt_exe_seqn = rcd_task_open.stt_exe_seqn
                and stt_tsk_code = rcd_task_open.stt_tsk_code;
 
@@ -734,7 +738,8 @@ create or replace package body lics_stream_poller as
             /* Set the child task events to *QUEUED
             /*-*/
             update lics_str_exe_event
-               set ste_exe_status = '*QUEUED'
+               set ste_exe_status = '*QUEUED',
+                   ste_exe_queued = sysdate
              where ste_exe_seqn = rcd_task_open.stt_exe_seqn
                and ste_tsk_code = rcd_task_open.stt_tsk_code;
 
@@ -860,14 +865,16 @@ create or replace package body lics_stream_poller as
             /* Set the tasks to *CANCELLED
             /*-*/
             update lics_str_exe_task
-               set stt_exe_status = '*CANCELLED'
+               set stt_exe_status = '*CANCELLED',
+                   stt_exe_end = sysdate
              where stt_exe_seqn = par_exe_seqn;
 
             /*-*/
             /* Set the events to *CANCELLED
             /*-*/
             update lics_str_exe_event
-               set ste_exe_status = '*CANCELLED'
+               set ste_exe_status = '*CANCELLED',
+                   ste_exe_end = sysdate
              where ste_exe_seqn = par_exe_seqn;
 
          else
@@ -885,7 +892,8 @@ create or replace package body lics_stream_poller as
             /* Set the pending tasks to *CANCELLED
             /*-*/
             update lics_str_exe_task
-               set stt_exe_status = '*CANCELLED'
+               set stt_exe_status = '*CANCELLED',
+                   stt_exe_end = sysdate
              where stt_exe_seqn = par_exe_seqn
                and stt_exe_status = '*PENDING';
 
@@ -893,7 +901,8 @@ create or replace package body lics_stream_poller as
             /* Set the pending/queued events to *CANCELLED
             /*-*/
             update lics_str_exe_event
-               set ste_exe_status = '*CANCELLED'
+               set ste_exe_status = '*CANCELLED',
+                   ste_exe_end = sysdate
              where ste_exe_seqn = par_exe_seqn
                and (ste_exe_status = '*PENDING' or ste_exe_status = '*QUEUED');
 
@@ -1177,7 +1186,8 @@ create or replace package body lics_stream_poller as
       /* Set the task to *COMPLETED
       /*-*/
       update lics_str_exe_task
-         set stt_exe_status = '*COMPLETED'
+         set stt_exe_status = '*COMPLETED',
+             stt_exe_end = sysdate
        where stt_exe_seqn = par_exe_seqn
          and stt_tsk_code = par_tsk_code;
 
@@ -1198,7 +1208,8 @@ create or replace package body lics_stream_poller as
          /* Set the child task to *OPENED
          /*-*/
          update lics_str_exe_task
-            set stt_exe_status = '*OPENED'
+            set stt_exe_status = '*OPENED',
+                stt_exe_start = sysdate
           where stt_exe_seqn = rcd_task_open.stt_exe_seqn
             and stt_tsk_code = rcd_task_open.stt_tsk_code;
 
@@ -1206,7 +1217,8 @@ create or replace package body lics_stream_poller as
          /* Set the child task events to *QUEUED
          /*-*/
          update lics_str_exe_event
-            set ste_exe_status = '*QUEUED'
+            set ste_exe_status = '*QUEUED',
+                ste_exe_queued = sysdate
           where ste_exe_seqn = rcd_task_open.stt_exe_seqn
             and ste_tsk_code = rcd_task_open.stt_tsk_code;
 
@@ -1265,7 +1277,8 @@ create or replace package body lics_stream_poller as
       /* Set the task to *FAILED
       /*-*/
       update lics_str_exe_task
-         set stt_exe_status = '*FAILED'
+         set stt_exe_status = '*FAILED',
+             stt_exe_end = sysdate
        where stt_exe_seqn = par_exe_seqn
          and stt_tsk_code = par_tsk_code;
 
@@ -1357,7 +1370,8 @@ create or replace package body lics_stream_poller as
       /* Set the task to *CANCELLED
       /*-*/
       update lics_str_exe_task
-         set stt_exe_status = '*CANCELLED'
+         set stt_exe_status = '*CANCELLED',
+             stt_exe_end = sysdate
        where stt_exe_seqn = par_exe_seqn
          and stt_tsk_code = par_tsk_code;
 
@@ -1365,7 +1379,8 @@ create or replace package body lics_stream_poller as
       /* Set the task events to *CANCELLED
       /*-*/
       update lics_str_exe_event
-         set ste_exe_status = '*CANCELLED'
+         set ste_exe_status = '*CANCELLED',
+             ste_exe_end = sysdate
        where ste_exe_seqn = par_exe_seqn
          and ste_tsk_code = par_tsk_code;
 
@@ -1436,7 +1451,9 @@ create or replace package body lics_stream_poller as
       /* Set the gate to *COMPLETED
       /*-*/
       update lics_str_exe_task
-         set stt_exe_status = '*COMPLETED'
+         set stt_exe_status = '*COMPLETED',
+             stt_exe_start = sysdate,
+             stt_exe_end = sysdate
        where stt_exe_seqn = par_exe_seqn
          and stt_tsk_code = par_tsk_code;
 
@@ -1457,7 +1474,8 @@ create or replace package body lics_stream_poller as
          /* Set the child task to *OPENED
          /*-*/
          update lics_str_exe_task
-            set stt_exe_status = '*OPENED'
+            set stt_exe_status = '*OPENED',
+                stt_exe_start = sysdate
           where stt_exe_seqn = rcd_task_open.stt_exe_seqn
             and stt_tsk_code = rcd_task_open.stt_tsk_code;
 
@@ -1465,7 +1483,8 @@ create or replace package body lics_stream_poller as
          /* Set the child task events to *QUEUED
          /*-*/
          update lics_str_exe_event
-            set ste_exe_status = '*QUEUED'
+            set ste_exe_status = '*QUEUED',
+                ste_exe_queued = sysdate
           where ste_exe_seqn = rcd_task_open.stt_exe_seqn
             and ste_tsk_code = rcd_task_open.stt_tsk_code;
 

@@ -948,6 +948,10 @@
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
             strMessage = strMessage + 'Parameter text must be entered';
          }
+         if (cobjStream.parary[i].strval == '') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Parameter value must be entered';
+         }
          var bolFound = false;
          for (var j=0;j<cobjStream.parary.length;j++) {
             if (i != j && cobjStream.parary[i].strcod == cobjStream.parary[j].strcod) {
@@ -1547,7 +1551,7 @@
       strText = strText + '<td class="clsLabelBN" align=left colspan=1 nowrap><nobr>&nbsp;<a class="clsSelect" href="javascript:addParam();">Add</a>&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Code&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Text&nbsp;</nobr></td>';
-      strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Value&nbsp;</nobr></td>';
+      strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Value&nbsp;(Fixed Value or *SUPPLIED)</nobr></td>';
       strText = strText + '</tr>';
       for (var i=0;i<cobjStream.parary.length;i++) {
          strText = strText + '<tr>';

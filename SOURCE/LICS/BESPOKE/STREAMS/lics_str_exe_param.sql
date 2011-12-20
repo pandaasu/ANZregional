@@ -25,7 +25,7 @@ create table lics_str_exe_param
     stp_str_code          varchar2(32 char)            not null,
     stp_par_code          varchar2(32 char)            not null,
     stp_par_text          varchar2(128 char)           not null,
-    stp_par_value         varchar2(64 char)            null);
+    stp_par_value         varchar2(64 char)            not null);
 
 /**/
 /* Comments
@@ -35,7 +35,7 @@ comment on column lics_str_exe_param.stp_exe_seqn is 'Stream parameter - executi
 comment on column lics_str_exe_param.stp_str_code is 'Stream parameter - stream code';
 comment on column lics_str_exe_param.stp_par_code is 'Stream parameter - parameter code';
 comment on column lics_str_exe_param.stp_par_text is 'Stream parameter - parameter text';
-comment on column lics_str_exe_param.stp_par_value is 'Stream parameter - parameter value';
+comment on column lics_str_exe_param.stp_par_value is 'Stream parameter - parameter value (fixed value or supplied)';
 
 /**/
 /* Primary Key Constraint
