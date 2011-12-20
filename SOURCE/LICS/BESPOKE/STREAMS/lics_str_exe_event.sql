@@ -23,6 +23,10 @@
 create table lics_str_exe_event
    (ste_exe_seqn          number                       not null,
     ste_exe_status        varchar2(10 char)            not null,
+    ste_exe_queued        date                         not null,
+    ste_exe_open          date                         not null,
+    ste_exe_start         date                         not null,
+    ste_exe_end           date                         not null,
     ste_exe_message       varchar2(4000 char)          null,
     ste_str_code          varchar2(32 char)            not null,
     ste_tsk_code          varchar2(32 char)            not null,
@@ -41,6 +45,10 @@ create table lics_str_exe_event
 comment on table lics_str_exe_event is 'LICS Stream Execution Event Table';
 comment on column lics_str_exe_event.ste_exe_seqn is 'Stream event - execution sequence';
 comment on column lics_str_exe_event.ste_exe_status is 'Stream event - execution status';
+comment on column lics_str_exe_event.ste_exe_queued is 'Stream event - execution queued time';
+comment on column lics_str_exe_event.ste_exe_open is 'Stream event - execution open time';
+comment on column lics_str_exe_event.ste_exe_start is 'Stream event - execution start time';
+comment on column lics_str_exe_event.ste_exe_end is 'Stream event - execution end time';
 comment on column lics_str_exe_event.ste_exe_message is 'Stream event - execution message';
 comment on column lics_str_exe_event.ste_str_code is 'Stream event - stream code';
 comment on column lics_str_exe_event.ste_tsk_code is 'Stream event - task code';

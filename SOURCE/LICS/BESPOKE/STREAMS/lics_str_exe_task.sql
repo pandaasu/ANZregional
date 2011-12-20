@@ -23,6 +23,8 @@
 create table lics_str_exe_task
    (stt_exe_seqn          number                       not null,
     stt_exe_status        varchar2(10 char)            not null,
+    stt_exe_start         date                         not null,
+    stt_exe_end           date                         not null,
     stt_str_code          varchar2(32 char)            not null,
     stt_tsk_code          varchar2(32 char)            not null,
     stt_tsk_pcde          varchar2(32 char)            not null,
@@ -36,6 +38,8 @@ create table lics_str_exe_task
 comment on table lics_str_exe_task is 'LICS Stream Execution Task Table';
 comment on column lics_str_exe_task.stt_exe_seqn is 'Stream task - execution sequence';
 comment on column lics_str_exe_task.stt_exe_status is 'Stream task - execution status';
+comment on column lics_str_exe_task.stt_exe_start is 'Stream event - execution start time';
+comment on column lics_str_exe_task.stt_exe_end is 'Stream event - execution end time';
 comment on column lics_str_exe_task.stt_str_code is 'Stream task - stream code';
 comment on column lics_str_exe_task.stt_tsk_code is 'Stream task - task code';
 comment on column lics_str_exe_task.stt_tsk_pcde is 'Stream task - task parent';
