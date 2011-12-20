@@ -212,7 +212,7 @@ sub ProcessCancel()
    '//
    '// Cancel the stream instance
    '//
-   strStatement = "lics_stream_monitor.cancel_stream('" & GetUser() & "')"
+   strStatement = "lics_stream_monitor.cancel_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -246,7 +246,7 @@ sub ProcessPause()
    '//
    '// Pause the stream instance
    '//
-   strStatement = "lics_stream_monitor.pause_stream('" & GetUser() & "')"
+   strStatement = "lics_stream_monitor.pause_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -280,7 +280,7 @@ sub ProcessResume()
    '//
    '// Resume the stream instance
    '//
-   strStatement = "lics_stream_monitor.resume_stream('" & GetUser() & "')"
+   strStatement = "lics_stream_monitor.resume_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)

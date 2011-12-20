@@ -188,6 +188,7 @@ create or replace package body lics_stream_loader as
       rcd_lics_str_exe_event lics_str_exe_event%rowtype;
       rcd_lics_str_exe_param lics_str_exe_param%rowtype;
       var_exe_seqn number;
+      var_par_code varchar2(32 char);
 
       /*-*/
       /* Local cursors
@@ -216,6 +217,20 @@ create or replace package body lics_stream_loader as
       /*-*/
       if pvar_stream is null then
          raise_application_error(-20000, 'Stream has not been loaded');
+      end if;
+
+      /*-*/
+      /* Check the parameter values
+      /*-*/
+      var_par_code := null;
+      for idx in 1..tbl_parameter.count loop
+         if upper(tbl_parameter(idx).value) = '*SUPPLIED' then
+            var_par_code := tbl_parameter(idx).code;
+            exit;
+         end if;
+      end loop;
+      if not(var_par_code is null) then
+         raise_application_error(-20000, 'Parameter type *SUPPLIED (' || var_par_code || ') does not have a value');
       end if;
 
       /*-*/

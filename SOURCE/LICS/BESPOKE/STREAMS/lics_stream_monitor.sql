@@ -28,6 +28,9 @@ create or replace package lics_stream_monitor as
    /* Public declarations
    /*-*/
    function get_nodes(par_exe_seqn in number) return lics_strvew_table pipelined;
+   procedure cancel_stream(par_exe_seqn in number);
+   procedure pause_stream(par_exe_seqn in number);
+   procedure resume_stream(par_exe_seqn in number);
 
 end lics_stream_monitor;
 /
@@ -259,6 +262,330 @@ create or replace package body lics_stream_monitor as
    /* End routine */
    /*-------------*/
    end get_nodes;
+
+   /*****************************************************/
+   /* This procedure performs the cancel stream routine */
+   /*****************************************************/
+   procedure cancel_stream(par_exe_seqn in number) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_stream is
+         select t01.*
+           from lics_str_exe_header t01
+          where t01.sth_exe_seqn = par_exe_seqn
+            for update nowait;
+      rcd_stream csr_stream%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Attempt to lock the stream
+      /* notes - must still exist
+      /*         must still be pending or opened status
+      /*         must still be no request
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_stream;
+         fetch csr_stream into rcd_stream;
+         if csr_stream%notfound then
+            var_available := false;
+         else
+            if (rcd_stream.sth_exe_status != '*PENDING' and rcd_stream.sth_exe_status != '*OPENED') or
+               rcd_stream.sth_exe_request != '*NONE' then
+               var_available := false;
+            end if;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_stream%isopen then
+         close csr_stream;
+      end if;
+
+      /*-*/
+      /* Release the stream row lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+
+         /*-*/
+         /* Rollback to release row locks
+         /*-*/
+         rollback;
+
+      /*-*/
+      /* Process the stream when available
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the stream to *CANCEL
+         /*-*/
+         update lics_str_exe_header
+            set sth_exe_request = '*CANCEL'
+          where sth_exe_seqn = par_exe_seqn;
+
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
+
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'ICS_STREAM_MONITOR - CANCEL_STREAM - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end cancel_stream;
+
+   /****************************************************/
+   /* This procedure performs the pause stream routine */
+   /****************************************************/
+   procedure pause_stream(par_exe_seqn in number) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_stream is
+         select t01.*
+           from lics_str_exe_header t01
+          where t01.sth_exe_seqn = par_exe_seqn
+            for update nowait;
+      rcd_stream csr_stream%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Attempt to lock the stream
+      /* notes - must still exist
+      /*         must still be opened status
+      /*         must still be no request
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_stream;
+         fetch csr_stream into rcd_stream;
+         if csr_stream%notfound then
+            var_available := false;
+         else
+            if rcd_stream.sth_exe_status != '*OPENED' or
+               rcd_stream.sth_exe_request != '*NONE' then
+               var_available := false;
+            end if;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_stream%isopen then
+         close csr_stream;
+      end if;
+
+      /*-*/
+      /* Release the stream row lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+
+         /*-*/
+         /* Rollback to release row locks
+         /*-*/
+         rollback;
+
+      /*-*/
+      /* Process the stream when available
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the stream request to *PAUSE
+         /*-*/
+         update lics_str_exe_header
+            set sth_exe_request = '*PAUSE'
+          where sth_exe_seqn = par_exe_seqn;
+
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
+
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'ICS_STREAM_MONITOR - PAUSE_STREAM - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end pause_stream;
+
+   /*****************************************************/
+   /* This procedure performs the resume stream routine */
+   /*****************************************************/
+   procedure resume_stream(par_exe_seqn in number) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_available boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_stream is
+         select t01.*
+           from lics_str_exe_header t01
+          where t01.sth_exe_seqn = par_exe_seqn
+            for update nowait;
+      rcd_stream csr_stream%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Attempt to lock the stream
+      /* notes - must still exist
+      /*         must still be opened paused status
+      /*         must still be no request
+      /*         must not be locked
+      /*-*/
+      var_available := true;
+      begin
+         open csr_stream;
+         fetch csr_stream into rcd_stream;
+         if csr_stream%notfound then
+            var_available := false;
+         else
+            if rcd_stream.sth_exe_status != '*OPNPAUSED' or
+               rcd_stream.sth_exe_request != '*NONE' then
+               var_available := false;
+            end if;
+         end if;
+      exception
+         when others then
+            var_available := false;
+      end;
+      if csr_stream%isopen then
+         close csr_stream;
+      end if;
+
+      /*-*/
+      /* Release the stream row lock when not available
+      /* 1. Cursor row locks are not released until commit or rollback
+      /* 2. Cursor close does not release row locks
+      /*-*/
+      if var_available = false then
+
+         /*-*/
+         /* Rollback to release row locks
+         /*-*/
+         rollback;
+
+      /*-*/
+      /* Process the stream when available
+      /*-*/
+      else
+
+         /*-*/
+         /* Set the stream request to *RESUME
+         /*-*/
+         update lics_str_exe_header
+            set sth_exe_request = '*RESUME'
+          where sth_exe_seqn = par_exe_seqn;
+
+         /*-*/
+         /* Commit the database
+         /*-*/
+         commit;
+
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'ICS_STREAM_MONITOR - RESUME_STREAM - ' || substr(SQLERRM, 1, 1024));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end resume_stream;
 
 end lics_stream_monitor;
 /  
