@@ -77,6 +77,12 @@
             call ProcessSelect
          case "REVIEW"
             call ProcessReview
+         case "CANCEL"
+            call ProcessCancel
+         case "PAUSE"
+            call ProcessPause
+         case "RESUME"
+            call ProcessResume
          case else
             strMode = "FATAL"
             strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
@@ -186,6 +192,108 @@ sub ProcessReview()
    '// Set the mode
    '//
    strMode = "REVIEW"
+
+end sub
+
+'////////////////////////////
+'// Process cancel routine //
+'////////////////////////////
+sub ProcessCancel()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Cancel the stream instance
+   '//
+   strStatement = "lics_stream_monitor.cancel_stream('" & GetUser() & "')"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'///////////////////////////
+'// Process pause routine //
+'///////////////////////////
+sub ProcessPause()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Pause the stream instance
+   '//
+   strStatement = "lics_stream_monitor.pause_stream('" & GetUser() & "')"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
+
+end sub
+
+'////////////////////////////
+'// Process resume routine //
+'////////////////////////////
+sub ProcessResume()
+
+   dim strStatement
+   dim lngCount
+
+   '//
+   '// Create the procedure object
+   '//
+   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
+   set objProcedure.Security = objSecurity
+
+   '//
+   '// Resume the stream instance
+   '//
+   strStatement = "lics_stream_monitor.resume_stream('" & GetUser() & "')"
+   strReturn = objProcedure.Execute(strStatement)
+   if strReturn <> "*OK" then
+      strError = FormatError(strReturn)
+      strMode = "SELECT"
+      call ProcessSelect
+      exit sub
+   end if
+
+   '//
+   '// Set the mode
+   '//
+   strMode = "SELECT"
+   call ProcessSelect
 
 end sub
 

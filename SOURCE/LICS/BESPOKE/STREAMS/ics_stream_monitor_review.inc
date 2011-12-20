@@ -35,7 +35,7 @@
    }
    function doRefresh() {
       document.main.action = '<%=strBase%><%=strTarget%>';
-      document.main.Mode.value = 'REFRESH';
+      document.main.Mode.value = 'REVIEW';
       document.main.submit();
    }
    function processForm() {
@@ -58,7 +58,7 @@
    var cobjStream = null;
    function loadStream() {
       var objData = new Array();<%for i = objSelection.ListLower("NODES") to objSelection.ListUpper("NODES")%>
-      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=replace(objSelection.ListValue03("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue04("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue06("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue08("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>,,'<%=replace(objSelection.ListValue11("NODES",i), "'", "\'", 1, -1, 1)%>,'<%=replace(objSelection.ListValue12("NODES",i), "'", "\'", 1, -1, 1)%>,'<%=replace(objSelection.ListValue13("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
+      objData[<%=i%>] = new clsData('<%=objSelection.ListValue01("NODES",i)%>','<%=objSelection.ListValue02("NODES",i)%>','<%=replace(objSelection.ListValue03("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue04("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue05("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue06("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue07("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue08("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue09("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue10("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue11("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue12("NODES",i), "'", "\'", 1, -1, 1)%>','<%=replace(objSelection.ListValue13("NODES",i), "'", "\'", 1, -1, 1)%>');<%next%>
       var intPidx = 0;
       var intTidx = 0;
       var objParent = new Array();
@@ -103,9 +103,9 @@
       }
       paintStream();
    }
-   function clsData(strDepth,strType,str001,str002,str003,str004,str005,str006,str007,str008,str009,str010,str011,str012,str013) {
-      this.strdep = strDepth;
-      this.strtyp = strType;
+   function clsData(strdep,strtyp,str001,str002,str003,str004,str005,str006,str007,str008,str009,str010,str011,str012,str013) {
+      this.strdep = strdep;
+      this.strtyp = strtyp;
       this.str001 = str001;
       this.str002 = str002;
       this.str003 = str003;
@@ -262,7 +262,7 @@
          }
       }
       objDiv.appendChild(document.createElement('br'));
-      objDiv.appendChild(document.createTextNode('(+cobjStream.strsqn + ') ' + cobjStream.stretx));
+      objDiv.appendChild(document.createTextNode('('+cobjStream.strsqn + ') ' + cobjStream.stretx));
       objDiv.appendChild(document.createElement('br'));
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -301,11 +301,12 @@
       objFont.style.fontWeight = 'normal';
       objFont.appendChild(document.createTextNode(cobjStream.strlod));
       objDiv.appendChild(objFont);
+      objDiv.appendChild(document.createElement('br'));
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
       objFont.style.fontWeight = 'bold';
-      objFont.appendChild(document.createTextNode(' Started: '));
+      objFont.appendChild(document.createTextNode('Started: '));
       objDiv.appendChild(objFont);
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -313,11 +314,12 @@
       objFont.style.fontWeight = 'normal';
       objFont.appendChild(document.createTextNode(cobjStream.strstr));
       objDiv.appendChild(objFont);
+      objDiv.appendChild(document.createElement('br'));
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
       objFont.style.fontWeight = 'bold';
-      objFont.appendChild(document.createTextNode(' Ended: '));
+      objFont.appendChild(document.createTextNode('Ended: '));
       objDiv.appendChild(objFont);
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -738,6 +740,7 @@
       </tr>
    </table>
    <input type="hidden" name="Mode" value="<%=objForm.Fields("Mode").Value%>">
+   <input type="hidden" name="DTA_StreamSeqn" value="<%=objForm.Fields("DTA_StreamSeqn").Value%>">
 </form>
 </body>
 </html>
