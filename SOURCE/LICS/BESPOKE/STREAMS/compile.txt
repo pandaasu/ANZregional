@@ -1,0 +1,88 @@
+drop table lics_str_header;
+drop table lics_str_param.sql;
+drop table lics_str_task.sql;
+drop table lics_str_depend.sql;
+drop table lics_str_event.sql;
+drop table lics_str_exe_header.sql;
+drop table lics_str_exe_param.sql;
+drop table lics_str_exe_task.sql;
+drop table lics_str_exe_depend.sql;
+drop table lics_str_exe_event.sql;
+
+
+
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_header.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_param.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_task.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_depend.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_event.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_exe_header.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_exe_param.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_exe_task.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_exe_depend.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_str_exe_event.sql;
+
+
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_type.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_strvew_type.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_loader.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_poller.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_processor.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_configuration.sql;
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\lics_stream_monitor.sql;
+
+@C:\ISI_SVN\regional\SOURCE\LICS\BESPOKE\STREAMS\test_procedure.sql;
+
+
+-- ALl public synonyms missing for LICS
+
+
+create or replace public synonym lics_str_header for lics.lics_str_header;
+create or replace public synonym lics_str_param for lics.lics_str_param;
+create or replace public synonym lics_str_task for lics.lics_str_task;
+create or replace public synonym lics_str_depend for lics.lics_str_depend;
+create or replace public synonym lics_str_event for lics.lics_str_event;
+create or replace public synonym lics_str_exe_header for lics.lics_str_exe_header;
+create or replace public synonym lics_str_exe_param for lics.lics_str_exe_param;
+create or replace public synonym lics_str_exe_task for lics.lics_str_exe_task;
+create or replace public synonym lics_str_exe_depend for lics.lics_str_exe_depend;
+create or replace public synonym lics_str_exe_event for lics.lics_str_exe_event;
+
+
+
+begin lics_stream_loader.load('STR002','Forecast Aggregation 2011/12/23',null);
+lics_stream_loader.set_parameter('RUNDTE','2011/12/23');
+lics_stream_loader.execute;
+lics_stream_loader.load('STR001','Sales Aggregation 2011/12/23',null);
+lics_stream_loader.set_parameter('RUNDTE','2011/12/23');
+lics_stream_loader.execute; end;
+
+
+
+
+      objData[0] = new clsData('0','S','*ROOT','*TOP','Stream Root','1','','','','');
+      objData[1] = new clsData('1','T','*TOP','T1','Task T1','','','','','');
+      objData[2] = new clsData('2','E','T1','T1E1','Event T1E1','','','','','');
+      objData[3] = new clsData('2','E','T1','T1E2','Event T1E2','','','','','');
+      objData[4] = new clsData('2','T','T1','T2','Task T2','','','','','');
+      objData[5] = new clsData('3','E','T2','T2E1','Event T2E1','','','','','');
+      objData[6] = new clsData('2','T','T1','T3','Task T3','','','','','');
+      objData[7] = new clsData('3','E','T3','T3E1','Event T3E1','','','','','');
+      objData[8] = new clsData('1','T','*TOP','T4','Task T4','','','','','');
+      objData[9] = new clsData('2','E','T4','T4E1','Event T4E1','','','','','');
+      objData[10] = new clsData('2','E','T4','T4E2','Event T4E2','','','','','');
+      objData[11] = new clsData('1','G','*TOP','G1','Gate G1','','','','','');
+      objData[12] = new clsData('2','T','G1','T5','Task T5','','','','','');
+      objData[13] = new clsData('3','E','T5','T5E1','Event T5E1','','','','','');
+      objData[14] = new clsData('3','E','T5','T5E2','Event T5E2','','','','','');
+      objData[15] = new clsData('2','T','G1','T6','Task T6','','','','','');
+      objData[16] = new clsData('3','E','T6','T6E1','Event T6E1','','','','','');
+      objData[17] = new clsData('3','E','T6','T6E2','Event T6E2','','','','','');
+      objData[18] = new clsData('3','T','T6','T7','Task T7','','','','','');
+      objData[19] = new clsData('4','E','T7','T7E1','Event T7E1','','','','','');
+      objData[20] = new clsData('3','T','T6','T8','Task T8','','','','','');
+      objData[21] = new clsData('4','E','T8','T8E1','Event T8E1','','','','','');
+      objData[22] = new clsData('1','G','*TOP','G2','Gate G2','','','','','');
+      objData[23] = new clsData('2','T','G2','T9','Task T9','','','','','');
+      objData[24] = new clsData('3','E','T9','T9E1','Event T9E1','','','','','');
+      objData[25] = new clsData('3','E','T9','T9E2','Event T9E2','','','','','');
