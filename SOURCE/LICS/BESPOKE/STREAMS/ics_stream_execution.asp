@@ -128,7 +128,7 @@ sub ProcessSelect()
    strQuery = strQuery & " t01.sth_str_code,"
    strQuery = strQuery & " t01.sth_str_text"
    strQuery = strQuery & " from lics_str_header t01"
-   strQuery = strQuery & " where t01.sth_str_status = '1'"
+   strQuery = strQuery & " where t01.sth_status = '1'"
    strQuery = strQuery & " order by t01.sth_str_code asc"
    strReturn = objSelection.Execute("LIST", strQuery, lngSize)
    if strReturn <> "*OK" then
