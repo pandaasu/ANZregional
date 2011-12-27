@@ -1604,7 +1604,7 @@
       strText = strText + '</table>';
       document.getElementById('tabDepend').innerHTML = strText;
    }
-   function editStream(strXML) {
+   function editStream() {
       if (cobjStream.strpar == '') {
          if (cstrMessage != '') {cstrMessage = cstrMessage + '\r\n';}
          cstrMessage = cstrMessage + 'Stream code must be entered';
@@ -1771,7 +1771,7 @@
       var intPart = 0;
       var aryStream = null;
       var bolFound = false;
-      var strXML = editStream(cobjStream);
+      var strXML = editStream();
       if (cstrMessage == '') {
          intPart = 0;
          aryStream = strXML.match(RegExp('.{1,2000}','g'));
