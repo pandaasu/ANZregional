@@ -62,16 +62,16 @@
       cobjParam[<%=i%>] = new clsParam('<%=objSelection.ListValue01("PARAMS",i)%>','<%=objSelection.ListValue02("PARAMS",i)%>','<%=objSelection.ListValue03("PARAMS",i)%>');<%next%>
       var strText = '<table align=center border=0 cellpadding=0 cellspacing=2 cols=2>';
       strText = strText + '<tr>';
-      strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Text&nbsp;</nobr></td>';
+      strText = strText + '<td class="clsLabelBB" align=right colspan=1 nowrap><nobr>&nbsp;Parameter&nbsp;</nobr></td>';
       strText = strText + '<td class="clsLabelBB" align=left colspan=1 nowrap><nobr>&nbsp;Value&nbsp;</nobr></td>';
       strText = strText + '</tr>';
       for (var i=0;i<cobjParam.length;i++) {
          strText = strText + '<tr>';
-         strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr>' + cobjParam[i].strtxt + '</nobr></td>';
+         strText = strText + '<td class="clsLabelBN" align=right colspan=1 valign=center nowrap><nobr>' + cobjParam[i].strtxt + '</nobr></td>';
          if (cobjParam[i].strsav == '*SUPPLIED') {
             strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr><input class="clsInputNN" type="text" name="INP_ParValu' + i + '" size="64" maxlength="64" value="" onFocus="setSelect(this);"></nobr></td>';
          } else {
-            strText = strText + '<td class="clsLabelBN" align=left colspan=1 valign=center nowrap><nobr>' + cobjParam[i].strval + '</nobr></td>';
+            strText = strText + '<td class="clsLabelBB" align=left colspan=1 valign=center nowrap><nobr>' + cobjParam[i].strval + '</nobr></td>';
          }
          strText = strText + '</tr>';
       }
@@ -123,7 +123,7 @@
       strXML = strXML+'<ICS_STREAM';
       strXML = strXML+' CODE="'+fixAttribute(strCode)+'"';
       strXML = strXML+' TEXT="'+fixAttribute(strText)+'"';
-      strXML = strXML+' PROCEDURE="'+fixAttribute(strProc)+'"';
+      strXML = strXML+' PROCEDURE="'+fixAttribute(strProcedure)+'"';
       strXML = strXML+'>';
       if (cobjParam.length > 0) {
          for (var i=0;i<cobjParam.length;i++) {
