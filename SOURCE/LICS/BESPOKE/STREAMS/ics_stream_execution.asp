@@ -227,11 +227,10 @@ sub ProcessSubmitAccept()
       exit sub
    end if
 
-
    '//
    '// Set the mode
    '//
-   strMode = "SUBMIT"
+   strMode = "SELECT"
    call ProcessSelect
 
 end sub
