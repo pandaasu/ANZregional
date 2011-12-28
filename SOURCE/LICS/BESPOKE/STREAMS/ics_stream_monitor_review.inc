@@ -461,7 +461,7 @@
       objFont.style.fontWeight = 'normal';
       objFont.appendChild(document.createTextNode(objTask.strsts));
       objDiv.appendChild(objFont);
-      if (objTask.strsts != '*PENDING') {
+      if (objTask.strsts != '*PENDING' && objTask.strsts != '*CANCELLED') {
          objDiv.appendChild(document.createElement('br'));
          objFont = document.createElement('font');
          objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -475,7 +475,7 @@
          objFont.style.fontWeight = 'normal';
          objFont.appendChild(document.createTextNode(objTask.strstr));
          objDiv.appendChild(objFont);
-         if (objTask.strsts == '*COMPLETED' || objTask.strsts == '*CANCELLED' || objTask.strsts == '*FAILED') {
+         if (objTask.strsts == '*COMPLETED' || objTask.strsts == '*FAILED') {
             objDiv.appendChild(document.createElement('br'));
             objFont = document.createElement('font');
             objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -490,6 +490,21 @@
             objFont.appendChild(document.createTextNode(objTask.strend));
             objDiv.appendChild(objFont);
          }
+      }
+      if (objTask.strsts == '*CANCELLED') {
+         objDiv.appendChild(document.createElement('br'));
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'bold';
+         objFont.appendChild(document.createTextNode('Cancelled: '));
+         objDiv.appendChild(objFont);
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'normal';
+         objFont.appendChild(document.createTextNode(objTask.strend));
+         objDiv.appendChild(objFont);
       }
       objCanvas.appendChild(objDiv);
       objTask.strrig = (objTask.strlef-0) + objDiv.offsetWidth;
@@ -572,7 +587,7 @@
       objDiv.style.fontWeight = 'bold';
       objDiv.style.whiteSpace = 'normal';
       objDiv.style.backgroundColor = '#f0fff0';
-      if (objGate.strsts == '*OPENED') {
+      if (objGate.strsts == '*COMPLETED') {
          objDiv.style.backgroundColor = '#f5f5f5';
       }
       if (objGate.strsts == '*CANCELLED') {
@@ -621,7 +636,7 @@
          objFont.appendChild(document.createTextNode(objGate.depary[i].strcod));
          objDiv.appendChild(objFont);
       }
-      if (objGate.strsts == '*OPENED') {
+      if (objGate.strsts == '*COMPLETED') {
          objDiv.appendChild(document.createElement('br'));
          objFont = document.createElement('font');
          objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -725,9 +740,12 @@
       objDiv.style.whiteSpace = 'normal';
       objDiv.style.backgroundColor = '#fffacd';
       if (objEvent.strsts == '*QUEUED') {
-         objDiv.style.backgroundColor = '#ffffc0';
+         objDiv.style.backgroundColor = '#d5d6f9';
       }
       if (objEvent.strsts == '*OPENED') {
+         objDiv.style.backgroundColor = '#c0ffff';
+      }
+      if (objEvent.strsts == '*WORKING') {
          objDiv.style.backgroundColor = '#c0ffc0';
       }
       if (objEvent.strsts == '*COMPLETED') {
@@ -803,7 +821,7 @@
       objFont.style.fontWeight = 'normal';
       objFont.appendChild(document.createTextNode(objEvent.strsts));
       objDiv.appendChild(objFont);
-      if (objEvent.strsts != '*PENDING') {
+      if (objEvent.strsts != '*PENDING' && objEvent.strsts != '*CANCELLED') {
          objDiv.appendChild(document.createElement('br'));
          objFont = document.createElement('font');
          objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -822,7 +840,7 @@
             objFont.style.fontFamily = 'Verdana,sans-serif';
             objFont.style.fontSize = '8pt';
             objFont.style.fontWeight = 'bold';
-            objFont.appendChild(document.createTextNode('Opened: '));
+            objFont.appendChild(document.createTextNode(' Opened: '));
             objDiv.appendChild(objFont);
             objFont = document.createElement('font');
             objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -831,7 +849,7 @@
             objFont.appendChild(document.createTextNode(objEvent.stropn));
             objDiv.appendChild(objFont);
          }
-         if (objEvent.strsts == '*WORKING') {
+         if (objEvent.strsts == '*WORKING' || objEvent.strsts == '*COMPLETED' || objEvent.strsts == '*FAILED') {
             objDiv.appendChild(document.createElement('br'));
             objFont = document.createElement('font');
             objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -846,12 +864,12 @@
             objFont.appendChild(document.createTextNode(objEvent.strstr));
             objDiv.appendChild(objFont);
          }
-         if (objEvent.strsts == '*COMPLETED' || objEvent.strsts == '*CANCELLED' || objEvent.strsts == '*FAILED') {
+         if (objEvent.strsts == '*COMPLETED' || objEvent.strsts == '*FAILED') {
             objFont = document.createElement('font');
             objFont.style.fontFamily = 'Verdana,sans-serif';
             objFont.style.fontSize = '8pt';
             objFont.style.fontWeight = 'bold';
-            objFont.appendChild(document.createTextNode('Ended: '));
+            objFont.appendChild(document.createTextNode(' Ended: '));
             objDiv.appendChild(objFont);
             objFont = document.createElement('font');
             objFont.style.fontFamily = 'Verdana,sans-serif';
@@ -860,6 +878,21 @@
             objFont.appendChild(document.createTextNode(objEvent.strend));
             objDiv.appendChild(objFont);
          }
+      }
+      if (objEvent.strsts == '*CANCELLED') {
+         objDiv.appendChild(document.createElement('br'));
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'bold';
+         objFont.appendChild(document.createTextNode('Cancelled: '));
+         objDiv.appendChild(objFont);
+         objFont = document.createElement('font');
+         objFont.style.fontFamily = 'Verdana,sans-serif';
+         objFont.style.fontSize = '8pt';
+         objFont.style.fontWeight = 'normal';
+         objFont.appendChild(document.createTextNode(objEvent.strend));
+         objDiv.appendChild(objFont);
       }
       if (objEvent.strmsg != '') {
          objDiv.appendChild(document.createElement('br'));
