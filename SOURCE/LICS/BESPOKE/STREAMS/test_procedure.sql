@@ -25,7 +25,7 @@ create or replace package test_procedure as
    /**/
    /* Public declarations
    /**/
-   procedure execute;
+   procedure execute(par_error in varchar2);
 
 end test_procedure;
 /
@@ -35,10 +35,16 @@ end test_procedure;
 /****************/
 create or replace package body test_procedure as
 
+   /*-*/
+   /* Private exceptions
+   /*-*/
+   application_exception exception;
+   pragma exception_init(application_exception, -20000);
+
    /*******************************************************/
    /* This procedure performs the execute process routine */
    /*******************************************************/
-   procedure execute is
+   procedure execute(par_error in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -58,6 +64,13 @@ create or replace package body test_procedure as
          dbms_lock.sleep(60);
       end loop;
       dbms_lock.sleep(var_sleep-(trunc(var_sleep/60)*60));
+
+      /*-*/
+      /* Raise the error when requested to test error processing
+      /*-*/
+      if not(par_error is null) then
+         raise_application_error(-20000, par_error);
+      end if;
 
    /*-------------*/
    /* End routine */

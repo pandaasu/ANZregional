@@ -199,6 +199,7 @@ end sub
 sub ProcessSubmitAccept()
 
    dim strStatement
+   dim lngCount
 
    '//
    '// Create the procedure object
@@ -212,7 +213,7 @@ sub ProcessSubmitAccept()
    call objProcedure.Execute("lics_form.clear_form")
    lngCount = clng(objForm.Fields("StreamCount").Value)
    for i = 1 to lngCount
-      call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
+     call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
    next
 
    '//

@@ -127,11 +127,13 @@
       strXML = strXML+'>';
       if (cobjParam.length > 0) {
          for (var i=0;i<cobjParam.length;i++) {
-            strXML = strXML+'<PARAM';
-            strXML = strXML+' CODE="'+fixAttribute(cobjParam[i].strcod)+'"';
-            strXML = strXML+' VALUE="'+fixAttribute(cobjParam[i].strval)+'"';
-            strXML = strXML+'/>'
-        }
+            if (cobjParam[i].strsav == '*SUPPLIED') {
+               strXML = strXML+'<PARAM';
+               strXML = strXML+' CODE="'+fixAttribute(cobjParam[i].strcod)+'"';
+               strXML = strXML+' VALUE="'+fixAttribute(cobjParam[i].strval)+'"';
+               strXML = strXML+'/>'
+            }
+         }
       }
       strXML = strXML+'</ICS_STREAM>';
       return strXML;

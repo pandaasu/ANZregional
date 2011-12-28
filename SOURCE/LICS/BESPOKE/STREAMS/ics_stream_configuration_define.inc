@@ -371,7 +371,14 @@
       objDiv.setAttribute('objref',objTask);
       objDiv.setAttribute('bakcol','#e6e6fa');
       objDiv.onclick = function() {setSelected(this);};
-      objDiv.appendChild(document.createTextNode('('+objTask.strcod+') '+objTask.strtxt));
+      objDiv.appendChild(document.createTextNode(objTask.strcod));
+      objDiv.appendChild(document.createElement('br'));
+      objFont = document.createElement('font');
+      objFont.style.fontFamily = 'Verdana,sans-serif';
+      objFont.style.fontSize = '8pt';
+      objFont.style.fontWeight = 'bold';
+      objFont.appendChild(document.createTextNode(objTask.strtxt));
+      objDiv.appendChild(objFont);
       if (cstrSelectCode == objTask.strcod) {
          setSelected(objDiv);
       }
@@ -582,11 +589,12 @@
       objDiv.setAttribute('bakcol','#fffacd');
       objDiv.onclick = function() {setSelected(this);};
       objDiv.appendChild(document.createTextNode(objEvent.strtxt));
+      objDiv.appendChild(document.createElement('br'));
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
       objFont.style.fontSize = '8pt';
       objFont.style.fontWeight = 'bold';
-      objFont.appendChild(document.createTextNode(' - Procedure: '));
+      objFont.appendChild(document.createTextNode('Procedure: '));
       objDiv.appendChild(objFont);
       objFont = document.createElement('font');
       objFont.style.fontFamily = 'Verdana,sans-serif';
