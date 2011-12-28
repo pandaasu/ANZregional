@@ -72,7 +72,6 @@ create or replace package body lics_stream_processor as
       /*-*/
       /* Local definitions
       /*-*/
-      var_start date;
       var_error varchar2(4000);
 
       /*-*/
@@ -100,7 +99,6 @@ create or replace package body lics_stream_processor as
       var_lock := null;
       var_alert := null;
       var_email := null;
-      var_start := sysdate;
 
       /*-*/
       /* Validate the parameters
@@ -127,6 +125,18 @@ create or replace package body lics_stream_processor as
       if rcd_event.ste_exe_status != '*OPENED' then
          raise_application_error(-20000, 'Stream execution event is not *OPENED (' || to_char(par_stream) || '/' || par_task || '/' || par_event || ')');
       end if;
+
+      /*-*/
+      /* Update the current event to *WORKING
+      /*-*/
+      update lics_str_exe_event
+         set ste_exe_status = '*WORKING',
+             ste_exe_start = sysdate,
+             ste_exe_end = sysdate
+       where ste_exe_seqn = rcd_event.ste_exe_seqn
+         and ste_tsk_code = rcd_event.ste_tsk_code
+         and ste_evt_code = rcd_event.ste_evt_code;
+      commit;
 
       /*-*/
       /* Process the execution event
@@ -171,7 +181,6 @@ create or replace package body lics_stream_processor as
          /*-*/
          update lics_str_exe_event
             set ste_exe_status = '*COMPLETED',
-                ste_exe_start = var_start,
                 ste_exe_end = sysdate
           where ste_exe_seqn = rcd_event.ste_exe_seqn
             and ste_tsk_code = rcd_event.ste_tsk_code
@@ -185,7 +194,6 @@ create or replace package body lics_stream_processor as
          /*-*/
          update lics_str_exe_event
             set ste_exe_status = '*FAILED',
-                ste_exe_start = var_start,
                 ste_exe_end = sysdate,
                 ste_exe_message = var_error
           where ste_exe_seqn = rcd_event.ste_exe_seqn

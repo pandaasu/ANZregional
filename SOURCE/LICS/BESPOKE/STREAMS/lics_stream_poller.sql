@@ -135,7 +135,7 @@ create or replace package body lics_stream_poller as
             and not(t01.ste_evt_lock in (select ste_evt_lock
                                            from lics_str_exe_event
                                           where ste_evt_lock = t01.ste_evt_lock
-                                            and ste_exe_status = '*OPENED'))
+                                            and ste_exe_status in ('*OPENED','*WORKING')))
           order by t01.ste_exe_seqn asc,
                    t01.stt_tsk_seqn asc,
                    t01.ste_evt_seqn asc;
