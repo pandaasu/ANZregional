@@ -14,6 +14,7 @@
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
  2008/04   Trevor Keon    Created 
+ 2012/01   Ben Halicki    Added index to improve manufacturing systems performance
 
 *******************************************************************************/
 
@@ -46,6 +47,7 @@ alter table bds.bds_recipe_resource
 /**/
 create index bds.bds_recipe_resource_idx01 on bds.bds_recipe_resource (resource_code, proc_order);
 create index bds.bds_recipe_resource_idx02 on bds.bds_recipe_resource (resource_code);
+create index bds.bds_recipe_resource_idx03 on bds.bds_recipe_resource(ltrim("PROC_ORDER",'0'), operation)
 
 /**/
 /* Authority 
