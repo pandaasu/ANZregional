@@ -1,27 +1,3 @@
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
- System  : lads
- Package : lads_validation
- Owner   : lads_app
- Author  : Steve Gregan
-
- Description
- -----------
- Local Atlas Data Store - LADS Validation
-
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2005/08   Steve Gregan   Created
- 2005/11   Steve Gregan   Changed classification loop to array processing
- 2006/06   Steve Gregan   Included classification message deletion in classification loop
- 2006/12   Steve Gregan   Included classification search logic and emailing logic
- 2007/01   Steve Gregan   Changed rule execution logic to array processing
- 2007/05   Steve Gregan   Included execute with email indicator method
-
-*******************************************************************************/
-
 /*****************/
 /* Package Types */
 /*****************/
@@ -47,13 +23,37 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package lads_validation as
+CREATE OR REPLACE PACKAGE LADS_APP."LADS_VALIDATION" as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    System  : lads
+    Package : lads_validation
+    Owner   : lads_app
+    Author  : Steve Gregan
+
+    Description
+    -----------
+    Local Atlas Data Store - LADS Validation
+
+    YYYY/MM   Author         Description
+    -------   ------         -----------
+    2005/08   Steve Gregan   Created
+    2005/11   Steve Gregan   Changed classification loop to array processing
+    2006/06   Steve Gregan   Included classification message deletion in classification loop
+    2006/12   Steve Gregan   Included classification search logic and emailing logic
+    2007/01   Steve Gregan   Changed rule execution logic to array processing
+    2007/05   Steve Gregan   Included execute with email indicator method
+    2012/01   Rajwant Saini  Added author details to spreadsheet header
+                             Added logging to display rule execution time 
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
    procedure execute(par_group in varchar2);
- --  procedure execute(par_group in varchar2, par_email in varchar2);
    function execute_single(par_class in varchar2, par_code in varchar2) return varchar2;
    procedure email_messages(par_execution in varchar2);
    procedure load_statistics(par_group in varchar2);
@@ -65,7 +65,7 @@ end lads_validation;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lads_validation as
+CREATE OR REPLACE PACKAGE BODY LADS_APP."LADS_VALIDATION" as
 
    /*-*/
    /* Private definitions
@@ -121,13 +121,13 @@ create or replace package body lads_validation as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_group is 
+      cursor csr_group is
          select *
            from sap_val_grp t01
           where t01.vag_group = upper(par_group);
       rcd_group csr_group%rowtype;
 
-      cursor csr_classification is 
+      cursor csr_classification is
          select *
            from sap_val_cla t01
           where t01.vac_group = rcd_group.vag_group
@@ -428,7 +428,7 @@ create or replace package body lads_validation as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_classification is 
+      cursor csr_classification is
          select *
            from sap_val_cla t01,
                 sap_val_grp t02
@@ -569,11 +569,15 @@ create or replace package body lads_validation as
       var_dynamic varchar2(32767 char);
       type typ_dynamic is ref cursor;
       csr_dynamic typ_dynamic;
+      var_start_time date;
+      var_end_time date;
+      var_time_diff number;
+           
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_message is 
+      cursor csr_message is
          select vam_sequence
            from sap_val_mes t01
           where t01.vam_execution = par_execution
@@ -582,7 +586,7 @@ create or replace package body lads_validation as
           order by t01.vam_sequence desc;
       rcd_message csr_message%rowtype;
 
-      cursor csr_class_rule is 
+      cursor csr_class_rule is
          select *
            from sap_val_cla_rul t01,
                 sap_val_rul t02
@@ -592,7 +596,7 @@ create or replace package body lads_validation as
           order by t01.vcr_sequence asc;
       rcd_class_rule csr_class_rule%rowtype;
 
-      cursor csr_type_header is 
+      cursor csr_type_header is
          select t02.vaf_type,
                 t02.vaf_filter
            from sap_val_fil_det t01,
@@ -604,7 +608,7 @@ create or replace package body lads_validation as
                    t02.vaf_filter;
       rcd_type_header csr_type_header%rowtype;
 
-      cursor csr_type_rule is 
+      cursor csr_type_rule is
          select *
            from sap_val_typ_rul t01,
                 sap_val_rul t02
@@ -647,8 +651,8 @@ create or replace package body lads_validation as
          /*-*/
          /* Set the message rule
          /*-*/
-         rcd_sap_val_mes.vam_rule := rcd_class_rule.var_rule;
-
+          rcd_sap_val_mes.vam_rule := rcd_class_rule.var_rule;
+          var_start_time := sysdate;
          /*-*/
          /* Build the rule query statement
          /*-*/
@@ -840,7 +844,13 @@ create or replace package body lads_validation as
          /* Commit the database
          /*-*/
          commit;
-
+         
+         var_end_time := sysdate;
+         var_time_diff := round((var_end_time - var_start_time)*24*60*60,0);        
+                
+         lics_logging.write_log('RULE - ' || rcd_class_rule.var_rule || ' Duration - ' || to_char(to_date(var_time_diff,'sssss'),'hh24:mi:ss'));
+         var_time_diff := 0;
+          
       end loop;
       close csr_class_rule;
 
@@ -1095,7 +1105,7 @@ create or replace package body lads_validation as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_email_detail is 
+      cursor csr_email_detail is
          select distinct(t01.ved_email) as ved_email
            from sap_val_ema_det t01
           where (t01.ved_group = '*ALL' or t01.ved_group = par_message.vam_group)
@@ -1238,14 +1248,14 @@ create or replace package body lads_validation as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_email is 
+      cursor csr_email is
          select t01.*
            from sap_val_ema t01
           where t01.vae_status = '1'
           order by t01.vae_email asc;
       rcd_email csr_email%rowtype;
 
-      cursor csr_assigned is 
+      cursor csr_assigned is
          select t01.*,
                 t02.*
            from sap_val_mes_ema t01,
@@ -1368,51 +1378,185 @@ create or replace package body lads_validation as
                /* Create the email file part and output the header data
                /*-*/
                if var_prt_count = 1 then
-                  lics_mailer.create_part(par_execution||'_'||replace(var_class,'*','#')||'.xls');
+                  lics_mailer.create_part(par_execution||'_'||replace(var_class,'*','#')||'.xml');
                else
-                  lics_mailer.create_part(par_execution||'_'||replace(var_class,'*','#')||'_PART'||to_char(var_prt_count,'fm9999999990')||'.xls');
+                  lics_mailer.create_part(par_execution||'_'||replace(var_class,'*','#')||'_PART'||to_char(var_prt_count,'fm9999999990')||'.xml');
                end if;
-               lics_mailer.append_data('<table border=1 cellpadding="0" cellspacing="0">');
-               lics_mailer.append_data('<tr>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">SAP Code</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Sequence</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Group</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Classification</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Type</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Filter</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Rule</td>');
-               lics_mailer.append_data('<td align=left style="FONT-FAMILY:Arial,Verdana,Tahoma,sans-serif;FONT-SIZE:9pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#40414c;COLOR:#ffffff;">Message</td>');
-               lics_mailer.append_data('</tr>');
-
-               /*-*/
-               /* Reset the email file row count
-               /*-*/
-               var_row_count := 1;
+               
+                 lics_mailer.append_data('<?xml version="1.0" ?>');
+                 lics_mailer.append_data('<?mso-application progid="Excel.Sheet"?>');
+                 lics_mailer.append_data('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office"');
+                 lics_mailer.append_data('xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"');
+                 lics_mailer.append_data('xmlns:html="http://www.w3.org/TR/REC-html40">');
+                 lics_mailer.append_data('<DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">');
+                 lics_mailer.append_data('<Title>' || lads_parameter.system_code || ' Validation</Title>');
+                 lics_mailer.append_data('<Subject>' || rcd_assigned.vam_group || '</Subject>');
+                 lics_mailer.append_data('<Author>' || lads_parameter.system_code || '_' || lads_parameter.system_unit || '_' || lads_parameter.system_environment || '</Author>');
+                 lics_mailer.append_data('<Company>Mars Information Services</Company>');                 
+                 lics_mailer.append_data('</DocumentProperties>');
+                 lics_mailer.append_data('<ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel"></ExcelWorkbook>');
+                 
+                 --******DEFINE STYLE******
+                    
+                 lics_mailer.append_data('<Styles>');
+                 
+                 lics_mailer.append_data('<Style ss:ID="Normal" ss:Name="Normal">');
+                 lics_mailer.append_data('<Alignment ss:Vertical="Top" ss:WrapText="0" />');
+                 lics_mailer.append_data('<Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000" ss:Size="11" />');
+                 lics_mailer.append_data('</Style>');
+                 
+                 lics_mailer.append_data('<Style ss:ID="red">');
+                 lics_mailer.append_data('<Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="white" ss:Size="11" ss:Bold="1" />');
+                 lics_mailer.append_data('<Interior ss:Color="red" ss:Pattern="Solid" />');
+                 lics_mailer.append_data('</Style>');
+                 
+                 lics_mailer.append_data('<Style ss:ID="blue">');
+                 lics_mailer.append_data('<Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="white" ss:Size="11" ss:Bold="1" />');
+                 lics_mailer.append_data('<Interior ss:Color="blue" ss:Pattern="Solid" />');
+                 lics_mailer.append_data('</Style>');
+                    
+                 lics_mailer.append_data('<Style ss:ID="black">');
+                 lics_mailer.append_data('<Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="white" ss:Size="11" ss:Bold="1" />');
+                 lics_mailer.append_data('<Interior ss:Color="black" ss:Pattern="Solid" />');
+                 lics_mailer.append_data('</Style>');
+                 
+                 lics_mailer.append_data('</Styles>');
+                
+                 lics_mailer.append_data('<Worksheet ss:Name="'||var_class||'">');
+                 
+                 /********FREEZE ROW AND COLUMN ********/
+                 lics_mailer.append_data('<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">');
+                 lics_mailer.append_data('<Selected />');
+                 lics_mailer.append_data('<FreezePanes />');
+                 lics_mailer.append_data('<FrozenNoSplit />');
+                 lics_mailer.append_data('<SplitHorizontal>1</SplitHorizontal>');
+                 lics_mailer.append_data('<TopRowBottomPane>1</TopRowBottomPane>');
+                 lics_mailer.append_data('<SplitVertical>1</SplitVertical>');
+                 lics_mailer.append_data('<LeftColumnRightPane>1</LeftColumnRightPane>');  
+                 lics_mailer.append_data('<ActivePane>0</ActivePane>');
+                 lics_mailer.append_data('<Panes>');
+                 lics_mailer.append_data('<Pane>');
+                 lics_mailer.append_data('<Number>3</Number>');
+                 lics_mailer.append_data('</Pane>');
+                 lics_mailer.append_data('<Pane>');
+                 lics_mailer.append_data('<Number>2</Number>');
+                 lics_mailer.append_data('</Pane>');
+                 lics_mailer.append_data('<Pane>');
+                 lics_mailer.append_data('<Number>1</Number>');
+                 lics_mailer.append_data('</Pane>');
+                 lics_mailer.append_data('<Pane>');
+                 lics_mailer.append_data('<Number>0</Number>');
+                 lics_mailer.append_data('</Pane>');
+                 lics_mailer.append_data('</Panes>');
+                 lics_mailer.append_data('<ProtectContents>False</ProtectContents>');
+                 lics_mailer.append_data('<ProtectObjects>False</ProtectObjects>');
+                 lics_mailer.append_data('<ProtectScenarios>False</ProtectScenarios>');    
+                 lics_mailer.append_data('</WorksheetOptions>');
+                 lics_mailer.append_data('<ss:ProtectStructure>False</ss:ProtectStructure>');
+                 lics_mailer.append_data('<ss:ProtectWindows>False</ss:ProtectWindows>');
+                
+                 lics_mailer.append_data('<Table>');
+                 /********HIDE COLUMNS*********/
+                 lics_mailer.append_data('<Column ss:Hidden="0" ss:Width="100" />');
+                 lics_mailer.append_data('<Column ss:Hidden="1" ss:Width="50" />');
+                 lics_mailer.append_data('<Column ss:Hidden="1" ss:Width="50" />');
+                 lics_mailer.append_data('<Column ss:Hidden="1" ss:Width="100" />');
+                 lics_mailer.append_data('<Column ss:Hidden="1" ss:Width="50" />');
+                 lics_mailer.append_data('<Column ss:Hidden="1" ss:Width="50" />');
+                 lics_mailer.append_data('<Column ss:Hidden="0" ss:Width="100" />');
+                 lics_mailer.append_data('<Column ss:Hidden="0" ss:Width="1000" />');
+                    
+                 lics_mailer.append_data('<Row>');
+                 
+                 /********HEADER ROWS**********/
+                 lics_mailer.append_data('<Cell ss:StyleID="black">');
+                 lics_mailer.append_data('<Data ss:Type="String">SAP Code</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="red">');
+                 lics_mailer.append_data('<Data ss:Type="String">Sequence</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="red">');
+                 lics_mailer.append_data('<Data ss:Type="String">Group</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="red">');
+                 lics_mailer.append_data('<Data ss:Type="String">Classification</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="red">');
+                 lics_mailer.append_data('<Data ss:Type="String">Type</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="red">');
+                 lics_mailer.append_data('<Data ss:Type="String">Filter</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="blue">');
+                 lics_mailer.append_data('<Data ss:Type="String">Rule</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('<Cell ss:StyleID="black">');
+                 lics_mailer.append_data('<Data ss:Type="String">Message</Data>');
+                 lics_mailer.append_data('</Cell>');
+                
+                 lics_mailer.append_data('</Row>');
+               
+                /*-*/
+                /* Reset the email file row count
+                /*-*/
+                var_row_count := 1;
 
             end if;
 
             /*-*/
             /* Output the message data
-            /*-*/
-            lics_mailer.append_data('<tr>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_code||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_sequence||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_group||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_class||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_type||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_filter||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_rule||'</td>');
-            lics_mailer.append_data('<td align=left>'||rcd_assigned.vam_text||'</td>');
-            lics_mailer.append_data('</tr>');
+           /*-*/
+            lics_mailer.append_data('<Row>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_code||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_sequence||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_group||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_class||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_type||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_filter||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_rule||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+            
+            lics_mailer.append_data('<Cell>');
+            lics_mailer.append_data('<Data ss:Type="String">'||rcd_assigned.vam_text||'</Data>');
+            lics_mailer.append_data(' </Cell>');
+              
+            lics_mailer.append_data('</Row>');
 
             /*-*/
             /* Increment the email file row count
-            /*-*/
+           /*-*/
             var_row_count := var_row_count + 1;
 
             /*-*/
             /* Update the message emailed count
-            /*-*/
+           /*-*/
             update sap_val_mes
                set vam_emailed = vam_emailed + 1
              where vam_execution = rcd_assigned.vam_execution
@@ -1425,9 +1569,11 @@ create or replace package body lads_validation as
 
          /*-*/
          /* Complete the email when required
-         /*-*/
+        /*-*/
          if not(var_class is null) then
-            lics_mailer.append_data('</table>');
+            lics_mailer.append_data('</Table>');
+           lics_mailer.append_data ('</Worksheet>');
+            lics_mailer.append_data('</Workbook>');
             lics_mailer.create_part(null);
             lics_mailer.append_data(null);
             lics_mailer.append_data(null);
@@ -1462,14 +1608,14 @@ create or replace package body lads_validation as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_class_header is 
+      cursor csr_class_header is
          select *
            from sap_val_cla t01
           where t01.vac_group = upper(par_group)
           order by t01.vac_class asc;
       rcd_class_header csr_class_header%rowtype;
 
-      cursor csr_class_statistic is  
+      cursor csr_class_statistic is
          select vac_class,
                 vac_description,
                 0 as mis_count,
@@ -1496,7 +1642,7 @@ create or replace package body lads_validation as
             and t01.vac_class = rcd_class_header.vac_class;
       rcd_class_statistic csr_class_statistic%rowtype;
 
-      cursor csr_type_statistic is  
+      cursor csr_type_statistic is
          select vat_type,
                 vat_description,
                 0 as mis_count,
@@ -1523,7 +1669,7 @@ create or replace package body lads_validation as
             and t01.vat_group = upper(par_group);
       rcd_type_statistic csr_type_statistic%rowtype;
 
-      cursor csr_filter_statistic is  
+      cursor csr_filter_statistic is
          select vaf_filter,
                 vaf_description,
                 nvl(mis_count,0) as mis_count,
@@ -1565,7 +1711,7 @@ create or replace package body lads_validation as
             and t01.vaf_group = upper(par_group);
       rcd_filter_statistic csr_filter_statistic%rowtype;
 
-      cursor csr_rule_statistic is  
+      cursor csr_rule_statistic is
          select var_rule,
                 var_description,
                 0 as mis_count,
@@ -1599,18 +1745,18 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Initialise the statistic variables
-      /*-*/
+     /*-*/
       rcd_sap_val_sta.vas_group := upper(par_group);
 
       /*-*/
       /* Delete any existing statistics for the group
-      /*-*/
+     /*-*/
       delete from sap_val_sta
        where vas_group = rcd_sap_val_sta.vas_group;
 
       /*-*/
       /* Retrieve the statistics for all classifications
-      /*-*/
+     /*-*/
       open csr_class_header;
       loop
          fetch csr_class_header into rcd_class_header;
@@ -1620,7 +1766,7 @@ create or replace package body lads_validation as
 
          /*-*/
          /* Execute and count the classification list query
-         /*-*/
+        /*-*/
          var_test := get_clob(rcd_class_header.vac_lst_query);
          begin
             open csr_test for 'select count(*) from (' || var_test || ')';
@@ -1636,7 +1782,7 @@ create or replace package body lads_validation as
 
          /*-*/
          /* Insert the classification statistics
-         /*-*/
+        /*-*/
          open csr_class_statistic;
          fetch csr_class_statistic into rcd_class_statistic;
          if csr_class_statistic%found then
@@ -1672,7 +1818,7 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Insert the type statistics
-      /*-*/
+     /*-*/
       open csr_type_statistic;
       loop
          fetch csr_type_statistic into rcd_type_statistic;
@@ -1708,7 +1854,7 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Insert the filter statistics
-      /*-*/
+     /*-*/
       open csr_filter_statistic;
       loop
          fetch csr_filter_statistic into rcd_filter_statistic;
@@ -1744,7 +1890,7 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Insert the rule statistics
-      /*-*/
+     /*-*/
       open csr_rule_statistic;
       loop
          fetch csr_rule_statistic into rcd_rule_statistic;
@@ -1780,7 +1926,7 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Commit the database
-      /*-*/
+     /*-*/
       commit;
 
    /*-------------*/
@@ -1809,14 +1955,14 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Retrieve the clob in 2000 character chunks
-      /*-*/
+     /*-*/
       var_return := null;
       var_pointer := 1;
       loop
 
          /*-*/
          /* Retrieve the next chunk
-         /*-*/
+        /*-*/
          begin
             dbms_lob.read(par_clob, var_length, var_pointer, var_buffer);
             var_pointer := var_pointer + var_length;
@@ -1830,7 +1976,7 @@ create or replace package body lads_validation as
 
          /*-*/
          /* Build the return value
-         /*-*/
+        /*-*/
          var_return := var_return || var_buffer;
 
       end loop;
@@ -1853,7 +1999,7 @@ create or replace package body lads_validation as
 
       /*-*/
       /* Return the virtual table
-      /*-*/
+     /*-*/
       return var_vir_table;
 
    /*-------------*/
