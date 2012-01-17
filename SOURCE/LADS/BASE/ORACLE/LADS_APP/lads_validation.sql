@@ -848,7 +848,7 @@ CREATE OR REPLACE PACKAGE BODY LADS_APP."LADS_VALIDATION" as
          var_end_time := sysdate;
          var_time_diff := round((var_end_time - var_start_time)*24*60*60,0);        
                 
-         lics_logging.write_log('RULE - ' || rcd_class_rule.var_rule || ' Duration - ' || to_char(to_date(var_time_diff,'sssss'),'hh24:mi:ss'));
+         lics_logging.write_log('RULE - ' || rcd_class_rule.var_rule || ' - EXECUTION TIME - ' || to_char(to_date(var_time_diff,'sssss'),'hh24:mi:ss'));
          var_time_diff := 0;
           
       end loop;
