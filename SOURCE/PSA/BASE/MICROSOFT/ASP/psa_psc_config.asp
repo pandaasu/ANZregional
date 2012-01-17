@@ -1446,6 +1446,7 @@ sub PaintFunction()%>
       this.actpch = 0;
       this.actmix = 0;
       this.actton = 0;
+      this.reqpch = 0;
       this.invary = new Array();
    }
    function clsTypeInvt() {
@@ -1611,6 +1612,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length-1].actpch = objElements[i].getAttribute('ACTPCH');
                objActAry[objActAry.length-1].actmix = objElements[i].getAttribute('ACTMIX');
                objActAry[objActAry.length-1].actton = objElements[i].getAttribute('ACTTON');
+               objActAry[objActAry.length-1].reqpch = objElements[i].getAttribute('REQPCH');
             } else if (objElements[i].nodeName == 'LININV') {
                objInvAry = objActAry[objActAry.length-1].invary;
                objInvAry[objInvAry.length] = new clsTypeInvt();
@@ -2286,6 +2288,14 @@ sub PaintFunction()%>
                      objDiv.appendChild(document.createElement('br'));
                      if (cstrTypeCode == '*FILL') {
                         objDiv.appendChild(document.createTextNode('Scheduled Pouches ('+objWork.schpch+')'));
+                        objDiv.appendChild(document.createElement('br'));
+                        // objDiv.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#ff7744;';  
+                        objFont = document.createElement('font');
+                        //objFont.style.backgroundColor = '#ff7744'; 
+                        objFont.style.fontWeight = 'bold';
+                        objFont.style.color = '#b00000';                     
+                        objFont.appendChild(document.createTextNode('Requested Pouches ('+objWork.reqpch+')'));   
+                        objDiv.appendChild(objFont);    
                      } else if (cstrTypeCode == '*PACK') {
                         objDiv.appendChild(document.createTextNode('Scheduled Cases ('+objWork.schcas+') Pallets ('+objWork.schplt+')'));
                      } else if (cstrTypeCode == '*FORM') {

@@ -1,7 +1,8 @@
+
 /******************/
 /* Package Header */
 /******************/
-create or replace package psa_app.psa_psc_function as
+CREATE OR REPLACE package PSA_APP.psa_psc_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -21,6 +22,7 @@ create or replace package psa_app.psa_psc_function as
     2009/12   Steve Gregan   Created
     2011/03   Steve Gregan   Added PSA batch weight override
     2011/06   Steve Gregan   Added RSU to SAP data interface
+    2012/12   Rajwant Saini  Added Requested Pouches in Load_Schedule procedure 
 
    *******************************************************************************/
 
@@ -57,7 +59,7 @@ end psa_psc_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body psa_app.psa_psc_function as
+CREATE OR REPLACE package body PSA_APP.psa_psc_function as
 
    /*-*/
    /* Private exceptions
@@ -7193,6 +7195,7 @@ create or replace package body psa_app.psa_psc_function as
                 to_char(t01.psa_mat_act_pch_qty) as psa_mat_act_pch_qty,
                 to_char(t01.psa_mat_act_mix_qty) as psa_mat_act_mix_qty,
                 to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty,
+                to_char(t01.psa_mat_req_pch_qty) as psa_mat_req_pch_qty,
                 to_char(trunc(t01.psa_act_dur_mins/60))||' hrs '||to_char(mod(t01.psa_act_dur_mins,60))||' min' as psa_act_dur_mins
            from psa_psc_actv t01
           where t01.psa_psc_code = par_psc_code
@@ -7258,6 +7261,7 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTENT="'||psa_to_xml(rcd_uact.psa_act_ent_flag)||'"'||
                                                       ' LINCDE="'||psa_to_xml(rcd_uact.psa_sch_lin_code)||'"'||
                                                       ' CONCDE="'||psa_to_xml(rcd_uact.psa_sch_con_code)||'"'||
+                                                      ' REQPCH="'||psa_to_xml(rcd_uact.psa_mat_req_pch_qty)||'"'||
                                                       ' SCHDUR="'||psa_to_xml(rcd_uact.psa_sch_dur_mins)||'"/>';
             end if;
          end loop;
@@ -7368,7 +7372,8 @@ create or replace package body psa_app.psa_psc_function as
                 to_char(t01.psa_mat_act_cas_qty) as psa_mat_act_cas_qty,
                 to_char(t01.psa_mat_act_pch_qty) as psa_mat_act_pch_qty,
                 to_char(t01.psa_mat_act_mix_qty) as psa_mat_act_mix_qty,
-                to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty
+                to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty,
+                to_char(t01.psa_mat_req_pch_qty) as psa_mat_req_pch_qty
            from psa_psc_actv t01
           where t01.psa_psc_code = par_psc_code
             and t01.psa_prd_type = par_prd_type
@@ -7480,7 +7485,8 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTCAS="'||psa_to_xml(rcd_sact.psa_mat_act_cas_qty)||'"'||
                                                       ' ACTPCH="'||psa_to_xml(rcd_sact.psa_mat_act_pch_qty)||'"'||
                                                       ' ACTMIX="'||psa_to_xml(rcd_sact.psa_mat_act_mix_qty)||'"'||
-                                                      ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"/>';
+                                                      ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"'||
+                                                      ' REQPCH="'||psa_to_xml(rcd_sact.psa_mat_req_pch_qty)||'"/>';
             else
                ptbl_data(ptbl_data.count+1) := '<LINACT ACTCDE="'||psa_to_xml(rcd_sact.psa_act_code)||'"'||
                                                       ' ACTTYP="'||psa_to_xml(rcd_sact.psa_act_type)||'"'||
@@ -7508,7 +7514,8 @@ create or replace package body psa_app.psa_psc_function as
                                                       ' ACTCAS="'||psa_to_xml(rcd_sact.psa_mat_act_cas_qty)||'"'||
                                                       ' ACTPCH="'||psa_to_xml(rcd_sact.psa_mat_act_pch_qty)||'"'||
                                                       ' ACTMIX="'||psa_to_xml(rcd_sact.psa_mat_act_mix_qty)||'"'||
-                                                      ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"/>';
+                                                      ' ACTTON="'||psa_to_xml(rcd_sact.psa_mat_act_ton_qty)||'"'||
+                                                      ' REQPCH="'||psa_to_xml(rcd_sact.psa_mat_req_pch_qty)||'"/>';
             end if;
             open csr_sivt;
             loop
@@ -8341,8 +8348,3 @@ create or replace package body psa_app.psa_psc_function as
 end psa_psc_function;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym psa_psc_function for psa_app.psa_psc_function;
-grant execute on psa_app.psa_psc_function to public;

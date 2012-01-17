@@ -1,7 +1,8 @@
+
 /******************/
 /* Package Header */
 /******************/
-create or replace package psa_app.psa_rpt_function as
+CREATE OR REPLACE package PSA_APP.psa_rpt_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -19,6 +20,7 @@ create or replace package psa_app.psa_rpt_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/12   Steve Gregan   Created
+    2012/12   Rajwant Saini  Added Requested Pouches in report_Schedule Function 
 
    *******************************************************************************/
 
@@ -35,7 +37,7 @@ end psa_rpt_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body psa_app.psa_rpt_function as
+CREATE OR REPLACE package body PSA_APP.psa_rpt_function as
 
    /*-*/
    /* Private exceptions
@@ -243,7 +245,8 @@ create or replace package body psa_app.psa_rpt_function as
                 to_char(t01.psa_mat_act_cas_qty) as psa_mat_act_cas_qty,
                 to_char(t01.psa_mat_act_pch_qty) as psa_mat_act_pch_qty,
                 to_char(t01.psa_mat_act_mix_qty) as psa_mat_act_mix_qty,
-                to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty
+                to_char(t01.psa_mat_act_ton_qty,'fm999999990.000') as psa_mat_act_ton_qty,
+                to_char(t01.psa_mat_req_pch_qty) as psa_mat_req_pch_qty
            from psa_psc_actv t01
           where t01.psa_psc_code = rcd_retrieve.psp_psc_code
             and t01.psa_prd_type = rcd_retrieve.psp_prd_type
@@ -684,34 +687,36 @@ create or replace package body psa_app.psa_rpt_function as
                   var_work := var_work||'<br>';
                end if;
                var_work := var_work||'<font style="font-family:Arial;font-size:8pt;font-weight:bold;background-color:#ffffff;color:'||var_bcolor||';">*PROD* - Material ('||rcd_sact.psa_mat_code||') '||rcd_sact.psa_mat_name||'</font>';
-               var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
-               if rcd_sact.psa_sch_chg_flag = '0' then
-                  var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||')';
-               else
-                  var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||') Change ('||rcd_sact.psa_sch_chg_mins||')';
+              var_work := var_work||'<br>'||'Start ('||to_char(rcd_sact.psa_act_str_time,'dd/mm/yyyy hh24:mi')||') End ('||to_char(rcd_sact.psa_act_end_time,'dd/mm/yyyy hh24:mi')||')';
+              if rcd_sact.psa_sch_chg_flag = '0' then
+                 var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||')';
+              else
+                var_work := var_work||'<br>'||'Scheduled Production ('||rcd_sact.psa_sch_dur_mins||') Change ('||rcd_sact.psa_sch_chg_mins||')';
                end if;
                if rcd_sact.psa_act_ent_flag = '1' then
-                  if rcd_sact.psa_act_chg_flag = '0' then
-                     var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||')';
-                  else
-                     var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||') Change ('||rcd_sact.psa_act_chg_mins||')';
-                  end if;
-               end if;
+                if rcd_sact.psa_act_chg_flag = '0' then
+                 var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||')';
+              else
+               var_work := var_work||'<br>'||'Actual Production ('||rcd_sact.psa_act_dur_mins||') Change ('||rcd_sact.psa_act_chg_mins||')';
+              end if;
+              end if;
                if rcd_retrieve.psp_prd_type = '*FILL' then
-                  var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pouches ('||rcd_sact.psa_mat_sch_pch_qty||') Mixes ('||rcd_sact.psa_mat_sch_mix_qty||')';
-               elsif rcd_retrieve.psp_prd_type = '*PACK' then
-                  var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pallets ('||rcd_sact.psa_mat_sch_plt_qty||')';
-               elsif rcd_retrieve.psp_prd_type = '*FORM' then
-                  var_work := var_work||'<br>'||'Scheduled Pouches ('||rcd_sact.psa_mat_sch_pch_qty||')';
-               end if;
-               if rcd_sact.psa_act_ent_flag = '1' then
-                  if rcd_retrieve.psp_prd_type = '*FILL' then
+               var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pouches ('||rcd_sact.psa_mat_sch_pch_qty||') Mixes ('||rcd_sact.psa_mat_sch_mix_qty||')';
+               var_work := var_work||'<br>'||'<font style="font-weight:bold;">'||'Requested Pouches ('||rcd_sact.psa_mat_req_pch_qty||')'||'</font>';
+              elsif rcd_retrieve.psp_prd_type = '*PACK' then
+               var_work := var_work||'<br>'||'Scheduled Cases ('||rcd_sact.psa_mat_sch_cas_qty||') Pallets ('||rcd_sact.psa_mat_sch_plt_qty||')';
+              elsif rcd_retrieve.psp_prd_type = '*FORM' then
+               var_work := var_work||'<br>'||'Scheduled Pouches ('||rcd_sact.psa_mat_sch_pch_qty||')';
+                 
+              end if;
+              if rcd_sact.psa_act_ent_flag = '1' then
+               if rcd_retrieve.psp_prd_type = '*FILL' then
                      var_work := var_work||'<br>'||'Actual Cases ('||rcd_sact.psa_mat_act_cas_qty||') Pouches ('||rcd_sact.psa_mat_act_pch_qty||') Mixes ('||rcd_sact.psa_mat_act_mix_qty||')';
-                  elsif rcd_retrieve.psp_prd_type = '*PACK' then
-                     var_work := var_work||'<br>'||'Actual Cases ('||rcd_sact.psa_mat_act_cas_qty||') Pallets ('||rcd_sact.psa_mat_act_plt_qty||')';
-                  elsif rcd_retrieve.psp_prd_type = '*FORM' then
-                     var_work := var_work||'<br>'||'Actual Pouches ('||rcd_sact.psa_mat_act_pch_qty||')';
-                  end if;
+                elsif rcd_retrieve.psp_prd_type = '*PACK' then
+                  var_work := var_work||'<br>'||'Actual Cases ('||rcd_sact.psa_mat_act_cas_qty||') Pallets ('||rcd_sact.psa_mat_act_plt_qty||')';
+                elsif rcd_retrieve.psp_prd_type = '*FORM' then
+                 var_work := var_work||'<br>'||'Actual Pouches ('||rcd_sact.psa_mat_act_pch_qty||')';
+                 end if;
                end if;
                open csr_sivt;
                loop
@@ -852,7 +857,7 @@ create or replace package body psa_app.psa_rpt_function as
 
       /*-*/
       /* Start the report
-      /*-*/
+      /*-*/ 
       pipe row('<html');
       pipe row('<head>');
       pipe row('<style>br {mos-data_placement:same-cell;}</style>');
@@ -939,7 +944,7 @@ create or replace package body psa_app.psa_rpt_function as
       /*-*/
       pipe row('</table>');
       pipe row('</body>');
-      pipe row('</html>');
+      pipe row('</html>'); 
 
       /*-*/
       /* Return
@@ -1508,8 +1513,3 @@ create or replace package body psa_app.psa_rpt_function as
 end psa_rpt_function;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym psa_rpt_function for psa_app.psa_rpt_function;
-grant execute on psa_app.psa_rpt_function to public;
