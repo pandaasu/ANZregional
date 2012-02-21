@@ -44,6 +44,7 @@ create or replace package dw_scheduled_aggregation as
     2008/08   Steve Gregan   Added ICS process trace calls
     2008/09   Linden Glen    Added NZ16 to NZMKT base load
     2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
+    2009/08   Trevor Keon    Added check for Atlas outage flag to sap_retrieval
 
    *******************************************************************************/
 
@@ -346,7 +347,8 @@ create or replace package body dw_scheduled_aggregation as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
-      var_company_code company.company_code%type;
+      var_outage varchar2(5);
+      var_company_code company.company_code%type;      
 
       /*-*/
       /* Local constants
@@ -404,6 +406,17 @@ create or replace package body dw_scheduled_aggregation as
       /* Begin procedure
       /*-*/
       lics_logging.write_log('Begin - Scheduled SAP Retrieval - Parameters(' || var_company_code || ')');
+
+      /*-*/
+      /* Check if the SAP Outage flag is set
+      /*-*/
+      var_outage := lics_setting_configuration.retrieve_setting('DW_SAP_RETRIEVAL','SAP_OUTAGE');
+      
+      if var_outage = '*YES' then
+         lics_logging.write_log('Atlas Outage flag set - Exiting ...');
+         lics_logging.end_log;
+         return;
+      end if;
 
       /*-*/
       /* Request the lock on the SAP retrieval
