@@ -100,6 +100,7 @@ create index bds.bds_material_plant_idx06 on bds.bds_material_plant_mfanz(plant_
 create index bds.bds_material_plant_idx07 on bds.bds_material_plant_mfanz(mars_traded_unit_flag);
 create index bds.bds_material_plant_idx08 on bds.bds_material_plant_mfanz(mars_retail_sales_unit_flag);
 create index bds.bds_material_plant_idx09 on bds.bds_material_plant_mfanz(mars_intrmdt_prdct_compnt_flag);
+create index bds.bds_material_plant_idx10 on bds.bds_material_plant_mfanz(mrp_controller,plant_code);
 
 /**/
 /* Primary Key Constraint 
