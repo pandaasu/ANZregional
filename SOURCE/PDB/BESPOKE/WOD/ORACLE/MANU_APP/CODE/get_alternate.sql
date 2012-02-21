@@ -1,7 +1,4 @@
-DROP FUNCTION MANU_APP.GET_ALTERNATE;
-
-CREATE OR REPLACE FUNCTION MANU_APP.Get_Alternate(par_matl IN  VARCHAR2, par_xdate IN DATE DEFAULT SYSDATE) RETURN VARCHAR2
-IS
+create or replace function manu_app.get_alternate(par_matl in  varchar2, par_xdate in date default sysdate) return varchar2 is
 
 /*******************************************************************************
     NAME:      Get_Alternate
@@ -13,6 +10,7 @@ IS
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   7/7/2004  Jeff Phillipson          Created this procedure.
+    1.2   15/4/2009 Trevor Keon              Changed query to use BDS tables
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -27,31 +25,33 @@ IS
      							 correct date.
   ********************************************************************************/
    
-   var_alt    VARCHAR2(4);
+  var_alt varchar2(4);
   
-BEGIN
+begin
 
-   SELECT r.alt 
-   INTO var_alt
-   FROM (SELECT DECODE(alt,NULL,'1', alt) alt, eff_start_date
-   FROM MANU.BOM 
-   WHERE MATL_CODE = par_matl 
-   AND eff_start_date <= par_xdate
-   ORDER BY 2 DESC) r WHERE ROWNUM = 1;
+  select r.alt 
+  into var_alt
+  from 
+    (
+      select decode(t01.bom_alternative, null, '1', t01.bom_alternative) as alt,
+        decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) as eff_start_date
+      from bds_bom_all t01
+      where t01.bom_plant in ('AU20', 'AU21', 'AU22', 'AU23', 'AU24', 'AU25')
+        and t01.item_number is not null
+        and t01.bom_material_code = par_matl
+        and decode(t01.bom_eff_from_date, null, t01.item_eff_from_date, t01.bom_eff_from_date) <= par_xdate
+      order by 2 desc
+    ) r 
+  where rownum = 1;
+     
+  return var_alt;
    
-   RETURN var_alt;
-   
-EXCEPTION
-    WHEN OTHERS THEN
-        RETURN 1;
-END;
+exception
+  when others then
+    return 1;
+end;
 /
 
+grant execute on manu_app.get_alternate to appsupport;
 
-DROP PUBLIC SYNONYM GET_ALTERNATE;
-
-CREATE PUBLIC SYNONYM GET_ALTERNATE FOR MANU_APP.GET_ALTERNATE;
-
-
-GRANT EXECUTE ON MANU_APP.GET_ALTERNATE TO APPSUPPORT;
-
+create or replace public synonym get_alternate for manu_app.get_alternate;
