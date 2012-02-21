@@ -8,7 +8,7 @@ function GetEnvironment()
    '// Returns the environment string
    '// (Devp, Test, Prod)
    '//
-   GetEnvironment = "Test" 
+   GetEnvironment = "Prod" 
 
 end function
 
@@ -20,7 +20,7 @@ function GetInstallation()
    '//
    '// Returns the installation string
    '//
-   GetInstallation = "China Local" 
+   GetInstallation = "China/HK/KR" 
 
 end function
 
@@ -46,7 +46,6 @@ function GetBase()
    '//
    dim strBase
    strBase = "http://" & Request.ServerVariables("SERVER_NAME")
-   strBase = strBase & ":" & Request.ServerVariables("SERVER_PORT")
    strBase = strBase & left(Request.ServerVariables("PATH_INFO"), instrRev(Request.ServerVariables("PATH_INFO"), "/"))
    GetBase = strBase
 
