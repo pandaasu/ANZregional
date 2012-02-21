@@ -14,6 +14,7 @@ create or replace package rtm_app.cadefx01_extract as
    YYYY/MM   Author         Description
    -------   ------         -----------
    2009/02   Danny Xing    Created
+   2009/06   Trevor Keon   Removed danny_test insert statements
 
   *******************************************************************************/
 
@@ -80,7 +81,6 @@ create or replace package body rtm_app.cadefx01_extract as
             and period_num = substrb(rec_routeplan.date_start,5,2)
             and period_day_num = substrb(rec_routeplan.date_start,7,1)*7-7+substrb(rec_routeplan.date_start,8,1)+1;
         exception when others then
-          insert into danny_test values('1','v_date_start','not_found');
           v_valid_flag := 'N';
         end;
         
@@ -92,7 +92,6 @@ create or replace package body rtm_app.cadefx01_extract as
             and period_num = substrb(rec_routeplan.date_end,5,2)
             and period_day_num = substrb(rec_routeplan.date_end,7,1)*7-7+substrb(rec_routeplan.date_end,8,1)+1;
         exception when others then
-          insert into danny_test values('21','v_date_end','not_found');
           v_valid_flag := 'N';
         end;
         
@@ -106,7 +105,6 @@ create or replace package body rtm_app.cadefx01_extract as
             and period_num = substrb(rec_routeplan.date_start,5,2)+6
             and period_day_num = substrb(rec_routeplan.date_end,7,1)*7-7+substrb(rec_routeplan.date_end,8,1)+1;
         exception when others then
-          insert into danny_test values('22','v_date_end','not_found');
           v_valid_flag := 'N';
         end;
       end if;
@@ -121,7 +119,6 @@ create or replace package body rtm_app.cadefx01_extract as
             and period_num = substrb(rec_routeplan.date_start,5,2)+6
             and period_day_num = substrb(rec_routeplan.date_end,7,1)*7-7+substrb(rec_routeplan.date_end,8,1)+1;
         exception when others then
-          insert into danny_test values('23','v_date_end','not_found');
           v_valid_flag:='N';
         end;
       end if;
@@ -135,7 +132,6 @@ create or replace package body rtm_app.cadefx01_extract as
             and period_num = substrb(rec_routeplan.date_start,5,2)+6
             and period_day_num = substrb(rec_routeplan.date_end,7,1)*7-7+substrb(rec_routeplan.date_end,8,1)+1;
         exception when others then
-          insert into danny_test values('24','v_date_end','not_found');
           v_valid_flag:='N';
         end;
       end if;
@@ -146,37 +142,33 @@ create or replace package body rtm_app.cadefx01_extract as
           loop
             fetch csr_date_range into rec_date_range;
             exit when csr_date_range%notfound;
-            
-            begin
-              insert into rtm.efex_rt_pln_final_data
-              (
-                sales_prsn_associate_code,
-                route_plan_date,
-                route_plan_order,
-                customer_code,
-                updated_by,
-                updated_on,
-                created_by,
-                created_on,
-                row_no,
-                status
-              )
-              values 
-              (
-                rec_routeplan.sales_prsn_code,
-                rec_date_range.calendar_date,
-                rec_routeplan.rtp_seq,
-                rec_routeplan.cust_code,
-                v_created_by,
-                sysdate,
-                v_updated_by,
-                sysdate,
-                rec_routeplan.row_no,
-                rec_routeplan.rtp_status
-              );
-            exception when others then
-              insert into danny_test values('99','insert','error');        
-            end;
+
+            insert into rtm.efex_rt_pln_final_data
+            (
+              sales_prsn_associate_code,
+              route_plan_date,
+              route_plan_order,
+              customer_code,
+              updated_by,
+              updated_on,
+              created_by,
+              created_on,
+              row_no,
+              status
+            )
+            values 
+            (
+              rec_routeplan.sales_prsn_code,
+              rec_date_range.calendar_date,
+              rec_routeplan.rtp_seq,
+              rec_routeplan.cust_code,
+              v_created_by,
+              sysdate,
+              v_updated_by,
+              sysdate,
+              rec_routeplan.row_no,
+              rec_routeplan.rtp_status
+            );
           end loop;
           close csr_date_range;
         end;

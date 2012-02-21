@@ -16,6 +16,7 @@
  2007/01   Linden Glen    Created
  2008/02   Linden Glen    Added LAST_UPDATE_DATE
  2008/05   Linden Glen    Added swb_status
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
 
 *******************************************************************************/
 
@@ -54,7 +55,10 @@ create table cad_customer_master
     channel_grp_name                 varchar2(120 char)    null,
     swb_status                       varchar2(8 char)      null,
     last_update_date                 varchar2(14 char)     null,
-    cad_load_date                    date                  not null);
+    cad_load_date                    date                  not null,
+    org_code                         varchar2(4 char)      null,
+    distbn_chnl_code                 varchar2(2 char)      null,
+    division                         varchar2(2 char)      null);
 
 
 /**/

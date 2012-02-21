@@ -15,6 +15,7 @@
  -------   ------         -----------
  2008/01   Linden Glen    Created
  2008/02   Linden Glen    Added NIV values
+ 2009/03   Trevor Keon    Added sales_org_code, distbn_chnl_code and division_code
 
 *******************************************************************************/
 
@@ -47,7 +48,10 @@ create table cad_order_summary
     ord_niv                      number                 null,
     del_niv                      number                 null,
     pod_niv                      number                 null,
-    cad_load_date                date                   not null);
+    cad_load_date                date                   not null,
+    org_code                     varchar2(4 char)       null,
+    distbn_chnl_code             varchar2(2 char)       null,
+    division                     varchar2(2 char)       null);
 
 /**/
 /* Primary Key Constraint
