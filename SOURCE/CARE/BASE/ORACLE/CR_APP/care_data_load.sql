@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
+create or replace package cr_app.care_data_load as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -40,6 +40,8 @@ CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
                           MOD: Disallow executing only one load component (ie. manu menu or hierachy)
  2008/06   Trevor Keon    Added support for SSG and MSG
  2008/09   Trevor Keon    Modified inactive flag so it would not be changed
+ 2009/07   Trevor Keon    Removed keyw_description_74 field update from load_keywrd 
+                          procedure.
 
 *******************************************************************************/
 
@@ -51,7 +53,7 @@ CREATE OR REPLACE PACKAGE CR_APP.care_data_load as
 end care_data_load;
 /
 
-CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
+create or replace package body cr_app.care_data_load as
 
    /*-*/
    /* Private exceptions
@@ -866,7 +868,7 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
             (trim(rec_tdu.keyw_misc1_x) != nvl(trim(rec_rsu.keyw_misc1_x),' ')) then
 
             update sfi.keywrd set
-               keyw_description_74 = rec_tdu.keyw_description_74,
+--               keyw_description_74 = rec_tdu.keyw_description_74,
                keyw_apn = rec_tdu.keyw_apn,
                keyw_inactive = rec_rsu.keyw_inactive,
                keyw_keyword_01 = rec_tdu.keyw_keyword_01,
@@ -1509,8 +1511,6 @@ CREATE OR REPLACE PACKAGE BODY CR_APP.care_data_load as
 end care_data_load;
 /
 
-GRANT EXECUTE ON CR_APP.CARE_DATA_LOAD TO PUBLIC;
+grant execute on cr_app.care_data_load to public;
 
-CREATE OR REPLACE PUBLIC SYNONYM CARE_DATA_LOAD FOR CR_APP.CARE_DATA_LOAD;
-
-
+create or replace public synonym care_data_load for cr_app.care_data_load;
