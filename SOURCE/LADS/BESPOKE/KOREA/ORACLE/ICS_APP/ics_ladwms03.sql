@@ -19,9 +19,10 @@ create or replace package ics_app.ics_ladwms03 as
     PARAMETERS:
 
       1. PAR_DAYS - number of days of changes to extract
-            0 = full extract (extract all materials)
+           -1 = full extract (extract all materials)
+            0 = updates only (extract only changed materials)
             n = number provided will extract changed materials for sysdate - n
-            DEFAULT = no parameter specified, default is 0 (full extract)
+            DEFAULT = no parameter specified, default is 0 (update extract)
 
 
 
@@ -29,6 +30,7 @@ create or replace package ics_app.ics_ladwms03 as
  -------   ------               -----------
  2009/02   Steve Gregan         Created (based on China extract)
  2009/05   Trevor Keon          Removed gross weight and volume hard-codes
+ 2009/06   Trevor Keon          Added update only extract option
 
  NOTES:
   * It is assumed that material codes for China will not exceed 8 character in length (Zou Kai)
@@ -74,11 +76,12 @@ create or replace package body ics_app.ics_ladwms03 as
    /* Private declarations
    /*-*/
    function format_xml_str(par_string varchar2) return varchar2;
+   procedure create_interface;
 
    /*-*/
    /* Constants
    /*-*/
-   var_interface constant varchar2(8) := 'LADWMS03';
+   con_interface constant varchar2(8) := 'LADWMS03';
 
    /***********************************************/
    /* This procedure performs the execute routine */
@@ -88,8 +91,12 @@ create or replace package body ics_app.ics_ladwms03 as
       /*-*/
       /* Local Variables
       /*-*/
-      var_instance number(15,0);
       var_days number;
+      var_count number;
+      
+      var_lastrun_date date;
+      var_start_date date;
+      var_update_lastrun boolean;      
 
       /*-*/
       /* Local Cursors
@@ -242,10 +249,14 @@ create or replace package body ics_app.ics_ladwms03 as
           and a.matnr = e.matnr(+)
           and a.matnr = c.matnr(+)
           and a.matnr = d.matnr
-          and a.laeda > to_char(sysdate - var_days,'yyyymmdd')
           and a.mtart in ('FERT','ZPRM','VERP')
           and d.werks = 'KR02'
-          and d.mmsta in ('03','20')
+          and d.mmsta in ('03','20')          
+          and 
+          (
+            (var_lastrun_date is not null and a.lads_date >= var_lastrun_date)
+            or (var_lastrun_date is null and trunc(a.lads_date) >= trunc(sysdate) - var_days)
+          )
         order by a.matnr asc;
       rec_matl_master csr_matl_master%rowtype;
 
@@ -253,37 +264,31 @@ create or replace package body ics_app.ics_ladwms03 as
    /* Begin block */
    /*-------------*/
    begin
+      /*-*/
+      /* Initalise variables
+      /*-*/ 
+      var_count := 0;
+      var_update_lastrun := false;
 
       /*-*/
       /* Define number of days to extract
       /*-*/
-      if (par_days = 0) then
+      if (par_days = -1) then
          var_days := 99999;
+         var_lastrun_date := null;
+      elsif (par_days = 0) then
+         /*-*/
+         /* Set values for both full send and update only.  Potential for no entry
+         /* in LICS last run tables, so last run date will be null.  In this case
+         /* the code should act as though a full send is required.
+         /*-*/
+         var_days := 99999;
+         var_start_date := sysdate;
+         var_update_lastrun := true;
+         var_lastrun_date := lics_last_run_control.get_last_run(con_interface);
       else
          var_days := par_days;
       end if;
-
-      /*-*/
-      /* Create Outbound Interface
-      /*-*/
-      var_instance := lics_outbound_loader.create_interface(var_interface);
-
-      /*-*/
-      /* Write XML Header
-      /*-*/
-      lics_outbound_loader.append_data('<?xml version="1.0" encoding="UTF-8"?>');
-      lics_outbound_loader.append_data('<Material_Master>');
-
-      /*-*/
-      /* Write XML Control record
-      /* ** notes** 1. CTL_NAME - security defined against this tag on gateway
-      /*-*/
-      lics_outbound_loader.append_data('<CTL>');
-      lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
-      lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || var_interface || '</CTL_INTERFACE_NAME>');
---      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
-      lics_outbound_loader.append_data('<CTL_NAME>APP002CPKR</CTL_NAME>');
-      lics_outbound_loader.append_data('</CTL>');
 
       /*-*/
       /* Open cursor for output
@@ -291,9 +296,13 @@ create or replace package body ics_app.ics_ladwms03 as
       open csr_matl_master;
       loop
          fetch csr_matl_master into rec_matl_master;
-         if (csr_matl_master%notfound) then
-            exit;
+         exit when csr_matl_master%notfound;
+         
+         if ( var_count = 0 ) then
+            create_interface;
          end if;
+         
+         var_count := var_count + 1;
 
          /*-*/
          /* Only select naterials with an english or korean description
@@ -345,16 +354,23 @@ create or replace package body ics_app.ics_ladwms03 as
 
       end loop;
       close csr_matl_master;
+      
+      if ( lics_outbound_loader.is_created = true ) then
 
-      /*-*/
-      /* Write XML Footer details
-      /*-*/
-      lics_outbound_loader.append_data('</Material_Master>');
+         /*-*/
+         /* Write XML Footer details
+         /*-*/
+         lics_outbound_loader.append_data('</MATERIAL_MASTER>');
 
-      /*-*/
-      /* Finalise Interface
-      /*-*/
-      lics_outbound_loader.finalise_interface;
+         /*-*/
+         /* Finalise Interface
+         /*-*/
+         lics_outbound_loader.finalise_interface;
+          
+         if ( var_update_lastrun = true ) then
+            lics_last_run_control.set_last_run(con_interface, var_start_date);
+         end if;
+      end if;       
 
    /*-------------------*/
    /* Exception handler */
@@ -383,6 +399,37 @@ create or replace package body ics_app.ics_ladwms03 as
    /* End routine */
    /*-------------*/
    end execute;
+   
+   procedure create_interface is
+   
+      /*-*/
+      /* Local Variables
+      /*-*/
+      var_instance number(15,0);   
+   
+   begin
+      /*-*/
+      /* Create Outbound Interface
+      /*-*/
+      var_instance := lics_outbound_loader.create_interface(con_interface);
+
+      /*-*/
+      /* Write XML Header
+      /*-*/
+      lics_outbound_loader.append_data('<?xml version="1.0" encoding="UTF-8"?>');
+      lics_outbound_loader.append_data('<MATERIAL_MASTER>');
+
+      /*-*/
+      /* Write XML Control record
+      /* ** notes** 1. CTL_NAME - security defined against this tag on gateway
+      /*-*/
+      lics_outbound_loader.append_data('<CTL>');
+      lics_outbound_loader.append_data('<CTL_RECORD_ID>CTL</CTL_RECORD_ID>');
+      lics_outbound_loader.append_data('<CTL_INTERFACE_NAME>' || con_interface || '</CTL_INTERFACE_NAME>');
+--      lics_outbound_loader.append_data('<CTL_NAME>APB002CTKR</CTL_NAME>');
+      lics_outbound_loader.append_data('<CTL_NAME>APP002CPKR</CTL_NAME>');
+      lics_outbound_loader.append_data('</CTL>'); 
+   end;   
 
    /**************************************************/
    /* This function converts XML specific characters */
