@@ -22,7 +22,7 @@ create or replace package qv_app.template_dimension_loader as
 
     2. A unique template_object_type is required for each dimension definition that describes the data layout.
 
-    3. The source loader package procedure are invoked directly from the ICS inbound processor.
+    3. The dimension loader package procedure are invoked directly from the ICS inbound processor.
 
     4. Commit and rollback should be executed at the appropriate places in code.
 
@@ -63,14 +63,13 @@ create or replace package body qv_app.template_dimension_loader as
    /*-*/
    /* Private definitions
    /*-*/
-   var_dim_created boolean;
-   var_dim_error boolean;
-   var_dest_moe varchar2(20);
-   var_plan_year varchar2(20);
-   var_plan_code varchar2(20);
-   var_customer varchar2(20);
-   var_unit varchar2(20);
-   var_period varchar2(20);
+   var_src_error boolean;
+   type rcd_data is record (dim_code varchar2(20),
+                            dim_text varchar2(80),
+                            dim_lvl01 varchar2(20),
+                            dim_lvl02 varchar2(20));
+   type typ_data is table of rcd_data index by binary_integer;
+   tbl_data typ_data;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -86,27 +85,22 @@ create or replace package body qv_app.template_dimension_loader as
       /* Initialise the package level variables
       /*-*/
       var_src_error := false;
-      var_dest_moe := null;
-      var_plan_year := null;
-      var_plan_code := null;
-      var_customer := null;
-      var_unit := null;
-      var_period := null;
+      tbl_data.delete;
 
       /*-*/
       /* Initialise the layout definitions
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('DEST_CODE',1);
-      lics_inbound_utility.set_csv_definition('DEST_TEXT',2);
-      lics_inbound_utility.set_csv_definition('DEST_LVL01',3);
-      lics_inbound_utility.set_csv_definition('DEST_LVL02',4);
+      lics_inbound_utility.set_csv_definition('DIM_CODE',1);
+      lics_inbound_utility.set_csv_definition('DIM_TEXT',2);
+      lics_inbound_utility.set_csv_definition('DIM_LVL01',3);
+      lics_inbound_utility.set_csv_definition('DIM_LVL02',4);
 
       /*-*/
-      /* Create the new header
+      /* Start the dimension loader
       /*-*/
-      qvi_dim_function.create_header('DESTINATION_MOE');
+      qvi_dim_function.start_loader('DESTINATION_MOE');
 
    /*-------------*/
    /* End routine */
@@ -117,11 +111,6 @@ create or replace package body qv_app.template_dimension_loader as
    /* This procedure performs the on data routine */
    /***********************************************/
    procedure on_data(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_data template_object_type;
 
    /*-------------*/
    /* Begin block */
@@ -139,161 +128,9 @@ create or replace package body qv_app.template_dimension_loader as
          return;
       end if;
 
-      /*----------------------------------------------*/
-      /* STRIP - Strip the control data when required */
-      /*----------------------------------------------*/
-
-      /*-*/
-      /* Destination MOE record
-      /*-*/
-      if upper(trim(substr(par_record,1,20))) = 'DEST_MOE' then
-
-         /*-*/
-         /* Commit/rollback the header when required
-         /*-*/
-         if var_src_created = true then
-            if var_src_error = false then
-               qvi_src_function.finalise_header;
-               commit;
-            else
-               rollback;
-            end if;
-         end if;
-         var_src_created := false;
-         var_src_error := false;
-         var_dest_moe := null;
-         var_plan_year := null;
-         var_plan_code := null;
-         var_customer := null;
-         var_unit := null;
-         var_period := null;
-
-         /*-*/
-         /* Strip the destination MOE and exit the procedure
-         /*-*/
-         var_dest_moe := substr(par_record,21,3);
-         return;
-
-      /*-*/
-      /* Plan Version record
-      /*-*/
-      elsif upper(trim(substr(par_record,1,20))) = 'PLAN_VERSION' then
-
-         /*-*/
-         /* Validate the source header status
-         /*-*/
-         if var_src_created = true then
-            lics_inbound_utility.add_exception('Previous source header has not been finalised');
-            var_src_error := true;
-         end if;
-
-         /*-*/
-         /* Strip the plan version and exit the procedure
-         /*-*/
-         var_plan_year := substr(par_record,21,4);
-         var_plan_code := substr(par_record,26,10);
-         return;
-
-      /*-*/
-      /* Customer record
-      /*-*/
-      elsif upper(trim(substr(par_record,1,20))) = 'CUSTOMER' then
-
-         /*-*/
-         /* Validate the source header status
-         /*-*/
-         if var_src_created = true then
-            lics_inbound_utility.add_exception('Previous source header has not been finalised');
-            var_src_error := true;
-         end if;
-
-         /*-*/
-         /* Strip the customer and exit the procedure
-         /*-*/
-         var_customer := substr(par_record,21,3);
-         return;
-
-      /*-*/
-      /* Unit record
-      /*-*/
-      elsif upper(trim(substr(par_record,1,20))) = 'UNIT' then
-
-         /*-*/
-         /* Validate the source header status
-         /*-*/
-         if var_src_created = true then
-            lics_inbound_utility.add_exception('Previous source header has not been finalised');
-            var_src_error := true;
-         end if;
-
-         /*-*/
-         /* Strip the unit and exit the procedure
-         /*-*/
-         var_unit := substr(par_record,21,4);
-         return;
-
-      /*-*/
-      /* Period record
-      /*-*/
-      elsif upper(trim(substr(par_record,1,3))) = ',,,' then
-
-         /*-*/
-         /* Extract the period and ensure that all control variables are present
-         /*-*/
-         var_period := substr(par_record,5,2);
-         if var_src_created = true then
-            lics_inbound_utility.add_exception('Previous source has not been finalised');
-            var_src_error := true;
-         end if;
-         if var_dest_moe is null then
-            lics_inbound_utility.add_exception('Source data is missing the destination MOE');
-            var_src_error := true;
-         end if;
-         if var_plan_year is null then
-            lics_inbound_utility.add_exception('Source data is missing the plan year');
-            var_src_error := true;
-         end if;
-         if var_plan_code is null then
-            lics_inbound_utility.add_exception('Source data is missing the plan code');
-            var_src_error := true;
-         end if;
-         if var_customer is null then
-            lics_inbound_utility.add_exception('Source data is missing the customer');
-            var_src_error := true;
-         end if;
-         if var_unit is null then
-            lics_inbound_utility.add_exception('Source data is missing the unit');
-            var_src_error := true;
-         end if;
-         if var_period is null then
-            lics_inbound_utility.add_exception('Source data is missing the period');
-            var_src_error := true;
-         end if;
-
-         /*-*/
-         /* Create the new header
-         /*-*/
-         qvi_src_function.create_header('FPPS_REGIONAL', 'ACTUALS', var_plan_year||var_period, var_unit);
-         var_src_created := true;
-
-         /*-*/
-         /* Exit the procedure
-         /*-*/
-         return;
-
-      end if;
-
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
-
-      /*-*/
-      /* Source header must have been created when a detail row
-      /*-*/
-      if var_src_created = false then
-         var_src_error := true;
-         return;
-      end if;
 
       /*-*/
       /* Parse the input data record
@@ -301,27 +138,18 @@ create or replace package body qv_app.template_dimension_loader as
       lics_inbound_utility.parse_csv_record(par_record, con_delimiter);
 
       /*-*/
-      /* Create the source object
+      /* Load the source data into the array
       /*-*/
-      var_data := template_object_type(var_dest_moe,
-                                       var_customer,
-                                       lics_inbound_utility.get_variable('LINE_ITEM'),
-                                       lics_inbound_utility.get_variable('MATERIAL'),
-                                       lics_inbound_utility.get_variable('SRC_MOE'),
-                                       lics_inbound_utility.get_number('VALUE'));
+      tbl_data(tbl_data.count+1).dim_code := lics_inbound_utility.get_variable('DIM_CODE');
+      tbl_data(tbl_data.count).dim_text := lics_inbound_utility.get_variable('DIM_TEXT');
+      tbl_data(tbl_data.count).dim_lvl01 := lics_inbound_utility.get_variable('DIM_LVL01');
+      tbl_data(tbl_data.count).dim_lvl02 := lics_inbound_utility.get_variable('DIM_LVL02');
 
       /*-*/
       /* Exceptions raised in LICS_INBOUND_UTILITY
       /*-*/
       if lics_inbound_utility.has_errors = true then
          var_src_error := true;
-      end if;
-
-      /*-*/
-      /* Append the destination data when required (no errors)
-      /*-*/
-      if var_src_error = false then
-         qvi_dim_function.append_data(sys.anydata.ConvertObject(var_data));
       end if;
 
    /*-------------*/
@@ -334,20 +162,46 @@ create or replace package body qv_app.template_dimension_loader as
    /**********************************************/
    procedure on_end is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_data template_object_type;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
 
       /*-*/
-      /* Commit/rollback the header when required
+      /* Rollback the database when required
       /*-*/
-      if var_src_error = false then
-         qvi_dim_function.finalise_header;
-         commit;
-      else
+      if var_src_error = true then
          rollback;
       end if;
+
+      /*-*/
+      /* Perform the dimension explosion logic
+      /*-*/
+      for idx in 1..tbl_data.count loop
+         -- load the exploded data to the array
+      end loop;
+
+      /*-*/
+      /* Load the dimension data
+      /*-*/
+      for idx in 1..tbl_data.count loop
+         var_data := template_object_type(tbl_data(idx).dim_code,
+                                          tbl_data(idx).dim_text,
+                                          tbl_data(idx).dim_lvl01,
+                                          tbl_data(idx).dim_lvl02);
+         qvi_dim_function.append_data(sys.anydata.ConvertObject(var_data));
+      end loop;
+
+      /*-*/
+      /* Finalise the loader and commit the database
+      /*-*/
+      qvi_dim_function.finalise_loader;
+      commit;
 
    /*-------------*/
    /* End routine */
