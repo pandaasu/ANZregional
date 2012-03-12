@@ -25,9 +25,9 @@ create or replace package qv_app.qvi_dim_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure create_header(par_dim_code in varchar2);
+   procedure start_loader(par_dim_code in varchar2);
    procedure append_data(par_data in sys.anydata);
-   procedure finalise_header();
+   procedure finalise_loader;
    function get_table(par_dim_code in varchar2) return qvi_dim_table pipelined;
 
 end qvi_dim_function;
@@ -44,50 +44,30 @@ create or replace package body qv_app.qvi_dim_function as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /**************************************************************/
-   /* This function performs the create dimension header routine */
-   /**************************************************************/
-   procedure create_header(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) is
+   /*-*/
+   /* Private definitions
+   /*-*/
+   pvar_dim_code varchar2(32);
+   pvar_dat_seqn number;
+
+   /*************************************************************/
+   /* This function performs the start dimension loader routine */
+   /*************************************************************/
+   procedure start_loader(par_dim_code in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_found boolean;
-      var_das_name varchar2(32);
-      var_fac_code varchar2(32);
-      var_tim_code varchar2(32);
 
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_das_defn is
+      cursor csr_dim_defn is
          select t01.*
-           from qvi_das_defn t01
-          where t01.qdd_das_code = var_das_code;
-      rcd_das_defn csr_das_defn%rowtype;
-
-      cursor csr_fac_defn is
-         select t01.*
-           from qvi_fac_defn t01
-          where t01.qfd_das_code = var_das_code
-                t01.qfd_fac_code = var_fac_code;
-      rcd_fac_defn csr_fac_defn%rowtype;
-
-      cursor csr_fac_time is
-         select t01.*
-           from qvi_fac_time t01
-          where t01.qft_das_code = var_das_code
-                t01.qft_fac_code = var_fac_code
-                t01.qft_tim_code = var_tim_code;
-      rcd_fac_time csr_fac_time%rowtype;
-
-      cursor csr_fac_hedr is
-         select t01.*
-           from qvi_fac_hedr t01
-          where t01.qfh_das_code = var_das_code
-                t01.qfh_fac_code = var_fac_code
-                t01.qfh_tim_code = var_tim_code;
-      rcd_fac_hedr csr_fac_hedr%rowtype;
+           from qvi_dim_defn t01
+          where t01.qdd_dim_code = par_dim_code;
+      rcd_dim_defn csr_dim_defn%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -95,87 +75,52 @@ create or replace package body qv_app.qvi_dim_function as
    begin
 
       /*-*/
-      /* Set the loacl variables
+      /* Reset the package
       /*-*/
-      var_das_code := par_das_code;
-      var_fac_code := par_fac_code;
-      var_tim_code := par_tim_code;
-      
-      /*-*/
-      /* Re-initialise the package
-      /*-*/
-      var_hdr_control := null;
-      rcd_lics_header.hea_header := null;
+      pvar_dim_code := null;
+      pvar_dat_seqn := 0;
 
       /*-*/
-      /* Retrieve the requested dashboard
+      /* Retrieve the requested dimension
       /* notes - must exist
       /*         must be active
       /*-*/
       var_found := false;
-      open csr_das_defn;
-      fetch csr_das_defn into rcd_das_defn;
-      if csr_das_defn%notfound then
+      open csr_dim_defn;
+      fetch csr_dim_defn into rcd_dim_defn;
+      if csr_dim_defn%notfound then
          var_found := true;
       end if;
-      close csr_das_defn;
+      close csr_dim_defn;
       if var_found = false then
-         raise_application_error(-20000, 'Create Fact Header - Dashboard (' || var_das_code || ') does not exist');
+         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') does not exist');
       end if;
-      if rcd_das_defn.qdd_das_status != '1' then
-         raise_application_error(-20000, 'Create Fact Header - Dashboard (' || var_das_code || ') is not active');
+      if rcd_dim_defn.qdd_dim_status != '1' then
+         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') is not active');
+      end if;
+
+
+      /*-*/
+      /* Update the dimension load status
+      /*-*/
+      update qvi_dim_defn
+         set qdd_lod_status = '1',
+             qdd_end_date = sysdate
+       where qdd_dim_code = pvar_dim_code;
+      if sql%notfound then
+         raise_application_error(-20000, 'Finalise Loader - Dimension (' || pvar_dim_code || ') does not exist');
       end if;
 
       /*-*/
-      /* Retrieve the requested fact
-      /* notes - must exist
-      /*         must be active
+      /* Remove the existing dimension data
       /*-*/
-      var_found := false;
-      open csr_fac_defn;
-      fetch csr_fac_defn into rcd_fac_defn;
-      if csr_fac_defn%notfound then
-         var_found := true;
-      end if;
-      close csr_fac_defn;
-      if var_found = false then
-         raise_application_error(-20000, 'Create Fact Header - Fact (' || var_fac_code || ') does not exist');
-      end if;
-      if rcd_fac_defn.qfd_fac_status != '1' then
-         raise_application_error(-20000, 'Create Fact Header - Fact (' || var_fac_code || ') is not active');
-      end if;
+      delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
 
       /*-*/
-      /* Create the new fact header
+      /* Set the package variables
       /*-*/
-      rcd_qvi_fac_hedr.hea_interface := rcd_lics_interface.int_interface;
-      rcd_qvi_fac_hedr.hea_trc_count := 1;
-      rcd_qvi_fac_hedr.hea_crt_time := sysdate;
-      rcd_qvi_fac_hedr.hea_fil_name := var_fil_name;
-      rcd_qvi_fac_hedr.hea_msg_name := var_msg_name;
-      rcd_qvi_fac_hedr.hea_status := lics_constant.header_load_working;
-      insert into qvi_fac_hedr
-         (hea_header,
-          hea_interface,
-          hea_trc_count,
-          hea_crt_user,
-          hea_crt_time,
-          hea_fil_name,
-          hea_msg_name,
-          hea_status)
-         values(rcd_qvi_fac_hedr.hea_header,
-                rcd_qvi_fac_hedr.hea_interface,
-                rcd_qvi_fac_hedr.hea_trc_count,
-                rcd_qvi_fac_hedr.hea_crt_user,
-                rcd_qvi_fac_hedr.hea_crt_time,
-                rcd_qvi_fac_hedr.hea_fil_name,
-                rcd_qvi_fac_hedr.hea_msg_name,
-                rcd_qvi_fac_hedr.hea_status);
-
-      /*-*/
-      /* Set the header control variable
-      /*-*/
-      var_hdr_control := rcd_lics_header.hea_header;
+      pvar_dim_code := var_dim_code;
+      pvar_dat_seqn := 0;
 
    /*-------------------*/
    /* Exception handler */
@@ -190,12 +135,12 @@ create or replace package body qv_app.qvi_dim_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Dimension Function - Create Header - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Dimension Function - Start Loader - ' || substr(sqlerrm, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end create_header;
+   end start_loader;
 
    /*************************************************************/
    /* This procedure performs the append dimension data routine */
@@ -213,18 +158,18 @@ create or replace package body qv_app.qvi_dim_function as
    begin
 
       /*-*/
-      /* Existing header must exist
-      /* notes - header control must not be null
+      /* Dimension loader must be started
       /*-*/
-      if var_hdr_control is null then
-         raise_application_error(-20000, 'Append Data - Interface has not been created');
+      if pvar_dim_code is null then
+         raise_application_error(-20000, 'Append Data - Dimension loader has not been started');
       end if;
 
       /*-*/
       /* Create the new dimension data
       /*-*/
+      pvar_dat_seqn := pvar_dat_seqn + 1;
       rcd_qvi_dim_data.qdd_dim_code := pvar_dim_code;
-      rcd_qvi_dim_data.qdd_dat_seqn := pvar_dat_seqn + 1;
+      rcd_qvi_dim_data.qdd_dat_seqn := pvar_dat_seqn;
       rcd_qvi_dim_data.qdd_dat_data := par_data;
       insert into qvi_dim_data values rcd_qvi_dim_data;
 
@@ -249,9 +194,9 @@ create or replace package body qv_app.qvi_dim_function as
    end append_data;
 
    /*****************************************************************/
-   /* This procedure performs the finalise dimension header routine */
+   /* This procedure performs the finalise dimension loader routine */
    /*****************************************************************/
-   procedure finalise_header is
+   procedure finalise_loader is
 
    /*-------------*/
    /* Begin block */
@@ -259,54 +204,27 @@ create or replace package body qv_app.qvi_dim_function as
    begin
 
       /*-*/
-      /* Existing header must exist
-      /* notes - header control must not be null
+      /* Dimension loader must be started
       /*-*/
-      if var_hdr_control is null then
-         raise_application_error(-20000, 'Finalise Interface - Interface has not been created');
+      if pvar_dim_code is null then
+         raise_application_error(-20000, 'Finalise Loader - Dimension loader has not been started');
       end if;
 
       /*-*/
-      /* Re-initialise the package
+      /* Update the dimension load status
       /*-*/
-      var_hdr_control := null;
-
-      /*-*/
-      /* Update the source header status and time
-      /* note - header_load_completed
-      /*        header_load_completed_error
-      /*-*/
-      rcd_lics_hdr_trace.het_end_time := sysdate;
-      if rcd_lics_hdr_trace.het_status = lics_constant.header_load_working then
-         rcd_lics_hdr_trace.het_status := lics_constant.header_load_completed;
-      else
-         rcd_lics_hdr_trace.het_status := lics_constant.header_load_completed_error;
-      end if;
-      update lics_hdr_trace
-         set het_end_time = rcd_lics_hdr_trace.het_end_time,
-             het_status = rcd_lics_hdr_trace.het_status
-       where het_header = rcd_lics_hdr_trace.het_header
-         and het_hdr_trace = rcd_lics_hdr_trace.het_hdr_trace;
+      update qvi_dim_defn
+         set qdd_lod_status = '1',
+             qdd_end_date = sysdate
+       where qdd_dim_code = pvar_dim_code;
       if sql%notfound then
-         raise_application_error(-20000, 'Finalise Interface - Header/trace (' || to_char(rcd_lics_hdr_trace.het_header,'FM999999999999990') || '/' || to_char(rcd_lics_hdr_trace.het_hdr_trace,'FM99990') || ') does not exist');
+         raise_application_error(-20000, 'Finalise Loader - Dimension (' || pvar_dim_code || ') does not exist');
       end if;
 
       /*-*/
-      /* Update the header status
-      /* note - header_load_completed
-      /*        header_load_completed_error
+      /* Reset the package variables
       /*-*/
-      if rcd_lics_header.hea_status = lics_constant.header_load_working then
-         rcd_lics_header.hea_status := lics_constant.header_load_completed;
-      else
-         rcd_lics_header.hea_status := lics_constant.header_load_completed_error;
-      end if;
-      update lics_header
-         set hea_status = rcd_lics_header.hea_status
-       where hea_header = rcd_lics_header.hea_header;
-      if sql%notfound then
-         raise_application_error(-20000, 'Finalise Interface - Header (' || to_char(rcd_lics_header.hea_header,'FM999999999999990') || ') does not exist');
-      end if;
+      pvar_dim_code := null;
 
    /*-------------------*/
    /* Exception handler */
@@ -321,12 +239,12 @@ create or replace package body qv_app.qvi_dim_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Dimension Function - Finalise Header - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Dimension Function - Finalise Loader - ' || substr(sqlerrm, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end finalise_header;
+   end finalise_loader;
 
    /***********************************************************/
    /* This procedure performs the get dimension table routine */
@@ -401,7 +319,7 @@ begin
    /*-*/
    /* Initialise the package
    /*-*/
-   var_hdr_control := null;
+   var_dim_code := null;
 
 end qvi_dim_function;
 /

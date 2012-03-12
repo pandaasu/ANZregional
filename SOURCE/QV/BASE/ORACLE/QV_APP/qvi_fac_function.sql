@@ -52,7 +52,6 @@ create or replace package body qv_app.qvi_fac_function as
    pvar_tim_code varchar2(32);
    pvar_dat_seqn number;
 
-
    /*********************************************************/
    /* This function performs the create fact header routine */
    /*********************************************************/
