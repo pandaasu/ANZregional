@@ -7,7 +7,7 @@
 
  Description
  -----------
- QlikView - Source Header Table
+ QlikView - Fact Header Table
 
  YYYY/MM   Author         Description
  -------   ------         -----------
@@ -22,7 +22,7 @@ create table qv.qvi_fac_hedr
    (qfh_das_code                    varchar2(32)                  not null,
     qfh_fac_code                    varchar2(32)                  not null,
     qfh_tim_code                    varchar2(32)                  not null,
-    qfh_hdr_status                  varchar2(1)                   not null,
+    qfh_lod_status                  varchar2(1)                   not null,
     qfh_str_date                    date                          not null,
     qfh_end_date                    date                          not null);
 
@@ -33,9 +33,9 @@ comment on table qv.qvi_fac_hedr is 'Fact Header Table';
 comment on column qv.qvi_fac_hedr.qfh_das_code is 'Dashboard code';
 comment on column qv.qvi_fac_hedr.qfh_fac_code is 'Fact code';
 comment on column qv.qvi_fac_hedr.qfh_tim_code is 'Time code';
-comment on column qv.qvi_fac_hedr.qfh_hdr_status is 'Header status (0=xxxx, 1=xxxx or 2=xxxx)';
-comment on column qv.qvi_fac_hedr.qfh_str_date is 'Build start date';
-comment on column qv.qvi_fac_hedr.qfh_end_date is 'Build end date';
+comment on column qv.qvi_fac_hedr.qfh_lod_status is 'Load status (0=empty, 1=loading or 2=loaded)';
+comment on column qv.qvi_fac_hedr.qfh_str_date is 'Load start date';
+comment on column qv.qvi_fac_hedr.qfh_end_date is 'Load end date';
 
 /*-*/
 /* Primary Key Constraint

@@ -23,7 +23,7 @@ create table qv.qvi_src_hedr
     qsh_fac_code                    varchar2(32)                  not null,
     qsh_tim_code                    varchar2(32)                  not null,
     qsh_par_code                    varchar2(32)                  not null,
-    qsh_hdr_status                  varchar2(1)                   not null,
+    qsh_lod_status                  varchar2(1)                   not null,
     qsh_str_date                    date                          not null,
     qsh_end_date                    date                          not null);
 
@@ -35,7 +35,7 @@ comment on column qv.qvi_src_hedr.qsh_das_code is 'Dashboard code';
 comment on column qv.qvi_src_hedr.qsh_fac_code is 'Fact code';
 comment on column qv.qvi_src_hedr.qsh_tim_code is 'Time code';
 comment on column qv.qvi_src_hedr.qsh_par_code is 'Part code';
-comment on column qv.qvi_src_hedr.qsh_hdr_status is 'Header status (0=xxxx, 1=xxxx or 2=xxxx)';
+comment on column qv.qvi_src_hedr.qsh_lod_status is 'Load status (0=empty, 1=loading or 2=loaded)';
 comment on column qv.qvi_src_hedr.qsh_str_date is 'Load start date';
 comment on column qv.qvi_src_hedr.qsh_end_date is 'Load end date';
 

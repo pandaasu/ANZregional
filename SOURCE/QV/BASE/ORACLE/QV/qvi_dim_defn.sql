@@ -39,7 +39,7 @@ comment on column qv.qvi_dim_defn.qdd_dim_name is 'Fact name';
 comment on column qv.qvi_dim_defn.qdd_dim_status is 'Dimension status (0=inactive or 1=active)';
 comment on column qv.qvi_dim_defn.qdd_dim_table is 'Dimension pipelined table function';
 comment on column qv.qvi_dim_defn.qdd_dim_type is 'Dimension data type';
-comment on column qv.qvi_dim_defn.qdd_dim_status is 'Load status (0=loading or 1=loaded)';
+comment on column qv.qvi_dim_defn.qdd_lod_status is 'Load status (0=empty, 1=loading or 2=loaded)';
 comment on column qv.qvi_dim_defn.qdd_str_date is 'Load start date';
 comment on column qv.qvi_dim_defn.qdd_end_date is 'Load end date';
 comment on column qv.qvi_dim_defn.qdd_upd_user is 'Last updated user';
