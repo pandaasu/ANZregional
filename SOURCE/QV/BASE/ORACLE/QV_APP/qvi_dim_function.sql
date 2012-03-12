@@ -59,15 +59,7 @@ create or replace package body qv_app.qvi_dim_function as
       /* Local definitions
       /*-*/
       var_found boolean;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_dim_defn is
-         select t01.*
-           from qvi_dim_defn t01
-          where t01.qdd_dim_code = par_dim_code;
-      rcd_dim_defn csr_dim_defn%rowtype;
+      var_dim_status varchar2(1);
 
    /*-------------*/
    /* Begin block */
@@ -81,34 +73,22 @@ create or replace package body qv_app.qvi_dim_function as
       pvar_dat_seqn := 0;
 
       /*-*/
-      /* Retrieve the requested dimension
-      /* notes - must exist
-      /*         must be active
-      /*-*/
-      var_found := false;
-      open csr_dim_defn;
-      fetch csr_dim_defn into rcd_dim_defn;
-      if csr_dim_defn%notfound then
-         var_found := true;
-      end if;
-      close csr_dim_defn;
-      if var_found = false then
-         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') does not exist');
-      end if;
-      if rcd_dim_defn.qdd_dim_status != '1' then
-         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') is not active');
-      end if;
-
-
-      /*-*/
-      /* Update the dimension load status
+      /* Lock the requested dimension definition (oracle default wait behaviour - lock will hold until commit or rollback)
+      /* 1. Set the load status to 0 (loading)
+      /* 2. Set the load start date to sysdate
+      /* 3. Set the load end date to sysdate
       /*-*/
       update qvi_dim_defn
-         set qdd_lod_status = '1',
-             qdd_end_date = sysdate
-       where qdd_dim_code = pvar_dim_code;
+         set qdd_lod_status = '0',
+             qdd_str_date := sysdate,
+             qdd_end_date := sysdate
+       where qdd_dim_code = par_dim_code
+       returning qdd_dim_status into var_dim_status;
       if sql%notfound then
-         raise_application_error(-20000, 'Finalise Loader - Dimension (' || pvar_dim_code || ') does not exist');
+         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') does not exist');
+      end;
+      if var_dim_status != '1' then
+         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') is not active');
       end if;
 
       /*-*/
@@ -212,6 +192,8 @@ create or replace package body qv_app.qvi_dim_function as
 
       /*-*/
       /* Update the dimension load status
+      /* 1. Set the load status to 0 (loading)
+      /* 2. Set the load end date to sysdate
       /*-*/
       update qvi_dim_defn
          set qdd_lod_status = '1',
