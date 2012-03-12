@@ -24,6 +24,7 @@ create table qv.qvi_dim_defn
     qdd_dim_status                  varchar2(1)                   not null,
     qdd_dim_table                   varchar2(120)                 not null,
     qdd_dim_type                    varchar2(120)                 not null,
+    qdd_lod_status                  varchar2(1)                   not null,
     qdd_str_date                    date                          not null,
     qdd_end_date                    date                          not null,
     qdd_upd_user                    varchar2(30)                  not null,
@@ -38,8 +39,9 @@ comment on column qv.qvi_dim_defn.qdd_dim_name is 'Fact name';
 comment on column qv.qvi_dim_defn.qdd_dim_status is 'Dimension status (0=inactive or 1=active)';
 comment on column qv.qvi_dim_defn.qdd_dim_table is 'Dimension pipelined table function';
 comment on column qv.qvi_dim_defn.qdd_dim_type is 'Dimension data type';
-comment on column qv.qvi_dim_defn.qdd_str_date is 'Build start date';
-comment on column qv.qvi_dim_defn.qdd_end_date is 'Build end date';
+comment on column qv.qvi_dim_defn.qdd_dim_status is 'Load status (0=loading or 1=loaded)';
+comment on column qv.qvi_dim_defn.qdd_str_date is 'Load start date';
+comment on column qv.qvi_dim_defn.qdd_end_date is 'Load end date';
 comment on column qv.qvi_dim_defn.qdd_upd_user is 'Last updated user';
 comment on column qv.qvi_dim_defn.qdd_upd_date is 'Last updated date';
 
