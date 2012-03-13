@@ -9,5 +9,5 @@ create or replace type qvi_fac_object as object
     dat_data                    sys.anydata);
 /
 
-create or replace type qvi_fac_type as table of qvi_fac_object;
+create or replace type qvi_fac_table as table of qvi_fac_object;
 /

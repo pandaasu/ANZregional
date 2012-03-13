@@ -10,5 +10,5 @@ create or replace type qvi_src_object as object
     dat_data                    sys.anydata);
 /
 
-create or replace type qvi_src_type as table of qvi_src_object;
+create or replace type qvi_src_table as table of qvi_src_object;
 /

@@ -76,15 +76,15 @@ create or replace package body qv_app.qvi_fac_function as
          select t01.*
            from qvi_fac_defn t01
           where t01.qfd_das_code = par_das_code
-                t01.qfd_fac_code = par_fac_code;
+            and t01.qfd_fac_code = par_fac_code;
       rcd_fac_defn csr_fac_defn%rowtype;
 
       cursor csr_fac_time is
          select t01.*
            from qvi_fac_time t01
           where t01.qft_das_code = par_das_code
-                t01.qft_fac_code = par_fac_code
-                t01.qft_tim_code = par_tim_code;
+            and t01.qft_fac_code = par_fac_code
+            and t01.qft_tim_code = par_tim_code;
       rcd_fac_time csr_fac_time%rowtype;
 
    /*-------------*/
@@ -113,10 +113,10 @@ create or replace package body qv_app.qvi_fac_function as
       end if;
       close csr_das_defn;
       if var_found = false then
-         raise_application_error(-20000, 'Start Loader - Dashboard ('||var_das_code||') does not exist');
+         raise_application_error(-20000, 'Start Loader - Dashboard ('||par_das_code||') does not exist');
       end if;
       if rcd_das_defn.qdd_das_status != '1' then
-         raise_application_error(-20000, 'Start Loader - Dashboard ('||var_das_code||') is not active');
+         raise_application_error(-20000, 'Start Loader - Dashboard ('||par_das_code||') is not active');
       end if;
 
       /*-*/
@@ -175,20 +175,20 @@ create or replace package body qv_app.qvi_fac_function as
          when dup_val_on_index then
             update qvi_fac_hedr
                set qfh_lod_status = '1',
-                   qfh_str_date := sysdate,
-                   qfh_end_date := sysdate
-             where qfh_das_code = par_dim_code
+                   qfh_str_date = sysdate,
+                   qfh_end_date = sysdate
+             where qfh_das_code = par_das_code
                and qfh_fac_code = par_fac_code
                and qfh_tim_code = par_tim_code;
             if sql%notfound then
                raise_application_error(-20000, 'Start Loader - Fact ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') does not exist');
-            end;
+            end if;
 
             /*-*/
             /* Remove the existing fact data
             /*-*/
             delete from qvi_fac_data
-             where qfd_das_code = par_dim_code
+             where qfd_das_code = par_das_code
                and qfd_fac_code = par_fac_code
                and qfd_tim_code = par_tim_code;
 
@@ -353,18 +353,18 @@ create or replace package body qv_app.qvi_fac_function as
          select t01.*
            from qvi_fac_hedr t01
           where t01.qfh_das_code = par_das_code
-                t01.qfh_fac_code = par_fac_code
-                t01.qfh_tim_code = par_tim_code;
+            and t01.qfh_fac_code = par_fac_code
+            and t01.qfh_tim_code = par_tim_code;
       rcd_fac_hedr csr_fac_hedr%rowtype;
 
-      cursor csr_qvi_fac_data is
+      cursor csr_fac_data is
          select t01.*
            from qvi_fac_data t01
           where t01.qfd_das_code = rcd_fac_hedr.qfh_das_code
             and t01.qfd_fac_code = rcd_fac_hedr.qfh_fac_code
-            and t01.qfd_tim_code = rcd_fac_hedr.qfh_tim_code;
-          order by t01.qsd_dat_seqn asc;
-      rcd_qvi_fac_data csr_qvi_fac_data%rowtype;
+            and t01.qfd_tim_code = rcd_fac_hedr.qfh_tim_code
+          order by t01.qfd_dat_seqn asc;
+      rcd_fac_data csr_fac_data%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -378,29 +378,29 @@ create or replace package body qv_app.qvi_fac_function as
       /*-*/
       /* Retrieve the selected fact header
       /*-*/
-      open csr_qvi_fac_hedr;
-      fetch csr_qvi_fac_hedr into rcd_qvi_fac_hedr;
-      if csr_qvi_fac_hedr%found then
+      open csr_fac_hedr;
+      fetch csr_fac_hedr into rcd_fac_hedr;
+      if csr_fac_hedr%found then
 
          /*-*/
          /* Retrieve and pipe the fact data
          /*-*/
-         open csr_qvi_fac_data;
+         open csr_fac_data;
          loop
-            fetch csr_qvi_fac_data into rcd_qvi_fac_data;
-            if csr_qvi_fac_data%notfound then
+            fetch csr_fac_data into rcd_fac_data;
+            if csr_fac_data%notfound then
                exit;
             end if;
-            pipe row(qvi_fac_object(rcd_qvi_fac_data.qfd_das_code,
-                                    rcd_qvi_fac_data.qfd_fac_code,
-                                    rcd_qvi_fac_data.qfd_tim_code,
-                                    rcd_qvi_fac_data.qfd_dat_seqn,
-                                    rcd_qvi_fac_data.qfd_dat_data));
+            pipe row(qvi_fac_object(rcd_fac_data.qfd_das_code,
+                                    rcd_fac_data.qfd_fac_code,
+                                    rcd_fac_data.qfd_tim_code,
+                                    rcd_fac_data.qfd_dat_seqn,
+                                    rcd_fac_data.qfd_dat_data));
          end loop;
-         close csr_qvi_fac_data;
+         close csr_fac_data;
 
       end if;
-      close csr_qvi_fac_hedr;
+      close csr_fac_hedr;
 
       /*-*/
       /* Return

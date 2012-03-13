@@ -80,21 +80,21 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       update qvi_dim_defn
          set qdd_lod_status = '1',
-             qdd_str_date := sysdate,
-             qdd_end_date := sysdate
+             qdd_str_date = sysdate,
+             qdd_end_date = sysdate
        where qdd_dim_code = par_dim_code
        returning qdd_dim_status into var_dim_status;
       if sql%notfound then
-         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') does not exist');
-      end;
+         raise_application_error(-20000, 'Start Loader - Dimension (' || par_dim_code || ') does not exist');
+      end if;
       if var_dim_status != '1' then
-         raise_application_error(-20000, 'Start Loader - Dimension (' || var_dim_code || ') is not active');
+         raise_application_error(-20000, 'Start Loader - Dimension (' || par_dim_code || ') is not active');
       end if;
 
       /*-*/
       /* Remove the existing dimension data
       /*-*/
-      delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
+      delete from qvi_dim_defn where qdd_dim_code = par_dim_code;
 
       /*-*/
       /* Set the package variables
@@ -245,14 +245,14 @@ create or replace package body qv_app.qvi_dim_function as
          select t01.*
            from qvi_dim_defn t01
           where t01.qdd_dim_code = par_dim_code;
-      rcd_dim_defn csr_dim_defnr%rowtype;
+      rcd_dim_defn csr_dim_defn%rowtype;
 
-      cursor csr_qvi_dim_data is
+      cursor csr_dim_data is
          select t01.*
            from qvi_dim_data t01
-          where t01.qdd_dim_code = rcd_dim_defn.qdd_dim_code;
+          where t01.qdd_dim_code = rcd_dim_defn.qdd_dim_code
           order by t01.qdd_dat_seqn asc;
-      rcd_qvi_dim_data csr_qvi_dim_data%rowtype;
+      rcd_dim_data csr_dim_data%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -266,27 +266,27 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       /* Retrieve the selected dimension definition
       /*-*/
-      open csr_qvi_dim_defn;
-      fetch csr_qvi_dim_defn into rcd_qvi_dim_defn;
-      if csr_qvi_dim_defn%found then
+      open csr_dim_defn;
+      fetch csr_dim_defn into rcd_dim_defn;
+      if csr_dim_defn%found then
 
          /*-*/
          /* Retrieve and pipe the dimension data
          /*-*/
-         open csr_qvi_dim_data;
+         open csr_dim_data;
          loop
-            fetch csr_qvi_dim_data into rcd_qvi_dim_data;
-            if csr_qvi_dim_data%notfound then
+            fetch csr_dim_data into rcd_dim_data;
+            if csr_dim_data%notfound then
                exit;
             end if;
-            pipe row(qvi_dim_object(rcd_qvi_dim_data.qdd_dim_code,
-                                    rcd_qvi_dim_data.qdd_dat_seqn,
-                                    rcd_qvi_dim_data.qdd_dat_data));
+            pipe row(qvi_dim_object(rcd_dim_data.qdd_dim_code,
+                                    rcd_dim_data.qdd_dat_seqn,
+                                    rcd_dim_data.qdd_dat_data));
          end loop;
-         close csr_qvi_dim_data;
+         close csr_dim_data;
 
       end if;
-      close csr_qvi_dim_defn;
+      close csr_dim_defn;
 
       /*-*/
       /* Return
@@ -306,7 +306,7 @@ begin
    /*-*/
    /* Initialise the package
    /*-*/
-   var_dim_code := null;
+   pvar_dim_code := null;
 
 end qvi_dim_function;
 /

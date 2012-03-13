@@ -7,5 +7,5 @@ create or replace type qvi_dim_object as object
     dat_data                    sys.anydata);
 /
 
-create or replace type qvi_dim_type as table of qvi_dim_object;
+create or replace type qvi_dim_table as table of qvi_dim_object;
 /
