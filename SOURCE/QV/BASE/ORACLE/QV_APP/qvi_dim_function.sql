@@ -74,12 +74,12 @@ create or replace package body qv_app.qvi_dim_function as
 
       /*-*/
       /* Lock the requested dimension definition (oracle default wait behaviour - lock will hold until commit or rollback)
-      /* 1. Set the load status to 0 (loading)
+      /* 1. Set the load status to 1 (loading)
       /* 2. Set the load start date to sysdate
       /* 3. Set the load end date to sysdate
       /*-*/
       update qvi_dim_defn
-         set qdd_lod_status = '0',
+         set qdd_lod_status = '1',
              qdd_str_date := sysdate,
              qdd_end_date := sysdate
        where qdd_dim_code = par_dim_code
@@ -99,7 +99,7 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       /* Set the package variables
       /*-*/
-      pvar_dim_code := var_dim_code;
+      pvar_dim_code := par_dim_code;
       pvar_dat_seqn := 0;
 
    /*-------------------*/
@@ -192,11 +192,11 @@ create or replace package body qv_app.qvi_dim_function as
 
       /*-*/
       /* Update the dimension load status
-      /* 1. Set the load status to 0 (loading)
+      /* 1. Set the load status to 2 (loaded)
       /* 2. Set the load end date to sysdate
       /*-*/
       update qvi_dim_defn
-         set qdd_lod_status = '1',
+         set qdd_lod_status = '2',
              qdd_end_date = sysdate
        where qdd_dim_code = pvar_dim_code;
       if sql%notfound then
@@ -217,6 +217,11 @@ create or replace package body qv_app.qvi_dim_function as
       /* Exception trap
       /*-*/
       when others then
+
+         /*-*/
+         /* Reset the package variables
+         /*-*/
+         pvar_dim_code := null;
 
          /*-*/
          /* Raise an exception to the calling application

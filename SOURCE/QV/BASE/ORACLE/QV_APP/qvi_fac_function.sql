@@ -25,9 +25,9 @@ create or replace package qv_app.qvi_fac_function as
    /*-*/
    /* Public declarations
    /*-*/
-   procedure create_header(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2);
+   procedure start_loader(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2);
    procedure append_data(par_data in sys.anydata);
-   procedure finalise_header;
+   procedure finalise_loader;
    function get_table(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) return qvi_fac_table pipelined;
 
 end qvi_fac_function;
@@ -47,23 +47,20 @@ create or replace package body qv_app.qvi_fac_function as
    /*-*/
    /* Private definitions
    /*-*/
-   pvar_das_name varchar2(32);
+   pvar_das_code varchar2(32);
    pvar_fac_code varchar2(32);
    pvar_tim_code varchar2(32);
    pvar_dat_seqn number;
 
-   /*********************************************************/
-   /* This function performs the create fact header routine */
-   /*********************************************************/
-   procedure create_header(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) is
+   /********************************************************/
+   /* This function performs the start fact loader routine */
+   /********************************************************/
+   procedure start_loader(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) is
 
       /*-*/
       /* Local definitions
       /*-*/
       var_found boolean;
-      var_das_name varchar2(32);
-      var_fac_code varchar2(32);
-      var_tim_code varchar2(32);
       rcd_qvi_fac_hedr qvi_fac_hedr%rowtype;
 
       /*-*/
@@ -72,31 +69,23 @@ create or replace package body qv_app.qvi_fac_function as
       cursor csr_das_defn is
          select t01.*
            from qvi_das_defn t01
-          where t01.qdd_das_code = var_das_code;
+          where t01.qdd_das_code = par_das_code;
       rcd_das_defn csr_das_defn%rowtype;
 
       cursor csr_fac_defn is
          select t01.*
            from qvi_fac_defn t01
-          where t01.qfd_das_code = var_das_code
-                t01.qfd_fac_code = var_fac_code;
+          where t01.qfd_das_code = par_das_code
+                t01.qfd_fac_code = par_fac_code;
       rcd_fac_defn csr_fac_defn%rowtype;
 
       cursor csr_fac_time is
          select t01.*
            from qvi_fac_time t01
-          where t01.qft_das_code = var_das_code
-                t01.qft_fac_code = var_fac_code
-                t01.qft_tim_code = var_tim_code;
+          where t01.qft_das_code = par_das_code
+                t01.qft_fac_code = par_fac_code
+                t01.qft_tim_code = par_tim_code;
       rcd_fac_time csr_fac_time%rowtype;
-
-      cursor csr_fac_hedr is
-         select t01.*
-           from qvi_fac_hedr t01
-          where t01.qfh_das_code = var_das_code
-                t01.qfh_fac_code = var_fac_code
-                t01.qfh_tim_code = var_tim_code;
-      rcd_fac_hedr csr_fac_hedr%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -104,12 +93,13 @@ create or replace package body qv_app.qvi_fac_function as
    begin
 
       /*-*/
-      /* Set the local variables
+      /* Reset the package variables
       /*-*/
-      var_das_code := par_das_code;
-      var_fac_code := par_fac_code;
-      var_tim_code := par_tim_code;
-      
+      pvar_das_code := null;
+      pvar_fac_code := null;
+      pvar_tim_code := null;
+      pvar_dat_seqn := 0;
+
       /*-*/
       /* Retrieve the requested dashboard
       /* notes - must exist
@@ -123,14 +113,14 @@ create or replace package body qv_app.qvi_fac_function as
       end if;
       close csr_das_defn;
       if var_found = false then
-         raise_application_error(-20000, 'Create Fact Header - Dashboard (' || var_das_code || ') does not exist');
+         raise_application_error(-20000, 'Start Loader - Dashboard ('||var_das_code||') does not exist');
       end if;
       if rcd_das_defn.qdd_das_status != '1' then
-         raise_application_error(-20000, 'Create Fact Header - Dashboard (' || var_das_code || ') is not active');
+         raise_application_error(-20000, 'Start Loader - Dashboard ('||var_das_code||') is not active');
       end if;
 
       /*-*/
-      /* Retrieve the requested fact
+      /* Retrieve the requested dimension fact
       /* notes - must exist
       /*         must be active
       /*-*/
@@ -142,29 +132,74 @@ create or replace package body qv_app.qvi_fac_function as
       end if;
       close csr_fac_defn;
       if var_found = false then
-         raise_application_error(-20000, 'Create Fact Header - Fact (' || var_fac_code || ') does not exist');
+         raise_application_error(-20000, 'Start Loader - Fact ('||par_das_code||'/'||par_fac_code||') does not exist');
       end if;
       if rcd_fac_defn.qfd_fac_status != '1' then
-         raise_application_error(-20000, 'Create Fact Header - Fact (' || var_fac_code || ') is not active');
+         raise_application_error(-20000, 'Start Loader - Fact ('||par_das_code||'/'||par_fac_code||') is not active');
       end if;
 
       /*-*/
-      /* Create the new fact header
+      /* Retrieve the requested dimension fact time
+      /* notes - must exist
+      /*         must be active
       /*-*/
-      rcd_qvi_fac_hedr.qfh_das_code := var_das_code;
-      rcd_qvi_fac_hedr.qfh_fac_code := var_fac_code;
-      rcd_qvi_fac_hedr.qfh_tim_code := var_tim_code;
-      rcd_qvi_fac_hedr.qfh_hdr_status := '1';
-      rcd_qvi_fac_hedr.qfh_str_date := sysdate;
-      rcd_qvi_fac_hedr.qfh_end_date := sysdate;
-      insert into qvi_fac_hedr values rcd_qvi_fac_hedr;
+      var_found := false;
+      open csr_fac_time;
+      fetch csr_fac_time into rcd_fac_time;
+      if csr_fac_time%notfound then
+         var_found := true;
+      end if;
+      close csr_fac_time;
+      if var_found = false then
+         raise_application_error(-20000, 'Start Loader - Fact Time ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') does not exist');
+      end if;
+      if rcd_fac_time.qft_tim_status != '2' then
+         raise_application_error(-20000, 'Start Loader - Fact Time ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') is not completed (missing parts)');
+      end if;
+
+      /*-*/
+      /* Lock the requested fact header (oracle default wait behaviour - lock will hold until commit or rollback)
+      /* 1. Set the load status to 1 (loading)
+      /* 2. Set the load start date to sysdate
+      /* 3. Set the load end date to sysdate
+      /*-*/
+      begin
+         rcd_qvi_fac_hedr.qfh_das_code := par_das_code;
+         rcd_qvi_fac_hedr.qfh_fac_code := par_fac_code;
+         rcd_qvi_fac_hedr.qfh_tim_code := par_tim_code;
+         rcd_qvi_fac_hedr.qfh_lod_status := '1';
+         rcd_qvi_fac_hedr.qfh_str_date := sysdate;
+         rcd_qvi_fac_hedr.qfh_end_date := sysdate;
+         insert into qvi_fac_hedr values rcd_qvi_fac_hedr;
+      exception
+         when dup_val_on_index then
+            update qvi_fac_hedr
+               set qfh_lod_status = '1',
+                   qfh_str_date := sysdate,
+                   qfh_end_date := sysdate
+             where qfh_das_code = par_dim_code
+               and qfh_fac_code = par_fac_code
+               and qfh_tim_code = par_tim_code;
+            if sql%notfound then
+               raise_application_error(-20000, 'Start Loader - Fact ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') does not exist');
+            end;
+
+            /*-*/
+            /* Remove the existing fact data
+            /*-*/
+            delete from qvi_fac_data
+             where qfd_das_code = par_dim_code
+               and qfd_fac_code = par_fac_code
+               and qfd_tim_code = par_tim_code;
+
+      end;
 
       /*-*/
       /* Set the package variables
       /*-*/
-      pvar_das_code := var_das_code;
-      pvar_fac_code := var_fac_code;
-      pvar_tim_code := var_tim_code;
+      pvar_das_code := par_das_code;
+      pvar_fac_code := par_fac_code;
+      pvar_tim_code := par_tim_code;
       pvar_dat_seqn := 0;
 
    /*-------------------*/
@@ -180,12 +215,12 @@ create or replace package body qv_app.qvi_fac_function as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Fact Function - Create Header - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Fact Function - Start Loader - ' || substr(sqlerrm, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end create_header;
+   end start_loader;
 
    /********************************************************/
    /* This procedure performs the append fact data routine */
@@ -203,10 +238,10 @@ create or replace package body qv_app.qvi_fac_function as
    begin
 
       /*-*/
-      /* Fact header must exist
+      /* Fact loader must be started
       /*-*/
       if pvar_das_code is null then
-         raise_application_error(-20000, 'Append Data - Fact header has not been created');
+         raise_application_error(-20000, 'Append Data - Fact loader has not been started');
       end if;
 
       /*-*/
@@ -241,9 +276,9 @@ create or replace package body qv_app.qvi_fac_function as
    end append_data;
 
    /************************************************************/
-   /* This procedure performs the finalise fact header routine */
+   /* This procedure performs the finalise fact loader routine */
    /************************************************************/
-   procedure finalise_header is
+   procedure finalise_loader is
 
    /*-------------*/
    /* Begin block */
@@ -251,24 +286,25 @@ create or replace package body qv_app.qvi_fac_function as
    begin
 
       /*-*/
-      /* Fact header must exist
+      /* Fact loader must be started
       /*-*/
       if pvar_das_code is null then
-         raise_application_error(-20000, 'Append Data - Fact header has not been created');
+         raise_application_error(-20000, 'Append Data - Fact loader has not been started');
       end if;
 
       /*-*/
-      /* Update the fact header status
-      /* note - built
+      /* Update the fact load status
+      /* 1. Set the load status to 2 (loaded)
+      /* 2. Set the load end date to sysdate
       /*-*/
       update qvi_fac_hedr
-         set qfh_hdr_status = '2',
+         set qfh_lod_status = '2',
              qfh_end_date = sysdate
        where qfh_das_code = pvar_das_code
          and qfh_fac_code = pvar_fac_code
          and qfh_tim_code = pvar_tim_code;
       if sql%notfound then
-         raise_application_error(-20000, 'Finalise Header - Header ('||pvar_das_code||'/'||pvar_fac_code||'/'||pvar_tim_code||') does not exist');
+         raise_application_error(-20000, 'Finalise Loader - Fact ('||pvar_das_code||'/'||pvar_fac_code||'/'||pvar_tim_code||') does not exist');
       end if;
 
       /*-*/
@@ -289,14 +325,21 @@ create or replace package body qv_app.qvi_fac_function as
       when others then
 
          /*-*/
+         /* Reset the package variables
+         /*-*/
+         pvar_das_code := null;
+         pvar_fac_code := null;
+         pvar_tim_code := null;
+
+         /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Fact Function - Finalise Header - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - Fact Function - Finalise Loader - ' || substr(sqlerrm, 1, 1536));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end finalise_header;
+   end finalise_loader;
 
    /******************************************************/
    /* This procedure performs the get fact table routine */
