@@ -94,7 +94,7 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       /* Remove the existing dimension data
       /*-*/
-      delete from qvi_dim_defn where qdd_dim_code = par_dim_code;
+      delete from qvi_dim_data where qdd_dim_code = par_dim_code;
 
       /*-*/
       /* Set the package variables
