@@ -38,7 +38,7 @@ comment on column qv.qvi_fac_part.qfp_fac_code is 'Fact code';
 comment on column qv.qvi_fac_part.qfp_par_code is 'Part code';
 comment on column qv.qvi_fac_part.qfp_par_name is 'Part name';
 comment on column qv.qvi_fac_part.qfp_par_status is 'Part status (0=inactive or 1=active)';
-comment on column qv.qvi_fac_part.qfp_src_table is Source pipelined table function';
+comment on column qv.qvi_fac_part.qfp_src_table is 'Source pipelined table function';
 comment on column qv.qvi_fac_part.qfp_src_type is 'Source data type';
 comment on column qv.qvi_fac_part.qfp_upd_user is 'Last updated user';
 comment on column qv.qvi_fac_part.qfp_upd_date is 'Last updated date';

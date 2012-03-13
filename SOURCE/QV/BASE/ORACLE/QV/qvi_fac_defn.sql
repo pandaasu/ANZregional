@@ -26,7 +26,7 @@ create table qv.qvi_fac_defn
     qfd_src_check                   varchar2(120)                 not null,
     qfd_fac_build                   varchar2(120)                 not null,
     qfd_fac_table                   varchar2(120)                 not null,
-    qfp_fac_type                    varchar2(120)                 not null,
+    qfd_fac_type                    varchar2(120)                 not null,
     qfd_upd_user                    varchar2(30)                  not null,
     qfd_upd_date                    date                          not null);
 
