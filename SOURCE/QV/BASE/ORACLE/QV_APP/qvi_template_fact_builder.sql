@@ -79,9 +79,9 @@ create or replace package body qv_app.template_fact_builder as
    begin
 
       /*-*/
-      /* Create the fact header
+      /* Create the fact loader
       /*-*/
-      qvi_fac_function.create_header(par_das_code, par_fac_code, par_tim_code);
+      qvi_fac_function.start_loader(par_das_code, par_fac_code, par_tim_code);
 
       /*-*/
       /* Retrieve the fact data from the intermediate pipelined table function
@@ -115,9 +115,9 @@ create or replace package body qv_app.template_fact_builder as
       close csr_src_table;
 
       /*-*/
-      /* Finalise the fact header
+      /* Finalise the fact loader
       /*-*/
-      qvi_fac_function.finalise_header;
+      qvi_fac_function.finalise_loader;
 
       /*-*/
       /* Commit the database

@@ -267,9 +267,9 @@ create or replace package body qv_app.template_source_loader as
          end if;
 
          /*-*/
-         /* Create the new header
+         /* Start the source loader
          /*-*/
-         qvi_src_function.create_header('FPPS_REGIONAL', 'ACTUALS', var_plan_year||var_period, var_unit);
+         qvi_src_function.start_loader('FPPS_REGIONAL', 'ACTUALS', var_plan_year||var_period, var_unit);
          var_src_created := true;
 
          /*-*/
@@ -336,11 +336,11 @@ create or replace package body qv_app.template_source_loader as
    begin
 
       /*-*/
-      /* Commit/rollback the header when required
+      /* Commit/rollback the loader when required
       /*-*/
       if var_src_created = true then
          if var_src_error = false then
-            qvi_src_function.finalise_header;
+            qvi_src_function.finalise_loader;
             commit;
          else
             rollback;
