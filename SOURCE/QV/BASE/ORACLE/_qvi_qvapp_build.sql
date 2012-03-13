@@ -36,10 +36,13 @@ spool ^spl_path\_qvi_qvapp_build.log
 /*-*/
 prompt CREATING QVI QV_APP OBJECTS ...
 
-@^obj_path\qvi_das_poller.sql;
+@^obj_path\qvi_dim_type.sql;
+@^obj_path\qvi_fac_type.sql;
+@^obj_path\qvi_src_type.sql;
 @^obj_path\qvi_dim_function.sql;
 @^obj_path\qvi_fac_function.sql;
 @^obj_path\qvi_src_function.sql;
+--@^obj_path\qvi_das_poller.sql;
 
 /*-*/
 /* Undefine the work variables
