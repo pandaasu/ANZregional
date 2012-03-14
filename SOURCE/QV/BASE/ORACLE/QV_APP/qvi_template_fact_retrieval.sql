@@ -62,6 +62,7 @@ create or replace package body qvi_app.template_fact_retrieval as
       /*-*/
       /* Local definitions
       /*-*/
+      var_pointer pls_integer;
       var_data template_object_type;
 
       /*-*/
@@ -69,7 +70,7 @@ create or replace package body qvi_app.template_fact_retrieval as
       /*-*/
       cursor csr_fact_table is
          select t01.*
-           from table(qvi_fac_function.get_table(par_das_code, par_fac_code, par_tim_code) t01;
+           from table(qvi_fac_function.get_table(par_das_code, par_fac_code, par_tim_code)) t01;
       rcd_fact_table csr_fact_table%rowtype;
 
    /*-------------*/
@@ -96,7 +97,7 @@ create or replace package body qvi_app.template_fact_retrieval as
          if csr_fact_table%notfound then
             exit;
          end if;
-         rcd_fact_table.dat_data.GetObject(var_data)
+         var_pointer := rcd_fact_table.dat_data.GetObject(var_data);
          pipe row(var_data);
       end loop;
       close csr_fact_table;

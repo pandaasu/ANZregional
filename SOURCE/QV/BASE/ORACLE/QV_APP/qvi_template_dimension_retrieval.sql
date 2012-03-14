@@ -62,6 +62,7 @@ create or replace package body qvi_app.template_dimension_retrieval as
       /*-*/
       /* Local definitions
       /*-*/
+      var_pointer pls_integer;
       var_data template_object_type;
 
       /*-*/
@@ -69,7 +70,7 @@ create or replace package body qvi_app.template_dimension_retrieval as
       /*-*/
       cursor csr_dimension_table is
          select t01.*
-           from table(qvi_dim_function.get_table(par_dim_code) t01;
+           from table(qvi_dim_function.get_table(par_dim_code)) t01;
       rcd_dimension_table csr_dimension_table%rowtype;
 
    /*-------------*/
@@ -96,7 +97,7 @@ create or replace package body qvi_app.template_dimension_retrieval as
          if csr_dimension_table%notfound then
             exit;
          end if;
-         rcd_dimension_table.dat_data.GetObject(var_data)
+         var_pointer := rcd_dimension_table.dat_data.GetObject(var_data);
          pipe row(var_data);
       end loop;
       close csr_dimension_table;
