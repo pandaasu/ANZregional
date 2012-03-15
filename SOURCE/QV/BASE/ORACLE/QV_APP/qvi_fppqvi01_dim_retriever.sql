@@ -19,6 +19,7 @@ create or replace package qv_app.qvi_fppqvi01_dim_retriever as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
+    2012/03   Mal Chambeyron Created retriever from templace
 
    *******************************************************************************/
 
@@ -101,7 +102,7 @@ create or replace package body qv_app.qvi_fppqvi01_dim_retriever as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - FPPQVI01 Dimension Retriever - Get Table - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - QlikView Interfacing - FPPQVI01 - FPPS Customer - Dimension Retriever - Get Table - ' || substr(sqlerrm, 1, 1536));
 
    /*-------------*/
    /* End routine */

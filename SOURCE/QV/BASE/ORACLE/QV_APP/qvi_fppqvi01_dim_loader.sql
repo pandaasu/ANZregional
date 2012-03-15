@@ -19,6 +19,7 @@ create or replace package qv_app.qvi_fppqvi01_dim_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
+    2012/03   Mal Chambeyron Created loader from templace
 
    *******************************************************************************/
 
@@ -83,15 +84,15 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_definition('DAT','Cust Code',6);
-      lics_inbound_utility.set_definition('DAT','Customer',32);
-      lics_inbound_utility.set_definition('DAT','Cust Parent Code',6);
-      lics_inbound_utility.set_definition('DAT','Cust Parent',32);
+      lics_inbound_utility.set_csv_definition('Cust Code',1);
+      lics_inbound_utility.set_csv_definition('Customer',2);
+      lics_inbound_utility.set_csv_definition('Cust Parent Code',3);
+      lics_inbound_utility.set_csv_definition('Cust Parent',4);
 
       /*-*/
       /* Start the dimension loader
       /*-*/
-      qvi_dim_function.start_loader('FPPQVI01');
+      qvi_dim_function.start_loader('fpps_customer');
 
    /*-------------*/
    /* End routine */
@@ -107,7 +108,10 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /* Local definitions
       /*-*/
       var_code varchar2(2);
-
+      var_regexp_switch varchar2(4) := null; -- oracle regexp_like match_parameter       
+      var_trim_flag boolean := true;
+      var_header varchar2(1024);
+      
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -119,19 +123,25 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*--------------------------------------------*/
 
       /*-*/
-      /* Ignore Header
-      /*-*/
-      if var_row_count <= 1 then
-         return;
-      end if;
-
-      /*-*/
       /* Empty rows
       /*-*/
       if trim(par_record) is null then
          return;
       end if;
-
+      
+      /*-----------------------*/
+      /* PARSE - Header record */
+      /*-----------------------*/
+      
+      if var_row_count = 1 then
+         var_header :=  'Int Acc -,Description,Total,Description';
+      	 if trim(substr(par_record,1,length(trim(var_header)))) != var_header then
+            lics_inbound_utility.add_exception('File header "'||par_record||'" not recognised, expected "'||var_header||'".');
+            var_src_error := true;
+         end if;
+         return;
+      end if;
+      
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
@@ -139,15 +149,16 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*-*/
       /* Parse the input data record
       /*-*/
-      lics_inbound_utility.parse_record('DAT', par_record);
+      lics_inbound_utility.parse_csv_record(par_record, con_delimiter);
 
       /*-*/
       /* Load the source data into the array
       /*-*/
-      tbl_data(tbl_data.count+1)."Cust Code" := lics_inbound_utility.get_variable('Cust Code');
-      tbl_data(tbl_data.count)."Customer" := lics_inbound_utility.get_variable('Customer');
-      tbl_data(tbl_data.count)."Cust Parent Code" := lics_inbound_utility.get_variable('Cust Parent Code');
-      tbl_data(tbl_data.count)."Cust Parent" := lics_inbound_utility.get_variable('Cust Parent');
+
+      tbl_data(tbl_data.count+1)."Cust Code" := qvi_util.get_validated_value('Cust Code','^[[:alnum:]]{1,6}$',var_regexp_switch,var_trim_flag);
+      tbl_data(tbl_data.count)."Customer" := qvi_util.get_validated_value('Customer','^[[:print:]|[:space:]]{1,32}$',var_regexp_switch,var_trim_flag);
+      tbl_data(tbl_data.count)."Cust Parent Code" := qvi_util.get_validated_value('Cust Parent Code','^[[:alnum:]]{1,6}$',var_regexp_switch,var_trim_flag);
+      tbl_data(tbl_data.count)."Cust Parent" := qvi_util.get_validated_value('Cust Parent','^[[:print:]|[:space:]]{1,32}$',var_regexp_switch,var_trim_flag);
 
       /*-*/
       /* Exceptions raised in LICS_INBOUND_UTILITY
@@ -204,7 +215,7 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
    /* End routine */
    /*-------------*/
    end on_end;
-
+   
 end qvi_fppqvi01_dim_loader;
 /
 
