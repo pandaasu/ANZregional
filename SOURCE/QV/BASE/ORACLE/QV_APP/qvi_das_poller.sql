@@ -88,8 +88,8 @@ create or replace package body qv_app.qvi_das_poller as
                     and t11.qsh_tim_code = rcd_das_defn.qft_tim_code
                     and t11.qsh_lod_status = '2') t02
           where t01.qfp_par_code = t02.qsh_par_code(+)
-            and t01.qfp_das_code = rcd_fac_defn.qdd_das_code
-            and t01.qfp_fac_code = rcd_fac_defn.qfd_fac_code
+            and t01.qfp_das_code = rcd_das_defn.qdd_das_code
+            and t01.qfp_fac_code = rcd_das_defn.qfd_fac_code
             and t01.qfp_par_status = '1'
           order by t01.qfp_par_code asc;
       rcd_fac_part csr_fac_part%rowtype;
@@ -142,7 +142,7 @@ create or replace package body qv_app.qvi_das_poller as
                exit;
             end if;
          end loop;
-         close csr_fac_fac_part;
+         close csr_fac_part;
 
          /*-*/
          /* Submit the fact builder when required
