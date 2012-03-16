@@ -178,6 +178,22 @@ create or replace package body qv_app.qvi_dim_function as
    /*****************************************************************/
    procedure finalise_loader is
 
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_found boolean;
+      var_flg_string varchar2(4000);
+      var_instance number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_dim_defn is
+         select t01.*
+           from qvi_dim_defn t01
+          where t01.qdd_dim_code = pvar_dim_code;
+      rcd_dim_defn csr_dim_defn%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -188,6 +204,20 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       if pvar_dim_code is null then
          raise_application_error(-20000, 'Finalise Loader - Dimension loader has not been started');
+      end if;
+
+      /*-*/
+      /* Retrieve the dimension definition
+      /*-*/
+      var_found := false;
+      open csr_dim_defn;
+      fetch csr_dim_defn into rcd_dim_defn;
+      if csr_dim_defn%found then
+         var_found := true;
+      end if;
+      close csr_dim_defn;
+      if var_found = false then
+         raise_application_error(-20000, 'Finalise Loader - Dimension (' || pvar_dim_code || ') does not exist');
       end if;
 
       /*-*/
@@ -202,6 +232,20 @@ create or replace package body qv_app.qvi_dim_function as
       if sql%notfound then
          raise_application_error(-20000, 'Finalise Loader - Dimension (' || pvar_dim_code || ') does not exist');
       end if;
+
+      /*-*/
+      /* Create the flag file interface - Qlikview
+      /*-*/
+      begin
+         var_instance := lics_outbound_loader.create_interface(rcd_dim_defn.qdd_flg_iface,null,rcd_dim_defn.qdd_flg_mname);
+         var_flg_string := pvar_dim_code;
+         var_flg_string := var_flg_string||',"'||rcd_dim_defn.qdd_dim_table||'('''||pvar_dim_code||''')"';
+         lics_outbound_loader.append_data(var_flg_string);
+         lics_outbound_loader.finalise_interface;
+      exception
+         when others then
+            raise_application_error(-20000, 'Finalise Loader - Flag file interface failed - ' || substr(sqlerrm, 1, 1024));
+      end;
 
       /*-*/
       /* Reset the package variables
