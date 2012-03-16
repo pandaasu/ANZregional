@@ -43,9 +43,6 @@ comment on column qv.qvi_fac_part.qfp_src_type is 'Source data type';
 comment on column qv.qvi_fac_part.qfp_upd_user is 'Last updated user';
 comment on column qv.qvi_fac_part.qfp_upd_date is 'Last updated date';
 
-
--- can be unit / p&l or unit / balance sheet which can simply tie to an interface
-
 /*-*/
 /* Primary Key Constraint
 /*-*/

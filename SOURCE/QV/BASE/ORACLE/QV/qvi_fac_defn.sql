@@ -23,10 +23,13 @@ create table qv.qvi_fac_defn
     qfd_fac_code                    varchar2(32)                  not null,
     qfd_fac_name                    varchar2(120 char)            not null,
     qfd_fac_status                  varchar2(1)                   not null,
-    qfd_src_check                   varchar2(120)                 not null,
     qfd_fac_build                   varchar2(120)                 not null,
     qfd_fac_table                   varchar2(120)                 not null,
     qfd_fac_type                    varchar2(120)                 not null,
+    qfd_job_group                   varchar2(10 char)             not null,
+    qfd_ema_group                   varchar2(64 char)             not null,
+    qfd_flg_iface                   varchar2(32 char)             not null,
+    qfd_flg_mname                   varchar2(64 char)             not null,
     qfd_upd_user                    varchar2(30)                  not null,
     qfd_upd_date                    date                          not null);
 
@@ -38,10 +41,13 @@ comment on column qv.qvi_fac_defn.qfd_das_code is 'Dashboard code';
 comment on column qv.qvi_fac_defn.qfd_fac_code is 'Fact code';
 comment on column qv.qvi_fac_defn.qfd_fac_name is 'Fact name';
 comment on column qv.qvi_fac_defn.qfd_fac_status is 'Fact status (0=inactive or 1=active)';
-comment on column qv.qvi_fac_defn.qfd_src_check is 'Source check procedure (*NONE or source check procedure)';
 comment on column qv.qvi_fac_defn.qfd_fac_build is 'Fact build procedure';
 comment on column qv.qvi_fac_defn.qfd_fac_table is 'Fact pipelined table function';
 comment on column qv.qvi_fac_defn.qfd_fac_type is 'Fact data type';
+comment on column qv.qvi_fac_defn.qfd_job_group is 'Fact build job group';
+comment on column qv.qvi_fac_defn.qfd_ema_group is 'Fact build email group';
+comment on column qv.qvi_fac_defn.qfd_flg_iface is 'Fact build flag file interface';
+comment on column qv.qvi_fac_defn.qfd_flg_mname is 'Fact build flag file message name';
 comment on column qv.qvi_fac_defn.qfd_upd_user is 'Last updated user';
 comment on column qv.qvi_fac_defn.qfd_upd_date is 'Last updated date';
 
