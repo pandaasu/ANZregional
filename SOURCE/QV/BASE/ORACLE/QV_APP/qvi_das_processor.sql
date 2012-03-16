@@ -127,7 +127,7 @@ create or replace package body qv_app.qvi_das_processor as
       if var_found = false then
          var_errors := true;
          lics_logging.write_log('Dashboard fact not found (' || par_das_code || '/' || par_fac_code || ')');
-      elsif rcd_fac_defn.qfd_fac_status != '2' then
+      elsif rcd_fac_defn.qfd_fac_status != '1' then
          var_errors := true;
          lics_logging.write_log('Dashboard fact is not active (' || par_das_code || '/' || par_fac_code || ')');
       end if;
@@ -147,7 +147,7 @@ create or replace package body qv_app.qvi_das_processor as
          lics_logging.write_log('Dashboard fact time not found (' || par_das_code || '/' || par_fac_code || '/' || par_tim_code || ')');
       elsif rcd_fac_time.qft_tim_code != '2' then
          var_errors := true;
-         lics_logging.write_log('Dashboard fact time is not 1(submitted) (' || par_das_code || '/' || par_fac_code || '/' || par_tim_code || ')');
+         lics_logging.write_log('Dashboard fact time is not 2(submitted) (' || par_das_code || '/' || par_fac_code || '/' || par_tim_code || ')');
       end if;
 
       /*-*/
