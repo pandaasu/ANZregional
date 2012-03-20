@@ -23,7 +23,8 @@ create or replace package qv_app.qvi_util as
    /*-*/
    /* Public declarations
    /*-*/
-   function get_validated_value(par_column_name in varchar2, par_regexp in varchar2, par_regexp_switch in varchar2, par_trim_flag in boolean) return varchar2;
+   function get_validated_string(par_column_name in varchar2, par_validation_descr in varchar2, par_validation_regexp in varchar2, par_validation_regexp_switch in varchar2, par_trim_flag in boolean, par_src_error in out boolean) return varchar2;
+   function get_validated_string(par_column_name in varchar2, par_column_value in varchar2, par_validation_descr in varchar2, par_validation_regexp in varchar2, par_validation_regexp_switch in varchar2, par_trim_flag in boolean, par_src_error in out boolean) return varchar2;
    
 end qvi_util;
 /
@@ -42,9 +43,33 @@ create or replace package body qv_app.qvi_util as
    /*******************************************************************************************************************/
    /* This procedure validates value against regexp, on success return value, otherwise add_exception and return null */
    /*******************************************************************************************************************/
-   function get_validated_value(par_column_name in varchar2, par_regexp in varchar2, par_regexp_switch in varchar2, par_trim_flag in boolean) return varchar2 is
+   function get_validated_string(par_column_name in varchar2, par_validation_descr in varchar2, par_validation_regexp in varchar2, par_validation_regexp_switch in varchar2, par_trim_flag in boolean, par_src_error in out boolean) return varchar2 as
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return varchar2(4000);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+      /*-*/
+      /* Validate column value against regexp, on success return value, otherwise add_exception and return null
+      /*-*/
+      var_return := get_validated_string(par_column_name, lics_inbound_utility.get_variable(par_column_name), par_validation_descr, par_validation_regexp, par_validation_regexp, par_trim_flag, par_src_error);
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end get_validated_string;
+   
+   /*******************************************************************************************************************/
+   /* This procedure validates value against regexp, on success return value, otherwise add_exception and return null */
+   /*******************************************************************************************************************/
+   function get_validated_string(par_column_name in varchar2, par_column_value in varchar2, par_validation_descr in varchar2, par_validation_regexp in varchar2, par_validation_regexp_switch in varchar2, par_trim_flag in boolean, par_src_error in out boolean) return varchar2 as
       /* 
-      /* par_regexp_switch is a text literal that lets you change the default matching 
+      /* par_validation_regexp_switch is a text literal that lets you change the default matching 
       /* behavior of the function. You can specify one or more of the following values 
       /* for match_parameter:
       /* 
@@ -68,20 +93,20 @@ create or replace package body qv_app.qvi_util as
    /* Begin block */
    /*-------------*/
    begin
-
       /*-*/
-      /* Validate value against regexp, on success return value, otherwise add_exception and return null
+      /* Validate column value against regexp, on success return value, otherwise add_exception and return null
       /*-*/
-      
-      var_return := lics_inbound_utility.get_variable(par_column_name);
-      
-      if par_trim_flag then
+      var_return := par_column_value;
+         
+      if par_trim_flag = true then
       	var_return := trim(var_return);
+      	var_return := regexp_replace(var_return,'[[:space:]]*$',''); -- remove extraneous trailing whitespace (cr/lf/tab/etc..) 
       end if;
       
-      if not regexp_like(var_return, par_regexp, par_regexp_switch) then
-         lics_inbound_utility.add_exception('Field "'||par_column_name||'" value "'||var_return||'" failed validation regular expression "'||par_regexp||'"');
+      if not regexp_like(var_return, par_validation_regexp, par_validation_regexp_switch) then
+         lics_inbound_utility.add_exception('Field "'||par_column_name||'" value "'||var_return||'" must be - '||par_validation_descr);
          var_return := null;
+         par_src_error := true;
       end if;
 
       return var_return;
@@ -89,8 +114,8 @@ create or replace package body qv_app.qvi_util as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end get_validated_value;
-   
+   end get_validated_string;
+
 end qvi_util;
 /
 

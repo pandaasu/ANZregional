@@ -48,6 +48,8 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
    /* Private constants 
    /*-*/
    con_delimiter constant varchar2(32)  := ',';
+   con_regexp_switch varchar2(4) := null; -- oracle regexp_like match_parameter       
+   con_trim_flag boolean := true;
 
    /*-*/
    /* Private definitions
@@ -108,8 +110,6 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /* Local definitions
       /*-*/
       var_code varchar2(2);
-      var_regexp_switch varchar2(4) := null; -- oracle regexp_like match_parameter       
-      var_trim_flag boolean := true;
       var_header varchar2(1024);
       
    /*-------------*/
@@ -154,11 +154,14 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*-*/
       /* Load the source data into the array
       /*-*/
-
-      tbl_data(tbl_data.count+1)."Cust Code" := qvi_util.get_validated_value('Cust Code','^[[:alnum:]]{1,6}$',var_regexp_switch,var_trim_flag);
-      tbl_data(tbl_data.count)."Customer" := qvi_util.get_validated_value('Customer','^[[:print:]|[:space:]]{1,32}$',var_regexp_switch,var_trim_flag);
-      tbl_data(tbl_data.count)."Cust Parent Code" := qvi_util.get_validated_value('Cust Parent Code','^[[:alnum:]]{1,6}$',var_regexp_switch,var_trim_flag);
-      tbl_data(tbl_data.count)."Cust Parent" := qvi_util.get_validated_value('Cust Parent','^[[:print:]|[:space:]]{1,32}$',var_regexp_switch,var_trim_flag);
+      tbl_data(tbl_data.count+1)."Cust Code" := qvi_util.get_validated_string(
+         'Cust Code','Alphanumeric of 1 to 6 characters','^[[:alnum:]]{1,6}$',con_regexp_switch,con_trim_flag,var_src_error);
+      tbl_data(tbl_data.count)."Customer" := qvi_util.get_validated_string(
+         'Customer','String of 1 to 32 characters','^[[:print:]|[:space:]]{1,32}$',con_regexp_switch,con_trim_flag,var_src_error);
+      tbl_data(tbl_data.count)."Cust Parent Code" := qvi_util.get_validated_string(
+         'Cust Parent Code','Alphanumeric of 1 to 6 characters','^[[:alnum:]]{1,6}$',con_regexp_switch,con_trim_flag,var_src_error);
+      tbl_data(tbl_data.count)."Cust Parent" := qvi_util.get_validated_string(
+         'Cust Parent','String of 1 to 32 characters','^[[:print:]|[:space:]]{1,32}$',con_regexp_switch,con_trim_flag,var_src_error);
 
       /*-*/
       /* Exceptions raised in LICS_INBOUND_UTILITY
@@ -192,6 +195,7 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*-*/
       if var_src_error = true then
          rollback;
+         return;
       end if;
 
       /*-*/
