@@ -19,7 +19,8 @@ create or replace package qv_app.qvi_src_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
-
+    2012/03   Mal Chambeyron Corrected cursor notfounds in start_loader and sequence update in append_data
+    
    *******************************************************************************/
 
    /*-*/
@@ -116,11 +117,11 @@ create or replace package body qv_app.qvi_src_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_das_defn;
       fetch csr_das_defn into rcd_das_defn;
       if csr_das_defn%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_das_defn;
       if var_found = false then
@@ -135,11 +136,11 @@ create or replace package body qv_app.qvi_src_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_fac_defn;
       fetch csr_fac_defn into rcd_fac_defn;
       if csr_fac_defn%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_fac_defn;
       if var_found = false then
@@ -154,11 +155,11 @@ create or replace package body qv_app.qvi_src_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_fac_part;
       fetch csr_fac_part into rcd_fac_part;
       if csr_fac_part%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_fac_part;
       if var_found = false then
@@ -174,11 +175,11 @@ create or replace package body qv_app.qvi_src_function as
       /* 1. When found must not be time status 2 (completed)
       /* 2. When not found create and set time status to 1 (created)
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_fac_time;
       fetch csr_fac_time into rcd_fac_time;
       if csr_fac_time%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_fac_time;
       if var_found = true then
@@ -206,6 +207,7 @@ create or replace package body qv_app.qvi_src_function as
       /* 2. Set the load start date to sysdate
       /* 3. Set the load end date to sysdate
       /*-*/
+      
       begin
          rcd_qvi_src_hedr.qsh_das_code := par_das_code;
          rcd_qvi_src_hedr.qsh_fac_code := par_fac_code;
@@ -298,7 +300,8 @@ create or replace package body qv_app.qvi_src_function as
       rcd_qvi_src_data.qsd_fac_code := pvar_fac_code;
       rcd_qvi_src_data.qsd_tim_code := pvar_tim_code;
       rcd_qvi_src_data.qsd_par_code := pvar_par_code;
-      rcd_qvi_src_data.qsd_dat_seqn := pvar_dat_seqn + 1;
+      pvar_dat_seqn := pvar_dat_seqn + 1;
+      rcd_qvi_src_data.qsd_dat_seqn := pvar_dat_seqn;
       rcd_qvi_src_data.qsd_dat_data := par_data;
       insert into qvi_src_data values rcd_qvi_src_data;
 

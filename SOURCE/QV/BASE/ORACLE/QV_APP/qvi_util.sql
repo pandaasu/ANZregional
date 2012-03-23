@@ -56,9 +56,28 @@ create or replace package body qv_app.qvi_util as
       /*-*/
       /* Validate column value against regexp, on success return value, otherwise add_exception and return null
       /*-*/
-      var_return := get_validated_string(par_column_name, lics_inbound_utility.get_variable(par_column_name), par_validation_descr, par_validation_regexp, par_validation_regexp, par_trim_flag, par_src_error);
+      var_return := lics_inbound_utility.get_variable(par_column_name);
+      var_return := get_validated_string(par_column_name,var_return,par_validation_descr,par_validation_regexp,par_validation_regexp_switch,par_trim_flag,par_src_error);
       return var_return;
+   exception
 
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - [QV_UTIL.GET_VALIDATED_STRING-1] - '
+            ||'Column Name "'||par_column_name
+            ||'", Column Value "'||var_return
+            ||'", Validation Desc "'||par_validation_descr
+            ||'", Validation Regular Expression "'||par_validation_regexp
+            ||'", Validation Regular Switch "'||par_validation_regexp_switch
+            ||'", Trim Flag "'||(CASE par_trim_flag when true then 'TRUE' ELSE 'FALSE' END)
+            ||'", Source Error "'||(CASE par_src_error when true then 'TRUE' ELSE 'FALSE' END)
+            ||'" - '||substr(sqlerrm, 1, 1536));
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -98,9 +117,9 @@ create or replace package body qv_app.qvi_util as
       /*-*/
       var_return := par_column_value;
          
-      if par_trim_flag = true then
+      if var_return is not null and par_trim_flag = true then
+      	var_return := regexp_replace(var_return,'[[:space:]]*$',null); -- remove extraneous trailing whitespace (cr/lf/tab/etc..) 
       	var_return := trim(var_return);
-      	var_return := regexp_replace(var_return,'[[:space:]]*$',''); -- remove extraneous trailing whitespace (cr/lf/tab/etc..) 
       end if;
       
       if not regexp_like(var_return, par_validation_regexp, par_validation_regexp_switch) then
@@ -111,6 +130,25 @@ create or replace package body qv_app.qvi_util as
 
       return var_return;
 
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - [QV_UTIL.GET_VALIDATED_STRING-2] - '
+            ||'Column Name "'||par_column_name
+            ||'", Column Value "'||var_return
+            ||'", Validation Desc "'||par_validation_descr
+            ||'", Validation Regular Expression "'||par_validation_regexp
+            ||'", Validation Regular Switch "'||par_validation_regexp_switch
+            ||'", Trim Flag "'||(CASE par_trim_flag when true then 'TRUE' ELSE 'FALSE' END)
+            ||'", Source Error "'||(CASE par_src_error when true then 'TRUE' ELSE 'FALSE' END)
+            ||'" - '||substr(sqlerrm, 1, 1536));
    /*-------------*/
    /* End routine */
    /*-------------*/

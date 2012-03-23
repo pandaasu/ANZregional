@@ -135,7 +135,7 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       
       if var_row_count = 1 then
          var_header :=  'Int Acc -,Description,Total,Description';
-      	 if trim(substr(par_record,1,length(trim(var_header)))) != var_header then
+          if trim(substr(par_record,1,length(trim(var_header)))) != var_header then
             lics_inbound_utility.add_exception('File header "'||par_record||'" not recognised, expected "'||var_header||'".');
             var_src_error := true;
          end if;
@@ -203,9 +203,9 @@ create or replace package body qv_app.qvi_fppqvi01_dim_loader as
       /*-*/
       for idx in 1..tbl_data.count loop
          var_data := qvi_fppqvi01_dim_object(tbl_data(idx)."Cust Code",
-         		             tbl_data(idx)."Customer",
-         		             tbl_data(idx)."Cust Parent Code",
-                                     tbl_data(idx)."Cust Parent");
+            tbl_data(idx)."Customer",
+            tbl_data(idx)."Cust Parent Code",
+            tbl_data(idx)."Cust Parent");
          qvi_dim_function.append_data(sys.anydata.ConvertObject(var_data));
       end loop;
 
