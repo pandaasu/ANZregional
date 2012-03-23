@@ -10,14 +10,14 @@ declare
          t02.cust_dtl_code,
          t04.mars_week as call_yyyyppw,
          t01.user_id as efex_assoc_caller_id,
-         '147' as company_code,
+         '147' as company_code,         -- Update company code as required (1 market id = 147, 5 market id = 149) 
          t01.sales_terr_user_id as efex_assoc_id,
          t01.efex_cust_id,
          t03.sales_terr_code,
          t01.sales_terr_id as efex_sales_terr_id,
          t01.sgmnt_id as efex_sgmnt_id,
          t01.bus_unit_id as efex_bus_unit_id,
-         '80' as call_type_code,
+         t05.call_type_code,
          trunc(t01.call_date) as call_date,
          t01.end_date as call_end_time,
          round(case when (t01.end_date is null) then null
@@ -28,14 +28,17 @@ declare
       from efex_call t01,
          efex_cust_dtl_dim t02,
          efex_sales_terr_dim t03,
-         mars_date t04
+         mars_date t04,
+         efex_call_type t05
       where t01.efex_cust_id = t02.efex_cust_id
         and t01.sales_terr_id = t03.efex_sales_terr_id
         and trunc(t01.call_date) = t04.calendar_date
+        and t01.call_type = t05.call_type
         and t01.user_id = '8499'        -- Update User as required
         and t02.last_rec_flg = 'Y'
         and t03.last_rec_flg = 'Y'
         and t04.mars_period = '201201'  -- Update Period as required
+        and t05.efex_mkt_id = '1'       -- Update Market as required
         and not exists
         (
           select *
