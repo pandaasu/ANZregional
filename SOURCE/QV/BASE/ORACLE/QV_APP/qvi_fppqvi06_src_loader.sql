@@ -50,7 +50,6 @@ end qvi_fppqvi06_src_loader;
 /* Package Body */
 /****************/
 create or replace package body qv_app.qvi_fppqvi06_src_loader as
-
    /*-*/
    /* Private exceptions
    /*-*/
@@ -63,21 +62,22 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
    con_schema_name constant varchar2(30) := 'QV_APP';
    con_package_name constant varchar2(30) := 'QVI_FPPQVI06_SRC_LOADER';
    var_module_name varchar2(128) := trim(con_schema_name)||'.'||trim(con_package_name)||'.*PACKAGE'; -- Module name is fully qualified schema.package.module used for error reporting
-   
+   var_statement_tag varchar2(128) := null;
+
    con_delimiter constant varchar2(32)  := ',';
    con_regexp_switch constant varchar2(4) := null; -- oracle regexp_like match_parameter
    con_trim_flag constant boolean := true;
 
    /*-*/
    /* Private definitions
-   /*-*/   
-   var_src_created boolean;
+   /*-*/
    var_src_error boolean;
-   
+
    var_src_first_header boolean;
    var_src_complete_header boolean;
-
-   var_src_filename varchar2(256);
+   var_src_plan_flag boolean;
+   var_src_filename varchar2(512);
+   var_src_file_format varchar2(16);
 
    var_das_code varchar2(32);
    var_fac_code varchar2(32);
@@ -85,7 +85,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
    var_par_code varchar2(32);
    var_currency_code varchar2(3);
    var_current_rec qvi_fppqvi06_src_obj;
-   var_previous_rec qvi_fppqvi06_src_obj;
+   var_rec_no number := 0;
 
    /************************************************/
    /* This procedure performs the on start routine */
@@ -100,63 +100,50 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
       /* Module name is fully qualified schema.package.module used for error reporting
       /*-*/
       var_module_name := trim(con_schema_name)||'.'||trim(con_package_name)||'.ON_START';
+      var_statement_tag := null;
 
       /*-*/
       /* Initialise the package level variables
       /*-*/
-      var_src_created := false;
       var_src_error := false;
-      
+
       var_src_complete_header := false;
       var_src_first_header := true;
 
-      var_current_rec := qvi_fppqvi06_src_obj(null,null,null,null,null,null,null,null,null,null,null);
-      var_previous_rec := qvi_fppqvi06_src_obj(null,null,null,null,null,null,null,null,null,null,null);
-      
+      var_current_rec := qvi_fppqvi06_src_obj(null,null,null,null,null,null,null,null,null,null,null,null,null);
+
       /*-*/
       /* Get source filename, throwing error if not found
       /*-*/
-      var_src_filename := lics_inbound_processor.callback_file_name;
+      var_src_filename := upper(lics_inbound_processor.callback_file_name);
       if trim(var_src_filename) is null then
          raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - Source filename not found');
       end if;
       
-      var_das_code := 'fpps_anz_pet';
-      if regexp_like(var_src_filename, '^plan.csv$') then
-         var_fac_code := 'fpps_plan';
-         var_current_rec."Period" := -1; -- will be set in parsing for loop
-      elsif regexp_like(var_src_filename, '^actual.csv$') then
-         var_fac_code := 'fpps_actual';
-      else
-         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - Unknown source filename "'||var_src_filename||'"');
-      end if;
-      
-      var_currency_code := 'USD';
-      var_current_rec."Currency" := var_currency_code;
+      var_das_code := 'FPPS';
 
+      if substr(var_src_filename,1,3)= 'QV_' then
+         var_current_rec."Dashboard Unit Code" := regexp_substr(var_src_filename, '[[:alnum:]]*', 1, 3);
+         var_current_rec."Currency" := regexp_substr(var_src_filename, '[[:alnum:]]*', 1, 7);
+         var_src_file_format := regexp_substr(var_src_filename, '[[:alnum:]]*', 1, 9)||'_'||regexp_substr(var_src_filename, '[[:alnum:]]*', 1, 11);
+         var_current_rec."Solve Type" := regexp_substr(var_src_filename, '[[:alnum:]]*', 1, 11);
+      end if;
+
+      var_fac_code := 'FPPS_'||var_current_rec."Dashboard Unit Code";
+      var_par_code :=  substr(substr(var_src_filename,1,instr(var_src_filename,'_',1,6)-1),4);
+      
       /*-*/
       /* Initialise the layout definitions
       /*-*/
       lics_inbound_utility.clear_definition;
-      lics_inbound_utility.set_csv_definition('Line Item Code',1);
-      lics_inbound_utility.set_csv_definition('Material Code',2);
-      lics_inbound_utility.set_csv_definition('Source Code',3);
-      if var_fac_code = 'fpps_plan' then 
-         lics_inbound_utility.set_csv_definition('P01',4);
-         lics_inbound_utility.set_csv_definition('P02',5);
-         lics_inbound_utility.set_csv_definition('P03',6);
-         lics_inbound_utility.set_csv_definition('P04',7);
-         lics_inbound_utility.set_csv_definition('P05',8);
-         lics_inbound_utility.set_csv_definition('P06',9);
-         lics_inbound_utility.set_csv_definition('P07',10);
-         lics_inbound_utility.set_csv_definition('P08',11);
-         lics_inbound_utility.set_csv_definition('P09',12);
-         lics_inbound_utility.set_csv_definition('P10',13);
-         lics_inbound_utility.set_csv_definition('P11',14);
-         lics_inbound_utility.set_csv_definition('P12',15);
-         lics_inbound_utility.set_csv_definition('P13',16);
-      else -- fpps_actual
+      
+      if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
+         lics_inbound_utility.set_csv_definition('Line Item Code',1);
+         lics_inbound_utility.set_csv_definition('Material Code',2);
+         lics_inbound_utility.set_csv_definition('Source Code',3);
          lics_inbound_utility.set_csv_definition('Value',4);
+      else
+         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - Unknown source filename format "'||var_src_file_format||'"');
       end if;
 
    /*-------------------*/
@@ -171,7 +158,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          /* Raise an exception to the calling application
          /*-*/
          rollback;
-         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||']['||var_statement_tag||'] - ' || substr(sqlerrm, 1, 1536));
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -181,91 +168,99 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
    /* This procedure performs the on data routine */
    /***********************************************/
    procedure on_data(par_record in varchar2) is
-
       /*-*/
       /* Local definitions
       /*-*/
-      var_record varchar2(4000);
-      var_header_row_tag varchar2(20) := null;
-      var_header_row_value varchar2(256) := null;
+      var_rec varchar2(4000);
+      var_rec_type varchar2(20) := null;
+      var_rec_data varchar2(256) := null;
       var_period_column_name varchar2(30) := null;
 
    /*-------------*
    /* Begin block */
    /*-------------*/
    begin
+      var_rec_no := var_rec_no + 1;
       /*-*/
       /* Module name is fully qualified schema.package.module used for error reporting
       /*-*/
       var_module_name := trim(con_schema_name)||'.'||trim(con_package_name)||'.ON_DATA';
-   
-      var_record := regexp_replace(par_record,'[[:space:]]*$',null); -- remove extraneous trailing whitespace (cr/lf/tab/etc..)
-
-      /*--------------------------------------------*/
-      /* IGNORE - Ignore the data row when required */
-      /*--------------------------------------------*/
+      var_statement_tag := null;
 
       /*-*/
-      /* Empty rows
+      /* Remove extraneous trailing whitespace (cr/lf/tab/etc..) from record
+      /* and return is nothing to process
       /*-*/
-      if trim(var_record) is null or trim(replace(var_record,con_delimiter,' ')) is null then
+      var_rec := regexp_replace(par_record,'[[:space:]]*$',null); -- remove extraneous trailing whitespace (cr/lf/tab/etc..)
+      if trim(var_rec) is null or trim(replace(var_rec,con_delimiter,' ')) is null then
          return;
       end if;
 
-      /*---------------------------*/
-      /* STRIP - Strip header data */
-      /*---------------------------*/
-      var_header_row_tag := rtrim(substr(var_record,1,20));
-      var_header_row_value := rtrim(substr(var_record,21));
+      /*-*/
+      /* Break out record type and data
+      /*-*/
+      var_rec_type := rtrim(substr(var_rec,1,20));
+      var_rec_data := rtrim(substr(var_rec,21));
 
       /*-*/
-      /* Parse Unit record
+      /* Process Unit record
       /*-*/
-      if var_header_row_tag = 'Unit' then
+      if var_rec_type = 'Unit' then
+         var_statement_tag := 'Process Unit record';
          var_current_rec."Unit Code" := qvi_util.get_validated_string(
-            'Unit Code',var_header_row_value,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+            'Unit Code',var_rec_data,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
          return;
+      end if;
 
       /*-*/
-      /* Parse Plan_Version record
+      /* Process Plan Version record
       /*-*/
-      elsif var_header_row_tag = 'Plan_Version' then
+      if var_rec_type = 'Plan_Version' then
+         var_statement_tag := 'Process Plan Version record';
          var_current_rec."Plan Version" := qvi_util.get_validated_string(
-            'Plan Version',var_header_row_value,'String of 1 to 64 characters','^[[:print:]|[:space:]]{1,64}$',con_regexp_switch,con_trim_flag,var_src_error);
+            'Plan Version',var_rec_data,'String of 1 to 64 characters','^[[:print:]]{1,64}$',con_regexp_switch,con_trim_flag,var_src_error);
          var_current_rec."Year" := to_number(qvi_util.get_validated_string(
-            'Year',substr(var_header_row_value,1,4),'Number of 4 digits','^[[:digit:]]{4}$',con_regexp_switch,con_trim_flag,var_src_error));
+            'Year',substr(var_rec_data,1,4),'Number of 4 digits','^[[:digit:]]{4}$',con_regexp_switch,con_trim_flag,var_src_error));
          return;
+      end if;
 
       /*-*/
-      /* Parse Dest record
+      /* Process Destination record
       /*-*/
-      elsif var_header_row_tag = 'Dest_MOE' then
+      if var_rec_type = 'Dest_MOE' then
+         var_statement_tag := 'Process Destination record';
          var_current_rec."Dest Code" := qvi_util.get_validated_string(
-            'Dest Code',var_header_row_value,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+            'Dest Code',var_rec_data,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
          return;
+      end if;
 
       /*-*/
-      /* Parse Customer record
+      /* Process Customer record
       /*-*/
-      elsif var_header_row_tag = 'Customer' then
+      if var_rec_type = 'Customer' then
+         var_statement_tag := 'Process Customer record';
          var_current_rec."Cust Code" := qvi_util.get_validated_string(
-            'Cust Code',var_header_row_value,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+            'Cust Code',var_rec_data,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
          return;
+      end if;
 
       /*-*/
-      /* Parse Period header record
+      /* Process Period header record
       /*-*/
-      elsif trim(substr(var_record,1,3)) = ',,,' then
+      if trim(substr(var_rec,1,3)) = ',,,' then
+         var_statement_tag := 'Process Period header record';
          /*-*/
          /* Parse Period header record for fpps_actual only .. as fpps_plan has all periods
          /*-*/
-         if var_fac_code = 'fpps_actual' then
+         if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
+            var_statement_tag := 'Process Period record';
             var_current_rec."Period" := to_number(qvi_util.get_validated_string(
-               'Period',substr(var_record,5,2),'Number of 1 to 2 digits','^[[:digit:]]{1,2}$',con_regexp_switch,con_trim_flag,var_src_error));
+               'Period',substr(var_rec,5,2),'Number of 1 to 2 digits','^[[:digit:]]{1,2}$',con_regexp_switch,con_trim_flag,var_src_error));
          end if;
          /*-*/
          /* Check header is complete
          /*-*/
+         var_statement_tag := 'Check header is complete';
          var_src_complete_header := true;
          if var_current_rec."Unit Code" is null then
             lics_inbound_utility.add_exception('Source data is missing the Unit Code');
@@ -300,115 +295,72 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          end if;
 
          /*-*/
-         /* Start the source loader on first header .. or on change of Unit Code, Year
+         /* Start the source loader on first header .
          /*-*/
-         if (var_src_first_header = true
-            or NVL(var_current_rec."Unit Code", '*NULL') != NVL(var_previous_rec."Unit Code", '*NULL')
-            or NVL(var_current_rec."Year", '*NULL') != NVL(var_previous_rec."Year", '*NULL'))
-            and
-            (var_fac_code = 'fpps_plan'
-            or (var_fac_code = 'fpps_actual' and NVL(var_current_rec."Period", '*NULL') != NVL(var_previous_rec."Period", '*NULL'))) then
-
-            if var_src_first_header = true then
-               var_src_first_header := false;
-            else
-               /*-*/
-               /* Commit/rollback the header when required
-               /*-*/
-               if var_src_created = true then
-                  if var_src_error = false then
-                     qvi_src_function.finalise_loader;
-                     var_src_created := false;
-                     commit;
-                  else
-                     rollback;
-                  end if;
-               end if;
-            end if;
-            
-            /*-*/
-            /* Time code is year for plan and year/period for actual
-            /*-*/
-            if var_fac_code = 'fpps_plan' then
-               var_tim_code := var_current_rec."Year";
-            else -- fpps_actual
-               var_tim_code := var_current_rec."Year"||to_char(var_current_rec."Period", 'FM00');
-            end if;
-            
-            if var_src_created = false then
-               qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_current_rec."Unit Code"||'-'||lower(var_currency_code));
-               var_src_created := true;
-               var_src_error := false;
-            else
-               lics_inbound_utility.add_exception('Previous source has not been finalised');
-               var_src_error := true;
-            end if;
-
-            /*-*/
-            /* Take copy of key header values .. used to determine part (split)
-            /*-*/
-            var_previous_rec."Unit Code" := var_current_rec."Unit Code";
-            var_previous_rec."Year" := var_current_rec."Year";
-            var_previous_rec."Period" := var_current_rec."Period";
-         end if;
-
-         return;
-      /*-------------------------------*/
-      /* PARSE - Parse the data record */
-      /*-------------------------------*/
-      else
-      
-         /*-*/
-         /* Source header must have been created when a detail row
-         /*-*/
-         if var_src_created = false then
-            var_src_error := true;
-         end if;
-
-         /*-*/
-         /* Parse the input data record
-         /*-*/
-         lics_inbound_utility.parse_csv_record(var_record, con_delimiter);
-         
-         var_current_rec."Line Item Code" := qvi_util.get_validated_string(
-            'Line Item Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
-         var_current_rec."Material Code" := qvi_util.get_validated_string(
-            'Material Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
-         var_current_rec."Source Code" := qvi_util.get_validated_string(
-            'Source Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
-            
-         /*-*/
-         /* Loop through Periods for plan .. Exit after one period on actual
-         /*-*/
-         var_period_column_name := null;
-         for var_period in 1..13 loop
-            if var_fac_code = 'fpps_plan' then
-               var_current_rec."Period" := var_period;
-               var_period_column_name := 'P'||to_char(var_period,'FM00'); 
-            else -- fpps_actual
---               null; -- period already set as part of processing
-               var_period_column_name := 'Value'; 
-            end if;
-
-            var_current_rec."Value" := to_number(qvi_util.get_validated_string(
-               var_period_column_name,'Number of up to percision 15, scale 5','^[-]?[[:digit:]]{1,10}[[\.]?[[:digit:]]{0,5}]?$',con_regexp_switch,con_trim_flag,var_src_error), '9999999999.00000');
-   
-            /*-*/
-            /* Append the source data when required (no errors)
-            /*-*/
+         var_statement_tag := 'Check need to start source loader';
+         if var_src_first_header = true then
+            var_src_first_header := false;
             if var_src_error = false then
-               qvi_src_function.append_data(sys.anydata.ConvertObject(var_current_rec));
+               /*-*/
+               /* Time code is year for plan and year/period for actual
+               /*-*/
+               if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
+                  var_tim_code := to_char(var_current_rec."Year", 'FM0000')||to_char(var_current_rec."Period", 'FM00');
+               else -- fpps_plan
+                  var_tim_code := var_current_rec."Year";
+               end if;
+   
+               qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
+               
+            else 
+               lics_inbound_utility.add_exception('Cannot start loader due to source errors');
             end if;
- 
-            -- exit when var_fac_code = 'fpps_actual'; 
-            exit when var_period = 1; 
-         end loop;
-            
-         /*-*/
-         /* Exit the procedure
-         /*-*/
-
+         end if;
+         
+         return;
       end if;
+
+      /*-*/
+      /* Process the data records ..
+      /*-*/
+
+      var_statement_tag := 'Parse the data records';
+      lics_inbound_utility.parse_csv_record(var_rec, con_delimiter);
+
+      var_current_rec."Line Item Code" := qvi_util.get_validated_string(
+         'Line Item Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+      var_current_rec."Material Code" := qvi_util.get_validated_string(
+         'Material Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+      var_current_rec."Source Code" := qvi_util.get_validated_string(
+         'Source Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',con_regexp_switch,con_trim_flag,var_src_error);
+
+      /*-*/
+      /* Loop through Periods for plan .. Exit after one period on actual
+      /*-*/
+      var_period_column_name := null;
+      var_statement_tag := 'Loop through Periods';
+      
+      for var_period in 1..13 loop
+         if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- single period file formats
+            var_period_column_name := 'Value';
+         else -- 13 periods
+            var_current_rec."Period" := var_period;
+            var_period_column_name := 'P'||to_char(var_period,'FM00');
+         end if;
+
+         var_current_rec."Value" := qvi_util.get_validated_string(
+            var_period_column_name,'Number of any percision and scale','^[-]?[[:digit:]]+[[\.]?[[:digit:]]*]?$',con_regexp_switch,con_trim_flag,var_src_error);
+
+         /*-*/
+         /* Append the source data when required (no errors)
+         /*-*/
+         if var_src_error = false then
+            qvi_src_function.append_data(sys.anydata.ConvertObject(var_current_rec));
+         end if;
+         
+         exit when var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT'); -- single period file formats
+      end loop;
+
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -421,7 +373,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          /* Raise an exception to the calling application
          /*-*/
          rollback;
-         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||']['||var_statement_tag||'] - ' || substr(sqlerrm, 1, 1536));
    /*-------------*/
    /* End routine */
    /*-------------*/
@@ -440,17 +392,16 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
       /* Module name is fully qualified schema.package.module used for error reporting
       /*-*/
       var_module_name := trim(con_schema_name)||'.'||trim(con_package_name)||'.ON_END';
+      var_statement_tag := null;
 
       /*-*/
       /* Commit/rollback the loader when required
       /*-*/
-      if var_src_created = true then
-         if var_src_error = false then
-            qvi_src_function.finalise_loader;
-            commit;
-         else
-            rollback;
-         end if;
+      if var_src_error = false then
+         qvi_src_function.finalise_loader;
+         commit;
+      else
+         rollback;
       end if;
 
    /*-------------------*/
@@ -465,7 +416,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          /* Raise an exception to the calling application
          /*-*/
          rollback;
-         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||'] - ' || substr(sqlerrm, 1, 1536));
+         raise_application_error(-20000, 'FATAL ERROR - ['||var_module_name||']['||var_statement_tag||'] - ' || substr(sqlerrm, 1, 1536));
    /*-------------*/
    /* End routine */
    /*-------------*/
