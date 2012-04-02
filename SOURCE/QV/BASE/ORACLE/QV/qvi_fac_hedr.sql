@@ -12,6 +12,8 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2012/03   Steve Gregan   Created
+ 2012/04   Mal Chambeyron Added Update Sequence.
+ 
 
 *******************************************************************************/
 
@@ -23,6 +25,7 @@ create table qv.qvi_fac_hedr
     qfh_fac_code                    varchar2(32)                  not null,
     qfh_tim_code                    varchar2(32)                  not null,
     qfh_lod_status                  varchar2(1)                   not null,
+    qfh_upd_seqn                    number(15)                    not null,
     qfh_str_date                    date                          not null,
     qfh_end_date                    date                          not null);
 
@@ -34,6 +37,7 @@ comment on column qv.qvi_fac_hedr.qfh_das_code is 'Dashboard code';
 comment on column qv.qvi_fac_hedr.qfh_fac_code is 'Fact code';
 comment on column qv.qvi_fac_hedr.qfh_tim_code is 'Time code';
 comment on column qv.qvi_fac_hedr.qfh_lod_status is 'Load status (0=empty, 1=loading or 2=loaded)';
+comment on column qv.qvi_fac_hedr.qfh_upd_seqn is 'Update sequence, common across facts and dimensions, updated on fact header creation';
 comment on column qv.qvi_fac_hedr.qfh_str_date is 'Load start date';
 comment on column qv.qvi_fac_hedr.qfh_end_date is 'Load end date';
 

@@ -12,6 +12,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2012/03   Steve Gregan   Created
+ 2012/04   Mal Chambeyron Added Poll Flag
 
 *******************************************************************************/
 
@@ -28,8 +29,9 @@ create table qv.qvi_fac_defn
     qfd_fac_type                    varchar2(120)                 not null,
     qfd_job_group                   varchar2(10 char)             not null,
     qfd_ema_group                   varchar2(64 char)             not null,
-    qfd_flg_iface                   varchar2(32 char)             not null,
-    qfd_flg_mname                   varchar2(64 char)             not null,
+    qfd_pol_flag                    varchar2(1)                   not null,
+    qfd_flg_iface                   varchar2(32 char),
+    qfd_flg_mname                   varchar2(64 char),
     qfd_upd_user                    varchar2(30)                  not null,
     qfd_upd_date                    date                          not null);
 
@@ -46,8 +48,9 @@ comment on column qv.qvi_fac_defn.qfd_fac_table is 'Fact pipelined table functio
 comment on column qv.qvi_fac_defn.qfd_fac_type is 'Fact data type';
 comment on column qv.qvi_fac_defn.qfd_job_group is 'Fact build job group';
 comment on column qv.qvi_fac_defn.qfd_ema_group is 'Fact build email group';
-comment on column qv.qvi_fac_defn.qfd_flg_iface is 'Fact build flag file interface';
-comment on column qv.qvi_fac_defn.qfd_flg_mname is 'Fact build flag file message name';
+comment on column qv.qvi_fac_defn.qfd_pol_flag is 'Polling Flag (0=even-driven, 1=polling)';
+comment on column qv.qvi_fac_defn.qfd_flg_iface is 'Fact build flag file interface, required for even-driven';
+comment on column qv.qvi_fac_defn.qfd_flg_mname is 'Fact build flag file message name, required for even-driven';
 comment on column qv.qvi_fac_defn.qfd_upd_user is 'Last updated user';
 comment on column qv.qvi_fac_defn.qfd_upd_date is 'Last updated date';
 
