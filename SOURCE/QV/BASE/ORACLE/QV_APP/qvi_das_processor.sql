@@ -19,6 +19,7 @@ create or replace package qv_app.qvi_das_processor as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
+    2012/04   Mal Chambeyron Add Polling Flag logic to skip Event Driven "Flag File"
 
    *******************************************************************************/
 
@@ -201,25 +202,27 @@ create or replace package body qv_app.qvi_das_processor as
             commit;
 
             /*-*/
-            /* Create the flag file interface - Qlikview
+            /* Create the flag file interface if Poll Flag is False (0) - Qlikview
             /*-*/
-            begin
-               var_instance := lics_outbound_loader.create_interface(rcd_fac_defn.qfd_flg_iface,null,rcd_fac_defn.qfd_flg_mname);
-               var_flg_string := par_das_code||','||par_fac_code||','||par_tim_code;
-               var_flg_string := var_flg_string||',"'||rcd_fac_defn.qfd_fac_table||'('''||par_das_code||''','''||par_fac_code||''','''||par_tim_code||''')"';
-               lics_outbound_loader.append_data(var_flg_string);
-               lics_outbound_loader.finalise_interface;
-            exception
-               when others then
-                  var_errors := true;
-                  var_exception := substr(sqlerrm, 1, 1536);
-                  lics_logging.write_log(var_exception);
-                  if lics_outbound_loader.is_created = true then
-                     lics_outbound_loader.add_exception(var_exception);
-                     lics_outbound_loader.finalise_interface;
-                  end if;
-            end;
-
+            if rcd_fac_defn.qfd_pol_flag = 0 then 
+               begin
+                  var_instance := lics_outbound_loader.create_interface(rcd_fac_defn.qfd_flg_iface,null,rcd_fac_defn.qfd_flg_mname);
+                  var_flg_string := par_das_code||','||par_fac_code||','||par_tim_code;
+                  var_flg_string := var_flg_string||',"'||rcd_fac_defn.qfd_fac_table||'('''||par_das_code||''','''||par_fac_code||''','''||par_tim_code||''')"';
+                  lics_outbound_loader.append_data(var_flg_string);
+                  lics_outbound_loader.finalise_interface;
+               exception
+                  when others then
+                     var_errors := true;
+                     var_exception := substr(sqlerrm, 1, 1536);
+                     lics_logging.write_log(var_exception);
+                     if lics_outbound_loader.is_created = true then
+                        lics_outbound_loader.add_exception(var_exception);
+                        lics_outbound_loader.finalise_interface;
+                     end if;
+               end;
+            end if;
+            
          end if;
 
          /*-*/

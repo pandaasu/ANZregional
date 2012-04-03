@@ -19,7 +19,8 @@ create or replace package qv_app.qvi_dim_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
-
+    2012/04   Mal Chambeyron Add Update Sequence to finalise_loader,
+                             Add Polling Flag logic to skip Event Driven "Flag File"
    *******************************************************************************/
 
    /*-*/
@@ -227,6 +228,7 @@ create or replace package body qv_app.qvi_dim_function as
       /*-*/
       update qvi_dim_defn
          set qdd_lod_status = '2',
+             qdd_upd_seqn = qvi_update_sequence.nextval, 
              qdd_end_date = sysdate
        where qdd_dim_code = pvar_dim_code;
       if sql%notfound then
@@ -234,18 +236,20 @@ create or replace package body qv_app.qvi_dim_function as
       end if;
 
       /*-*/
-      /* Create the flag file interface - Qlikview
+      /* Create the flag file interface if Poll Flag is False (0) - Qlikview
       /*-*/
-      begin
-         var_instance := lics_outbound_loader.create_interface(rcd_dim_defn.qdd_flg_iface,null,rcd_dim_defn.qdd_flg_mname);
-         var_flg_string := pvar_dim_code;
-         var_flg_string := var_flg_string||',"'||rcd_dim_defn.qdd_dim_table||'('''||pvar_dim_code||''')"';
-         lics_outbound_loader.append_data(var_flg_string);
-         lics_outbound_loader.finalise_interface;
-      exception
-         when others then
-            raise_application_error(-20000, 'Finalise Loader - Flag file interface failed - ' || substr(sqlerrm, 1, 1024));
-      end;
+      if rcd_dim_defn.qdd_pol_flag = 0 then 
+         begin
+            var_instance := lics_outbound_loader.create_interface(rcd_dim_defn.qdd_flg_iface,null,rcd_dim_defn.qdd_flg_mname);
+            var_flg_string := pvar_dim_code;
+            var_flg_string := var_flg_string||',"'||rcd_dim_defn.qdd_dim_table||'('''||pvar_dim_code||''')"';
+            lics_outbound_loader.append_data(var_flg_string);
+            lics_outbound_loader.finalise_interface;
+         exception
+            when others then
+               raise_application_error(-20000, 'Finalise Loader - Flag file interface failed - ' || substr(sqlerrm, 1, 1024));
+         end;
+      end if;
 
       /*-*/
       /* Reset the package variables

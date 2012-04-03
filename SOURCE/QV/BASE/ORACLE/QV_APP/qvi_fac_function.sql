@@ -19,7 +19,8 @@ create or replace package qv_app.qvi_fac_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
-
+    2012/04   Mal Chambeyron Correct Cursor NOTFOUND functionality and Update Sequence
+    
    *******************************************************************************/
 
    /*-*/
@@ -105,11 +106,11 @@ create or replace package body qv_app.qvi_fac_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_das_defn;
       fetch csr_das_defn into rcd_das_defn;
       if csr_das_defn%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_das_defn;
       if var_found = false then
@@ -124,11 +125,11 @@ create or replace package body qv_app.qvi_fac_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_fac_defn;
       fetch csr_fac_defn into rcd_fac_defn;
       if csr_fac_defn%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_fac_defn;
       if var_found = false then
@@ -143,11 +144,11 @@ create or replace package body qv_app.qvi_fac_function as
       /* notes - must exist
       /*         must be active
       /*-*/
-      var_found := false;
+      var_found := true;
       open csr_fac_time;
       fetch csr_fac_time into rcd_fac_time;
       if csr_fac_time%notfound then
-         var_found := true;
+         var_found := false;
       end if;
       close csr_fac_time;
       if var_found = false then
@@ -168,6 +169,7 @@ create or replace package body qv_app.qvi_fac_function as
          rcd_qvi_fac_hedr.qfh_fac_code := par_fac_code;
          rcd_qvi_fac_hedr.qfh_tim_code := par_tim_code;
          rcd_qvi_fac_hedr.qfh_lod_status := '1';
+         rcd_qvi_fac_hedr.qfh_upd_seqn := qvi_update_sequence.nextval;
          rcd_qvi_fac_hedr.qfh_str_date := sysdate;
          rcd_qvi_fac_hedr.qfh_end_date := sysdate;
          insert into qvi_fac_hedr values rcd_qvi_fac_hedr;
@@ -175,6 +177,7 @@ create or replace package body qv_app.qvi_fac_function as
          when dup_val_on_index then
             update qvi_fac_hedr
                set qfh_lod_status = '1',
+                   qfh_upd_seqn = qvi_update_sequence.nextval,
                    qfh_str_date = sysdate,
                    qfh_end_date = sysdate
              where qfh_das_code = par_das_code
