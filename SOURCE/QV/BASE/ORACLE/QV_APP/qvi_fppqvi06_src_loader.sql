@@ -83,8 +83,9 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
    var_fac_code varchar2(32);
    var_tim_code varchar2(32);
    var_par_code varchar2(32);
-   var_currency_code varchar2(3);
    var_current_rec qvi_fppqvi06_src_obj;
+   var_year number(4);
+   var_period number(2);
    var_rec_no number := 0;
 
    /************************************************/
@@ -110,7 +111,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
       var_src_complete_header := false;
       var_src_first_header := true;
 
-      var_current_rec := qvi_fppqvi06_src_obj(null,null,null,null,null,null,null,null,null,null,null,null,null);
+      var_current_rec := qvi_fppqvi06_src_obj(null,null,null,null,null,null,null,null,null,null,null,null);
 
       /*-*/
       /* Get source filename, throwing error if not found
@@ -219,7 +220,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          var_statement_tag := 'Process Plan Version record';
          var_current_rec."Plan Version" := qvi_util.get_validated_string(
             'Plan Version',var_rec_data,'String of 1 to 64 characters','^[[:print:]]{1,64}$',con_regexp_switch,con_trim_flag,var_src_error);
-         var_current_rec."Year" := to_number(qvi_util.get_validated_string(
+         var_year := to_number(qvi_util.get_validated_string(
             'Year',substr(var_rec_data,1,4),'Number of 4 digits','^[[:digit:]]{4}$',con_regexp_switch,con_trim_flag,var_src_error));
          return;
       end if;
@@ -254,7 +255,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
          /*-*/
          if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
             var_statement_tag := 'Process Period record';
-            var_current_rec."Period" := to_number(qvi_util.get_validated_string(
+            var_period := to_number(qvi_util.get_validated_string(
                'Period',substr(var_rec,5,2),'Number of 1 to 2 digits','^[[:digit:]]{1,2}$',con_regexp_switch,con_trim_flag,var_src_error));
          end if;
          /*-*/
@@ -270,7 +271,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
             lics_inbound_utility.add_exception('Source data is missing the Plan Version');
             var_src_complete_header := false;
          end if;
-         if var_current_rec."Year" is null then
+         if var_year is null then
             lics_inbound_utility.add_exception('Source data is missing the Plan Year');
             var_src_complete_header := false;
          end if;
@@ -282,7 +283,7 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
             lics_inbound_utility.add_exception('Source data is missing the Customer Code');
             var_src_complete_header := false;
          end if;
-         if var_current_rec."Period" is null then
+         if var_period is null then
             lics_inbound_utility.add_exception('Source data is missing the Period');
             var_src_complete_header := false;
          end if;
@@ -305,9 +306,9 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
                /* Time code is year for plan and year/period for actual
                /*-*/
                if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
-                  var_tim_code := to_char(var_current_rec."Year", 'FM0000')||to_char(var_current_rec."Period", 'FM00');
+                  var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
                else -- fpps_plan
-                  var_tim_code := var_current_rec."Year";
+                  var_tim_code := var_year;
                end if;
    
                qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
@@ -340,14 +341,15 @@ create or replace package body qv_app.qvi_fppqvi06_src_loader as
       var_period_column_name := null;
       var_statement_tag := 'Loop through Periods';
       
-      for var_period in 1..13 loop
+      for var_period_iterator in 1..13 loop
          if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- single period file formats
             var_period_column_name := 'Value';
          else -- 13 periods
-            var_current_rec."Period" := var_period;
+            var_period := var_period_iterator;
             var_period_column_name := 'P'||to_char(var_period,'FM00');
          end if;
-
+         var_current_rec."YYYYPP" := var_year * 100 + var_period;
+         
          var_current_rec."Value" := qvi_util.get_validated_string(
             var_period_column_name,'Number of any percision and scale','^[-]?[[:digit:]]+[[\.]?[[:digit:]]*]?$',con_regexp_switch,con_trim_flag,var_src_error);
 

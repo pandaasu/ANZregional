@@ -17,8 +17,7 @@ create or replace type qvi_fppqvi06_src_obj as object
     "Line Item Code"                varchar2(18),
     "Material Code"                 varchar2(18),
     "Source Code"                   varchar2(18),
-    "Year"                          number(4),
-    "Period"                        number(2),
+    "YYYYPP"                        number(6),
     "Value"                         varchar2(64),
     "Currency"                      varchar2(3));
 /
