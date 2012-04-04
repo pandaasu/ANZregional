@@ -212,8 +212,8 @@ create or replace package body qv_app.qvi_das_poller as
                lics_trigger_loader.execute('QlikView Fact Builder',
                                            'qv_app.qvi_das_processor.execute('''||rcd_submit.qft_das_code||''','''||rcd_submit.qft_fac_code||''','''||rcd_submit.qft_tim_code||''')',
                                            null,
-                                           rcd_das_defn.qfd_job_group,
-                                           rcd_das_defn.qfd_ema_group);
+                                           rcd_das_defn.qfd_ema_group,
+                                           rcd_das_defn.qfd_job_group);
 
             end if;
 
