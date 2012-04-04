@@ -20,6 +20,8 @@ create or replace package qv_app.qvi_das_processor as
     -------   ------         -----------
     2012/03   Steve Gregan   Created
     2012/04   Mal Chambeyron Add Polling Flag logic to skip Event Driven "Flag File"
+                             Corrected status check from tim_code to tim_status
+                             Corrected dynamic sql for fact builder procedure
 
    *******************************************************************************/
 
@@ -146,7 +148,7 @@ create or replace package body qv_app.qvi_das_processor as
       if var_found = false then
          var_errors := true;
          lics_logging.write_log('Dashboard fact time not found (' || par_das_code || '/' || par_fac_code || '/' || par_tim_code || ')');
-      elsif rcd_fac_time.qft_tim_code != '2' then
+      elsif rcd_fac_time.qft_tim_status != '2' then
          var_errors := true;
          lics_logging.write_log('Dashboard fact time is not 2(submitted) (' || par_das_code || '/' || par_fac_code || '/' || par_tim_code || ')');
       end if;
@@ -177,7 +179,7 @@ create or replace package body qv_app.qvi_das_processor as
          /*    (this processor will always perform commit/rollback for safety)
          /*-*/
          begin
-            execute immediate 'begin '||rcd_fac_defn.qfd_fac_build||'('''||par_das_code||''','''||par_fac_code||''','''||par_tim_code||''');'||'; end;';
+            execute immediate 'begin '||rcd_fac_defn.qfd_fac_build||'('''||par_das_code||''','''||par_fac_code||''','''||par_tim_code||'''); end;';
             commit;
          exception
             when others then
