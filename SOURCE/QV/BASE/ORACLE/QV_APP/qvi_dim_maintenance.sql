@@ -211,7 +211,7 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_FUNCTION - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
+         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_MAINTENANCE - SELECT_LIST - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -357,7 +357,7 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_FUNCTION - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
+         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_MAINTENANCE - RETRIEVE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -537,7 +537,7 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_FUNCTION - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
+         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_MAINTENANCE - UPDATE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
@@ -630,7 +630,7 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_FUNCTION - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
+         qvi_gen_function.add_mesg_data('FATAL ERROR - QVI_DIM_MAINTENANCE - DELETE_DATA - ' || substr(SQLERRM, 1, 1536));
 
    /*-------------*/
    /* End routine */
