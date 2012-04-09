@@ -460,6 +460,8 @@ sub PaintFunction()%>
          document.getElementById('DEF_DimName').value = '';
          document.getElementById('DEF_DimTable').value = '';
          document.getElementById('DEF_DimType').value = '';
+         document.getElementById('DEF_FlgIface').value = '';
+         document.getElementById('DEF_FlgMname').value = '';
          var strDimStat = '';
          var objDimStat = document.getElementById('DEF_DimStat');
          var strRtvType = '';
@@ -476,8 +478,8 @@ sub PaintFunction()%>
                document.getElementById('DEF_DimType').value = objElements[i].getAttribute('DIMTYP');
                strDimStat = objElements[i].getAttribute('DIMSTS');
                strRtvType = objElements[i].getAttribute('POLFLG');
-               document.getElementById('DEF_RtvIface').value = objElements[i].getAttribute('FLGINT');
-               document.getElementById('DEF_RtvMname').value = objElements[i].getAttribute('FLGMSG');
+               document.getElementById('DEF_FlgIface').value = objElements[i].getAttribute('FLGINT');
+               document.getElementById('DEF_FlgMname').value = objElements[i].getAttribute('FLGMSG');
             }
          }
          objDimStat.selectedIndex = -1;
@@ -525,8 +527,8 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' POLFLG="'+fixXML(objRtvType.options[objRtvType.selectedIndex].value)+'"';
       }
-      strXML = strXML+' FLGINT="'+fixXML(document.getElementById('DEF_RtvIface').value)+'"';
-      strXML = strXML+' FLGMSG="'+fixXML(document.getElementById('DEF_RtvMname').value)+'"';
+      strXML = strXML+' FLGINT="'+fixXML(document.getElementById('DEF_FlgIface').value)+'"';
+      strXML = strXML+' FLGMSG="'+fixXML(document.getElementById('DEF_FlgMname').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -688,13 +690,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Flag Retrieval Interface:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase; type="text" name="DEF_PolIface" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase; type="text" name="DEF_FlgIface" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Flag Retrieval Message Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_PolMname" size="64" maxlength="64" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_FlgMname" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
