@@ -188,6 +188,11 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDefineCreate(\'*NEW\');',10);
    }
+   function doSelectFact(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestListFact(\''+strCode+'\');',10);
+   }
    function doSelectRefresh() {
       if (!processForm()) {return;}
       cstrSelectStrCode = document.getElementById('SEL_SelCode').value;
@@ -277,32 +282,32 @@ sub PaintFunction()%>
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'LSTROW') {
                if (cstrSelectStrCode == '') {
-                  cstrSelectStrCode = objElements[i].getAttribute('DIMCDE');
+                  cstrSelectStrCode = objElements[i].getAttribute('DASCDE');
                }
-               cstrSelectEndCode = objElements[i].getAttribute('DIMCDE');
+               cstrSelectEndCode = objElements[i].getAttribute('DASCDE');
                objRow = objTabBody.insertRow(-1);
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('DIMCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('DIMCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('DIMCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('DASCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('DASCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('DASCDE')+'\');">Copy</a>&nbsp;<a class="clsSelect" onClick="doSelectFact(\''+objElements[i].getAttribute('DASCDE')+'\');">Fact Maintenance</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DIMCDE')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DASCDE')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DIMNAM')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DASNAM')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'left';
-               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DIMSTS')+'&nbsp;';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DASSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             }
@@ -335,7 +340,7 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*DLTDEF" DASCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_das_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
@@ -376,19 +381,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*UPDDEF" DASCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CRTDEF" DASCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CPYDEF" DASCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -420,51 +425,51 @@ sub PaintFunction()%>
             document.getElementById('updDefine').style.display = 'none';
          }
          displayScreen('dspDefine');
-         document.getElementById('DEF_FacCode').value = '';
-         document.getElementById('DEF_FacName').value = '';
-         var strFacStat = '';
-         var objFacStat = document.getElementById('DEF_FacStat');
+         document.getElementById('DEF_DasCode').value = '';
+         document.getElementById('DEF_DasName').value = '';
+         var strDasStat = '';
+         var objDasStat = document.getElementById('DEF_DasStat');
          for (var i=0;i<objElements.length;i++) {
-            if (objElements[i].nodeName == 'DIMDFN') {
+            if (objElements[i].nodeName == 'DASDFN') {
                if (cstrDefineMode == '*UPD') {
-                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('DIMCDE')+'</p>';
+                  document.getElementById('DEF_UpdCode').innerHTML = '<p>'+objElements[i].getAttribute('DASCDE')+'</p>';
                } else {
-                  document.getElementById('DEF_FacCode').value = objElements[i].getAttribute('DIMCDE');
+                  document.getElementById('DEF_DasCode').value = objElements[i].getAttribute('DASCDE');
                }
-               document.getElementById('DEF_FacName').value = objElements[i].getAttribute('DIMNAM');
-               strFacStat = objElements[i].getAttribute('DIMSTS');
+               document.getElementById('DEF_DasName').value = objElements[i].getAttribute('DASNAM');
+               strDasStat = objElements[i].getAttribute('DASSTS');
             }
          }
-         objFacStat.selectedIndex = -1;
-         for (var i=0;i<objFacStat.length;i++) {
-            if (objFacStat.options[i].value == strFacStat) {
-               objFacStat.options[i].selected = true;
+         objDasStat.selectedIndex = -1;
+         for (var i=0;i<objDasStat.length;i++) {
+            if (objDasStat.options[i].value == strDasStat) {
+               objDasStat.options[i].selected = true;
                break;
             }
          }
          if (cstrDefineMode == '*UPD') {
-            document.getElementById('DEF_FacName').focus();
+            document.getElementById('DEF_DasName').focus();
          } else {
-            document.getElementById('DEF_FacCode').focus();
+            document.getElementById('DEF_DasCode').focus();
          }
       }
    }
    function doDefineAccept() {
       if (!processForm()) {return;}
-      var objFacStat = document.getElementById('DEF_FacStat');
+      var objDasStat = document.getElementById('DEF_DasStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
-         strXML = strXML+' DIMCDE="'+fixXML(cstrDefineCode)+'"';
+         strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF"';
+         strXML = strXML+' DASCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
-         strXML = strXML+' DIMCDE="'+fixXML(document.getElementById('DEF_FacCode').value)+'"';
+         strXML = strXML+'<QVI_REQUEST ACTION="*CRTDEF"';
+         strXML = strXML+' DASCDE="'+fixXML(document.getElementById('DEF_DasCode').value)+'"';
       }
-      strXML = strXML+' DIMNAM="'+fixXML(document.getElementById('DEF_FacName').value)+'"';
-      if (objFacStat.selectedIndex == -1) {
-         strXML = strXML+' DIMSTS=""';
+      strXML = strXML+' DASNAM="'+fixXML(document.getElementById('DEF_DasName').value)+'"';
+      if (objDasStat.selectedIndex == -1) {
+         strXML = strXML+' DASSTS=""';
       } else {
-         strXML = strXML+' DIMSTS="'+fixXML(objFacStat.options[objFacStat.selectedIndex].value)+'"';
+         strXML = strXML+' DASSTS="'+fixXML(objDasStat.options[objDasStat.selectedIndex].value)+'"';
       }
       strXML = strXML+'/>';
       doActivityStart(document.body);
@@ -581,7 +586,7 @@ sub PaintFunction()%>
       <tr id="addDefine" style="display:none;visibility:visible">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FacCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_DasCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr id="updDefine" style="display:none;visibility:visible">
@@ -591,13 +596,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_FacName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" type="text" name="DEF_DasName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" id="DEF_FacStat">
+            <select class="clsInputBN" id="DEF_DasStat">
                <option value="0">Inactive
                <option value="1">Active
             </select>
