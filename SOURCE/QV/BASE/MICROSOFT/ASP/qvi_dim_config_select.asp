@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the dimension selection
    '//
-   strStatement = "select xml_text from table(qv_app.qvi_dim_function.select_list)"
+   strStatement = "select xml_text from table(qv_app.qvi_dim_maintenance.select_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the dimension delete
    '//
-   call objProcedure.Execute("qv_app.qvi_dim_function.delete_data")
+   call objProcedure.Execute("qv_app.qvi_dim_maintenance.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if

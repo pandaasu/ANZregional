@@ -269,6 +269,24 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load Start Time&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load End Time&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
          objCell.innerHTML = '&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
@@ -305,22 +323,40 @@ sub PaintFunction()%>
                objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('DIMSTS')+'&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODSTR')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODEND')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
             }
          }
          if (objTabBody.rows.length == 0) {
             objRow = objTabBody.insertRow(-1);
             objCell = objRow.insertCell(-1);
-            objCell.colSpan = 4;
+            objCell.colSpan = 7;
             objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[7].style.width = 16;
             objTabHead.style.tableLayout = 'auto';
             objTabBody.style.tableLayout = 'auto';
          } else {
             setScrollable('HeadList','BodyList','horizontal');
-            objTabHead.rows(0).cells[4].style.width = 16;
+            objTabHead.rows(0).cells[7].style.width = 16;
             objTabHead.style.tableLayout = 'fixed';
             objTabBody.style.tableLayout = 'fixed';
          }
@@ -335,7 +371,7 @@ sub PaintFunction()%>
    var cstrDeleteCode;
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*DLTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_dim_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
@@ -376,19 +412,19 @@ sub PaintFunction()%>
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*UPDDEF" DIMCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_dim_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CRTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_dim_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" DIMCDE="'+fixXML(strCode)+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CPYDEF" DIMCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_dim_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
@@ -422,8 +458,12 @@ sub PaintFunction()%>
          displayScreen('dspDefine');
          document.getElementById('DEF_DimCode').value = '';
          document.getElementById('DEF_DimName').value = '';
+         document.getElementById('DEF_DimTable').value = '';
+         document.getElementById('DEF_DimType').value = '';
          var strDimStat = '';
          var objDimStat = document.getElementById('DEF_DimStat');
+         var strRtvType = '';
+         var objRtvType = document.getElementById('DEF_RtvType');
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'DIMDFN') {
                if (cstrDefineMode == '*UPD') {
@@ -432,13 +472,25 @@ sub PaintFunction()%>
                   document.getElementById('DEF_DimCode').value = objElements[i].getAttribute('DIMCDE');
                }
                document.getElementById('DEF_DimName').value = objElements[i].getAttribute('DIMNAM');
+               document.getElementById('DEF_DimTable').value = objElements[i].getAttribute('DIMTAB');
+               document.getElementById('DEF_DimType').value = objElements[i].getAttribute('DIMTYP');
                strDimStat = objElements[i].getAttribute('DIMSTS');
+               strRtvType = objElements[i].getAttribute('POLFLG');
+               document.getElementById('DEF_RtvIface').value = objElements[i].getAttribute('FLGINT');
+               document.getElementById('DEF_RtvMname').value = objElements[i].getAttribute('FLGMSG');
             }
          }
          objDimStat.selectedIndex = -1;
          for (var i=0;i<objDimStat.length;i++) {
             if (objDimStat.options[i].value == strDimStat) {
                objDimStat.options[i].selected = true;
+               break;
+            }
+         }
+         objRtvType.selectedIndex = -1;
+         for (var i=0;i<objRtvType.length;i++) {
+            if (objRtvType.options[i].value == strRtvType) {
+               objRtvType.options[i].selected = true;
                break;
             }
          }
@@ -454,10 +506,10 @@ sub PaintFunction()%>
       var objDimStat = document.getElementById('DEF_DimStat');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
-         strXML = strXML+'<PSA_REQUEST ACTION="*UPDDEF"';
+         strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF"';
          strXML = strXML+' DIMCDE="'+fixXML(cstrDefineCode)+'"';
       } else {
-         strXML = strXML+'<PSA_REQUEST ACTION="*CRTDEF"';
+         strXML = strXML+'<QVI_REQUEST ACTION="*CRTDEF"';
          strXML = strXML+' DIMCDE="'+fixXML(document.getElementById('DEF_DimCode').value)+'"';
       }
       strXML = strXML+' DIMNAM="'+fixXML(document.getElementById('DEF_DimName').value)+'"';
@@ -466,6 +518,15 @@ sub PaintFunction()%>
       } else {
          strXML = strXML+' DIMSTS="'+fixXML(objDimStat.options[objDimStat.selectedIndex].value)+'"';
       }
+      strXML = strXML+' DIMTAB="'+fixXML(document.getElementById('DEF_DimTable').value)+'"';
+      strXML = strXML+' DIMTYP="'+fixXML(document.getElementById('DEF_DimType').value)+'"';
+      if (objRtvType.selectedIndex == -1) {
+         strXML = strXML+' POLFLG=""';
+      } else {
+         strXML = strXML+' POLFLG="'+fixXML(objRtvType.options[objRtvType.selectedIndex].value)+'"';
+      }
+      strXML = strXML+' FLGINT="'+fixXML(document.getElementById('DEF_RtvIface').value)+'"';
+      strXML = strXML+' FLGMSG="'+fixXML(document.getElementById('DEF_RtvMname').value)+'"';
       strXML = strXML+'/>';
       doActivityStart(document.body);
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
@@ -601,6 +662,39 @@ sub PaintFunction()%>
                <option value="0">Inactive
                <option value="1">Active
             </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Retrieve Table Function:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DimTable" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Storage Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_DimType" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dimension Retrieval Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_RtvType">
+               <option value="0">Flag
+               <option value="1">Batch
+            </select>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Flag Retrieval Interface:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" style="text-transform:uppercase; type="text" name="DEF_PolIface" size="32" maxlength="32" value="" onFocus="setSelect(this);">
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Flag Retrieval Message Name:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="DEF_PolMname" size="64" maxlength="64" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

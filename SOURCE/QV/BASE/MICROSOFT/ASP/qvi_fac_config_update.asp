@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the fact update
    '//
-   call objProcedure.Execute("qv_app.qvi_fac_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("qv_app.qvi_fac_maintenance.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

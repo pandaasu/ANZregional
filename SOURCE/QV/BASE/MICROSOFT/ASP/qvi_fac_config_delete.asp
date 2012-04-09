@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the fact delete
    '//
-   call objProcedure.Execute("qv_app.qvi_fac_function.delete_data")
+   call objProcedure.Execute("qv_app.qvi_fac_maintenance.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if
