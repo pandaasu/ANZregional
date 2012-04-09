@@ -1,11 +1,11 @@
-create or replace function qvi_app.qvi_to_date(par_date in varchar2, par_format in varchar2) return date is
+create or replace function qv_app.qvi_to_date(par_date in varchar2, par_format in varchar2) return date is
 
    /******************************************************************************/
    /* Function Definition                                                        */
    /******************************************************************************/
    /**
     Function : qvi_to_date
-    Owner    : qvi_app
+    Owner    : qv_app
 
     Description
     -----------
@@ -48,5 +48,5 @@ create or replace function qvi_app.qvi_to_date(par_date in varchar2, par_format 
 /***************************/
 /* Function Synonym/Grants */
 /***************************/
-create or replace public synonym qvi_to_date for qvi_app.qvi_to_date;
+create or replace public synonym qvi_to_date for qv_app.qvi_to_date;
 grant execute on qvi_to_date to public with grant option;

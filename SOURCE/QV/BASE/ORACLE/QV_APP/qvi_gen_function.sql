@@ -1,14 +1,14 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package qvi_app.qvi_gen_function as
+create or replace package qv_app.qvi_gen_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     Package : qvi_gen_function
-    Owner   : qvi_app
+    Owner   : qv_app
 
     Description
     -----------
@@ -37,7 +37,7 @@ end qvi_gen_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body qvi_app.qvi_gen_function as
+create or replace package body qv_app.qvi_gen_function as
 
    /*-*/
    /* Private exceptions
@@ -194,7 +194,7 @@ create or replace package body qvi_app.qvi_gen_function as
          pipe row(qvi_xml_object('<ERROR ERRTXT="'||qvi_to_xml(ptbl_mesg(idx))||'"/>'));
       end loop;
       if not(pvar_cfrm is null) then
-         pipe row(psa_xml_object('<CONFIRM CONTXT="'||psa_to_xml(pvar_cfrm)||'"/>'));
+         pipe row(qvi_xml_object('<CONFIRM CONTXT="'||qvi_to_xml(pvar_cfrm)||'"/>'));
       end if;
       if ptbl_mesg.count != 0 or not(pvar_cfrm is null) then
          pipe row(qvi_xml_object('</QVI_RESPONSE>'));
@@ -280,5 +280,5 @@ end qvi_gen_function;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym qvi_gen_function for qvi_app.qvi_gen_function;
-grant execute on qvi_app.qvi_gen_function to public;
+create or replace public synonym qvi_gen_function for qv_app.qvi_gen_function;
+grant execute on qv_app.qvi_gen_function to public;

@@ -1,11 +1,11 @@
-create or replace function qvi_app.qvi_to_number(par_number in varchar2) return number is
+create or replace function qv_app.qvi_to_number(par_number in varchar2) return number is
 
    /******************************************************************************/
    /* Function Definition                                                        */
    /******************************************************************************/
    /**
     Function : qvi_to_number
-    Owner    : qvi_app
+    Owner    : qv_app
 
     Description
     -----------
@@ -52,5 +52,5 @@ create or replace function qvi_app.qvi_to_number(par_number in varchar2) return 
 /***************************/
 /* Function Synonym/Grants */
 /***************************/
-create or replace public synonym qvi_to_number for qvi_app.qvi_to_number;
+create or replace public synonym qvi_to_number for qv_app.qvi_to_number;
 grant execute on qvi_to_number to public with grant option;

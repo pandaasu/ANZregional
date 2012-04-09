@@ -1,14 +1,14 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package qvi_app.qvi_dim_maintenance as
+create or replace package qv_app.qvi_dim_maintenance as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     Package : qvi_dim_maintenance
-    Owner   : qvi_app
+    Owner   : qv_app
 
     Description
     -----------
@@ -36,7 +36,7 @@ end qvi_dim_maintenance;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body qvi_app.qvi_dim_maintenance as
+create or replace package body qv_app.qvi_dim_maintenance as
 
    /*-*/
    /* Private exceptions
@@ -68,7 +68,10 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          select t01.*
            from (select t01.qdd_dim_code,
                         t01.qdd_dim_name,
-                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status
+                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status,
+                        decode(t01.qdd_lod_status,'0','Empty','1','Loading','2','Loaded','*UNKNOWN') as qdd_lod_status,
+                        decode(t01.qdd_lod_status,'0','Empty',to_char(t01.qdd_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_str_date,
+                        decode(t01.qdd_lod_status,'0','Empty','1','In Progress',to_char(t01.qdd_end_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_end_date
                    from qvi_dim_defn t01
                   where (var_str_code is null or t01.qdd_dim_code >= var_str_code)
                   order by t01.qdd_dim_code asc) t01
@@ -78,7 +81,10 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          select t01.*
            from (select t01.qdd_dim_code,
                         t01.qdd_dim_name,
-                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status
+                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status,
+                        decode(t01.qdd_lod_status,'0','Empty','1','Loading','2','Loaded','*UNKNOWN') as qdd_lod_status,
+                        decode(t01.qdd_lod_status,'0','Empty',to_char(t01.qdd_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_str_date,
+                        decode(t01.qdd_lod_status,'0','Empty','1','In Progress',to_char(t01.qdd_end_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_end_date
                    from qvi_dim_defn t01
                   where (var_action = '*NXTDEF' and (var_end_code is null or t01.qdd_dim_code > var_end_code)) or
                         (var_action = '*PRVDEF')
@@ -89,7 +95,10 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          select t01.*
            from (select t01.qdd_dim_code,
                         t01.qdd_dim_name,
-                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status
+                        decode(t01.qdd_dim_status,'0','Inactive','1','Active','*UNKNOWN') as qdd_dim_status,
+                        decode(t01.qdd_lod_status,'0','Empty','1','Loading','2','Loaded','*UNKNOWN') as qdd_lod_status,
+                        decode(t01.qdd_lod_status,'0','Empty',to_char(t01.qdd_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_str_date,
+                        decode(t01.qdd_lod_status,'0','Empty','1','In Progress',to_char(t01.qdd_end_date, 'yyyy/mm/dd hh24:mi:ss')) as qdd_end_date
                    from qvi_dim_defn t01
                   where (var_action = '*PRVDEF' and (var_str_code is null or t01.qdd_dim_code < var_str_code)) or
                         (var_action = '*NXTDEF')
@@ -150,7 +159,7 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          fetch csr_slct bulk collect into tbl_list;
          close csr_slct;
          for idx in 1..tbl_list.count loop
-            pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'"/>'));
+            pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'" LODSTS="'||qvi_to_xml(tbl_list(idx).qdd_lod_status)||'" LODSTR="'||qvi_to_xml(tbl_list(idx).qdd_str_date)||'" LODEND="'||qvi_to_xml(tbl_list(idx).qdd_end_date)||'"/>'));
          end loop;
       elsif var_action = '*NXTDEF' then
          tbl_list.delete;
@@ -159,14 +168,14 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          close csr_next;
          if tbl_list.count = var_pag_size then
             for idx in 1..tbl_list.count loop
-               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'"/>'));
+               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'" LODSTS="'||qvi_to_xml(tbl_list(idx).qdd_lod_status)||'" LODSTR="'||qvi_to_xml(tbl_list(idx).qdd_str_date)||'" LODEND="'||qvi_to_xml(tbl_list(idx).qdd_end_date)||'"/>'));
             end loop;
          else
             open csr_prev;
             fetch csr_prev bulk collect into tbl_list;
             close csr_prev;
             for idx in reverse 1..tbl_list.count loop
-               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'"/>'));
+               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'" LODSTS="'||qvi_to_xml(tbl_list(idx).qdd_lod_status)||'" LODSTR="'||qvi_to_xml(tbl_list(idx).qdd_str_date)||'" LODEND="'||qvi_to_xml(tbl_list(idx).qdd_end_date)||'"/>'));
             end loop;
          end if;
       elsif var_action = '*PRVDEF' then
@@ -176,14 +185,14 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          close csr_prev;
          if tbl_list.count = var_pag_size then
             for idx in reverse 1..tbl_list.count loop
-               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'"/>'));
+               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'" LODSTS="'||qvi_to_xml(tbl_list(idx).qdd_lod_status)||'" LODSTR="'||qvi_to_xml(tbl_list(idx).qdd_str_date)||'" LODEND="'||qvi_to_xml(tbl_list(idx).qdd_end_date)||'"/>'));
             end loop;
          else
             open csr_next;
             fetch csr_next bulk collect into tbl_list;
             close csr_next;
             for idx in 1..tbl_list.count loop
-               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'"/>'));
+               pipe row(qvi_xml_object('<LSTROW DIMCDE="'||qvi_to_xml(tbl_list(idx).qdd_dim_code)||'" DIMNAM="'||qvi_to_xml(tbl_list(idx).qdd_dim_name)||'" DIMSTS="'||qvi_to_xml(tbl_list(idx).qdd_dim_status)||'" LODSTS="'||qvi_to_xml(tbl_list(idx).qdd_lod_status)||'" LODSTR="'||qvi_to_xml(tbl_list(idx).qdd_str_date)||'" LODEND="'||qvi_to_xml(tbl_list(idx).qdd_end_date)||'"/>'));
             end loop;
          end if;
       end if;
@@ -308,19 +317,19 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          var_output := var_output||' DIMSTS="'||qvi_to_xml(rcd_retrieve.qdd_dim_status)||'"';
          var_output := var_output||' DIMTAB="'||qvi_to_xml(rcd_retrieve.qdd_dim_table)||'"';
          var_output := var_output||' DIMTYP="'||qvi_to_xml(rcd_retrieve.qdd_dim_type)||'"';
-         var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_dim_pol_flag)||'"';
-         var_output := var_output||' FLGINT="'||qvi_to_xml(rcd_retrieve.qdd_dim_flg_iface)||'"';
-         var_output := var_output||' FLGMSG="'||qvi_to_xml(rcd_retrieve.qdd_dim_flg_mname)||'"/>';
+         var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_pol_flag)||'"';
+         var_output := var_output||' FLGINT="'||qvi_to_xml(rcd_retrieve.qdd_flg_iface)||'"';
+         var_output := var_output||' FLGMSG="'||qvi_to_xml(rcd_retrieve.qdd_flg_mname)||'"/>';
          pipe row(qvi_xml_object(var_output));
       elsif var_action = '*CPYDEF' then
          var_output := '<DIMDFN DIMCDE=""';
          var_output := var_output||' DIMNAM="'||qvi_to_xml(rcd_retrieve.qdd_dim_name)||'"';
-         var_output := var_output||' DIMSTS="'||qvi_to_xml(rcd_retrieve.qdd_dim_status)||'"';
+         var_output := var_output||' DIMSTS="1"';
          var_output := var_output||' DIMTAB="'||qvi_to_xml(rcd_retrieve.qdd_dim_table)||'"';
          var_output := var_output||' DIMTYP="'||qvi_to_xml(rcd_retrieve.qdd_dim_type)||'"';
-         var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_dim_pol_flag)||'"';
-         var_output := var_output||' FLGINT="'||qvi_to_xml(rcd_retrieve.qdd_dim_flg_iface)||'"';
-         var_output := var_output||' FLGMSG="'||qvi_to_xml(rcd_retrieve.qdd_dim_flg_mname)||'"/>';
+         var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_pol_flag)||'"';
+         var_output := var_output||' FLGINT="'||qvi_to_xml(rcd_retrieve.qdd_flg_iface)||'"';
+         var_output := var_output||' FLGMSG="'||qvi_to_xml(rcd_retrieve.qdd_flg_mname)||'"/>';
          pipe row(qvi_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<DIMDFN DIMCDE=""';
@@ -448,11 +457,27 @@ create or replace package body qvi_app.qvi_dim_maintenance as
       if rcd_qvi_dim_defn.qdd_dim_table is null then
          qvi_gen_function.add_mesg_data('Dimension retrieve table function must be supplied');
       end if;
-      if rcd_qvi_dim_defn.qdd_dim_typr is null then
-         qvi_gen_function.add_mesg_data('Dimension retrieve type must be supplied');
+      if rcd_qvi_dim_defn.qdd_dim_type is null then
+         qvi_gen_function.add_mesg_data('Dimension storage type must be supplied');
       end if;
       if rcd_qvi_dim_defn.qdd_pol_flag is null or (rcd_qvi_dim_defn.qdd_pol_flag != '0' and rcd_qvi_dim_defn.qdd_pol_flag != '1') then
-         qvi_gen_function.add_mesg_data('Dimension polling flag must be (0)event or (1)polled');
+         qvi_gen_function.add_mesg_data('Dimension polling flag must be (0)flag or (1)batch');
+      else
+         if rcd_qvi_dim_defn.qdd_pol_flag = '0' then
+            if rcd_qvi_dim_defn.qdd_flg_iface is null then
+               qvi_gen_function.add_mesg_data('Dimension flag file interface must be supplied for polling flag (0)flag');
+            end if;
+            if rcd_qvi_dim_defn.qdd_flg_mname is null then
+               qvi_gen_function.add_mesg_data('Dimension flag file message name must be supplied for polling flag (0)flag');
+            end if;
+         else
+            if not(rcd_qvi_dim_defn.qdd_flg_iface) is null then
+               qvi_gen_function.add_mesg_data('Dimension flag file interface must be null for polling flag (1)batch');
+            end if;
+            if not(rcd_qvi_dim_defn.qdd_flg_mname) is null then
+               qvi_gen_function.add_mesg_data('Dimension flag file message name must be null for polling flag (1)batch');
+            end if;
+         end if;
       end if;
       if rcd_qvi_dim_defn.qdd_upd_user is null then
          qvi_gen_function.add_mesg_data('Update user must be supplied');
@@ -481,11 +506,20 @@ create or replace package body qvi_app.qvi_dim_maintenance as
          end;
          if var_found = false then
             qvi_gen_function.add_mesg_data('Dimension code ('||rcd_qvi_dim_defn.qdd_dim_code||') does not exist');
+         else
+            if rcd_retrieve.qdd_lod_status = '1' then
+               qvi_gen_function.add_mesg_data('Dimension code ('||rcd_qvi_dim_defn.qdd_dim_code||') is currently loading - unable to update');
+            end if;
          end if;
          if qvi_gen_function.get_mesg_count = 0 then
             update qvi_dim_defn
                set qdd_dim_name = rcd_qvi_dim_defn.qdd_dim_name,
                    qdd_dim_status = rcd_qvi_dim_defn.qdd_dim_status,
+                   qdd_dim_table = rcd_qvi_dim_defn.qdd_dim_table,
+                   qdd_dim_type = rcd_qvi_dim_defn.qdd_dim_type,
+                   qdd_pol_flag = rcd_qvi_dim_defn.qdd_pol_flag,
+                   qdd_flg_iface = rcd_qvi_dim_defn.qdd_flg_iface,
+                   qdd_flg_mname = rcd_qvi_dim_defn.qdd_flg_mname,
                    qdd_upd_user = rcd_qvi_dim_defn.qdd_upd_user,
                    qdd_upd_date = rcd_qvi_dim_defn.qdd_upd_date
              where qdd_dim_code = rcd_qvi_dim_defn.qdd_dim_code;
@@ -560,6 +594,16 @@ create or replace package body qvi_app.qvi_dim_maintenance as
       var_found boolean;
       var_dim_code varchar2(32);
 
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from qvi_dim_defn t01
+          where t01.qdd_dim_code = var_dim_code
+            for update nowait;
+      rcd_retrieve csr_retrieve%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -594,8 +638,33 @@ create or replace package body qvi_app.qvi_dim_maintenance as
       /* Process the dimension definition
       /*-*/
       var_confirm := 'deleted';
-      delete from qvi_dim_data where qdd_dim_code = var_dim_code;
-      delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
+      var_found := false;
+      begin
+         open csr_retrieve;
+         fetch csr_retrieve into rcd_retrieve;
+         if csr_retrieve%found then
+            var_found := true;
+         end if;
+         close csr_retrieve;
+      exception
+         when others then
+            var_found := true;
+            qvi_gen_function.add_mesg_data('Dimension code ('||var_dim_code||') is currently locked');
+      end;
+      if var_found = false then
+         qvi_gen_function.add_mesg_data('Dimension code ('||var_dim_code||') does not exist');
+      else
+         if rcd_retrieve.qdd_lod_status = '1' then
+            qvi_gen_function.add_mesg_data('Dimension code ('||var_dim_code||') is currently loading - unable to delete');
+         end if;
+      end if;
+      if qvi_gen_function.get_mesg_count = 0 then
+         delete from qvi_dim_data where qdd_dim_code = var_dim_code;
+         delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
+      else
+         rollback;
+         return;
+      end if;
 
       /*-*/
       /* Free the XML document
@@ -643,5 +712,5 @@ end qvi_dim_maintenance;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym qvi_dim_maintenance for qvi_app.qvi_dim_maintenance;
-grant execute on qvi_app.qvi_dim_maintenance to public;
+create or replace public synonym qvi_dim_maintenance for qv_app.qvi_dim_maintenance;
+grant execute on qv_app.qvi_dim_maintenance to public;

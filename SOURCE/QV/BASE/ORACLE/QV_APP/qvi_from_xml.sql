@@ -1,11 +1,11 @@
-create or replace function qvi_app.qvi_from_xml(par_text in varchar2) return varchar2 is
+create or replace function qv_app.qvi_from_xml(par_text in varchar2) return varchar2 is
 
    /******************************************************************************/
    /* Function Definition                                                        */
    /******************************************************************************/
    /**
     Function : qvi_from_xml
-    Owner    : qvi_app
+    Owner    : qv_app
 
     Description
     -----------
@@ -48,5 +48,5 @@ create or replace function qvi_app.qvi_from_xml(par_text in varchar2) return var
 /***************************/
 /* Function Synonym/Grants */
 /***************************/
-create or replace public synonym qvi_from_xml for qvi_app.qvi_from_xml;
+create or replace public synonym qvi_from_xml for qv_app.qvi_from_xml;
 grant execute on qvi_from_xml to public with grant option;
