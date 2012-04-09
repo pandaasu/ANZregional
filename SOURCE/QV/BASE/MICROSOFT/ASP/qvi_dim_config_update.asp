@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the dimension update
    '//
-   call objProcedure.Execute("qvi_app.qvi_dim_function.update_data('" & GetUser() & "')")
+   call objProcedure.Execute("qv_app.qvi_dim_function.update_data('" & GetUser() & "')")
    if strReturn <> "*OK" then
       exit sub
    end if

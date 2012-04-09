@@ -86,7 +86,7 @@ sub ProcessRequest()
    '//
    '// Retrieve the fact selection
    '//
-   strStatement = "select xml_text from table(qvi_app.qvi_fac_function.select_list)"
+   strStatement = "select xml_text from table(qv_app.qvi_fac_function.select_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
@@ -95,7 +95,7 @@ sub ProcessRequest()
    '//
    '// Retrieve any messages
    '//
-   strStatement = "select xml_text from table(qvi_app.qvi_gen_function.get_mesg_data)"
+   strStatement = "select xml_text from table(qv_app.qvi_gen_function.get_mesg_data)"
    strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

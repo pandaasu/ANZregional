@@ -80,7 +80,7 @@ sub ProcessRequest()
    '//
    '// Perform the dimension delete
    '//
-   call objProcedure.Execute("qvi_app.qvi_dim_function.delete_data")
+   call objProcedure.Execute("qv_app.qvi_dim_function.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if
@@ -94,7 +94,7 @@ sub ProcessRequest()
    '//
    '// Retrieve any messages
    '//
-   strStatement = "select xml_text from table(qvi_app.qvi_gen_function.get_mesg_data)"
+   strStatement = "select xml_text from table(qv_app.qvi_gen_function.get_mesg_data)"
    strReturn = objSelection.Execute("MESSAGE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub
