@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : QVI (QlikView Interfacing Application)             //
-'// Script  : qvi_fac_config_select.asp                          //
+'// Script  : qvi_das_config_select.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : April 2012                                         //
-'// Text    : This script implements the fact definition         //
+'// Text    : This script implements the dashboard definition    //
 '//           configuration select functionality                 //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("QVI_FAC_CONFIG")
+   strReturn = GetSecurityCheck("QVI_DAS_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -84,9 +84,9 @@ sub ProcessRequest()
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve the fact selection
+   '// Retrieve the dashboard selection
    '//
-   strStatement = "select xml_text from table(qv_app.qvi_fac_maintenance.select_list)"
+   strStatement = "select xml_text from table(qv_app.qvi_das_maintenance.select_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

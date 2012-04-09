@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : QVI (QlikView Interfacing Application)             //
-'// Script  : qvi_fac_config_delete.asp                          //
+'// Script  : qvi_das_config_delete.asp                          //
 '// Author  : Steve Gregan                                       //
 '// Date    : April 2012                                         //
-'// Text    : This script implements the fact definition         //
+'// Text    : This script implements the dashboard definition    //
 '//           configuration delete functionality                 //
 '//////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("QVI_FAC_CONFIG")
+   strReturn = GetSecurityCheck("QVI_DAS_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -78,9 +78,9 @@ sub ProcessRequest()
    next
 
    '//
-   '// Perform the fact delete
+   '// Perform the dashboard delete
    '//
-   call objProcedure.Execute("qv_app.qvi_fac_maintenance.delete_data")
+   call objProcedure.Execute("qv_app.qvi_das_maintenance.delete_data")
    if strReturn <> "*OK" then
       exit sub
    end if

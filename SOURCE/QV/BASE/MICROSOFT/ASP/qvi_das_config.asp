@@ -3,10 +3,10 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : QVI (QlikView Interfacing Application)             //
-'// Script  : qvi_fac_config.asp                                 //
+'// Script  : qvi_das_config.asp                                 //
 '// Author  : Steve Gregan                                       //
 '// Date    : April 2012                                         //
-'// Text    : This script implements the fact definition         //
+'// Text    : This script implements the dashboard definition    //
 '//           configuration functionality                        //
 '//////////////////////////////////////////////////////////////////
 
@@ -30,8 +30,8 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "qvi_fac_config.asp"
-   strHeading = "Fact Maintenance"
+   strTarget = "qvi_das_config.asp"
+   strHeading = "Dashboard Maintenance"
 
    '//
    '// Get the base string
@@ -51,7 +51,7 @@
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurityCheck("QVI_FAC_CONFIG")
+   strReturn = GetSecurityCheck("QVI_DAS_CONFIG")
    if strReturn <> "*OK" then
       call PaintFatal
    else
@@ -128,8 +128,8 @@ sub PaintFunction()%>
       cobjScreens[1] = new clsScreen('dspSelect','hedSelect');
       cobjScreens[2] = new clsScreen('dspDefine','hedDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Fact Selection';
-      cobjScreens[2].hedtxt = 'Fact Maintenance';
+      cobjScreens[1].hedtxt = 'Dashboard Selection';
+      cobjScreens[2].hedtxt = 'Dashboard Maintenance';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -172,7 +172,7 @@ sub PaintFunction()%>
    }
    function doSelectDelete(strCode) {
       if (!processForm()) {return;}
-      if (confirm('Please confirm the deletion\r\npress OK continue (the selected fact will be deleted)\r\npress Cancel to cancel and return') == false) {
+      if (confirm('Please confirm the deletion\r\npress OK continue (the selected dashboard will be deleted)\r\npress Cancel to cancel and return') == false) {
          return;
       }
       doActivityStart(document.body);
@@ -206,7 +206,7 @@ sub PaintFunction()%>
    }
    function requestSelectList(strAction) {
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="'+strAction+'" STRCDE="'+cstrSelectStrCode+'" ENDCDE="'+cstrSelectEndCode+'"/>';
-      doPostRequest('<%=strBase%>qvi_fac_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_select.asp',function(strResponse) {checkSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkSelectList(strResponse) {
       doActivityStop();
@@ -251,7 +251,7 @@ sub PaintFunction()%>
          objCell = objRow.insertCell(-1);
          objCell.colSpan = 1;
          objCell.align = 'center';
-         objCell.innerHTML = '&nbsp;Fact&nbsp;';
+         objCell.innerHTML = '&nbsp;Dashboard&nbsp;';
          objCell.className = 'clsLabelHB';
          objCell.style.whiteSpace = 'nowrap';
          objCell = objRow.insertCell(-1);
@@ -336,7 +336,7 @@ sub PaintFunction()%>
    function requestDelete(strCode) {
       cstrDeleteCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*DLTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>qvi_fac_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_delete.asp',function(strResponse) {checkDelete(strResponse);},false,streamXML(strXML));
    }
    function checkDelete(strResponse) {
       doActivityStop();
@@ -377,19 +377,19 @@ sub PaintFunction()%>
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*UPDDEF" DIMCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>qvi_fac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCreate(strCode) {
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CRTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>qvi_fac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function requestDefineCopy(strCode) {
       cstrDefineMode = '*CPY';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PSA_REQUEST ACTION="*CPYDEF" DIMCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>qvi_fac_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
       doActivityStop();
@@ -411,11 +411,11 @@ sub PaintFunction()%>
             return;
          }
          if (cstrDefineMode == '*UPD') {
-            cobjScreens[2].hedtxt = 'Update Fact';
+            cobjScreens[2].hedtxt = 'Update Dashboard';
             document.getElementById('addDefine').style.display = 'none';
             document.getElementById('updDefine').style.display = 'block';
          } else {
-            cobjScreens[2].hedtxt = 'Create Fact';
+            cobjScreens[2].hedtxt = 'Create Dashboard';
             document.getElementById('addDefine').style.display = 'block';
             document.getElementById('updDefine').style.display = 'none';
          }
@@ -471,7 +471,7 @@ sub PaintFunction()%>
       window.setTimeout('requestDefineAccept(\''+strXML+'\');',10);
    }
    function requestDefineAccept(strXML) {
-      doPostRequest('<%=strBase%>qvi_fac_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
+      doPostRequest('<%=strBase%>qvi_das_config_update.asp',function(strResponse) {checkDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkDefineAccept(strResponse) {
       doActivityStop();
@@ -519,7 +519,7 @@ sub PaintFunction()%>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
-<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('qvi_fac_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('qvi_das_config_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
    <table id="dspLoad" class="clsGrid02" style="display:block;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr>
       <tr>
@@ -529,7 +529,7 @@ sub PaintFunction()%>
    <table id="dspSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Fact Selection</nobr></td>
+         <td id="hedSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard Selection</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -573,29 +573,29 @@ sub PaintFunction()%>
    <table id="dspDefine" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doDefineAccept();}">
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
-         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Fact Define</nobr></td>
+         <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Dashboard Define</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr id="addDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Fact Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FacCode" size="32" maxlength="32" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr id="updDefine" style="display:none;visibility:visible">
-         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Fact Code:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align="right" valign="center" colspan="1" nowrap><nobr>&nbsp;Dashboard Code:&nbsp;</nobr></td>
          <td id="DEF_UpdCode" class="clsLabelBB" align="left" valign="center" colspan="1" nowrap><nobr></nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Fact Name:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_FacName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Fact Status:&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Dashboard Status:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="DEF_FacStat">
                <option value="0">Inactive
