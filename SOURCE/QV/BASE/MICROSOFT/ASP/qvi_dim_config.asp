@@ -506,6 +506,7 @@ sub PaintFunction()%>
    function doDefineAccept() {
       if (!processForm()) {return;}
       var objDimStat = document.getElementById('DEF_DimStat');
+      var objRtvType = document.getElementById('DEF_RtvType');
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       if (cstrDefineMode == '*UPD') {
          strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF"';
