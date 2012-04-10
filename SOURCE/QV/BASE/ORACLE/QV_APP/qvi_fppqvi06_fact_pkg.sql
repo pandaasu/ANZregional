@@ -74,7 +74,7 @@ create or replace package qv_app.qvi_fppqvi06_fact_pkg as
    /* SECTION : FACT BUILDER
    /*-*/
    procedure build_fact(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2);
-   function final_pass(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) return qvi_fppqvi06_fact_tab pipelined;
+   -- function final_pass(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) return qvi_fppqvi06_fact_tab pipelined;
 
    /*-*/
    /* SECTION : FACT RETRIEVER
@@ -184,7 +184,6 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       end if;  
 
       var_das_code := 'FPPS';
-      var_fac_code := var_das_code||'_'||var_current_rec."Dashboard Unit Code";
       var_par_code :=  substr(substr(var_src_filename,1,instr(var_src_filename,'_',1,6)-1),4);
       
       /*-*/
@@ -192,11 +191,30 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /*-*/
       lics_inbound_utility.clear_definition;
       
-      if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
+      if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- actual format 1
+         var_fac_code := 'ACTUAL_'||var_current_rec."Dashboard Unit Code";
          lics_inbound_utility.set_csv_definition('Line Item Code',1);
          lics_inbound_utility.set_csv_definition('Material Code',2);
          lics_inbound_utility.set_csv_definition('Source Code',3);
          lics_inbound_utility.set_csv_definition('Value',4);
+      elsif var_src_file_format in ('4_OPITMTOTTOTTOT','4_OPTOTTOTTOTTOT') then -- plan format 4
+         var_fac_code := 'PLAN_'||var_current_rec."Dashboard Unit Code";
+         lics_inbound_utility.set_csv_definition('Line Item Code',1);
+         lics_inbound_utility.set_csv_definition('Material Code',2);
+         lics_inbound_utility.set_csv_definition('Source Code',3);
+         lics_inbound_utility.set_csv_definition('P01',4);
+         lics_inbound_utility.set_csv_definition('P02',5);
+         lics_inbound_utility.set_csv_definition('P03',6);
+         lics_inbound_utility.set_csv_definition('P04',7);
+         lics_inbound_utility.set_csv_definition('P05',8);
+         lics_inbound_utility.set_csv_definition('P06',9);
+         lics_inbound_utility.set_csv_definition('P07',10);
+         lics_inbound_utility.set_csv_definition('P08',11);
+         lics_inbound_utility.set_csv_definition('P09',12);
+         lics_inbound_utility.set_csv_definition('P10',13);
+         lics_inbound_utility.set_csv_definition('P11',14);
+         lics_inbound_utility.set_csv_definition('P12',15);
+         lics_inbound_utility.set_csv_definition('P13',16);
       else
          raise_application_error(-20000,'FATAL ERROR - ['||var_module_name||'] - Unknown source filename format "'||var_src_file_format||'"');
       end if;
@@ -227,6 +245,7 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /* Local definitions
       /*-*/
       var_row_data varchar2(4000);
+      var_rec_header_expected varchar2(4000);
       var_rec_type varchar2(20) := null;
       var_rec_data varchar2(256) := null;
       var_period_column_name varchar2(30) := null;
@@ -311,10 +330,18 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
          /*-*/
          /* Parse Period header record for fpps_actual only .. as fpps_plan has all periods
          /*-*/
-         if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
-            var_statement_tag := 'Process Period record';
+         var_statement_tag := 'Process Period record';
+         if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- actual format 1
             var_period := to_number(qvi_util.get_validated_value(
                'Period',substr(var_row_data,5,2),'Number of 1 to 2 digits','^[[:digit:]]{1,2}$',var_src_error));
+         elsif var_src_file_format in ('4_OPITMTOTTOTTOT','4_OPTOTTOTTOTTOT') then -- plan format 4
+            var_rec_header_expected := ',,,P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13';
+            if trim(substr(var_row_data,1,length(trim(var_rec_header_expected)))) = var_rec_header_expected then
+               var_period := 1;
+            else
+               lics_inbound_utility.add_exception('Header record "'||var_row_data||'" not recognised, expected "'||var_rec_header_expected||'".');
+               var_src_header_complete_flag := false;
+            end if;
          end if;
          /*-*/
          /* Check header is complete
@@ -363,9 +390,9 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
                /*-*/
                /* Time code is year for plan and year/period for actual
                /*-*/
-               if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then
+               if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- actual format 1
                   var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
-               else -- fpps_plan
+               elsif var_src_file_format in ('4_OPITMTOTTOTTOT','4_OPTOTTOTTOTTOT') then -- plan format 4
                   var_tim_code := var_year;
                end if;
    
@@ -401,7 +428,7 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       for var_period_iterator in 1..13 loop
          if var_src_file_format in ('1_PDITMSRCTOTTOT','1_PDTOTTOTTOTTOT') then -- single period file formats
             var_period_column_name := 'Value';
-         else -- 13 periods
+         elsif var_src_file_format in ('4_OPITMTOTTOTTOT','4_OPTOTTOTTOTTOT') then -- plan format 4 (13 periods)
             var_period := var_period_iterator;
             var_period_column_name := 'P'||to_char(var_period,'FM00');
          end if;
@@ -495,14 +522,6 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /*-*/
       var_data qvi_fppqvi06_fact_obj;
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_src_table is
-         select t01.*
-           from table(qvi_fppqvi06_fact_pkg.final_pass(par_das_code, par_fac_code, par_tim_code)) t01;
-      rcd_src_table csr_src_table%rowtype;
-
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -518,44 +537,11 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /*-*/
       qvi_fac_function.start_loader(par_das_code, par_fac_code, par_tim_code);
 
-      /*-*/
-      /* Retrieve the fact data from the intermediate pipelined table function
-      /* **notes**
-      /* 1. Create DAT_DATA using the TEMPLATE_OBJECT_TYPE
-      /* 2. The DAT_DATA is cast to SYS.ANYDATA using SYS.ANYDATA.CONVERTTOOBJECT
-      /*-*/
-      open csr_src_table;
-      loop
-         fetch csr_src_table into rcd_src_table;
-         if csr_src_table%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the fact object
-         /*-*/
-         var_data := qvi_fppqvi06_fact_obj(
-            rcd_src_table."Dashboard Unit Code",
-            rcd_src_table."Solve Type",
-            rcd_src_table."Unit Code",
-            rcd_src_table."Plan Version",
-            rcd_src_table."Dest Code",
-            rcd_src_table."Cust Code",
-            rcd_src_table."Line Item Code",
-            rcd_src_table."Material Code",
-            rcd_src_table."Source Code",
-            rcd_src_table."YYYYPP",
-            rcd_src_table."Value",
-            rcd_src_table."Currency");
-
-         /*-*/
-         /* Append the fact data
-         /*-*/
-         qvi_fac_function.append_data(sys.anydata.ConvertObject(var_data));
-
-      end loop;
-      close csr_src_table;
-
+      /*-*
+      /* Would normally copy data from source to fact table here .. however 
+      /* bypassing for effiency, as data is the same format.
+      /*-*
+      
       /*-*/
       /* Finalise the fact loader
       /*-*/
@@ -565,7 +551,7 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /* Commit the database
       /*-*/
       commit;
-
+      return;
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
@@ -584,80 +570,6 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
    /*-------------*/
    end build_fact;
 
-   /*********************************************************************/
-   /* This procedure performs the select source table routine           */
-   /* CUSTOMISE : return_type, var_data type and update var_module_name */
-   /*********************************************************************/
-   function final_pass(par_das_code in varchar2, par_fac_code in varchar2, par_tim_code in varchar2) return qvi_fppqvi06_fact_tab pipelined is
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_pointer pls_integer;
-      var_data qvi_fppqvi06_fact_obj;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_src_table is
-         select t01.*
-           from table(qvi_src_function.get_tables(par_das_code, par_fac_code, par_tim_code, '*ALL')) t01;
-      rcd_src_table csr_src_table%rowtype;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-      /*-*/
-      /* Fully qualified schema.package.module used for error reporting
-      /*-*/
-      var_module_name := trim(con_schema_name)||'.'||trim(con_package_name)||'.FINAL_PASS';
-      var_statement_tag := null;
-
-      /*------------------------------------------------*/
-      /* NOTE - This procedure must not commit/rollback */
-      /*------------------------------------------------*/
-
-      /*-*/
-      /* Retrieve the source data from the QVI_SRC_FUNCTION.GET_TABLES pipelined table function
-      /* **notes**
-      /* 1. The QVI_FAC_FUNCTION.GET_TABLE function returns a table of QVI_FAC_OBJECT type rows
-      /* 2. The QVI_FAC_OBJECT type contains the fact data in column DAT_DATA as SYS.ANYDATA
-      /* 3. The column DAT_DATA is cast to the TEMPLATE_OBJECT_TYPE using SYS.ANYDATA.GET_OBJECT
-      /* 4. The TEMPLATE_OBJECT_TYPE is piped to the consumer
-      /* 5. An Exception will be raised when DAT_DATA is unable to be cast to TEMPLATE_OBJECT_TYPE
-      /*-*/
-      open csr_src_table;
-      loop
-         fetch csr_src_table into rcd_src_table;
-         if csr_src_table%notfound then
-            exit;
-         end if;
-         var_pointer := rcd_src_table.dat_data.GetObject(var_data);
-         pipe row(var_data);
-      end loop;
-      close csr_src_table;
-
-      /*-*/
-      /* Return
-      /*-*/
-      return;
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-      /*-*/
-      /* Exception trap
-      /*-*/
-      when others then
-         /*-*/
-         /* Raise exception to the calling application
-         /*-*/
-         raise_application_error(-20000,substr('FATAL ERROR - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end final_pass;
-
    /* ======================================================================= */
    /* SECTION : FACT RETRIEVER                                                */
    /* ======================================================================= */
@@ -674,13 +586,13 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       var_data qvi_fppqvi06_fact_obj;
 
       /*-*/
-      /* Local cursors
+      /* Local cursors .. *** getting fact data from source data table *** 
       /*-*/
       cursor csr_fact_table is
          select t01.*
-           from table(qvi_fac_function.get_table(par_das_code, par_fac_code, par_tim_code)) t01;
+           from table(qvi_src_function.get_tables(par_das_code, par_fac_code, par_tim_code, '*ALL')) t01;
       rcd_fact_table csr_fact_table%rowtype;
-
+      
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -744,7 +656,7 @@ end qvi_fppqvi06_fact_pkg;
 /* Package Synonym/Grants                                                     */
 /******************************************************************************/
 create or replace public synonym qvi_fppqvi06_fact_pkg for qv_app.qvi_fppqvi06_fact_pkg;
-grant execute on qvi_fppqvi06_fact_pkg to lics_app, qv_app;
+grant execute on qvi_fppqvi06_fact_pkg to lics_app, qv_app, qv_user;
 
 /******************************************************************************/
 set define on;
