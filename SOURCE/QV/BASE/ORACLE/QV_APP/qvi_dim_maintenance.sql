@@ -461,21 +461,21 @@ create or replace package body qv_app.qvi_dim_maintenance as
          qvi_gen_function.add_mesg_data('Dimension storage type must be supplied');
       end if;
       if rcd_qvi_dim_defn.qdd_pol_flag is null or (rcd_qvi_dim_defn.qdd_pol_flag != '0' and rcd_qvi_dim_defn.qdd_pol_flag != '1') then
-         qvi_gen_function.add_mesg_data('Dimension polling flag must be (0)flag or (1)batch');
+         qvi_gen_function.add_mesg_data('Dimension retrieval type must be (0)flag or (1)batch');
       else
          if rcd_qvi_dim_defn.qdd_pol_flag = '0' then
             if rcd_qvi_dim_defn.qdd_flg_iface is null then
-               qvi_gen_function.add_mesg_data('Dimension flag file interface must be supplied for polling flag (0)flag');
+               qvi_gen_function.add_mesg_data('Dimension flag file interface must be supplied for retrieval type (0)flag');
             end if;
             if rcd_qvi_dim_defn.qdd_flg_mname is null then
-               qvi_gen_function.add_mesg_data('Dimension flag file message name must be supplied for polling flag (0)flag');
+               qvi_gen_function.add_mesg_data('Dimension flag file message name must be supplied for retrieval type (0)flag');
             end if;
          else
             if not(rcd_qvi_dim_defn.qdd_flg_iface) is null then
-               qvi_gen_function.add_mesg_data('Dimension flag file interface must be null for polling flag (1)batch');
+               qvi_gen_function.add_mesg_data('Dimension flag file interface must be null for retrieval type (1)batch');
             end if;
             if not(rcd_qvi_dim_defn.qdd_flg_mname) is null then
-               qvi_gen_function.add_mesg_data('Dimension flag file message name must be null for polling flag (1)batch');
+               qvi_gen_function.add_mesg_data('Dimension flag file message name must be null for retrieval type (1)batch');
             end if;
          end if;
       end if;
