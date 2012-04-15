@@ -277,7 +277,7 @@ create or replace package body qv_app.qvi_dim_maintenance as
       var_action := upper(xslProcessor.valueOf(obj_qvi_request,'@ACTION'));
       var_dim_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@DIMCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
          qvi_gen_function.add_mesg_data('Invalid request action');
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
@@ -287,7 +287,7 @@ create or replace package body qv_app.qvi_dim_maintenance as
       /*-*/
       /* Retrieve the existing dimension when required
       /*-*/
-      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
+      if var_action = '*UPDDEF' then
          var_found := false;
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
@@ -315,16 +315,6 @@ create or replace package body qv_app.qvi_dim_maintenance as
          var_output := '<DIMDFN DIMCDE="'||qvi_to_xml(rcd_retrieve.qdd_dim_code||' - (Last updated by '||rcd_retrieve.qdd_upd_user||' on '||to_char(rcd_retrieve.qdd_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' DIMNAM="'||qvi_to_xml(rcd_retrieve.qdd_dim_name)||'"';
          var_output := var_output||' DIMSTS="'||qvi_to_xml(rcd_retrieve.qdd_dim_status)||'"';
-         var_output := var_output||' DIMTAB="'||qvi_to_xml(rcd_retrieve.qdd_dim_table)||'"';
-         var_output := var_output||' DIMTYP="'||qvi_to_xml(rcd_retrieve.qdd_dim_type)||'"';
-         var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_pol_flag)||'"';
-         var_output := var_output||' FLGINT="'||qvi_to_xml(rcd_retrieve.qdd_flg_iface)||'"';
-         var_output := var_output||' FLGMSG="'||qvi_to_xml(rcd_retrieve.qdd_flg_mname)||'"/>';
-         pipe row(qvi_xml_object(var_output));
-      elsif var_action = '*CPYDEF' then
-         var_output := '<DIMDFN DIMCDE=""';
-         var_output := var_output||' DIMNAM="'||qvi_to_xml(rcd_retrieve.qdd_dim_name)||'"';
-         var_output := var_output||' DIMSTS="1"';
          var_output := var_output||' DIMTAB="'||qvi_to_xml(rcd_retrieve.qdd_dim_table)||'"';
          var_output := var_output||' DIMTYP="'||qvi_to_xml(rcd_retrieve.qdd_dim_type)||'"';
          var_output := var_output||' POLFLG="'||qvi_to_xml(rcd_retrieve.qdd_pol_flag)||'"';
@@ -658,13 +648,16 @@ create or replace package body qv_app.qvi_dim_maintenance as
             qvi_gen_function.add_mesg_data('Dimension code ('||var_dim_code||') is currently loading - unable to delete');
          end if;
       end if;
-      if qvi_gen_function.get_mesg_count = 0 then
-         delete from qvi_dim_data where qdd_dim_code = var_dim_code;
-         delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
-      else
+      if qvi_gen_function.get_mesg_count != 0 then
          rollback;
          return;
       end if;
+
+      /*-*/
+      /* Delete the data
+      /*-*/
+      delete from qvi_dim_data where qdd_dim_code = var_dim_code;
+      delete from qvi_dim_defn where qdd_dim_code = var_dim_code;
 
       /*-*/
       /* Free the XML document

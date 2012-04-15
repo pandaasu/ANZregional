@@ -537,6 +537,12 @@ create or replace package body qv_app.qvi_das_maintenance as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_fact is
+         select t01.*
+           from qvi_fac_defn t01
+          where t01.qfd_das_code = var_das_code;
+      rcd_fact csr_fact%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -586,17 +592,34 @@ create or replace package body qv_app.qvi_das_maintenance as
       end;
       if var_found = false then
          qvi_gen_function.add_mesg_data('Dashboard code ('||var_das_code||') does not exist');
+      else
+         var_found := false;
+         open csr_fact;
+         fetch csr_fact into rcd_fact;
+         if csr_fact%found then
+            var_found := true;
+         end if;
+         close csr_fact;
+         if var_found = true then
+            qvi_gen_function.add_mesg_data('Dashboard code ('||var_das_code||') has facts defined - unable to delete');
+         end if;
       end if;
-      if qvi_gen_function.get_mesg_count = 0 then
-         delete from qvi_src_data where qsd_das_code = var_das_code;
-         delete from qvi_src_hedr where qsh_das_code = var_das_code;
-         delete from qvi_fac_data where qfd_das_code = var_das_code;
-         delete from qvi_fac_hedr where qfh_das_code = var_das_code;
-         delete from qvi_fac_time where qft_das_code = var_das_code;
-         delete from qvi_fac_part where qfp_das_code = var_das_code;
-         delete from qvi_fac_defn where qfd_das_code = var_das_code;
-         delete from qvi_das_defn where qdd_das_code = var_das_code;
+      if qvi_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
       end if;
+
+      /*-*/
+      /* Delete the data
+      /*-*/
+      delete from qvi_src_data where qsd_das_code = var_das_code;
+      delete from qvi_src_hedr where qsh_das_code = var_das_code;
+      delete from qvi_fac_data where qfd_das_code = var_das_code;
+      delete from qvi_fac_hedr where qfh_das_code = var_das_code;
+      delete from qvi_fac_time where qft_das_code = var_das_code;
+      delete from qvi_fac_part where qfp_das_code = var_das_code;
+      delete from qvi_fac_defn where qfd_das_code = var_das_code;
+      delete from qvi_das_defn where qdd_das_code = var_das_code;
 
       /*-*/
       /* Free the XML document
