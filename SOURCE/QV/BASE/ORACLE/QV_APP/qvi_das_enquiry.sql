@@ -359,7 +359,7 @@ create or replace package body qv_app.qvi_das_enquiry as
            from qvi_fac_time t01
           where t01.qft_das_code = var_das_code
             and t01.qft_fac_code = var_fac_code
-          order by t01.qft_tim_code asc;
+          order by t01.qft_tim_code desc;
 
       /*-*/
       /* Local arrays

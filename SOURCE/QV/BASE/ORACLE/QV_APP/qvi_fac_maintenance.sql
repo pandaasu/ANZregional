@@ -34,6 +34,9 @@ create or replace package qv_app.qvi_fac_maintenance as
    procedure update_part_data(par_user in varchar2);
    procedure delete_part_data;
 
+
+-- reset/delete time for fact for reprocessing
+
 end qvi_fac_maintenance;
 /
 
