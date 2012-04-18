@@ -464,13 +464,13 @@ create or replace package body qv_app.qvi_das_enquiry as
       /*-*/
       cursor csr_slct is
          select t01.*,
-                nvl(t02.qsh_lod_status,'*NONE') as qsh_lod_status,
+                nvl(t02.qsh_lod_status,'No Source Received') as qsh_lod_status,
                 t02.qsh_str_date,
                 t02.qsh_end_date
            from qvi_fac_part t01,
                 (select t11.qsh_par_code,
                         decode(t11.qsh_lod_status,'0','Empty','1','Loading','2','Loaded','*UNKNOWN') as qsh_lod_status,
-                        decode(t11.qsh_lod_status,'0','Empty','1',to_char(t11.qsh_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qsh_str_date,
+                        decode(t11.qsh_lod_status,'0','Empty',to_char(t11.qsh_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qsh_str_date,
                         decode(t11.qsh_lod_status,'0','Empty','1','In Progress',to_char(t11.qsh_end_date, 'yyyy/mm/dd hh24:mi:ss')) as qsh_end_date
                    from qvi_src_hedr t11
                   where t11.qsh_das_code = var_das_code
