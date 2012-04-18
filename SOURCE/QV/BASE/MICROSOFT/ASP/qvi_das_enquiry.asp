@@ -130,10 +130,10 @@ sub PaintFunction()%>
       cobjScreens[3] = new clsScreen('dspTimeSelect','hedTimeSelect');
       cobjScreens[4] = new clsScreen('dspPartSelect','hedPartSelect');
       cobjScreens[0].hedtxt = '**LOADING**';
-      cobjScreens[1].hedtxt = 'Dashboard Selection';
-      cobjScreens[2].hedtxt = 'Fact Selection';
-      cobjScreens[3].hedtxt = 'Time Selection';
-      cobjScreens[4].hedtxt = 'Part Selection';
+      cobjScreens[1].hedtxt = 'Dashboard Enquiry';
+      cobjScreens[2].hedtxt = 'Dashboard Fact Enquiry';
+      cobjScreens[3].hedtxt = 'Dashboard Fact Time Enquiry';
+      cobjScreens[4].hedtxt = 'Dashboard Fact Time Part Enquiry';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -272,7 +272,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectFact(\''+objElements[i].getAttribute('DASCDE')+'\');">Fact Enquiry</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectFact(\''+objElements[i].getAttribute('DASCDE')+'\');">Facts</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -334,7 +334,7 @@ sub PaintFunction()%>
       window.setTimeout('requestFactSelectList();',10);
    }
    function requestFactSelectList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="'+strAction+'" DASCDE="'+cstrSelectDasCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST DASCDE="'+cstrSelectDasCode+'"/>';
       doPostRequest('<%=strBase%>qvi_das_enquiry_fact.asp',function(strResponse) {checkFactSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkFactSelectList(strResponse) {
@@ -407,7 +407,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectTime(\''+objElements[i].getAttribute('FACCDE')+'\');">Time Enquiry</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectTime(\''+objElements[i].getAttribute('FACCDE')+'\');">Fact Time Dimensions</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -453,10 +453,10 @@ sub PaintFunction()%>
    ///////////////////////////
    // Time Select Functions //
    ///////////////////////////
-   var cstrSelectTimeCode;
+   var cstrSelectTimCode;
    function doSelectPart(strCode) {
       if (!processForm()) {return;}
-      cstrSelectTimeCode = strCode;
+      cstrSelectTimCode = strCode;
       doActivityStart(document.body);
       window.setTimeout('requestPartSelectList();',10);
    }
@@ -466,7 +466,7 @@ sub PaintFunction()%>
       window.setTimeout('requestTimeSelectList();',10);
    }
    function requestTimeSelectList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="'+strAction+'" DASCDE="'+cstrSelectDasCode+'" FACCDE="'+cstrSelectFacCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST DASCDE="'+cstrSelectDasCode+'" FACCDE="'+cstrSelectFacCode+'"/>';
       doPostRequest('<%=strBase%>qvi_das_enquiry_time.asp',function(strResponse) {checkTimeSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkTimeSelectList(strResponse) {
@@ -533,7 +533,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectPart(\''+objElements[i].getAttribute('TIMCDE')+'\');">Part Enquiry</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectPart(\''+objElements[i].getAttribute('TIMCDE')+'\');">Fact Parts</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -579,7 +579,7 @@ sub PaintFunction()%>
       window.setTimeout('requestPartSelectList();',10);
    }
    function requestPartSelectList() {
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="'+strAction+'" DASCDE="'+cstrSelectDasCode+'" FACCDE="'+cstrSelectFacCode+'" TIMCDE="'+cstrSelectTimCode+'"/>';
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST DASCDE="'+cstrSelectDasCode+'" FACCDE="'+cstrSelectFacCode+'" TIMCDE="'+cstrSelectTimCode+'"/>';
       doPostRequest('<%=strBase%>qvi_das_enquiry_part.asp',function(strResponse) {checkPartSelectList(strResponse);},false,streamXML(strXML));
    }
    function checkPartSelectList(strResponse) {
@@ -737,11 +737,10 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=5 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=4 cellpadding="0" cellspacing="0">
                <tr>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SEL_SelCode" size="32" maxlength="32" value="" onFocus="setSelect(this);"></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectPrevious();"><&nbsp;Prev&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectNext();">&nbsp;Next&nbsp;></a></nobr></td>
                </tr>
@@ -776,7 +775,7 @@ sub PaintFunction()%>
          <td id="hedFactSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard Fact Enquiry</nobr></td>
       </tr>
       <tr>
-         <td id="hedFactData" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard</nobr></td>
+         <td id="hedFactData" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Dashboard</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -786,6 +785,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFactSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                </tr>
             </table>
@@ -819,7 +819,7 @@ sub PaintFunction()%>
          <td id="hedTimeSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard Time Enquiry</nobr></td>
       </tr>
       <tr>
-         <td id="hedTimeData" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard/Fact</nobr></td>
+         <td id="hedTimeData" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Dashboard/Fact</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -829,6 +829,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFactSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                </tr>
             </table>
@@ -856,13 +857,13 @@ sub PaintFunction()%>
          </nobr></td>
       </tr>
    </table>
-   <table id="dspFactSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+   <table id="dspPartSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedPartSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard Fact Time Part Enquiry</nobr></td>
       </tr>
       <tr>
-         <td id="hedPartData" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard/Fact</nobr></td>
+         <td id="hedPartData" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Dashboard/Fact</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -872,6 +873,7 @@ sub PaintFunction()%>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                </tr>
             </table>
