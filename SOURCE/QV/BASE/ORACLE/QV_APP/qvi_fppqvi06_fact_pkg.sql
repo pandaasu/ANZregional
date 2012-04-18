@@ -193,31 +193,13 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /*-*/
       lics_inbound_utility.clear_definition;
       
-      if var_src_file_format_id = '1' then -- actual format 1
-         var_fac_code := 'ACTUAL_'||var_current_rec."Dashboard Unit Code";
-         lics_inbound_utility.set_csv_definition('Line Item Code',1);
-         lics_inbound_utility.set_csv_definition('Material Code',2);
-         lics_inbound_utility.set_csv_definition('Source Code',3);
-         lics_inbound_utility.set_csv_definition('Value',4);
-      elsif var_src_file_format_id = '4' then -- plan format 4
+      if var_src_file_format_id = '4' then -- format 4 (Plan)
          var_fac_code := 'PLAN_'||var_current_rec."Dashboard Unit Code";
          lics_inbound_utility.set_csv_definition('Line Item Code',1);
-         lics_inbound_utility.set_csv_definition('Material Code',2);
-         lics_inbound_utility.set_csv_definition('Source Code',3);
-         lics_inbound_utility.set_csv_definition('P01',4);
-         lics_inbound_utility.set_csv_definition('P02',5);
-         lics_inbound_utility.set_csv_definition('P03',6);
-         lics_inbound_utility.set_csv_definition('P04',7);
-         lics_inbound_utility.set_csv_definition('P05',8);
-         lics_inbound_utility.set_csv_definition('P06',9);
-         lics_inbound_utility.set_csv_definition('P07',10);
-         lics_inbound_utility.set_csv_definition('P08',11);
-         lics_inbound_utility.set_csv_definition('P09',12);
-         lics_inbound_utility.set_csv_definition('P10',13);
-         lics_inbound_utility.set_csv_definition('P11',14);
-         lics_inbound_utility.set_csv_definition('P12',15);
-         lics_inbound_utility.set_csv_definition('P13',16);
-      elsif var_src_file_format_id = '5' then -- actual format 5
+         lics_inbound_utility.set_csv_definition('Period',2);
+         lics_inbound_utility.set_csv_definition('Material Code',3);
+         lics_inbound_utility.set_csv_definition('Value',4);
+      elsif var_src_file_format_id = '5' then -- format 5 (Actual)
          var_fac_code := 'ACTUAL_'||var_current_rec."Dashboard Unit Code";
          lics_inbound_utility.set_csv_definition('Line Item Code',1);
          lics_inbound_utility.set_csv_definition('Material Code',2);
@@ -257,7 +239,6 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       var_rec_header_expected varchar2(4000);
       var_rec_type varchar2(20) := null;
       var_rec_data varchar2(256) := null;
-      var_period_column_name varchar2(30) := null;
 
    /*-------------*/
    /* Begin block */
@@ -278,8 +259,8 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /* Remove extraneous trailing whitespace (cr/lf/tab/etc..) from row and
       /* return if empty row
       /*-*/
-      var_row_data := regexp_replace(par_record,'[[:space:]]*$',null); 
-      if trim(var_row_data) is null or trim(replace(var_row_data,con_delimiter,' ')) is null then
+      var_row_data := regexp_replace(par_record,'[[:space:]]*$'); 
+      if trim(var_row_data) is null or trim(replace(var_row_data,con_delimiter)) is null then
          return;
       end if;
 
@@ -312,6 +293,16 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       end if;
 
       /*-*/
+      /* Process Source record
+      /*-*/
+      if var_rec_type = 'Source_MOE' then
+         var_statement_tag := 'Process Source record';
+         var_current_rec."Source Code" := qvi_util.get_validated_value(
+            'Source Code',var_rec_data,'Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
+         return;
+      end if;
+
+      /*-*/
       /* Process Destination record
       /*-*/
       if var_rec_type = 'Dest_MOE' then
@@ -334,22 +325,19 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
       /*-*/
       /* Process Period header record
       /*-*/
-      if trim(substr(var_row_data,1,3)) = ',,,' then
-         var_statement_tag := 'Process Period header record';
+      if substr(var_row_data,1,3) = ',,,' then
+         var_statement_tag := 'Process Column Header record';
          /*-*/
          /* Parse Period header record for fpps_actual only .. as fpps_plan has all periods
          /*-*/
-         var_statement_tag := 'Process Period record';
-         if var_src_file_format_id in ('1','5') then -- actual formats 1,5 report on a single period
+         if var_src_file_format_id = '4' then -- format 4 (Plan), has Plan Version at this level
+            var_current_rec."Plan Version" := qvi_util.get_validated_value(
+               'Plan Version',replace(var_row_data,','),'String of 1 to 64 characters','^[[:print:]]{1,64}$',var_src_error);
+            var_year := to_number(qvi_util.get_validated_value(
+               'Year',substr(replace(var_row_data,','),1,4),'Number of 4 digits','^[[:digit:]]{4}$',var_src_error));
+         elsif var_src_file_format_id = '5' then -- format 5 (Actual), has Period at this level
             var_period := to_number(qvi_util.get_validated_value(
                'Period',substr(replace(var_row_data,','),2,2),'Number of 1 to 2 digits','^[[:digit:]]{1,2}$',var_src_error));
-         elsif var_src_file_format_id = '4' then -- plan format 4 reports on an entire year
-            var_period := null;
-            var_rec_header_expected := ',,,P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13';
-            if trim(substr(var_row_data,1,length(trim(var_rec_header_expected)))) != var_rec_header_expected then
-               lics_inbound_utility.add_exception('Header record "'||var_row_data||'" not recognised, expected "'||var_rec_header_expected||'".');
-               var_src_header_complete_flag := false;
-            end if;
          end if;
          /*-*/
          /* Check header is complete
@@ -368,7 +356,11 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
             lics_inbound_utility.add_exception('Source data is missing the Plan Year');
             var_src_header_complete_flag := false;
          end if;
-         if var_src_file_format_id != '5' and var_current_rec."Dest Code" is null then -- format 5, destination in the data, not the header
+         if var_src_file_format_id = '4' and var_current_rec."Source Code" is null then -- format 4, source in header 
+            lics_inbound_utility.add_exception('Source data is missing the Source Code');
+            var_src_header_complete_flag := false;
+         end if;
+         if var_src_file_format_id = '4' and var_current_rec."Dest Code" is null then -- format 4, destination in header
             lics_inbound_utility.add_exception('Source data is missing the Destination Code');
             var_src_header_complete_flag := false;
          end if;
@@ -376,7 +368,7 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
             lics_inbound_utility.add_exception('Source data is missing the Customer Code');
             var_src_header_complete_flag := false;
          end if;
-         if var_src_file_format_id != '4' and var_period is null then -- format 4, is by year
+         if var_src_file_format_id = '5' and var_period is null then -- format 5, period in column header
             lics_inbound_utility.add_exception('Source data is missing the Period');
             var_src_header_complete_flag := false;
          end if;
@@ -394,20 +386,21 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
          var_statement_tag := 'Check need to start source loader';
          if var_src_first_header = true then
             var_src_first_header := false;
-            if var_src_error = false then
+            if var_src_header_complete_flag = true then
                /*-*/
                /* Time code is year for plan and year/period for actual
                /*-*/
-               if var_src_file_format_id in ('1','5') then -- format 1,5 by period
-                  var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
-               elsif var_src_file_format_id = '4' then -- format 4 by year
+               if var_src_file_format_id = '4' then -- format 4, by year
                   var_tim_code := var_year;
+               elsif var_src_file_format_id = '5' then -- format 5, by period
+                  var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
                end if;
    
                qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
                
             else 
-               lics_inbound_utility.add_exception('Cannot start loader due to source errors');
+               -- lics_inbound_utility.add_exception('Cannot start loader due to source errors');
+               raise_application_error(-20000,substr('FATAL ERROR - Cannot start loader due to source errors - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
             end if;
          end if;
          
@@ -424,40 +417,25 @@ create or replace package body qv_app.qvi_fppqvi06_fact_pkg as
          'Line Item Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
       var_current_rec."Material Code" := qvi_util.get_validated_column(
          'Material Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
-      var_current_rec."Source Code" := qvi_util.get_validated_column(
-         'Source Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
-         
-      if var_src_file_format_id = '5' then -- format 5, destination in the data
+
+      if var_src_file_format_id = '4' then -- format 4, period in the column data
+            var_period := to_number(substr(lics_inbound_utility.get_variable('Period'),2));
+      elsif var_src_file_format_id = '5' then -- format 5, source and destination in the column data
+         var_current_rec."Source Code" := qvi_util.get_validated_column(
+            'Source Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
          var_current_rec."Dest Code" := qvi_util.get_validated_column(
             'Dest Code','Alphanumeric of 1 to 18 characters','^[[:alnum:]]{1,18}$',var_src_error);
       end if;
-      /*-*/
-      /* Loop through Periods for plan .. Exit after one period on actual
-      /*-*/
-      var_period_column_name := null;
-      var_statement_tag := 'Loop through Periods';
       
-      for var_period_iterator in 1..13 loop
-         if var_src_file_format_id in ('1','5') then -- format 1,5 single period
-            var_period_column_name := 'Value';
-         elsif var_src_file_format_id = '4' then -- format 4 year (13 periods)
-            var_period := var_period_iterator;
-            var_period_column_name := 'P'||to_char(var_period,'FM00');
-         end if;
-         var_current_rec."YYYYPP" := var_year * 100 + var_period;
-         
-         var_current_rec."Value" := qvi_util.get_validated_column(
-            var_period_column_name,'Number of any percision and scale','^[-]?[[:digit:]]+[[\.]?[[:digit:]]*]?$',var_src_error);
+      var_current_rec."YYYYPP" := var_year * 100 + var_period;
+      var_current_rec."Value" := qvi_util.get_validated_column(
+         'Value','Number of any percision and scale','^[-]?[[:digit:]]+[[\.]?[[:digit:]]*]?$',var_src_error);
 
-         /*-*/
-         /* Append the source data when required (no errors)
-         /*-*/
-         if var_src_error = false then
-            qvi_src_function.append_data(sys.anydata.ConvertObject(var_current_rec));
-         end if;
-         
-         exit when var_src_file_format_id in ('1','5'); -- format 1,5 single period
-      end loop;
+      if var_src_error = false then
+         qvi_src_function.append_data(sys.anydata.ConvertObject(var_current_rec));
+      end if;
+      
+      return;
 
    /*-------------------*/
    /* Exception handler */
