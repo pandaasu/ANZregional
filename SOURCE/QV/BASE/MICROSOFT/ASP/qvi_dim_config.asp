@@ -178,11 +178,6 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestDelete(\''+strCode+'\');',10);
    }
-   function doSelectCopy(strCode) {
-      if (!processForm()) {return;}
-      doActivityStart(document.body);
-      window.setTimeout('requestDefineCopy(\''+strCode+'\');',10);
-   }
    function doSelectCreate() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
@@ -302,7 +297,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('DIMCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('DIMCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectCopy(\''+objElements[i].getAttribute('DIMCDE')+'\');">Copy</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doSelectUpdate(\''+objElements[i].getAttribute('DIMCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSelectDelete(\''+objElements[i].getAttribute('DIMCDE')+'\');">Delete</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -419,12 +414,6 @@ sub PaintFunction()%>
       cstrDefineMode = '*CRT';
       cstrDefineCode = strCode;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CRTDEF" DIMCDE="'+fixXML(strCode)+'"/>';
-      doPostRequest('<%=strBase%>qvi_dim_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
-   }
-   function requestDefineCopy(strCode) {
-      cstrDefineMode = '*CPY';
-      cstrDefineCode = strCode;
-      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*CPYDEF" DIMCDE="'+fixXML(strCode)+'"/>';
       doPostRequest('<%=strBase%>qvi_dim_config_retrieve.asp',function(strResponse) {checkDefineLoad(strResponse);},false,streamXML(strXML));
    }
    function checkDefineLoad(strResponse) {
