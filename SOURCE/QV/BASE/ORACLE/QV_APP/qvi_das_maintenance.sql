@@ -268,7 +268,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       var_action := upper(xslProcessor.valueOf(obj_qvi_request,'@ACTION'));
       var_das_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@DASCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' and var_action != '*CPYDEF' then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
          qvi_gen_function.add_mesg_data('Invalid request action');
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
@@ -278,7 +278,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       /*-*/
       /* Retrieve the existing dashboard when required
       /*-*/
-      if var_action = '*UPDDEF' or var_action = '*CPYDEF' then
+      if var_action = '*UPDDEF' then
          var_found := false;
          open csr_retrieve;
          fetch csr_retrieve into rcd_retrieve;
@@ -306,11 +306,6 @@ create or replace package body qv_app.qvi_das_maintenance as
          var_output := '<DASDFN DASCDE="'||qvi_to_xml(rcd_retrieve.qdd_das_code||' - (Last updated by '||rcd_retrieve.qdd_upd_user||' on '||to_char(rcd_retrieve.qdd_upd_date,'yyyy/mm/dd')||')')||'"';
          var_output := var_output||' DASNAM="'||qvi_to_xml(rcd_retrieve.qdd_das_name)||'"';
          var_output := var_output||' DASSTS="'||qvi_to_xml(rcd_retrieve.qdd_das_status)||'"/>';
-         pipe row(qvi_xml_object(var_output));
-      elsif var_action = '*CPYDEF' then
-         var_output := '<DASDFN DASCDE=""';
-         var_output := var_output||' DASNAM="'||qvi_to_xml(rcd_retrieve.qdd_das_name)||'"';
-         var_output := var_output||' DASSTS="1"/>';
          pipe row(qvi_xml_object(var_output));
       elsif var_action = '*CRTDEF' then
          var_output := '<DASDFN DASCDE=""';

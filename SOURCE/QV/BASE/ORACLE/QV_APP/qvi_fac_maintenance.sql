@@ -209,7 +209,7 @@ create or replace package body qv_app.qvi_fac_maintenance as
       var_das_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@DASCDE')));
       var_fac_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@FACCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF'then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
          qvi_gen_function.add_mesg_data('Invalid request action');
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
@@ -836,7 +836,7 @@ create or replace package body qv_app.qvi_fac_maintenance as
       var_fac_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@FACCDE')));
       var_par_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@PARCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF'then
+      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
          qvi_gen_function.add_mesg_data('Invalid request action');
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
