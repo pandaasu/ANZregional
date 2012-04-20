@@ -20,6 +20,7 @@ create or replace package qv_app.qvi_src_function as
     -------   ------         -----------
     2012/03   Steve Gregan   Created
     2012/03   Mal Chambeyron Corrected cursor notfounds in start_loader and sequence update in append_data
+    2012/04   Steve Gregan   Added the fact time part snapshot logic
     
    *******************************************************************************/
 
@@ -90,13 +91,14 @@ create or replace package body qv_app.qvi_src_function as
             and t01.qft_tim_code = par_tim_code;
       rcd_fac_time csr_fac_time%rowtype;
 
-      cursor csr_fac_part is
+      cursor csr_fac_tpar is
          select t01.*
-           from qvi_fac_part t01
-          where t01.qfp_das_code = par_das_code
-            and t01.qfp_fac_code = par_fac_code
-            and t01.qfp_par_code = par_par_code;
-      rcd_fac_part csr_fac_part%rowtype;
+           from qvi_fac_tpar t01
+          where t01.qft_das_code = par_das_code
+            and t01.qft_fac_code = par_fac_code
+            and t01.qft_tim_code = par_tim_code
+            and t01.qft_par_code = par_par_code;
+      rcd_fac_tpar csr_fac_tpar%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -151,29 +153,10 @@ create or replace package body qv_app.qvi_src_function as
       end if;
 
       /*-*/
-      /* Retrieve the requested dimension fact part
-      /* notes - must exist
-      /*         must be active
-      /*-*/
-      var_found := true;
-      open csr_fac_part;
-      fetch csr_fac_part into rcd_fac_part;
-      if csr_fac_part%notfound then
-         var_found := false;
-      end if;
-      close csr_fac_part;
-      if var_found = false then
-         raise_application_error(-20000, 'Start Loader - Fact Part ('||par_das_code||'/'||par_fac_code||'/'||par_par_code||') does not exist');
-      end if;
-      if rcd_fac_part.qfp_par_status != '1' then
-         raise_application_error(-20000, 'Start Loader - Fact Part ('||par_das_code||'/'||par_fac_code||'/'||par_par_code||') is not active');
-      end if;
-
-      /*-*/
       /* Retrieve the requested dimension fact time
       /* notes - create when not found
-      /* 1. When found must not be time status 2 (completed)
-      /* 2. When not found create and set time status to 1 (created)
+      /* 1. When found must be time status 1 (opened)
+      /* 2. When not found create and set time status to 1 (created) and snapshot the active fact parts
       /*-*/
       var_found := true;
       open csr_fac_time;
@@ -183,8 +166,8 @@ create or replace package body qv_app.qvi_src_function as
       end if;
       close csr_fac_time;
       if var_found = true then
-         if rcd_fac_time.qft_tim_status = '2' then
-            raise_application_error(-20000, 'Start Loader - Fact Time ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') is already completed');
+         if rcd_fac_time.qft_tim_status != '1' then
+            raise_application_error(-20000, 'Start Loader - Fact Time ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||') is already submitted or completed');
          end if;
       else
          begin
@@ -195,10 +178,31 @@ create or replace package body qv_app.qvi_src_function as
             rcd_qvi_fac_time.qft_upd_user := user;
             rcd_qvi_fac_time.qft_upd_date := sysdate;
             insert into qvi_fac_time values rcd_qvi_fac_time;
+            insert into qvi_fac_tpar (qft_das_code, qft_fac_code, qft_tim_code, qft_par_code)
+               select qfp_das_code, qfp_fac_code, par_tim_code, qfp_par_code
+                 from qvi_fac_part
+                where qfp_das_code = par_das_code
+                  and qfp_fac_code = par_fac_code
+                  and qfp_par_status = '1';
          exception
             when dup_val_on_index then
                null;
          end;
+      end if;
+
+      /*-*/
+      /* Retrieve the requested dimension fact time part
+      /* notes - must exist
+      /*-*/
+      var_found := true;
+      open csr_fac_tpar;
+      fetch csr_fac_tpar into rcd_fac_tpar;
+      if csr_fac_tpar%notfound then
+         var_found := false;
+      end if;
+      close csr_fac_tpar;
+      if var_found = false then
+         raise_application_error(-20000, 'Start Loader - Fact Time Part ('||par_das_code||'/'||par_fac_code||'/'||par_tim_code||'/'||par_par_code||') does not exist');
       end if;
 
       /*-*/
@@ -207,7 +211,6 @@ create or replace package body qv_app.qvi_src_function as
       /* 2. Set the load start date to sysdate
       /* 3. Set the load end date to sysdate
       /*-*/
-      
       begin
          rcd_qvi_src_hedr.qsh_das_code := par_das_code;
          rcd_qvi_src_hedr.qsh_fac_code := par_fac_code;

@@ -463,11 +463,13 @@ create or replace package body qv_app.qvi_das_enquiry as
       /* Local cursors
       /*-*/
       cursor csr_slct is
-         select t01.*,
-                nvl(t02.qsh_lod_status,'No Source Received') as qsh_lod_status,
-                t02.qsh_str_date,
-                t02.qsh_end_date
-           from qvi_fac_part t01,
+         select t01.qft_par_code,
+                nvl(t02.qfp_par_name,'*UNKNOWN') as qfp_par_name,
+                nvl(t03.qsh_lod_status,'No Source Received') as qsh_lod_status,
+                t03.qsh_str_date,
+                t03.qsh_end_date
+           from qvi_fac_tpar t01,
+                qvi_fac_part t02,
                 (select t11.qsh_par_code,
                         decode(t11.qsh_lod_status,'0','Empty','1','Loading','2','Loaded','*UNKNOWN') as qsh_lod_status,
                         decode(t11.qsh_lod_status,'0','Empty',to_char(t11.qsh_str_date, 'yyyy/mm/dd hh24:mi:ss')) as qsh_str_date,
@@ -475,12 +477,13 @@ create or replace package body qv_app.qvi_das_enquiry as
                    from qvi_src_hedr t11
                   where t11.qsh_das_code = var_das_code
                     and t11.qsh_fac_code = var_fac_code
-                    and t11.qsh_tim_code = var_tim_code) t02
-          where t01.qfp_par_code = t02.qsh_par_code(+)
-            and t01.qfp_das_code = var_das_code
-            and t01.qfp_fac_code = var_fac_code
-            and t01.qfp_par_status = '1'
-          order by t01.qfp_par_code asc;
+                    and t11.qsh_tim_code = var_tim_code) t03
+          where t01.qft_par_code = t02.qfp_par_code(+)
+            and t01.qft_par_code = t03.qsh_par_code(+)
+            and t01.qft_das_code = var_das_code
+            and t01.qft_fac_code = var_fac_code
+            and t01.qft_tim_code = var_tim_code
+          order by t01.qft_par_code asc;
 
       /*-*/
       /* Local arrays
@@ -524,14 +527,14 @@ create or replace package body qv_app.qvi_das_enquiry as
       pipe row(qvi_xml_object('<?xml version="1.0" encoding="UTF-8"?><QVI_RESPONSE>'));
 
       /*-*/
-      /* Retrieve the fact part list and pipe the results
+      /* Retrieve the fact time part list and pipe the results
       /*-*/
       tbl_list.delete;
       open csr_slct;
       fetch csr_slct bulk collect into tbl_list;
       close csr_slct;
       for idx in 1..tbl_list.count loop
-         pipe row(qvi_xml_object('<LSTROW PARCDE="'||qvi_to_xml(tbl_list(idx).qfp_par_code)||
+         pipe row(qvi_xml_object('<LSTROW PARCDE="'||qvi_to_xml(tbl_list(idx).qft_par_code)||
                                        '" PARNAM="'||qvi_to_xml(tbl_list(idx).qfp_par_name)||
                                        '" LODSTS="'||qvi_to_xml(tbl_list(idx).qsh_lod_status)||
                                        '" LODSTR="'||qvi_to_xml(tbl_list(idx).qsh_str_date)||

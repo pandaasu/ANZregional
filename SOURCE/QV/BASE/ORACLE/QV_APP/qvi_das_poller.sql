@@ -19,6 +19,7 @@ create or replace package qv_app.qvi_das_poller as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2012/03   Steve Gregan   Created
+    2012/04   Steve Gregan   Changed part test logic to check the fact time part snapshot
 
    *******************************************************************************/
 
@@ -77,22 +78,22 @@ create or replace package body qv_app.qvi_das_poller as
                    t03.qft_tim_code asc;
       rcd_das_defn csr_das_defn%rowtype;
 
-      cursor csr_fac_part is
+      cursor csr_fac_tpar is
          select t01.*,
                 nvl(t02.qsh_par_code, '*NONE') as src_flag
-           from qvi_fac_part t01,
+           from qvi_fac_tpar t01,
                 (select t11.qsh_par_code
                    from qvi_src_hedr t11
                   where t11.qsh_das_code = rcd_das_defn.qdd_das_code
                     and t11.qsh_fac_code = rcd_das_defn.qfd_fac_code
                     and t11.qsh_tim_code = rcd_das_defn.qft_tim_code
                     and t11.qsh_lod_status = '2') t02
-          where t01.qfp_par_code = t02.qsh_par_code(+)
-            and t01.qfp_das_code = rcd_das_defn.qdd_das_code
-            and t01.qfp_fac_code = rcd_das_defn.qfd_fac_code
-            and t01.qfp_par_status = '1'
-          order by t01.qfp_par_code asc;
-      rcd_fac_part csr_fac_part%rowtype;
+          where t01.qft_par_code = t02.qsh_par_code(+)
+            and t01.qft_das_code = rcd_das_defn.qdd_das_code
+            and t01.qft_fac_code = rcd_das_defn.qfd_fac_code
+            and t01.qft_tim_code = rcd_das_defn.qft_tim_code
+          order by t01.qft_par_code asc;
+      rcd_fac_tpar csr_fac_tpar%rowtype;
 
       cursor csr_submit is 
          select t01.*
@@ -112,7 +113,7 @@ create or replace package body qv_app.qvi_das_poller as
       /* The dashboard poller performs the following processing...
       /*
       /* 1. Retrieves all opened time dimensions for all active facts for all active dashboards
-      /* 2. Checks that each opened time dimension has the loaded source data for each active fact part.
+      /* 2. Checks that each opened time dimension has the loaded source data for each fact time part.
       /* 3. When all part source data has been loaded the fact build is submitted to the ICS trigger queue
       /*    for the related time dimension.
       /*-*/
@@ -128,26 +129,26 @@ create or replace package body qv_app.qvi_das_poller as
          end if;
 
          /*-*/
-         /* Check that all active fact parts have source data for the current time dimension
+         /* Check that all fact time parts have source data for the current time dimension
          /*-*/
          var_fact_build := true;
-         open csr_fac_part;
+         open csr_fac_tpar;
          loop
-            fetch csr_fac_part into rcd_fac_part;
-            if csr_fac_part%notfound then
+            fetch csr_fac_tpar into rcd_fac_tpar;
+            if csr_fac_tpar%notfound then
                exit;
             end if;
-            if rcd_fac_part.src_flag = '*NONE' then
+            if rcd_fac_tpar.src_flag = '*NONE' then
                var_fact_build := false;
                exit;
             end if;
          end loop;
-         close csr_fac_part;
+         close csr_fac_tpar;
 
          /*-*/
          /* Submit the fact builder when required
          /* **notes**
-         /* 1. Processes fact time dimensions that are in an 1(opened) status and have all related part source data available.
+         /* 1. Processes fact time dimensions that are in an 1(opened) status and have all related time part source data available.
          /* 2. Fact time dimension status changes to 2(submitted) until processing (fact builder) has completed or failed.
          /* 3. The submit architecture does not ensure that all submitted fact builders will execute in parallel. The number of
          /*    fact builders that will execute in parallel is determined by the number of jobs defined in the job groups

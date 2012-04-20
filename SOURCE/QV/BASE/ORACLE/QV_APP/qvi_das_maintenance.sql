@@ -615,13 +615,6 @@ create or replace package body qv_app.qvi_das_maintenance as
       /*-*/
       /* Delete the data
       /*-*/
-      delete from qvi_src_data where qsd_das_code = var_das_code;
-      delete from qvi_src_hedr where qsh_das_code = var_das_code;
-      delete from qvi_fac_data where qfd_das_code = var_das_code;
-      delete from qvi_fac_hedr where qfh_das_code = var_das_code;
-      delete from qvi_fac_time where qft_das_code = var_das_code;
-      delete from qvi_fac_part where qfp_das_code = var_das_code;
-      delete from qvi_fac_defn where qfd_das_code = var_das_code;
       delete from qvi_das_defn where qdd_das_code = var_das_code;
 
       /*-*/
@@ -1242,6 +1235,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       delete from qvi_fac_data where qfd_das_code = var_das_code and qfd_fac_code = var_fac_code;
       delete from qvi_fac_hedr where qfh_das_code = var_das_code and qfh_fac_code = var_fac_code;
       delete from qvi_fac_part where qfp_das_code = var_das_code and qfp_fac_code = var_fac_code;
+      delete from qvi_fac_tpar where qft_das_code = var_das_code and qft_fac_code = var_fac_code;
       delete from qvi_fac_time where qft_das_code = var_das_code and qft_fac_code = var_fac_code;
       delete from qvi_fac_defn where qfd_das_code = var_das_code and qfd_fac_code = var_fac_code;
 
@@ -1743,6 +1737,14 @@ create or replace package body qv_app.qvi_das_maintenance as
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
 
+      cursor csr_time_part is
+         select t01.*
+           from qvi_fac_tpar t01
+          where t01.qft_das_code = var_das_code
+            and t01.qft_fac_code = var_fac_code
+            and t01.qft_par_code = var_par_code;
+      rcd_time_part csr_time_part%rowtype;
+
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -1790,10 +1792,21 @@ create or replace package body qv_app.qvi_das_maintenance as
       exception
          when others then
             var_found := true;
-            qvi_gen_function.add_mesg_data('Dashboard/Fact code ('||var_das_code||'/'||var_fac_code||') is currently locked');
+            qvi_gen_function.add_mesg_data('Dashboard/Fact/Part code ('||var_das_code||'/'||var_fac_code||'/'||var_par_code||') is currently locked');
       end;
       if var_found = false then
-         qvi_gen_function.add_mesg_data('Dashboard/Fact code ('||var_das_code||'/'||var_fac_code||') does not exist');
+         qvi_gen_function.add_mesg_data('Dashboard/Fact/Part code ('||var_das_code||'/'||var_fac_code||'/'||var_par_code||') does not exist');
+      else
+         var_found := false;
+         open csr_time_part;
+         fetch csr_time_part into rcd_time_part;
+         if csr_time_part%found then
+            var_found := true;
+         end if;
+         close csr_time_part;
+         if var_found = true then
+            qvi_gen_function.add_mesg_data('Dashboard/Fact/Part code ('||var_das_code||'/'||var_fac_code||'/'||var_par_code||') is attached to time dimensions - unable to delete');
+         end if;
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
          rollback;
@@ -1820,7 +1833,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       /*-*/
       /* Send the confirm message
       /*-*/
-      qvi_gen_function.set_cfrm_data('Dashboard/Fact code ('||var_das_code||'/'||var_fac_code||') successfully '||var_confirm);
+      qvi_gen_function.set_cfrm_data('Dashboard/Fact/Part code ('||var_das_code||'/'||var_fac_code||'/'||var_par_code||') successfully '||var_confirm);
 
    /*-------------------*/
    /* Exception handler */
