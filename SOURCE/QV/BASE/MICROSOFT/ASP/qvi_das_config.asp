@@ -527,7 +527,7 @@ sub PaintFunction()%>
          return;
       }
       doActivityStart(document.body);
-      window.setTimeout('requesFactDelete(\''+strCode+'\');',10);
+      window.setTimeout('requestFactDelete(\''+strCode+'\');',10);
    }
    function doFactSelectCreate() {
       if (!processForm()) {return;}
@@ -835,7 +835,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestFactDefineAccept(\''+strXML+'\');',10);
    }
-   function requesFactDefineAccept(strXML) {
+   function requestFactDefineAccept(strXML) {
       doPostRequest('<%=strBase%>qvi_das_config_fact_update.asp',function(strResponse) {checkFactDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkFactDefineAccept(strResponse) {
@@ -886,7 +886,7 @@ sub PaintFunction()%>
          return;
       }
       doActivityStart(document.body);
-      window.setTimeout('requesPartDelete(\''+strCode+'\');',10);
+      window.setTimeout('requestPartDelete(\''+strCode+'\');',10);
    }
    function doPartSelectCreate() {
       if (!processForm()) {return;}
@@ -1156,7 +1156,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestPartDefineAccept(\''+strXML+'\');',10);
    }
-   function requesPartDefineAccept(strXML) {
+   function requestPartDefineAccept(strXML) {
       doPostRequest('<%=strBase%>qvi_das_config_part_update.asp',function(strResponse) {checkPartDefineAccept(strResponse);},false,streamXML(strXML));
    }
    function checkPartDefineAccept(strResponse) {
@@ -1319,8 +1319,9 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFactSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFactSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
@@ -1466,8 +1467,9 @@ sub PaintFunction()%>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
-            <table class="clsTable01" align=center cols=2 cellpadding="0" cellspacing="0">
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doFactSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartSelectCreate();">&nbsp;Create&nbsp;</a></nobr></td>
                </tr>
