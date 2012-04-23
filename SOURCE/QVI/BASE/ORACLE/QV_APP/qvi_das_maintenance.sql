@@ -2004,7 +2004,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       cursor csr_time_part is
          select t01.qfp_par_code,
                 t01.qfp_par_name,
-                t01.qfp_par_status,
+                decode(t01.qfp_par_status,'0','Inactive','1','Active','*UNKNOWN') as qfp_par_status,
                 decode(t02.qft_par_code,null,'0','1') as par_used,
                 nvl(t03.qsh_lod_status,'No Source Received') as qsh_lod_status,
                 t03.qsh_str_date,
@@ -2023,7 +2023,9 @@ create or replace package body qv_app.qvi_das_maintenance as
                   where t11.qsh_das_code = var_das_code
                     and t11.qsh_fac_code = var_fac_code
                     and t11.qsh_tim_code = var_tim_code) t03
-          where t01.qfp_par_code = t02.qft_par_code(+)
+          where t01.qfp_das_code = var_das_code
+            and t01.qfp_fac_code = var_fac_code
+            and t01.qfp_par_code = t02.qft_par_code(+)
             and t01.qfp_par_code = t03.qsh_par_code(+)
           order by t01.qfp_par_code asc;
       rcd_time_part csr_time_part%rowtype;
