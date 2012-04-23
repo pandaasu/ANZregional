@@ -2026,7 +2026,7 @@ create or replace package body qv_app.qvi_das_maintenance as
           where t01.qfp_das_code = var_das_code
             and t01.qfp_fac_code = var_fac_code
             and t01.qfp_par_code = t02.qft_par_code(+)
-            and t01.qfp_par_code = t03.qsh_par_code(+)
+            and t02.qft_par_code = t03.qsh_par_code(+)
           order by t01.qfp_par_code asc;
       rcd_time_part csr_time_part%rowtype;
 
@@ -2319,7 +2319,8 @@ create or replace package body qv_app.qvi_das_maintenance as
             delete from qvi_fac_tpar
              where qft_das_code = rcd_qvi_fac_tpar.qft_das_code
                and qft_fac_code = rcd_qvi_fac_tpar.qft_fac_code
-               and qft_tim_code = rcd_qvi_fac_tpar.qft_tim_code;
+               and qft_tim_code = rcd_qvi_fac_tpar.qft_tim_code
+               and qft_par_code = rcd_qvi_fac_tpar.qft_par_code;
 
          /*-*/
          /* Include/reprocess a part
