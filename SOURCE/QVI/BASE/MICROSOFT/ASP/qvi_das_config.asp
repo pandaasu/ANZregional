@@ -1572,7 +1572,7 @@ sub PaintFunction()%>
             }
          }
          if (strAddFlag == '1' || strRemFlag == '1') {
-            strXML = strXML+'<PARLST ADDFLG="'+strAddFlag+'" REMFLG="'+strRemFla+'" PARCDE="'+fixXML(strParCode)+'"/>';
+            strXML = strXML+'<PARLST ADDFLG="'+strAddFlag+'" REMFLG="'+strRemFlag+'" PARCDE="'+fixXML(strParCode)+'"/>';
          }
       }
       doActivityStart(document.body);
