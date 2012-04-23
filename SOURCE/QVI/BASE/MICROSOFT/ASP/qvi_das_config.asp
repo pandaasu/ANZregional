@@ -1555,7 +1555,7 @@ sub PaintFunction()%>
          return;
       }
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
-      strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF" DASCDE="'+fixXML(cstrSelectDasCode)+'" FACCDE="'+fixXML(cstrSelectFacCode)+'" TIMCDE="'+fixXML(cstrTimeDefineCode)+'"'>;
+      strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF" DASCDE="'+fixXML(cstrSelectDasCode)+'" FACCDE="'+fixXML(cstrSelectFacCode)+'" TIMCDE="'+fixXML(cstrTimeDefineCode)+'">';
       for (var i=0;i<objTabBody.rows.length;i++) {
          strParCode = '';
          strAddFlag = '0';
