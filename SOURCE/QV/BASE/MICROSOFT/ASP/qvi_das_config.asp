@@ -131,6 +131,8 @@ sub PaintFunction()%>
       cobjScreens[4] = new clsScreen('dspFactDefine','hedFactDefine');
       cobjScreens[5] = new clsScreen('dspPartSelect','hedPartSelect');
       cobjScreens[6] = new clsScreen('dspPartDefine','hedPartDefine');
+      cobjScreens[7] = new clsScreen('dspTimeSelect','hedTimeSelect');
+      cobjScreens[8] = new clsScreen('dspTimeDefine','hedTimeDefine');
       cobjScreens[0].hedtxt = '**LOADING**';
       cobjScreens[1].hedtxt = 'Dashboard Selection';
       cobjScreens[2].hedtxt = 'Dashboard Maintenance';
@@ -138,6 +140,8 @@ sub PaintFunction()%>
       cobjScreens[4].hedtxt = 'Dashboard Fact Maintenance';
       cobjScreens[5].hedtxt = 'Dashboard Fact Part Selection';
       cobjScreens[6].hedtxt = 'Dashboard Fact Part Maintenance';
+      cobjScreens[7].hedtxt = 'Dashboard Fact Time Selection';
+      cobjScreens[8].hedtxt = 'Dashboard Fact Time Maintenance';
       displayScreen('dspLoad');
       doSelectRefresh();
    }
@@ -540,6 +544,12 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestPartSelectList();',10);
    }
+   function doFactSelectTime(strCode) {
+      if (!processForm()) {return;}
+      cstrSelectFacCode = strCode;
+      doActivityStart(document.body);
+      window.setTimeout('requestTimeSelectList();',10);
+   }
    function doFactSelectRefresh() {
       if (!processForm()) {return;}
       doActivityStart(document.body);
@@ -619,7 +629,7 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(-1);
                objCell.colSpan = 1;
                objCell.align = 'center';
-               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doFactSelectUpdate(\''+objElements[i].getAttribute('FACCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFactSelectDelete(\''+objElements[i].getAttribute('FACCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFactSelectPart(\''+objElements[i].getAttribute('FACCDE')+'\');">\Fact Part Maintenance</a>&nbsp;';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doFactSelectUpdate(\''+objElements[i].getAttribute('FACCDE')+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFactSelectDelete(\''+objElements[i].getAttribute('FACCDE')+'\');">Delete</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFactSelectPart(\''+objElements[i].getAttribute('FACCDE')+'\');">\Fact Part Maintenance</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doFactSelectTime(\''+objElements[i].getAttribute('FACCDE')+'\');">\Fact Time Reprocessing</a>&nbsp;';
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(-1);
@@ -1193,6 +1203,418 @@ sub PaintFunction()%>
       displayScreen('dspPartSelect');
    }
 
+   ///////////////////////////
+   // Time Select Functions //
+   ///////////////////////////
+   function doTimeSelectUpdate(strCode) {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestTimeDefineUpdate(\''+strCode+'\');',10);
+   }
+   function doTimeSelectRefresh() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestTimeSelectList();',10);
+   }
+   function requestTimeSelectList() {
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST DASCDE="'+cstrSelectDasCode+'" FACCDE="'+cstrSelectFacCode+'"/>';
+      doPostRequest('<%=strBase%>qvi_das_config_time_select.asp',function(strResponse) {checkTimeSelectList(strResponse);},false,streamXML(strXML));
+   }
+   function checkTimeSelectList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspTimeSelect');
+         document.getElementById('hedTimeSelectData').innerHTML = '<p>Dashboard ('+cstrSelectDasCode+') Fact ('+cstrSelectFacCode+')</p>';
+         var objTabHead = document.getElementById('tabTimeHeadList');
+         var objTabBody = document.getElementById('tabTimeBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Action&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Time&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTROW') {
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;<a class="clsSelect" onClick="doTimeSelectUpdate(\''+objElements[i].getAttribute('TIMCDE')+'\');">Reprocess</a>&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('TIMCDE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('TIMSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 3;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('TimeHeadList','TimeBodyList','horizontal');
+            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('TimeHeadList','TimeBodyList','horizontal');
+            objTabHead.rows(0).cells[3].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
+         }
+      }
+   }
+
+   ///////////////////////////
+   // Time Define Functions //
+   ///////////////////////////
+   var cstrTimeDefineCode;
+   function requestTimeDefineUpdate(strCode) {
+      cstrTimeDefineCode = strCode;
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?><QVI_REQUEST ACTION="*UPDDEF" DASCDE="'+fixXML(cstrSelectDasCode)+'" FACCDE="'+fixXML(cstrSelectFacCode)+'" TIMCDE="'+fixXML(strCode)+'"/>';
+      doPostRequest('<%=strBase%>qvi_das_config_time_retrieve.asp',function(strResponse) {checkTimeDefineLoad(strResponse);},false,streamXML(strXML));
+   }
+   function checkTimeDefineLoad(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         cobjScreens[8].hedtxt = 'Dashboard Fact Time Reprocessing';
+         displayScreen('dspTimeDefine');
+         document.getElementById('hedTimeDefineData').innerHTML = '<p>Dashboard ('+cstrSelectDasCode+') Fact ('+cstrSelectFacCode+') Time ('+cstrTimeDefineCode+')</p>';
+
+         var objTabHead = document.getElementById('tabTimePartHeadList');
+         var objTabBody = document.getElementById('tabTimePartBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         var intCount = 0;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         objRow = objTabHead.insertRow(-1);
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Reprocess/Include&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Remove&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Current&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Part Code&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Part Name&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Part Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load Status&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load Start Time&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;Load End Time&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         objCell = objRow.insertCell(-1);
+         objCell.colSpan = 1;
+         objCell.align = 'center';
+         objCell.innerHTML = '&nbsp;';
+         objCell.className = 'clsLabelHB';
+         objCell.style.whiteSpace = 'nowrap';
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'TIMPAR') {
+               objRow = objTabBody.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;<input type="checkbox" name="TIM_AddParCode'+intCount+'" value="'+objElements[i].getAttribute('PARCDE')+'">&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               if (objElements[i].getAttribute('PARFLG') == '1') {
+                  objCell.innerHTML = '&nbsp;<input type="checkbox" name="TIM_RemParCode'+intCount+'" value="'+objElements[i].getAttribute('PARCDE')+'">&nbsp;';
+               } else {
+                  objCell.innerHTML = '&nbsp;';
+               }
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               if (objElements[i].getAttribute('PARFLG') == '1') {
+                  objCell.innerHTML = '&nbsp;Yes&nbsp;';
+               } else {
+                  objCell.innerHTML = '&nbsp;';
+               }
+               intCount++;
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PARCDE')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PARNAM')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('PARSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODSTS')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODSTR')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'left';
+               objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('LODEND')+'&nbsp;';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = 9;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('TimePartHeadList','TimePartBodyList','horizontal');
+            objTabHead.rows(0).cells[9].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('TimePartHeadList','TimePartBodyList','horizontal');
+            objTabHead.rows(0).cells[9].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
+         }
+      }
+   }
+   function doTimeDefineAccept() {
+      if (!processForm()) {return;}
+      var objTabBody = document.getElementById('tabTimePartBodyList');
+      var objWork = null;
+      var strParCode = null;
+      var strAddFlag = null;
+      var strRemFlag = null;
+      var intCount = 0;
+      var strMessage = '';
+      for (var i=0;i<objTabBody.rows.length;i++) {
+         strParCode = '';
+         strAddFlag = '0';
+         strRemFlag = '0';
+         objWork = document.getElementById('TIM_AddParCode'+i);
+         strParCode = objWork.value;
+         if (objWork.checked) {
+            strAddFlag = '1';
+         }
+         objWork = document.getElementById('TIM_RemParCode'+i);
+         if (objWork != null) {
+            if (objWork.checked) {
+               strRemFlag = '1';
+            }
+         }
+         if (strAddFlag == '1' && strRemFlag == '1') {
+            if (strMessage != '') {strMessage = strMessage + '\r\n';}
+            strMessage = strMessage + 'Part ('+strParCode+') cannot be both reprocessed and removed';
+         }
+         if (strAddFlag == '1' || strRemFlag == '1') {
+            intCount++;
+         }
+      }
+      if (intCount == 0) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'At least one part must be reprocessed/included or removed to accept';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+      strXML = strXML+'<QVI_REQUEST ACTION="*UPDDEF" DASCDE="'+fixXML(cstrSelectDasCode)+'" FACCDE="'+fixXML(cstrSelectFacCode)+'" TIMCDE="'+fixXML(cstrTimeDefineCode)+'"';
+      for (var i=0;i<objTabBody.rows.length;i++) {
+         strParCode = '';
+         strAddFlag = '0';
+         strRemFlag = '0';
+         objWork = document.getElementById('TIM_AddParCode'+i);
+         strParCode = objWork.value;
+         if (objWork.checked) {
+            strAddFlag = '1';
+         }
+         objWork = document.getElementById('TIM_RemParCode'+i);
+         if (objWork != null) {
+            if (objWork.checked) {
+               strRemFlag = '1';
+            }
+         }
+         if (strAddFlag == '1' || strRemFlag == '1') {
+            strXML = strXML+'<PARLST ADDFLG="'+strAddFlag+'" REMFLG="'+strRemFla+'" PARCDE="'+fixXML(strParCode)+'"/>';
+         }
+      }
+      doActivityStart(document.body);
+      window.setTimeout('requestTimeDefineAccept(\''+strXML+'\');',10);
+   }
+   function requestTimeDefineAccept(strXML) {
+      doPostRequest('<%=strBase%>qvi_das_config_time_update.asp',function(strResponse) {checkTimeDefineAccept(strResponse);},false,streamXML(strXML));
+   }
+   function checkTimeDefineAccept(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         if (strResponse.length > 3) {
+            var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+            if (objDocument == null) {return;}
+            var strMessage = '';
+            var objElements = objDocument.documentElement.childNodes;
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                  if (strMessage != '') {strMessage = strMessage + '\r\n';}
+                  strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+            }
+            if (strMessage != '') {
+               alert(strMessage);
+               return;
+            }
+            for (var i=0;i<objElements.length;i++) {
+               if (objElements[i].nodeName == 'CONFIRM') {
+                  alert(objElements[i].getAttribute('CONTXT'));
+               }
+            }
+         }
+         doTimeSelectRefresh();
+      }
+   }
+   function doTimeDefineCancel() {
+      if (checkChange() == false) {return;}
+      displayScreen('dspTimeSelect');
+   }
+
 // -->
 </script>
 <!--#include file="ics_std_input.inc"-->
@@ -1557,6 +1979,98 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspTimeSelect" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedTimeSelect" class="clsFunction" align=center colspan=2 nowrap><nobr>Dashboard Time Selection</nobr></td>
+      </tr>
+      <tr>
+         <td id="hedTimeSelectData" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Time</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPartSelectRefresh();">&nbsp;Back&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeSelectRefresh();">&nbsp;Refresh&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conTimeHeadList">
+                     <table class="clsTableHead" id="tabTimeHeadList" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conTimeBodyList">
+                     <table class="clsTableBody" id="tabTimeBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspTimeDefine" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doTimeDefineAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedTimeDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Dashboard Time Define</nobr></td>
+      </tr>
+      <tr>
+         <td id="hedTimeDefineData" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Time</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conTimePartHeadList">
+                     <table class="clsTableHead" id="tabTimePartHeadList" align=left cols=1 cellpadding="0" cellspacing="1">
+                     </table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conTimePartBodyList">
+                     <table class="clsTableBody" id="tabTimePartBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeDefineCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doTimeDefineAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
