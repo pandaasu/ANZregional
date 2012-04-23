@@ -2004,12 +2004,13 @@ create or replace package body qv_app.qvi_das_maintenance as
       cursor csr_time_part is
          select t01.qfp_par_code,
                 t01.qfp_par_name,
+                t01.qfp_par_status,
                 decode(t02.qft_par_code,null,'0','1') as par_used,
                 nvl(t03.qsh_lod_status,'No Source Received') as qsh_lod_status,
                 t03.qsh_str_date,
                 t03.qsh_end_date
            from qvi_fac_part t01,
-                (select t11.*
+                (select t11.qft_par_code
                    from qvi_fac_tpar t11
                   where t11.qft_das_code = var_das_code
                     and t11.qft_fac_code = var_fac_code
@@ -2054,7 +2055,7 @@ create or replace package body qv_app.qvi_das_maintenance as
       var_fac_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@FACCDE')));
       var_tim_code := upper(qvi_from_xml(xslProcessor.valueOf(obj_qvi_request,'@TIMCDE')));
       xmlDom.freeDocument(obj_xml_document);
-      if var_action != '*UPDDEF' and var_action != '*CRTDEF' then
+      if var_action != '*UPDDEF' then
          qvi_gen_function.add_mesg_data('Invalid request action');
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
@@ -2097,6 +2098,7 @@ create or replace package body qv_app.qvi_das_maintenance as
 
          pipe row(qvi_xml_object('<TIMPAR PARCDE="'||qvi_to_xml(rcd_time_part.qfp_par_code)||
                                        '" PARNAM="'||qvi_to_xml(rcd_time_part.qfp_par_name)||
+                                       '" PARSTS="'||qvi_to_xml(rcd_time_part.qfp_par_status)||
                                        '" PARFLG="'||qvi_to_xml(rcd_time_part.par_used)||
                                        '" LODSTS="'||qvi_to_xml(rcd_time_part.qsh_lod_status)||
                                        '" LODSTR="'||qvi_to_xml(rcd_time_part.qsh_str_date)||
@@ -2151,7 +2153,8 @@ create or replace package body qv_app.qvi_das_maintenance as
       var_confirm varchar2(32);
       var_found boolean;
       var_par_code varchar2(32);
-      var_par_flag varchar2(1);
+      var_add_flag varchar2(1);
+      var_rem_flag varchar2(1);
       rcd_qvi_fac_time qvi_fac_time%rowtype;
       rcd_qvi_fac_tpar qvi_fac_tpar%rowtype;
 
@@ -2232,9 +2235,9 @@ create or replace package body qv_app.qvi_das_maintenance as
       obj_par_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/QVI_REQUEST/PARLST');
       for idx in 0..xmlDom.getLength(obj_par_list)-1 loop
          obj_par_node := xmlDom.item(obj_par_list,idx);
-         var_par_flag := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@PARFLG'));
+         var_add_flag := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@ADDFLG'));
          var_par_code := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@PARCDE'));
-         if var_par_flag != '0' then
+         if var_add_flag = '1' then
             open csr_part;
             fetch csr_part into rcd_part;
             if csr_part%notfound then
@@ -2265,7 +2268,7 @@ create or replace package body qv_app.qvi_das_maintenance as
          qvi_gen_function.add_mesg_data('Dashboard/Fact/Time code ('||rcd_qvi_fac_time.qft_das_code||'/'||rcd_qvi_fac_time.qft_fac_code||'/'||rcd_qvi_fac_time.qft_tim_code||') does not exist');
       else
          if rcd_retrieve.qft_tim_status != '3' then
-            qvi_gen_function.add_mesg_data('Dashboard/Fact/Time code ('||rcd_qvi_fac_time.qft_das_code||'/'||rcd_qvi_fac_time.qft_fac_code||'/'||rcd_qvi_fac_time.qft_tim_code||') is not completed');
+            qvi_gen_function.add_mesg_data('Dashboard/Fact/Time code ('||rcd_qvi_fac_time.qft_das_code||'/'||rcd_qvi_fac_time.qft_fac_code||'/'||rcd_qvi_fac_time.qft_tim_code||') is not completed - unable to reopen');
          end if;
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
@@ -2285,7 +2288,7 @@ create or replace package body qv_app.qvi_das_maintenance as
          and qft_tim_code = rcd_qvi_fac_time.qft_tim_code;
 
       /*-*/
-      /* Retrieve and insert the fact time part data as required
+      /* Retrieve and insert/update the fact time part data as required
       /*-*/
       rcd_qvi_fac_tpar.qft_das_code := rcd_qvi_fac_time.qft_das_code;
       rcd_qvi_fac_tpar.qft_fac_code := rcd_qvi_fac_time.qft_fac_code;
@@ -2293,13 +2296,14 @@ create or replace package body qv_app.qvi_das_maintenance as
       obj_par_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/QVI_REQUEST/PARLST');
       for idx in 0..xmlDom.getLength(obj_par_list)-1 loop
          obj_par_node := xmlDom.item(obj_par_list,idx);
-         var_par_flag := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@PARFLG'));
+         var_add_flag := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@ADDFLG'));
+         var_rem_flag := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@REMFLG'));
          rcd_qvi_fac_tpar.qft_par_code := qvi_from_xml(xslProcessor.valueOf(obj_par_node,'@PARCDE'));
 
          /*-*/
          /* Remove a part
          /*-*/
-         if var_par_flag = '0' then
+         if var_rem_flag = '1' then
             delete from qvi_src_data
              where qsd_das_code = rcd_qvi_fac_tpar.qft_das_code
                and qsd_fac_code = rcd_qvi_fac_tpar.qft_fac_code
@@ -2316,20 +2320,9 @@ create or replace package body qv_app.qvi_das_maintenance as
                and qft_tim_code = rcd_qvi_fac_tpar.qft_tim_code;
 
          /*-*/
-         /* Select a part
+         /* Include/reprocess a part
          /*-*/
-         elsif var_par_flag = '1' then
-            begin
-               insert into qvi_fac_tpar values rcd_qvi_fac_tpar;
-            exception
-               when others then
-                  null;
-            end;
-
-         /*-*/
-         /* Rerun a part
-         /*-*/
-         elsif var_par_flag = '2' then
+         elsif var_add_flag = '1' then
             delete from qvi_src_data
              where qsd_das_code = rcd_qvi_fac_tpar.qft_das_code
                and qsd_fac_code = rcd_qvi_fac_tpar.qft_fac_code
