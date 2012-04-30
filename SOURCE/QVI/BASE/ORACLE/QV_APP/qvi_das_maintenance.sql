@@ -18,8 +18,9 @@ create or replace package qv_app.qvi_das_maintenance as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2009/12   Steve Gregan   Created
-
+    2012/04   Steve Gregan   Created
+    2012/04   Mal Chambeyron Relax constraint to allow maintenance at any fact time status ..
+    
    *******************************************************************************/
 
    /*-*/
@@ -2269,9 +2270,13 @@ create or replace package body qv_app.qvi_das_maintenance as
       if var_found = false then
          qvi_gen_function.add_mesg_data('Dashboard/Fact/Time code ('||rcd_qvi_fac_time.qft_das_code||'/'||rcd_qvi_fac_time.qft_fac_code||'/'||rcd_qvi_fac_time.qft_tim_code||') does not exist');
       else
+         null;
+         /*
+         ** Relax constraint to allow maintenance at any fact time status .. 
          if rcd_retrieve.qft_tim_status != '3' then
             qvi_gen_function.add_mesg_data('Dashboard/Fact/Time code ('||rcd_qvi_fac_time.qft_das_code||'/'||rcd_qvi_fac_time.qft_fac_code||'/'||rcd_qvi_fac_time.qft_tim_code||') is not completed - unable to reopen');
          end if;
+         */
       end if;
       if qvi_gen_function.get_mesg_count != 0 then
          rollback;
