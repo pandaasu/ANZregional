@@ -27,8 +27,8 @@ set define ^;
 /*-*/
 /* Define the work variables
 /*-*/
-define tab_path = C:\ISI_SVN\regional\SOURCE\QVI\BASE\ORACLE\QV
-define spl_path = C:\ISI_SVN\regional\SOURCE\QVI\BASE\ORACLE
+define tab_path = D:\DATA\SVN\repository\regional\SOURCE\QVI\BASE\ORACLE\QV
+define spl_path = D:\DATA\SVN\repository\regional\SOURCE\QVI\BASE\ORACLE
 
 /*-*/
 /* Start the spool process
