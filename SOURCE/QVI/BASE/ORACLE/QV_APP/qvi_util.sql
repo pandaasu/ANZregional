@@ -300,7 +300,7 @@ end qvi_util;
 /* Package Synonym/Grants                                                     */
 /******************************************************************************/
 create or replace public synonym qvi_util for qv_app.qvi_util;
-grant execute on qvi_util to lics_app;
+grant execute on qvi_util to public;
 
 /******************************************************************************/
 set define on;
