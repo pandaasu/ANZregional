@@ -118,6 +118,7 @@ create or replace package body qv_app.qvi_fppqvi01_fact_pkg as
    var_fac_code varchar2(32);
    var_tim_code varchar2(32);
    var_par_code varchar2(32);
+   var_prev_par_code varchar2(32);
 
    var_year number(4);
    var_period number(2);
@@ -156,7 +157,8 @@ create or replace package body qv_app.qvi_fppqvi01_fact_pkg as
 
       var_das_code := 'FPPS';
       var_fac_code := 'ACTUAL_3298';
-      var_par_code := '-';
+      var_par_code := null;
+      var_prev_par_code := null;
       
       /*-*/
       /* Initialise the layout definitions
@@ -302,26 +304,24 @@ create or replace package body qv_app.qvi_fppqvi01_fact_pkg as
          end if;
          if var_src_header_complete_flag = false then
             var_src_error := true;
+            -- lics_inbound_utility.add_exception('Cannot start loader due to source errors');
+            raise_application_error(-20000,substr('FATAL ERROR - Cannot start loader due to source errors - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
          end if;
 
          /*-*/
-         /* Start the source loader on first header .
+         /* Start the source loader on owner unit/unit change
          /*-*/
          var_statement_tag := 'Check need to start source loader';
-         if var_src_first_header = true then
-            var_src_first_header := false;
-            if var_src_header_complete_flag = true then
-               /*-*/
-               /* Time code is year/period for actual
-               /*-*/
-               var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
-   
-               qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
-               
-            else 
-               -- lics_inbound_utility.add_exception('Cannot start loader due to source errors');
-               raise_application_error(-20000,substr('FATAL ERROR - Cannot start loader due to source errors - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
+         
+         var_par_code := upper(var_rec_prefix||'_'||var_current_rec."Unit Code");
+         var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
+         if nvl(var_prev_par_code,'*NULL') != nvl(var_par_code,'*NULL') then
+            if var_prev_par_code is not null then -- finalise previous source
+               qvi_src_function.finalise_loader;
+               commit;
             end if;
+            qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
+            var_prev_par_code := var_par_code;
          end if;
          
          return;

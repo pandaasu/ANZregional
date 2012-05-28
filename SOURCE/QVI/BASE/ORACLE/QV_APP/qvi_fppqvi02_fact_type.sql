@@ -3,10 +3,10 @@
 /*****************/
 
 --        123456789012345678901234567890 .. Maximum identifier length ..
-drop type qvi_fppqvi01_fact_tab;
-drop type qvi_fppqvi01_fact_obj;
+drop type qvi_fppqvi02_fact_tab;
+drop type qvi_fppqvi02_fact_obj;
 
-create or replace type qvi_fppqvi01_fact_obj as object
+create or replace type qvi_fppqvi02_fact_obj as object
 --   123456789012345678901234567890 .. Maximum identifier length ..
    ("Owner Unit Code"               varchar2(18),
     "Unit Code"                     varchar2(18),
@@ -20,5 +20,5 @@ create or replace type qvi_fppqvi01_fact_obj as object
     "Value"                         varchar2(64));
 /
 
-create or replace type qvi_fppqvi01_fact_tab as table of qvi_fppqvi01_fact_obj;
+create or replace type qvi_fppqvi02_fact_tab as table of qvi_fppqvi02_fact_obj;
 /

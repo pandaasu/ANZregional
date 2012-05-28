@@ -119,6 +119,7 @@ create or replace package body qv_app.qvi_fppqvi02_fact_pkg as
    var_fac_code varchar2(32);
    var_tim_code varchar2(32);
    var_par_code varchar2(32);
+   var_prev_par_code varchar2(32);
 
    var_year number(4);
    var_period number(2);
@@ -157,7 +158,8 @@ create or replace package body qv_app.qvi_fppqvi02_fact_pkg as
 
       var_das_code := 'FPPS';
       var_fac_code := 'PLAN_3298';
-      var_par_code := '-';
+      var_par_code := null;
+      var_prev_par_code := null;
 
       /*-*/
       /* Initialise the layout definitions
@@ -276,15 +278,15 @@ create or replace package body qv_app.qvi_fppqvi02_fact_pkg as
       /*-*/
       /* Process Period header record
       /*-*/
-      if substr(var_row_data,1,3) = ',,,' then
+      if substr(var_row_data_prefix_removed,1,3) = ',,,' then
          var_statement_tag := 'Process Column Header record';
          /*-*/
          /* Parse Period header record for fpps_actual only .. as fpps_plan has all periods
          /*-*/
          var_current_rec."Plan Version" := qvi_util.get_validated_value(
-            'Plan Version',replace(var_row_data,','),'String of 1 to 64 characters','^[[:print:]]{1,64}$',var_src_error);
+            'Plan Version',replace(var_row_data_prefix_removed,','),'String of 1 to 64 characters','^[[:print:]]{1,64}$',var_src_error);
          var_year := to_number(qvi_util.get_validated_value(
-            'Year',substr(replace(var_row_data,','),1,4),'Number of 4 digits','^[[:digit:]]{4}$',var_src_error));
+            'Year',substr(replace(var_row_data_prefix_removed,','),1,4),'Number of 4 digits','^[[:digit:]]{4}$',var_src_error));
          /*-*/
          /* Check header is complete
          /*-*/
@@ -316,26 +318,24 @@ create or replace package body qv_app.qvi_fppqvi02_fact_pkg as
          end if;
          if var_src_header_complete_flag = false then
             var_src_error := true;
+            -- lics_inbound_utility.add_exception('Cannot start loader due to source errors');
+            raise_application_error(-20000,substr('FATAL ERROR - Cannot start loader due to source errors - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
          end if;
 
          /*-*/
-         /* Start the source loader on first header .
+         /* Start the source loader on owner unit/unit change
          /*-*/
          var_statement_tag := 'Check need to start source loader';
-         if var_src_first_header = true then
-            var_src_first_header := false;
-            if var_src_header_complete_flag = true then
-               /*-*/
-               /* Time code is year for plan
-               /*-*/
-               var_tim_code := var_year;
-   
-               qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
-               
-            else 
-               -- lics_inbound_utility.add_exception('Cannot start loader due to source errors');
-               raise_application_error(-20000,substr('FATAL ERROR - Cannot start loader due to source errors - ['||var_module_name||']['||var_statement_tag||'] - '||sqlerrm, 1, 4000));
+         
+         var_par_code := upper(var_rec_prefix||'_'||var_current_rec."Unit Code");
+         var_tim_code := var_year;
+         if nvl(var_prev_par_code,'*NULL') != nvl(var_par_code,'*NULL') then
+            if var_prev_par_code is not null then -- finalise previous source
+               qvi_src_function.finalise_loader;
+               commit;
             end if;
+            qvi_src_function.start_loader(var_das_code, var_fac_code, var_tim_code, var_par_code);
+            var_prev_par_code := var_par_code;
          end if;
          
          return;
