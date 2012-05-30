@@ -563,7 +563,7 @@ end qvi_fppqvi01_fact_pkg;
 /* Package Synonym/Grants                                                     */
 /******************************************************************************/
 create or replace public synonym qvi_fppqvi01_fact_pkg for qv_app.qvi_fppqvi01_fact_pkg;
-grant execute on qvi_fppqvi01_fact_pkg to lics_app, qv_app, qv_user;
+grant execute on qvi_fppqvi01_fact_pkg to public;
 
 /******************************************************************************/
 set define on;
