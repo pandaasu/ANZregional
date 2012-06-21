@@ -1,6 +1,5 @@
---
--- BDS_ATLLAD06_FLATTEN  (Package) 
---
+DROP PACKAGE BDS_APP.BDS_ATLLAD06_FLATTEN;
+
 CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -53,6 +52,8 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
  2011/03   Ben Halicki      Added Z_APCHAR16, Z_APCHAR17, Z_APCHAR18, Z_APCHAR19, Z_APCHAR20, Z_APCHAR21, 
                                 Z_APVERP01, Z_APVERP02, Z_APCHAR22, Z_APCHAR23
  2011/07   Edward Rousseau  Bugfix for ZZTHCUST01 (was picking up data for ZZTHCUST02) ref CR 73958
+ 2012/03   Ben Halicki      Added Z_APROH01, CLFFERT66 (Ref CIP: C01585)
+                            Fixed bug with BDS rebuild processing 
 
 *******************************************************************************/
 
@@ -64,20 +65,17 @@ CREATE OR REPLACE PACKAGE BDS_APP.bds_atllad06_flatten as
 end bds_atllad06_flatten;
 /
 
---
--- BDS_ATLLAD06_FLATTEN  (Synonym) 
---
-CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
+
+DROP PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN;
+
+CREATE OR REPLACE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
 
 
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LADS_APP;
 
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LICS_APP;
+DROP PACKAGE BODY BDS_APP.BDS_ATLLAD06_FLATTEN;
 
-
---
--- BDS_ATLLAD06_FLATTEN  (Package Body) 
---
 CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
 
    /*-*/
@@ -291,6 +289,8 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
                 max(case when t02.atnam = 'CLFROH05' then t02.atwrt end) as sap_physical_condtn_code,
                 max(case when t02.atnam = 'CLFVERP01' then t02.atwrt end) as sap_pack_family_code,
                 max(case when t02.atnam = 'CLFVERP02' then t02.atwrt end) as sap_pack_sub_family_code,
+                max(case when t02.atnam = 'Z_APROH01' then t02.atwrt end) as sap_raw_th_boi_grp_code,
+                max(case when t02.atnam = 'CLFFERT66' then t02.atwrt end) as sap_raw_allergen_code,
                 max(t01.idoc_name) as sap_idoc_name,
                 max(t01.idoc_number) as sap_idoc_number,
                 max(t01.idoc_timestamp) as sap_idoc_timestamp,
@@ -324,7 +324,7 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
          raise_application_error(-20000, 'Material Classification cursor not found');
       end if;
       close csr_lads_mat_classfctn;
-
+ 
       rcd_bds_material_classfctn.sap_material_code := rcd_lads_mat_classfctn.sap_material_code;
       rcd_bds_material_classfctn.bds_lads_date := rcd_lads_mat_classfctn.bds_lads_date;
       rcd_bds_material_classfctn.bds_lads_status := rcd_lads_mat_classfctn.bds_lads_status;
@@ -389,7 +389,9 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
       rcd_bds_material_classfctn.sap_th_boi_grp_code := rcd_lads_mat_classfctn.sap_th_boi_grp_code;      
       rcd_bds_material_classfctn.sap_nz_launch_ranking_code := rcd_lads_mat_classfctn.sap_nz_launch_ranking_code;
       rcd_bds_material_classfctn.sap_nz_selectively_grow_code := rcd_lads_mat_classfctn.sap_nz_selectively_grow_code;   
-
+      rcd_bds_material_classfctn.sap_raw_th_boi_grp_code := rcd_lads_mat_classfctn.sap_raw_th_boi_grp_code;
+      rcd_bds_material_classfctn.sap_raw_allergen_code := rcd_lads_mat_classfctn.sap_raw_allergen_code;
+      
       /*-*/
       /* UPDATE BDS, INSERT when new record
       /*-*/
@@ -456,8 +458,10 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              sap_pack_dspsal_class = rcd_bds_material_classfctn.sap_pack_dspsal_class,     
              sap_th_boi_grp_code = rcd_bds_material_classfctn.sap_th_boi_grp_code,
              sap_nz_launch_ranking_code = rcd_bds_material_classfctn.sap_nz_launch_ranking_code,
-             sap_nz_selectively_grow_code = rcd_bds_material_classfctn.sap_nz_selectively_grow_code         
-         where sap_material_code = rcd_bds_material_classfctn.sap_material_code;
+             sap_nz_selectively_grow_code = rcd_bds_material_classfctn.sap_nz_selectively_grow_code,
+             sap_raw_th_boi_grp_code = rcd_bds_material_classfctn.sap_raw_th_boi_grp_code,
+             sap_raw_allergen_code = rcd_bds_material_classfctn.sap_raw_allergen_code
+       where sap_material_code = rcd_bds_material_classfctn.sap_material_code;
       if (sql%notfound) then
          insert into bds_material_classfctn
             (sap_material_code,
@@ -523,8 +527,9 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              sap_pack_dspsal_class,      
              sap_th_boi_grp_code,
              sap_nz_launch_ranking_code,
-             sap_nz_selectively_grow_code          
-            )
+             sap_nz_selectively_grow_code,
+             sap_raw_th_boi_grp_code,
+             sap_raw_allergen_code)
            values
             (rcd_bds_material_classfctn.sap_material_code,
              rcd_bds_material_classfctn.sap_idoc_name,
@@ -589,7 +594,9 @@ CREATE OR REPLACE PACKAGE BODY BDS_APP.bds_atllad06_flatten as
              rcd_bds_material_classfctn.sap_pack_dspsal_class,      
              rcd_bds_material_classfctn.sap_th_boi_grp_code,
              rcd_bds_material_classfctn.sap_nz_launch_ranking_code,
-             rcd_bds_material_classfctn.sap_nz_selectively_grow_code                            
+             rcd_bds_material_classfctn.sap_nz_selectively_grow_code,
+             rcd_bds_material_classfctn.sap_raw_th_boi_grp_code,
+             rcd_bds_material_classfctn.sap_raw_allergen_code                          
              );
       end if;
 
@@ -1091,12 +1098,12 @@ end bds_atllad06_flatten;
 /
 
 
---
--- BDS_ATLLAD06_FLATTEN  (Synonym) 
---
-CREATE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
+DROP PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN;
+
+CREATE OR REPLACE PUBLIC SYNONYM BDS_ATLLAD06_FLATTEN FOR BDS_APP.BDS_ATLLAD06_FLATTEN;
 
 
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LADS_APP;
 
 GRANT EXECUTE ON BDS_APP.BDS_ATLLAD06_FLATTEN TO LICS_APP;
+

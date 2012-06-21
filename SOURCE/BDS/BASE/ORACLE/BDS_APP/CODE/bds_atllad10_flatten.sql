@@ -1,4 +1,6 @@
-create or replace package bds_atllad10_flatten as
+DROP PACKAGE BDS_APP.BDS_ATLLAD10_FLATTEN;
+
+CREATE OR REPLACE PACKAGE BDS_APP."BDS_ATLLAD10_FLATTEN" as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -40,6 +42,7 @@ create or replace package bds_atllad10_flatten as
  2007/05   Steve Gregan   Fixed process_prodctn_resrc_text field mapping
  2007/07   Steve Gregan   Added null primary key filters
  2008/10   Linden Glen    Added for bds_refrnc_purchasing_src_cml in process_purchasing_src
+ 2012/04   Ben Halicki    Added /MARS/MD_CHC066 in process_charistic
 
 *******************************************************************************/
 
@@ -52,10 +55,17 @@ end bds_atllad10_flatten;
 /
 
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body bds_atllad10_flatten as
+DROP PUBLIC SYNONYM BDS_ATLLAD10_FLATTEN;
+
+CREATE OR REPLACE PUBLIC SYNONYM BDS_ATLLAD10_FLATTEN FOR BDS_APP.BDS_ATLLAD10_FLATTEN;
+
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD10_FLATTEN TO LADS_APP;
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD10_FLATTEN TO LICS_APP;
+DROP PACKAGE BODY BDS_APP.BDS_ATLLAD10_FLATTEN;
+
+CREATE OR REPLACE PACKAGE BODY BDS_APP."BDS_ATLLAD10_FLATTEN" as
 
    /*-*/
    /* Private exceptions
@@ -195,7 +205,8 @@ create or replace package body bds_atllad10_flatten as
                upper(par_z_tabname) = '/MARS/MD_CHC016' or 
                upper(par_z_tabname) = '/MARS/MD_CHC021' or 
                upper(par_z_tabname) = '/MARS/MD_CHC038') then process_charistic(par_z_tabname, 3);
-         when (upper(par_z_tabname) = '/MARS/MD_CHC006') then process_charistic(par_z_tabname, 4);
+         when (upper(par_z_tabname) = '/MARS/MD_CHC006' or
+               upper(par_z_tabname) = '/MARS/MD_CHC066') then process_charistic(par_z_tabname, 4);
          when (upper(par_z_tabname) = '/MARS/MD_VERP01' or 
                upper(par_z_tabname) = '/MARS/MD_VERP02' or 
                upper(par_z_tabname) = '/MARS/MD_ROH01' or 
@@ -1587,7 +1598,7 @@ create or replace package body bds_atllad10_flatten as
                 trim(substr(max(t01.z_data), 35, 40)) as resrc_text,
                 trim(substr(max(t01.z_data), 75, 40)) as resrc_text_upper,
                 trim(substr(max(t01.z_data), 15, 8)) as change_date,
-                trim(substr(max(t01.z_data), 23, 12)) as change_user,					
+                trim(substr(max(t01.z_data), 23, 12)) as change_user,               
                 max(t01.idoc_number) as idoc_number,
                 max(t01.idoc_timestamp) as idoc_timestamp,
                 max(t01.z_chgtyp) as z_chgtyp
@@ -1699,9 +1710,9 @@ create or replace package body bds_atllad10_flatten as
                 nvl(trim(substr(t01.z_data, 4, 2)),'*NONE') as resrc_type,
                 nvl(trim(substr(t01.z_data, 6, 8)),'*NONE') as resrc_id,
                 trim(substr(max(t01.z_data), 110, 8)) as resrc_code,
-                trim(substr(max(t01.z_data), 118, 4)) as resrc_plant_code,		
-                trim(substr(max(t01.z_data), 122, 4)) as resrc_ctgry,		
-                trim(substr(max(t01.z_data), 126, 1)) as resrc_deletion_flag,		
+                trim(substr(max(t01.z_data), 118, 4)) as resrc_plant_code,      
+                trim(substr(max(t01.z_data), 122, 4)) as resrc_ctgry,      
+                trim(substr(max(t01.z_data), 126, 1)) as resrc_deletion_flag,      
                 max(t01.idoc_number) as idoc_number,
                 max(t01.idoc_timestamp) as idoc_timestamp,
                 max(t01.z_chgtyp) as z_chgtyp
@@ -2050,9 +2061,13 @@ create or replace package body bds_atllad10_flatten as
 end bds_atllad10_flatten;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym bds_atllad10_flatten for bds_app.bds_atllad10_flatten;
-grant execute on bds_atllad10_flatten to lics_app;
-grant execute on bds_atllad10_flatten to lads_app;
+
+DROP PUBLIC SYNONYM BDS_ATLLAD10_FLATTEN;
+
+CREATE OR REPLACE PUBLIC SYNONYM BDS_ATLLAD10_FLATTEN FOR BDS_APP.BDS_ATLLAD10_FLATTEN;
+
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD10_FLATTEN TO LADS_APP;
+
+GRANT EXECUTE ON BDS_APP.BDS_ATLLAD10_FLATTEN TO LICS_APP;
+
