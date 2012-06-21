@@ -1,116 +1,131 @@
-/******************************************************************************/
-/* Table Definition                                                           */
-/******************************************************************************/
-/**
- System  : BDS
- Table   : BDS_REFRNC_PURCHASING_SRC_CML
- Owner   : BDS
- Author  : Linden Glen
+ALTER TABLE BDS.BDS_REFRNC_PURCHASING_SRC_CML
+ DROP PRIMARY KEY CASCADE;
 
- Description
- -----------
- Business Data Store - Reference Data - EORD (Material/Vendor) Cumulative
+DROP TABLE BDS.BDS_REFRNC_PURCHASING_SRC_CML CASCADE CONSTRAINTS;
 
-  * The EORD reference table sent via ATLLAD10 is a full replace each time. 
-    If Material/Vendor records are purged/deleted from SAP, then on next send they
-    will also be removed from BDS due the full resend nature of the interface.
-    This table will store a cumulative set of records, that will only be updated/inserted
-    to on receiving the EORD interface. Records not resent by a subsequent EORD interface
-    will remain in this table.
+CREATE TABLE BDS.BDS_REFRNC_PURCHASING_SRC_CML
+(
+  SAP_MATERIAL_CODE              VARCHAR2(18 CHAR) NOT NULL,
+  PLANT_CODE                     VARCHAR2(4 CHAR) NOT NULL,
+  SRC_LIST_VALID_FROM            DATE           NOT NULL,
+  SRC_LIST_VALID_TO              DATE           NOT NULL,
+  PURCHASING_ORGANISATION        VARCHAR2(4 CHAR) NOT NULL,
+  VENDOR_CODE                    VARCHAR2(10 CHAR) NOT NULL,
+  AGREEMENT_NO                   VARCHAR2(10 CHAR) NOT NULL,
+  AGREEMENT_ITEM                 VARCHAR2(5 CHAR) NOT NULL,
+  PLANT_PROCURED_FROM            VARCHAR2(4 CHAR) NOT NULL,
+  SRC_LIST_PLANNING_USAGE        VARCHAR2(4 CHAR) NOT NULL,
+  FIXED_VENDOR_INDCTR            VARCHAR2(4 CHAR) NOT NULL,
+  CREATN_DATE                    DATE,
+  CREATN_USER                    VARCHAR2(12 CHAR),
+  FIXED_PURCHASE_AGREEMENT_ITEM  VARCHAR2(1 CHAR),
+  STO_FIXED_ISSUING_PLANT        VARCHAR2(1 CHAR),
+  MANUFCTR_PART_REFRNC_MATERIAL  VARCHAR2(18 CHAR),
+  BLOCKED_SUPPLY_SRC_FLAG        VARCHAR2(1 CHAR),
+  PURCHASING_DOCUMENT_CTGRY      VARCHAR2(1 CHAR),
+  SRC_LIST_CTGRY                 VARCHAR2(1 CHAR),
+  ORDER_UNIT                     VARCHAR2(3 CHAR),
+  LOGICAL_SYSTEM                 VARCHAR2(10 CHAR),
+  SPECIAL_STOCK_INDCTR           VARCHAR2(1 CHAR)
+)
+TABLESPACE BDS_DATA
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
 
- YYYY/MM   Author         Description
- -------   ------         -----------
- 2008/10   Linden Glen    Created
+COMMENT ON TABLE BDS.BDS_REFRNC_PURCHASING_SRC_CML IS 'Business Data Store - Reference Data - Purchasing Source List Cumulative (ZDISTR - EORD)';
 
-*******************************************************************************/
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SAP_MATERIAL_CODE IS 'Material Number - LADS_REF_DAT.Z_TABNAME';
 
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.PLANT_CODE IS 'Plant - LADS_REF_DAT.Z_TABNAME';
 
-/**/
-/* Table creation
-/**/
-create table bds_refrnc_purchasing_src_cml
-   (sap_material_code                  varchar2(18 char)     not null, 
-    plant_code                         varchar2(4 char)      not null, 
-    src_list_valid_from                date                  not null, 
-    src_list_valid_to                  date                  not null, 
-    purchasing_organisation            varchar2(4 char)      not null, 
-    vendor_code                        varchar2(10 char)     not null,
-    agreement_no                       varchar2(10 char)     not null, 
-    agreement_item                     varchar2(5 char)      not null,  
-    plant_procured_from                varchar2(4 char)      not null, 
-    src_list_planning_usage            varchar2(4 char)      not null,
-    fixed_vendor_indctr                varchar2(4 char)      not null, 
-    creatn_date                        date                  null, 
-    creatn_user                        varchar2(12 char)     null,  
-    fixed_purchase_agreement_item      varchar2(1 char)      null, 
-    sto_fixed_issuing_plant            varchar2(1 char)      null, 
-    manufctr_part_refrnc_material      varchar2(18 char)     null, 
-    blocked_supply_src_flag            varchar2(1 char)      null, 
-    purchasing_document_ctgry          varchar2(1 char)      null, 
-    src_list_ctgry                     varchar2(1 char)      null, 
-    order_unit                         varchar2(3 char)      null, 
-    logical_system                     varchar2(10 char)     null, 
-    special_stock_indctr               varchar2(1 char)      null);
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SRC_LIST_VALID_FROM IS 'Source list record valid from - LADS_REF_DAT.Z_TABNAME';
 
-    
-/**/
-/* Primary Key Constraint
-/**/
-alter table bds_refrnc_purchasing_src_cml
-   add constraint bds_refrnc_prchsng_src_cml_pk primary key (sap_material_code, 
-                                                             plant_code,  
-                                                             src_list_valid_from,  
-                                                             src_list_valid_to,
-                                                             purchasing_organisation,  
-                                                             vendor_code,  
-                                                             agreement_no,  
-                                                             agreement_item,  
-                                                             plant_procured_from,  
-                                                             src_list_planning_usage,  
-                                                             fixed_vendor_indctr);
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SRC_LIST_VALID_TO IS 'Source list record valid to - LADS_REF_DAT.Z_TABNAME';
 
-    
-/**/
-/* Indexes
-/**/
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.PURCHASING_ORGANISATION IS 'Purchasing Organization - LADS_REF_DAT.Z_TABNAME';
 
-/**/
-/* Comments
-/**/
-comment on table bds_refrnc_purchasing_src_cml is 'Business Data Store - Reference Data - Purchasing Source List Cumulative (ZDISTR - EORD)';
-comment on column bds_refrnc_purchasing_src_cml.sap_material_code is 'Material Number - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.plant_code is 'Plant - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.creatn_date is 'Date on which the record was created - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.creatn_user is 'Name of Person who Created the Object - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.src_list_valid_from is 'Source list record valid from - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.src_list_valid_to is 'Source list record valid to - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.vendor_code is 'Account Number of the Vendor - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.fixed_vendor_indctr is 'Indicator: Fixed vendor - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.agreement_no is 'Agreement number - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.agreement_item is 'Agreement item - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.fixed_purchase_agreement_item is 'Fixed outline purchase agreement item - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.plant_procured_from is 'Plant from which material is procured - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.sto_fixed_issuing_plant is 'Fixed issuing plant in case of stock transport order - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.manufctr_part_refrnc_material is 'Material number corresponding to manufacturer part number - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.blocked_supply_src_flag is 'Blocked source of supply - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.purchasing_organisation is 'Purchasing Organization - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.purchasing_document_ctgry is 'Purchasing document category - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.src_list_ctgry is 'Category of source list record - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.src_list_planning_usage is 'Source list usage in materials planning and control - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.order_unit is 'Order unit - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.logical_system is 'Logical System - LADS_REF_DAT.Z_TABNAME';
-comment on column bds_refrnc_purchasing_src_cml.special_stock_indctr is 'Special Stock Indicator - LADS_REF_DAT.Z_TABNAME';
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.VENDOR_CODE IS 'Account Number of the Vendor - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.AGREEMENT_NO IS 'Agreement number - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.AGREEMENT_ITEM IS 'Agreement item - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.PLANT_PROCURED_FROM IS 'Plant from which material is procured - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SRC_LIST_PLANNING_USAGE IS 'Source list usage in materials planning and control - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.FIXED_VENDOR_INDCTR IS 'Indicator: Fixed vendor - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.CREATN_DATE IS 'Date on which the record was created - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.CREATN_USER IS 'Name of Person who Created the Object - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.FIXED_PURCHASE_AGREEMENT_ITEM IS 'Fixed outline purchase agreement item - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.STO_FIXED_ISSUING_PLANT IS 'Fixed issuing plant in case of stock transport order - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.MANUFCTR_PART_REFRNC_MATERIAL IS 'Material number corresponding to manufacturer part number - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.BLOCKED_SUPPLY_SRC_FLAG IS 'Blocked source of supply - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.PURCHASING_DOCUMENT_CTGRY IS 'Purchasing document category - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SRC_LIST_CTGRY IS 'Category of source list record - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.ORDER_UNIT IS 'Order unit - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.LOGICAL_SYSTEM IS 'Logical System - LADS_REF_DAT.Z_TABNAME';
+
+COMMENT ON COLUMN BDS.BDS_REFRNC_PURCHASING_SRC_CML.SPECIAL_STOCK_INDCTR IS 'Special Stock Indicator - LADS_REF_DAT.Z_TABNAME';
 
 
-/**/
-/* Synonym
-/**/
-create or replace public synonym bds_refrnc_purchasing_src_cml for bds.bds_refrnc_purchasing_src_cml;
 
-/**/
-/* Authority
-/**/
-grant select,update,delete,insert on bds_refrnc_purchasing_src_cml to lics_app;
-grant select,update,delete,insert on bds_refrnc_purchasing_src_cml to bds_app;
-grant select,update,delete,insert on bds_refrnc_purchasing_src_cml to lads_app;
-grant select on bds_refrnc_purchasing_src_cml to public with grant option;
+CREATE UNIQUE INDEX BDS.BDS_REFRNC_PRCHSNG_SRC_CML_PK ON BDS.BDS_REFRNC_PURCHASING_SRC_CML
+(SAP_MATERIAL_CODE, PLANT_CODE, SRC_LIST_VALID_FROM, SRC_LIST_VALID_TO, PURCHASING_ORGANISATION, 
+VENDOR_CODE, AGREEMENT_NO, AGREEMENT_ITEM, PLANT_PROCURED_FROM, SRC_LIST_PLANNING_USAGE, 
+FIXED_VENDOR_INDCTR)
+LOGGING
+TABLESPACE BDS_DATA
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+           )
+NOPARALLEL;
+
+
+DROP PUBLIC SYNONYM BDS_REFRNC_PURCHASING_SRC_CML;
+
+CREATE OR REPLACE PUBLIC SYNONYM BDS_REFRNC_PURCHASING_SRC_CML FOR BDS.BDS_REFRNC_PURCHASING_SRC_CML;
+
+
+ALTER TABLE BDS.BDS_REFRNC_PURCHASING_SRC_CML ADD (
+  CONSTRAINT BDS_REFRNC_PRCHSNG_SRC_CML_PK
+  PRIMARY KEY
+  (SAP_MATERIAL_CODE, PLANT_CODE, SRC_LIST_VALID_FROM, SRC_LIST_VALID_TO, PURCHASING_ORGANISATION, VENDOR_CODE, AGREEMENT_NO, AGREEMENT_ITEM, PLANT_PROCURED_FROM, SRC_LIST_PLANNING_USAGE, FIXED_VENDOR_INDCTR)
+  USING INDEX .BDS_REFRNC_PRCHSNG_SRC_CML_PK);
+
+GRANT DELETE, INSERT, SELECT, UPDATE ON BDS.BDS_REFRNC_PURCHASING_SRC_CML TO BDS_APP;
+
+GRANT SELECT ON BDS.BDS_REFRNC_PURCHASING_SRC_CML TO PUBLIC WITH GRANT OPTION;
