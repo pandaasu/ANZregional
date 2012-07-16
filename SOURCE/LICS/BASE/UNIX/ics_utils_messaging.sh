@@ -15,6 +15,7 @@
 # 13-MAY-2008   S. Gregan   Added oracle classes12.jar to java calls within get_file_from_sap
 # 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
 # 18-JUN-2009   T. Keon     Added Linux support to inbound SAP processing
+# 25-NOV-2011   S. Gordon   Modify send_file_via_mqft_to_CDW() to send to directory with interface name
 #
 # ---------------------------------------------------------------------------
 
@@ -536,7 +537,7 @@ process_passthru_mqft()
     load_file $LOAD_FILE_PASSTHRU "${INTERFACE_ID}" "${FILENAME}"
 }
 
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------A
 #
 # queue_depth Description:
 # Checks the depth of the queue.  If the queue is empty and the mode
@@ -588,9 +589,17 @@ queue_depth()
 # --------------------------------------------------------------------------
 send_file_via_mqft_to_CDW()
 {
-    log_file "INFO: [send_file_via_mqft_to_CDW] Executing command [${AMI_PATH}/bin/mqft/mqftssnd -source ${AMI_QMGR},${Q_FILE} -target ${TARG_QMGR},${TARG_PATH}/${TARG_FILE}]" "HARMLESS"      
+    # Start change 20111125 GORDOSTE
+    # Add temporary variable ID_ODS_INT which has interface name ATLODSxx
+    #${AMI_PATH}/bin/mqft/mqftssnd -source ${AMI_QMGR},${Q_FILE} -target ${TARG_QMGR},${TARG_PATH}/${ID_INT} >> ${TMP_OUT} 2>&1
+    ID_ODS_INT=`echo $ID_INT | perl -lpe 's/LAD/ODS/g;$_=lc($_)'`
+    ODS_FILE=`basename $Q_FILE`
+
+    log_file "INFO: [send_file_via_mqft_to_CDW] Executing command [${AMI_PATH}/bin/mqft/mqftssnd -source ${AMI_QMGR},${Q_FILE} -target ${TARG_QMGR},${TARG_PATH}/${ID_ODS_INT}/${ODS_FILE}]" "HARMLESS"      
     
-    ${AMI_PATH}/bin/mqft/mqftssnd -source ${AMI_QMGR},${Q_FILE} -target ${TARG_QMGR},${TARG_PATH}/${TARG_FILE} >> ${TMP_OUT} 2>&1
+    ${AMI_PATH}/bin/mqft/mqftssnd -source ${AMI_QMGR},${Q_FILE} -target ${TARG_QMGR},${TARG_PATH}/${ID_ODS_INT}/${ODS_FILE} -bin >> ${TMP_OUT} 2>&1
+    # End change 20111125 GORDOSTE
+
     if [[ $? -ne 0 ]] ; then
         error_exit "ERROR: [send_file_via_mqft_to_CDW] MQFT command failed, see [${TMP_OUT}]"
     else
