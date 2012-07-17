@@ -53,8 +53,3 @@ Please create the following a new database on <DBSERVER>
    - please ensure 'oracle' user is added to MQM group on local filesystem
 
 
-
-   - Done
-
-
-
