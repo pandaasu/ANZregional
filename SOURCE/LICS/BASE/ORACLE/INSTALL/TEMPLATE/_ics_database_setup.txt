@@ -4,14 +4,14 @@ DBA WO for a new ICS instance
 
 Copy this script and perform the following scan/replace to localise...
 
-   A. Scan for <SERVER> and replace with the server name
+   A. Scan for <DBSERVER> and replace with the server name
    B. Scan for <ICS_FILE_SYSTEM> and replace with the ICS file system path for the installation (eg. /ics/lad/test)
    C. Scan for <ENVIRONMENT> and replace with the environment name (eg. Test, Production, etc)
 
 
-Please create the following a new database on <SERVER> ...
+Please create the following a new database on <DBSERVER>
 
-   Database Name - ICS (Interface Control System) <ENVIRONMENT> Environment
+   Database Name - QVI/ICS (Interface Control System) <ENVIRONMENT> Environment
 
    **DATABASE NOTES** 
 
@@ -19,7 +19,7 @@ Please create the following a new database on <SERVER> ...
    2. Database to be at least Oracle 10g.
    3. Database to be UTF-8.
    4. Database to have job queue processes set to 100.
-   5. Database to have the following user profiles:
+   5. Database to have the following user profiles by _ICS_USER_CREATION.sql :
 
          LICS
          LICS_APP
