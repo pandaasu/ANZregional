@@ -48,6 +48,7 @@ alter table lics_grp_interface
 /* Authority
 /**/
 grant select, insert, update, delete on lics_grp_interface to lics_app;
+grant select on lics_grp_interface to lics_exec;
 
 /**/
 /* Synonym

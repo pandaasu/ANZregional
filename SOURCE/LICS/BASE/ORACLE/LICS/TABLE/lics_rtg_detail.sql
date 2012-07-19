@@ -54,6 +54,7 @@ alter table lics_rtg_detail
 /* Authority
 /**/
 grant select, insert, update, delete on lics_rtg_detail to lics_app;
+grant select on lics_rtg_detail to lics_exec;
 
 /**/
 /* Synonym

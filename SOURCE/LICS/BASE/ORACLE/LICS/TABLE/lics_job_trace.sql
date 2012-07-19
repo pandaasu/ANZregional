@@ -64,6 +64,7 @@ alter table lics_job_trace
 /* Authority
 /**/
 grant select, insert, update, delete on lics_job_trace to lics_app;
+grant select on lics_job_trace to lics_exec;
 
 /**/
 /* Synonym

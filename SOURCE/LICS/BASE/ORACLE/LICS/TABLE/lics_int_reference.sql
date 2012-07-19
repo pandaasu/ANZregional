@@ -48,6 +48,7 @@ alter table lics_int_reference
 /* Authority
 /**/
 grant select, insert, update, delete on lics_int_reference to lics_app;
+grant select on lics_int_reference to lics_exec;
 
 /**/
 /* Synonym

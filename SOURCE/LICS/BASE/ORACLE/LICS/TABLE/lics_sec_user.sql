@@ -45,6 +45,7 @@ alter table lics_sec_user
 /* Authority
 /**/
 grant select, insert, update, delete on lics_sec_user to lics_app;
+grant select on lics_sec_user to lics_exec;
 
 /**/
 /* Synonym

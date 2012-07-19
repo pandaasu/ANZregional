@@ -43,6 +43,7 @@ alter table lics_routing
 /* Authority
 /**/
 grant select, insert, update, delete on lics_routing to lics_app;
+grant select on lics_routing to lics_exec;
 
 /**/
 /* Synonym

@@ -55,6 +55,7 @@ NOPARALLEL;
 -- LICS_ALERT  (Synonym) 
 --
 CREATE PUBLIC SYNONYM LICS_ALERT FOR LICS.LICS_ALERT;
+grant select on lics_alert to lics_exec;
 
 
 -- 

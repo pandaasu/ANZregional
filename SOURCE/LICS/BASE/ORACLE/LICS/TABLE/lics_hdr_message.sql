@@ -52,6 +52,7 @@ alter table lics_hdr_message
 /* Authority
 /**/
 grant select, insert, update, delete on lics_hdr_message to lics_app;
+grant select on lics_hdr_message to lics_exec;
 
 /**/
 /* Synonym

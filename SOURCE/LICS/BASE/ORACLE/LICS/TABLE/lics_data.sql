@@ -52,6 +52,7 @@ alter table lics_data
 /* Authority
 /**/
 grant select, insert, update, delete on lics_data to lics_app;
+grant select on lics_data to lics_exec;
 
 /**/
 /* Synonym

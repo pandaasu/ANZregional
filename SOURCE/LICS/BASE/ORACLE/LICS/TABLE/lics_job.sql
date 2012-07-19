@@ -61,6 +61,7 @@ alter table lics_job
 /* Authority
 /**/
 grant select, insert, update, delete on lics_job to lics_app;
+grant select on lics_job to lics_exec;
 
 /**/
 /* Synonym

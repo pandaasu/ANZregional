@@ -62,6 +62,7 @@ alter table lics_hdr_trace
 /* Authority
 /**/
 grant select, insert, update, delete on lics_hdr_trace to lics_app;
+grant select on lics_hdr_trace to lics_exec;
 
 /**/
 /* Synonym

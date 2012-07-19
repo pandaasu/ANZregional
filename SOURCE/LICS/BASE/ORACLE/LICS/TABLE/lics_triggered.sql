@@ -55,6 +55,7 @@ alter table lics_triggered
 /* Authority
 /**/
 grant select, insert, update, delete on lics_triggered to lics_app;
+grant select on lics_triggered to lics_exec;
 
 /**/
 /* Synonym

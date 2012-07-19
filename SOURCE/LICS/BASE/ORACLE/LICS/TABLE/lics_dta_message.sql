@@ -58,6 +58,7 @@ alter table lics_dta_message
 /* Authority
 /**/
 grant select, insert, update, delete on lics_dta_message to lics_app;
+grant select on lics_dta_message to lics_exec;
 
 /**/
 /* Synonym

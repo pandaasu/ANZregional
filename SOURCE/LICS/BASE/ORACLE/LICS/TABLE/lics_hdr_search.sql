@@ -50,6 +50,7 @@ alter table lics_hdr_search
 /* Authority
 /**/
 grant select, insert, update, delete on lics_hdr_search to lics_app;
+grant select on lics_hdr_search to lics_exec;
 
 /**/
 /* Synonym

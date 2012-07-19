@@ -45,6 +45,7 @@ alter table lics_lock
 /* Authority
 /**/
 grant select, insert, update, delete on lics_lock to lics_app;
+grant select on lics_lock to lics_exec;
 
 /**/
 /* Synonym

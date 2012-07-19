@@ -79,6 +79,7 @@ alter table lics_str_action
 /* Authority
 /**/
 grant select, insert, update, delete on lics_str_action to lics_app;
+grant select on lics_str_action to lics_exec;
 
 /**/
 /* Synonym

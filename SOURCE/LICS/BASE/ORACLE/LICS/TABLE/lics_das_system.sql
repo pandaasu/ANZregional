@@ -45,6 +45,7 @@ alter table lics_das_system
 /* Authority
 /**/
 grant select, insert, update, delete on lics_das_system to lics_app;
+grant select on lics_das_system to lics_exec;
 
 /**/
 /* Synonym

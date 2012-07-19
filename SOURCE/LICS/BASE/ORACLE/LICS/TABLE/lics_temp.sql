@@ -36,6 +36,7 @@ comment on column lics_temp.dat_record is 'Data - record string';
 /* Authority
 /**/
 grant select, insert, update, delete on lics_temp to lics_app;
+grant select on lics_temp to lics_exec;
 
 /**/
 /* Synonym
