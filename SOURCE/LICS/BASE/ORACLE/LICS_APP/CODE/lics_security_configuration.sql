@@ -22,6 +22,7 @@ create or replace package lics_security_configuration as
     -------   ------         -----------
     2007/06   Steve Gregan   Created
     2008/07   Trevor Keon    Added interface security support
+	2012/07	  Ben Halicki	 Added grants for LICS_EXEC
 
    *******************************************************************************/
 
@@ -1740,3 +1741,4 @@ end lics_security_configuration;
 /**************************/
 create or replace public synonym lics_security_configuration for lics_app.lics_security_configuration;
 grant execute on lics_security_configuration to ics_app;
+grant execute on lics_security_configuration to lics_exec;
