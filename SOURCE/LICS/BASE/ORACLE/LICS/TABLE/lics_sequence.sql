@@ -88,6 +88,14 @@ grant select on lics_log_sequence to lics_app;
 grant select on lics_stream_sequence to lics_app;
 grant select on lics_file_sequence to lics_app;
 
+grant select on lics_header_sequence to lics_exec;
+grant select on lics_execution_sequence to lics_exec;
+grant select on lics_triggered_sequence to lics_exec;
+grant select on lics_event_sequence to lics_exec;
+grant select on lics_log_sequence to lics_exec;
+grant select on lics_stream_sequence to lics_exec;
+grant select on lics_file_sequence to lics_exec;
+
 /**/
 /* Synonym
 /**/

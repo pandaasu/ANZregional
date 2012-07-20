@@ -269,6 +269,8 @@ initialise_utilities()
     read_variable "HK_TARG_QMGR"
     read_variable "USE_AMI"
     read_variable "AMI_PATH" 
+	read_variable "MQIF_PATH"
+	read_variable "MQIF_SERVER"
     
     set_date "NOW" $DATE_FORMAT_FILE_SHORT     # Current date & time for filenames
     load_current_os
