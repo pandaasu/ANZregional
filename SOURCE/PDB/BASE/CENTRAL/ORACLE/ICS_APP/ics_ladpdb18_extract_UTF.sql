@@ -45,12 +45,11 @@ CREATE OR REPLACE PACKAGE ICS_APP."ICS_LADPDB18_EXTRACT" as
       - *MFA = Wyong 
       - *WGI = Wanganui 
       - *PCH = Pak Chong Thailand
-      - *MCH = HUA Plant DB (China)
 
   YYYY/MM    Author       Version    Description 
   -------    ------       -------    ----------- 
   2011/04   Ben Halicki   1.0        Created 
-  2011/08   Ben Halicki   1.1        Added MQFT triggering code
+  2012/08   Ben Halicki   1.1        Updated to include logic for End Point Architecture
   
 *******************************************************************************/
 
@@ -129,25 +128,21 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
     var_site      varchar2(10);
     var_start     boolean := false;
     var_intfc     varchar2(20);
+    var_intfc_trg varchar2(1);
      
     /*-*/
     /* Local cursors
     /*-*/
     cursor csr_intfc is
-        select 
-            dsv_group as site, 
-            dsv_value as intfc_extn 
-        from 
-            table (lics_datastore.retrieve_group('PDB','INTFC_EXTN',NULL)) t01
-        where 
-            (var_site = '*ALL' or '*' || t01.dsv_group = var_site);
-  
+      select t01.dsv_system,
+             t01.dsv_group as site,
+             max(case when t01.dsv_code='INTFC_EXTN' then DSV_VALUE end) as intfc_extn,
+             nvl(max(case when t01.dsv_code='INTFC_TRG' then DSV_VALUE end),'Y') as intfc_trg 
+        from table (lics_datastore.retrieve_group('PDB',null,null)) t01
+      having (var_site = '*ALL' or '*' || t01.dsv_group = var_site)
+      group by t01.dsv_system, 
+               t01.dsv_group;  
     rcd_intfc csr_intfc%rowtype;
-    
-    cursor csr_trigger is
-        select dsv_value as intfc_trigger 
-          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
-    rcd_trigger csr_trigger%rowtype;  
          
   begin  
   
@@ -157,7 +152,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
     
     /*-*/
     /* validate parameters 
-    /*-*/
+   /*-*/
     if ( var_action != '*ALL'
         and var_action != '*EQUIPMENT'
         and var_action != '*HISTORY' ) then
@@ -178,29 +173,24 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
         tbl_definition.delete;
         
         var_intfc := con_intfc || rcd_intfc.intfc_extn; 
+        var_intfc_trg := rcd_intfc.intfc_trg;
         
         /*-*/
         /* Get last run date  
-        /*-*/    
+       /*-*/    
         if ( var_update_lastrun = true ) then
             var_lastrun_date := lics_last_run_control.get_last_run(var_intfc);
         end if;
         
         var_start_date := sysdate;
         var_start := execute_extract(var_action, var_data, rcd_intfc.site);      
-
+                
         /*-*/
         /* ensure data was returned in the cursor before creating interfaces 
-        /* to send to the specified site(s) 
-        /*-*/           
+       /* to send to the specified site(s) 
+       /*-*/           
         if ( var_start = true ) then
-           open csr_trigger;
-           fetch csr_trigger into rcd_trigger;
-           if csr_trigger%notfound then
-              rcd_trigger.intfc_trigger := 'Y';
-           end if;
-           close csr_trigger;
-           execute_send(var_intfc, rcd_trigger.intfc_trigger);
+            execute_send(var_intfc, var_intfc_trg);
         end if;
         
         if ( var_update_lastrun = true ) then
@@ -211,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
     
     /*-*/
     /* if no valid sites were found, raise exception
-    /*-*/
+   /*-*/
     if (csr_intfc%rowcount=0 and var_site='*ALL') then
         raise_application_error(-20000, 'No valid plant databases have been configured via Data Store Configuration.');
     end if;
@@ -229,22 +219,22 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
 
     /**/
     /* Exception trap 
-    /**/
+   /**/
     when others then
 
     /*-*/
     /* Rollback the database 
-    /*-*/
+   /*-*/
     rollback;
 
     /*-*/
     /* Save the exception 
-    /*-*/
+   /*-*/
     var_exception := substr(sqlerrm, 1, 1024);
 
     /*-*/
     /* Finalise the outbound loader when required 
-    /*-*/
+   /*-*/
     if ( lics_outbound_loader.is_created = true ) then
       lics_outbound_loader.add_exception(var_exception);
       lics_outbound_loader.finalise_interface;
@@ -252,7 +242,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
 
     /*-*/
     /* Raise an exception to the calling application 
-    /*-*/
+   /*-*/
     raise_application_error(-20000, 'ics_ladpdb18_extract - ' || ' - ' || var_exception);
 
    /*-------------*/
@@ -305,13 +295,13 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
 
     /*-*/
     /* Initialise variables 
-    /*-*/
+   /*-*/
     var_result := false;
     tbl_definition.delete;
 
     /*-*/
     /* Open Cursor for output 
-    /*-*/
+   /*-*/
     open csr_equipment_plant_hdr;
     loop
     
@@ -349,7 +339,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB18_EXTRACT" as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-          if upper(par_trigger) = 'Y' then
+          if (upper(par_trigger) = 'Y') then
              var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
           else
              var_instance := lics_outbound_loader.create_interface(par_interface);

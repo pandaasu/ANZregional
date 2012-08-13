@@ -45,12 +45,11 @@ CREATE OR REPLACE PACKAGE ICS_APP."ICS_LADPDB19_EXTRACT" as
       - *MFA = Wyong 
       - *WGI = Wanganui 
       - *PCH = Pak Chong Thailand
-      - *MCH = HUA Plant DB (China)
 
   YYYY/MM    Author       Version    Description 
   -------    ------       -------    ----------- 
   2011/04   Ben Halicki   1.0        Created 
-  2011/08   Ben Halicki   1.1        Included MQFT triggering option
+  2012/08   Ben Halicki   1.1        Updated to include logic for End Point Architecture
   
 *******************************************************************************/
 
@@ -129,26 +128,22 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB19_EXTRACT" as
     var_site      varchar2(10);
     var_start     boolean := false;
     var_intfc     varchar2(20);
-     
+    var_intfc_trg varchar2(1);
+         
     /*-*/
     /* Local cursors
     /*-*/
     cursor csr_intfc is
-        select 
-            dsv_group as site, 
-            dsv_value as intfc_extn 
-        from 
-            table (lics_datastore.retrieve_group('PDB','INTFC_EXTN',NULL)) t01
-        where 
-            (var_site = '*ALL' or '*' || t01.dsv_group = var_site);
-  
+      select t01.dsv_system,
+             t01.dsv_group as site,
+             max(case when t01.dsv_code='INTFC_EXTN' then DSV_VALUE end) as intfc_extn,
+             nvl(max(case when t01.dsv_code='INTFC_TRG' then DSV_VALUE end),'Y') as intfc_trg 
+        from table (lics_datastore.retrieve_group('PDB',null,null)) t01
+      having (var_site = '*ALL' or '*' || t01.dsv_group = var_site)
+      group by t01.dsv_system, 
+               t01.dsv_group;  
     rcd_intfc csr_intfc%rowtype;
-         
-    cursor csr_trigger is
-        select dsv_value as intfc_trigger 
-          from table (lics_datastore.retrieve_value('PDB',rcd_intfc.site,'INTFC_TRIGGER')) t01;
-    rcd_trigger csr_trigger%rowtype;   
-    
+           
   begin  
   
     var_action := upper(nvl(trim(par_action), '*NULL'));
@@ -178,7 +173,8 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB19_EXTRACT" as
         tbl_definition.delete;
         
         var_intfc := con_intfc || rcd_intfc.intfc_extn; 
-        
+        var_intfc_trg := rcd_intfc.intfc_trg;
+                
         /*-*/
         /* Get last run date  
         /*-*/    
@@ -194,13 +190,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB19_EXTRACT" as
         /* to send to the specified site(s) 
         /*-*/           
         if ( var_start = true ) then
-           open csr_trigger;
-           fetch csr_trigger into rcd_trigger;
-           if csr_trigger%notfound then
-              rcd_trigger.intfc_trigger := 'Y';
-           end if;
-           close csr_trigger;
-           execute_send(var_intfc, rcd_trigger.intfc_trigger);
+            execute_send(var_intfc, var_intfc_trg);
         end if;
         
         if ( var_update_lastrun = true ) then
@@ -347,7 +337,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP."ICS_LADPDB19_EXTRACT" as
 
     for idx in 1..tbl_definition.count loop
       if ( lics_outbound_loader.is_created = false ) then
-          if upper(par_trigger) = 'Y' then
+          if (upper(par_trigger) = 'Y') then
              var_instance := lics_outbound_loader.create_interface(par_interface, null, par_interface);
           else
              var_instance := lics_outbound_loader.create_interface(par_interface);
