@@ -132,3 +132,5 @@ end lics_alerting_configuration;
 --
 CREATE PUBLIC SYNONYM LICS_ALERTING_CONFIGURATION FOR LICS_APP.LICS_ALERTING_CONFIGURATION;
 
+GRANT EXECUTE ON lics_alerting_configuration TO lics_exec;
+
