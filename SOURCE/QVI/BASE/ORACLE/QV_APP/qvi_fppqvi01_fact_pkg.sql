@@ -61,6 +61,7 @@ create or replace package qv_app.qvi_fppqvi01_fact_pkg as
     -------   ------         -----------
     2012/03   Steve Gregan   Created
     2012/05   Mal Chambeyron Modified - FPPQVI01 FPPS Actuals
+    2012/08   Mal Chambeyron Modified - Reduce Part logic to Owner Unit (as Opposed to Owner Unit/Unit) due Sequence of Reports  
 
    ****************************************************************************/
 
@@ -313,7 +314,8 @@ create or replace package body qv_app.qvi_fppqvi01_fact_pkg as
          /*-*/
          var_statement_tag := 'Check need to start source loader';
          
-         var_par_code := upper(var_rec_prefix||'_'||var_current_rec."Unit Code");
+         -- var_par_code := upper(var_rec_prefix||'_'||var_current_rec."Unit Code"); -- removed unit, as cannot work with single file due to sequence of reports
+         var_par_code := '-';
          var_tim_code := to_char(var_year, 'FM0000')||to_char(var_period, 'FM00');
          if nvl(var_prev_par_code,'*NULL') != nvl(var_par_code,'*NULL') then
             if var_prev_par_code is not null then -- finalise previous source
