@@ -7,39 +7,40 @@ create or replace package dw_flag_file_creation as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : dw_flag_file_creation
-    Owner   : dw_app
+    Package : dw_flag_file_creation 
+    Owner   : dw_app 
 
     Description
     -----------
-    Dimensional Data Store - Flag File Creation
+    Dimensional Data Store - Flag File Creation 
 
-    This package contain the data warehouse flag file creation. The package exposes one
+    This package contain the data warehouse flag file creation. The package exposes one 
     procedure EXECUTE that performs the flag file creation based on the following parameters:
 
-    1. PAR_INTERFACE (Interface Identifier) (MANDATORY)
+    1. PAR_INTERFACE (Interface Identifier) (MANDATORY) 
 
-       The interface identifier for the flag file.
+       The interface identifier for the flag file. 
 
-    2. PAR_FILE_NAME (Flag file name) (MANDATORY)
+    2. PAR_FILE_NAME (Flag file name) (MANDATORY) 
 
-       The interface identifier for the flag file.
+       The interface identifier for the flag file. 
 
-    **notes**
+    **notes** 
     1. A web log is produced under the search value DW_FLAG_FILE_CREATION where all errors are logged.
 
     2. All errors will raise an exception to the calling application so that an alert can be raised.
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2008/08   Steve Gregan   Created
-    2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
-    2010/07   Steve Gregan   Added Qlikview flag file interfaces
+    YYYY/MM   Author         Description 
+    -------   ------         ----------- 
+    2008/08   Steve Gregan   Created 
+    2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving 
+    2010/07   Steve Gregan   Added Qlikview flag file interfaces 
+    2012/08   Trevor Keon    Added eFex flag file creation for QlikView 
 
    *******************************************************************************/
 
    /*-*/
-   /* Public declarations
+   /* Public declarations 
    /*-*/
    procedure execute(par_company in varchar2);
 
@@ -121,7 +122,7 @@ create or replace package body dw_flag_file_creation as
       if upper(par_company) is null then
          raise_application_error(-20000, 'Process company must be supplied');
       end if;
-      if upper(par_company) != 'CON' then
+      if upper(par_company) != 'CON' and upper(par_company) != 'EFEX' then
          open csr_company;
          fetch csr_company into rcd_company;
          if csr_company%notfound then
@@ -136,12 +137,14 @@ create or replace package body dw_flag_file_creation as
       /*-*/
       var_date := trunc(sysdate);
       var_process_date := to_char(var_date-1,'yyyymmdd');
-      if upper(par_company) != 'CON' then
-         var_process_code := 'FLAGFILE_'||var_company_code;
-      else
+      if upper(par_company) = 'CON' then
          var_process_code := 'FLAGFILE_CON';
+      elsif upper(par_company) = 'EFEX' then
+         var_process_code := 'FLAGFILE_EFEX';
+      else
+         var_process_code := 'FLAGFILE_' || var_company_code;
       end if;
-      if upper(par_company) != 'CON' then
+      if upper(par_company) != 'CON' and upper(par_company) != 'EFEX' then
          if rcd_company.company_timezone_code != 'Australia/NSW' then
             var_date := dw_to_timezone(trunc(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')),'Australia/NSW',rcd_company.company_timezone_code);
             var_process_date := to_char(dw_to_timezone(sysdate,rcd_company.company_timezone_code,'Australia/NSW')-1,'yyyymmdd');
@@ -153,6 +156,8 @@ create or replace package body dw_flag_file_creation as
       /*-*/
       if upper(par_company) = 'CON' then
          var_filename := '4749.txt';
+      elsif upper(par_company) = 'EFEX' then
+         var_filename := 'EFEX_4749.txt';
       else
          var_filename := par_company||'.txt';
       end if;
@@ -185,25 +190,30 @@ create or replace package body dw_flag_file_creation as
       if var_locked = true then
 
          /*-*/
-         /* Create the flag file interface - BOXI
-         /*-*/
-         begin
-            var_instance := lics_outbound_loader.create_interface('VENBOX01',null,var_filename);
-            lics_outbound_loader.append_data('OK');
-            lics_outbound_loader.finalise_interface;
-         exception
-            when others then
-               var_errors := true;
-               var_exception := substr(SQLERRM, 1, 3000);
-               lics_logging.write_log(var_exception);
-               if lics_outbound_loader.is_created = true then
-                  lics_outbound_loader.add_exception(var_exception);
-                  lics_outbound_loader.finalise_interface;
-               end if;
-         end;
+         /* eFex flag file only for QlikView (at this stage) 
+         /*-*/        
+         if upper(par_company) != 'EFEX' then
+            /*-*/
+            /* Create the flag file interface - BOXI 
+            /*-*/
+            begin
+               var_instance := lics_outbound_loader.create_interface('VENBOX01',null,var_filename);
+               lics_outbound_loader.append_data('OK');
+               lics_outbound_loader.finalise_interface;
+            exception
+               when others then
+                  var_errors := true;
+                  var_exception := substr(SQLERRM, 1, 3000);
+                  lics_logging.write_log(var_exception);
+                  if lics_outbound_loader.is_created = true then
+                     lics_outbound_loader.add_exception(var_exception);
+                     lics_outbound_loader.finalise_interface;
+                  end if;
+            end;         
+         end if;
 
          /*-*/
-         /* Create the flag file interface - Qlikview
+         /* Create the flag file interface - Qlikview 
          /*-*/
          begin
             var_instance := lics_outbound_loader.create_interface('CDWQVW01',null,var_filename);
