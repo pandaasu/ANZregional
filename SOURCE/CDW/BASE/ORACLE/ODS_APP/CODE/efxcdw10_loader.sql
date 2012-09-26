@@ -1,6 +1,3 @@
-/******************/
-/* Package Header */
-/******************/
 create or replace package ods_app.efxcdw10_loader as
 
    /******************************************************************************/
@@ -16,7 +13,8 @@ create or replace package ods_app.efxcdw10_loader as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2010/05   Steve Gregan   Created
+    2010/05   Steve Gregan   Created 
+    2012/09   Trevor Keon    Added efex_matl_code to update statement 
 
    *******************************************************************************/
 
@@ -27,7 +25,7 @@ create or replace package ods_app.efxcdw10_loader as
    procedure on_data(par_record in varchar2);
    procedure on_end;
 
-end efxcdw10_loader;
+end efxcdw10_loader; 
 /
 
 /****************/
@@ -306,7 +304,8 @@ create or replace package body ods_app.efxcdw10_loader as
                    pos_matl_flg = rcd_efex_matl.pos_matl_flg,
                    status = rcd_efex_matl.status,
                    valdtn_status = rcd_efex_matl.valdtn_status,
-                   efex_mkt_id = rcd_efex_matl.efex_mkt_id
+                   efex_mkt_id = rcd_efex_matl.efex_mkt_id,
+                   efex_matl_code = rcd_efex_matl.efex_matl_code
              where efex_matl_id = rcd_efex_matl.efex_matl_id;
       end;
 
@@ -327,7 +326,7 @@ create or replace package body ods_app.efxcdw10_loader as
    /*-------------*/
    end process_record_hdr;
 
-end efxcdw10_loader;
+end efxcdw10_loader; 
 /
 
 /**************************/
