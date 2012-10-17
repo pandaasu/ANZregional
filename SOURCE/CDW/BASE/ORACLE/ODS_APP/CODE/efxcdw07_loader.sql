@@ -1,6 +1,3 @@
-/******************/
-/* Package Header */
-/******************/
 create or replace package ods_app.efxcdw07_loader as
 
    /******************************************************************************/
@@ -16,7 +13,8 @@ create or replace package ods_app.efxcdw07_loader as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2010/05   Steve Gregan   Created
+    2010/05   Steve Gregan   Created 
+    2012/07   Trevor Keon    Added Period field 
 
    *******************************************************************************/
 
@@ -30,9 +28,6 @@ create or replace package ods_app.efxcdw07_loader as
 end efxcdw07_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
 create or replace package body ods_app.efxcdw07_loader as
 
    /*-*/
@@ -128,6 +123,7 @@ create or replace package body ods_app.efxcdw07_loader as
       lics_inbound_utility.set_definition('HDR','CAL_WEEK3DAYSEQ',15);
       lics_inbound_utility.set_definition('HDR','CAL_WEEK4DAYSEQ',15);
       lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
+      lics_inbound_utility.set_definition('HDR','PERIOD',50);
 
    /*-------------*/
    /* End routine */
@@ -312,6 +308,7 @@ create or replace package body ods_app.efxcdw07_loader as
       rcd_efex_cust.efex_mkt_id := var_trn_market;
       rcd_efex_cust.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
       rcd_efex_cust.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_cust.period := lics_inbound_utility.get_variable('PERIOD');
       rcd_efex_cust.valdtn_status := ods_constants.valdtn_unchecked;
       var_trn_count := var_trn_count + 1;
 
@@ -373,7 +370,8 @@ create or replace package body ods_app.efxcdw07_loader as
                    efex_mkt_id = rcd_efex_cust.efex_mkt_id,
                    efex_lupdt = rcd_efex_cust.efex_lupdt,
                    status = rcd_efex_cust.status,
-                   valdtn_status = rcd_efex_cust.valdtn_status
+                   valdtn_status = rcd_efex_cust.valdtn_status,
+                   period = rcd_efex_cust.period
              where efex_cust_id = rcd_efex_cust.efex_cust_id;
       end;
 
@@ -396,9 +394,3 @@ create or replace package body ods_app.efxcdw07_loader as
 
 end efxcdw07_loader;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw07_loader for ods_app.efxcdw07_loader;
-grant execute on ods_app.efxcdw07_loader to lics_app;

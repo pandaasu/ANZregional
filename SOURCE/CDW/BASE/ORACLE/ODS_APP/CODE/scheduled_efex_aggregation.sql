@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE         scheduled_efex_aggregation IS
+create or replace package ods_app.scheduled_efex_aggregation is
 
 /*******************************************************************************
   NAME:      run_efex_aggregation
@@ -50,8 +50,12 @@ CREATE OR REPLACE PACKAGE         scheduled_efex_aggregation IS
                                       change in efex application
   1.6   06/07/2009 Trevor Keon        - Added batch commits to the efex_distbn_fact_aggr function
   1.7   28/06/2010 Steve Gregan       - Added market id to the flattening/aggregation process
-                                        This process is now performed by market id
-
+                                        This process is now performed by market id 
+  1.8   26/07/2012 Trevor Keon        - Added promo price for distribution 
+                                      - Added period for customer details 
+  1.9   28/08/2012 Mal Chambeyron     - Add assmnt_title to efex_assmnt_questn_flattening()
+                                      - Add lics_setting_configuration.retrieve_setting() for email
+                                       
   PARAMETERS:
   Pos  Type   Format   Description                          Example
   ---- ------ -------- ------------------------------------ --------------------
@@ -121,14 +125,17 @@ FUNCTION format_cust_code (
 END scheduled_efex_aggregation;
 /
 
-
-CREATE OR REPLACE PACKAGE BODY         scheduled_efex_aggregation IS
+create or replace package body ods_app.scheduled_efex_aggregation is
 
   c_future_date          CONSTANT DATE := TO_DATE('99991231','YYYYMMDD');
   c_tp_budget_target_id  CONSTANT efex_target_fact.efex_target_id%TYPE := 12;
   p_market_id            NUMBER;
   p_company_code         VARCHAR2(10);
 
+  con_ema_group constant varchar2(32) := 'EFEX_CDW_POLLER'; 
+  con_ema_code constant varchar2(32) := 'EMAIL_GROUP';
+  con_email constant varchar2(256) := lics_setting_configuration.retrieve_setting(con_ema_group, con_ema_code);  
+  
 FUNCTION efex_ref_data_flattening (
   i_log_level             IN ods.log.log_level%TYPE
   ) RETURN NUMBER;
@@ -585,6 +592,9 @@ BEGIN
    ***   CALLING FACT AGGREGATIONS  ***
    ************************************/
 
+/*    Commented out 6 June by Craig Drew as a part of aggregation catch up     
+
+
   -- Calling the efex_route_sched_fact_aggr function.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Calling the efex_route_sched_fact_aggr function.');
   v_status := efex_route_sched_fact_aggr(v_aggregation_date, v_log_level + 1);
@@ -755,7 +765,14 @@ BEGIN
 
   -- End scheduled efex aggregation processing.
   write_log(ods_constants.data_type_generic, 'N/A', v_log_level, 'Scheduled Efex Flattening and Aggregation - End');
+*/
 
+  -- End scheduled efex aggregation processing.
+  write_log(ods_constants.data_type_generic, 'N/A', v_log_level, 'Scheduled Efex Flattening but NOT Aggregation - End');
+
+  -- utils.send_short_email('group_anz_applications_support_team@smtp.ap.mars', 'Scheduled Efex Flattening', 'Scheduled Efex Flattening but NOT Aggregation Completed for date: ' || v_aggregation_date || ' and market: ' || p_market_id);
+  utils.send_short_email(con_email, 'Scheduled Efex Flattening', 'Scheduled Efex Flattening but NOT Aggregation Completed for date: ' || v_aggregation_date || ' and market: ' || p_market_id);
+  
 EXCEPTION
   WHEN e_processing_error THEN
     write_log(ods_constants.data_type_generic,
@@ -1782,6 +1799,7 @@ BEGIN
                   display_qty,
                   inv_qty,
                   matl_price,
+                  promo_price,
                   gap,
                   gap_new,
                   gap_closed,
@@ -1819,6 +1837,7 @@ BEGIN
                  t1.display_qty,
                  t1.inv_qty,
                  t1.matl_price,
+                 t1.promo_price,
                  t1.gap,
                  t1.gap_new,
                  t1.gap_closed,
@@ -2129,7 +2148,8 @@ FUNCTION efex_cust_flattening (
       t1.status,
       t2.sales_terr_code,
       t2.sales_terr_mgr_id,
-      t2.efex_sgmnt_id
+      t2.efex_sgmnt_id,
+      t1.period
     FROM
       efex_cust t1,
       efex_sales_terr_dim t2
@@ -2396,7 +2416,8 @@ BEGIN
                 status,
                 last_call_date,
                 last_order_date,
-                last_order_id
+                last_order_id,
+                period
                )
              VALUES
               (
@@ -2435,7 +2456,8 @@ BEGIN
                rv_efex_cust.status,
                v_last_call_date,
                v_last_order_date,
-               v_last_order_id
+               v_last_order_id,
+               rv_efex_cust.period
               );
 
              v_insert_count := v_insert_count + SQL%ROWCOUNT;
@@ -2471,6 +2493,7 @@ BEGIN
                    display_qty,
                    inv_qty,
                    matl_price,
+                   promo_price,
                    gap,
                    gap_new,
                    gap_closed,
@@ -2508,6 +2531,7 @@ BEGIN
                   t1.display_qty,
                   t1.inv_qty,
                   t1.matl_price,
+                  t1.promo_price,
                   t1.gap,
                   t1.gap_new,
                   t1.gap_closed,
@@ -2799,7 +2823,8 @@ BEGIN
                 active_flg = rv_efex_cust.active_flg,
                 status = rv_efex_cust.status,
                 eff_end_date = CASE WHEN (rv_efex_cust.status = 'X' AND eff_end_date = c_future_date) THEN rv_efex_cust.efex_lupdt
-                                    WHEN (rv_efex_cust.status = 'A') THEN c_future_date ELSE eff_end_date END
+                                    WHEN (rv_efex_cust.status = 'A') THEN c_future_date ELSE eff_end_date END,
+                period = rv_efex_cust.period
              WHERE
                efex_cust_id = rv_efex_cust.efex_cust_id
                AND last_rec_flg = 'Y';
@@ -3278,6 +3303,7 @@ BEGIN
        efex_assmnt_questn_dim t1
      USING (SELECT
               t1.assmnt_id as efex_assmnt_id,
+              t1.assmnt_title,
               t1.assmnt_questn,
               t1.questn_grp,
               t1.sgmnt_id      as efex_sgmnt_id,
@@ -3296,6 +3322,7 @@ BEGIN
         ON (t1.efex_assmnt_id = t2.efex_assmnt_id )
         WHEN MATCHED THEN
           UPDATE SET
+              t1.assmnt_title = t2.assmnt_title,
               t1.assmnt_questn = t2.assmnt_questn,
               t1.questn_grp = t2.questn_grp,
               t1.efex_sgmnt_id = t2.efex_sgmnt_id,
@@ -3307,6 +3334,7 @@ BEGIN
         WHEN NOT MATCHED THEN
           INSERT
             (t1.efex_assmnt_id,
+             t1.assmnt_title,
              t1.assmnt_questn,
              t1.questn_grp,
              t1.efex_sgmnt_id,
@@ -3317,6 +3345,7 @@ BEGIN
              t1.status)
           VALUES
             (t2.efex_assmnt_id,
+             t2.assmnt_title,
              t2.assmnt_questn,
              t2.questn_grp,
              t2.efex_sgmnt_id,
@@ -3632,8 +3661,9 @@ FUNCTION efex_distbn_xactn_flattening (
       -- gap_flg_code need to be retrieve later after determine the gap_new, gap_closed
       t1.facing_qty,
       t1.display_qty,
-      inv_qty,
-      sell_price as matl_price,
+      t1.inv_qty,
+      t1.sell_price as matl_price,
+      t1.promo_price,
       -- NOTE: only handle petcare and snackfood
       CASE WHEN (t1.facing_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_pet AND t2.rqd_date_instore IS NULL) THEN 1
            WHEN (t1.display_qty = 0 AND t1.bus_unit_id = ods_constants.efex_bus_unit_snack AND t2.rqd_date_instore IS NULL) THEN 1
@@ -3835,6 +3865,7 @@ BEGIN
                display_qty,
                inv_qty,
                matl_price,
+               promo_price,
                gap,
                gap_new,
                gap_closed,
@@ -3872,6 +3903,7 @@ BEGIN
               rv_efex_distbn.display_qty,
               rv_efex_distbn.inv_qty,
               rv_efex_distbn.matl_price,
+              rv_efex_distbn.promo_price,
               rv_efex_distbn.gap,
               v_gap_new,
               v_gap_closed,
@@ -7728,7 +7760,7 @@ BEGIN
               t1.cust_note_title,
               t1.cust_note_body,
               t1.cust_note_author,
-              to_date(t1.cust_note_created) as cust_note_created
+              to_date(t1.cust_note_created,'yyyy/mm/dd hh24:mi:ss') as cust_note_created
             FROM
               efex_cust_note t1,
               efex_cust_dtl_dim t2,
@@ -8227,3 +8259,4 @@ END write_log;
 
 END scheduled_efex_aggregation;
 /
+

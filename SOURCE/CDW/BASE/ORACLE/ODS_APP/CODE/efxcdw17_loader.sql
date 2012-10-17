@@ -17,6 +17,8 @@ create or replace package ods_app.efxcdw17_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2010/05   Steve Gregan   Created
+    2012/08   Mal Chambeyron Add comm_title 
+    2012/09   Mal Chambeyron Modify comm_title to assmnt_title 
 
    *******************************************************************************/
 
@@ -90,6 +92,7 @@ create or replace package body ods_app.efxcdw17_loader as
       /*-*/
       lics_inbound_utility.set_definition('HDR','RCD_ID',3);
       lics_inbound_utility.set_definition('HDR','COM_ID',10);
+      lics_inbound_utility.set_definition('HDR','COM_TITLE',50);
       lics_inbound_utility.set_definition('HDR','COM_TYPE',50);
       lics_inbound_utility.set_definition('HDR','CGR_ID',10);
       lics_inbound_utility.set_definition('HDR','CGR_NAME',50);
@@ -250,6 +253,7 @@ create or replace package body ods_app.efxcdw17_loader as
 
       rcd_efex_assmnt_questn.assmnt_id := lics_inbound_utility.get_number('COM_ID',null);
       rcd_efex_assmnt_questn.assmnt_questn := null;
+      rcd_efex_assmnt_questn.assmnt_title := lics_inbound_utility.get_variable('COM_TITLE');
       rcd_efex_assmnt_questn.questn_type := lics_inbound_utility.get_variable('COM_TYPE');
       rcd_efex_assmnt_questn.efex_grp_id := lics_inbound_utility.get_number('CGR_ID',null);
       rcd_efex_assmnt_questn.questn_grp := lics_inbound_utility.get_variable('CGR_NAME');
@@ -369,6 +373,7 @@ create or replace package body ods_app.efxcdw17_loader as
          when dup_val_on_index then
             update efex_assmnt_questn
                set assmnt_questn = rcd_efex_assmnt_questn.assmnt_questn,
+                   assmnt_title = rcd_efex_assmnt_questn.assmnt_title,
                    questn_type = rcd_efex_assmnt_questn.questn_type,
                    efex_grp_id = rcd_efex_assmnt_questn.efex_grp_id,
                    questn_grp = rcd_efex_assmnt_questn.questn_grp,

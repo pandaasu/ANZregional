@@ -1,6 +1,3 @@
-/******************/
-/* Package Header */
-/******************/
 create or replace package ods_app.efxcdw22_loader as
 
    /******************************************************************************/
@@ -12,11 +9,13 @@ create or replace package ods_app.efxcdw22_loader as
 
     Description
     -----------
-    Operational Data Store - Efex Distribution Data - EFEX to CDW
+    Operational Data Store - Efex Distribution Data - EFEX to CDW 
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2010/05   Steve Gregan   Created
+    2010/05   Steve Gregan   Created 
+    2012/07   Trevor Keon    Added Promo Price field
+    2012/08   Mal Chambeyron Modify Promo Price to VARCHAR2, equal to source
 
    *******************************************************************************/
 
@@ -30,9 +29,6 @@ create or replace package ods_app.efxcdw22_loader as
 end efxcdw22_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
 create or replace package body ods_app.efxcdw22_loader as
 
    /*-*/
@@ -101,6 +97,7 @@ create or replace package body ods_app.efxcdw22_loader as
       lics_inbound_utility.set_definition('HDR','REQ_FLAG',1);
       lics_inbound_utility.set_definition('HDR','INV_QTY',15);
       lics_inbound_utility.set_definition('HDR','SEL_PRICE',15);
+      lics_inbound_utility.set_definition('HDR','PRO_PRICE',15);
       lics_inbound_utility.set_definition('HDR','IST_DATE',14);
       lics_inbound_utility.set_definition('HDR','STATUS',1);
       lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
@@ -260,6 +257,8 @@ create or replace package body ods_app.efxcdw22_loader as
       rcd_efex_distbn.rqd_flg := lics_inbound_utility.get_variable('REQ_FLAG');
       rcd_efex_distbn.inv_qty := lics_inbound_utility.get_number('INV_QTY',null);
       rcd_efex_distbn.sell_price := lics_inbound_utility.get_number('SEL_PRICE',null);
+      -- rcd_efex_distbn.promo_price := lics_inbound_utility.get_number('PRO_PRICE',null);
+      rcd_efex_distbn.promo_price := lics_inbound_utility.get_variable('PRO_PRICE');
       rcd_efex_distbn.in_store_date := lics_inbound_utility.get_date('IST_DATE','yyyymmddhh24miss');
       rcd_efex_distbn.status := lics_inbound_utility.get_variable('STATUS');
       rcd_efex_distbn.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
@@ -296,6 +295,7 @@ create or replace package body ods_app.efxcdw22_loader as
                    rqd_flg = rcd_efex_distbn.rqd_flg,
                    inv_qty = rcd_efex_distbn.inv_qty,
                    sell_price = rcd_efex_distbn.sell_price,
+                   promo_price = rcd_efex_distbn.promo_price,
                    in_store_date = rcd_efex_distbn.in_store_date,
                    status = rcd_efex_distbn.status,
                    efex_lupdt = rcd_efex_distbn.efex_lupdt,
@@ -325,8 +325,3 @@ create or replace package body ods_app.efxcdw22_loader as
 end efxcdw22_loader;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw22_loader for ods_app.efxcdw22_loader;
-grant execute on ods_app.efxcdw22_loader to lics_app;
