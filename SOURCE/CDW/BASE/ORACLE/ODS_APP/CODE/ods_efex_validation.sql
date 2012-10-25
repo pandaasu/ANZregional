@@ -42,7 +42,7 @@ create or replace package ods_app.ods_efex_validation as
    /*-*/
    procedure execute(par_market in number);
 
-end ods_efex_validation;
+end ods_efex_validation; 
 /
 
 /****************/
@@ -106,7 +106,7 @@ create or replace package body ods_app.ods_efex_validation as
    /*-*/
    /* Private constants
    /*-*/
-   pcon_com_count constant number := 500;
+   pcon_com_count constant number := 10000;
 
    /*-*/
    /* Private definitions
@@ -275,6 +275,8 @@ create or replace package body ods_app.ods_efex_validation as
          raise_application_error(-20000, '**LOGGED ERROR**');
 
       end if;
+
+      utils.send_short_email('Group_ANZ_Venus_Production_Notification@smtp.ap.mars', 'Efex Validation', 'Efex Validation Completed for: ' || var_market);
 
    /*-------------------*/
    /* Exception handler */
