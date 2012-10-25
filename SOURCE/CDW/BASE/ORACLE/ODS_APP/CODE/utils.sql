@@ -8,9 +8,9 @@ CREATE OR REPLACE PACKAGE ODS_APP.utils AS
     Ver   Date       Author               Description
     ----- ---------- -------------------- ----------------------------------------
     1.0   21/06/2004 Gerald Arnold        Created this procedure.
-	2.0   01/06/2006 Linden Glen 		  RE-Write of procedure to remove repetition
-	                                      of slow running query. Overcome issue when
-										  validation executes over a long period of time
+   2.0   01/06/2006 Linden Glen         RE-Write of procedure to remove repetition
+                                         of slow running query. Overcome issue when
+                                validation executes over a long period of time
 
     PARAMETERS:
     Pos  Type   Format   Description                          Example
@@ -628,7 +628,6 @@ CREATE OR REPLACE PACKAGE ODS_APP.utils AS
     ) RETURN NUMBER;
 
 END utils;
-/
 
 CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
 
@@ -1063,15 +1062,15 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                   v_log_level,
                   'Execute command and returning results from shell.');
     BEGIN
-		  IF (ods_constants.run_unix_commands) THEN
+          IF (ods_constants.run_unix_commands) THEN
         v_temp := dbec.java_utility.execute_external_function('"' || ods_constants.base_unix_directory || '/bin/sh.sh" "-c" "' || i_unix_command || '"');
-			ELSE
-		    utils.ods_log(ods_constants.job_type_utils,
-		                  ods_constants.data_type_unix_command,
-		                  ods_constants.data_type_unix_command,
-		                  v_log_level,
-		                  'Not actually executing unix command due to constants paramter.');
-			END IF;
+            ELSE
+            utils.ods_log(ods_constants.job_type_utils,
+                          ods_constants.data_type_unix_command,
+                          ods_constants.data_type_unix_command,
+                          v_log_level,
+                          'Not actually executing unix command due to constants paramter.');
+            END IF;
     EXCEPTION
       WHEN OTHERS THEN
         utils.ods_log(ods_constants.job_type_utils,
@@ -1225,9 +1224,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     'ERROR',
                     0,
                     '!!!ERROR!!! - utl_smtp.transient_error OR utl_smtp.permanent_error occured.');
-      raise_application_error(-20000,
+      /*raise_application_error(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN others THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1374,9 +1373,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
         CLOSE csr_company_addresses;
       END IF;
 
-      raise_application_error(-20000,
+      /*raise_application_error(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN others THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1504,9 +1503,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     'ERROR',
                     0,
                     '!!!ERROR!!! - utl_smtp.transient_error OR utl_smtp.permanent_error occured.');
-      RAISE_APPLICATION_ERROR(-20000,
+    /*  RAISE_APPLICATION_ERROR(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN others THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1555,9 +1554,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     'ERROR',
                     0,
                     '!!!ERROR!!! - utl_smtp.transient_error OR utl_smtp.permanent_error occured.');
-      RAISE_APPLICATION_ERROR(-20000,
+     /* RAISE_APPLICATION_ERROR(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN others THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1644,9 +1643,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     'ERROR',
                     0,
                     '!!!ERROR!!! - utl_smtp.transient_error OR utl_smtp.permanent_error occured.');
-      RAISE_APPLICATION_ERROR(-20000,
+     /* RAISE_APPLICATION_ERROR(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN others THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1701,9 +1700,9 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     'ERROR',
                     0,
                     '!!!ERROR!!! - utl_smtp.transient_error OR utl_smtp.permanent_error occured.');
-      RAISE_APPLICATION_ERROR(-20000,
+     /* RAISE_APPLICATION_ERROR(-20000,
                               'Failed to send mail due to the following error: ' ||
-                              sqlerrm);
+                              sqlerrm);*/
 
     WHEN OTHERS THEN
       utils.ods_log(ods_constants.job_type_utils,
@@ -1982,7 +1981,7 @@ CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
                     0,
                     '!!!ERROR111!!! - FATAL ERROR FOR SEND_TIVOLI_ALERT.' ||
                     ' ERROR MESSAGE: ' || SUBSTR(SQLERRM, 1, 512));
-      RAISE_APPLICATION_ERROR(-20000, 'Failed to send Tivoli Alert.');
+     -- RAISE_APPLICATION_ERROR(-20000, 'Failed to send Tivoli Alert.');
   END send_tivoli_alert;
 
 
@@ -2625,6 +2624,4 @@ BEGIN
   v_item_code_6           := NULL;
   v_valdtn_reasn_dtl_seq  := NULL;
 
-END utils; 
-/
-
+END utils;

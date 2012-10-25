@@ -43,7 +43,6 @@ create or replace package ods_app.ods_efex_validation as
    procedure execute(par_market in number);
 
 end ods_efex_validation; 
-/
 
 /****************/
 /* Package Body */
@@ -6107,7 +6106,7 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          /* Raise an exception to the caller
          /*-*/
-         raise_application_error(-20000, '**ERROR**');
+       --  raise_application_error(-20000, '**ERROR**');
 
    /*-------------*/
    /* End routine */
