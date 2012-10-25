@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_mailer as
+CREATE OR REPLACE package LICS_APP.lics_mailer as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -18,25 +15,25 @@ create or replace package lics_mailer as
 
  The package implements the mailer functionality.
 
-  PROCEDURE: CREATE_EMAIL 
+  PROCEDURE: CREATE_EMAIL
 
    1. PAR_SENDER ('sender@host', null)  null = default of 'CURRENT_USER@DB_NAME'
    1. PAR_RECIPIENT ('linden.glen','linden.glen@ap.effem.com','linden.glen@smtp.ap.mars')
-   2. PAR_SUBJECT   ('subject', null) 
+   2. PAR_SUBJECT   ('subject', null)
    3. PAR_SMTP_HOST ('host', null)  null = default of 'smtp.ap.mars'
    4. PAR_SMTP_PORT ('port', null)  null = default of 25
 
-  PROCEDURE: CREATE_PART 
+  PROCEDURE: CREATE_PART
 
    1. PAR_File ('file name', null)
-  
+
       Part to be created in email body.
       File name ('filename.ext') - max length 128 characters (null = text in body)
 
-  PROCEDURE: APPEND_DATA 
+  PROCEDURE: APPEND_DATA
 
    1. PAR_DATA ('data', null)
-  
+
       Data line to be written to email body. Max length 4000 characters.
 
   PROCEDURE: FINALISE_EMAIL
@@ -65,7 +62,7 @@ create or replace package lics_mailer as
 
         lics_mailer.create_part(null);
         lics_mailer.append_data('End of load report');
-        
+
         lics_mailer.finalise_email;
 
      exception
@@ -83,7 +80,7 @@ create or replace package lics_mailer as
         < processing >
 
         lics_mailer.send_short_email('LOADER@AP0001P.AP.MARS',
-                                     'linden.glen', 
+                                     'linden.glen',
                                      'INFO : Processing Complete',
                                      '123 records processed on 20051023 successfully',
                                      null,
@@ -106,13 +103,13 @@ create or replace package lics_mailer as
    /* Public declarations
    /*-*/
    procedure send_short_email(par_sender in varchar2,
-                              par_recipient in varchar2, 
+                              par_recipient in varchar2,
                               par_subject in varchar2,
                               par_body in varchar2,
                               par_smtp_host in varchar2,
                               par_smtp_port in number);
    procedure create_email(par_sender in varchar2,
-                          par_recipient in varchar2, 
+                          par_recipient in varchar2,
                           par_subject in varchar2,
                           par_smtp_host in varchar2,
                           par_smtp_port in number);
@@ -122,7 +119,6 @@ create or replace package lics_mailer as
    function is_created return boolean;
 
 end lics_mailer;
-/
 
 /****************/
 /* Package Body */
@@ -165,11 +161,11 @@ create or replace package body lics_mailer as
    /* This function performs the short email routine */
    /**************************************************/
    procedure send_short_email(par_sender in varchar2,
-                              par_recipient in varchar2, 
+                              par_recipient in varchar2,
                               par_subject in varchar2,
                               par_body in varchar2,
                               par_smtp_host in varchar2,
-                              par_smtp_port in number) is 
+                              par_smtp_port in number) is
 
    /*-------------*/
    /* Begin block */
@@ -195,17 +191,17 @@ create or replace package body lics_mailer as
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   exception
+   --exception
 
       /**/
       /* Exception trap
       /**/
-      when others then
+     -- when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - SEND_SHORT_EMAIL - ' || substr(SQLERRM, 1, 1024));
+       --  raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - SEND_SHORT_EMAIL - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -216,7 +212,7 @@ create or replace package body lics_mailer as
    /* This function performs the create email routine */
    /***************************************************/
    procedure create_email(par_sender in varchar2,
-                          par_recipient in varchar2, 
+                          par_recipient in varchar2,
                           par_subject in varchar2,
                           par_smtp_host in varchar2,
                           par_smtp_port in number) is
@@ -270,7 +266,7 @@ create or replace package body lics_mailer as
       /* Default and set the SMTP host variable
       /*-*/
       if par_smtp_host is null then
-         var_smtp_host := con_default_smtp_host;       
+         var_smtp_host := con_default_smtp_host;
       else
          var_smtp_host := par_smtp_host;
       end if;
@@ -279,7 +275,7 @@ create or replace package body lics_mailer as
       /* Default and set the SMTP port variable
       /*-*/
       if par_smtp_host is null then
-         var_smtp_port := con_default_smtp_port;       
+         var_smtp_port := con_default_smtp_port;
       else
          var_smtp_port := par_smtp_port;
       end if;
@@ -298,17 +294,17 @@ create or replace package body lics_mailer as
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   exception
+   --exception
 
       /**/
       /* Exception trap
       /**/
-      when others then
+     -- when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - CREATE_EMAIL - ' || substr(SQLERRM, 1, 1024));
+       --  raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - CREATE_EMAIL - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -357,17 +353,17 @@ create or replace package body lics_mailer as
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   exception
+   --exception
 
       /**/
       /* Exception trap
       /**/
-      when others then
+     -- when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - CREATE_PART - ' || substr(SQLERRM, 1, 1024));
+       --  raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - CREATE_PART - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -421,17 +417,17 @@ create or replace package body lics_mailer as
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   exception
+  -- exception
 
       /**/
       /* Exception trap
       /**/
-      when others then
+    --  when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - APPEND_DATA - ' || substr(SQLERRM, 1, 1024));
+       --  raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - APPEND_DATA - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
@@ -500,7 +496,7 @@ create or replace package body lics_mailer as
 
       /*-*/
       /* Write email body from the part and data array
-      /*-*/      
+      /*-*/
       for pidx in 1..tbl_part.count loop
          if tbl_part(pidx).part_file is null then
             utl_smtp.write_data(var_connection, con_open_email_boundary || utl_tcp.CRLF);
@@ -526,12 +522,12 @@ create or replace package body lics_mailer as
 
       /*-*/
       /* Close the email boundary
-      /*-*/  
+      /*-*/
       utl_smtp.write_data(var_connection, con_close_email_boundary || utl_tcp.CRLF);
 
       /*-*/
       /* Close the data stream and quit the connection
-      /*-*/   
+      /*-*/
       utl_smtp.close_data(var_connection);
       utl_smtp.quit(var_connection);
 
@@ -543,17 +539,17 @@ create or replace package body lics_mailer as
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
-   exception
+   --exception
 
       /**/
       /* Exception trap
       /**/
-      when others then
+   --   when others then
 
          /*-*/
          /* Raise an exception to the calling application
          /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - FINALISE_EMAIL - ' || substr(SQLERRM, 1, 1024));
+       --  raise_application_error(-20000, 'FATAL ERROR - LICS_MAILER - FINALISE_EMAIL - ' || substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
