@@ -4,18 +4,19 @@ create or replace package qv_app.qv_csvqvs01_loader as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : qv_csvqvs01_loader
-    Owner   : qv_app
+    Package : qv_csvqvs01_loader 
+    Owner   : qv_app 
 
-    Description
-    -----------
-    CSV File to Qlikview - CSVQVS01 - NZ Demand Planning ReGroup
+    Description 
+    ----------- 
+    CSV File to Qlikview - CSVQVS01 - NZ Demand Planning ReGroup 
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2010/09   Trevor Keon    Created
-    2011/11   Trevor Keon    Updated to support ICS v2
-    2012/01   Trevor Keon    Added abbreviation for Regroup name
+    YYYY/MM   Author         Description 
+    -------   ------         ----------- 
+    2010/09   Trevor Keon    Created 
+    2011/11   Trevor Keon    Updated to support ICS v2 
+    2012/01   Trevor Keon    Added abbreviation for Regroup name 
+    2012/05   Trevor Keon    Added sort order 
 
    *******************************************************************************/
 
@@ -86,7 +87,8 @@ create or replace package body qv_app.qv_csvqvs01_loader as
       /*-*/
       lics_inbound_utility.set_csv_definition('REGROUP_DPG',1);
       lics_inbound_utility.set_csv_definition('DEMAND_PLANNING_GRP',2);
-      lics_inbound_utility.set_csv_definition('REGROUP_ABBR',3);   
+      lics_inbound_utility.set_csv_definition('REGROUP_ABBR',3);  
+      lics_inbound_utility.set_csv_definition('SORT_ORDER',4);  
 
       /*-*/
       /* Delete the existing data
@@ -149,6 +151,7 @@ create or replace package body qv_app.qv_csvqvs01_loader as
       rcd_nz_demand_plng_regroup.dpr_regroup_dpg := lics_inbound_utility.get_variable('REGROUP_DPG');
       rcd_nz_demand_plng_regroup.dpr_demand_plng_grp := lics_inbound_utility.get_variable('DEMAND_PLANNING_GRP');
       rcd_nz_demand_plng_regroup.dpr_regroup_abbr := lics_inbound_utility.get_variable('REGROUP_ABBR');
+      rcd_nz_demand_plng_regroup.dpr_sort_order := lics_inbound_utility.get_variable('SORT_ORDER');
 
       /*-*/
       /* Insert the row when required

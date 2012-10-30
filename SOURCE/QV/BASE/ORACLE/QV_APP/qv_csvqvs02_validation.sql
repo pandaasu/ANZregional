@@ -4,19 +4,17 @@ create or replace package qv_app.qv_csvqvs02_validation as
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : qv_csvqvs02_validation
-    Owner   : qv_app
-    Author  : Trevor Keon
+    Package : qv_csvqvs02_validation 
+    Owner   : qv_app 
+    Author  : Trevor Keon 
 
-    Description
-    -----------
-    CSV to QV- CSVQVS - TP Budgets Validation
+    Description 
+    ----------- 
+    CSV to QV- CSVQVS - NZ KAM Forecast Validation 
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2010/09   Trevor Keon    Created
-    2011/02   Trevor Keon    Added blank line check
-    2011/11   Trevor Keon    Updated to support ICS v2
+    YYYY/MM   Author         Description 
+    -------   ------         ----------- 
+    2012/08   Trevor Keon    Created 
 
    *******************************************************************************/
 
@@ -31,11 +29,15 @@ end qv_csvqvs02_validation;
 create or replace package body qv_app.qv_csvqvs02_validation as
 
    /*-*/
+   /* Private declarations  
+   /*-*/
+   function check_nz_regroup(par_value in varchar2) return varchar2;
+
+   /*-*/
    /* Private constants 
    /*-*/
-   con_interface constant varchar2(10) := 'CSVQVS02';
-   con_header_row constant number := 1;
    con_delimiter constant varchar2(32)  := ',';
+   con_header_row constant number := 1;
 
    /*-*/
    /* Private definitions
@@ -52,26 +54,21 @@ create or replace package body qv_app.qv_csvqvs02_validation as
    /*-------------*/
    /* Begin block */
    /*-------------*/   
-   begin
-   
+   begin   
       /*-*/
       /* Initialise the variables
       /*-*/   
       var_line_count := 0;
- 
+      
       /*-*/
       /* Initialise the definitions
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
-      lics_inbound_utility.set_csv_definition('DATE',1);
-      lics_inbound_utility.set_csv_definition('DEMAND_GROUP',2);
-      lics_inbound_utility.set_csv_definition('BRAND',3);
-      lics_inbound_utility.set_csv_definition('MARKET_SUB_CATEGORY',4);
-      lics_inbound_utility.set_csv_definition('MARS_YEAR',5);
-      lics_inbound_utility.set_csv_definition('MARS_PERIOD',6);
-      lics_inbound_utility.set_csv_definition('MARS_PERIOD_WEEK',7);
-      lics_inbound_utility.set_csv_definition('BUDGET',8); 
+      lics_inbound_utility.set_csv_definition('MARS_PERIOD',1);
+      lics_inbound_utility.set_csv_definition('MARS_WEEK',2);
+      lics_inbound_utility.set_csv_definition('NZ_REGROUP',3);
+      lics_inbound_utility.set_csv_definition('FORECAST',4); 
       
       return var_message;
    
@@ -113,7 +110,7 @@ create or replace package body qv_app.qv_csvqvs02_validation as
       /*-*/      
       if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
          return var_message;
-      end if;      
+      end if;  
       
       /*-------------------------------*/
       /* PARSE - Parse the data record */
@@ -121,55 +118,31 @@ create or replace package body qv_app.qv_csvqvs02_validation as
       lics_inbound_utility.parse_csv_record(par_record, con_delimiter);       
 
       /*-*/
-      /* Validate the data
+      /* Validate the data 
       /*-*/
-      if qv_validation_utilities.check_date(lics_inbound_utility.get_variable('DATE'), 'DD/MM/YYYY') = false then
-         if not(var_message is null) then
-            var_message := var_message || '; ';
-         end if;
-         var_message := var_message || 'As At Date is not a valid date format - expecting DD/MM/YYYY format';         
-      end if;
-      if lics_inbound_utility.get_variable('DEMAND_GROUP') is null then
-         if not(var_message is null) then
-            var_message := var_message || '; ';
-         end if;
-         var_message := var_message || 'Demand group value not set';
-      end if;
-      if lics_inbound_utility.get_variable('BRAND') is null then
-         if not(var_message is null) then
-            var_message := var_message || '; ';
-         end if;
-         var_message := var_message || 'Brand value not set';
-      end if;
-      if lics_inbound_utility.get_variable('MARKET_SUB_CATEGORY') is null then
-         if not(var_message is null) then
-            var_message := var_message || '; ';
-         end if;
-         var_message := var_message || 'Market sub category not set';
-      end if;
-      if qv_validation_utilities.check_mars_calendar(lics_inbound_utility.get_variable('MARS_YEAR'), '*YEAR') = false then
-         if not(var_message is null) then
-            var_message := var_message || '; ';
-         end if;
-         var_message := var_message || 'Mars Year does not exist';
-      end if;
       if qv_validation_utilities.check_mars_calendar(lics_inbound_utility.get_variable('MARS_PERIOD'), '*PERIOD') = false then
          if not(var_message is null) then
             var_message := var_message || '; ';
          end if;
-         var_message := var_message || 'Mars Period does not exist';
+         var_message := var_message || 'Mars Period [' || lics_inbound_utility.get_variable('MARS_PERIOD') || '] does not exist';
       end if;
-      if qv_validation_utilities.check_mars_calendar(lics_inbound_utility.get_variable('MARS_PERIOD_WEEK'), '*PERIOD_WEEK') = false then
+      if qv_validation_utilities.check_mars_calendar(lics_inbound_utility.get_variable('MARS_WEEK'), '*PERIOD_WEEK') = false then
          if not(var_message is null) then
             var_message := var_message || '; ';
          end if;
-         var_message := var_message || 'Mars Period Week does not exist';
+         var_message := var_message || 'Mars Week [' || lics_inbound_utility.get_variable('MARS_WEEK') || '] does not exist';
       end if;
-      if qv_validation_utilities.check_number(lics_inbound_utility.get_variable('BUDGET')) = false then
+      if check_nz_regroup(lics_inbound_utility.get_variable('NZ_REGROUP')) is null then
          if not(var_message is null) then
             var_message := var_message || '; ';
          end if;
-         var_message := var_message || 'Budget is not a valid number';
+         var_message := var_message || 'NZ Regroup value not set or not found [' || lics_inbound_utility.get_variable('NZ_REGROUP') || ']';
+      end if;
+      if qv_validation_utilities.check_number(lics_inbound_utility.get_variable('FORECAST')) = false then
+         if not(var_message is null) then
+            var_message := var_message || '; ';
+         end if;
+         var_message := var_message || 'Forecast is not a valid number';
       end if;
 
       /*-*/
@@ -181,6 +154,35 @@ create or replace package body qv_app.qv_csvqvs02_validation as
    /* End routine */
    /*-------------*/
    end on_data;
+   
+   function check_nz_regroup(par_value in varchar2) return varchar2 is
+   
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_result varchar2(100 char);
+      
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_nz_regroup is
+        select nkf_regroup_dpg
+        from nz_kam_forecast
+        where nkf_regroup_dpg = par_value;
+      rcd_nz_regroup csr_nz_regroup%rowtype;    
+   
+   begin
+     open csr_nz_regroup;
+       fetch csr_nz_regroup into rcd_nz_regroup;
+       if csr_nz_regroup%notfound then
+         var_result := null;
+       else
+         var_result := rcd_nz_regroup.nkf_regroup_dpg;
+       end if;
+     close csr_nz_regroup;
+     
+     return var_result;    
+   end;
    
 end qv_csvqvs02_validation;
 
