@@ -24,7 +24,8 @@ create or replace package qv_app.qv_validation_utilities as
     -------   ------         -----------
     2010/09   Trevor Keon    Created
     2011/02   Trevor Keon    Added blank line check
-    2011/11   Trevor Keon    Updated to support ICS v2
+    2011/11   Trevor Keon    Updated to support ICS v2 
+    2012/10   Trevor Keon    Added number format to number validation
 
    *******************************************************************************/
 
@@ -33,6 +34,7 @@ create or replace package qv_app.qv_validation_utilities as
    /*-*/
    function check_date(par_date in varchar2, par_format in varchar2) return boolean;
    function check_number(par_number in varchar2) return boolean;
+   function check_number(par_number in varchar2, par_number_format in varchar2) return boolean;
    function check_length(par_value in varchar2, par_length in number) return boolean;
    function check_mars_calendar(par_value in varchar2, par_type in varchar2) return boolean;
    function check_blank_line(par_value in varchar2, par_delimiter in varchar2) return boolean;
@@ -72,6 +74,17 @@ create or replace package body qv_app.qv_validation_utilities as
    end check_date;
    
    function check_number(par_number in varchar2) return boolean is
+   
+   begin
+   
+      return check_number(par_number, null);  
+   
+   /*-------------*/
+   /* End routine */
+   /*-------------*/   
+   end check_number;
+   
+   function check_number(par_number in varchar2, par_number_format in varchar2) return boolean is
 
       /*-*/
       /* Local definitions
@@ -83,7 +96,13 @@ create or replace package body qv_app.qv_validation_utilities as
    
       if not(par_number is null) then      
          begin
-            var_number := to_number(par_number);
+         
+            if par_number_format is null then
+               var_number := to_number(par_number);
+            else     
+               var_number := to_number(par_number, par_number_format);
+            end if;
+            
             var_result := not(var_number is null);
          exception
             when others then
