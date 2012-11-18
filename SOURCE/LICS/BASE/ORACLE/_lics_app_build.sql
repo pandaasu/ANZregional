@@ -63,6 +63,7 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_inbound_processor.sql;
 @^pro_path\lics_inbound_utility.sql;
 @^pro_path\lics_interface_configuration.sql;
+@^pro_path\lics_interface_loader.sql;
 @^pro_path\lics_interface_process.sql;
 @^pro_path\lics_interface_search.sql;
 @^pro_path\lics_interface_view.sql;
