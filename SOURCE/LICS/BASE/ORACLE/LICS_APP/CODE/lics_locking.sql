@@ -16,6 +16,7 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2005/01   Steve Gregan   Created
+ 2012/11   Ben Halicki	  Added retrieve_lock_time and retrieve_lock_age functions
 
 *******************************************************************************/
 
