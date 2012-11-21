@@ -30,7 +30,8 @@ create or replace package lics_locking as
    procedure request(par_lock in varchar2);
    procedure release(par_lock in varchar2);
    procedure cancel(par_lock in varchar2);
-
+   function retrieve_lock_time(par_lock in varchar2) return date;
+   function retrieve_lock_age(par_lock in varchar2) return number;
 
 end lics_locking;
 /
@@ -201,6 +202,104 @@ create or replace package body lics_locking as
    /* End routine */
    /*-------------*/
    end cancel;
+
+   /**********************************************************/
+   /* This procedure performs the retrieve_lock_time routine */
+   /**********************************************************/
+   function retrieve_lock_time(par_lock in varchar2) return date is
+
+      /*-*/
+      /* Local definitions
+     /*-*/
+      var_lock varchar2(128);
+
+      /*-*/
+      /* Local cursors
+     /*-*/
+      cursor csr_lics_lock is
+         select t01.loc_time
+           from lics_lock t01
+          where t01.loc_lock = var_lock;
+      rcd_lics_lock csr_lics_lock%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the parameter variables
+      /*-*/
+      var_lock := upper(par_lock);
+
+      /*-*/
+      /* Check for an existing lock
+     /*-*/
+      open csr_lics_lock;
+      fetch csr_lics_lock into rcd_lics_lock;
+      if csr_lics_lock%notfound then
+         raise_application_error(-20000, 'LICS_LOCKING - RETRIEVE_LOCK_TIME - Lock (' || var_lock || ') does not exist');
+      end if;
+      close csr_lics_lock;
+
+      return rcd_lics_lock.loc_time;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_lock_time;
+
+   /*********************************************************/
+   /* This procedure performs the retrieve_lock_age routine */
+   /*********************************************************/
+   function retrieve_lock_age(par_lock in varchar2) return number is
+
+      /*-*/
+      /* Local definitions
+     /*-*/
+      var_lock varchar2(128);
+      var_age  number;
+      
+      /*-*/
+      /* Local cursors
+     /*-*/
+      cursor csr_lics_lock is
+         select t01.loc_time
+           from lics_lock t01
+          where t01.loc_lock = var_lock;
+      rcd_lics_lock csr_lics_lock%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the parameter variables
+     /*-*/
+      var_lock := upper(par_lock);
+
+      /*-*/
+      /* Check for an existing lock
+     /*-*/
+      open csr_lics_lock;
+      fetch csr_lics_lock into rcd_lics_lock;
+      if csr_lics_lock%notfound then
+         raise_application_error(-20000, 'LICS_LOCKING - RETRIEVE_LOCK_AGE - Lock (' || var_lock || ') does not exist');
+      end if;
+      close csr_lics_lock;
+
+      /*-*/
+      /* Calculate lock age
+     /*-*/
+      var_age := (sysdate - rcd_lics_lock.loc_time) * 86400;
+
+      return var_age;
+      
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_lock_age;
 
 end lics_locking;
 /  
