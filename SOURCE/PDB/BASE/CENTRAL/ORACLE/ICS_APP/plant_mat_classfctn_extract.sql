@@ -1,6 +1,3 @@
---
--- PLANT_MAT_CLASSFCTN_EXTRACT  (Package) 
---
 CREATE OR REPLACE PACKAGE ICS_APP.plant_mat_classfctn_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
@@ -37,7 +34,6 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_mat_classfctn_extract as
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
       - *MCA = Ballarat 
-      - *SCO = Scoresby 
       - *WOD = Wodonga 
       - *MFA = Wyong 
       - *WGI = Wanganui 
@@ -45,7 +41,8 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_mat_classfctn_extract as
   YYYY/MM   Author         Description 
   -------   ------         ----------- 
   2008/03   Trevor Keon    Created 
-  2011/12   B. Halicki    Added trigger option for sending to systems without V2
+  2011/12   B. Halicki     Added trigger option for sending to systems without V2
+  2012/11   B. Halicki     Removed Scoresby (SCO)
   
 *******************************************************************************/
 
@@ -58,25 +55,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_mat_classfctn_extract as
 end plant_mat_classfctn_extract;
 /
 
-
---
--- PLANT_MAT_CLASSFCTN_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_MAT_CLASSFCTN_EXTRACT FOR ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO ICS_EXECUTOR;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO LICS_APP;
-
-
---
--- PLANT_MAT_CLASSFCTN_EXTRACT  (Package Body) 
---
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_MAT_CLASSFCTN_EXTRACT FOR ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT;
 CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_mat_classfctn_extract as
 
   /*-*/
@@ -161,12 +140,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_mat_classfctn_extract as
     
     if ( var_site != '*ALL'
         and var_site != '*MCA'
-        and var_site != '*SCO'
         and var_site != '*WOD'
         and var_site != '*MFA'
         and var_site != '*BTH'
         and var_site != '*WGI' ) then
-      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
     
     if ( var_action = '*MATERIAL' and var_data is null ) then
@@ -196,9 +174,6 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_mat_classfctn_extract as
       end if;    
       if ( par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB11.5','Y');   
-      end if;
-      if ( par_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB11.6','Y');   
       end if;
     end if; 
 
@@ -429,17 +404,4 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_mat_classfctn_extract as
 end plant_mat_classfctn_extract;
 /
 
-
---
--- PLANT_MAT_CLASSFCTN_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_MAT_CLASSFCTN_EXTRACT FOR ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO ICS_EXECUTOR;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT TO LICS_APP;
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_MAT_CLASSFCTN_EXTRACT FOR ICS_APP.PLANT_MAT_CLASSFCTN_EXTRACT;

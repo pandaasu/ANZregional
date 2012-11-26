@@ -1,4 +1,4 @@
-create or replace package ics_app.plant_reference_data_extract as
+CREATE OR REPLACE PACKAGE ICS_APP.plant_reference_data_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
 /******************************************************************************/ 
@@ -19,7 +19,6 @@ create or replace package ics_app.plant_reference_data_extract as
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
       - *MCA = Ballarat 
-      - *SCO = Scoresby 
       - *WOD = Wodonga 
       - *MFA = Wyong 
       - *WGI = Wanganui 
@@ -39,10 +38,8 @@ create or replace package ics_app.plant_reference_data_extract as
 end plant_reference_data_extract;
 /
 
-/****************/ 
-/* Package Body */ 
-/****************/ 
-create or replace package body ics_app.plant_reference_data_extract as
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_REFERENCE_DATA_EXTRACT FOR ICS_APP.PLANT_REFERENCE_DATA_EXTRACT;
+CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_reference_data_extract as
 
   /*-*/
   /* Private exceptions 
@@ -160,15 +157,4 @@ create or replace package body ics_app.plant_reference_data_extract as
 end plant_reference_data_extract;
 /
 
-/*-*/
-/* Authority 
-/*-*/
-grant execute on ics_app.plant_reference_data_extract to appsupport;
-grant execute on ics_app.plant_reference_data_extract to lads_app;
-grant execute on ics_app.plant_reference_data_extract to lics_app;
-grant execute on ics_app.plant_reference_data_extract to ics_executor;
-
-/*-*/
-/* Synonym 
-/*-*/
-create or replace public synonym plant_reference_data_extract for ics_app.plant_reference_data_extract;
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_REFERENCE_DATA_EXTRACT FOR ICS_APP.PLANT_REFERENCE_DATA_EXTRACT;

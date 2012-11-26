@@ -1,6 +1,3 @@
---
--- PLANT_REFRNC_CHARISTIC_EXTRACT  (Package) 
---
 CREATE OR REPLACE PACKAGE ICS_APP.plant_refrnc_charistic_extract as
 /******************************************************************************/ 
 /* Package Definition                                                         */ 
@@ -18,7 +15,6 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_refrnc_charistic_extract as
     Specify the site for the data to be sent to.
       - *ALL = All sites (DEFAULT) 
       - *MCA = Ballarat 
-      - *SCO = Scoresby 
       - *WOD = Wodonga 
       - *MFA = Wyong 
       - *WGI = Wanganui 
@@ -28,6 +24,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_refrnc_charistic_extract as
   2008/03   Trevor Keon    Created 
   2008/07   Trevor Keon    Changed package to do full refreshes only
   2011/12   B. Halicki    Added trigger option for sending to systems without V2
+  2012/11   B. Halicki     Removed Scoresby (SCO)
   
 *******************************************************************************/
 
@@ -39,25 +36,7 @@ CREATE OR REPLACE PACKAGE ICS_APP.plant_refrnc_charistic_extract as
 end plant_refrnc_charistic_extract;
 /
 
-
---
--- PLANT_REFRNC_CHARISTIC_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_REFRNC_CHARISTIC_EXTRACT FOR ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO ICS_EXECUTOR;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO LICS_APP;
-
-
---
--- PLANT_REFRNC_CHARISTIC_EXTRACT  (Package Body) 
---
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_REFRNC_CHARISTIC_EXTRACT FOR ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT;
 CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_refrnc_charistic_extract as
 
   /*-*/
@@ -107,12 +86,11 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_refrnc_charistic_extract as
        
     if ( var_site != '*ALL'
         and var_site != '*MCA'
-        and var_site != '*SCO'
         and var_site != '*WOD'
         and var_site != '*MFA'
         and var_site != '*BTH'
         and var_site != '*WGI' ) then
-      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *SCO, *WOD, *MFA, *BTH, *WGI or NULL');
+      raise_application_error(-20000, 'Site parameter (' || par_site || ') must be *ALL, *MCA, *WOD, *MFA, *BTH, *WGI or NULL');
     end if;
     
     var_start := execute_extract;
@@ -136,9 +114,6 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_refrnc_charistic_extract as
       end if;    
       if (par_site in ('*ALL','*MCA') ) then
         execute_send('LADPDB07.5','Y');   
-      end if;
-      if (par_site in ('*ALL','*SCO') ) then
-        execute_send('LADPDB07.6','Y');   
       end if;
     end if; 
       
@@ -275,17 +250,4 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_refrnc_charistic_extract as
 end plant_refrnc_charistic_extract;
 /
 
-
---
--- PLANT_REFRNC_CHARISTIC_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_REFRNC_CHARISTIC_EXTRACT FOR ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO ICS_EXECUTOR;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT TO LICS_APP;
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_REFRNC_CHARISTIC_EXTRACT FOR ICS_APP.PLANT_REFRNC_CHARISTIC_EXTRACT;

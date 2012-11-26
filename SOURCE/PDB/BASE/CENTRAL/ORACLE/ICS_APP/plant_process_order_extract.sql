@@ -1,6 +1,3 @@
---
--- PLANT_PROCESS_ORDER_EXTRACT  (Package) 
---
 CREATE OR REPLACE PACKAGE ICS_APP.plant_process_order_extract
 as
 /******************************************************************************/
@@ -20,12 +17,13 @@ as
  YYYY/MM     Author         Description 
  -------     ------         ----------- 
  01_Jun-2007 Steve Gregan   Created 
- 12-Oct-2007 JP           Added filtering to not send to petcare, Food and WGI 
- 26-Oct-2007 JP           Remove plant specific filtering 
+ 12-Oct-2007 JP             Added filtering to not send to petcare, Food and WGI 
+ 26-Oct-2007 JP             Remove plant specific filtering 
  28-Feb-2008 Trevor Keon    Changed schema to ICS_APP from SITE_APP
  10-Dec-2008 Trevor Keon    Added check for missing ',' when doing to_number with FM999G999G999D999 
-                            format using convert_to_number. 
- 2011/12   B. Halicki    Added trigger option for sending to systems without V2
+                                format using convert_to_number. 
+ 2011/12    B. Halicki      Added trigger option for sending to systems without V2
+ 2012/11    B. Halicki      Removed Scoresby (SCO)
   
 *******************************************************************************/
 
@@ -36,23 +34,7 @@ as
 end plant_process_order_extract;
 /
 
-
---
--- PLANT_PROCESS_ORDER_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LICS_APP;
-
-
---
--- PLANT_PROCESS_ORDER_EXTRACT  (Package Body) 
---
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
 CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_process_order_extract as
 
    /*-*/
@@ -338,9 +320,6 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_process_order_extract as
       elsif rcd_lads_ctl_rec_hpi.plant = 'AU40' then
          var_interface := 'LADPDB01.5';
          var_trigger := 'Y';
-      elsif rcd_lads_ctl_rec_hpi.plant = 'AU45' then
-         var_interface := 'LADPDB01.6';
-         var_trigger := 'Y';
       else
          raise_application_error(-20000, 'Execute - Control recipe id (' || to_char(rcd_lads_ctl_rec_hpi.cntl_rec_id) || ') plant (' || rcd_lads_ctl_rec_hpi.plant || ') not defined for plant database interface');
       end if;
@@ -353,9 +332,7 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_process_order_extract as
           else
              var_instance := lics_outbound_loader.create_interface(var_interface);
           end if;
-      
-          --var_instance := lics_outbound_loader.create_interface(var_interface,null,var_interface);
-
+  
           for idx in 1..tbl_recipe_header.count loop
              var_output := 'HDR';
              var_output := var_output || rpad(nvl(tbl_recipe_header(idx).proc_order,' '),12,' ');
@@ -1998,15 +1975,4 @@ CREATE OR REPLACE PACKAGE BODY ICS_APP.plant_process_order_extract as
 end plant_process_order_extract;
 /
 
-
---
--- PLANT_PROCESS_ORDER_EXTRACT  (Synonym) 
---
-CREATE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
-
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO APPSUPPORT;
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LADS_APP;
-
-GRANT EXECUTE ON ICS_APP.PLANT_PROCESS_ORDER_EXTRACT TO LICS_APP;
+CREATE OR REPLACE PUBLIC SYNONYM PLANT_PROCESS_ORDER_EXTRACT FOR ICS_APP.PLANT_PROCESS_ORDER_EXTRACT;
