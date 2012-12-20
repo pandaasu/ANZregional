@@ -1,4 +1,5 @@
-create or replace package qv_app.qv_csvqvs15_loader as
+
+  CREATE OR REPLACE PACKAGE "QV_APP"."QV_CSVQVS15_LOADER" as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -15,7 +16,7 @@ create or replace package qv_app.qv_csvqvs15_loader as
     -------   ------         ----------- 
     2012/07   Trevor Keon    Created 
     2012/08   Trevor Keon    Added support for all AU sites 
-
+    2012/12   Jeff Phillipson Added extra column for Coles Code divisor
    *******************************************************************************/
 
    /*-*/
@@ -27,7 +28,8 @@ create or replace package qv_app.qv_csvqvs15_loader as
 
 end qv_csvqvs15_loader;
 
-create or replace package body qv_app.qv_csvqvs15_loader as
+
+  CREATE OR REPLACE PACKAGE BODY "QV_APP"."QV_CSVQVS15_LOADER" as
 
    /*-*/
    /* Private exceptions
@@ -47,6 +49,7 @@ create or replace package body qv_app.qv_csvqvs15_loader as
    /*-*/
    var_trn_error boolean;
    var_trn_count number;
+   var_inserts_count number;
    var_sequence number;  
       
    rcd_matl_map au_coles_matl_map%rowtype;  
@@ -69,7 +72,8 @@ create or replace package body qv_app.qv_csvqvs15_loader as
       /*-*/
       var_trn_error := false;
       var_trn_count := 0;  
-
+      var_inserts_count := 0;
+      
       /*-*/
       /* Set sequence number
       /*-*/
@@ -84,7 +88,7 @@ create or replace package body qv_app.qv_csvqvs15_loader as
       /*-*/
       lics_inbound_utility.set_csv_definition('REP_ITEM',1);
       lics_inbound_utility.set_csv_definition('COLES_CODE',2);
-      lics_inbound_utility.set_csv_definition('SKU NAME',3);
+      lics_inbound_utility.set_csv_definition('COLES_DIVISOR',3);
 
       /*-*/
       /* Delete the existing data 
@@ -132,7 +136,7 @@ create or replace package body qv_app.qv_csvqvs15_loader as
       /* Ignore blank lines
       /*-*/      
       if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
-         lics_logging.write_log('Found blank line - #' || var_trn_count);
+         --lics_logging.write_log('Found blank line - #' || var_trn_count);
          return;
       end if;
       
@@ -161,15 +165,18 @@ create or replace package body qv_app.qv_csvqvs15_loader as
       rcd_matl_map.acmm_version := var_sequence;
       rcd_matl_map.acmm_rep_item := lics_inbound_utility.get_variable('REP_ITEM');
       rcd_matl_map.acmm_coles_code := lics_inbound_utility.get_variable('COLES_CODE');
+      rcd_matl_map.acmm_coles_divisor := lics_inbound_utility.get_number('COLES_DIVISOR','999999');
 
       /*-*/
       /* Insert the row when required
       /*-*/
-      if not(rcd_matl_map.acmm_rep_item is null) or
-         not(rcd_matl_map.acmm_coles_code is null) then               
-         insert into au_coles_matl_map values rcd_matl_map;
-      else
+      if (rcd_matl_map.acmm_rep_item is null) 
+            or (rcd_matl_map.acmm_coles_code is null) 
+            or (rcd_matl_map.acmm_coles_divisor is null) then               
          lics_logging.write_log('Line contains null values - #' || var_trn_count);
+      else
+         insert into au_coles_matl_map values rcd_matl_map;
+         var_inserts_count := var_inserts_count + 1;
       end if;
 
    /*-------------------*/
@@ -220,7 +227,7 @@ create or replace package body qv_app.qv_csvqvs15_loader as
       /*-*/
       commit;
       
-      lics_logging.write_log('Completed successfully');      
+      lics_logging.write_log('Completed successfully, Records loaded: '  || to_char(var_inserts_count));       
       lics_logging.end_log;        
 
    /*-------------------*/
@@ -253,8 +260,9 @@ create or replace package body qv_app.qv_csvqvs15_loader as
    /* End routine */
    /*-------------*/
    end on_end;
-
+   
 end qv_csvqvs15_loader;
+
 
 /**/
 /* Authority 

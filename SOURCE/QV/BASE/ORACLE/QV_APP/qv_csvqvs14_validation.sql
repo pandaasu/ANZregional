@@ -1,4 +1,5 @@
-create or replace package qv_app.qv_csvqvs14_validation as
+
+  CREATE OR REPLACE PACKAGE "QV_APP"."QV_CSVQVS14_VALIDATION" as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -6,15 +7,15 @@ create or replace package qv_app.qv_csvqvs14_validation as
    /**
     Package : qv_csvqvs14_validation
     Owner   : qv_app
-    Author  : Trevor Keon
+    Author  : Jeff Phillipson
 
     Description
     -----------
-    CSV to QV- CSVQVS - Qlikview Freight to Customer OP validation
+    CSV to QV- CSVQVS - Petcare FPPS Values (Actuals and Forecast) Validation
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2011/02   Trevor Keon    Created
+    2011/05   Jeff Phillipson    Created
 
    *******************************************************************************/
 
@@ -26,24 +27,36 @@ create or replace package qv_app.qv_csvqvs14_validation as
 
 end qv_csvqvs14_validation;
 
-create or replace package body qv_app.qv_csvqvs14_validation as
 
+  CREATE OR REPLACE PACKAGE BODY "QV_APP"."QV_CSVQVS14_VALIDATION" as
+
+   /*-*/
+   /* Private functions 
+   /*-*/
+   function validate_mars_week(par_number in number) return number;
+   function get_rep_item(par_coles_product in varchar2) return varchar2;
+   
    /*-*/
    /* Private constants 
    /*-*/
-   con_interface constant varchar2(10) := 'csvqvs14';
-   con_header_row constant number := 1;
-   con_mars_periods constant number := 13;
    con_delimiter constant varchar2(32)  := ',';
-
+   con_unit_delimiter constant varchar2(1 char) := '/';  
+   con_interface constant varchar2(10) := 'CSVQVS14';
+   /* used to get the cast week from cell A1 */
+   con_cast_week constant number := 1;
+   con_date_heading constant number := 3;
+   
    /*-*/
    /* Private definitions
    /*-*/
-   var_check_user boolean;
-   var_valid_user boolean;
    var_line_count number;
-   var_user varchar2(32 char); 
-
+   var_cast_week au_coles_forecast.acf_cast_yyyyppw%type;
+   var_cast_entry varchar2(100);
+   var_rep_item au_coles_forecast.acf_rep_item%type;
+   
+   /************************************************/
+   /* This procedure performs the on start routine */
+   /************************************************/
    function on_start return varchar2 is
    
       /*-*/
@@ -60,38 +73,16 @@ create or replace package body qv_app.qv_csvqvs14_validation as
       /* Initialise the variables
       /*-*/   
       var_line_count := 0;
-
+      
       /*-*/
-      /* Load and validate the user
-      /*-*/      
-      var_user := lics_interface_loader.get_user(con_interface);
-
-      if qv_validation_utilities.validate_user(var_user, con_interface) = false then
-         var_message := 'User ' || var_user || ' does not have permission to load interface ' || con_interface;
-      else   
-         /*-*/
-         /* Initialise the definitions
-         /*-*/
-         lics_inbound_utility.clear_definition;
-         /*-*/
-         lics_inbound_utility.set_csv_definition('ACCNT_ASSIGNMNT_CODE',1);
-         lics_inbound_utility.set_csv_definition('ACCNT_ASSIGNMNT_DESC',2);
-         lics_inbound_utility.set_csv_definition('PLANT_CODE',3);
-         lics_inbound_utility.set_csv_definition('PLANT_DESC',4);
-         lics_inbound_utility.set_csv_definition('PERIOD_1',5);
-         lics_inbound_utility.set_csv_definition('PERIOD_2',6);
-         lics_inbound_utility.set_csv_definition('PERIOD_3',7);
-         lics_inbound_utility.set_csv_definition('PERIOD_4',8);
-         lics_inbound_utility.set_csv_definition('PERIOD_5',9);
-         lics_inbound_utility.set_csv_definition('PERIOD_6',10);
-         lics_inbound_utility.set_csv_definition('PERIOD_7',11);
-         lics_inbound_utility.set_csv_definition('PERIOD_8',12);
-         lics_inbound_utility.set_csv_definition('PERIOD_9',13);
-         lics_inbound_utility.set_csv_definition('PERIOD_10',14);
-         lics_inbound_utility.set_csv_definition('PERIOD_11',15);
-         lics_inbound_utility.set_csv_definition('PERIOD_12',16);
-         lics_inbound_utility.set_csv_definition('PERIOD_13',17);
-      end if;
+      /* Initialise the definitions
+      /*-*/
+      lics_inbound_utility.clear_definition;
+      /*-*/
+      /* added CAST_WEEK fopr the first cell on the first row */
+      lics_inbound_utility.set_csv_definition('CAST_WEEK',1);
+      lics_inbound_utility.set_csv_definition('COLES_WAREHOUSE',1);
+      lics_inbound_utility.set_csv_definition('COLES_PRODUCT',2);
       
       return var_message;
    
@@ -109,10 +100,12 @@ create or replace package body qv_app.qv_csvqvs14_validation as
       /* Local definitions
       /*-*/
       var_message varchar2(4000);
-      var_period_text varchar2(25);
+      var_field varchar2(10 char);
+      var_unit_field varchar2(100 char);
       
-      var_period shp_sls_tons_op.sst_period%type;
-      var_forecast shp_sls_tons_op.sst_forecast%type;
+      var_line_item fpps_values.fvl_line_item%type;
+      var_source fpps_values.fvl_source%type;
+      var_customer fpps_values.fvl_customer%type;
 
    /*-------------*/
    /* Begin block */
@@ -123,7 +116,6 @@ create or replace package body qv_app.qv_csvqvs14_validation as
       /* Initialise the function
       /*-*/
       var_message := null;
-      var_line_count := var_line_count + 1;
       
       /*-*/
       /* Ignore blank lines
@@ -131,6 +123,8 @@ create or replace package body qv_app.qv_csvqvs14_validation as
       if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
          return var_message;
       end if;
+      
+      var_line_count := var_line_count + 1;
 
       /*-------------------------------*/
       /* PARSE - Parse the data record */
@@ -138,45 +132,24 @@ create or replace package body qv_app.qv_csvqvs14_validation as
       lics_inbound_utility.parse_csv_record(par_record, con_delimiter);
        
       /*-*/
-      /* Validate Period headings are correct on the header as it will be used
-      /* in the final table
-      /*-*/       
-      if var_line_count <= con_header_row then      
-         for i in 1..con_mars_periods loop
+      /* Validate headings are correct mars week
+      /*-*/  
+      if var_line_count = con_cast_week then
+         /* check if the casting week is available to be read */
+         var_cast_entry := lics_inbound_utility.get_variable('CAST_WEEK');
+         
+         if qv_validation_utilities.check_number(var_cast_entry) then
             
-            var_period_text := 'PERIOD_' || to_char(i);
-            var_period := lics_inbound_utility.get_variable(var_period_text);
+            /* if not valid then use processed date */
+            if validate_mars_week(var_cast_entry) = 0 then
+                var_message := 'Casting week entered in Cell A1 not a valid mars week - "' || to_char(var_cast_entry) || '" Should be in YYYYPPW format';
+            end if;
             
-            if qv_validation_utilities.check_mars_calendar(var_period, '*PERIOD') = false then
-               if not(var_message is null) then
-                  var_message := var_message || '; ';
-               end if;
-               var_message := var_message || 'Period [' || var_period || '] is not valid.  Expecting YYYYPP format';
-            end if;
-         end loop;      
-      
-      else        
-         if lics_inbound_utility.get_variable('ACCNT_ASSIGNMNT_CODE') is null then
-            if not(var_message is null) then
-               var_message := var_message || '; ';
-            end if;
-            var_message := var_message || 'Account assignment code is not set.';
+         else
+            var_message := 'Casting week not found in Cell A1 - value found: "' || to_char(var_cast_entry) || '" Should be in YYYYPPW format';
          end if;
-                
-         for i in 1..con_mars_periods loop
-            
-            var_period_text := 'PERIOD_' || to_char(i);
-            var_forecast := lics_inbound_utility.get_variable(var_period_text);
-            
-            if qv_validation_utilities.check_number(var_forecast) = false then
-               if not(var_message is null) then
-                  var_message := var_message || '; ';
-               end if;
-               var_message := var_message || 'Forecast value is not a number.';
-            end if;
-         end loop;                     
       end if;
-
+      
       /*-*/
       /* Return the message
       /*-*/
@@ -185,7 +158,79 @@ create or replace package body qv_app.qv_csvqvs14_validation as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end on_data;
+   end on_data; 
+   
+   /****************************************************/
+   /* This function validates the number as a mars week*/
+   /****************************************************/
+   function validate_mars_week(par_number in number) return number is
+         
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_result number;
+         
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_mars_week is
+         select count(max(mars_week)) as mars_week 
+         from mars_date
+         where mars_week = par_number
+         group by mars_week;
+      rcd_mars_week csr_mars_week%rowtype;   
+   
+   begin
+   
+     open csr_mars_week;
+       fetch csr_mars_week into rcd_mars_week;
+       if csr_mars_week%notfound then
+         var_result := '0';
+       else
+         var_result := rcd_mars_week.mars_week;
+       end if;
+     close csr_mars_week;
+     
+     return var_result;
+   
+   end validate_mars_week;  
+   
+   /***************************************************/
+   /* This function performs the get rep item routine */
+   /***************************************************/   
+   function get_rep_item(par_coles_product in varchar2) return varchar2 is
+   
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_result varchar2(18 char);
+      var_coles_code varchar2(18 char);
+      
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_rep_item is
+        select acmm_rep_item
+        from au_coles_matl_map
+        where acmm_coles_code = var_coles_code;
+      rcd_rep_item csr_rep_item%rowtype;         
+   
+   begin
+   
+     var_coles_code := substr(par_coles_product, 0, instr(par_coles_product, ' ') - 1);
+   
+     open csr_rep_item;
+       fetch csr_rep_item into rcd_rep_item;
+       if csr_rep_item%notfound then
+         var_result := null;
+       else
+         var_result := rcd_rep_item.acmm_rep_item;
+       end if;
+     close csr_rep_item;
+     
+     return var_result;      
+   
+   end get_rep_item;   
    
 end qv_csvqvs14_validation;
 

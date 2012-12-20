@@ -1,4 +1,5 @@
-create or replace package qv_app.qv_csvqvs14_loader as
+
+  CREATE OR REPLACE PACKAGE "QV_APP"."QV_CSVQVS14_LOADER" as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -17,7 +18,7 @@ create or replace package qv_app.qv_csvqvs14_loader as
     2012/07   Trevor Keon    Added Rep Item and removed 0 forecasts 
     2012/07   Trevor Keon    Fixed issue with variable columns 
     2012/08   Trevor Keon    Updated to support all AU sites 
-
+    2012/12   Jeff Phillipson Added extra field CASTING_WEEK
    *******************************************************************************/
 
    /*-*/
@@ -29,7 +30,8 @@ create or replace package qv_app.qv_csvqvs14_loader as
 
 end qv_csvqvs14_loader;
 
-create or replace package body qv_app.qv_csvqvs14_loader as
+
+  CREATE OR REPLACE PACKAGE BODY "QV_APP"."QV_CSVQVS14_LOADER" as
 
    /*-*/
    /* Private exceptions
@@ -42,17 +44,20 @@ create or replace package body qv_app.qv_csvqvs14_loader as
    /*-*/
    function get_mars_week(par_date in date) return number;
    function get_rep_item(par_coles_product in varchar2) return varchar2;
-
+   
    /*-*/
    /* Private constants 
    /*-*/
    con_delimiter constant varchar2(32)  := ',';  
    con_heading_count constant number := 2;
    con_date_heading constant number := 3;
+   /* used to get the cast week from cell A1 */
+   con_cast_week constant number := 1;
    
    con_max_columns constant number := 50;
    con_interface constant varchar2(10) := 'CSVQVS14';
    con_unit_moe_code constant varchar2(8) := '0021';
+   con_unallocated_coles_code constant varchar2(10) := 'N/A';
 
    /*-*/
    /* Private definitions
@@ -64,6 +69,9 @@ create or replace package body qv_app.qv_csvqvs14_loader as
    
    var_load_week au_coles_forecast.acf_load_yyyyppw%type;
    var_load_period au_coles_forecast.acf_load_yyyypp%type;
+   var_cast_week au_coles_forecast.acf_cast_yyyyppw%type;
+   var_cast_entry varchar2(100);
+   
    
    type data_record is record
    (
@@ -83,7 +91,8 @@ create or replace package body qv_app.qv_csvqvs14_loader as
    current_forecast forecast_record;
       
    rcd_au_coles_fcst au_coles_forecast%rowtype;  
-
+   
+  
    /************************************************/
    /* This procedure performs the on start routine */
    /************************************************/
@@ -116,6 +125,8 @@ create or replace package body qv_app.qv_csvqvs14_loader as
       /*-*/
       lics_inbound_utility.clear_definition;
       /*-*/
+      /* added CAST_WEEK fopr the first cell on the first row */
+      lics_inbound_utility.set_csv_definition('CAST_WEEK',1);
       lics_inbound_utility.set_csv_definition('COLES_WAREHOUSE',1);
       lics_inbound_utility.set_csv_definition('COLES_PRODUCT',2);
       lics_inbound_utility.set_csv_definition('DAY_1',3);
@@ -168,11 +179,6 @@ create or replace package body qv_app.qv_csvqvs14_loader as
       lics_inbound_utility.set_csv_definition('DAY_48',50);
       lics_inbound_utility.set_csv_definition('DAY_49',51);
       lics_inbound_utility.set_csv_definition('DAY_50',52);
-      
-      /*-*/
-      /* Remove any records loaded in the same week  
-      /*-*/       
-      delete from au_coles_forecast where acf_load_yyyyppw = var_load_week;
 
    /*-------------------*/
    /* Exception handler */
@@ -207,7 +213,9 @@ create or replace package body qv_app.qv_csvqvs14_loader as
       
       var_unit_field mars_date.calendar_date%type;
       var_mars_week mars_date.mars_week%type;
-
+      var_coles_code au_coles_forecast.acf_unallocated_coles_code%type;
+      var_rep_item au_coles_forecast.acf_rep_item%type;
+      
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -228,21 +236,27 @@ create or replace package body qv_app.qv_csvqvs14_loader as
       /* Ignore blank lines
       /*-*/      
       if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
-         lics_logging.write_log('Found blank line - #' || var_trn_count);
          return;
-      end if;      
-     
-      /*-*/
-      /* Ignore the header record 
-      /*-*/         
-      if var_trn_count <= con_heading_count then
-         return;
-      end if;                   
+      end if;                      
       
       /*-------------------------------*/
       /* PARSE - Parse the data record */
       /*-------------------------------*/
       lics_inbound_utility.parse_csv_record(par_record, con_delimiter);           
+      
+      /*-*/
+      /* check if first header record
+      /*-*/         
+      if var_trn_count = con_cast_week then
+         /* get casting week */
+         var_cast_week := lics_inbound_utility.get_variable('CAST_WEEK');
+         lics_logging.write_log('Casting week recorded - ' || to_char(var_cast_week));
+         /*-*/
+         /* Remove any records loaded in the same week  
+         /*-*/ 
+         delete from au_coles_forecast where acf_cast_yyyyppw = var_cast_week;
+         return;
+      end if; 
       
       /*-*/
       /* Retrieve field values
@@ -263,22 +277,26 @@ create or replace package body qv_app.qv_csvqvs14_loader as
             data_list(i).mars_week := var_mars_week;
             data_list(i).calendar_date := var_unit_field;
           end if;
-        
         end loop;
       else      
         rcd_au_coles_fcst.acf_load_yyyyppw := var_load_week;
         rcd_au_coles_fcst.acf_load_yyyypp := var_load_period;
+        rcd_au_coles_fcst.acf_cast_yyyyppw := var_cast_week;
         rcd_au_coles_fcst.acf_warehouse := lics_inbound_utility.get_variable('COLES_WAREHOUSE');
         rcd_au_coles_fcst.acf_rep_item := get_rep_item(lics_inbound_utility.get_variable('COLES_PRODUCT'));
         rcd_au_coles_fcst.acf_moe_code := con_unit_moe_code;
         
-       /*-*/
-       /* Ignore records with no Coles product matching a rep item 
-       /*-*/         
+        /*-*/
+        /* Ignore records with no Coles product matching a rep item 
+        /*-*/         
         if rcd_au_coles_fcst.acf_rep_item is null then
           lics_logging.write_log('Missing mapping for Coles product - ' || lics_inbound_utility.get_variable('COLES_PRODUCT'));
-          return;
+          /* Highlight errors by getting the unallocated coles code */
+          var_coles_code :=  lics_inbound_utility.get_variable('COLES_PRODUCT');
+          var_rep_item := con_unallocated_coles_code;
+          --return;
         end if;
+        
         
         for i in 1..var_column_count loop
           var_field := 'DAY_' || to_char(i);
@@ -290,24 +308,26 @@ create or replace package body qv_app.qv_csvqvs14_loader as
             
             var_last_mars_week := data_list(i).mars_week;
             var_day_count := 1;
+            
           elsif var_last_mars_week <> data_list(i).mars_week then
             rcd_au_coles_fcst.acf_yyyypp := current_forecast.mars_period;
             rcd_au_coles_fcst.acf_yyyyppw := current_forecast.mars_week;
             rcd_au_coles_fcst.acf_forecast := current_forecast.forecast;
-          
-            /*-*/
-            /* Add the record if the forecast is not 0 
-            /*-*/             
-            if current_forecast.forecast <> 0 then
-              insert into au_coles_forecast
-              values rcd_au_coles_fcst;
+            
+            /* Check for unalocated Coles code */
+            if var_rep_item = con_unallocated_coles_code then
+                rcd_au_coles_fcst.acf_rep_item := var_rep_item || to_char(var_trn_count);
+                rcd_au_coles_fcst.acf_unallocated_coles_code := var_coles_code;
+            else
+                rcd_au_coles_fcst.acf_unallocated_coles_code := '';
             end if;
             
             /*-*/
-            /* Log when an incomplete week is recorded 
-            /*-*/
-            if var_day_count <> 7 then
-               lics_logging.write_log('Incomplete week recorded - ' || to_char(current_forecast.mars_week));
+            /* Add the record if the forecast is not 0 
+            /*-*/  
+            if current_forecast.forecast <> 0 then
+              insert into au_coles_forecast
+              values rcd_au_coles_fcst;
             end if;
             
             current_forecast.mars_week := data_list(i).mars_week;
@@ -486,3 +506,5 @@ grant execute on qv_csvqvs14_loader to lics_app;
 /* Synonym 
 /**/
 create or replace public synonym qv_csvqvs14_loader for qv_app.qv_csvqvs14_loader;
+
+
