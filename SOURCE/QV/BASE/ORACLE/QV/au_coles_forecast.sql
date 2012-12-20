@@ -16,6 +16,7 @@
  2012/07   Trevor Keon    Created 
  2012/07   Trevor Keon    Updated to include load YYYYPP 
  2012/08   Trevor Keon    Updated to support all AU sites
+ 2012/12   Jeff Phillipson Added 2 extra columns acf_cast_yyyyppw and acf_unallocated_coles_code
 
 *******************************************************************************/
 
@@ -31,7 +32,9 @@ create table au_coles_forecast
   acf_forecast       number not null,
   acf_load_yyyypp    number not null,
   acf_load_yyyyppw   number not null,
-  acf_moe_code       varchar2(8 char) not null       
+  acf_moe_code       varchar2(8 char) not null,
+  acf_cast_yyyyppw   number not null, 
+  acf_unallocated_coles_code VARCHAR2(400 char)     
 );
 
 /**/
@@ -46,17 +49,20 @@ comment on column au_coles_forecast.acf_forecast is 'AU Coles Forecasts - foreca
 comment on column au_coles_forecast.acf_load_yyyypp is 'AU Coles Forecasts - forecast load period';
 comment on column au_coles_forecast.acf_load_yyyyppw is 'AU Coles Forecasts - forecast load week';
 comment on column au_coles_forecast.acf_moe_code is 'AU Coles Forecasts - MOE code';
+COMMENT ON COLUMN au_coles_forecast.acf_cast_yyyyppw IS 'Used to save Cast Week from cell A1 of spreadsheet';
+COMMENT ON COLUMN au_coles_forecast.acf_unallocated_coles_code IS 'Contains the Coles code and desc when no Rep Item xref is available';
 
 /**/
 /* Primary Key Constraint 
 /**/
 alter table au_coles_forecast 
-   add constraint au_coles_forecast_pk primary key (acf_yyyyppw, acf_load_yyyyppw, acf_warehouse, acf_rep_item);
+   add constraint au_coles_forecast_pk primary key (AU_COLES_FORECAST, acf_yyyyppw, acf_load_yyyyppw, acf_warehouse, acf_rep_item, acf_cast_yyyyppw);
 
 /**/
 /* Index 
 /**/
 create index au_coles_forecast_ix01 on au_coles_forecast(acf_load_yyyypp);
+create index au_coles_forecast_idx02 on au_coles_forecast (acf_cast_yyyyppw asc) 
 
 /**/
 /* Authority 

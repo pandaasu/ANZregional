@@ -13,7 +13,8 @@
 
  YYYY/MM   Author         Description 
  -------   ------         ----------- 
- 2012/07   Trevor Keon    Created 
+ 2012/07   Trevor Keon    Created
+ 2012/12   Jeff Phillipson Added extra column - acmm_coles_divisor which is the divisor of coles code to rep item 
 
 *******************************************************************************/
 
@@ -24,7 +25,8 @@ create table au_coles_matl_map
 (
   acmm_version      number not null,
   acmm_rep_item     varchar2(18 char) not null,
-  acmm_coles_code   varchar2(18 char) not null
+  acmm_coles_code   varchar2(18 char) not null,
+  acmm_coles_divisor number default 1 not null 
 );
 
 /**/
@@ -34,6 +36,7 @@ comment on table au_coles_matl_map is 'AU Coles Material Mapping';
 comment on column au_coles_matl_map.acmm_version is 'AU Coles Material Mapping - load version';
 comment on column au_coles_matl_map.acmm_rep_item is 'AU Coles Material Mapping - ZREP code';
 comment on column au_coles_matl_map.acmm_coles_code is 'AU Coles Material Mapping - Coles code';
+comment on column au_coles_matl_map.acmm_coles_divisor is 'contains the divisor for coles code to rep item';
 
 /**/
 /* Primary Key Constraint 
