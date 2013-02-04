@@ -1,3 +1,5 @@
+CREATE OR REPLACE PACKAGE LADS_APP.lads_atllad09 as
+
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -15,13 +17,10 @@
  -------   ------         -----------
  2004/01   Steve Gregan   Created
  2008/05   Trevor Keon    Added calls to monitor before and after procedure
+ 2010/07   Ben Halicki    Updated to include Z1E1EDP01.ELIKZ, Z1E1EDP01.UEBTO and Z1E1EDP01.INSMK 
+                          (Atlas Thailand implementation requirement)
 
 *******************************************************************************/
-
-/******************/
-/* Package Header */
-/******************/
-create or replace package lads_atllad09 as
 
    /*-*/
    /* Public declarations
@@ -33,10 +32,9 @@ create or replace package lads_atllad09 as
 end lads_atllad09;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lads_atllad09 as
+GRANT EXECUTE ON LADS_APP.LADS_ATLLAD09 TO LICS_APP
+/
+CREATE OR REPLACE PACKAGE BODY LADS_APP.lads_atllad09 as
 
    /*-*/
    /* Private exceptions
@@ -293,6 +291,9 @@ create or replace package body lads_atllad09 as
       lics_inbound_utility.set_definition('GEN','HIPOS',6);
       lics_inbound_utility.set_definition('GEN','HIEVW',1);
       lics_inbound_utility.set_definition('GEN','POSGUID',22);
+      lics_inbound_utility.set_definition('GEN','ELIKZ',1);
+      lics_inbound_utility.set_definition('GEN','UEBTO',5);
+      lics_inbound_utility.set_definition('GEN','INSMK',1); 
       /*-*/
       lics_inbound_utility.set_definition('SCH','IDOC_SCH',3);
       lics_inbound_utility.set_definition('SCH','WMENG',15);
@@ -1888,6 +1889,9 @@ create or replace package body lads_atllad09 as
       rcd_lads_sto_po_gen.hipos := lics_inbound_utility.get_number('HIPOS',null);
       rcd_lads_sto_po_gen.hievw := lics_inbound_utility.get_variable('HIEVW');
       rcd_lads_sto_po_gen.posguid := lics_inbound_utility.get_variable('POSGUID');
+      rcd_lads_sto_po_gen.elikz := lics_inbound_utility.get_variable('ELIKZ');
+      rcd_lads_sto_po_gen.uebto := lics_inbound_utility.get_variable('UEBTO');
+      rcd_lads_sto_po_gen.insmk := lics_inbound_utility.get_variable('INSMK');
 
       /*-*/
       /* Retrieve exceptions raised
@@ -1977,7 +1981,11 @@ create or replace package body lads_atllad09 as
           valtg,
           hipos,
           hievw,
-          posguid)
+          posguid,
+          elikz,
+          uebto,
+          insmk
+          )
       values
          (rcd_lads_sto_po_gen.belnr,
           rcd_lads_sto_po_gen.genseq,
@@ -2028,7 +2036,11 @@ create or replace package body lads_atllad09 as
           rcd_lads_sto_po_gen.valtg,
           rcd_lads_sto_po_gen.hipos,
           rcd_lads_sto_po_gen.hievw,
-          rcd_lads_sto_po_gen.posguid);
+          rcd_lads_sto_po_gen.posguid,
+          rcd_lads_sto_po_gen.elikz,
+          rcd_lads_sto_po_gen.uebto,
+          rcd_lads_sto_po_gen.insmk
+          );
 
    /*-------------*/
    /* End routine */
@@ -2629,8 +2641,5 @@ create or replace package body lads_atllad09 as
 end lads_atllad09;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lads_atllad09 for lads_app.lads_atllad09;
-grant execute on lads_atllad09 to lics_app;
+GRANT EXECUTE ON LADS_APP.LADS_ATLLAD09 TO LICS_APP
+/
