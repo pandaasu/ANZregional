@@ -70,7 +70,10 @@ create table lads_sto_po_gen
     valtg                                        number                              null,
     hipos                                        number                              null,
     hievw                                        varchar2(1 char)                    null,
-    posguid                                      varchar2(22 char)                   null);
+    posguid                                      varchar2(22 char)                   null,
+    elikz      					 				 varchar2(1 char)		     		 null,
+    uebto      					 				 varchar2(5 char)		     		 null,
+    insmk      					 				 varchar2(1 char)		     		 null);
 
 /**/
 /* Comments
