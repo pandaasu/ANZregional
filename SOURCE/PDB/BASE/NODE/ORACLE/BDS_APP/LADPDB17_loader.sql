@@ -440,3 +440,5 @@ end ladpdb17_loader;
 
 GRANT EXECUTE ON BDS_APP.LADPDB17_LOADER TO LICS_APP
 /
+
+create public synonym ladpdb17_loader for bds_app.ladpdb17_loader;
