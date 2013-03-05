@@ -18,6 +18,7 @@ create or replace package ods_app.quo_batch as
    YYYY-MM-DD   Author                 Description
    ----------   --------------------   -----------------------------------------
    2013-02-19   Mal Chambeyron         Created
+   2013-03-05   Mal Chambeyron         Add Check Batches
 
   *****************************************************************************/
 
@@ -25,6 +26,7 @@ create or replace package ods_app.quo_batch as
   procedure process_batches;
   procedure process_batch(p_source_id in number, p_batch_id in number);
   procedure force_batches;
+  procedure check_batches;
    
 end quo_batch;
 /
@@ -281,6 +283,157 @@ create or replace package body ods_app.quo_batch as
       raise_application_error(-20000, substr('['||g_package_name||'.process_batches] : '||SQLERRM, 1, 4000));
     
   end force_batches;
+
+  /*****************************************************************************
+  ** PUBLIC Procedure : Check Batches .. Mail on Error 
+  *****************************************************************************/
+  procedure check_batches as
+
+    l_log_header_text varchar2(4000 char);
+    l_log_search_text varchar2(4000 char);
+  
+    l_lock_text varchar2(10);
+    l_locked boolean;
+    l_batch_errors boolean;
+    l_source_id number(4,0);
+    l_message varchar2(4000 char);
+    l_line varchar2(4000 char);
+    l_body varchar2(4000 char);
+
+  begin
+  
+    -- start logging
+    l_log_header_text := 'Quofore Check Batches';
+    l_log_search_text := 'QUO_CHECK_BATCH';
+    lics_logging.start_log(l_log_header_text,l_log_search_text);
+  
+    -- request lock (on search text)
+    l_locked := false;
+    begin
+      lics_locking.request(l_log_search_text);
+      l_locked := true;
+    exception
+      when others then
+        lics_logging.write_log(substr('Failed requesting lock ['||l_log_search_text||'] : '||SQLERRM, 1, 4000));
+    end;
+  
+    -- if received lock
+    if l_locked then
+
+      -- Check Batches ..
+      l_batch_errors := false;
+      l_source_id := -1;
+      l_message := null;
+      for batch in (
+      
+        select q4x_source_id source_id,
+          'Last Batch Processed > 24 Hours' message,
+          q4x_batch_id batch_id,
+          q4x_create_time create_time
+        from quo_interface_hdr
+        where q4x_status = quo_constants.status_processed
+        and q4x_entity_name = 'DIGEST'
+        and q4x_create_time < sysdate-1
+        and (q4x_source_id, q4x_batch_id) in ( 
+          select q4x_source_id,
+            max(q4x_batch_id) q4x_batch_id
+          from quo_interface_hdr
+          where q4x_status = quo_constants.status_processed
+          and q4x_entity_name = 'DIGEST'
+          group by q4x_source_id
+        )
+        
+        union all
+        
+        select q4x_source_id source_id,
+          'Last Batch Processed was Empty - This is Possible on Weekends/Public Holidays' message,
+          q4x_batch_id batch_id,
+          q4x_create_time create_time
+        from quo_interface_hdr
+        where q4x_status = quo_constants.status_processed
+        and q4x_entity_name = 'DIGEST'
+        and q4x_row_count = 0
+        and (q4x_source_id, q4x_batch_id) in ( -- latest batch per source / 24 hours 
+          select q4x_source_id,
+            max(q4x_batch_id) q4x_batch_id
+          from quo_interface_hdr
+          where q4x_status = quo_constants.status_processed
+          and q4x_entity_name = 'DIGEST'
+          and q4x_create_time > sysdate-1
+          group by q4x_source_id
+        )          
+
+        union all
+
+        select q4x_source_id source_id,
+          'Unprocessed Batch' message,
+          q4x_batch_id batch_id,
+          max(q4x_create_time) create_time
+        from quo_interface_hdr
+        where q4x_status != quo_constants.status_processed
+        group by q4x_source_id,
+          q4x_batch_id
+        
+        order by 1,2,3  
+
+      ) loop
+      
+        l_batch_errors := true;
+        
+        if batch.source_id != nvl(l_source_id,-1) then
+          l_source_id := batch.source_id;
+          l_message := null;
+          l_line := 'Source : ['||batch.source_id||'] '||quo_util.get_source_desc(batch.source_id);
+          l_body := l_body||l_line||chr(10)||chr(13);
+          lics_logging.write_log(l_line);
+        end if;
+        
+        if batch.message != nvl(l_message,'*NULL') then
+          l_message := batch.message;
+          l_line := '--> Message : '||batch.message;
+          l_body := l_body||l_line||chr(10)||chr(13);
+          lics_logging.write_log(l_line);
+        end if;
+        
+        if batch.batch_id > 0 then
+          l_line := '----> Batch : ['||batch.batch_id||'] '||to_char(batch.create_time,'YYYY-MM-DD HH24:MI:SS');
+          l_body := l_body||l_line||chr(10)||chr(13);
+          lics_logging.write_log(l_line);
+        end if;
+        
+      end loop;
+
+      if l_batch_errors then 
+
+        lics_logging.write_log('Errors Found .. Sending E-Mail ['||quo_util.get_email_default||']');
+
+        lics_mailer.send_short_email('Quofore_'||lics_parameter.system_environment||'_'||lics_parameter.system_code||'_'||lics_parameter.system_unit||'@'||lics_parameter.log_database, -- sender
+          quo_util.get_email_default, -- recipient
+          'DAILY BATCH CHECK *ERROR* : Quofore '||lics_parameter.system_environment||' '||lics_parameter.system_code||' '||lics_parameter.system_unit, -- subject
+           l_body, -- body
+           lics_parameter.email_smtp_host, -- smtp host
+           lics_parameter.email_smtp_port); --  smtp port
+
+      else
+        lics_logging.write_log('No Errors Found');
+      end if;
+      
+      -- release lock
+      lics_locking.release(l_log_search_text);
+
+    else
+      -- log already locked
+      lics_logging.write_log('Lock already held on ['||l_log_search_text||']');
+    end if;
+
+    -- end logging
+    lics_logging.end_log;
+    
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.check_batches] : '||SQLERRM, 1, 4000));
+    
+  end check_batches;
   
 end quo_batch;
 /

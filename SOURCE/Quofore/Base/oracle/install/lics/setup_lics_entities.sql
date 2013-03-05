@@ -11,6 +11,7 @@ commit;
 insert into LICS_JOB (JOB_JOB,JOB_DESCRIPTION,JOB_RES_GROUP,JOB_EXE_HISTORY,JOB_OPR_ALERT,JOB_EMA_GROUP,JOB_TYPE,JOB_INT_GROUP,JOB_PROCEDURE,JOB_NEXT,JOB_INTERVAL,JOB_STATUS) values ('IB_QUO_01','Inbound Quofore - 01',null,20,null,'Group_ANZ_Venus_Production_Notification@smtp.ap.mars','*INBOUND','IB_QUO#01',null,'sysdate',null,'1');
 insert into LICS_JOB (JOB_JOB,JOB_DESCRIPTION,JOB_RES_GROUP,JOB_EXE_HISTORY,JOB_OPR_ALERT,JOB_EMA_GROUP,JOB_TYPE,JOB_INT_GROUP,JOB_PROCEDURE,JOB_NEXT,JOB_INTERVAL,JOB_STATUS) values ('FILE_QUO_01','Quofore File Processor - 01',null,20,null,'Group_ANZ_Venus_Production_Notification@smtp.ap.mars','*FILE','FP_QUO#01',null,'sysdate',null,'1');
 insert into LICS_JOB (JOB_JOB,JOB_DESCRIPTION,JOB_RES_GROUP,JOB_EXE_HISTORY,JOB_OPR_ALERT,JOB_EMA_GROUP,JOB_TYPE,JOB_INT_GROUP,JOB_PROCEDURE,JOB_NEXT,JOB_INTERVAL,JOB_STATUS) values ('QUO_PROCESS_BATCH','Quofore Process Batch - Every 15 Minutes',null,20,null,'Group_ANZ_Venus_Production_Notification@smtp.ap.mars','*PROCEDURE',null,'ods_app.quo_batch.process_batches','sysdate','sysdate+1/96','1');
+insert into LICS_JOB (JOB_JOB,JOB_DESCRIPTION,JOB_RES_GROUP,JOB_EXE_HISTORY,JOB_OPR_ALERT,JOB_EMA_GROUP,JOB_TYPE,JOB_INT_GROUP,JOB_PROCEDURE,JOB_NEXT,JOB_INTERVAL,JOB_STATUS) values ('QUO_CHECK_BATCH','Quofore Check Batches - Daily 07:00',null,20,null,'Group_ANZ_Venus_Production_Notification@smtp.ap.mars','*PROCEDURE',null,'ods_app.quo_batch.check_batches','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
 commit;
 
 --------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ insert into LICS_GRP_INTERFACE (GRI_GROUP,GRI_INTERFACE) values ('QUOCDW_1_INBOU
 commit;
 
 --------------------------------------------------------------------------------
--- Create Interface Directories
+-- Set Directory Permissions
 begin
   lics_directory.create_directory('ICS_QUOCDW00#1', '/ics/cdw/prod/inbound/quocdw00.1');
   lics_directory.create_directory('ICS_QUOCDW01#1', '/ics/cdw/prod/inbound/quocdw01.1');
