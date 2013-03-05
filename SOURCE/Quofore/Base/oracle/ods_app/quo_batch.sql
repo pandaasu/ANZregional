@@ -353,6 +353,7 @@ create or replace package body ods_app.quo_batch as
         where q4x_status = quo_constants.status_processed
         and q4x_entity_name = 'DIGEST'
         and q4x_row_count = 0
+        and trim(to_char(sysdate,'Day')) not in ('Sunday','Monday') -- Ignore Empty Batches Over Weekend, Sun / Mon Mornings        
         and (q4x_source_id, q4x_batch_id) in ( -- latest batch per source / 24 hours 
           select q4x_source_id,
             max(q4x_batch_id) q4x_batch_id
