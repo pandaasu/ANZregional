@@ -22,11 +22,25 @@ create or replace package ods_app.quo_batch as
 
   *****************************************************************************/
 
+  -- Public : Type
+
+  type quo_unprocessed_batches_rec is record (
+    source_id	number(4,0),
+    batch_id	number(10,0),
+    expected_file_name varchar2(512 char),
+    expected_row_count number(10,0),
+    loaded_row_count number(10,0),
+    load_status varchar2(16 char)
+  );
+
+  type quo_unprocessed_batches_type is table of quo_unprocessed_batches_rec;
+  
   -- Public : Functions
   procedure process_batches;
   procedure process_batch(p_source_id in number, p_batch_id in number);
   procedure force_batches;
   procedure check_batches;
+  function view_unprocessed_batches return quo_unprocessed_batches_type pipelined;
    
 end quo_batch;
 /
@@ -435,6 +449,47 @@ create or replace package body ods_app.quo_batch as
       raise_application_error(-20000, substr('['||g_package_name||'.check_batches] : '||SQLERRM, 1, 4000));
     
   end check_batches;
+
+  /*****************************************************************************
+  ** Function : View Unprocessed Batches
+  *****************************************************************************/
+  function view_unprocessed_batches return quo_unprocessed_batches_type pipelined is
+
+  begin
+
+    for l_entity in (
+    
+          select a.q4x_source_id source_id,
+            a.q4x_batch_id batch_id,
+            nvl(b.file_name,a.q4x_file_name) expected_file_name,
+            b.row_count expected_row_count,
+            c.q4x_row_count loaded_row_count,
+            decode(b.row_count,nvl(c.q4x_row_count,-1),'PASS',decode(a.q4x_row_count,0,'PASS','FAIL')) load_status -- digest equals loaded, or digest is empty
+          from quo_interface_hdr a,
+            quo_digest_load b,
+            quo_interface_hdr c
+          -- interface header for digest > digest
+          where a.q4x_status != quo_constants.status_processed
+          and a.q4x_entity_name = 'DIGEST'
+          and a.q4x_source_id = b.q4x_source_id(+)
+          and a.q4x_batch_id = b.q4x_batch_id(+)
+          -- digest > interaface headers found in digest
+          and b.q4x_source_id = c.q4x_source_id(+)
+          and b.q4x_batch_id = c.q4x_batch_id(+)
+          and b.file_name = c.q4x_file_name(+)
+          and quo_constants.status_processed != c.q4x_status(+) 
+          order by 1,2,3
+
+    )
+    loop
+      pipe row(l_entity);
+    end loop;
+
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.view_unprocessed_batches] : '||SQLERRM, 1, 4000));
+
+  end view_unprocessed_batches;
   
 end quo_batch;
 /
