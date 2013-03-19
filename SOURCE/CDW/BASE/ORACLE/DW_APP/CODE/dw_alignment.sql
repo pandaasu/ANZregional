@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dw_alignment as
+create or replace package dw_app.dw_alignment as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -40,7 +40,7 @@ end dw_alignment;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_alignment as
+create or replace package body dw_app.dw_alignment as
 
    /*-*/
    /* Private exceptions
@@ -667,7 +667,7 @@ create or replace package body dw_alignment as
       /*----------------------*/
       /* DLVRY_BASE Retrieval */
       /*----------------------*/
-
+      
       /*-*/
       /* Retrieve the DLVRY_BASE rows with a *OPEN status
       /*-*/
@@ -709,6 +709,7 @@ create or replace package body dw_alignment as
          /* 1. This logic continues to assume that there will always be a one to one relationship between the delivery line and the invoice line.
          /*-*/
          open csr_sales_base;
+         fetch csr_sales_base into rcd_sales_base;
          if csr_sales_base%found then
 
             /*-*/
@@ -716,7 +717,7 @@ create or replace package body dw_alignment as
             /* 1. Purchase orders do not use the large order line split functionality
             /*-*/
             var_invoiced := true;
-
+            
             /*-*/
             /* Invoice billed values
             /*-*/
@@ -746,7 +747,7 @@ create or replace package body dw_alignment as
             open csr_sap_doc_status;
             fetch csr_sap_doc_status into rcd_sap_doc_status;
             if csr_sap_doc_status%found then
-               if rcd_sap_doc_status.doc_status = '*CLOSED' then
+               if rcd_sap_doc_status.doc_status = '*CLOSED' then                  
                   var_trace := false;
                   open csr_sap_inv_trace;
                   fetch csr_sap_inv_trace into rcd_sap_inv_trace;
@@ -761,7 +762,7 @@ create or replace package body dw_alignment as
             end if;
             close csr_sap_doc_status;
          end if;
-
+         
          /*-------------------*/
          /* DLVRY_BASE Update */
          /*-------------------*/
