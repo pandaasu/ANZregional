@@ -19,6 +19,7 @@ create or replace package dds_app.quo_assort_pkg as
   YYYY-MM-DD  Author                Description
   ----------  --------------------  --------------------------------------------
   2013-02-12  Mal Chambeyron        Created
+  2013-03-20  Mal Chambeyron        Correct the way we Determine Core Products
 
 *******************************************************************************/
 
@@ -191,85 +192,18 @@ create or replace package dds_app.quo_assort_pkg as
 
   type quo_prod_assort_type is table of quo_prod_assort_rec;
 
-  -- Public : Type : Master Assortment RAW -------------------------------------
-  type quo_master_assort_raw_rec is record (
+-- Public : Type : Customer / Procuct Assortment -------------------------------
+  type quo_cust_prod_assort_rec is record (
     source_id number(4,0),
     report_date date,
     --
-    cust_hier_priority number(3),
-    cust_hier_type varchar2(50 char),
-    --
-    root_cust_node varchar2(50 char),
-    root_cust_type varchar2(50 char),
-    root_cust_id number(10,0),
-    root_cust_batch_id number(15,0),
-    root_cust_lookup varchar2(50 char),
-    root_cust_code varchar2(50 char),
-    root_cust_desc varchar2(50 char),
-    root_cust_level number(3,0),
-    --
-    cust_type varchar2(50 char),
     cust_id number(10,0),
-    cust_batch_id number(15,0),
-    cust_lookup varchar2(50 char),
-    cust_code varchar2(50 char),
-    cust_desc varchar2(50 char),
-    cust_level number(3,0),
-    cust_direct_flag number(1,0),
-    --
-    assort_id number(10,0),
-    assort_desc varchar2(50 char),
-    --
-    cust_assort_dtl_type varchar2(100 char),
-    cust_assort_dtl_id number(10,0),
-    cust_assort_dtl_batch_id number(15,0),
-    cust_assort_dtl_desc varchar2(50 char),
-    cust_assort_dtl_level number(3,0),
-    cust_assort_dtl_direct_flag number(1,0),
-    --
-    prod_assort_dtl_type varchar2(100 char),
-    prod_assort_dtl_id number(10,0),
-    prod_assort_dtl_batch_id number(15,0),
-    prod_assort_dtl_desc varchar2(50 char),
-    prod_assort_dtl_level number(3,0),
-    prod_assort_dtl_direct_flag number(1,0),
-    prod_assort_dtl_effective_from date,
-    prod_assort_dtl_effective_to date,
-    --
-    prod_hier_priority number(3),
-    prod_hier_type varchar2(50 char),
-    --
-    root_prod_node varchar2(50 char),
-    root_prod_type varchar2(50 char),
-    root_prod_id number(10,0),
-    root_prod_batch_id number(15,0),
-    root_prod_lookup varchar2(50 char),
-    root_prod_code varchar2(50 char),
-    root_prod_desc varchar2(50 char),
-    root_prod_level number(3,0),
-    --
-    prod_type varchar2(50 char),
     prod_id number(10,0),
-    prod_batch_id number(15,0),
-    prod_lookup varchar2(50 char),
-    prod_code varchar2(50 char),
-    prod_desc varchar2(50 char),
-    prod_level number(3,0),
-    prod_direct_flag number(1,0),
-    --
-    cust_hier_path varchar2(256 char),
-    cust_segment_hier_path varchar2(256 char),
-    prod_segment_hier_path varchar2(256 char),
-    prod_hier_path varchar2(256 char),
-    --
-    core_flag number(1,0),
-    core_assort_dtl_effective_from date,
-    core_assort_dtl_effective_to date,
-    core_prod_hier_path varchar2(256 char),
-    core_segment_hier_path varchar2(256 char)
+    assort_id number(10,0),
+    assort_dtl_id number(10,0)
   );
 
-  type quo_master_assort_raw_type is table of quo_master_assort_raw_rec;
+  type quo_cust_prod_assort_type is table of quo_cust_prod_assort_rec;
 
   -- Public : Type : Master Assortment -----------------------------------------
   type quo_master_assort_rec is record (
@@ -277,10 +211,11 @@ create or replace package dds_app.quo_assort_pkg as
     report_date date,
     --
     cust_id number(10,0),
-    cust_batch_id number(15,0),
-    --
     prod_id number(10,0),
-    prod_batch_id number(15,0),
+    prod_assort_id number(10,0),
+    prod_assort_dtl_id number(10,0),
+    core_assort_id number(10,0),
+    core_assort_dtl_id number(10,0),
     --
     core_flag number(1,0)
   );
@@ -294,11 +229,12 @@ create or replace package dds_app.quo_assort_pkg as
   function segment_hier_view_at_date(p_source_id in number, p_at_date in date) return quo_assort_dtl_type pipelined;
   function segment_up_hier_view_at_date(p_source_id in number, p_at_date in date) return quo_assort_dtl_type pipelined;
 
-  function cust_assort_view_at_date(p_source_id in number, p_at_date date, p_filtered in number) return quo_cust_assort_type pipelined;
-  function prod_assort_view_at_date(p_source_id in number, p_at_date date, p_filtered in number) return quo_prod_assort_type pipelined;
+  function cust_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_cust_assort_type pipelined;
+  function prod_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_prod_assort_type pipelined;
   function core_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_prod_assort_type pipelined;
-
-  function master_assort_raw_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_master_assort_raw_type pipelined;
+  function cust_prod_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_cust_prod_assort_type pipelined;
+  function cust_core_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_cust_prod_assort_type pipelined;
+  
   function master_assort_view_at_date(p_source_id in number, p_at_date in date) return quo_master_assort_type pipelined;
 
 end quo_assort_pkg;
@@ -980,133 +916,123 @@ create or replace package body dds_app.quo_assort_pkg as
   end core_assort_view_at_date;
 
   /*****************************************************************************
-  ** Function : Master Assortment RAW, as at Date
+  ** Function : Customer/Product Assortment, as at Date
   *****************************************************************************/
-  function master_assort_raw_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_master_assort_raw_type pipelined is
+  function cust_prod_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_cust_prod_assort_type pipelined is
+
+    l_cust_id number(10,0);
+    l_prod_id number(10,0);
 
   begin
 
+    l_cust_id := -1;
+    l_prod_id := -1;
+  
     for l_entity in (
 
       select p_source_id source_id,
         p_at_date report_date,
         --
-        assort.*,
-        --
-        decode(core.assort_id,null,0,1) core_flag,
-        core.prod_assort_dtl_effective_from core_assort_dtl_effective_from,
-        core.prod_assort_dtl_effective_to core_assort_dtl_effective_to,
-        core.prod_hier_path core_prod_hier_path,
-        core.segment_hier_path core_segment_hier_path
-      from (
-        --
-        select cust.cust_hier_priority,
-          cust.cust_hier_type,
-          --
-          cust.root_cust_node,
-          cust.root_cust_type,
-          cust.root_cust_id,
-          cust.root_cust_batch_id,
-          cust.root_cust_lookup,
-          cust.root_cust_code,
-          cust.root_cust_desc,
-          cust.root_cust_level,
-          --
-          cust.cust_type,
-          cust.cust_id,
-          cust.cust_batch_id,
-          cust.cust_lookup,
-          cust.cust_code,
-          cust.cust_desc,
-          cust.cust_level,
-          cust.cust_direct_flag,
-          --
-          cust.assort_id,
-          cust.assort_desc,
-          --
-          cust.assort_dtl_type cust_assort_dtl_type,
-          cust.assort_dtl_id cust_assort_dtl_id,
-          cust.assort_dtl_batch_id cust_assort_dtl_batch_id,
-          cust.assort_dtl_desc cust_assort_dtl_desc,
-          cust.assort_dtl_level cust_assort_dtl_level,
-          cust.assort_dtl_direct_flag cust_assort_dtl_direct_flag,
-          --
-          prod.assort_dtl_type prod_assort_dtl_type,
-          prod.assort_dtl_id prod_assort_dtl_id,
-          prod.assort_dtl_batch_id prod_assort_dtl_batch_id,
-          prod.assort_dtl_desc prod_assort_dtl_desc,
-          prod.assort_dtl_level prod_assort_dtl_level,
-          prod.assort_dtl_direct_flag prod_assort_dtl_direct_flag,
-          prod.prod_assort_dtl_effective_from,
-          prod.prod_assort_dtl_effective_to,
-          --
-          prod.prod_hier_priority,
-          prod.prod_hier_type,
-          --
-          prod.root_prod_node,
-          prod.root_prod_type,
-          prod.root_prod_id,
-          prod.root_prod_batch_id,
-          prod.root_prod_lookup,
-          prod.root_prod_code,
-          prod.root_prod_desc,
-          prod.root_prod_level,
-          --
-          prod.prod_type,
-          prod.prod_id,
-          prod.prod_batch_id,
-          prod.prod_lookup,
-          prod.prod_code,
-          prod.prod_desc,
-          prod.prod_level,
-          prod.prod_direct_flag,
-          --
-          cust.cust_hier_path,
-          cust.segment_hier_path cust_segment_hier_path,
-          prod.segment_hier_path prod_segment_hier_path,
-          prod.prod_hier_path
-          --
-        from table(quo_assort_pkg.cust_assort_view_at_date(p_source_id,p_at_date,p_filtered)) cust,
-          table(quo_assort_pkg.prod_assort_view_at_date(p_source_id,p_at_date,p_filtered)) prod
-        where cust.assort_id = prod.assort_id
-        and cust.assort_dtl_id = prod.assort_dtl_id
-        --and cust.cust_id = p_cust_id .. Will likely need to break down to smaller chunks
-      ) assort,
-        table(quo_assort_pkg.core_assort_view_at_date(p_source_id,p_at_date,p_filtered)) core
-      where assort.assort_id = core.assort_id(+)
-      and assort.cust_assort_dtl_id = core.assort_dtl_id(+)
-      and assort.prod_id = core.prod_id(+)
+        cust.cust_id,
+        prod.prod_id,
+        cust.assort_id,
+        prod.assort_dtl_id
+      from table(quo_assort_pkg.cust_assort_view_at_date(p_source_id,p_at_date,p_filtered)) cust,
+        table(quo_assort_pkg.prod_assort_view_at_date(p_source_id,p_at_date,p_filtered)) prod
+      where cust.source_id = prod.source_id
+      and cust.assort_id = prod.assort_id
+      and cust.assort_dtl_id = prod.assort_dtl_id
       --
-      order by assort.cust_id,
-        assort.prod_id,
-        assort.cust_direct_flag desc,
-        assort.prod_direct_flag desc,
-        assort.assort_id, 
-        assort.cust_assort_dtl_direct_flag desc,
-        assort.prod_assort_dtl_direct_flag desc,
-        assort.cust_assort_dtl_level desc
-        -- assort.cust_hier_priority, 
-        -- assort.prod_hier_priority,
-        -- assort.root_cust_level desc,
-        -- assort.root_prod_level desc
+      order by cust.cust_id,
+        prod.prod_id,
+        cust.assort_dtl_level,
+        cust.assort_id,
+        prod.assort_dtl_level
+        
     )
     loop
-      pipe row(l_entity);
+    
+      if p_filtered != 0 then -- Apply Filter Logic
+        -- Return First Customer / Product Row
+        if l_cust_id != l_entity.cust_id or l_prod_id != l_entity.prod_id then
+          l_cust_id := l_entity.cust_id;
+          l_prod_id := l_entity.prod_id;
+          pipe row(l_entity);
+        end if;
+      else -- Return ALL
+        pipe row(l_entity);
+      end if;
+    
     end loop;
-
+    
   exception
     when others then
-      raise_application_error(-20000, substr('['||g_package_name||'.master_assort_raw_view_at_date] : '||SQLERRM, 1, 4000));
+      raise_application_error(-20000, substr('['||g_package_name||'.cust_prod_assort_view_at_date] : '||SQLERRM, 1, 4000));
 
-  end master_assort_raw_view_at_date;
+  end cust_prod_assort_view_at_date;
+  
+  /*****************************************************************************
+  ** Function : Customer/Core Assortment, as at Date
+  *****************************************************************************/
+  function cust_core_assort_view_at_date(p_source_id in number, p_at_date in date, p_filtered in number) return quo_cust_prod_assort_type pipelined is
 
+    l_cust_id number(10,0);
+    l_prod_id number(10,0);
+
+  begin
+
+    l_cust_id := -1;
+    l_prod_id := -1;
+  
+    for l_entity in (
+
+      select p_source_id source_id,
+        p_at_date report_date,
+        --
+        cust.cust_id,
+        core.prod_id,
+        cust.assort_id,
+        core.assort_dtl_id
+      from table(quo_assort_pkg.cust_assort_view_at_date(p_source_id,p_at_date,p_filtered)) cust,
+        table(quo_assort_pkg.core_assort_view_at_date(p_source_id,p_at_date,p_filtered)) core
+      where cust.source_id = core.source_id
+      and cust.assort_id = core.assort_id
+      and cust.assort_dtl_id = core.assort_dtl_id
+      --
+      order by cust.cust_id,
+        core.prod_id,
+        cust.assort_dtl_level desc,
+        cust.assort_id,
+        core.assort_dtl_level desc
+        
+    )
+    loop
+    
+      if p_filtered != 0 then -- Apply Filter Logic
+        -- Return First Customer / Core Row
+        if l_cust_id != l_entity.cust_id or l_prod_id != l_entity.prod_id then
+          l_cust_id := l_entity.cust_id;
+          l_prod_id := l_entity.prod_id;
+          pipe row(l_entity);
+        end if;
+      else -- Return ALL
+        pipe row(l_entity);
+      end if;
+    
+    end loop;
+    
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.cust_core_assort_view_at_date] : '||SQLERRM, 1, 4000));
+
+  end cust_core_assort_view_at_date;
+  
   /*****************************************************************************
   ** Function : Master Assortment, as at Date
   *****************************************************************************/
   function master_assort_view_at_date(p_source_id in number, p_at_date in date) return quo_master_assort_type pipelined is
 
-    l_working_entity quo_master_assort_rec;
-    l_filtered number(1) := 1;
+    l_filtered number(1) := 1; -- Always Filtered 
   
   begin
   
@@ -1115,70 +1041,25 @@ create or replace package body dds_app.quo_assort_pkg as
       select p_source_id source_id,
         p_at_date report_date,
         --
-        assort.cust_id,
-        assort.cust_batch_id,
-        assort.prod_id,
-        assort.prod_batch_id,
-        --
-        decode(core.assort_id,null,0,1) core_flag
-      from (
-        --
-        select 
-          cust.cust_id,
-          cust.cust_batch_id,
-          --
-          cust.assort_id,
-          cust.assort_dtl_id cust_assort_dtl_id,
-          --
-          prod.prod_id,
-          prod.prod_batch_id
-          --
-        from table(quo_assort_pkg.cust_assort_view_at_date(p_source_id,p_at_date,l_filtered)) cust,
-          table(quo_assort_pkg.prod_assort_view_at_date(p_source_id,p_at_date,l_filtered)) prod
-        where cust.assort_id = prod.assort_id
-        and cust.assort_dtl_id = prod.assort_dtl_id
-        --and cust.cust_id = p_cust_id .. Will likely need to break down to smaller chunks
-      ) assort,
-        table(quo_assort_pkg.core_assort_view_at_date(p_source_id,p_at_date,l_filtered)) core
-      where assort.assort_id = core.assort_id(+)
-      and assort.cust_assort_dtl_id = core.assort_dtl_id(+)
-      and assort.prod_id = core.prod_id(+)
-      --
-      order by assort.cust_id,
-        assort.prod_id
+        prod.cust_id,
+        prod.prod_id,
+        prod.assort_id prod_assort_id,
+        prod.assort_dtl_id prod_assort_dtl_id,
+        core.assort_id core_assort_id,
+        core.assort_dtl_id core_assort_dtl_id,
+        decode(core.assort_dtl_id,null,0,1) core_flag
+      from table(quo_assort_pkg.cust_prod_assort_view_at_date(p_source_id,p_at_date,l_filtered)) prod,
+        table(quo_assort_pkg.cust_core_assort_view_at_date(p_source_id,p_at_date,l_filtered)) core
+      where prod.cust_id = core.cust_id(+)
+      and prod.prod_id = core.prod_id(+)
+      order by prod.cust_id,
+        prod.prod_id
+
     )
     loop
-    
-      if l_working_entity.cust_id is null then -- First Entity, Initialise Working Entity
-        l_working_entity.source_id := p_source_id;
-        l_working_entity.report_date := p_at_date;
-        --
-        l_working_entity.cust_id := l_entity.cust_id;
-        l_working_entity.cust_batch_id := l_entity.cust_batch_id;
-        --
-        l_working_entity.prod_id := l_entity.prod_id;
-        l_working_entity.prod_batch_id := l_entity.prod_batch_id;
-        --
-        l_working_entity.core_flag := l_entity.core_flag;
-      elsif l_working_entity.cust_id = l_entity.cust_id and l_working_entity.prod_id = l_entity.prod_id then
-        if l_entity.core_flag = 1 then
-          l_working_entity.core_flag := 1;
-        end if;
-      else
-        pipe row(l_working_entity);
-        l_working_entity.cust_id := l_entity.cust_id;
-        l_working_entity.cust_batch_id := l_entity.cust_batch_id;
-        --
-        l_working_entity.prod_id := l_entity.prod_id;
-        l_working_entity.prod_batch_id := l_entity.prod_batch_id;
-        --
-        l_working_entity.core_flag := l_entity.core_flag;
-      end if;
-    
+      pipe row(l_entity);
     end loop;
     
-    pipe row(l_working_entity); -- Pile Last Entity ..
-      
   exception
     when others then
       raise_application_error(-20000, substr('['||g_package_name||'.master_assort_view_at_date] : '||SQLERRM, 1, 4000));
