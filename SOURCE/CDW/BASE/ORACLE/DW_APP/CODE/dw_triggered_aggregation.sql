@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package dw_triggered_aggregation as
+create or replace package dw_app.dw_triggered_aggregation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -37,7 +34,7 @@ create or replace package dw_triggered_aggregation as
 
     4. PAR_COMPANY (company code) (MANDATORY)
 
-       The company for which the aggregation is to be performed. 
+       The company for which the aggregation is to be performed.
 
     **notes**
     1. A web log is produced under the search value DW_TRIGGERED_AGGREGATION where all errors are logged.
@@ -58,6 +55,7 @@ create or replace package dw_triggered_aggregation as
     2008/08   Steve Gregan   Modified demand planning group division logic
     2008/08   Steve Gregan   Added ICS process trace call
     2008/10   Steve Gregan   Removed flag file processing
+    2013/03   Trevor Keon    Added sales adjustment table to sales_fact 
 
    *******************************************************************************/
 
@@ -72,7 +70,7 @@ end dw_triggered_aggregation;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_triggered_aggregation as
+create or replace package body dw_app.dw_triggered_aggregation as
 
    /*-*/
    /* Private exceptions
@@ -309,7 +307,7 @@ create or replace package body dw_triggered_aggregation as
          end if;
 
          /*-*/
-         /* Perform SALES_BASE dependant aggregations when no errors 
+         /* Perform SALES_BASE dependant aggregations when no errors
          /*-*/
          if var_errors = false then
 
@@ -740,7 +738,61 @@ create or replace package body dw_triggered_aggregation as
       /* Local cursors
       /*-*/
       cursor csr_trace is
-         select t01.*,
+         select t01.trace_seqn,
+                t01.trace_date,
+                t01.trace_status,  
+                t01.company_code,
+                t01.billing_doc_num,
+                t01.billing_doc_line_num,
+                t01.doc_currcy_code,
+                t01.exch_rate,
+                t01.order_reasn_code,
+                t01.creatn_date,
+                t01.creatn_yyyyppdd,
+                t01.creatn_yyyyppw,
+                t01.creatn_yyyypp,
+                t01.creatn_yyyymm,
+                t01.billing_eff_date,
+                t01.billing_eff_yyyyppdd,
+                t01.billing_eff_yyyyppw,
+                t01.billing_eff_yyyypp,
+                t01.billing_eff_yyyymm,
+                t01.order_type_code,
+                t01.invc_type_code,
+                t01.hdr_sales_org_code,
+                t01.hdr_distbn_chnl_code,
+                t01.hdr_division_code,
+                t01.hdr_sold_to_cust_code,
+                t01.hdr_bill_to_cust_code,
+                t01.hdr_payer_cust_code,
+                t01.hdr_ship_to_cust_code,
+                t01.billed_uom_code,
+                t01.billed_base_uom_code,
+                t01.plant_code,
+                t01.storage_locn_code,
+                t01.gen_sales_org_code,
+                t01.gen_distbn_chnl_code,
+                t01.gen_division_code,
+                t01.order_usage_code,
+                t01.order_qty,
+                t01.billed_qty,
+                t01.billed_qty_base_uom,
+                t01.billed_gross_weight,
+                t01.billed_net_weight,
+                t01.billed_weight_unit,
+                t01.matl_code,
+                t01.matl_entd,
+                t01.gen_sold_to_cust_code,
+                t01.gen_bill_to_cust_code,
+                t01.gen_payer_cust_code,
+                t01.gen_ship_to_cust_code,
+                t01.purch_order_doc_num,
+                t01.purch_order_doc_line_num,
+                t01.order_doc_num,
+                t01.order_doc_line_num,
+                t01.dlvry_doc_num,
+                t01.dlvry_doc_line_num,
+                t01.billed_gsv,
                 t02.atwrt as mat_bus_sgmnt_code
            from (select t01.*
                    from (select t01.*,
@@ -755,9 +807,74 @@ create or replace package body dw_triggered_aggregation as
             and 'MARA' = t02.obtab(+)
             and '001' = t02.klart(+)
             and 'CLFFERT01' = t02.atnam(+)
-            and t01.trace_status = '*ACTIVE';
-      rcd_trace csr_trace%rowtype;
-
+            and t01.trace_status = '*ACTIVE'
+         union all
+         select t01.trace_seqn,
+                t01.trace_date,
+                t01.trace_status,  
+                t01.company_code,
+                t01.billing_doc_num,
+                t01.billing_doc_line_num,
+                t01.doc_currcy_code,
+                t01.exch_rate,
+                t01.order_reasn_code,
+                t01.creatn_date,
+                t01.creatn_yyyyppdd,
+                t01.creatn_yyyyppw,
+                t01.creatn_yyyypp,
+                t01.creatn_yyyymm,
+                t01.billing_eff_date,
+                t01.billing_eff_yyyyppdd,
+                t01.billing_eff_yyyyppw,
+                t01.billing_eff_yyyypp,
+                t01.billing_eff_yyyymm,
+                t01.order_type_code,
+                t01.invc_type_code,
+                t01.hdr_sales_org_code,
+                t01.hdr_distbn_chnl_code,
+                t01.hdr_division_code,
+                t01.hdr_sold_to_cust_code,
+                t01.hdr_bill_to_cust_code,
+                t01.hdr_payer_cust_code,
+                t01.hdr_ship_to_cust_code,
+                t01.billed_uom_code,
+                t01.billed_base_uom_code,
+                t01.plant_code,
+                t01.storage_locn_code,
+                t01.gen_sales_org_code,
+                t01.gen_distbn_chnl_code,
+                t01.gen_division_code,
+                t01.order_usage_code,
+                t01.order_qty,
+                t01.billed_qty,
+                t01.billed_qty_base_uom,
+                t01.billed_gross_weight,
+                t01.billed_net_weight,
+                t01.billed_weight_unit,
+                t01.matl_code,
+                t01.matl_entd,
+                t01.gen_sold_to_cust_code,
+                t01.gen_bill_to_cust_code,
+                t01.gen_payer_cust_code,
+                t01.gen_ship_to_cust_code,
+                t01.purch_order_doc_num,
+                t01.purch_order_doc_line_num,
+                t01.order_doc_num,
+                t01.order_doc_line_num,
+                t01.dlvry_doc_num,
+                t01.dlvry_doc_line_num,
+                t01.billed_gsv,
+                t02.atwrt as mat_bus_sgmnt_code
+           from sales_adjustment t01,
+                sap_cla_chr t02
+          where t01.matl_code = t02.objek(+)
+            and 'MARA' = t02.obtab(+)
+            and '001' = t02.klart(+)
+            and 'CLFFERT01' = t02.atnam(+)
+            and t01.company_code = par_company
+            and t01.adjustment_entry_date = trunc(par_date);
+      rcd_trace csr_trace%rowtype;                   
+            
       cursor csr_invc_type is
          select decode(t01.invc_type_sign,'-',-1,1) as invoice_type_factor
            from invc_type t01
@@ -839,7 +956,7 @@ create or replace package body dw_triggered_aggregation as
       /*-*/
       /* STEP #4
       /*
-      /* Delete any existing sales base rows 
+      /* Delete any existing sales base rows
       /* **notes** 1. Delete all sales base rows for the company and creation date.
       /*-*/
       lics_logging.write_log('--> Deleting existing sales base data');
@@ -1243,7 +1360,7 @@ create or replace package body dw_triggered_aggregation as
          dds_partition.check_create('dw_sales_month01',rcd_source.billing_eff_yyyymm,par_company,'m');
 
          /*-*/
-         /* Build the partition for the current month 
+         /* Build the partition for the current month
          /*-*/
          lics_logging.write_log('--> Building the partition - Month(' || to_char(rcd_source.billing_eff_yyyymm) || ')');
          insert into dw_sales_month01

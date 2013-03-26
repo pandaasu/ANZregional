@@ -6093,7 +6093,7 @@ create or replace package body ods_app.ods_efex_validation as
          /*-*/
          /* Rollback the database
          /*-*/
-         rollback;
+--         rollback;
 
          /*-*/
          /* Log error

@@ -20,7 +20,8 @@ create or replace package cdwpdb01_allocated_stock as
  -------   -----------------  -----------
  2008/02   Scott R. Harding   Created     
  2008/02   Linden Glen        Modified for multi segment use
-                              Modified to send file to MCA and SCO
+                              Modified to send file to MCA and SCO 
+ 2012/12   Trevor Keon        Removed send to SCO as part of Plant DB decomission 
  
 *******************************************************************************/
 
@@ -73,7 +74,7 @@ create or replace package body cdwpdb01_allocated_stock as
       /*-*/
       if upper(par_action) = '*ALL' or upper(par_action) = '*SNACK' then
          execute_extract('CDWPDB01.5','01'); -- MCA/Ballarat
-         execute_extract('CDWPDB01.6','01'); -- SCO/Scoresby
+--         execute_extract('CDWPDB01.6','01'); -- SCO/Scoresby       T.K [20/12/2012] - Removed SCO call due to server decomissioning (WO#453241) 
       end if;
 
    /*-------------------*/
@@ -243,5 +244,5 @@ end cdwpdb01_allocated_stock;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym cdwpdb01_allocated_stock for ods_app.cdwpdb04_allocated_stock;
+create or replace public synonym cdwpdb01_allocated_stock for ods_app.cdwpdb01_allocated_stock;
 grant execute on cdwpdb01_allocated_stock to public;

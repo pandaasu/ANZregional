@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package dw_scheduled_aggregation as
+create or replace package dw_app.dw_scheduled_aggregation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -19,7 +19,7 @@ create or replace package dw_scheduled_aggregation as
 
     1. PAR_COMPANY (company code) (MANDATORY)
 
-       The company for which the aggregation is to be performed. 
+       The company for which the aggregation is to be performed.
 
     **notes**
     1. A web log is produced under the search value DW_SCHEDULED_AGGREGATION where all errors are logged.
@@ -32,19 +32,20 @@ create or replace package dw_scheduled_aggregation as
     4. A deadly embrace with scheduled aggregation is avoided by all data warehouse components
        use the same process isolation locking string and sharing the same ICS stream code.
 
-    YYYY/MM   Author         Description
-    -------   ------         -----------
-    2007/08   Steve Gregan   Created
-    2008/02   Steve Gregan   Added NZ market sales aggregation
-    2008/05   Steve Gregan   Modified for NZ demand planning group division
-    2008/06   Steve Gregan   Added SAP retrieval and SAP alignment
-    2008/08   Steve Gregan   Included APO rejection code Z9
-    2008/08   Steve Gregan   Modified demand planning group division logic
-    2008/08   Steve Gregan   Fixed sales order material joins (expand numeric)
-    2008/08   Steve Gregan   Added ICS process trace calls
-    2008/09   Linden Glen    Added NZ16 to NZMKT base load
-    2008/10   Steve Gregan   Fixed time conversion for NZ daylight saving
-    2009/08   Trevor Keon    Added check for Atlas outage flag to sap_retrieval
+    YYYY/MM   Author            Description
+    -------   ------            -----------
+    2007/08   Steve Gregan      Created 
+    2008/02   Steve Gregan      Added NZ market sales aggregation 
+    2008/05   Steve Gregan      Modified for NZ demand planning group division 
+    2008/06   Steve Gregan      Added SAP retrieval and SAP alignment 
+    2008/08   Steve Gregan      Included APO rejection code Z9 
+    2008/08   Steve Gregan      Modified demand planning group division logic 
+    2008/08   Steve Gregan      Fixed sales order material joins (expand numeric) 
+    2008/08   Steve Gregan      Added ICS process trace calls 
+    2008/09   Linden Glen       Added NZ16 to NZMKT base load 
+    2008/10   Steve Gregan      Fixed time conversion for NZ daylight saving 
+    2011/08   Jonathan Girling  Added NZ17 to NZMKT base load 
+    2013/03   Trevor Keon       Added package to process single delivery 
 
    *******************************************************************************/
 
@@ -54,6 +55,7 @@ create or replace package dw_scheduled_aggregation as
    procedure execute(par_company in varchar2);
    procedure sap_retrieval(par_company in varchar2);
    procedure sap_alignment(par_company in varchar2);
+   procedure process_single_dlvry(par_company_code in varchar2, par_dlvry_doc_num in varchar2, par_seq_num in number);
 
 end dw_scheduled_aggregation;
 /
@@ -61,7 +63,7 @@ end dw_scheduled_aggregation;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body dw_scheduled_aggregation as
+create or replace package body dw_app.dw_scheduled_aggregation as
 
    /*-*/
    /* Private exceptions
@@ -347,8 +349,7 @@ create or replace package body dw_scheduled_aggregation as
       var_email varchar2(256);
       var_locked boolean;
       var_errors boolean;
-      var_outage varchar2(5);
-      var_company_code company.company_code%type;      
+      var_company_code company.company_code%type;
 
       /*-*/
       /* Local constants
@@ -406,17 +407,6 @@ create or replace package body dw_scheduled_aggregation as
       /* Begin procedure
       /*-*/
       lics_logging.write_log('Begin - Scheduled SAP Retrieval - Parameters(' || var_company_code || ')');
-
-      /*-*/
-      /* Check if the SAP Outage flag is set
-      /*-*/
-      var_outage := lics_setting_configuration.retrieve_setting('DW_SAP_RETRIEVAL','SAP_OUTAGE');
-      
-      if var_outage = '*YES' then
-         lics_logging.write_log('Atlas Outage flag set - Exiting ...');
-         lics_logging.end_log;
-         return;
-      end if;
 
       /*-*/
       /* Request the lock on the SAP retrieval
@@ -859,7 +849,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* STEP #1
       /*
-      /* Delete any existing purchase order base rows 
+      /* Delete any existing purchase order base rows
       /* **notes** 1. Delete all purchase orders that have changed within the window
       /*              regardless of their eligibility for inclusion in this process.
       /*           2. This may result in *DELETED trace records being reprocessed during
@@ -1830,7 +1820,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* STEP #3
       /*
-      /* Delete any existing delivery base rows 
+      /* Delete any existing delivery base rows
       /* **notes** 1. Delete all deliveries that have changed within the window.
       /*              regardless of their eligibility for inclusion in this process.
       /*           2. This may result in *DELETED trace records being reprocessed during
@@ -1890,7 +1880,7 @@ create or replace package body dw_scheduled_aggregation as
             end if;
             close csr_purch_base;
          end if;
- 
+
          /*-*/
          /* Process the ODS data when required
          /*-*/
@@ -2278,7 +2268,7 @@ create or replace package body dw_scheduled_aggregation as
       /*-*/
       /* STEP #1
       /*
-      /* Delete any existing NZ market transfer rows 
+      /* Delete any existing NZ market transfer rows
       /* **notes** 1. Delete all NZ market transfers that have changed within the window
       /*              regardless of their eligibility for inclusion in this process.
       /*           2. This may result in *DELETED trace records being reprocessed during
@@ -2338,7 +2328,7 @@ create or replace package body dw_scheduled_aggregation as
             var_process := true;
          end if;
          if (rcd_trace.source_plant_code in ('NZ01','NZ11') and
-             rcd_trace.plant_code in ('NZ13','NZ14','NZ16') and
+             rcd_trace.plant_code in ('NZ13','NZ14','NZ16','NZ17') and
              rcd_trace.mat_type_code = 'FERT' and
              rcd_trace.mat_bus_sgmnt_code = '05' and
              rcd_trace.mat_cnsmr_pack_frmt_code = '45') then
@@ -2346,7 +2336,7 @@ create or replace package body dw_scheduled_aggregation as
             var_nzmkt_factor := 1;
             var_process := true;
          end if;
-         if (rcd_trace.source_plant_code in ('NZ13','NZ14','NZ16') and
+         if (rcd_trace.source_plant_code in ('NZ13','NZ14','NZ16','NZ17') and
              rcd_trace.plant_code in ('NZ01','NZ11') and
              rcd_trace.mat_type_code = 'FERT' and
              rcd_trace.mat_bus_sgmnt_code = '05' and
@@ -2827,6 +2817,442 @@ create or replace package body dw_scheduled_aggregation as
    /* End routine */
    /*-------------*/
    end sap_base_alignment;
+   
+   procedure process_single_dlvry(par_company_code in varchar2, par_dlvry_doc_num in varchar2, par_seq_num in number) is
+
+      /*-*/
+      /* Local variables 
+      /*-*/
+      rcd_dlvry_base dw_dlvry_base%rowtype;
+      var_dlvry_type_factor number;
+      var_gsv_value number;
+      var_process boolean;
+      
+      var_company_currcy company.company_currcy%type;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_company is
+         select t01.*
+           from company t01
+          where t01.company_code = par_company_code;
+      rcd_company csr_company%rowtype;
+      
+      cursor csr_trace is
+         select t01.*,
+                t02.atwrt as mat_bus_sgmnt_code
+           from sap_del_trace t01,
+                sap_cla_chr t02
+          where t01.trace_seqn = par_seq_num
+            and t01.dlvry_doc_num = par_dlvry_doc_num
+            and t01.company_code = par_company_code
+            and t01.trace_status = '*ACTIVE'
+            and t01.matl_code = t02.objek(+)
+            and t02.obtab(+) = 'MARA'
+            and t02.klart(+) = '001'
+            and t02.atnam(+) = 'CLFFERT01'
+          order by t01.dlvry_doc_num asc,
+                   t01.dlvry_doc_line_num asc;
+      rcd_trace csr_trace%rowtype;
+
+      cursor csr_order_base is
+         select t01.*,
+                decode(t02.order_type_sign,'-',-1,1) as order_type_factor
+           from dw_order_base t01,
+                order_type t02
+          where t01.order_type_code = t02.order_type_code(+)
+            and t01.order_doc_num = rcd_trace.order_doc_num
+            and t01.order_doc_line_num = rcd_trace.order_doc_line_num;
+      rcd_order_base csr_order_base%rowtype;
+
+      cursor csr_purch_base is
+         select t01.*,
+                decode(t02.purch_order_type_sign,'-',-1,1) as purch_order_type_factor
+           from dw_purch_base t01,
+                purch_order_type t02
+          where t01.purch_order_type_code = t02.purch_order_type_code(+)
+            and t01.purch_order_doc_num = rcd_trace.purch_order_doc_num
+            and t01.purch_order_doc_line_num = rcd_trace.purch_order_doc_line_num;
+      rcd_purch_base csr_purch_base%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Log start
+      /*-*/
+      lics_logging.start_log('DW - SCHEDULED_AGGREGATION', 'DW_SCHEDULED_AGGREGATION_SINGLE');      
+      lics_logging.write_log('Begin - Process single Delivery Load');
+            
+      /*-*/
+      /* Validate the parameters
+      /*-*/
+      open csr_company;
+      fetch csr_company into rcd_company;
+      if csr_company%notfound then
+         raise_application_error(-20000, 'Company ' || par_company_code || ' not found on the company table');
+      end if;
+      close csr_company;
+      var_company_currcy := rcd_company.company_currcy;      
+
+      /*-*/
+      /* STEP #1 
+      /*
+      /* Update the ORDER_BASE rows to *OPEN when related to an existing 
+      /* a delivery line for the current execution. Ensures that the ORDER_BASE 
+      /* row delivery values are updated for deleted deliveries 
+      /*-*/
+      lics_logging.write_log('--> Reopening related order base data before delivery base load');
+      update dw_order_base
+         set order_line_status = '*OPEN'
+       where company_code = par_company_code
+         and (order_doc_num, order_doc_line_num) in (select order_doc_num, order_doc_line_num
+                                                       from dw_dlvry_base
+                                                      where company_code = par_company_code
+                                                        and dlvry_doc_num = par_dlvry_doc_num
+                                                        and order_doc_num is not null);
+
+      /*-*/ 
+      /* STEP #2 
+      /*
+      /* Update the PURCH_BASE rows to *OPEN when related to an existing 
+      /* delivery line for the current execution. Ensures that the PURCH_BASE 
+      /* row delivery values are updated for deleted deliveries 
+      /*-*/
+      lics_logging.write_log('--> Reopening related purchase base data before delivery base load');
+      update dw_purch_base
+         set purch_order_line_status = '*OPEN'
+       where company_code = par_company_code
+         and (purch_order_doc_num, purch_order_doc_line_num) in (select purch_order_doc_num, purch_order_doc_line_num
+                                                                   from dw_dlvry_base
+                                                                  where company_code = par_company_code
+                                                                    and dlvry_doc_num = par_dlvry_doc_num
+                                                                    and purch_order_doc_num is not null);
+
+      /*-*/
+      /* STEP #3 
+      /*
+      /* Delete any existing delivery base rows
+      /* **notes** 1. Delete all deliveries that have changed within the window.
+      /*              regardless of their eligibility for inclusion in this process.
+      /*           2. This may result in *DELETED trace records being reprocessed during
+      /*              the next execution of this routine where the *DELETED trace records
+      /*              have a trace sequence number greater than the last *ACTIVE trace
+      /*              record. This is because this routine uses trace records that have a
+      /*              trace sequence that is greater than the highest trace sequence on the
+      /*              related fact table and only *ACTIVE trace records are transferred to the
+      /*              fact table. These reprocessed *DELETED trace records will not actually
+      /*              perform any database activity as the fact table rows will not exist.
+      /*-*/
+      lics_logging.write_log('--> Deleting changed delivery base data');
+      delete from dw_dlvry_base
+       where company_code = par_company_code
+         and dlvry_doc_num = par_dlvry_doc_num;
+
+      /*-*/
+      /* STEP #4
+      /*
+      /* Load the delivery base rows from the ODS trace data
+      /* **notes** 1. Select all deliveries that have changed within the window.
+      /*           2. Only valid deliveries are selected (TRACE_STATUS = *ACTIVE)
+      /*-*/
+      lics_logging.write_log('--> Loading new and changed delivery base data');
+      open csr_trace;
+      loop
+         fetch csr_trace into rcd_trace;
+         if csr_trace%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Only process required delivery documents
+         /*
+         /* **notes**
+         /* 1. Reset the process indicator
+         /* 2. Retrieve the related ORDER_BASE row when required
+         /* 3. Retrieve the related PURCH_BASE row when required
+         /* 4. This will ensure the removal of any DLVRY_BASE rows that
+         /*    pointed to deleted ORDER_BASE or PURCH_BASE rows
+         /*-*/
+         var_process := false;
+         if not(rcd_trace.order_doc_num is null) then
+            open csr_order_base;
+            fetch csr_order_base into rcd_order_base;
+            if csr_order_base%found then
+               var_process := true;
+               var_dlvry_type_factor := rcd_order_base.order_type_factor;
+            end if;
+            close csr_order_base;
+         elsif not(rcd_trace.purch_order_doc_num is null) then
+            open csr_purch_base;
+            fetch csr_purch_base into rcd_purch_base;
+            if csr_purch_base%found then
+               var_process := true;
+               var_dlvry_type_factor := rcd_purch_base.purch_order_type_factor;
+            end if;
+            close csr_purch_base;
+         end if;
+
+         /*-*/
+         /* Process the ODS data when required
+         /*-*/
+         if var_process = true then
+
+            /*---------------------------*/
+            /* DLVRY_BASE Initialisation */
+            /*---------------------------*/
+
+            /*-*/
+            /* Initialise the delivery base row
+            /*-*/
+            rcd_dlvry_base.dlvry_doc_num := rcd_trace.dlvry_doc_num;
+            rcd_dlvry_base.dlvry_doc_line_num := rcd_trace.dlvry_doc_line_num;
+            rcd_dlvry_base.dlvry_line_status := '*OPEN';
+            rcd_dlvry_base.dlvry_trace_seqn := rcd_trace.trace_seqn;
+            rcd_dlvry_base.creatn_date := rcd_trace.creatn_date;
+            rcd_dlvry_base.creatn_yyyyppdd := rcd_trace.creatn_yyyyppdd;
+            rcd_dlvry_base.creatn_yyyyppw := rcd_trace.creatn_yyyyppw;
+            rcd_dlvry_base.creatn_yyyypp := rcd_trace.creatn_yyyypp;
+            rcd_dlvry_base.creatn_yyyymm := rcd_trace.creatn_yyyymm;
+            rcd_dlvry_base.dlvry_eff_date := rcd_trace.dlvry_eff_date;
+            rcd_dlvry_base.dlvry_eff_yyyyppdd := rcd_trace.dlvry_eff_yyyyppdd;
+            rcd_dlvry_base.dlvry_eff_yyyyppw := rcd_trace.dlvry_eff_yyyyppw;
+            rcd_dlvry_base.dlvry_eff_yyyypp := rcd_trace.dlvry_eff_yyyypp;
+            rcd_dlvry_base.dlvry_eff_yyyymm := rcd_trace.dlvry_eff_yyyymm;
+            rcd_dlvry_base.goods_issue_date := rcd_trace.goods_issue_date;
+            rcd_dlvry_base.goods_issue_yyyyppdd := rcd_trace.goods_issue_yyyyppdd;
+            rcd_dlvry_base.goods_issue_yyyyppw := rcd_trace.goods_issue_yyyyppw;
+            rcd_dlvry_base.goods_issue_yyyypp := rcd_trace.goods_issue_yyyypp;
+            rcd_dlvry_base.goods_issue_yyyymm := rcd_trace.goods_issue_yyyymm;
+            rcd_dlvry_base.order_doc_num := rcd_trace.order_doc_num;
+            rcd_dlvry_base.order_doc_line_num := rcd_trace.order_doc_line_num;
+            rcd_dlvry_base.purch_order_doc_num := rcd_trace.purch_order_doc_num;
+            rcd_dlvry_base.purch_order_doc_line_num := rcd_trace.purch_order_doc_line_num;
+            rcd_dlvry_base.company_code := rcd_trace.company_code;
+            rcd_dlvry_base.sales_org_code := rcd_trace.sales_org_code;
+            rcd_dlvry_base.distbn_chnl_code := rcd_trace.distbn_chnl_code;
+            rcd_dlvry_base.division_code := null;
+            rcd_dlvry_base.doc_currcy_code := null;
+            rcd_dlvry_base.company_currcy_code := var_company_currcy;
+            rcd_dlvry_base.exch_rate := null;
+            rcd_dlvry_base.dlvry_type_code := rcd_trace.dlvry_type_code;
+            rcd_dlvry_base.dlvry_procg_stage := rcd_trace.dlvry_procg_stage;
+            rcd_dlvry_base.sold_to_cust_code := rcd_trace.sold_to_cust_code;
+            rcd_dlvry_base.bill_to_cust_code := rcd_trace.bill_to_cust_code;
+            rcd_dlvry_base.payer_cust_code := rcd_trace.payer_cust_code;
+            rcd_dlvry_base.ship_to_cust_code := rcd_trace.ship_to_cust_code;
+            rcd_dlvry_base.matl_code := dw_trim_code(rcd_trace.matl_code);
+            rcd_dlvry_base.ods_matl_code := rcd_trace.matl_code;
+            rcd_dlvry_base.matl_entd := dw_trim_code(rcd_trace.matl_entd);
+            rcd_dlvry_base.plant_code := rcd_trace.plant_code;
+            rcd_dlvry_base.storage_locn_code := rcd_trace.storage_locn_code;
+            rcd_dlvry_base.dlvry_weight_unit := rcd_trace.dlvry_weight_unit;
+            rcd_dlvry_base.dlvry_gross_weight := rcd_trace.dlvry_gross_weight;
+            rcd_dlvry_base.dlvry_net_weight := rcd_trace.dlvry_net_weight;
+            rcd_dlvry_base.dlvry_uom_code := rcd_trace.dlvry_uom_code;
+            rcd_dlvry_base.dlvry_base_uom_code := rcd_trace.dlvry_base_uom_code;
+            rcd_dlvry_base.del_qty := 0;
+            rcd_dlvry_base.del_qty_base_uom := 0;
+            rcd_dlvry_base.del_qty_gross_tonnes := 0;
+            rcd_dlvry_base.del_qty_net_tonnes := 0;
+            rcd_dlvry_base.del_gsv := 0;
+            rcd_dlvry_base.del_gsv_xactn := 0;
+            rcd_dlvry_base.del_gsv_aud := 0;
+            rcd_dlvry_base.del_gsv_usd := 0;
+            rcd_dlvry_base.del_gsv_eur := 0;
+            rcd_dlvry_base.inv_qty := 0;
+            rcd_dlvry_base.inv_qty_base_uom := 0;
+            rcd_dlvry_base.inv_qty_gross_tonnes := 0;
+            rcd_dlvry_base.inv_qty_net_tonnes := 0;
+            rcd_dlvry_base.inv_gsv := 0;
+            rcd_dlvry_base.inv_gsv_xactn := 0;
+            rcd_dlvry_base.inv_gsv_aud := 0;
+            rcd_dlvry_base.inv_gsv_usd := 0;
+            rcd_dlvry_base.inv_gsv_eur := 0;
+            rcd_dlvry_base.mfanz_icb_flag := null;
+            rcd_dlvry_base.demand_plng_grp_division_code := null;
+
+            /*-*/
+            /* Set the related data ORDER_BASE or PURCH_BASE
+            /*-*/
+            if not(rcd_dlvry_base.order_doc_num is null) then
+               rcd_dlvry_base.division_code := rcd_order_base.division_code;
+               rcd_dlvry_base.doc_currcy_code := rcd_order_base.doc_currcy_code;
+               rcd_dlvry_base.exch_rate := rcd_order_base.exch_rate;
+               rcd_dlvry_base.mfanz_icb_flag := rcd_order_base.mfanz_icb_flag;
+               rcd_dlvry_base.demand_plng_grp_division_code := rcd_order_base.demand_plng_grp_division_code;
+            end if;
+            if not(rcd_dlvry_base.purch_order_doc_num is null) then
+               rcd_dlvry_base.division_code := rcd_purch_base.division_code;
+               rcd_dlvry_base.doc_currcy_code := rcd_purch_base.doc_currcy_code;
+               rcd_dlvry_base.exch_rate := rcd_purch_base.exch_rate;
+               rcd_dlvry_base.mfanz_icb_flag := rcd_purch_base.mfanz_icb_flag;
+               rcd_dlvry_base.demand_plng_grp_division_code := rcd_purch_base.demand_plng_grp_division_code;
+            end if;
+
+            /*-------------------------*/
+            /* DLVRY_BASE Calculations */
+            /*-------------------------*/
+
+            /*-*/
+            /* Calculate the delivered quantity values
+            /* **notes** 1. Recalculation from the material GRD data allows the base tables to be rebuilt from the ODS when GRD data errors are corrected.
+            /*           2. Ensures consistency when reducing outstanding quantity and weight from  invoice.
+            /*-*/
+            rcd_dlvry_base.del_qty := var_dlvry_type_factor * rcd_trace.dlvry_qty;
+            dw_utility.pkg_qty_fact.ods_matl_code := rcd_dlvry_base.ods_matl_code;
+            dw_utility.pkg_qty_fact.uom_code := rcd_dlvry_base.dlvry_uom_code;
+            dw_utility.pkg_qty_fact.uom_qty := rcd_dlvry_base.del_qty;
+            dw_utility.calculate_quantity;
+            rcd_dlvry_base.dlvry_base_uom_code := dw_utility.pkg_qty_fact.base_uom_code;
+            rcd_dlvry_base.del_qty_base_uom := dw_utility.pkg_qty_fact.qty_base_uom;
+            rcd_dlvry_base.del_qty_gross_tonnes := dw_utility.pkg_qty_fact.qty_gross_tonnes;
+            rcd_dlvry_base.del_qty_net_tonnes := dw_utility.pkg_qty_fact.qty_net_tonnes;
+
+            /*-*/
+            /* Calculate the delivered GSV values
+            /*-*/
+            if not(rcd_dlvry_base.order_doc_num is null) then
+               if rcd_order_base.ord_qty != 0 then
+                  rcd_dlvry_base.del_gsv_xactn := round(var_dlvry_type_factor * ((rcd_order_base.ord_gsv_xactn / rcd_order_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv := round(var_dlvry_type_factor * ((rcd_order_base.ord_gsv / rcd_order_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_aud := round(var_dlvry_type_factor * ((rcd_order_base.ord_gsv_aud / rcd_order_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_usd := round(var_dlvry_type_factor * ((rcd_order_base.ord_gsv_usd / rcd_order_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_eur := round(var_dlvry_type_factor * ((rcd_order_base.ord_gsv_eur / rcd_order_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+               end if;
+            end if;
+            if not(rcd_dlvry_base.purch_order_doc_num is null) then
+               if rcd_purch_base.ord_qty != 0 then
+                  rcd_dlvry_base.del_gsv_xactn := round(var_dlvry_type_factor * ((rcd_purch_base.ord_gsv_xactn / rcd_purch_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv := round(var_dlvry_type_factor * ((rcd_purch_base.ord_gsv / rcd_purch_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_aud := round(var_dlvry_type_factor * ((rcd_purch_base.ord_gsv_aud / rcd_purch_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_usd := round(var_dlvry_type_factor * ((rcd_purch_base.ord_gsv_usd / rcd_purch_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+                  rcd_dlvry_base.del_gsv_eur := round(var_dlvry_type_factor * ((rcd_purch_base.ord_gsv_eur / rcd_purch_base.ord_qty) * rcd_trace.dlvry_qty), 2);
+               end if;
+            end if;
+
+            /*---------------------*/
+            /* DLVRY_BASE Creation */
+            /*---------------------*/
+
+            /*-*/
+            /* Insert the delivery base row
+            /*-*/
+            insert into dw_dlvry_base values rcd_dlvry_base;
+
+         end if;
+
+      end loop;
+      close csr_trace;
+
+      /*-*/
+      /* STEP #5
+      /*
+      /* Update the sales base row delivery pointers for returns
+      /*-*/
+      lics_logging.write_log('--> Updating sales base data delivery pointers for returns');
+      dw_alignment.sales_base_return(par_company_code);
+
+      /*-*/
+      /* STEP #6
+      /*
+      /* Update the ORDER_BASE rows to *OPEN when related to a new
+      /* delivery line with a *OPEN status. Ensures that the ORDER_BASE
+      /* row delivery values are updated for current execution (document pointers changed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related order base data after delivery base load');
+      update dw_order_base
+         set order_line_status = '*OPEN'
+       where company_code = par_company_code
+         and (order_doc_num, order_doc_line_num) in (select order_doc_num, order_doc_line_num
+                                                       from dw_dlvry_base
+                                                      where company_code = par_company_code
+                                                        and dlvry_doc_num = par_dlvry_doc_num
+                                                        and order_doc_num is not null);
+
+      /*-*/
+      /* STEP #7
+      /*
+      /* Update the PURCH_BASE rows to *OPEN when related to a new
+      /* delivery line with a *OPEN status. Ensures that the PURCH_BASE
+      /* row delivery values are updated for current execution (document pointers changed)
+      /*-*/
+      lics_logging.write_log('--> Reopening related purchase base data after delivery base load');
+      update dw_purch_base
+         set purch_order_line_status = '*OPEN'
+       where company_code = par_company_code
+         and (purch_order_doc_num, purch_order_doc_line_num) in (select purch_order_doc_num, purch_order_doc_line_num
+                                                                   from dw_dlvry_base
+                                                                  where company_code = par_company_code
+                                                                    and dlvry_doc_num = par_dlvry_doc_num
+                                                                    and purch_order_doc_num is not null);
+
+      /*-*/
+      /* STEP #8
+      /*
+      /* Update the open delivery base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open delivery base data');
+      dw_alignment.dlvry_base_status(par_company_code);
+
+      /*-*/
+      /* STEP #9
+      /*
+      /* Update the open order base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open order base data');
+      dw_alignment.order_base_status(par_company_code);
+
+      /*-*/
+      /* STEP #10
+      /*
+      /* Update the open purchase base row data
+      /*-*/
+      lics_logging.write_log('--> Updating open purchase base data');
+      dw_alignment.purch_base_status(par_company_code);
+
+      /*-*/
+      /* Commit the database
+      /*-*/
+      commit;
+
+      /*-*/
+      /* End procedure
+      /*-*/
+      lics_logging.write_log('End - Process single Delivery Load');
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Rollback the database
+         /*-*/
+         rollback;
+
+         /*-*/
+         /* Log error
+         /*-*/
+         if lics_logging.is_created = true then
+            lics_logging.write_log('**ERROR** - Process single Delivery Load - ' || substr(SQLERRM, 1, 1024));
+            lics_logging.write_log('End - Process single Delivery Load');
+         end if;
+
+         /*-*/
+         /* Raise an exception to the caller
+         /*-*/
+         raise_application_error(-20000, '**ERROR**');
+         
+   end process_single_dlvry;
 
 end dw_scheduled_aggregation;
 /
