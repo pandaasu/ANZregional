@@ -325,10 +325,10 @@ sub ProcessUpdateAccept()
    '// Update the user
    '//
    strStatement = "lics_security_configuration.update_user("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuUser").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuDescription").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuMenu").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuStatus").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields.Item("DTA_SeuUser")) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields.Item("DTA_SeuDescription")) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields.Item("DTA_SeuMenu")) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields.Item("DTA_SeuStatus")) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(strUserName) & "'"
 
    strStatement = strStatement & ")"
