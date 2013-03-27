@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- CLIO-NA Prod Interface Control System Security -->
+<!-- -->
+<security connectionString="User Id=lics_app;Password=..PWD..;Data Source=ap0112t.ap.mars;" encryptedPassword="WZYVYWVZ71423V2U"/>
+

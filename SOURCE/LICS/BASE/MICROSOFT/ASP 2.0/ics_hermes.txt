@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- HK Interface Control System Menu -->
+<!-- -->
+<menu text="HK Interface Control System Menu">
+
+   <node text="Monitoring">
+      <option text="Job Monitoring" script="ics_job_monitor.asp?Mode=SEARCH"/>
+      <option text="Interface Monitoring" script="ics_int_monitor.asp?Mode=SEARCH"/>
+      <option text="Event Monitoring" script="ics_eve_monitor.asp?Mode=SEARCH"/>
+      <option text="Log Monitoring" script="ics_log_monitor.asp?Mode=SEARCH"/>
+   </node>
+
+   <node text="Hermes">
+      <option text="Budget Loading" script="hermes_budget.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+      <option text="Actuals Maintenance" script="hermes_actual.asp?Mode=SELECT&amp;DTA_TpaComCode=137"/>
+      <option text="Accruals Posting" script="hermes_accrual.asp?Mode=SELECT&amp;DTA_TpaComCode=137"/>
+      <option text="Company Information" script="hermes_com_info.asp?Mode=DISPLAY&amp;DTA_TpaComCode=137"/>
+      <option text="OP/BR Loading" script="hermes_opbr.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+      <option text="Cash Discount Loading" script="hermes_actual_upload.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+   </node>
+
+</menu>

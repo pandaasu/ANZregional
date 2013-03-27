@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Menu -->
+<!-- -->
+<menu text="HK CLIO Interface Control System Menu">
+
+   <node text="Monitoring">
+      <option text="Job Monitoring" script="ics_job_monitor.asp?Mode=SEARCH"/>
+      <option text="Interface Monitoring" script="ics_int_monitor.asp?Mode=SEARCH"/>
+      <option text="Event Monitoring" script="ics_eve_monitor.asp?Mode=SEARCH"/>
+      <option text="Log Monitoring" script="ics_log_monitor.asp?Mode=SEARCH"/>
+      <option text="Lock Monitoring" script="ics_loc_monitor.asp?Mode=SELECT"/>
+      <option text="File Search" script="ics_fil_search.asp?Mode=SEARCH"/>
+   </node>
+
+   <node text="Configuration">
+      <option text="Job Control" script="ics_job_control.asp"/>
+      <option text="Job Configuration" script="ics_job_configuration.asp?Mode=SELECT"/>
+      <option text="Interface Configuration" script="ics_int_configuration.asp?Mode=SELECT"/>
+      <option text="Routing Configuration" script="ics_rou_configuration.asp?Mode=SELECT"/>
+      <option text="Setting Configuration" script="ics_set_configuration.asp?Mode=SELECT"/>
+      <option text="Process Interface" script="ics_int_process.asp?Mode=SELECT"/>
+      <option text="Statistics" script="ics_statistics.asp?Mode=SELECT"/>
+   </node>
+
+   <node text="Interfaces">
+      <option text="SAP Interface" script="ics_sap_interface.asp?Mode=SELECT"/>
+   </node>
+
+   <node text="Validation">
+      <option text="Validation Data Store Interface Configuration" script="ics_vds_int.asp?Mode=SELECT"/>
+      <option text="Validation Data Store Interface Submit" script="ics_vds_sbm.asp?Mode=SELECT"/>
+      <option text="Validation Data Store View Generation" script="ics_vds_view.asp?Mode=SELECT"/>
+      <option text="Group Configuration" script="ics_val_grp.asp?Mode=SELECT"/>
+      <option text="Rule Configuration" script="ics_val_rul.asp?Mode=SELECT"/>
+      <option text="Classification Configuration" script="ics_val_cla.asp?Mode=SELECT"/>
+      <option text="Type Configuration" script="ics_val_typ.asp?Mode=SELECT"/>
+      <option text="Filter Configuration" script="ics_val_fil.asp?Mode=SELECT"/>
+      <option text="Email Configuration" script="ics_val_ema.asp?Mode=SELECT"/>
+      <option text="Validation Execution - Single" script="ics_val_exe.asp?Mode=SELECT"/>
+      <option text="Validation Execution - Batch" script="ics_val_sbm.asp?Mode=SELECT"/>
+      <option text="Message Enquiry" script="ics_val_mes.asp?Mode=SELECT"/>
+   </node>
+   
+   <node text="HK Local Functions">
+      <option text="DW Flattening" script="ics_mfj_flattening.asp?Mode=SELECT"/>
+      <option text="DW Forecast Aggregation" script="ics_mfj_fcst_aggregation.asp?Mode=SELECT"/>
+      <option text="LADS Order/Delivery Deletion" script="ics_lads_deletion.asp?Mode=PROMPT"/>
+   </node>
+   
+   <node text="Hermes">
+      <option text="Budget Loading" script="hermes_budget.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+      <option text="Actuals Maintenance" script="hermes_actual.asp?Mode=SELECT&amp;DTA_TpaComCode=137"/>
+      <option text="Accruals Posting" script="hermes_accrual.asp?Mode=SELECT&amp;DTA_TpaComCode=137"/>
+      <option text="Company Information" script="hermes_com_info.asp?Mode=DISPLAY&amp;DTA_TpaComCode=137"/>
+      <option text="OP/BR Loading" script="hermes_opbr.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+      <option text="Cash Discount Loading" script="hermes_actual_upload.asp?Mode=LOAD&amp;DTA_TpaComCode=137"/>
+   </node>
+   
+</menu>

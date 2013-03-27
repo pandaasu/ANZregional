@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- -->
+<!-- MFANZ Interface Control System Guest Menu -->
+<!-- -->
+<menu text="MFANZ Interface Control System Guest Menu">
+
+   <node text="Monitoring">
+      <option text="Job Monitoring" script="ics_job_monitor.asp?Mode=SEARCH"/>
+      <option text="Interface Monitoring" script="ics_int_monitor.asp?Mode=SEARCH"/>
+      <option text="Event Monitoring" script="ics_eve_monitor.asp?Mode=SEARCH"/>
+      <option text="Log Monitoring" script="ics_log_monitor.asp?Mode=SEARCH"/>
+      <option text="Lock Monitoring" script="ics_loc_monitor.asp?Mode=SELECT"/>
+      <option text="File Search" script="ics_fil_search.asp?Mode=SEARCH"/>
+   </node>
+
+</menu>
