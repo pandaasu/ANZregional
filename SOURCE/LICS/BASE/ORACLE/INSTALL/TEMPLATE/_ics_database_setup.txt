@@ -23,6 +23,7 @@ Please create the following a new database on <DBSERVER>
 
          LICS
          LICS_APP
+         ICS_READER
 
    - Please execute the following commands .....
 
