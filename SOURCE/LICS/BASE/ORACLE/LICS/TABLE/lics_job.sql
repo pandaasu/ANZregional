@@ -62,6 +62,7 @@ alter table lics_job
 /**/
 grant select, insert, update, delete on lics_job to lics_app;
 grant select on lics_job to lics_exec;
+grant select on lics_job to ics_reader;
 
 /**/
 /* Synonym

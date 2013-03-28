@@ -83,6 +83,7 @@ alter table lics_interface
 /**/
 grant select, insert, update, delete on lics_interface to lics_app;
 grant select on lics_interface to lics_exec;
+grant select on lics_interface to ics_reader;
 
 /**/
 /* Synonym
