@@ -204,9 +204,6 @@ create or replace package body quo_quocdw29 as
       commit;
     else
       rollback;
-      if g_footer_row_found_flag = false then
-        raise_application_error(-20000, 'FOOTER NOT FOUND .. Expected [FTR'||g_file_name||']');
-      end if;
     end if;
 
   exception

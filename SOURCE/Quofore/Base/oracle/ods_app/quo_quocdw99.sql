@@ -20,6 +20,7 @@ create or replace package quo_quocdw99 as
    YYYY-MM-DD   Author                 Description
    ----------   --------------------   -----------------------------------------
    2013-02-25   Mal Chambeyron         Created
+   2013-04-09   Mal Chambeyron         Re-Create Interface File - to Avoid ICS ZLIB Issue
 
   *****************************************************************************/
 
@@ -41,152 +42,112 @@ package body quo_quocdw99 as
   -- Private : Constants
   g_package_name constant varchar2(64 char) := 'ods_app.quo_quocdw99';
 
+  -- Private : Variables
+  g_file_opened boolean;
+  g_source_file_error_flag boolean;
+  g_footer_row_found_flag boolean;
+
+  g_file_handle utl_file.file_type;
+
+  g_temp_path varchar2(2048 char);
+  g_interface_path varchar2(2048 char);
+  g_file_name varchar2(512 char);
+  
+  g_source_interface_name varchar2(32 char);
+  g_target_interface_name varchar2(32 char);
+  g_entity_name varchar2(32 char);
+  g_source_id number(4);
+  g_source_desc varchar2(256 char);
+
+  g_log_header_text varchar2(4000 char);
+  g_log_search_text varchar2(4000 char);  
+  
   /*****************************************************************************
   ** Procedure : On Start - Call Back for LICS Framework
   **             Called by the LICS Framework BEFORE Processing the Record Set
   *****************************************************************************/
   procedure on_start is
 
-    l_file_name varchar2(512 char);
-    l_source_interface_name varchar2(32 char);
-    l_target_interface_name varchar2(32 char);
-    l_entity_name varchar2(32 char);
-    l_source_id number(4);
-    l_source_desc varchar2(256 char);
-
-    l_archive_path varchar2(2048 char);
-    l_temp_path varchar2(2048 char);
-    l_bin_path varchar2(2048 char);
-    l_interface_path varchar2(2048 char);
-
-    l_log_header_text varchar2(4000 char);
-    l_log_search_text varchar2(4000 char);
-
     l_error_msg varchar2(4000 char);
-    l_zlib_error_flag boolean;
 
   begin
 
+    -- Initialise Flags
+    g_file_opened := false;
+    g_source_file_error_flag := false;
+    g_footer_row_found_flag := false;
+    
     -- Set Interface and Source File Names ..
-    l_file_name := lics_inbound_processor.callback_file_name;
-    l_source_interface_name := upper(lics_inbound_processor.callback_interface); -- delibrate upper
+    g_file_name := lics_inbound_processor.callback_file_name;
+    g_source_interface_name := upper(lics_inbound_processor.callback_interface); -- delibrate upper
 
     -- Start Logging ..
-    l_log_header_text := 'Quofore Inteface *ROUTER ['||l_file_name||']';
-    l_log_search_text := 'QUOFORE_ROUTER_'||l_source_interface_name;
+    g_log_header_text := 'Quofore Inteface *ROUTER ['||g_file_name||']';
+    g_log_search_text := 'QUOFORE_ROUTER_'||g_source_interface_name;
     --
-    lics_logging.start_log(l_log_header_text,l_log_search_text);
-    lics_logging.write_log('Process File ['||l_file_name||']');
+    lics_logging.start_log(g_log_header_text,g_log_search_text);
+    lics_logging.write_log('Process File ['||g_file_name||']');
 
     -- Each of the remaining Procedures / Functions Raise Exception on Failure
 
     -- File Name, Extract .. Entity Name
     begin
-      l_entity_name := quo_util.get_file_entity_name(l_file_name);
+      g_entity_name := quo_util.get_file_entity_name(g_file_name);
     exception
       when others then
         lics_logging.write_log(substr('Cannot Extract Entity Name : '||SQLERRM, 1, 4000));
         lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
     end;
 
     -- Validate File Name
     begin
-      quo_util.validate_file_name(l_entity_name, l_file_name);
+      quo_util.validate_file_name(g_entity_name, g_file_name);
     exception
       when others then
         lics_logging.write_log(substr('Invalid File Name : '||SQLERRM, 1, 4000));
         lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
     end;
 
     -- Interface Name, Extract .. Source Id
     begin
-      l_source_id := quo_util.get_interface_source_id(l_source_interface_name);
+      g_source_id := quo_util.get_interface_source_id(g_source_interface_name);
     exception
       when others then
         lics_logging.write_log(substr('Cannot Extract Source Id : '||SQLERRM, 1, 4000));
         lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
     end;
 
     -- Entity Name, Get .. Interface Name
     begin
-      l_target_interface_name := quo_util.get_entity_interface_name(l_entity_name)||'.'||l_source_id;
+      g_target_interface_name := quo_util.get_entity_interface_name(g_entity_name)||'.'||g_source_id;
     exception
       when others then
         lics_logging.write_log(substr('Cannot Extract Source Id : '||SQLERRM, 1, 4000));
         lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
     end;
 
     -- Log Interface Routing
-    lics_logging.write_log('ROUTE BEGIN : Entity ['||l_entity_name||'] to Interface ['||l_target_interface_name||']');
+    lics_logging.write_log('ROUTE BEGIN : Entity ['||g_entity_name||'] to Interface ['||g_target_interface_name||']');
 
     -- Set Paths ..
-    l_archive_path := lics_parameter.archive_directory;
-    l_temp_path := lics_parameter.ics_path||'temp'||lics_parameter.folder_delimiter;
-    l_bin_path := lics_parameter.ics_path||'bin'||lics_parameter.folder_delimiter;
-    l_interface_path := lics_parameter.inbound_directory||lower(l_target_interface_name)||lics_parameter.folder_delimiter;
+    g_temp_path := lics_parameter.ics_path||'temp'||lics_parameter.folder_delimiter;
+    g_interface_path := lics_parameter.inbound_directory||lower(g_target_interface_name)||lics_parameter.folder_delimiter;
 
-    -- Restore Archived File to Temp Path .. DO NOT Remove Archive .. DO NOT Replace Target
-    l_zlib_error_flag := false;
+    -- Open/Create File ..
     begin
-      lics_filesystem.restore_file_gzip(l_archive_path, l_file_name||'.gz', l_temp_path, l_file_name, 0, 0);
-      lics_logging.write_log('Restore Archive File, Using LICS.Oracle.Java ['||l_archive_path||l_file_name||'.gz] to ['||l_temp_path||l_file_name||']');
+      g_file_handle := utl_file.fopen('ICS_TEMP', g_file_name, 'w', 32767); 
     exception
       when others then
-        l_error_msg := SQLERRM;
-        lics_logging.write_log(substr('Restore Archive File, Using LICS.Oracle.Java ['||l_archive_path||l_file_name||'.gz] to ['||l_temp_path||l_file_name||'] Failed : '||l_error_msg, 1, 4000));
-        if instr(l_error_msg,'Unexpected end of ZLIB input stream',1,1) > 0 then -- Oracle Java ZLIB Uncompress Failed .. Try Restore Using Command Shell GUNZIP
-          l_zlib_error_flag := true; -- Set Flag .. so can raise error at END of processing
-          lics_logging.write_log('Oracle Java ZLIB Uncompress Failed .. Try Restore Using Command Shell GUNZIP');
-          begin
-            lics_filesystem.execute_external_procedure(l_bin_path||'quo_gunzip.ksh '||l_archive_path||l_file_name||'.gz > '||l_temp_path||l_file_name);
-            lics_logging.write_log('Restore Archive File, Using LICS.Oracle.Ksh.Gunzip ['||l_archive_path||l_file_name||'.gz] to ['||l_temp_path||l_file_name||']');
-          exception
-            when others then
-              lics_logging.write_log(substr('Restore Archive File, Using LICS.Oracle.Ksh.Gunzip ['||l_archive_path||l_file_name||'.gz] to ['||l_temp_path||l_file_name||'] Failed : '||SQLERRM, 1, 4000));
-              lics_logging.end_log;
-              raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
-          end;
-        else
-          lics_logging.end_log;
-          raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
-        end if;
-    end;
-
-    -- Set File Attributes
-    begin
-      lics_filesystem.execute_external_procedure(replace(lics_parameter.file_attribute_command,'<FILE>',l_temp_path||l_file_name));
-    exception
-      when others then
-        lics_logging.write_log(substr('Set File Attributes ['||replace(lics_parameter.file_attribute_command,'<FILE>',l_temp_path||l_file_name)||'] Failed : '||SQLERRM, 1, 4000));
+        lics_logging.write_log(substr('Open/Create File ['||g_temp_path||g_file_name||'] Failed : '||SQLERRM, 1, 4000));
         lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
     end;
-    lics_logging.write_log('Set File Attributes ['||replace(lics_parameter.file_attribute_command,'<FILE>',l_temp_path||l_file_name)||']');
-
-    -- Move File to Interface Path .. DO NOT Replace Target
-    begin
-      lics_filesystem.move_file(l_temp_path, l_file_name, l_interface_path, l_file_name, 0);
-    exception
-      when others then
-        lics_logging.write_log(substr('Move File ['||l_temp_path||l_file_name||'] to ['||l_interface_path||l_file_name||'] Failed : '||SQLERRM, 1, 4000));
-        lics_logging.end_log;
-        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
-    end;
-    lics_logging.write_log('Move File ['||l_temp_path||l_file_name||'] to ['||l_interface_path||l_file_name||']');
-
-    if l_zlib_error_flag then
-      lics_logging.write_log('ROUTE COMPLETE (with ZLIB Error) : Entity ['||l_entity_name||'] to Interface ['||l_target_interface_name||']');
-      lics_logging.end_log;
-      raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||l_log_search_text||']['||l_log_header_text||'] for Details');
-    else
-      -- Successful Completion
-      lics_logging.write_log('ROUTE COMPLETE : Entity ['||l_entity_name||'] to Interface ['||l_target_interface_name||']');
-      lics_logging.end_log;
-    end if;
+    lics_logging.write_log('Open/Create File ['||g_temp_path||g_file_name||']');
+    g_file_opened := true;
 
   exception
     when others then
@@ -200,10 +161,53 @@ package body quo_quocdw99 as
   *****************************************************************************/
   procedure on_data(p_row in varchar2) is
 
+    l_row varchar2(4000 char);
+
   begin
 
-    return; -- Do nothing
+    if g_file_opened = true then
 
+      -- Write Unaltered Row
+      begin
+        utl_file.put_line(g_file_handle, p_row);
+      exception
+        when others then
+          raise_application_error(-20000, substr('Writing Row ['||p_row||'] Error : '||SQLERRM, 1, 4000));      
+      end;
+        
+      -- Checks for Valid Footer ..
+      -- ie. to NOT forward file for further processing on Invalid Footer
+      
+      -- Remove leading and trailing whitespace (including cr/lf/tab/etc..)
+      l_row := trim(regexp_replace(p_row,'[[:space:]]*$',null));
+      if l_row is null then
+        return; -- Return on EMPTY Line
+      end if;
+    
+      -- FOOTER row .. Starts with FTR followed by any APLHA, NUMERIC, [_] and [.] .. Note, NO Comma [,]
+      if regexp_instr(l_row,'^FTR[A-Z0-9._]*$',1,1,0,'i') = 1 then -- Simple Check to Distinguish from DATA row   
+        g_footer_row_found_flag := true;
+        if upper(l_row) != upper('FTR'||g_file_name) then -- Invalid FOOTER row / More Specific Check
+          lics_inbound_utility.add_exception('['||g_package_name||'.on_data] Invalid Footer Row .. Expected [FTR'||g_file_name||']');
+          lics_logging.write_log('['||g_package_name||'.on_data] Invalid Footer Row .. Expected [FTR'||g_file_name||']');
+          g_source_file_error_flag := true;
+          return; -- Invalid Footer
+        end if;
+      -- DATA row
+      else
+        if g_footer_row_found_flag then -- cannot have DATA row after FOOTER row
+          lics_inbound_utility.add_exception('['||g_package_name||'.on_data] DATA Row Found After FOOTER Row');
+          lics_logging.write_log('['||g_package_name||'.on_data] DATA Row Found After FOOTER Row');
+          g_source_file_error_flag := true;
+        end if;
+      end if;
+    
+    end if;
+
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.on_data] : '||SQLERRM, 1, 4000));
+      
   end on_data;
 
   /*****************************************************************************
@@ -214,7 +218,71 @@ package body quo_quocdw99 as
 
   begin
 
-    commit; -- ALWAYS Commit
+    -- Close File
+    if g_file_opened = true then
+      begin
+        utl_file.fclose(g_file_handle);
+      exception
+        when others then
+        lics_logging.write_log(substr('Close File ['||g_temp_path||g_file_name||'] Failed : '||SQLERRM, 1, 4000));
+        lics_logging.end_log;
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
+      end;
+      g_file_opened := false;
+    end if;
+    lics_logging.write_log('Close File ['||g_temp_path||g_file_name||']');
+  
+    -- Set File Attributes
+    begin
+      lics_filesystem.execute_external_procedure(replace(lics_parameter.file_attribute_command,'<FILE>',g_temp_path||g_file_name));
+    exception
+      when others then
+        lics_logging.write_log(substr('Set File Attributes ['||replace(lics_parameter.file_attribute_command,'<FILE>',g_temp_path||g_file_name)||'] Failed : '||SQLERRM, 1, 4000));
+        lics_logging.end_log;
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
+    end;
+    lics_logging.write_log('Set File Attributes ['||replace(lics_parameter.file_attribute_command,'<FILE>',g_temp_path||g_file_name)||']');
+
+
+    -- Check need to continue processing .. 
+    if g_source_file_error_flag = false and g_footer_row_found_flag = true then 
+      commit; -- and continue
+    else 
+      rollback; -- and raise exception or return as appropriate
+    
+      if g_footer_row_found_flag = false then
+        lics_logging.write_log('FOOTER NOT FOUND .. Expected [FTR'||g_file_name||']');
+        lics_logging.end_log;
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
+      end if;
+  
+      if g_source_file_error_flag = true then 
+        lics_logging.write_log('Error in Source File ['||g_file_name||']');
+        lics_logging.end_log;
+        return;
+      end if;
+
+    end if;    
+
+
+    -- Continue processing .. Route file to Interface ..     
+    
+    -- Move File to Interface Path .. DO NOT Replace Target
+    begin
+      lics_filesystem.move_file(g_temp_path, g_file_name, g_interface_path, g_file_name, 0);
+    exception
+      when others then
+        lics_logging.write_log(substr('Move File ['||g_temp_path||g_file_name||'] to ['||g_interface_path||g_file_name||'] Failed : '||SQLERRM, 1, 4000));
+        lics_logging.end_log;
+        raise_application_error(-20000, 'Check Log Monitor [LICS_LOG]['||g_log_search_text||']['||g_log_header_text||'] for Details');
+    end;
+    lics_logging.write_log('Move File ['||g_temp_path||g_file_name||'] to ['||g_interface_path||g_file_name||']');
+
+    -- Successful Completion
+    lics_logging.write_log('ROUTE COMPLETE : Entity ['||g_entity_name||'] to Interface ['||g_target_interface_name||']');
+    lics_logging.end_log;
+  
+    commit;
 
   exception
     when others then
