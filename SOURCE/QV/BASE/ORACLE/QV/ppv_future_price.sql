@@ -24,6 +24,7 @@ create table ppv_future_price
 (
   pfp_plant           varchar2(8 char) not null,
   pfp_material        varchar2(32 char) not null,
+  pfp_currency        varchar2(10 char) not null,
   pfp_yyyypp          number not null,
   pfp_price           number not null
 );
@@ -34,6 +35,7 @@ create table ppv_future_price
 comment on table ppv_future_price is 'PPV Future Price';
 comment on column ppv_future_price.pfp_plant is 'PPV Future Price - plant';
 comment on column ppv_future_price.pfp_material is 'PPV Future Price - material';
+comment on column ppv_future_price.pfp_currency is 'PPV Future Price - currency';
 comment on column ppv_future_price.pfp_yyyypp is 'PPV Future Price - mars period (YYYYPP)';
 comment on column ppv_future_price.pfp_price is 'PPV Future Price - future price';
 

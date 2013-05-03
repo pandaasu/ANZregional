@@ -71,19 +71,20 @@ create or replace package body qv_app.qv_csvqvs16_validation as
       lics_inbound_utility.set_csv_definition('PLANT_CODE',2);
       lics_inbound_utility.set_csv_definition('MATERIAL_CODE',3);
       lics_inbound_utility.set_csv_definition('MATERIAL_DESC',4);
-      lics_inbound_utility.set_csv_definition('PERIOD_1',5);
-      lics_inbound_utility.set_csv_definition('PERIOD_2',6);
-      lics_inbound_utility.set_csv_definition('PERIOD_3',7);
-      lics_inbound_utility.set_csv_definition('PERIOD_4',8);
-      lics_inbound_utility.set_csv_definition('PERIOD_5',9);
-      lics_inbound_utility.set_csv_definition('PERIOD_6',10);
-      lics_inbound_utility.set_csv_definition('PERIOD_7',11);
-      lics_inbound_utility.set_csv_definition('PERIOD_8',12);
-      lics_inbound_utility.set_csv_definition('PERIOD_9',13);
-      lics_inbound_utility.set_csv_definition('PERIOD_10',14);
-      lics_inbound_utility.set_csv_definition('PERIOD_11',15);
-      lics_inbound_utility.set_csv_definition('PERIOD_12',16);
-      lics_inbound_utility.set_csv_definition('PERIOD_13',17);
+      lics_inbound_utility.set_csv_definition('CURRENCY',5);
+      lics_inbound_utility.set_csv_definition('PERIOD_1',6);
+      lics_inbound_utility.set_csv_definition('PERIOD_2',7);
+      lics_inbound_utility.set_csv_definition('PERIOD_3',8);
+      lics_inbound_utility.set_csv_definition('PERIOD_4',9);
+      lics_inbound_utility.set_csv_definition('PERIOD_5',10);
+      lics_inbound_utility.set_csv_definition('PERIOD_6',11);
+      lics_inbound_utility.set_csv_definition('PERIOD_7',12);
+      lics_inbound_utility.set_csv_definition('PERIOD_8',13);
+      lics_inbound_utility.set_csv_definition('PERIOD_9',14);
+      lics_inbound_utility.set_csv_definition('PERIOD_10',15);
+      lics_inbound_utility.set_csv_definition('PERIOD_11',16);
+      lics_inbound_utility.set_csv_definition('PERIOD_12',17);
+      lics_inbound_utility.set_csv_definition('PERIOD_13',18);
       
       return var_message;
    
@@ -163,6 +164,13 @@ create or replace package body qv_app.qv_csvqvs16_validation as
                var_message := var_message || '; ';
             end if;
             var_message := var_message || 'Material code is not set.';
+         end if;
+
+         if lics_inbound_utility.get_variable('CURRENCY') is null then
+            if not(var_message is null) then
+               var_message := var_message || '; ';
+            end if;
+            var_message := var_message || 'Currency is not set.';
          end if;
                 
          for i in 1..con_mars_periods loop

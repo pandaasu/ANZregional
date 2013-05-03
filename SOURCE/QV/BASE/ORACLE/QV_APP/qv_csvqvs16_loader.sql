@@ -85,19 +85,20 @@ create or replace package body qv_app.qv_csvqvs16_loader as
       lics_inbound_utility.set_csv_definition('PLANT_CODE',2);
       lics_inbound_utility.set_csv_definition('MATERIAL_CODE',3);
       lics_inbound_utility.set_csv_definition('MATERIAL_DESC',4);
-      lics_inbound_utility.set_csv_definition('PERIOD_1',5);
-      lics_inbound_utility.set_csv_definition('PERIOD_2',6);
-      lics_inbound_utility.set_csv_definition('PERIOD_3',7);
-      lics_inbound_utility.set_csv_definition('PERIOD_4',8);
-      lics_inbound_utility.set_csv_definition('PERIOD_5',9);
-      lics_inbound_utility.set_csv_definition('PERIOD_6',10);
-      lics_inbound_utility.set_csv_definition('PERIOD_7',11);
-      lics_inbound_utility.set_csv_definition('PERIOD_8',12);
-      lics_inbound_utility.set_csv_definition('PERIOD_9',13);
-      lics_inbound_utility.set_csv_definition('PERIOD_10',14);
-      lics_inbound_utility.set_csv_definition('PERIOD_11',15);
-      lics_inbound_utility.set_csv_definition('PERIOD_12',16);
-      lics_inbound_utility.set_csv_definition('PERIOD_13',17);
+      lics_inbound_utility.set_csv_definition('CURRENCY',5);
+      lics_inbound_utility.set_csv_definition('PERIOD_1',6);
+      lics_inbound_utility.set_csv_definition('PERIOD_2',7);
+      lics_inbound_utility.set_csv_definition('PERIOD_3',8);
+      lics_inbound_utility.set_csv_definition('PERIOD_4',9);
+      lics_inbound_utility.set_csv_definition('PERIOD_5',10);
+      lics_inbound_utility.set_csv_definition('PERIOD_6',11);
+      lics_inbound_utility.set_csv_definition('PERIOD_7',12);
+      lics_inbound_utility.set_csv_definition('PERIOD_8',13);
+      lics_inbound_utility.set_csv_definition('PERIOD_9',14);
+      lics_inbound_utility.set_csv_definition('PERIOD_10',15);
+      lics_inbound_utility.set_csv_definition('PERIOD_11',16);
+      lics_inbound_utility.set_csv_definition('PERIOD_12',17);
+      lics_inbound_utility.set_csv_definition('PERIOD_13',18);
 
    /*-------------------*/
    /* Exception handler */
@@ -167,6 +168,7 @@ create or replace package body qv_app.qv_csvqvs16_loader as
       elsif var_trn_count > con_heading_count then 
          rcd_ppv_future_price.pfp_plant := lics_inbound_utility.get_variable('PLANT_CODE');
          rcd_ppv_future_price.pfp_material := lics_inbound_utility.get_variable('MATERIAL_CODE');
+         rcd_ppv_future_price.pfp_currency := lics_inbound_utility.get_variable('CURRENCY');
          
          if var_last_plant is null or var_last_plant <>  rcd_ppv_future_price.pfp_plant then
          
