@@ -19,6 +19,8 @@ create or replace package dds_app.quo_act_dtl_pkg as
   YYYY-MM-DD  Author                Description
   ----------  --------------------  --------------------------------------------
   2013-02-27  Mal Chambeyron        Created
+  2013-05-20  Tom Docherty			Restricted data to active customers and products returned for dist_check_view_at_date,
+  		"			"				sos_psd_view_at_date, sos_spc_view_at_date, off_view_at_date
 
 *******************************************************************************/
 
@@ -256,6 +258,8 @@ create or replace package body dds_app.quo_act_dtl_pkg as
         table(quo_prod_pkg.view_at_date(p_source_id,p_at_date)) prod
       where latest_act_dtl.cust_id = cust.id
       and latest_act_dtl.prod_id = prod.id
+	  and cust.is_active = 1
+	  and prod.is_active = 1
 
     )
     loop
@@ -331,6 +335,8 @@ create or replace package body dds_app.quo_act_dtl_pkg as
         table(quo_prod_pkg.view_at_date(p_source_id,p_at_date)) prod
       where latest_act_dtl.cust_id = cust.id
       and latest_act_dtl.prod_id = prod.id
+	  and cust.is_active = 1
+	  and prod.is_active = 1
 
     )
     loop
@@ -412,6 +418,8 @@ create or replace package body dds_app.quo_act_dtl_pkg as
         table(quo_hier_pkg.view_at_date(p_source_id,p_at_date)) prod_hier
       where latest_act_dtl.cust_id = cust.id
       and latest_act_dtl.prod_hier_id = prod_hier.id
+	  and cust.is_active = 1
+	  and prod_hier.is_active = 1
 
     )
     loop
@@ -503,6 +511,8 @@ create or replace package body dds_app.quo_act_dtl_pkg as
         table(quo_hier_pkg.view_at_date(p_source_id,p_at_date)) prod_hier
       where latest_act_dtl.cust_id = cust.id
       and latest_act_dtl.prod_hier_id = prod_hier.id
+	  and cust.is_active = 1
+	  and prod_hier.is_active = 1
 
     )
     loop
