@@ -57,6 +57,8 @@ package fflu_api as
   2013-05-30  Chris Horn            Implemented Load Functions.
   2013-06-03  Chris Horn            Implemented Monitoring Functions.
   2013-06-05  Chris Horn            Implemented Interface Monitoring Functions.
+  2013-06-11  Chris Horn            Fixed bug with line feed at 7999 char.
+  2013-06-13  Chris Horn            Added user code reprocess writeback.
 
 *******************************************************************************/
 
@@ -83,6 +85,7 @@ package fflu_api as
   function get_const_all_interfaces return varchar2;          -- ALL Interfaces
   function get_const_load_completed return varchar2;          -- Load Completed
   function get_const_process_working return varchar2;         -- Process Working
+  function get_const_process_working_err return varchar2;   -- Process Working Errors
 
 /*******************************************************************************
   NAME:      GET_USER_LIST
@@ -139,6 +142,7 @@ package fflu_api as
   1.0   2013-05-14 Mal Chamberyon       Created.
   1.1   2013-05-23 Chris Horn           Reviewed.  
   1.2   2013-05-29 Chris Horn           Added file type and csv qualifier.
+  1.3   2013-06-11 Chris Horn           Implemented File Type and CSV. 
 
 *******************************************************************************/
   -- Interface List Record
@@ -283,6 +287,8 @@ package fflu_api as
   1.0   2013-05-28 Chris Horn           Defined.
   1.1   2013-05-29 Chris Horn           Commenced Implementation.
   1.2   2013-05-30 Chris Horn           Completed Implementation.
+  1.3   2013-06-11 Chris Horn           Fixed bug with new line near end of 
+                                        read buffer.
 
 *******************************************************************************/
   procedure load_segment (
@@ -544,9 +550,9 @@ package fflu_api as
   NAME:      GET_XACTION_TRACE_LIST
   PURPOSE:   Given a particular interface transaction sequence, return all the
              other trace records that have been created for this interface.  
-             ie.  All the trace records less than the current trace on the 
-             header will already be displayed on the screen.  Records will be 
-             sorted in descending trace order.
+             ie.  All the trace records less than or equal to the current trace
+             on the header will already be displayed on the screen.  Records 
+             will be sorted in descending trace order.
   
   EXCEPTION: The following possible exceptions can be raised.           
              gc_exception_xaction_seq - Issues with interface sequence.
@@ -558,6 +564,7 @@ package fflu_api as
   1.1   2013-06-05 Chris Horn           Removed the need for the trace count.
   1.2   2013-06-05 Chris Horn           Implemented.
   1.3   2013-06-05 Chris Horn           Add User Code Check.
+  1.4   2013-06-11 Chris Horn           Included the current trace as well.
 
 *******************************************************************************/  
   -- Pipelined table function for returning the list of interfaces.
@@ -615,6 +622,7 @@ package fflu_api as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-05-29 Chris Horn           Defined.
   1.1   2013-06-05 Chris Horn           Implemented and added User Code Check.
+  1.2   2013-06-11 Chris Horn           Fixed bug with displaying error rows.
   
 *******************************************************************************/  
   function get_xaction_data_with_errors (
@@ -736,6 +744,7 @@ package fflu_api as
   1.0   2013-05-29 Chris Horn           Defined.
   1.1   2013-06-03 Chris Horn           Added User Code to Definition.
   1.2   2013-06-05 Chris Horn           Implemented.
+  1.3   2013-06-13 Chris Horn           Added user code reprocess writeback.
 
 *******************************************************************************/  
   procedure reprocess_interface(

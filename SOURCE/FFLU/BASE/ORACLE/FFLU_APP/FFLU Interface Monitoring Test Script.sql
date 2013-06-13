@@ -1,16 +1,25 @@
 -- Call to monitor a currently running lics interface.
-select * from table(fflu_api_dev.lics_monitor(
+select * from table(fflu_api.load_monitor(
   'HORNCHR', -- i_user_code in varchar2
-  2032647));
+  38));
+
+begin
+  fflu_common.load_execute;
+end;
+
+-- Call to monitor a currently running lics interface.
+select * from table(fflu_api.lics_monitor(
+  'HORNCHR', -- i_user_code in varchar2
+  2033273));
 
 -- Call to fetch the types of status descriptions and codes.
-select * from table(fflu_api_dev.get_xaction_status_list());
+select * from table(fflu_api.get_xaction_status_list());
 
 -- Call to fetch the number of records for the current filter criteria.
 declare
   v_count fflu_common.st_size;
 begin
-  v_count := fflu_api_dev.get_xaction_count(
+  v_count := fflu_api.get_xaction_count(
     'HORNCHR', -- i_user_code in varchar2
     null, -- interface_group_code in varchar2,
     null, -- i_interface_code in varchar2, 

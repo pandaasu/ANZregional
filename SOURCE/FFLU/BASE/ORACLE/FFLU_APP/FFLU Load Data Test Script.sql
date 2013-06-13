@@ -17,6 +17,7 @@ end;
 
 
 
+
 SELECT * FROM FFL_LOAD_HEADER
 
 
@@ -34,7 +35,7 @@ begin
   fflu_api_dev.load_execute();
 end;
 
-select * from fflu_load_header
+select * from fflu_load_header order by load_seq desc
 
 -- Test the load Monitoring Function
 select * from table (fflu_api.load_monitor(1));

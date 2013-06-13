@@ -315,6 +315,7 @@ package body fflu_api as
   function get_const_all_interfaces return varchar2       is begin return 'ALL Interfaces'; end get_const_all_interfaces; -- ALL Interfaces
   function get_const_load_completed return varchar2       is begin return lookup_header_status(lics_constant.header_load_completed); end get_const_load_completed;
   function get_const_process_working return varchar2      is begin return lookup_header_status(lics_constant.header_process_working); end get_const_process_working;
+  function get_const_process_working_err return varchar2   is begin return lookup_header_status(lics_constant.header_process_working_error); end get_const_process_working_err;
 
 /*******************************************************************************
   NAME:      GET_USER_LIST                                                PUBLIC
@@ -375,24 +376,52 @@ function get_authorised_user (i_user_code in varchar2) return tt_user_list pipel
   NAME:      GET_INTERFACE_LIST                                           PUBLIC
 *******************************************************************************/
   function get_interface_list return tt_interface_list pipelined is
-  begin
-    -- Return the Interface List.
-    for rv_row in (
+    cursor csr_interface is 
       select int_interface as interface_code,
         int_description as interface_name,
         int_type as interface_type_code,
-        int_group as interface_thread_group_code,
-        null as interface_filetype,
-        null as interface_csv_qualifier
+        int_group as interface_thread_code,
+        int_procedure as interface_package
       from lics_interface
       where int_status = lics_constant.status_active -- active interface
       and int_type in (get_const_int_type_inbound, get_const_int_type_outbound)
-      order by 1
-    )
+      order by 1;
+      rv_data csr_interface%rowtype; 
+      rv_row rt_interface_list;
+  begin
+    open csr_interface;
     loop
+      fetch csr_interface into rv_data;
+      exit when csr_interface%notfound;
+      -- Transfer the other data columns across.
+      rv_row.interface_code := rv_data.interface_code;
+      rv_row.interface_name := rv_data.interface_name;
+      rv_row.interface_type_code := rv_data.interface_type_code;
+      rv_row.interface_thread_code := rv_data.interface_thread_code;
+      -- Call the interface procedure hooks.
+      -- Now perform a get file type interface callbacks to determine file types and csv qualifiers. 
+      declare
+        v_filetype fflu_common.st_filetype;
+      begin
+        execute immediate 'begin :v_filetype := ' || rv_data.interface_package ||'.on_get_file_type; end;' USING OUT v_filetype;
+        rv_row.interface_filetype := v_filetype;
+      exception 
+        when others then 
+          rv_row.interface_filetype := null;
+      end;
+      declare 
+        v_qualifier fflu_common.st_qualifier;
+      begin
+        execute immediate 'begin :v_qualifier := ' || rv_data.interface_package ||'.on_get_csv_qualifier; end;' USING OUT v_qualifier;
+        rv_row.interface_csv_qual := v_qualifier;
+      exception 
+        when others then 
+          rv_row.interface_csv_qual := null; 
+      end;
+      -- Now pipe the row back out to the pipeline.
       pipe row(rv_row);
     end loop;
-
+    close csr_interface;
   end get_interface_list;
 
 /*******************************************************************************
@@ -571,6 +600,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     v_read_offset fflu_common.st_size;  -- 
     v_read_amount fflu_common.st_size;  -- Amount of bytes read.
     v_read_bytes fflu_common.st_size;   -- Number of actual bytes read.
+    v_wrote_bytes fflu_common.st_size;  -- Number of bytes written back out as lines.
     v_row_counter fflu_common.st_size;  -- The number of rows processed.
     v_errormsg fflu_common.st_string;   
     
@@ -578,7 +608,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     procedure process_line(io_row_counter in out fflu_common.st_size, io_line in out fflu_common.st_string) is
     begin
       io_row_counter := io_row_counter + 1;
-      insert into fflu_load_data (LOAD_SEQ, DATA_SEQ, DATA_RECORD) values (i_load_sequence, io_row_counter, io_line);
+      insert into fflu_load_data (LOAD_SEQ, DATA_SEQ, DATA_RECORD,DATA_SEG) values (i_load_sequence, io_row_counter, io_line,i_seg_count);
       io_line := '';
     exception
       when others then 
@@ -586,7 +616,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     end process_line;
     
     -- This procedure is used to process the contents of the buffer and perform validations as necessary and then store in the load data table.
-    procedure process_buffer(i_buffer in varchar2, io_row_counter in out fflu_common.st_size, io_line in out fflu_common.st_string) is
+    procedure process_buffer(i_buffer in varchar2, io_row_counter in out fflu_common.st_size, io_line in out fflu_common.st_string, io_wrote_bytes in out fflu_common.st_size) is
       v_pos fflu_common.st_size;
       v_line_feed fflu_common.st_size;
       v_line_buf varchar2(32000 byte);
@@ -594,7 +624,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     begin 
       v_pos := 1;
       v_buf_len := length(i_buffer);
-      while v_pos < v_buf_len loop 
+      while v_pos <= v_buf_len loop 
         v_line_feed := instr(i_buffer,chr(10),v_pos,1);
         -- Check if there is a line feed present.
         if v_line_feed = 0 then 
@@ -604,7 +634,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
             raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], row ' || io_row_counter || ' line construction length is greater than 4000 bytes.');
           end if;
           io_line := io_line || v_line_buf;
-          v_pos := v_buf_len;
+          v_pos := v_pos + length(v_line_buf);
         else 
           v_line_buf := substr(i_buffer,v_pos,v_line_feed + 1 - v_pos); -- Plus 1 includes the line feed.
           if lengthb(io_line) + lengthb(v_line_buf) > 4000 then 
@@ -612,6 +642,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
           end if;
           io_line := io_line || v_line_buf; 
           process_line(io_row_counter,io_line);
+          io_wrote_bytes := io_wrote_bytes + lengthb(io_line);
           v_pos := v_line_feed+1;
         end if;
       end loop;
@@ -660,6 +691,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       v_clob_len := DBMS_LOB.GETLENGTH(v_seg_data);
       v_read_offset := 1;
       v_read_bytes := 0;
+      v_wrote_bytes := 0;
       v_line := '';
       v_row_counter := nvl(v_load_header.row_count,0);
       -- Check if the clob is empty and raise exception if it is.
@@ -676,7 +708,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
         v_read_offset := v_read_offset + v_read_amount;
         v_read_bytes := v_read_bytes + lengthb(v_buffer);
         -- Now process this buffer.
-        process_buffer(v_buffer,v_row_counter,v_line);
+        process_buffer(v_buffer,v_row_counter,v_line,v_wrote_bytes);
       end loop;
       if lengthb(v_line) > 0 then 
         raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], segement did not end with a complete line.');
@@ -688,6 +720,10 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       -- Now check that the byte count matched.
       if v_read_bytes <> i_seg_size then 
         raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], segement expected ' || i_seg_size || ' bytes and received ' || v_read_bytes || ' instead.');
+      end if;
+      -- Now compare with written bytes. then
+      if v_wrote_bytes <> i_seg_size then 
+        raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], segement expected to write ' || i_seg_size || ' bytes but wrote out ' || v_wrote_bytes || ' instead.'); 
       end if;
       -- Now close the clob.  
       DBMS_LOB.CLOSE(v_seg_data);
@@ -808,7 +844,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     -- Commit any changes.
     commit;
     -- Now wake up the load executor.
-    lics_pipe.spray(lics_constant.queue_poller,pc_load_executor_group, lics_constant.pipe_wake);
+    lics_pipe.spray(lics_constant.type_poller,pc_load_executor_group, lics_constant.pipe_wake);
   exception 
     when others then 
       rollback;
@@ -1098,7 +1134,7 @@ begin
       declare
         v_filetype fflu_common.st_filetype;
       begin
-        execute immediate 'call ' || rv_xaction_list_data.interface_package ||'.on_get_file_type INTO :v_filetype' USING OUT v_filetype;
+        execute immediate 'begin :v_filetype := ' || rv_xaction_list_data.interface_package ||'.on_get_file_type; end;' USING OUT v_filetype;
         rv_xaction_list.xaction_filetype := v_filetype;
       exception 
         when others then 
@@ -1107,7 +1143,7 @@ begin
       declare 
         v_qualifier fflu_common.st_qualifier;
       begin
-        execute immediate 'call ' || rv_xaction_list_data.interface_package ||'.on_get_csv_qualifier INTO :v_qualifier' USING OUT v_qualifier;
+        execute immediate 'begin :v_qualifier := ' || rv_xaction_list_data.interface_package ||'.on_get_csv_qualifier; end;' USING OUT v_qualifier;
         rv_xaction_list.xaction_csv_qualifier := v_qualifier;
       exception 
         when others then 
@@ -1150,7 +1186,7 @@ begin
       where 
         t1.hea_header = t2.het_header and 
         t1.hea_header = i_xaction_seq and 
-        t2.het_hdr_trace < t1.hea_trc_count and 
+        t2.het_hdr_trace <= t1.hea_trc_count and 
         t1.hea_interface = t3.int_interface 
     order by t2.het_hdr_trace desc;
     rv_xaction_list_data csr_xaction_list_data%rowtype;
@@ -1190,7 +1226,7 @@ begin
       declare
         v_filetype fflu_common.st_filetype;
       begin
-        execute immediate 'call ' || rv_xaction_list_data.interface_package ||'.on_get_file_type INTO :v_filetype' USING OUT v_filetype;
+        execute immediate 'begin :v_filetype := ' || rv_xaction_list_data.interface_package ||'.on_get_file_type; end;' USING OUT v_filetype;
         rv_xaction_list.xaction_filetype := v_filetype;
       exception 
         when others then 
@@ -1199,7 +1235,7 @@ begin
       declare 
         v_qualifier fflu_common.st_qualifier;
       begin
-        execute immediate 'call ' || rv_xaction_list_data.interface_package ||'.on_get_csv_qualifier INTO :v_qualifier' USING OUT v_qualifier;
+        execute immediate 'begin :v_qualifier := ' || rv_xaction_list_data.interface_package ||'.on_get_csv_qualifier; end;' USING OUT v_qualifier;
         rv_xaction_list.xaction_csv_qualifier := v_qualifier;
       exception 
         when others then 
@@ -1283,7 +1319,7 @@ begin
           from lics_data t1
           where
             t1.dat_header = i_xaction_seq and 
-            exists (select * from lics_dta_message t0 where t0.dam_header = t1.dat_header and t0.dam_hdr_trace = i_xaction_trace_seq)
+            exists (select * from lics_dta_message t0 where t0.dam_header = t1.dat_header and t0.dam_hdr_trace = i_xaction_trace_seq and t0.dam_dta_seq = t1.dat_dta_seq)
           order by 
             t1.dat_dta_seq asc
         ) t10 where rownum < i_start_row + i_no_rows
@@ -1504,6 +1540,9 @@ begin
     v_interface_code := simple_interface_code_check(i_interface_code);
     -- Check that the user security is allowed to carry out this action
     user_interface_security_check(v_user_code,v_interface_code,get_const_process_option);
+    -- Now add an entry to the reprocess user code writeback table so we can track the user that reprossed this interface.
+    insert into fflu_xaction_writeback (lics_header_seq, user_code, last_updtd_time) values (i_xaction_seq,i_user_code, sysdate);
+    commit;
     -- Now perform the update of the interface to start it reprocessing. 
     -- Ignore Return code, only ever returns *OK or an exception. 
     v_return_code := lics_interface_process.update_status(i_xaction_seq);

@@ -13,3 +13,10 @@ grant select on lics_dta_message to fflu_app;
 grant select on lics_hdr_trace to fflu_app;
 grant select on lics_data to fflu_app;
 grant select on lics_interface to fflu_app;
+
+-- Update Grants for FFLU_COMMON Package.
+grant update, insert on lics_header to fflu_app;
+grant update, insert on lics_hdr_trace to fflu_app;
+grant update, insert on lics_hdr_message to fflu_app;
+grant select on lics_header_sequence to fflu_app;
+grant insert on lics_data to fflu_app;

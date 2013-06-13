@@ -33,6 +33,7 @@ PACKAGE fflu_common AS
   ----------  --------------------  --------------------------------------------
   2013-05-24  Chris Horn            Created.
   2013-06-05  Chris Horn            Moved Load Execute and Housekeeping here.
+  2013-06-13  Chris Horn            Added user code reprocess writeback.
 
 *******************************************************************************/
 
@@ -54,6 +55,7 @@ PACKAGE fflu_common AS
   subtype st_load_status is varchar2(32 char); -- The load status.
   subtype st_filetype is varchar2(3 char);     -- The file type.
   subtype st_qualifier is varchar2(1 char);    -- Ths csv text enclosing qualifier.
+  subtype st_buffer is varchar2(32000 byte);   -- Larger string buffer.
 
 /*******************************************************************************
   GLOBAL CONSTANTS - Exception Codes
@@ -139,7 +141,8 @@ PACKAGE fflu_common AS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-05-28 Chris Horn           Defined.
-  1.1   2013-05-30 Chris Horn           Redefined.
+  1.1   2013-05-30 Chris Horn           Redefined and Implemented.
+  1.2   2013-06-13 Chris Horn           Added line for user code writeback.
 
 *******************************************************************************/    
   procedure load_execute;
@@ -160,6 +163,8 @@ PACKAGE fflu_common AS
   1.0   2013-05-28 Chris Horn           Defined.
   1.1   2013-05-30 Chris Horn           Created Shell.
   1.2   2013-06-05 Chris Horn           Moved to Common Package.
+  1.3   2013-06-11 Chris Horn           Cleaned up data deletion log message.
+  1.4   2013-06-13 Chris Horn           Added cleanup for user writeback table.
 
 *******************************************************************************/  
   procedure perform_housekeeping;
