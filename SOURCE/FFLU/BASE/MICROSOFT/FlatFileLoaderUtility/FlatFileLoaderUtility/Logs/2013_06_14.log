@@ -1,0 +1,294 @@
+14/06/2013 15:19:03   System.Data.OracleClient.OracleException (0x80131938): ORA-03135: connection lost contact
+
+   at System.Data.OracleClient.OracleException.Check(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleInternalConnection.Commit()
+   at System.Data.OracleClient.OracleConnection.Commit()
+   at System.Data.OracleClient.OracleTransaction.Commit()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.Dispose() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 122
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.Dispose() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 58
+   at FlatFileLoaderUtility.Controllers.BaseController.Dispose(Boolean disposing) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 35
+   at System.Web.Mvc.Controller.Dispose()
+   at System.Web.Mvc.DefaultControllerFactory.ReleaseController(IController controller)
+   at System.Web.Mvc.MvcHandler.<>c__DisplayClass8.<BeginProcessRequest>b__3(IAsyncResult asyncResult)
+   at System.Web.Mvc.Async.AsyncResultWrapper.<>c__DisplayClass4.<MakeVoidDelegate>b__3(IAsyncResult ar)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.End()
+   at System.Web.Mvc.MvcHandler.EndProcessRequest(IAsyncResult asyncResult)
+   at System.Web.Mvc.MvcHandler.System.Web.IHttpAsyncHandler.EndProcessRequest(IAsyncResult result)
+   at System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionStep.Execute()
+   at System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean& completedSynchronously)
+14/06/2013 15:20:43   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.OracleClient.OracleException.Check(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleInternalConnection.OpenOnLocalTransaction(String userName, String password, String serverName, Boolean integratedSecurity, Boolean unicode, Boolean omitOracleConnectionName)
+   at System.Data.OracleClient.OracleInternalConnection..ctor(OracleConnectionString connectionOptions)
+   at System.Data.OracleClient.OracleConnectionFactory.CreateConnection(DbConnectionOptions options, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnection owningConnection, DbConnectionPool pool, DbConnectionOptions options)
+   at System.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:20:43   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:20:44   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:20:44   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:20:44   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:21:29   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:21:39   System.Data.OracleClient.OracleException (0x80131938): ORA-12571: TNS:packet writer failure
+
+   at System.Data.OracleClient.OracleConnection.CheckError(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleLob.Write(Byte[] buffer, Int32 offset, Int32 count)
+   at FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository.DataAccessUpload.LoadSegment(Int32 uploadId, String userCode, String interfaceCode, String fileName, Int32 segmentNumber, Int32 segmentSize, Int32 segmentRows, String segmentData) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\UploadRepository.cs:line 151
+   at FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository.LoadSegment(Int32 uploadId, String interfaceCode, String fileName, Int32 segmentNumber, Int32 segmentSize, Int32 segmentRows, String segmentData) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\UploadRepository.cs:line 37
+   at FlatFileLoaderUtility.Upload.Uploader.Upload() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Upload\Uploader.cs:line 131
+14/06/2013 15:22:24   System.Data.OracleClient.OracleException (0x80131938): ORA-03135: connection lost contact
+
+   at System.Data.OracleClient.OracleException.Check(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleInternalConnection.Commit()
+   at System.Data.OracleClient.OracleConnection.Commit()
+   at System.Data.OracleClient.OracleTransaction.Commit()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.Dispose() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 122
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.Dispose() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 58
+   at FlatFileLoaderUtility.Controllers.BaseController.Dispose(Boolean disposing) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 35
+   at System.Web.Mvc.Controller.Dispose()
+   at System.Web.Mvc.DefaultControllerFactory.ReleaseController(IController controller)
+   at System.Web.Mvc.MvcHandler.<>c__DisplayClass8.<BeginProcessRequest>b__3(IAsyncResult asyncResult)
+   at System.Web.Mvc.Async.AsyncResultWrapper.<>c__DisplayClass4.<MakeVoidDelegate>b__3(IAsyncResult ar)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.End()
+   at System.Web.Mvc.MvcHandler.EndProcessRequest(IAsyncResult asyncResult)
+   at System.Web.Mvc.MvcHandler.System.Web.IHttpAsyncHandler.EndProcessRequest(IAsyncResult result)
+   at System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionStep.Execute()
+   at System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean& completedSynchronously)
+14/06/2013 15:25:24   System.InvalidOperationException: Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:29:31   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:29:33   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 15:49:03   System.Web.HttpException (0x80004005): File does not exist.
+   at System.Web.StaticFileHandler.GetFileInfo(String virtualPathWithPathInfo, String physicalPath, HttpResponse response)
+   at System.Web.StaticFileHandler.ProcessRequestInternal(HttpContext context, String overrideVirtualPath)
+   at System.Web.DefaultHttpHandler.BeginProcessRequest(HttpContext context, AsyncCallback callback, Object state)
+   at System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionStep.Execute()
+   at System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean& completedSynchronously)
+14/06/2013 15:49:48   System.InvalidOperationException: Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 16:11:09   System.Data.OracleClient.OracleException (0x80131938): ORA-12170: TNS:Connect timeout occurred
+
+   at System.Data.OracleClient.OracleException.Check(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleInternalConnection.OpenOnLocalTransaction(String userName, String password, String serverName, Boolean integratedSecurity, Boolean unicode, Boolean omitOracleConnectionName)
+   at System.Data.OracleClient.OracleInternalConnection..ctor(OracleConnectionString connectionOptions)
+   at System.Data.OracleClient.OracleConnectionFactory.CreateConnection(DbConnectionOptions options, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnection owningConnection, DbConnectionPool pool, DbConnectionOptions options)
+   at System.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionPool.GetConnection(DbConnection owningObject)
+   at System.Data.ProviderBase.DbConnectionFactory.GetConnection(DbConnection owningConnection)
+   at System.Data.ProviderBase.DbConnectionClosed.OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+   at System.Data.OracleClient.OracleConnection.Open()
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess.OpenConnection() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 156
+   at FlatFileLoaderUtility.Repositories.DataAccess.DataAccess..ctor(Connection connection) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\DataAccess.cs:line 93
+   at FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer.set_Connection(Connection value) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\RepositoryContainer.cs:line 45
+   at FlatFileLoaderUtility.Controllers.BaseController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\BaseController.cs:line 59
+   at FlatFileLoaderUtility.Controllers.UploadsController.OnActionExecuting(ActionExecutingContext filterContext) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 23
+   at System.Web.Mvc.Controller.System.Web.Mvc.IActionFilter.OnActionExecuting(ActionExecutingContext filterContext)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.InvokeActionMethodFilterAsynchronously(IActionFilter filter, ActionExecutingContext preContext, Func`1 nextInChain)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<>c__DisplayClass39.<>c__DisplayClass3b.<BeginInvokeActionMethodWithFilters>b__35()
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass37.<BeginInvokeActionMethodWithFilters>b__31(AsyncCallback asyncCallback, Object asyncState)
+   at System.Web.Mvc.Async.AsyncResultWrapper.WrappedAsyncResult`1.Begin(AsyncCallback callback, Object state, Int32 timeout)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.BeginInvokeActionMethodWithFilters(ControllerContext controllerContext, IList`1 filters, ActionDescriptor actionDescriptor, IDictionary`2 parameters, AsyncCallback callback, Object state)
+   at System.Web.Mvc.Async.AsyncControllerActionInvoker.<>c__DisplayClass25.<BeginInvokeAction>b__1e(AsyncCallback asyncCallback, Object asyncState)
+14/06/2013 16:24:16   System.Web.HttpException (0x80004005): The controller for path '/Index' was not found or does not implement IController.
+   at System.Web.Mvc.DefaultControllerFactory.GetControllerInstance(RequestContext requestContext, Type controllerType)
+   at System.Web.Mvc.DefaultControllerFactory.CreateController(RequestContext requestContext, String controllerName)
+   at System.Web.Mvc.MvcHandler.ProcessRequestInit(HttpContextBase httpContext, IController& controller, IControllerFactory& factory)
+   at System.Web.Mvc.MvcHandler.BeginProcessRequest(HttpContextBase httpContext, AsyncCallback callback, Object state)
+   at System.Web.Mvc.MvcHandler.BeginProcessRequest(HttpContext httpContext, AsyncCallback callback, Object state)
+   at System.Web.Mvc.MvcHandler.System.Web.IHttpAsyncHandler.BeginProcessRequest(HttpContext context, AsyncCallback cb, Object extraData)
+   at System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionStep.Execute()
+   at System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean& completedSynchronously)
+14/06/2013 16:24:23   System.Web.HttpException (0x80004005): The controller for path '/Index' was not found or does not implement IController.
+   at System.Web.Mvc.DefaultControllerFactory.GetControllerInstance(RequestContext requestContext, Type controllerType)
+   at System.Web.Mvc.DefaultControllerFactory.CreateController(RequestContext requestContext, String controllerName)
+   at System.Web.Mvc.MvcHandler.ProcessRequestInit(HttpContextBase httpContext, IController& controller, IControllerFactory& factory)
+   at System.Web.Mvc.MvcHandler.BeginProcessRequest(HttpContextBase httpContext, AsyncCallback callback, Object state)
+   at System.Web.Mvc.MvcHandler.BeginProcessRequest(HttpContext httpContext, AsyncCallback callback, Object state)
+   at System.Web.Mvc.MvcHandler.System.Web.IHttpAsyncHandler.BeginProcessRequest(HttpContext context, AsyncCallback cb, Object extraData)
+   at System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionStep.Execute()
+   at System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean& completedSynchronously)
+14/06/2013 16:40:31   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89
+14/06/2013 16:42:55   System.Threading.ThreadAbortException: Thread was being aborted.
+   at System.Data.Common.UnsafeNativeMethods.OCILobWrite(OciHandle svchp, OciHandle errhp, OciHandle locp, UInt32& amtp, UInt32 offset, IntPtr bufp, UInt32 buflen, Byte piece, IntPtr ctxp, IntPtr cbfp, UInt16 csid, CHARSETFORM csfrm)
+   at System.Data.OracleClient.TracedNativeMethods.OCILobWrite(OciHandle svchp, OciHandle errhp, OciHandle locp, Int32& amtp, UInt32 offset, IntPtr bufp, UInt32 buflen, Byte piece, UInt16 csid, CHARSETFORM csfrm)
+   at System.Data.OracleClient.OracleLob.Write(Byte[] buffer, Int32 offset, Int32 count)
+   at FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository.DataAccessUpload.LoadSegment(Int32 uploadId, String userCode, String interfaceCode, String fileName, Int32 segmentNumber, Int32 segmentSize, Int32 segmentRows, String segmentData) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\UploadRepository.cs:line 151
+   at FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository.LoadSegment(Int32 uploadId, String interfaceCode, String fileName, Int32 segmentNumber, Int32 segmentSize, Int32 segmentRows, String segmentData) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Repositories\DataAccess\UploadRepository.cs:line 37
+   at FlatFileLoaderUtility.Upload.Uploader.Upload() in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Upload\Uploader.cs:line 131
+14/06/2013 16:46:30   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89
+14/06/2013 16:46:48   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89
+14/06/2013 16:49:18   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89
+14/06/2013 16:49:32   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89
+14/06/2013 16:49:38   System.Exception: Invalid file type. This interface only accepts .csv files.
+   at FlatFileLoaderUtility.Controllers.UploadsController.Start(String interfaceCode, String filename) in C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\Controllers\UploadsController.cs:line 89

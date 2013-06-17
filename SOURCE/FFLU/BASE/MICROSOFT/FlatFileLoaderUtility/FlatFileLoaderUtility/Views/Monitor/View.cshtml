@@ -1,0 +1,649 @@
+﻿@model FlatFileLoaderUtility.ViewModels.InterfaceMonitorDetailViewModel
+
+@{
+    ViewBag.Title = "Interface Detail";
+}
+
+@section JavascriptImport {
+    <script type="text/javascript">
+
+        /**************************************************
+        /* Page Variables
+        /**************************************************/
+        var isCsv = ("@Model.Record.FileType" == "csv");
+        var status = null;
+        var continueMonitoring = true;
+        var licsId = @Model.Record.LicsId;
+
+        /**************************************************
+        /* Document Ready
+        /**************************************************/
+        $(document).ready(function () {
+            // Plugin instantiation
+            $("button").button();
+            $("#progressbar").progressbar({
+                value: 0
+            });
+            $("#RowDataTableContainer").jtable({
+                addRecordButton: $("#none"),
+                paging: true,
+                pageSize: 15,
+                sorting: false,
+                selecting: true,
+                multiselect: false,
+                selectingCheckboxes: false,
+                defaultDateFormat: "dd/mm/yy",
+                //jqueryuitheme: true,
+                actions: {
+                    listAction: '@Url.Action("RowDataList")'
+                },
+                fields: {
+                    Row: {
+                        key: true,
+                        title: "Row",
+                        width: "4%",
+                        display: function (data) {
+                            if (data.record.Row == 0)
+                                return $("<pre class='colcount block'> </pre>");
+                            else
+                                return $("<div class='spacing leftEdge rightEdge'>" + data.record.Row + "</div>");
+                        }
+                    },
+                    ErrorCount: {
+                        title: "Errors",
+                        width: "4%",
+                        display: function (data) {
+                            if (data.record.Row == 0)
+                                return $("<pre class='colcount block'> </pre>");
+                            else if (data.record.Errors.length == 0)
+                                return $("<div class='spacing'>0</div>");
+                            else {
+                                var x = 0;
+                                var aryHtml = new Array();
+                                aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                for (var i = 0; i < data.record.Errors.length; i++) {
+                                    aryHtml[x++] = "<tr class='";
+                                    aryHtml[x++] = ((i % 2) == 0) ? "jtable-row-even" : "";
+                                    aryHtml[x++] = "'><td>";
+                                    aryHtml[x++] = data.record.Errors[i].Sequence;
+                                    aryHtml[x++] = "</td><td><pre class='exception'>";
+                                    aryHtml[x++] = data.record.Errors[i].Message;
+                                    aryHtml[x++] = "<pre></td></tr>";
+                                }
+                                aryHtml[x++] = "</tbody></table><div class='jtable-bottom-panel'></div><br /></div></div>";
+                                return $("<div class='spacing tooltipErrors hasErrors'>" + data.record.Errors.length + "</div>" + aryHtml.join(''));
+                            }
+                        }
+                    },
+                    @if (Model.Record.FileType != "csv") {
+                        <text>
+                        Data: {
+                            title: "Data",
+                            width: "90%",
+                            display: function (data) {
+                                var rowErrors = new Array();
+                                for (var i = 0; i < data.record.Errors.length; i++) {
+                                    if (data.record.Errors[i].Length > 0)
+                                        rowErrors.push(data.record.Errors[i]);
+                                }
+                                if (rowErrors.length == 0) {
+                                    return $("<pre class='leftEdge rightEdge " + ((data.record.Row == 0) ? "colcount" : "") + "'>" + data.record.Data + "</pre>");
+                                }
+                                else {
+                                    var index = 0;
+                                    var x = 0;
+                                    var aryHtml = new Array();
+                                    var needsLeftEdge = true;
+                                    for (var i = 0; i < rowErrors.length; i++) {
+                                        var error = rowErrors[i];
+                                        if (error.Position - 1 > index) {
+                                            aryHtml[x++] = "<pre class='" + (needsLeftEdge ? "leftEdge" : "") + ((data.record.Row == 0) ? " colcount" : "") + "'>" + data.record.Data.substring(index, error.Position - 1) + "</pre>";
+                                            index = error.Position - 1;
+                                            needsLeftEdge = false;
+                                        }
+                                        aryHtml[x++] = "<pre class='tooltipErrors highlight " + (index + error.Length == data.record.Data.length - 1 ? " rightEdge" : "") + (needsLeftEdge ? " leftEdge" : "") + ((data.record.Row == 0) ? " colcount" : "") + "'>" + data.record.Data.substring(index, error.Position - 1 + error.Length) + "</pre>";
+                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                        aryHtml[x++] = "<tr class='jtable-row-even'><td>";
+                                        aryHtml[x++] = rowErrors[i].Sequence;
+                                        aryHtml[x++] = "</td><td><pre class='exception'>";
+                                        aryHtml[x++] = rowErrors[i].Message;
+                                        aryHtml[x++] = "<pre></td></tr>";
+                                        aryHtml[x++] = "</tbody></table><div class='jtable-bottom-panel'></div><br /></div></div>";
+                                        index = error.Position - 1 + error.Length;
+                                        needsLeftEdge = false;
+                                    }
+                                    // The line still needs to be finished
+                                    if (index < data.record.Data.length) {
+                                        aryHtml[x++] = "<pre class='rightEdge " + ((data.record.Row == 0) ? " colcount" : "") + "'>" + data.record.Data.substring(index) + "</pre>";
+                                    }
+                                    return aryHtml.join('');
+                                }
+                            }
+                        }
+                        </text>
+                    }
+                    else {
+                        for (var i = 0; i < @Model.ColumnCount; i++) { 
+                            <text>
+                            Col@(i + 1): {
+                                title: "Col@(i + 1)",
+                                width: "@(90 / (Model.ColumnCount + 1))%",
+                                display: function (data) {
+                                    // Check if there are any errors for this column
+                                    var colErrors = new Array();
+                                    for (var i = 0; i < data.record.Errors.length; i++) {
+                                        if (data.record.Errors[i].Position == @(i + 1))
+                                            colErrors.push(data.record.Errors[i]);
+                                    }
+                                    if (colErrors.length == 0) {
+                                        return data.record.ColumnData[@i];
+                                    }
+                                    else {
+                                        var x = 0;
+                                        var aryHtml = new Array();
+                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                        for (var i = 0; i < colErrors.length; i++) {
+                                            aryHtml[x++] = "<tr class='";
+                                            aryHtml[x++] = ((i % 2) == 0) ? "jtable-row-even" : "";
+                                            aryHtml[x++] = "'><td>";
+                                            aryHtml[x++] = colErrors[i].Sequence;
+                                            aryHtml[x++] = "</td><td><pre class='exception'>";
+                                            aryHtml[x++] = colErrors[i].Message;
+                                            aryHtml[x++] = "<pre></td></tr>";
+                                        }
+                                        aryHtml[x++] = "</tbody></table><div class='jtable-bottom-panel'></div><br /></div></div>";
+                                        return $("<div class='spacing tooltipErrors'>" + data.record.ColumnData[@i] + "</div>" + aryHtml.join(''));
+                                    }
+                                }
+                            }
+                            </text>
+                            if (i < @Model.ColumnCount - 1) {
+                                @:,
+                            }
+                        }
+                    }
+                },
+                recordsLoaded: function (event, data) {
+                    $(".tooltipErrors").each(function () {
+                        $(this).qtip({
+                            content: $(this).next(),
+                            position: {
+		                        my: 'bottom center',
+		                        at: 'top center',
+		                        target: $(this)
+	                        },
+                            style: {
+		                        classes: 'qtip-red qtip-shadow qtip-tipped'
+	                        }
+                        });
+                    });
+                }
+            });
+
+            // Event Listeners
+            $(".traceRow").click(function () {
+                if ($(this).hasClass("jtable-row-selected") || $("#divLoading").is(":visible"))
+                    return false;
+
+                $(this).closest("table").find(".jtable-row-selected").removeClass("jtable-row-selected");
+                $(this).addClass("jtable-row-selected");
+                $(":input").attr("disabled", "disabled").trigger("liszt:updated");
+                $("#divInterfaceDetails").hide();
+                $("#divInterfaceErrors").hide();
+                $("#divLoading").show();
+
+                status = new Status();
+
+                $.ajax({
+                    type: "post",
+                    url: "/Monitor/GetMonitorDetails",
+                    data: {
+                        licsId: licsId,
+                        traceId: $(this).find(".traceId").text()
+                    },
+                    async: true,
+                    success: function (response) {
+                        $("#divInterfaceDetails").show();
+                        $("#divLoading").hide();
+
+                        if (response.Result != "OK") {
+                            status.Message = "Error while retrieving details.";
+                            status.Exception = response.Message;
+                            status.IsError = true;
+                            ShowResult();
+                        }
+                        else {
+                            $(":input").removeAttr("disabled").trigger("liszt:updated");
+                            
+                            $("#tdStatus").text(response.Monitor.Status);
+                            $("#tdTraceId").text(response.Monitor.TraceId);
+                            $("#tdUserCode").text(response.Monitor.UserCode);
+                            $("#tdRecordCount").text(response.Monitor.RecordCount);
+                            $("#tdFileName").text(response.Monitor.FileName);
+                            $("#tdStartTimeFormatted").text(response.Monitor.StartTimeFormatted);
+                            $("#tdRowCountError").text(response.Monitor.RowCountError);
+                            $("#tdEndTimeFormatted").text(response.Monitor.EndTimeFormatted);
+                            $("#tdInterfaceErrorCount").text(response.Monitor.InterfaceErrorCount);
+
+                            if (response.Monitor.InterfaceErrorCount > 0) {
+                                $("#divInterfaceErrors tbody").empty();
+                                for (var i = 0; i < response.InterfaceErrors.length; i++) {
+                                    $("#divInterfaceErrors tbody").append("<tr class='" + (((i % 2) == 0) ? "jtable-row-even" : "") + "'><td>" + response.InterfaceErrors[i].Sequence + "</td><td><pre class='exception'>" + response.InterfaceErrors[i].Message + "</pre></td></tr>");
+                                }
+                                $("#divInterfaceErrors").show();
+                            }
+
+                            loadRowData();
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        $("#divInterfaceDetails").show();
+                        $("#divLoading").hide();
+                        status.Message = "Error communicating with server.";
+                        status.Exception = (isTest) ? thrownError : "";
+                        status.IsError = true;
+                        ShowResult();
+                    }
+                });
+            });
+
+            $("#chkErrorsOnly").change(function () {
+                loadRowData();
+            });
+
+            $("#requestReprocess").click(function () {
+                status = new Status();
+                $("#interfaceCode").text("@Model.Record.InterfaceCode");
+                $("#interfaceName").text("@Model.Record.InterfaceName");
+                $("#licsId").text("@Model.Record.LicsId");
+                $("#fileName").text("@Model.Record.FileName");
+                $("#interfaceCode").text("@Model.Record.InterfaceCode");
+                $("#interfaceCode").text("@Model.Record.InterfaceCode");
+                $("#reprocesOptions").show();
+                $("#rowDescription").hide();
+                $("#progressbar").hide();
+                $("#dialogConfirm").dialog({
+                    modal: true,
+                    close: function (event, ui) {
+                        continueMonitoring = false;
+                    }
+                });
+
+                return false;
+            });
+
+            $("#cancel").click(function () {
+                $(".ui-dialog-content").dialog("destroy");
+            });
+
+            $("#reprocess").click(function () {
+                // First, disable the form so that the user can't click the button again
+                $(":input").attr("disabled", "disabled").trigger("liszt:updated");
+                $("#reprocesOptions").hide();
+                $("#description").text("Starting reprocess of interface");
+                $("#rowDescription").show();
+                $("#progressbar").show();
+
+                continueMonitoring = true;
+
+                $.ajax({
+                    type: "post",
+                    url: "/Monitor/Reprocess",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        licsId: $("#licsId").text(),
+                        interfaceCode: $("#interfaceCode").text()
+                    }),
+                    async: true,
+                    success: function (response) {
+                        if (response.Result != "OK") {
+                            status.Message = "Error while resubmitting the interface.";
+                            status.Exception = response.Message;
+                            status.IsError = true;
+                            ShowResult();
+                        }
+                        else {
+                            $(":input").removeAttr("disabled").trigger("liszt:updated");
+                            if (continueMonitoring)
+                                ReprocessMonitor();
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        status.Message = "Error communicating with server.";
+                        status.Exception = (isTest) ? thrownError : "";
+                        status.IsError = true;
+                        ShowResult();
+                    }
+                });
+            });
+            
+            // Document ready actions
+            loadRowData();
+        });
+
+        /**************************************************
+        /* Page Functions
+        /**************************************************/
+        
+        // Called to load row data from the server into the table
+        function loadRowData() {
+
+            $("#RowDataTableContainer").jtable("load", {
+                licsId: licsId,
+                traceId: $(".traceRow.jtable-row-selected .traceId").text(),
+                isErrorRowsOnly: $("#chkErrorsOnly").is(":checked")
+            });
+        }
+
+        // Called to show the result of an operation
+        function ShowResult() {
+            // Re-enable the form underneath the dialog
+            $(":input").removeAttr("disabled").trigger("liszt:updated");
+
+            // Remove any existing dialog windows
+            $(".ui-dialog-content").dialog("destroy");
+
+            // Set the message an exception text
+            $("#pMessage").text(status.Message);
+            if (status.Exception != "") {
+                $("#pException").text(status.Exception);
+                $("#pException").show();
+            }
+            else {
+                $("#pException").hide();
+            }
+
+            // Show the interface error count if it is available
+            if (status.LicsId > 0) {
+                $("#rowInterfaceErrors").show();
+                $("#interfaceErrorCount").text(status.InterfaceErrorCount);
+            }
+            else {
+                $("#rowInterfaceErrors").hide();
+            }
+
+            // Show the row error count if it is available
+            if (status.LicsId > 0) {
+                $("#rowRowErrors").show();
+                $("#rowErrorCount").text(status.RowErrorCount);
+            }
+            else {
+                $("#rowRowErrors").hide();
+            }
+
+            // Show the dialog
+            $("#dialogMessage").dialog({
+                modal: true,
+                title: (status.IsError) ? "Error" : "Message",
+                buttons: {
+                    Ok: function () {
+                        $(this).dialog("close");
+                        location.reload();
+                    }
+                }
+            });
+        }
+
+        // Called to monitor the status of a reprocess request
+        function ReprocessMonitor() {
+
+            if (!continueMonitoring)
+                return;
+
+            $.ajax({
+                type: "post",
+                url: "/Monitor/GetStatus",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    licsId: $("#licsId").text()
+                }),
+                async: true,
+                success: function (response) {
+                    if (response.Result != "OK") {
+                        status.IsError = true;
+                        status.Message = "Error while monitoring status."
+                        status.Exception = response.Message;
+                        ShowResult();
+                    }
+                    else {
+                        if (response.Total > 0 && response.Current > 0)
+                            $("#progressbar").progressbar("value", response.Current * 100 / response.Total);
+                        $("#spanDescription").text("Processing in ICS");
+
+                        // It can be a long time on "0" progress...
+                        // To let the user know that stuff is still happening, if it's 0 just increment the progressbar
+                        if (response.Current == 0) {
+                            var currentValue = $("#progressbar").progressbar("value");
+                            currentValue = (currentValue == 100) ? 0 : currentValue + 5;
+                            $("#progressbar").progressbar("value", currentValue);
+                        }
+
+                        if (response.CurrentStep == 5 && response.IsComplete == true) {
+                            status.Message = "Reprocess complete.";
+                            status.Exception = "";
+                            status.InterfaceErrorCount = response.InterfaceErrorCount;
+                            status.RowErrorCount = response.RowErrorCount;
+                            ShowResult();
+                        }
+                        else {
+                            // Wait a second before polling again
+                            if (continueMonitoring)
+                                setTimeout("ReprocessMonitor();", 1000);
+                        }
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    status.IsError = true;
+                    status.Message = "Error communicating with server.";
+                    status.Exception = (isTest) ? thrownError : "";
+                    ShowResult();
+                }
+            });
+        }
+    </script>
+}
+
+@if (Model.HasProcessAccess) {
+    <div class="actions">
+        <h3>Actions</h3>
+        <button id="requestReprocess">Reprocess</button>
+    </div>
+}
+
+<h3>Trace History</h3>
+<div class="jtable-main-container">
+    <table id="traceTable" class="jtable">
+        <thead>
+            <tr>
+                <th class="jtable-column-header">Trace</th>
+                <th class="jtable-column-header">User</th>
+                <th class="jtable-column-header">Int. Code</th>
+                <th class="jtable-column-header">Int. Name</th>
+                <th class="jtable-column-header">Start</th>
+                <th class="jtable-column-header">End</th>
+                <th class="jtable-column-header">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        @{ 
+            var odd = true;
+            var counter = 0;
+        }
+        @foreach (var item in Model.Monitors)
+        {
+            <tr class="@(odd ? "" : "jtable-row-even") traceRow @(counter == 0 ? "jtable-row-selected" : "")">
+                <td class="traceId">@item.TraceId</td>
+                <td>@item.UserCode</td>
+                <td>@item.InterfaceCode</td>
+                <td>@item.InterfaceName</td>
+                <td>@item.StartTimeFormatted</td>
+                <td>@item.EndTimeFormatted</td>
+                <td>@item.Status</td>
+            </tr>
+            odd = !odd;
+            counter++;
+        }
+        </tbody>
+    </table>
+    <div class="jtable-bottom-panel">
+    </div>
+</div>
+<br />
+
+<div id="divInterfaceDetails">
+    <h3>Trace Details</h3>
+    <table>
+        <tr>
+            <td style="width:100px;"><strong>Interface ID</strong></td>
+            <td style="width:20%;">@Model.Record.LicsId</td>
+            <td style="width:100px;"><strong>Interface Code</strong></td>
+            <td style="width:30%;">@Model.Record.InterfaceCode</td>
+            <td style="width:100px;"><strong>Status</strong></td>
+            <td style="width:20%;" id="tdStatus">@Model.Record.Status</td>
+        </tr>
+        <tr>
+            <td><strong>Trace</strong></td>
+            <td id="tdTraceId">@Model.Record.TraceId</td>
+            <td><strong>Interface Name</strong></td>
+            <td>@Model.Record.InterfaceName</td>
+            <td><strong>User Code</strong></td>
+            <td id="tdUserCode">@Model.Record.UserCode</td>
+        </tr>
+        <tr>
+            <td><strong>Record Count</strong></td>
+            <td id="tdRecordCount">@Model.Record.RecordCount</td>
+            <td><strong>File Name</strong></td>
+            <td id="tdFileName">@Model.Record.FileName</td>
+            <td><strong>Start Time</strong></td>
+            <td id="tdStartTimeFormatted">@Model.Record.StartTimeFormatted</td>
+        </tr>
+        <tr>
+            <td><strong>Row Errors</strong></td>
+            <td id="tdRowCountError">@Model.Record.RowErrorCount</td>
+            <td><strong>File Type</strong></td>
+            <td>@Model.Record.FileType</td>
+            <td><strong>End Time</strong></td>
+            <td id="tdEndTimeFormatted">@Model.Record.EndTimeFormatted</td>
+        </tr>
+        <tr>
+            <td><strong>Interface Errors</strong></td>
+            <td id="tdInterfaceErrorCount">@Model.Record.InterfaceErrorCount</td>
+            <td><strong>CSV Qualifier</strong></td>
+            <td>@Model.Record.CsvQualifier</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+    <br />
+
+
+    <div id="divInterfaceErrors" style="@((Model.Record.InterfaceErrorCount == 0) ? "display:none;" : string.Empty)">
+        <h3>Interface Errors</h3>
+        <div class="jtable-main-container">
+            <table id="interfaceErrorTable" class="jtable">
+                <thead>
+                    <tr>
+                        <th class="jtable-column-header">Error</th>
+                        <th class="jtable-column-header">Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.InterfaceErrors)
+                {
+                    <tr class="@(odd ? "" : "jtable-row-even")">
+                        <td>@item.Sequence</td>
+                        <td><pre class="exception">@item.Message</pre></td>
+                    </tr>
+                    odd = !odd;
+                }
+                </tbody>
+            </table>
+            <div class="jtable-bottom-panel">
+            </div>
+        </div>
+        <br />
+    </div>
+
+    <h3>Row Data</h3>
+    @if (Model.Record.RowErrorCount > 0)
+    {
+        <input type="checkbox" id="chkErrorsOnly" checked="checked" /> <label for="chkErrorsOnly">Error rows only</label><br />
+    }
+    <div id="RowDataTableContainer">
+    </div>
+    <br />
+</div>
+
+<div id="divLoading" style="display:none;">
+    <br />
+    <img alt="loading" src="/Scripts/jtable/themes/standard/blue/loading.gif" /> Loading...
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+</div>
+
+<div id="dialogConfirm" style="display:none;">
+    <p>Are you sure you want to reprocess this interface?</p>
+    <table cellspacing="8">
+        <tr>
+            <td style="width:100px;">Connection</td>
+            <td><strong>@ViewBag.Connection.ConnectionName</strong></td>
+        </tr>
+        <tr>
+            <td>Interface Code</td>
+            <td><strong id="interfaceCode"></strong></td>
+        </tr>
+        <tr>
+            <td>Interface Name</td>
+            <td><strong id="interfaceName"></strong></td>
+        </tr>
+        <tr>
+            <td>Interface ID</td>
+            <td><strong id="licsId"></strong></td>
+        </tr>
+        <tr>
+            <td>ICS User</td>
+            <td><strong>@ViewBag.User.UserName</strong></td>
+        </tr>
+        <tr>
+            <td>Filename</td>
+            <td><strong id="fileName"></strong></td>
+        </tr>
+        <tr id="rowDescription">
+            <td>Description</td>
+            <td><strong id="description"></strong></td>
+        </tr>
+    </table>
+    <br />
+    <div id="progressbar"></div>
+    <center id="reprocesOptions">
+        <button id="reprocess">Reprocess</button>
+        &nbsp;
+        &nbsp;
+        <button id="cancel">Cancel</button>
+    </center>
+    <br />
+</div>
+<div id="dialogMessage" style="display:none;">
+    <strong><p id="pMessage"></p></strong>
+    <p id="pException"></p>
+    <table>
+        <tr id="rowInterfaceErrors">
+            <td><strong>Interface Errors</strong>:</td>
+            <td id="interfaceErrorCount"></td>
+        </tr>
+        <tr id="rowRowErrors">
+            <td><strong>Row Errors</strong>:</td>
+            <td id="rowErrorCount"></td>
+        </tr>
+    </table>
+</div>

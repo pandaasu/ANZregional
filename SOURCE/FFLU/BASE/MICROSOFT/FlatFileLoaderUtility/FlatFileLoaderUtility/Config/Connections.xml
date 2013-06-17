@@ -1,0 +1,16 @@
+﻿<Connections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Connection>
+    <ConnectionId>1</ConnectionId>
+    <ConnectionName>Development (DB1293T)</ConnectionName>
+    <NetworkAlias>DB1293T.AP.MARS</NetworkAlias>
+    <Username>FFLU_EXECUTOR</Username>
+    <Password>fflu_exeidk</Password>
+  </Connection>
+  <Connection>
+    <ConnectionId>2</ConnectionId>
+    <ConnectionName>Test (DB1293T)</ConnectionName>
+    <NetworkAlias>DB1293T.AP.MARS</NetworkAlias>
+    <Username>FFLU_EXECUTOR</Username>
+    <Password>fflu_exeidk</Password>
+  </Connection>
+</Connections>

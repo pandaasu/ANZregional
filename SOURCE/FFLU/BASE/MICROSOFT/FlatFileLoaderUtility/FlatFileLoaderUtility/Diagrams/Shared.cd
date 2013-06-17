@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="FlatFileLoaderUtility.Models.Shared.Access">
+    <Position X="1.75" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAAAAAAAAAAAAAAAAQgAABAAAAAAAEAAAABAAAAAAAI=</HashCode>
+      <FileName>Models\Shared\Access.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.Tools">
+    <Position X="7" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAACAAIAABAAAAABAAAAAAAgAAAQAAA=</HashCode>
+      <FileName>Models\Shared\Tools.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.CacheExtensions">
+    <Position X="5.25" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>Models\Shared\CacheExtensions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.Errors">
+    <Position X="5.25" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAA=</HashCode>
+      <FileName>Models\Shared\Errors.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.Logs">
+    <Position X="3.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>Models\Shared\Logs.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.Mail">
+    <Position X="3.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Shared\Mail.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Models.Shared.PreserveViewDataOnExceptionFilter" BaseTypeListCollapsed="true">
+    <Position X="8.75" Y="1.25" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Models.Shared.PreserveViewDataOnExceptionFilter.FilterProvider" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Models\Shared\PreserveViewDataOnExceptionFilter.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAgAAAAA=</HashCode>
+      <FileName>Models\Shared\PreserveViewDataOnExceptionFilter.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

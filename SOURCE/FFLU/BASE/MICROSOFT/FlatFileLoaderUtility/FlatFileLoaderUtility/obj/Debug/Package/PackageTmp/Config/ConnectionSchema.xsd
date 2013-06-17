@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="Connections" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+  <xs:element name="Connections" msdata:IsDataSet="true" msdata:Locale="en-US">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="Connection">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ConnectionId" type="xs:int" minOccurs="1" maxOccurs="1" />
+              <xs:element name="ConnectionName" type="xs:string" minOccurs="1" maxOccurs="1" />
+              <xs:element name="NetworkAlias" type="xs:string" minOccurs="1" maxOccurs="1" />
+              <xs:element name="Username" type="xs:string" minOccurs="1" maxOccurs="1" />
+              <xs:element name="Password" type="xs:string" minOccurs="1" maxOccurs="1" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

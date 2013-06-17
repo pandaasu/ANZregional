@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.BaseRepository">
+    <Position X="12.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\DataAccess\BaseRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository">
+    <Position X="10.75" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.UploadRepository.DataAccessUpload" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\UploadRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAgABAAQCAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\DataAccess\UploadRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.ConnectionRepository" BaseTypeListCollapsed="true">
+    <Position X="23.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIYBAAAAAAgAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\ConnectionRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.DataAccess" BaseTypeListCollapsed="true">
+    <Position X="25.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAACIAAEMAEAAEBBAAgQAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>Repositories\DataAccess\DataAccess.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.IcsStatusRepository">
+    <Position X="5.5" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.IcsStatusRepository.DataAccessIcsStatus" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\IcsStatusRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\IcsStatusRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceGroupJoinRepository">
+    <Position X="12.5" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceGroupJoinRepository.DataAccessInterfaceGroupJoin" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\InterfaceGroupJoinRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\InterfaceGroupJoinRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceGroupRepository">
+    <Position X="16" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceGroupRepository.DataAccessInterfaceGroup" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\InterfaceGroupRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\InterfaceGroupRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceOptionRepository">
+    <Position X="19.5" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceOptionRepository.DataAccessInterfaceOption" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\InterfaceOptionRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\InterfaceOptionRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceRepository">
+    <Position X="7.25" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.InterfaceRepository.DataAccessInterface" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\InterfaceRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAQAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\InterfaceRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.LicsRepository">
+    <Position X="14.25" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.LicsRepository.DataAccessLics" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\LicsRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAABAAIAAIAAAAEAACI=</HashCode>
+      <FileName>Repositories\DataAccess\LicsRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.MonitorRepository">
+    <Position X="17.75" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.MonitorRepository.DataAccessMonitor" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\MonitorRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAwAAAAAAAAAAAAAAAgAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\DataAccess\MonitorRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.RepositoryContainer" BaseTypeListCollapsed="true">
+    <Position X="21.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>hAADgAAAACAQAEEAgASAAAQAUQMIAAADAAABMACgAQA=</HashCode>
+      <FileName>Repositories\DataAccess\RepositoryContainer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.UserRepository">
+    <Position X="9" Y="2.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="FlatFileLoaderUtility.Repositories.DataAccess.UserRepository.DataAccessUser" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Repositories\DataAccess\UserRepository.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Repositories\DataAccess\UserRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

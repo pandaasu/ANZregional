@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Interface Name="FlatFileLoaderUtility.Repositories.IConnectionRepository">
+    <Position X="6.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAYAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IConnectionRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IUserRepository">
+    <Position X="4.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IUserRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IIcsStatusRepository">
+    <Position X="3" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IIcsStatusRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IInterfaceGroupJoinRepository">
+    <Position X="4.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IInterfaceGroupJoinRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IInterfaceGroupRepository">
+    <Position X="6.5" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IInterfaceGroupRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IInterfaceOptionRepository">
+    <Position X="4.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IInterfaceOptionRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IInterfaceRepository">
+    <Position X="3" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAQAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IInterfaceRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.ILicsRepository">
+    <Position X="4.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAEAAAA=</HashCode>
+      <FileName>Repositories\ILicsRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IMonitorRepository">
+    <Position X="6.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAwAAAAAAAAAAAAAAAgAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IMonitorRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IRepositoryContainer">
+    <Position X="1.25" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>hAADAAAAACAAAEEAgAQAAAQAAAAIAAACAAAAAAAgAQA=</HashCode>
+      <FileName>Repositories\IRepositoryContainer.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="FlatFileLoaderUtility.Repositories.IUploadRepository">
+    <Position X="3" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAQCAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Repositories\IUploadRepository.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

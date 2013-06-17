@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title - Flat File Loader Utility</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+    @Styles.Render("~/Content/css")
+    @Styles.Render("~/Scripts/jtable/themes/standard/jtable_standard_base.css")
+    @Styles.Render("~/Scripts/jtable/themes/standard/blue/jtable_blue.css")
+    @Styles.Render("~/Scripts/menu/menu.css")
+    @RenderSection("CssImport", false)
+    
+    <script type="text/javascript">
+        var isTest = @((ViewBag.IsTest ?? false).ToString().ToLower());
+    </script>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/site")
+    @Scripts.Render("~/bundles/modernizr")
+    @RenderSection("JavascriptImport", false)
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#ddlConnection").chosen({ search_contains: true });
+            $("#ddlConnection").change(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/Base/SetConnection",
+                    data: {
+                        connectionId: $(this).val()
+                    },
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: function (response) {
+                        location.reload();
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert("Error communicating with server." + ((isTest) ? " Exception: " + thrownError : ""));
+                    }
+                });
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <header>
+        <div class="content-wrapper">
+            <div class="logo">
+                <a href="@Url.Action("Index", "Home")"></a>
+            </div>
+            <div class="header_text">
+                <a href="@Url.Action("Index", "Home")">Flat File Loader Utility</a>
+            </div>
+            <div class="float-right">
+                @Html.DropDownList("ddlConnection", (List<SelectListItem>)ViewBag.Connections, new { id = "ddlConnection" })
+            </div>
+        </div>
+    </header>
+    <div id="nav">
+        
+        <div id="menu">
+            <div class="content-wrapper">
+                <ul class="menu">
+			        <li @if(ViewBag.IsMenuUpload ?? false) { 
+                        @:class="current" 
+                    }>
+                        <a href="@Url.Action("Index", "Uploads")" class="parent"><span>File Upload</span></a>
+			        </li>
+                    <li @if(ViewBag.IsMenuMonitor ?? false) { 
+                        @:class="current" 
+                    }>
+                        <a href="@Url.Action("Index", "Monitor")" class="parent"><span>Interface Monitor</span></a>
+			        </li>
+                    <li @if (ViewBag.IsMenuUser ?? false) { 
+                        @:class="current" 
+                    }>
+                        <a href="#" style="cursor:default;" onclick="return false;"><span>@ViewBag.Access.Username</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("SwitchUser", "User")"><span>Switch User</span></a></li>
+                            @if (ViewBag.Access.IsImpersonating)
+                            {
+                                <li><a href="@Url.Action("Logoff", "User")"><span>Logoff</span></a></li>
+                            }
+                        </ul>
+                    </li>
+		        </ul>
+            </div>
+        </div>
+
+    </div>
+    <div id="body">
+        <section class="content-wrapper clear-fix">
+            <h1>@ViewBag.Title</h1>
+            @RenderBody()
+        </section>
+    </div>
+    <footer>
+        <div class="content-wrapper">
+            <div class="float-left">
+                <p>Connected to <strong>@ViewBag.Connection.ConnectionName</strong> as <strong>@ViewBag.User.UserName</strong></p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

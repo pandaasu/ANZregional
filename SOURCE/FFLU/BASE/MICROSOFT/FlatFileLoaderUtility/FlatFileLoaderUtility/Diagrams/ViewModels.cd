@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="FlatFileLoaderUtility.ViewModels.FileUploadViewModel">
+    <Position X="2.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAJAAAAEAAAAAABAAAAABAgAAAAAQAAAAAAAAABAAAA=</HashCode>
+      <FileName>ViewModels\FileUploadViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.ViewModels.UserViewModel">
+    <Position X="8" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAQAAAAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\UserViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.ViewModels.InterfaceMonitorDetailViewModel">
+    <Position X="6.25" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQAQAAAAAAAAAAAAQAAAAAAAABAAAAAABAA=</HashCode>
+      <FileName>ViewModels\InterfaceMonitorDetailViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FlatFileLoaderUtility.ViewModels.InterfaceMonitorListViewModel">
+    <Position X="4.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAIAAAAAAAAgAAAAAQAAAAAAEAAAAAAA=</HashCode>
+      <FileName>ViewModels\InterfaceMonitorListViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

@@ -1,0 +1,54 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FlatFileLoaderUtility.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="LoggingLevel" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="DateTimeFormatLong" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">dd/MM/yyyy HH:mm:ss</Value>
+    </Setting>
+    <Setting Name="LoggingPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">logs\</Value>
+    </Setting>
+    <Setting Name="MailSupport" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AppName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Flat File Loader Utility</Value>
+    </Setting>
+    <Setting Name="SmtpHost" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="SmtpUsername" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="SmtpPassword" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="MailTo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="MailCC" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LdapServer" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">woddc101.mars-ad.net</Value>
+    </Setting>
+    <Setting Name="IsTest" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="IsDev" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DatabasePackageName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">FFLU_API</Value>
+    </Setting>
+    <Setting Name="DevUser" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">HORNCHR</Value>
+    </Setting>
+    <Setting Name="SegmentBytes" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">512000</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -1,0 +1,81 @@
+﻿@model FlatFileLoaderUtility.ViewModels.UserViewModel
+
+@{
+    ViewBag.Title = "Switch User";
+}
+
+@section JavascriptImport {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            
+            $("#btnLogin").click(function () {
+                $(this).find("span").text("Authenticating");
+                $("form :input").attr("disabled", "disabled");
+                
+                $.ajax({
+                    type: "post",
+                    url: "/User/SwitchUser",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        username: $("#txtusername").val(),
+                        password: $("#txtPassword").val()
+                    }),
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: function (response) {
+                        if (response.Result == "OK") {
+                            $("#btnCancelDraft span").text("Cancelled");
+                            $("#status").text("Cancelled");
+                            isDirty = false;
+                        }
+                        else {
+                            alert("Error: " + response.Message);
+                            $("#btnCancelDraft span").text("Log in");
+                            $("form :input").removeAttr("disabled");
+                        }
+                    }
+                });
+            });
+
+            $("button").button();
+        });
+    </script>
+}
+
+<div class="main">
+    <br />
+    <p>You are currently logged in as <strong>@ViewBag.Access.Username</strong>.</p>
+    <p>With that login, you are connected to <strong>@ViewBag.Connection.ConnectionName</strong> as <strong>@ViewBag.User.UserName</strong>.</p>
+    <p>To log in as a different user, enter the credentials below.</p>
+
+    @using (Html.BeginForm("SwitchUser", "User", FormMethod.Post, new { autocomplete = "off" }))
+    {
+        @Html.ValidationSummary(true, string.Empty)
+        <br />
+        <table cellspacing="4">
+            <tr valign="top">
+                <td style="width:70px;">@Html.LabelFor(x => x.Username)</td>
+                <td>@Html.TextBoxFor(x => x.Username, new { style = "text-transform:uppercase;" })
+                    @Html.ValidationMessageFor(x => x.Username)
+                </td>
+            </tr>
+            <tr valign="top">
+                <td>@Html.LabelFor(x => x.Password)</td>
+                <td>@Html.PasswordFor(x => x.Password)
+                    @Html.ValidationMessageFor(x => x.Password)
+                </td>
+            </tr>
+            <tr valign="top">
+                <td></td>
+                <td><button type="submit">Log in</button></td>
+            </tr>
+        </table>
+    }
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+</div>
+<br />
