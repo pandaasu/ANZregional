@@ -30,6 +30,7 @@ package fflu_data as
     - get_number_field            Returns a number field.
     - get_date_field              Returns a date field.
     - get_mars_date_field         Returns a mars date field out.
+    - log_field_error             Logs and error associated with a field.
   + Other Functions
 
   Date        Author                Description
@@ -57,6 +58,34 @@ package fflu_data as
     i_allow_missing in boolean default false);
 
 /*******************************************************************************
+  NAME:      ADD_RECORD_TYPE
+  PURPOSE:   This function can be used to parses multiple different types of 
+             record types within a given interface.  There can only be one 
+             record type per row.  Each record type should be added first 
+             followed by the fields that are assocaites with this record type.
+             The record type doesn't have to be the first column, but it does have
+             to be added to this parser before other columns within the record.
+             All added fields up to the next record type will be parsed during
+             the parsing.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  procedure add_record_type(
+    i_column in fflu_common.st_column, 
+    i_column_name in fflu_common.st_name,
+    i_record_type in fflu_common.st_string);
+
+ procedure add_record_type(
+    i_position in fflu_common.st_position,
+    i_length in fflu_common.st_length,
+    i_column_name in fflu_common.st_name,
+    i_record_type in fflu_common.st_string);
+
+/*******************************************************************************
   NAME:      ADD_CHAR_FIELD
   PURPOSE:   This function defines the char field.
              
@@ -71,13 +100,16 @@ package fflu_data as
     i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
     i_max_length in fflu_common.st_size default null,
-    i_trim in boolean default false);
+    i_allow_null in boolean default false,
+    i_trim in boolean default false
+    );
   
   procedure add_char_field(
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
+    i_allow_null in boolean default false,
     i_trim in boolean default true);
   
 /*******************************************************************************
@@ -104,6 +136,7 @@ package fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
+    i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
   procedure add_number_field(
@@ -113,6 +146,7 @@ package fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
+    i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
   
   
@@ -137,6 +171,7 @@ package fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_date in date default null, 
     i_max_date in date default null,
+    i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
   procedure add_date_field(
@@ -146,18 +181,40 @@ package fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_date in date default null, 
     i_max_date in date default null,
+    i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
 /*******************************************************************************
   NAME:      ADD_MARS_DATE_FIELD
-  PURPOSE:   This function defines a mars date field.
+  PURPOSE:   This function defines a mars date field.  The mars date column is 
+            the name of the mars date table return column.
              
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
-  1.0   2013-06-13 Chris Horn           Defined.
+  1.0   2013-06-18 Chris Horn           Defined.
 
 *******************************************************************************/  
+  procedure add_mars_date_field(
+    i_column in fflu_common.st_column,
+    i_column_name in fflu_common.st_name,
+    i_mars_date_column in fflu_common.st_name,
+    i_format in fflu_common.st_name default null,
+    i_min_date in date default null, 
+    i_max_date in date default null,
+    i_allow_null in boolean default false,
+    i_nls_options in varchar2 default null);
+
+  procedure add_mars_date_field(
+    i_position in fflu_common.st_position,
+    i_length in fflu_common.st_length,
+    i_column_name in fflu_common.st_name,
+    i_mars_date_column in fflu_common.st_name,
+    i_format in fflu_common.st_name default null,
+    i_min_date in date default null, 
+    i_max_date in date default null,
+    i_allow_null in boolean default false,
+    i_nls_options in varchar2 default null);
     
 /*******************************************************************************
   NAME:      PARSE_DATA
@@ -173,6 +230,19 @@ package fflu_data as
 *******************************************************************************/  
   function parse_data(i_data in fflu_common.st_string) return boolean;
 
+/*******************************************************************************
+  NAME:      GET_RECORD_TYPE
+  PURPOSE:   This function returns the record type that was found on the 
+             currently parsed row.  It returns null if no record type field
+             was found on the row.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  function get_record_type return fflu_common.st_string;
 
 /*******************************************************************************
   NAME:      GET_CHAR_FIELD
@@ -182,9 +252,6 @@ package fflu_data as
              Errors will be logged if attempting to access an incorrect field
              or column name, or a value was not supplied in the data.
              
-             Note that fixed width char fields are automtically trimmed on 
-             being parsed.
-             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
@@ -193,9 +260,76 @@ package fflu_data as
 *******************************************************************************/  
   function get_char_field(i_column in fflu_common.st_column) return varchar2;
   function get_char_field(i_column_name in fflu_common.st_name) return varchar2; 
-  
-  
-  
-  
+
+/*******************************************************************************
+  NAME:      GET_NUMBER_FIELD
+  PURPOSE:   This function returns a number field either via column number or 
+             via column name as supplied in the definition.
+             
+             Errors will be logged if attempting to access an incorrect field
+             or column name, or a value was not supplied in the data.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  function get_number_field(i_column in fflu_common.st_column) return number;
+  function get_number_field(i_column_name in fflu_common.st_name) return number; 
+
+/*******************************************************************************
+  NAME:      GET_DATE_FIELD
+  PURPOSE:   This function returns a date field either via column number or 
+             via column name as supplied in the definition.
+             
+             Errors will be logged if attempting to access an incorrect field
+             or column name, or a value was not supplied in the data.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  function get_date_field(i_column in fflu_common.st_column) return date;
+  function get_date_field(i_column_name in fflu_common.st_name) return date; 
+
+/*******************************************************************************
+  NAME:      GET_MARS_DATE_FIELD
+  PURPOSE:   This function returns a mars date field either via column number or 
+             via column name as supplied in the definition.
+             
+             Errors will be logged if attempting to access an incorrect field
+             or column name, or a value was not supplied in the data.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  function get_mars_date_field(i_column in fflu_common.st_column) return number;
+  function get_mars_date_field(i_column_name in fflu_common.st_name) return number; 
+
+/*******************************************************************************
+  NAME:      LOG_FIELD_ERROR
+  PURPOSE:   This procedure allows you to quickly log an error against a field.
+             Its position, column and value information will be correctly 
+             passed to the fflu_utils.log_interface_data_error function.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Defined.
+
+*******************************************************************************/  
+  procedure log_field_error(
+    i_column in fflu_common.st_column, 
+    i_message in fflu_common.st_string);
+    
+  procedure log_field_error(
+    i_column_name in fflu_common.st_name, 
+    i_message in fflu_common.st_string);
   
 end fflu_data;

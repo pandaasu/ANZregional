@@ -68,6 +68,28 @@ package body fflu_utils as
     v_string := trim(v_string);
     return v_string;
   end escape_json_string;
+
+/*******************************************************************************
+  NAME:      JSON_NUMBER
+  PURPOSE:   This function takes a number and represents it as null or its
+             corresponding number.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-18 Chris Horn           Created
+  
+*******************************************************************************/   
+  function json_number(i_number in number) return fflu_common.st_buffer is
+    v_string fflu_common.st_buffer;
+  begin
+    if i_number is null then 
+      v_string := 'null';
+    else 
+      v_string := '' || i_number;
+    end if;
+    return v_string;
+  end json_number;
   
 /*******************************************************************************
   NAME:      LOG_INTERFACE_ERROR                                          PUBLIC
@@ -106,7 +128,7 @@ package body fflu_utils as
 *******************************************************************************/  
   procedure log_interface_data_error (
     i_label fflu_common.st_buffer,    -- Label, specific for interface. 
-    i_column fflu_common.st_size,   -- Char Position for Fixed With, Column for CSV 
+    i_column fflu_common.st_column,   -- Char Position for Fixed With, Column for CSV 
     i_value fflu_common.st_buffer,    -- The value found or not found if null. 
     i_message fflu_common.st_buffer) is -- The actual error message.
     v_lics_message fflu_common.st_buffer;
@@ -119,7 +141,7 @@ package body fflu_utils as
     v_message := i_message;
     -- Now construct the string.  
     loop
-      v_lics_message := '{"label":"' ||escape_json_string(v_label) ||'","column":' || i_column || ',"value":"'||escape_json_string(v_value)||'","message":"'||escape_json_string(v_message)||'"}';
+      v_lics_message := '{"label":"' ||escape_json_string(v_label) ||'","column":' || json_number(i_column) || ',"value":"'||escape_json_string(v_value)||'","message":"'||escape_json_string(v_message)||'"}';
       exit when lengthb(v_lics_message) <= 4000;
       -- Use a brute force approach to truncating the message keeping some of each part.
       if lengthb(v_message) > 1000 then
@@ -139,8 +161,8 @@ package body fflu_utils as
 *******************************************************************************/  
   procedure log_interface_data_error (
     i_label fflu_common.st_buffer,    -- Label, specific for interface. 
-    i_position fflu_common.st_size,   -- Char Position for Fixed With, Column for CSV 
-    i_length fflu_common.st_size,     -- The length of the field.
+    i_position fflu_common.st_position,   -- Char Position for Fixed With, Column for CSV 
+    i_length fflu_common.st_length,     -- The length of the field.
     i_value fflu_common.st_buffer,    -- The value found or not found if null. 
     i_message fflu_common.st_buffer) is -- The actual error message.
     v_lics_message fflu_common.st_string;
@@ -153,7 +175,7 @@ package body fflu_utils as
     v_message := i_message;
     -- Now construct the string.  
     loop
-      v_lics_message := '{"label":"' ||escape_json_string(v_label) ||'","position":' || i_position || ',"length":' || i_length || ',"value":"'||escape_json_string(v_value)||'","message":"'||escape_json_string(v_message)||'"}';
+      v_lics_message := '{"label":"' ||escape_json_string(v_label) ||'","position":' || json_number(i_position) || ',"length":' || json_number(i_length) || ',"value":"'||escape_json_string(v_value)||'","message":"'||escape_json_string(v_message)||'"}';
       exit when lengthb(v_lics_message) <= 4000;
       -- Use a brute force approach to truncating the message keeping some of each part.
       if lengthb(v_message) > 1000 then
