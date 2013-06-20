@@ -221,7 +221,10 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
                     status.LicsStatus = dataset.Tables[0].Rows[0]["lics_status"].ToString();
                     status.EstimatedSeconds = Tools.ZeroInvalidInt(dataset.Tables[0].Rows[0]["estimated_time"]);
 
-                    if (status.TotalRowCount == 0)
+                    // The TotalRowCount will only be 0 if this is status request from the monitor view page
+                    // In which case, it's ok for th TotalRowCount to be 0. It just means the progress bar won't start
+                    // but if the percent_complete is 0 then it hasn't started anyway.
+                    if (status.TotalRowCount == 0 && Tools.ZeroInvalidInt(dataset.Tables[0].Rows[0]["percent_complete"]) > 0)
                         status.TotalRowCount = (status.CompletedRowCount * 100) / Tools.ZeroInvalidInt(dataset.Tables[0].Rows[0]["percent_complete"]);
                 }
             }
