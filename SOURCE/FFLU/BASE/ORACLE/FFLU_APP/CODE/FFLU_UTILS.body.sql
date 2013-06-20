@@ -10,24 +10,24 @@ package body fflu_utils as
       lics_header_seq = lics_inbound_processor.callback_header;
     v_user_code fflu_common.st_user;
   begin
-    -- Check if there is a user code waiting in the writeback table for processing.
-    open csr_xaction_writeback;
-    fetch csr_xaction_writeback into v_user_code;
-    if csr_xaction_writeback%found then 
-      update lics_hdr_trace set het_user = v_user_code 
-      where het_header = lics_inbound_processor.callback_header and 
-        het_hdr_trace = lics_inbound_processor.callback_trace;
-      delete from fflu_xaction_writeback where lics_header_seq = lics_inbound_processor.callback_header;
-    end if;
-    close csr_xaction_writeback;
-
     -- Get the sequence number for the current interface. Only insert a record 
     -- if the sequence is defined.  
     v_sequence := lics_inbound_processor.callback_header;
     if v_sequence is not null then 
+      -- Check if there is a user code waiting in the writeback table for processing.
+      open csr_xaction_writeback;
+      fetch csr_xaction_writeback into v_user_code;
+      if csr_xaction_writeback%found then 
+        update lics_hdr_trace set het_user = v_user_code 
+        where het_header = lics_inbound_processor.callback_header and 
+          het_hdr_trace = lics_inbound_processor.callback_trace;
+        delete from fflu_xaction_writeback where lics_header_seq = lics_inbound_processor.callback_header;
+      end if;
+      close csr_xaction_writeback;
+      -- Now update the progress.    
       update fflu_xaction_progress 
         set 
-          dat_seq = lics_inbound_processor.callback_row, 
+          dat_seq = nvl(lics_inbound_processor.callback_row,0), 
           last_updtd_time = sysdate
         where lics_header_seq = v_sequence;
       if SQL%Rowcount = 0 then 
@@ -35,7 +35,7 @@ package body fflu_utils as
         insert into fflu_xaction_progress (
           lics_header_seq,dat_count,dat_seq,last_updtd_time
         ) values (
-          v_sequence, (select count(t0.DAT_DTA_SEQ) from lics_data t0 where t0.DAT_HEADER = v_sequence), lics_inbound_processor.callback_row, sysdate);
+          v_sequence, (select count(t0.DAT_DTA_SEQ) from lics_data t0 where t0.DAT_HEADER = v_sequence), nvl(lics_inbound_processor.callback_row,0), sysdate);
       end if;
       -- Now commit the progress update.
       commit;

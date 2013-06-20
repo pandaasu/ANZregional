@@ -19,6 +19,7 @@ package fflu_data as
   ------------------------------------------------------------------------------
   + Data Parsing Functions
     - initialise                  Initialise the data table definitions.
+    - cleanup                     Called after data processing has completed.
     - add_record_type             Defines a record type field.
     - add_char_field              Defines a character field.
     - add_date_field              Defines a date field.
@@ -31,11 +32,14 @@ package fflu_data as
     - get_date_field              Returns a date field.
     - get_mars_date_field         Returns a mars date field out.
     - log_field_error             Logs and error associated with a field.
+    - was_errors                  Return if any errors have been recorded.
   + Other Functions
 
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-13  Chris Horn            Defined the specification.
+  2013-06-18  Chris Horn            Refined spec and implemented.
+  2013-06-20  Chris Horn            Added was errors function.
 
 *******************************************************************************/
 
@@ -72,6 +76,7 @@ package fflu_data as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-18 Chris Horn           Defined.
+  1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
   procedure add_record_type(
@@ -80,6 +85,7 @@ package fflu_data as
     i_record_type in fflu_common.st_string);
 
  procedure add_record_type(
+    i_column in fflu_common.st_column, 
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
@@ -105,6 +111,7 @@ package fflu_data as
     );
   
   procedure add_char_field(
+    i_column in fflu_common.st_column, 
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
@@ -128,7 +135,8 @@ package fflu_data as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-13 Chris Horn           Defined.
-
+  1.1   2013-06-20 Chris Horn           Added column number to fixed width.
+  
 *******************************************************************************/  
   procedure add_number_field(
     i_column in fflu_common.st_column, 
@@ -140,6 +148,7 @@ package fflu_data as
     i_nls_options in varchar2 default null);
 
   procedure add_number_field(
+    i_column in fflu_common.st_column, 
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
@@ -163,6 +172,7 @@ package fflu_data as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-13 Chris Horn           Defined.
+  1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
   procedure add_date_field(
@@ -175,6 +185,7 @@ package fflu_data as
     i_nls_options in varchar2 default null);
 
   procedure add_date_field(
+    i_column in fflu_common.st_column, 
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
@@ -193,6 +204,7 @@ package fflu_data as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-18 Chris Horn           Defined.
+  1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
   procedure add_mars_date_field(
@@ -200,19 +212,20 @@ package fflu_data as
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_min_number in number default null, 
+    i_max_number in number default null,
     i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
   procedure add_mars_date_field(
+    i_column in fflu_common.st_column,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_min_number in number default null, 
+    i_max_number in number default null,
     i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
     
@@ -331,5 +344,30 @@ package fflu_data as
   procedure log_field_error(
     i_column_name in fflu_common.st_name, 
     i_message in fflu_common.st_string);
+  
+/*******************************************************************************
+  NAME:      WAS_ERRORS
+  PURPOSE:   Tracks if any errors have been raised since the last 
+             initialisation.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-20 Chris Horn           Created
+
+*******************************************************************************/  
+  function was_errors return boolean;
+
+/*******************************************************************************
+  NAME:      CLEANUP
+  PURPOSE:   Logs a final interface progress record and clears definition.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-20 Chris Horn           Created
+
+*******************************************************************************/  
+  procedure cleanup;
   
 end fflu_data;
