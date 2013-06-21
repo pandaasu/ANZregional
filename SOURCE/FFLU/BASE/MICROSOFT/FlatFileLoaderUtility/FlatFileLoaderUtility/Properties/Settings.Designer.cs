@@ -61,7 +61,7 @@ namespace FlatFileLoaderUtility.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Flat File Loader Utility")]
+        [global::System.Configuration.DefaultSettingValueAttribute("File Loader Utility")]
         public string AppName {
             get {
                 return ((string)(this["AppName"]));

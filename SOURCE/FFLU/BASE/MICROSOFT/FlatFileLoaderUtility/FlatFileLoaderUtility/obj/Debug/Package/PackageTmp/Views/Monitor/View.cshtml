@@ -60,12 +60,16 @@
                             else {
                                 var x = 0;
                                 var aryHtml = new Array();
-                                aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Label</th><th class='jtable-column-header'>Value</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
                                 for (var i = 0; i < data.record.Errors.length; i++) {
                                     aryHtml[x++] = "<tr class='";
                                     aryHtml[x++] = ((i % 2) == 0) ? "jtable-row-even" : "";
                                     aryHtml[x++] = "'><td>";
                                     aryHtml[x++] = data.record.Errors[i].Sequence;
+                                    aryHtml[x++] = "</td><td>";
+                                    aryHtml[x++] = data.record.Errors[i].Label;
+                                    aryHtml[x++] = "</td><td>";
+                                    aryHtml[x++] = data.record.Errors[i].Value;
                                     aryHtml[x++] = "</td><td><pre class='exception'>";
                                     aryHtml[x++] = data.record.Errors[i].Message;
                                     aryHtml[x++] = "<pre></td></tr>";
@@ -102,12 +106,31 @@
                                             needsLeftEdge = false;
                                         }
                                         aryHtml[x++] = "<pre class='tooltipErrors highlight " + (index + error.Length == data.record.Data.length - 1 ? " rightEdge" : "") + (needsLeftEdge ? " leftEdge" : "") + ((data.record.Row == 0) ? " colcount" : "") + "'>" + data.record.Data.substring(index, error.Position - 1 + error.Length) + "</pre>";
-                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
-                                        aryHtml[x++] = "<tr class='jtable-row-even'><td>";
-                                        aryHtml[x++] = rowErrors[i].Sequence;
-                                        aryHtml[x++] = "</td><td><pre class='exception'>";
-                                        aryHtml[x++] = rowErrors[i].Message;
-                                        aryHtml[x++] = "<pre></td></tr>";
+                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Label</th><th class='jtable-column-header'>Value</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                        while (true) {
+                                            aryHtml[x++] = "<tr class='";
+                                            aryHtml[x++] = ((i % 2) == 0) ? "jtable-row-even" : "";
+                                            aryHtml[x++] = "'><td>";
+                                            aryHtml[x++] = rowErrors[i].Sequence;
+                                            aryHtml[x++] = "</td><td>";
+                                            aryHtml[x++] = rowErrors[i].Label;
+                                            aryHtml[x++] = "</td><td>";
+                                            aryHtml[x++] = rowErrors[i].Value;
+                                            aryHtml[x++] = "</td><td><pre class='exception'>";
+                                            aryHtml[x++] = rowErrors[i].Message;
+                                            aryHtml[x++] = "<pre></td></tr>";
+                                            // There could be multiple errors for the same block
+                                            // Peek ahead. If the next error is for the same position, print it too and increment the index
+                                            if (i < rowErrors.length - 1) {
+                                                if (rowErrors[i + 1].Position = error.Position)
+                                                    i++;
+                                                else
+                                                    break;
+                                            }
+                                            else {
+                                                break;
+                                            }
+                                        }
                                         aryHtml[x++] = "</tbody></table><div class='jtable-bottom-panel'></div><br /></div></div>";
                                         index = error.Position - 1 + error.Length;
                                         needsLeftEdge = false;
@@ -136,17 +159,21 @@
                                             colErrors.push(data.record.Errors[i]);
                                     }
                                     if (colErrors.length == 0) {
-                                        return data.record.ColumnData[@i];
+                                        return $("<div class='spacing'>" + data.record.ColumnData[@i] + "</div>");
                                     }
                                     else {
                                         var x = 0;
                                         var aryHtml = new Array();
-                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
+                                        aryHtml[x++] = "<div class='tooltip'><div class='jtable-main-container'><table class='interfaceErrorTable jtable'><thead><tr><th class='jtable-column-header'>Error</th><th class='jtable-column-header'>Label</th><th class='jtable-column-header'>Value</th><th class='jtable-column-header'>Message</th></tr></thead><tbody>";
                                         for (var i = 0; i < colErrors.length; i++) {
                                             aryHtml[x++] = "<tr class='";
                                             aryHtml[x++] = ((i % 2) == 0) ? "jtable-row-even" : "";
                                             aryHtml[x++] = "'><td>";
                                             aryHtml[x++] = colErrors[i].Sequence;
+                                            aryHtml[x++] = "</td><td>";
+                                            aryHtml[x++] = colErrors[i].Label;
+                                            aryHtml[x++] = "</td><td>";
+                                            aryHtml[x++] = colErrors[i].Value;
                                             aryHtml[x++] = "</td><td><pre class='exception'>";
                                             aryHtml[x++] = colErrors[i].Message;
                                             aryHtml[x++] = "<pre></td></tr>";
@@ -170,10 +197,11 @@
                             position: {
 		                        my: 'bottom center',
 		                        at: 'top center',
-		                        target: $(this)
+		                        target: $(this),
+                                viewport: $(window)
 	                        },
                             style: {
-		                        classes: 'qtip-red qtip-shadow qtip-tipped'
+		                        classes: 'qtip-shadow qtip-tipped'
 	                        }
                         });
                     });

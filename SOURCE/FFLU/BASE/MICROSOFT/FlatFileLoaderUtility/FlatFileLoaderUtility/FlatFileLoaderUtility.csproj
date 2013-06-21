@@ -195,7 +195,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Config\Connections.xml" />
+    <Content Include="Content\images\cross24x24.png" />
     <Content Include="Content\images\tick.png" />
+    <Content Include="Content\images\tick24x24.png" />
     <Content Include="Content\jquery.qtip.css" />
     <Content Include="Content\jquery.qtip.min.css" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
@@ -268,6 +270,8 @@
     <Content Include="Content\themes\redmond\images\ui-icons_cd0a0a_256x240.png" />
     <Content Include="Content\themes\redmond\images\ui-icons_d8e7f3_256x240.png" />
     <Content Include="Content\themes\redmond\images\ui-icons_f9bd01_256x240.png" />
+    <Content Include="Content\images\wave-green.png" />
+    <Content Include="Content\images\wave-red.png" />
     <Content Include="Content\themes\redmond\jquery-ui-1.9.1.css" />
     <Content Include="Content\themes\redmond\jquery-ui-1.9.1.min.css" />
     <Content Include="favicon.ico" />

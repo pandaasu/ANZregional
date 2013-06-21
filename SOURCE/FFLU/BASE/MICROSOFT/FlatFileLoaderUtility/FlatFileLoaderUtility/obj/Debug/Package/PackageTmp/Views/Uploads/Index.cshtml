@@ -209,7 +209,7 @@
             $("#spanFilename").text(status.FileName);
             if (fileData != null) {
                 status.FileSize = fileData.size;
-                $("#spanFilesize").text(addCommas(parseInt(parseFloat(status.FileSize)/1024)) + " kB");
+                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(status.FileSize)/1024))) + " kB");
             }
             $("#uploadOptions").show();
             $("#divResult").hide();
@@ -220,6 +220,10 @@
             $("#step5tick").hide();
             $("#step4time").hide();
             $("#step5time").hide();
+            $(".failure").hide();
+            $(".success").hide();
+            $(".failureProgress").removeClass("failureProgress");
+            $(".successProgress").removeClass("successProgress");
             SetProgressDescription("Step 1 - Initialising upload");
 
             $("#dialog").dialog({
@@ -313,7 +317,7 @@
                 }
 
                 // Now that the file is accessed, the size is available
-                $("#spanFilesize").text(addCommas(parseInt(parseFloat(status.TotalLength)/1024)) + " kB");
+                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(status.TotalLength)/1024))) + " kB");
                 
                 ProcessSegment();
             }
@@ -529,6 +533,16 @@
                     $("#rowDetails").hide();
                 }
 
+                $("#progressbar").progressbar("value", 100);
+                if (status.IsError) {
+                    $("#progressbar > div").addClass("failureProgress");
+                    $(".failure").show();
+                }
+                else {
+                    $("#progressbar > div").addClass("successProgress");
+                    $(".success").show();
+                }
+
                 $("#dialog").dialog({
                     buttons: {
                         Ok: function() {
@@ -607,12 +621,20 @@
                         }
 
                         if (status.CurrentStep == 5 && response.IsComplete == true) {
-                            SetProgressDescription("Upload complete");
-                            status.Message = "Upload complete.";
-                            status.Exception = "";
                             status.InterfaceErrorCount = response.InterfaceErrorCount;
                             status.RowErrorCount = response.RowErrorCount;
                             status.LicsId = response.LicsId;
+                            status.Exception = "";
+                            if (status.InterfaceErrorCount == 0 && status.RowErrorCount == 0) {
+                                SetProgressDescription("File Load Completed Successfully");
+                                status.Message = "Success."
+                                status.IsError = false;
+                            }
+                            else {
+                                SetProgressDescription("File Load Complete – with Errors");
+                                status.Message = "Data Errors."
+                                status.IsError = true;
+                            }
                             $("#step5time").hide();
                             $("#step5tick").show();
                             ShowResult(false);
@@ -670,11 +692,11 @@
         <br />
         <br />
         <div id="dialog" style="display:none;">
-            <table cellspacing="6">
+            <table cellspacing="6" style="width:100%;">
                 <tr>
                     <td style="width:100px;">Connection</td>
                     <td><strong>@ViewBag.Connection.ConnectionName</strong></td>
-                    <td></td>
+                    <td style="width:50px;"></td>
                 </tr>
                 <tr>
                     <td>Interface</td>
@@ -732,12 +754,16 @@
                 <button id="cancelUpload">Cancel</button>
             </center>
             <div id="divResult">
-                <table cellspacing="6">
+                <table cellspacing="6" style="width:100%;">
                     <tr>
                         <td><strong id="result"></strong></td>
+                        <td style="width:50px;">
+                            <div class="success"></div>
+                            <div class="failure"></div>
+                        </td>
                     </tr>
                     <tr>
-                        <td><p id="pException2"></p></td>
+                        <td colspan="2"><p id="pException2"></p></td>
                     </tr>
                 </table>
                 <table cellspacing="6">

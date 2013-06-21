@@ -605,7 +605,7 @@ label
 }
 .regular #deliveryMatrix div.warning
 {
-    color:Red;
+    color:#E45756;
     font-size:10px;
 }
 .regular textarea 
@@ -679,21 +679,29 @@ pre.colcount
 }
 #RowDataTableContainer td pre.highlight
 {
-    color: red !important;
+    background-color: #E45756;
+    /*color: #E45756 !important;*/
 }
 #RowDataTableContainer td div 
 {
-    height: 14px;
+    min-height: 14px;
 }
 #RowDataTableContainer td div.tooltipErrors 
 {
-    color: red;
+    border: solid 2px #E45756;
+    min-height: 12px;
+    padding-top:0px;
+    /*color: #E45756;*/
+}
+#RowDataTableContainer td
+{
+    vertical-align:top;
 }
 #RowDataTableContainer td div.hasErrors
 {
     color: #333;
-    height: 12px;
-    border: solid 2px red;
+    min-height: 12px;
+    border: solid 2px #E45756;
     padding-top: 0px;
 }
 
@@ -755,4 +763,27 @@ pre.colcount
     text-align:center;
     font-weight:bold;
     margin-top:-23px;
+}
+
+.success 
+{
+    height: 24px;
+    width: 24px;
+    background: url(images/tick24x24.png);
+    display:block;
+}
+.failure
+{
+    height: 24px;
+    width: 24px;
+    background: url(images/cross24x24.png);
+    display:block;
+}
+.successProgress 
+{
+    background: #6AD16C url(images/wave-green.png) 50% 50% repeat-x;
+}
+.failureProgress 
+{
+    background: #E45756 url(images/wave-red.png) 50% 50% repeat-x;
 }

@@ -14,6 +14,8 @@ namespace FlatFileLoaderUtility.Models
     {
         public int Sequence { get; set; }
         public string Message { get; set; }
+        public string Label { get; set; }
+        public string Value { get; set; }
         public int Position { get; set; }
         public int Length { get; set; }
     }

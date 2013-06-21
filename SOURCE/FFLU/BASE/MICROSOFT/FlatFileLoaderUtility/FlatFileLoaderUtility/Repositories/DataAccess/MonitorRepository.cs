@@ -195,7 +195,9 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
                         try
                         {
                             dynamic json = JObject.Parse(item.Message);
-                            item.Message = json["label"] + " [" + json["value"] + "]. " + json["message"];
+                            item.Label = json["label"];
+                            item.Value = json["value"];
+                            item.Message = json["message"];
                         }
                         catch (Exception ex) 
                         {
@@ -271,7 +273,9 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
                         try
                         {
                             dynamic json = JObject.Parse(item.Message);
-                            item.Message = json["label"] + " [" + json["value"] + "]. " + json["message"];
+                            item.Label = json["label"];
+                            item.Value = json["value"];
+                            item.Message = json["message"];
                             if (json["column"] != null)
                             {
                                 item.Position = Tools.ZeroInvalidInt(json["column"]);
