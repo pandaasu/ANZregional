@@ -17,6 +17,8 @@ create or replace package ods_app.efxcdw00_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2010/05   Steve Gregan   Created
+    2013/05   Upul Dangalle  Updated - Changes to process_record_ctl procedure
+                             create a last_run record
 
    *******************************************************************************/
 
@@ -177,6 +179,11 @@ create or replace package body ods_app.efxcdw00_loader as
 
       rcd_efex_cntl_hdr.market_id := lics_inbound_utility.get_number('MKT_ID',null);
       rcd_efex_cntl_hdr.extract_time := lics_inbound_utility.get_variable('EXT_ID');
+     
+      --- Updated Upul Dangalle 20130523
+      lics_last_run_control.set_last_run('EFXCDW00LDR'||rcd_efex_cntl_hdr.market_id,to_date(rcd_efex_cntl_hdr.extract_time,'YYYYMMDDHH24MISS' ));
+      ---- end code change Upul Dangalle 20130523
+
       rcd_efex_cntl_hdr.extract_status := '*CONTROL';
 
       /*-*/

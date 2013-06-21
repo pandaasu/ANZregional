@@ -26,6 +26,7 @@ PACKAGE         scheduled_efex_aggr_stg_1 IS
                                         Efex_scheduled_aggregation to break out 
                                         Flattening from Aggreagation
   1.1   29/08/2012 Mal Chambeyron       Add lics_setting_configuration.retrieve_setting() for email
+  1.2   27/05/2013 Upul Dangalle        Aggrigation date to be taken from LICS LAST_RUN table 
 
   PARAMETERS:
   Pos  Type   Format   Description                          Example
@@ -191,7 +192,8 @@ PROCEDURE run_efex_aggregation_stage_1 (
   -- VARIABLE DECLARATIONS
   v_processing_msg   constants.message_string;
   v_company_code     company.company_code%TYPE;
-  v_aggregation_date DATE;
+  v_aggregation_date date;
+  v_lastrun_date date;
   v_log_level        ods.log.log_level%TYPE;
   v_status           NUMBER;
   v_db_name          VARCHAR2(256) := NULL;
@@ -237,7 +239,22 @@ BEGIN
     ELSE
       v_aggregation_date := i_aggregation_date;
       v_aggregation_date := TO_DATE(TO_CHAR(v_aggregation_date, 'YYYYMMDD'), 'YYYYMMDD');
-    END IF;
+    end if;
+        
+    ---- Upul Dangalle 27 May 2013
+        if TO_DATE(TO_CHAR(sysdate, 'YYYYMMDD'), 'YYYYMMDD') =  v_aggregation_date then
+            write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Getting last run date: ' || v_aggregation_date || ' and market: ' || p_market_id || '.');
+            
+            v_lastrun_date := nvl(lics_last_run_control.get_last_run('EFXCDW00LDR'||i_market_id),i_aggregation_date);
+            v_aggregation_date := to_date(to_char(v_lastrun_date, 'YYYYMMDD'), 'YYYYMMDD');
+            
+            write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Received last run date: ' || v_aggregation_date || ' and market: ' || p_market_id || '.');
+         
+   
+        end if; 
+        
+   ---- end of the code upul dangalle 27 May 2013
+    
     write_log(ods_constants.data_type_generic, 'N/A', v_log_level + 1, 'Will be flattening and aggregating EFEX data for date: ' || v_aggregation_date || ' and market: ' || p_market_id || '.');
   EXCEPTION
     WHEN OTHERS THEN
