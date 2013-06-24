@@ -7,7 +7,9 @@
 '// Author  : Steve Gregan                                       //
 '// Date    : June 2007                                          //
 '// Text    : This script implements the security user           //
-'//           configuration functionality                        //
+'//           configuration functionality				   //
+'//  History  : Record the person who add/udpate the user and the time when //
+'//		add/update the user. 	-- Derek, 21-May-21		   //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -26,6 +28,7 @@
    dim objSecurity
    dim objSelection
    dim objFunction
+    dim strUserName 
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -202,6 +205,8 @@ sub ProcessInsertAccept()
    dim strStatement
    dim lngCount
 
+   strUserName = GetUser()
+
    '//
    '// Create the function object
    '//
@@ -215,7 +220,9 @@ sub ProcessInsertAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuUser").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuDescription").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuMenu").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuStatus").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuStatus").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(strUserName) & "'"
+
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
@@ -240,6 +247,8 @@ sub ProcessUpdateLoad()
 
    dim strQuery
    dim lngSize
+
+
 
    '//
    '// Create the selection object
@@ -289,7 +298,7 @@ sub ProcessUpdateLoad()
    call objForm.AddField("DTA_SeuMenu", objSelection.ListValue03("LIST",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_SeuStatus", objSelection.ListValue04("LIST",objSelection.ListLower("LIST")))
 
-   '//
+    '//
    '// Set the mode
    '//
    strMode = "UPDATE"
@@ -310,6 +319,7 @@ sub ProcessUpdateAccept()
    '//
    set objFunction = Server.CreateObject("ICS_FUNCTION.Object")
    set objFunction.Security = objSecurity
+   strUserName = GetUser()
 
    '//
    '// Update the user
@@ -318,7 +328,9 @@ sub ProcessUpdateAccept()
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuUser").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuDescription").Value) & "',"
    strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuMenu").Value) & "',"
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuStatus").Value) & "'"
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields("DTA_SeuStatus").Value) & "',"
+   strStatement = strStatement & "'" & objSecurity.FixString(strUserName) & "'"
+
    strStatement = strStatement & ")"
    strReturn = objFunction.Execute(strStatement)
    if strReturn <> "*OK" then
