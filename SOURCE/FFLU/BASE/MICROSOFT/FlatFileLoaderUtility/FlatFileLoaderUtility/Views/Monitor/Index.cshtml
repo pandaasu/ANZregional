@@ -118,9 +118,7 @@
                         visibility: "visible",
                         display: function (data) {
                             if (data.record.HasProcessAccess) {
-                                return $("<input type='hidden' class='licsId' value='" + data.record.LicsId + "' /><input type='hidden' class='interfaceCode' value='" + data.record.InterfaceCode + "' /><input type='checkbox' id='chkReprocess' class='reprocess' />").click(function (event) {
-                                    event.stopPropagation();
-                                });
+                                return $("<input type='hidden' class='licsId' value='" + data.record.LicsId + "' /><input type='hidden' class='interfaceCode' value='" + data.record.InterfaceCode + "' /><input type='checkbox' id='chkReprocess' class='reprocess' />");
                             }
                             else {
                                 return "";
@@ -144,6 +142,9 @@
                     if ($("#chkAuto").is(":checked")) {
                         setTimeout("loadResults(" + autoCounter + ", 1);", 10000);
                     }
+                    $("#TableContainer tbody td:last-child").click(function (event) {
+                        event.stopPropagation();
+                    });
                 }
             });
 
