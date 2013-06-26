@@ -71,7 +71,7 @@ namespace FlatFileLoaderUtility.Models
         {
             try
             {
-                var connectionRepository = new ConnectionRepository();
+                var connectionRepository = new ConnectionRepository(new RepositoryContainer());
                 var connections = connectionRepository.Get("ConnectionName ASC");
                 
                 if (context == null)

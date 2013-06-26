@@ -25,11 +25,6 @@ namespace FlatFileLoaderUtility.Controllers
 
         public ActionResult FlushCache()
         {
-            //if (!this.Container.Access.IsSuperAdmin)
-            //{
-            //    return this.RedirectToAction("AccessDenied", "Admin");
-            //}
-
             List<string> toRemove = new List<string>();
             foreach (DictionaryEntry cacheItem in HttpRuntime.Cache)
             {
@@ -39,6 +34,15 @@ namespace FlatFileLoaderUtility.Controllers
             {
                 HttpRuntime.Cache.Remove(key);
             }
+
+            // It would seem that Oracle is re-using sessions across connections.
+            // ie, when viewing the results from select * from v$session where username = 'FFLU_EXECUTOR'
+            // it seems that a single session is being re-used even though the connection to the
+            // database from the web app is being terminated at the end of each call to a controller.
+            // Consequently, some data seems to be cached by Oracle, and weird things happen...
+            // The fix for this is apparently to call dbms_session.reset_package.
+
+            this.Container.ConnectionRepository.ResetPackage();
 
             return this.View();
         }

@@ -264,7 +264,8 @@ namespace FlatFileLoaderUtility.Controllers
                     IsComplete = (!string.IsNullOrEmpty(status.LicsStatus) && status.LicsStatus != constLoadComplete && status.LicsStatus != constProcessWorking && status.LicsStatus != constProcessWorkingError),
                     InterfaceErrorCount = status.InterfaceErrorCount,
                     RowErrorCount = status.RowErrorCount,
-                    CurrentStep = 5
+                    CurrentStep = 5,
+                    EstimatedTime = status.EstimatedTime
                 });
             }
             catch (Exception ex)

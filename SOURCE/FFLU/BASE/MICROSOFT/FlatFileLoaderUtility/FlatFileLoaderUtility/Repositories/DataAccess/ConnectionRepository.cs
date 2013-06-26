@@ -13,13 +13,14 @@ using FlatFileLoaderUtility.Models.Shared;
 
 namespace FlatFileLoaderUtility.Repositories.DataAccess
 {
-    public class ConnectionRepository : IConnectionRepository
+    public class ConnectionRepository : BaseRepository, IConnectionRepository
     {
         private const string CacheKey = "Connection";
 
         #region constructor
 
-        public ConnectionRepository()
+        public ConnectionRepository(RepositoryContainer container)
+            : base(container)
         { }
 
         #endregion
@@ -75,6 +76,12 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
             this.Add(item);
         }
 
+        public void ResetPackage()
+        {
+            using (var dal = new DataAccessConnection(this.Container.DataAccess))
+                dal.ResetPackage();
+        }
+
         #endregion
 
         #region private methods
@@ -121,6 +128,32 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
         {
             Logs.Log(1, "Connections.xml invalid.");
             throw new Exception("Connections.xml invalid.");
+        }
+
+        private class DataAccessConnection : DataAccess
+        {
+            #region constructors
+
+            public DataAccessConnection(DataAccess dataAccess)
+                : base(dataAccess)
+            {
+            }
+
+            #endregion
+
+            #region methods
+
+            public void ResetPackage()
+            {
+                this.Command = new OracleCommand();
+                this.Command.Connection = this.Connection;
+                this.Command.Transaction = this.Transaction;
+                this.Command.CommandType = CommandType.StoredProcedure;
+                this.Command.CommandText = "dbms_session.reset_package";
+                this.Command.ExecuteNonQuery();
+            }
+
+            #endregion
         }
 
         #endregion

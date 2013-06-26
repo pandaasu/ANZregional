@@ -289,7 +289,10 @@
                 $("#interfaceCode").text("@Model.Record.InterfaceCode");
                 $("#reprocesOptions").show();
                 $("#rowDescription").hide();
+                $("#rowTime").hide();
                 $("#progressbar").hide();
+                $("#pConfirm").show();
+
                 $("#dialogConfirm").dialog({
                     modal: true,
                     close: function (event, ui) {
@@ -311,6 +314,7 @@
                 $("#description").text("Starting reprocess of interface");
                 $("#rowDescription").show();
                 $("#progressbar").show();
+                $("#pConfirm").hide();
 
                 continueMonitoring = true;
 
@@ -436,7 +440,9 @@
                     else {
                         if (response.Total > 0 && response.Current > 0)
                             $("#progressbar").progressbar("value", response.Current * 100 / response.Total);
-                        $("#spanDescription").text("Processing in ICS");
+                        $("#description").text("Processing in ICS");
+                        $("#rowTime").show();
+                        $("#estimatedTime").text(response.EstimatedTime);
 
                         // It can be a long time on "0" progress...
                         // To let the user know that stuff is still happening, if it's 0 just increment the progressbar
@@ -571,7 +577,9 @@
             <table id="interfaceErrorTable" class="jtable">
                 <thead>
                     <tr>
-                        <th class="jtable-column-header">Error</th>
+                        <th class="jtable-column-header" style="width:10%;">Error</th>
+                        <th class="jtable-column-header" style="width:15%;">Label</th>
+                        <th class="jtable-column-header" style="width:15%;">Value</th>
                         <th class="jtable-column-header">Message</th>
                     </tr>
                 </thead>
@@ -580,6 +588,8 @@
                 {
                     <tr class="@(odd ? "" : "jtable-row-even")">
                         <td>@item.Sequence</td>
+                        <td>@item.Label</td>
+                        <td>@item.Value</td>
                         <td><pre class="exception">@item.Message</pre></td>
                     </tr>
                     odd = !odd;
@@ -620,7 +630,7 @@
 </div>
 
 <div id="dialogConfirm" style="display:none;">
-    <p>Are you sure you want to reprocess this interface?</p>
+    <p id="pConfirm">Are you sure you want to reprocess this interface?</p>
     <table cellspacing="8">
         <tr>
             <td style="width:100px;">Connection</td>
@@ -649,6 +659,10 @@
         <tr id="rowDescription">
             <td>Description</td>
             <td><strong id="description"></strong></td>
+        </tr>
+        <tr id="rowTime">
+            <td>Estimated Time</td>
+            <td><strong id="estimatedTime"></strong></td>
         </tr>
     </table>
     <br />

@@ -65,7 +65,7 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
             get
             {
                 if (this.mConnectionRepository == null)
-                    this.mConnectionRepository = new ConnectionRepository();
+                    this.mConnectionRepository = new ConnectionRepository(this);
                 return this.mConnectionRepository;
             }
         }

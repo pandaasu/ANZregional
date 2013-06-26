@@ -10,5 +10,6 @@ namespace FlatFileLoaderUtility.Repositories
         List<Connection> Get(string sorting);
         Connection Add(Connection item);
         void Update(Connection item);
+        void ResetPackage();
     }
 }
