@@ -40,6 +40,9 @@ package fflu_data as
   2013-06-13  Chris Horn            Defined the specification.
   2013-06-18  Chris Horn            Refined spec and implemented.
   2013-06-20  Chris Horn            Added was errors function.
+  2013-06-25  Chris Horn            Completed the CSV extraction logic.
+  2013-06-25  Chris Horn            Added a check for the header fields matching.
+  2013-06-25  Chris Horn            Moved to a unique field name arrangement.
 
 *******************************************************************************/
 
@@ -50,16 +53,22 @@ package fflu_data as
              Allow Missing = True, will prevent exception when whitespace, 
              or commas are missing for empty fields.
              
+             CVS Header = True, the file will contain a header row.  Field names
+             much match there header definitions.
+             
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-03 Chris Horn           Defined.
+  1.1   2013-06-25 Chris Horn           Added if csv file contains a header.
   
 *******************************************************************************/  
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default null,
+    i_csv_header in boolean default false, 
     i_allow_missing in boolean default false);
+    
 
 /*******************************************************************************
   NAME:      ADD_RECORD_TYPE
@@ -79,16 +88,16 @@ package fflu_data as
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
-  procedure add_record_type(
+  procedure add_record_type_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
     i_record_type in fflu_common.st_string);
 
- procedure add_record_type(
-    i_column in fflu_common.st_column, 
+ procedure add_record_type_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_record_type in fflu_common.st_string);
 
 /*******************************************************************************
@@ -101,20 +110,19 @@ package fflu_data as
   1.0   2013-06-13 Chris Horn           Defined.
 
 *******************************************************************************/  
-  procedure add_char_field(
+  procedure add_char_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
     i_max_length in fflu_common.st_size default null,
     i_allow_null in boolean default false,
-    i_trim in boolean default false
-    );
+    i_trim in boolean default false);
   
-  procedure add_char_field(
-    i_column in fflu_common.st_column, 
+  procedure add_char_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
     i_allow_null in boolean default false,
     i_trim in boolean default true);
@@ -138,7 +146,8 @@ package fflu_data as
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
   
 *******************************************************************************/  
-  procedure add_number_field(
+  procedure add_number_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
@@ -147,11 +156,10 @@ package fflu_data as
     i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
-  procedure add_number_field(
-    i_column in fflu_common.st_column, 
+  procedure add_number_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
@@ -175,7 +183,8 @@ package fflu_data as
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
-  procedure add_date_field(
+  procedure add_date_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
@@ -184,11 +193,10 @@ package fflu_data as
     i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
-  procedure add_date_field(
-    i_column in fflu_common.st_column, 
+  procedure add_date_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_date in date default null, 
     i_max_date in date default null,
@@ -207,7 +215,8 @@ package fflu_data as
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
 
 *******************************************************************************/  
-  procedure add_mars_date_field(
+  procedure add_mars_date_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
@@ -217,11 +226,10 @@ package fflu_data as
     i_allow_null in boolean default false,
     i_nls_options in varchar2 default null);
 
-  procedure add_mars_date_field(
-    i_column in fflu_common.st_column,
+  procedure add_mars_date_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
@@ -271,8 +279,7 @@ package fflu_data as
   1.0   2013-06-13 Chris Horn           Defined.
 
 *******************************************************************************/  
-  function get_char_field(i_column in fflu_common.st_column) return varchar2;
-  function get_char_field(i_column_name in fflu_common.st_name) return varchar2; 
+  function get_char_field(i_field_name in fflu_common.st_name) return varchar2; 
 
 /*******************************************************************************
   NAME:      GET_NUMBER_FIELD
@@ -288,8 +295,7 @@ package fflu_data as
   1.0   2013-06-18 Chris Horn           Defined.
 
 *******************************************************************************/  
-  function get_number_field(i_column in fflu_common.st_column) return number;
-  function get_number_field(i_column_name in fflu_common.st_name) return number; 
+  function get_number_field(i_field_name in fflu_common.st_name) return number; 
 
 /*******************************************************************************
   NAME:      GET_DATE_FIELD
@@ -305,8 +311,7 @@ package fflu_data as
   1.0   2013-06-18 Chris Horn           Defined.
 
 *******************************************************************************/  
-  function get_date_field(i_column in fflu_common.st_column) return date;
-  function get_date_field(i_column_name in fflu_common.st_name) return date; 
+  function get_date_field(i_field_name in fflu_common.st_name) return date; 
 
 /*******************************************************************************
   NAME:      GET_MARS_DATE_FIELD
@@ -322,8 +327,7 @@ package fflu_data as
   1.0   2013-06-18 Chris Horn           Defined.
 
 *******************************************************************************/  
-  function get_mars_date_field(i_column in fflu_common.st_column) return number;
-  function get_mars_date_field(i_column_name in fflu_common.st_name) return number; 
+  function get_mars_date_field(i_field_name in fflu_common.st_name) return number; 
 
 /*******************************************************************************
   NAME:      LOG_FIELD_ERROR
@@ -338,11 +342,7 @@ package fflu_data as
 
 *******************************************************************************/  
   procedure log_field_error(
-    i_column in fflu_common.st_column, 
-    i_message in fflu_common.st_string);
-    
-  procedure log_field_error(
-    i_column_name in fflu_common.st_name, 
+    i_field_name in fflu_common.st_name, 
     i_message in fflu_common.st_string);
   
 /*******************************************************************************

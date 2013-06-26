@@ -56,7 +56,10 @@ PACKAGE fflu_common AS
   subtype st_filetype is varchar2(3 char);     -- The file type.
   subtype st_qualifier is varchar2(1 char);    -- Ths csv text enclosing qualifier.
   subtype st_buffer is varchar2(32000 byte);   -- Larger string buffer.
-
+  subtype st_length is pls_integer;            -- The length of a field.
+  subtype st_position is pls_integer;          -- The position of a field.
+  subtype st_column is pls_integer;            -- The column within a record.
+  
 /*******************************************************************************
   GLOBAL CONSTANTS - Exception Codes
   These exception codes can be used by the API for determining the cause of 
@@ -92,7 +95,6 @@ PACKAGE fflu_common AS
   -- Expected CSV Qualifiers 
   gc_csv_qualifier_single_quote constant st_qualifier := '''';
   gc_csv_qualifier_double_quote constant st_qualifier := '"';
-
 
 /*******************************************************************************
   NAME:      VALIDATE_NON_EMPTY_STRING                                    PUBLIC

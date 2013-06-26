@@ -98,6 +98,25 @@ package fflu_utils as
     i_value fflu_common.st_buffer,    -- The value found or not found if null. 
     i_message fflu_common.st_buffer); -- The actual error message.
   
+
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_EXCEPTION
+  PURPOSE:   This can be called to log an Oracle Exception in the correct ouput
+             JSON format.
+             
+             The procedure of funtion that experienced the exception should 
+             be passed in as the input parameter.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-06-26 Chris Horn           Created
+
+*******************************************************************************/  
+  procedure log_interface_exception (
+    i_method fflu_common.st_buffer); 
+
+  
   
 /*******************************************************************************
 EXAMPLE JSON MESSAGES.

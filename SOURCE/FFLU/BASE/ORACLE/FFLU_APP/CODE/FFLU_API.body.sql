@@ -605,10 +605,11 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     v_errormsg fflu_common.st_string;   
     
     -- Now process the line into the database.
-    procedure process_line(io_row_counter in out fflu_common.st_size, io_line in out fflu_common.st_string) is
+    procedure process_line(io_row_counter in out fflu_common.st_size, io_line in out fflu_common.st_string, io_wrote_bytes in out fflu_common.st_size) is
     begin
       io_row_counter := io_row_counter + 1;
       insert into fflu_load_data (LOAD_SEQ, DATA_SEQ, DATA_RECORD,DATA_SEG) values (i_load_sequence, io_row_counter, io_line,i_seg_count);
+      io_wrote_bytes := io_wrote_bytes + nvl(lengthb(io_line),0);
       io_line := '';
     exception
       when others then 
@@ -630,19 +631,18 @@ function get_interface_group_list return tt_interface_group_list pipelined is
         if v_line_feed = 0 then 
           -- If not take everything we have left in the buffer and copy to line.
           v_line_buf := substr(i_buffer,v_pos);
-          if lengthb(io_line) + lengthb(v_line_buf) > 4000 then 
+          if nvl(lengthb(io_line),0) + nvl(lengthb(v_line_buf),0) > 4000 then 
             raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], row ' || io_row_counter || ' line construction length is greater than 4000 bytes.');
           end if;
           io_line := io_line || v_line_buf;
-          v_pos := v_pos + length(v_line_buf);
+          v_pos := v_pos + nvl(length(v_line_buf),0);
         else 
           v_line_buf := substr(i_buffer,v_pos,v_line_feed + 1 - v_pos); -- Plus 1 includes the line feed.
-          if lengthb(io_line) + lengthb(v_line_buf) > 4000 then 
+          if nvl(lengthb(io_line),0) + nvl(lengthb(v_line_buf),0) > 4000 then 
             raise_application_error(fflu_common.gc_exception_segment,'[load] value [' || i_load_sequence || '], row ' || io_row_counter || ' complete line length was greater than 4000 bytes.');
           end if;
           io_line := io_line || v_line_buf; 
-          process_line(io_row_counter,io_line);
-          io_wrote_bytes := io_wrote_bytes + lengthb(io_line);
+          process_line(io_row_counter,io_line,io_wrote_bytes);
           v_pos := v_line_feed+1;
         end if;
       end loop;
@@ -706,7 +706,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
         end if;
         -- Update the read counters.
         v_read_offset := v_read_offset + v_read_amount;
-        v_read_bytes := v_read_bytes + lengthb(v_buffer);
+        v_read_bytes := v_read_bytes + nvl(lengthb(v_buffer),0);
         -- Now process this buffer.
         process_buffer(v_buffer,v_row_counter,v_line,v_wrote_bytes);
       end loop;

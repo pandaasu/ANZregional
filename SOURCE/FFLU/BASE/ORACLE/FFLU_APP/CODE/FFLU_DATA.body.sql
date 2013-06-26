@@ -20,6 +20,7 @@ package body fflu_data as
 *******************************************************************************/  
   -- Define the record type.
   type rt_field is record (
+    field_name fflu_common.st_name,  -- The unique identifier for this field.  
     field_type st_field_type,
     column_no fflu_common.st_column,
     column_name fflu_common.st_name,
@@ -52,6 +53,7 @@ package body fflu_data as
   pv_initialised boolean;                    -- Tracks if data parsing has been initalised.
   pv_filetype fflu_common.st_filetype;       -- Holds the file type being parsed.
   pv_csv_qualifier fflu_common.st_qualifier; -- Holds the csv text qualifier.
+  pv_csv_header boolean;                     -- Tracks if this csv file has a header.
   pv_allow_missing boolean;                  -- Tracks if we allow missing columns after the last bit of data.
   pv_have_parsed boolean;                    -- Set to true if we have successfully parsed a row of data.
   pv_errors boolean;                         -- Tracks if any errors have been raised since the last initialisation.
@@ -59,8 +61,8 @@ package body fflu_data as
 
 /*******************************************************************************
   NAME:      FIND_COLUMN
-  PURPOSE:   This function looks up the field number for a given column name or
-             number. It is assumed that this is called after a successful data 
+  PURPOSE:   This function looks up the field number for a given field  It is 
+             assumed that this is called after a successful data 
              parse. Else it raises a parse not completed yet error.
              
   REVISIONS:
@@ -69,43 +71,8 @@ package body fflu_data as
   1.0   2013-06-18 Chris Horn           Created
   
 *******************************************************************************/   
-  function find_column(
-    i_column_no in fflu_common.st_column,
-    o_field_no out fflu_common.st_size) return boolean is
-    v_result boolean;
-    v_counter fflu_common.st_size;
-  begin
-    v_result := true;
-    o_field_no := null;
-    if pv_have_parsed = false then 
-      fflu_utils.log_interface_data_error(
-        'Column No',i_column_no,i_column_no,'Data parser does not have a parsed row of data in memory for that column.');
-      pv_errors := true;
-      v_result := false;
-    else
-      -- Now reviewed the parsed data and find the field for the column requested.
-      v_counter := 0;
-      loop 
-        v_counter := v_counter + 1;
-        exit when v_counter > ptv_fields.count or o_field_no is not null;
-        -- Now check if this field matches.
-        if ptv_fields(v_counter).column_no = i_column_no and ptv_fields(v_counter).was_parsed = true then 
-          o_field_no := v_counter;
-        end if;
-      end loop;
-      -- Now report an error if not found.
-      if o_field_no is null then
-        fflu_utils.log_interface_data_error(
-          'Column No',i_column_no,i_column_no,'Data parser could not find a successfully parsed column with that number.');
-        pv_errors := true;
-        v_result := false;
-      end if;
-    end if;
-    return v_result;
-  end find_column;
-
   function find_column (
-    i_column_name in fflu_common.st_name,
+    i_field_name in fflu_common.st_name,
     o_field_no out fflu_common.st_size) return boolean is
     v_result boolean;
     v_counter fflu_common.st_size;
@@ -114,7 +81,7 @@ package body fflu_data as
     o_field_no := null;
     if pv_have_parsed = false then 
       fflu_utils.log_interface_data_error(
-        'Column Name',null,i_column_name,'Data parser does not have a parsed row of data in memory for this column.');
+        'Field Name',null,i_field_name,'Data parser does not have a parsed row of data in memory.');
       pv_errors := true;
       v_result := false;
     else
@@ -124,14 +91,14 @@ package body fflu_data as
         v_counter := v_counter + 1;
         exit when v_counter > ptv_fields.count or o_field_no is not null;
         -- Now check if this field matches.
-        if ptv_fields(v_counter).column_name = i_column_name and ptv_fields(v_counter).was_parsed = true then 
+        if ptv_fields(v_counter).field_name = i_field_name and ptv_fields(v_counter).was_parsed = true then 
           o_field_no := v_counter;
         end if;
       end loop;
       -- Now report an error if not found.
       if o_field_no is null then
         fflu_utils.log_interface_data_error(
-          'Column Name',null,i_column_name,'Data parser could not find a successfully parsed column with that name.');
+          'Field Name',null,i_field_name,'Data parser could not find a successfully parsed field with that name.');
         pv_errors := true;
         v_result := false;
       end if;
@@ -238,11 +205,11 @@ package body fflu_data as
   1.0   2013-06-18 Chris Horn           Created
   
 *******************************************************************************/   
-  function check_filetype_is_csv(i_column_name in fflu_common.st_name) return boolean is
+  function check_filetype_is_csv(i_field_name in fflu_common.st_name) return boolean is
   begin
     if pv_filetype <> fflu_common.gc_file_type_csv then 
       fflu_utils.log_interface_error(
-           'File Type',pv_filetype,'Data Parsing expected a csv file type for column definition [' || i_column_name || '].');
+           'File Type',pv_filetype,'Data Parsing expected a csv file type for field definition [' || i_field_name || '].');
       pv_errors := true;
     end if;
     return pv_filetype = fflu_common.gc_file_type_csv;
@@ -258,11 +225,11 @@ package body fflu_data as
   1.0   2013-06-18 Chris Horn           Created
   
 *******************************************************************************/   
-  function check_filetype_is_fixed_width(i_column_name in fflu_common.st_name) return boolean is
+  function check_filetype_is_fixed_width(i_field_name in fflu_common.st_name) return boolean is
   begin
     if pv_filetype <> fflu_common.gc_file_type_fixed_width then 
       fflu_utils.log_interface_error(
-           'File Type',pv_filetype,'Data Parsing expected a txt file type for column definition [' || i_column_name || '].');
+           'File Type',pv_filetype,'Data Parsing expected a txt file type for field definition [' || i_field_name || '].');
       pv_errors := true;
     end if;
     return pv_filetype = fflu_common.gc_file_type_fixed_width;
@@ -280,13 +247,13 @@ package body fflu_data as
   
 *******************************************************************************/   
   function check_column (
-    i_column in fflu_common.st_column, 
-    i_column_name in fflu_common.st_name) return boolean is
+    i_field_name in fflu_common.st_name,
+    i_column in fflu_common.st_column) return boolean is
     v_error_sufix fflu_common.st_string;
     v_result boolean;
   begin
     v_result := true;
-    v_error_sufix := ' For column name [' || i_column_name || '].';
+    v_error_sufix := ' For field name [' || i_field_name || '].';
     -- Check the column number.
     if i_column is null then 
       fflu_utils.log_interface_error('Column No','null','Supplied column no cannot be null.' || v_error_sufix);
@@ -302,8 +269,8 @@ package body fflu_data as
       v_result := false;
     end if;
     -- Check the column name
-    if trim(i_column_name) is null then 
-      fflu_utils.log_interface_error('Column Name','null','Supplied column name cannot be null.');
+    if trim(i_field_name) is null then 
+      fflu_utils.log_interface_error('Field Name','null','Supplied column name cannot be null.');
       pv_errors := true;
       v_result := false;
     end if;
@@ -311,30 +278,15 @@ package body fflu_data as
   end check_column;
   
   function check_column (
-    i_column in fflu_common.st_column, 
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position, 
-    i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name) return boolean is
+    i_length in fflu_common.st_length) return boolean is
     v_error_sufix fflu_common.st_string;
     v_end_position fflu_common.st_position;
     v_result boolean;
   begin
     v_result := true;
-    v_error_sufix := ' For column name [' || i_column_name || '].';
-    -- Check the column number.
-    if i_column is null then 
-      fflu_utils.log_interface_error('Column No','null','Supplied column no cannot be null.' || v_error_sufix);
-      pv_errors := true;
-      v_result := false;
-    elsif i_column <= 0 then 
-      fflu_utils.log_interface_error('Column No',i_column,'Supplied column no cannot be less than or equal to zero.' || v_error_sufix);
-      pv_errors := true;
-      v_result := false;
-    elsif i_column > 4000 then 
-      fflu_utils.log_interface_error('Column No',i_column,'Supplied column no cannot be greater than 4000 columns.' || v_error_sufix);
-      pv_errors := true;
-      v_result := false;
-    end if;
+    v_error_sufix := ' For field name [' || i_field_name || '].';
     -- Check the column position.
     if i_position is null then 
       fflu_utils.log_interface_error('Position','null','Supplied column position cannot be null.' || v_error_sufix);
@@ -371,8 +323,8 @@ package body fflu_data as
       v_result := false;
     end if;
     -- Check the column name
-    if trim(i_column_name) is null then 
-      fflu_utils.log_interface_error('Column Name','null','Supplied column name cannot be null.');
+    if trim(i_field_name) is null then 
+      fflu_utils.log_interface_error('Field Name','null','Supplied field name cannot be null.');
       pv_errors := true;
       v_result := false;
     end if;
@@ -391,7 +343,7 @@ package body fflu_data as
   
 *******************************************************************************/   
   function check_mars_date_column(
-    i_column_name in fflu_common.st_name,
+    i_field_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name) return boolean is
     v_result boolean;
     v_error_sufix fflu_common.st_string;
@@ -401,7 +353,7 @@ package body fflu_data as
     v_column_name fflu_common.st_name;
   begin
     v_result := true;
-    v_error_sufix := ' For column name [' || i_column_name || '].';
+    v_error_sufix := ' For column name [' || i_field_name || '].';
     -- Check the mars date column name
     if i_mars_date_column is null then 
       fflu_utils.log_interface_error('Mars Date Column','null','Supplied mars date column name cannot be null.' || v_error_sufix);
@@ -411,7 +363,7 @@ package body fflu_data as
       -- Check the mars date column exists.
       open csr_check_mars_date_column;
       fetch csr_check_mars_date_column into v_column_name;
-      if csr_check_mars_date_column%notfound then 
+      if csr_check_mars_date_column%notfound = true then 
         fflu_utils.log_interface_error('Mars Date Column',i_mars_date_column,'Supplied mars date column did not exist in the mars date table.' || v_error_sufix);
         pv_errors := true;
         v_result := false;
@@ -427,6 +379,7 @@ package body fflu_data as
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default null,
+    i_csv_header in boolean default false, 
     i_allow_missing in boolean default false) is
   begin
     pv_initialised := true;
@@ -459,6 +412,11 @@ package body fflu_data as
         pv_initialised := false;
       end if;
     end if;
+    if pv_filetype = fflu_common.gc_file_type_csv then
+      pv_csv_header := i_csv_header;
+    else
+      pv_csv_header := false;
+    end if;
     pv_allow_missing := i_allow_missing;
     pv_have_parsed := false;
     -- Make sure interface progress has been called at least once.
@@ -469,15 +427,17 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_RECORD_TYPE                                              PUBLIC
 *******************************************************************************/  
-  procedure add_record_type(
+  procedure add_record_type_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
     i_record_type in fflu_common.st_string) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_column_name) = true and check_filetype_is_csv(i_column_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_record;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
@@ -487,36 +447,43 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_record_type;
+  exception
+    when others then 
+      fflu_utils.log_interface_error('Data Parser - Add Record Type Error',sqlcode,sqlerrm);
+      pv_errors := true;
+  end add_record_type_csv;
 
-  procedure add_record_type(
-    i_column in fflu_common.st_column, 
+  procedure add_record_type_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_record_type in fflu_common.st_string) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_position,i_length,i_column_name) = true and check_filetype_is_fixed_width(i_column_name) = true then
+    if check_initialised = true and check_column(i_field_name,i_position,i_length) = true and check_filetype_is_fixed_width(i_field_name) = true then
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_record;
       rv_field.position := i_position;
       rv_field.len := i_length;
-      rv_field.column_no := i_column;
-      rv_field.column_name := i_column_name;
       rv_field.record_type := i_record_type;
       rv_field.allow_null := false;
       rv_field.trim_column := false;
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_record_type;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Record Type');
+      pv_errors := true;
+  end add_record_type_txt;
 
 /*******************************************************************************
   NAME:      ADD_CHAR_FIELD                                               PUBLIC
 *******************************************************************************/  
-  procedure add_char_field(
+  procedure add_char_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
@@ -527,8 +494,9 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_column_name) = true and check_filetype_is_csv(i_column_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_char;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
@@ -539,26 +507,28 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_char_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Char Field');
+      pv_errors := true;
+  end add_char_field_csv;
   
-  procedure add_char_field(
-    i_column in fflu_common.st_column, 
+  procedure add_char_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
     i_allow_null in boolean default false,
     i_trim in boolean default true) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_position,i_length,i_column_name) = true and check_filetype_is_fixed_width(i_column_name) = true then
+    if check_initialised = true and check_column(i_field_name,i_position,i_length) = true and check_filetype_is_fixed_width(i_field_name) = true then
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_char;
       rv_field.position := i_position;
       rv_field.len := i_length;
-      rv_field.column_no := i_column;
-      rv_field.column_name := i_column_name;
       rv_field.min_len := i_min_length;
       rv_field.max_len := i_length;
       rv_field.allow_null := i_allow_null;
@@ -566,12 +536,17 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_char_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Char Field');
+      pv_errors := true;
+  end add_char_field_txt;
   
 /*******************************************************************************
   NAME:      ADD_NUMBER_FIELD                                             PUBLIC
 *******************************************************************************/  
-  procedure add_number_field(
+  procedure add_number_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
@@ -582,8 +557,9 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_column_name) = true and check_filetype_is_csv(i_column_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_number;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
@@ -594,13 +570,16 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_number_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Number Field');
+      pv_errors := true;    
+  end add_number_field_csv;
 
-  procedure add_number_field(
-    i_column in fflu_common.st_column, 
+  procedure add_number_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
@@ -609,13 +588,12 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_position,i_length,i_column_name) = true and check_filetype_is_fixed_width(i_column_name) = true then
+    if check_initialised = true and check_column(i_field_name,i_position,i_length) = true and check_filetype_is_fixed_width(i_field_name) = true then
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_number;
       rv_field.position := i_position;
       rv_field.len := i_length;
-      rv_field.column_no := i_column;
-      rv_field.column_name := i_column_name;
       rv_field.min_number := i_min_number;
       rv_field.max_number := i_max_number;
       rv_field.allow_null := i_allow_null;
@@ -623,13 +601,18 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_number_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Number Field');
+      pv_errors := true;
+  end add_number_field_txt;
   
   
 /*******************************************************************************
   NAME:      ADD_DATE_FIELD                                               PUBLIC
 *******************************************************************************/  
-  procedure add_date_field(
+  procedure add_date_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
@@ -640,9 +623,10 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_column_name) = true and check_filetype_is_csv(i_column_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
       -- Setup the field definition.
-      rv_field.field_type := pc_field_type_number;
+      rv_field.field_name := i_field_name;
+      rv_field.field_type := pc_field_type_date;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
       rv_field.format := i_format;
@@ -653,13 +637,16 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_date_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Date Field');
+      pv_errors := true;    
+  end add_date_field_csv;
     
-  procedure add_date_field(
-    i_column in fflu_common.st_column, 
+  procedure add_date_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_date in date default null, 
     i_max_date in date default null,
@@ -668,13 +655,12 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_position,i_length,i_column_name) = true and check_filetype_is_fixed_width(i_column_name) = true then
+    if check_initialised = true and check_column(i_field_name,i_position,i_length) = true and check_filetype_is_fixed_width(i_field_name) = true then
       -- Setup the field definition.
+      rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_date;
       rv_field.position := i_position;
       rv_field.len := i_length;
-      rv_field.column_no := i_column;
-      rv_field.column_name := i_column_name;
       rv_field.format := i_format;
       rv_field.min_date := i_min_date;
       rv_field.max_date := i_max_date;
@@ -683,12 +669,17 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_date_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Date Field');
+      pv_errors := true;
+  end add_date_field_txt;
 
 /*******************************************************************************
   NAME:      ADD_MARS_DATE_FIELD                                          PUBLIC 
 *******************************************************************************/  
-  procedure add_mars_date_field(
+  procedure add_mars_date_field_csv(
+    i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
@@ -700,10 +691,11 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_column_name) = true and check_filetype_is_csv(i_column_name) = true
-        and check_mars_date_column(i_column_name, i_mars_date_column) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true
+        and check_mars_date_column(i_field_name, i_mars_date_column) = true then 
       -- Setup the field definition.
-      rv_field.field_type := pc_field_type_number;
+      rv_field.field_name := i_field_name;
+      rv_field.field_type := pc_field_type_mars_date;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
       rv_field.format := i_format;
@@ -715,13 +707,16 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_mars_date_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Mars Date Field');
+      pv_errors := true;
+  end add_mars_date_field_csv;
 
-  procedure add_mars_date_field(
-    i_column in fflu_common.st_column,
+  procedure add_mars_date_field_txt(
+    i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
@@ -731,14 +726,13 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_column,i_position,i_length,i_column_name) = true and check_filetype_is_fixed_width(i_column_name) = true
-        and check_mars_date_column(i_column_name, i_mars_date_column) = true then 
+    if check_initialised = true and check_column(i_field_name,i_position,i_length) = true and check_filetype_is_fixed_width(i_field_name) = true
+      and check_mars_date_column(i_field_name, i_mars_date_column) = true  then 
       -- Setup the field definition.
-      rv_field.field_type := pc_field_type_date;
+      rv_field.field_name := i_field_name;
+      rv_field.field_type := pc_field_type_mars_date;
       rv_field.position := i_position;
       rv_field.len := i_length;
-      rv_field.column_no := i_column;
-      rv_field.column_name := i_column_name;
       rv_field.format := i_format;
       rv_field.min_number := i_min_number;
       rv_field.max_number := i_max_number;
@@ -748,7 +742,11 @@ package body fflu_data as
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
     end if;
-  end add_mars_date_field;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('Data Parser - Add Mars Date Field');
+      pv_errors := true;
+  end add_mars_date_field_txt;
 
 
 /*******************************************************************************
@@ -781,7 +779,7 @@ package body fflu_data as
       end loop;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Clear Data',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Clear Data');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end clear_data;
@@ -796,14 +794,14 @@ package body fflu_data as
           ptv_fields(i_field_no).column_name,ptv_fields(i_field_no).column_no,get_field_value_as_string(i_field_no),i_message);
       elsif pv_filetype = fflu_common.gc_file_type_fixed_width then 
         fflu_utils.log_interface_data_error(
-          ptv_fields(i_field_no).column_name,ptv_fields(i_field_no).position,
+          ptv_fields(i_field_no).field_name,ptv_fields(i_field_no).position,
           ptv_fields(i_field_no).len,get_field_value_as_string(i_field_no),i_message);
       end if;
       ptv_fields(i_field_no).error_count := ptv_fields(i_field_no).error_count + 1;
       pv_errors := true;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Log Field Parse Error',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Log Field Parse Error');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end log_field_parse_error;
@@ -841,17 +839,17 @@ package body fflu_data as
         end;
         -- Now perform the additional min max checks.
         if ptv_fields(i_field_no).min_number is not null and ptv_fields(i_field_no).value_number < ptv_fields(i_field_no).min_number then
-          log_field_parse_error(i_field_no,'Value needs to be at least ' || ptv_fields(i_field_no).min_number || ', it was ' || ptv_fields(i_field_no).value_number || '.');
+          log_field_parse_error(i_field_no,'Value needs to be at least ' || ptv_fields(i_field_no).min_number || '.');
         end if;
         if ptv_fields(i_field_no).max_number is not null and ptv_fields(i_field_no).value_number > ptv_fields(i_field_no).max_number then 
-          log_field_parse_error(i_field_no,'Value cannot be greater than ' || ptv_fields(i_field_no).max_number || ', it was ' || ptv_fields(i_field_no).value_number || '.');
+          log_field_parse_error(i_field_no,'Value cannot be greater than ' || ptv_fields(i_field_no).max_number || '.');
         end if;
         if ptv_fields(i_field_no).allow_null = false and ptv_fields(i_field_no).value_number is null then 
           log_field_parse_error(i_field_no,'Value field cannot be null.');
         end if;
       exception
         when others then 
-          fflu_utils.log_interface_error('Data Parser - Parse Number',sqlcode,sqlerrm);
+          fflu_utils.log_interface_exception('Data Parser - Parse Number');
           v_error_count := v_error_count + 1;
           pv_errors := true;
       end parse_number;
@@ -883,17 +881,17 @@ package body fflu_data as
         end;
         -- Now perform the additional min max checks.
         if ptv_fields(i_field_no).min_date is not null and ptv_fields(i_field_no).value_date < ptv_fields(i_field_no).min_date then
-          log_field_parse_error(i_field_no,'Date needs to be at least ' || ptv_fields(i_field_no).min_date || ', it was ' || ptv_fields(i_field_no).value_date || '.');
+          log_field_parse_error(i_field_no,'Date needs to be at least ' || ptv_fields(i_field_no).min_date || '.');
         end if;
         if ptv_fields(i_field_no).max_date is not null and ptv_fields(i_field_no).value_date > ptv_fields(i_field_no).max_date then 
-          log_field_parse_error(i_field_no,'Date cannot be greater than ' || ptv_fields(i_field_no).max_date || ', it was ' || ptv_fields(i_field_no).value_date || '.');
+          log_field_parse_error(i_field_no,'Date cannot be greater than ' || ptv_fields(i_field_no).max_date || '.');
         end if;
         if ptv_fields(i_field_no).allow_null = false and ptv_fields(i_field_no).value_date is null then 
           log_field_parse_error(i_field_no,'Date field cannot be null.');
         end if;
       exception 
         when others then 
-          fflu_utils.log_interface_error('Data Parser - Parse Date',sqlcode,sqlerrm);
+          fflu_utils.log_interface_exception('Data Parser - Parse Date');
           v_error_count := v_error_count + 1;
           pv_errors := true;
       end parse_date;
@@ -901,28 +899,33 @@ package body fflu_data as
       procedure process_mars_date is 
       begin
         -- Perform the selection of the mars date column into the number variable.
+        declare
+          v_date date;
+          v_mars_date number;
         begin
+          v_date := trunc(ptv_fields(i_field_no).value_date);
           execute immediate 'select ' || ptv_fields(i_field_no).mars_date_column || 
-            ' from mars_date where calendar_date = ?' 
-            into ptv_fields(i_field_no).value_number 
-            using ptv_fields(i_field_no).value_date;
+            ' from mars_date where calendar_date = :i_value_date'
+            into v_mars_date
+            using v_date;
+          ptv_fields(i_field_no).value_number := v_mars_date;
         exception
           when others then 
-            log_field_parse_error(i_field_no,'Unable to lookup mars date column [' || ptv_fields(i_field_no).mars_date_column || '] for date [' || ptv_fields(i_field_no).value_date || '].');
+            log_field_parse_error(i_field_no,'Unable to lookup mars date column [' || ptv_fields(i_field_no).mars_date_column || '] for date [' || to_char(ptv_fields(i_field_no).value_date,'DD/MM/YYYY') || '] - ' || SQLERRM || '.');
         end;
         -- Now perform some additional checks on the mars date number field.
         if ptv_fields(i_field_no).min_number is not null and ptv_fields(i_field_no).value_number < ptv_fields(i_field_no).min_number then
-          log_field_parse_error(i_field_no,'Mars date needs to be at least ' || ptv_fields(i_field_no).min_number || ', it was ' || ptv_fields(i_field_no).value_number || '.');
+          log_field_parse_error(i_field_no,'Mars date needs to be at least ' || ptv_fields(i_field_no).min_number || '.');
         end if;
         if ptv_fields(i_field_no).max_number is not null and ptv_fields(i_field_no).value_number > ptv_fields(i_field_no).max_number then 
-          log_field_parse_error(i_field_no,'Mars date cannot be greater than ' || ptv_fields(i_field_no).max_number || ', it was ' || ptv_fields(i_field_no).value_number || '.');
+          log_field_parse_error(i_field_no,'Mars date cannot be greater than ' || ptv_fields(i_field_no).max_number || '.');
         end if;
         if ptv_fields(i_field_no).allow_null = false and ptv_fields(i_field_no).value_number is null then 
           log_field_parse_error(i_field_no,'Mars date value cannot be null.');
         end if;
       exception
         when others then 
-          fflu_utils.log_interface_error('Data Parser - Parse Mars Date',sqlcode,sqlerrm);
+          fflu_utils.log_interface_exception('Data Parser - Parse Mars Date');
           v_error_count := v_error_count + 1;
           pv_errors := true;
     end process_mars_date;
@@ -949,14 +952,14 @@ package body fflu_data as
         when pc_field_type_char then 
           ptv_fields(i_field_no).was_parsed := true;
           ptv_fields(i_field_no).value_char := v_field_data;
-          if ptv_fields(i_field_no).min_len is not null and length(v_field_data) < ptv_fields(i_field_no).min_len then
-            log_field_parse_error(i_field_no,'Data needs to be at least ' || ptv_fields(i_field_no).min_len || ' characters in length, it was ' || length(v_field_data) || '.');
-          end if;
-          if ptv_fields(i_field_no).max_len is not null and length(v_field_data) > ptv_fields(i_field_no).max_len then 
-            log_field_parse_error(i_field_no,'Data cannot be greater than ' || ptv_fields(i_field_no).max_len || ' characters in length, it was ' || length(v_field_data) || '.');
-          end if;
           if ptv_fields(i_field_no).allow_null = false and v_field_data is null then 
             log_field_parse_error(i_field_no,'Character field cannot be null.');
+          end if;
+          if ptv_fields(i_field_no).min_len is not null and nvl(length(v_field_data),0) < ptv_fields(i_field_no).min_len then
+            log_field_parse_error(i_field_no,'Data needs to be at least ' || ptv_fields(i_field_no).min_len || ' characters in length, it was ' || nvl(length(v_field_data),0) || '.');
+          end if;
+          if ptv_fields(i_field_no).max_len is not null and nvl(length(v_field_data),0) > ptv_fields(i_field_no).max_len then 
+            log_field_parse_error(i_field_no,'Data cannot be greater than ' || ptv_fields(i_field_no).max_len || ' characters in length, it was ' || nvl(length(v_field_data),0) || '.');
           end if;
         -- Parse a number field.
         when pc_field_type_number then
@@ -976,44 +979,80 @@ package body fflu_data as
       end case;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Process Field',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Process Field');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end process_field;
+
+    procedure check_header (
+      i_field_no in fflu_common.st_size, 
+      i_field_data in fflu_common.st_string) is
+    begin
+      if ptv_fields(i_field_no).column_name <> i_field_data then 
+        log_field_parse_error(i_field_no,'Column no [' || ptv_fields(i_field_no).column_no || ']''s heading [' || i_field_data || '] did not match expected column heading of [' || ptv_fields(i_field_no).column_name || '].');
+      end if;
+    exception 
+      when others then 
+        fflu_utils.log_interface_exception('Data Parser - Check Header');
+        v_error_count := v_error_count + 1;
+        pv_errors := true;
+    end check_header;
     
     procedure extract_csv_columns is
       c_delimiter constant fflu_common.st_string := ',';
-      v_column fflu_common.st_string;
+      v_position fflu_common.st_size;
       v_char fflu_common.st_string;
       v_prev_char fflu_common.st_string;
-      v_qualified boolean;
-      v_counter fflu_common.st_size;
+      v_column fflu_common.st_string;
+      v_in_text boolean;
     begin
-      v_counter := 0;
-      v_column := null;
-      v_qualified := false;
+      v_char := null;
       v_prev_char := null;
+      v_position := 0;
+      v_column := null;
+      v_in_text := false;
       loop 
-        v_counter := v_counter + 1;
-        exit when v_counter > v_data_len;
+        v_position := v_position + 1;
+        exit when v_position > v_data_len;
+        -- Track the current characters.
         v_prev_char := v_char;
-        v_char := substr(v_data,v_counter,1);
-        -- Now work out if we are in a block of qualified text.
-        if v_qualified = true then 
-          null;
+        v_char := substr(v_data,v_position,1);
+        -- Now process the current data. 
+        if v_in_text = true then
+          if v_char = pv_csv_qualifier and v_prev_char = pv_csv_qualifier then 
+            v_column := v_column || pv_csv_qualifier;
+            v_char := null;
+          elsif v_char = c_delimiter and v_prev_char = pv_csv_qualifier then 
+            v_in_text := false;
+            tv_columns(tv_columns.count+1) := v_column;
+            v_column := null;
+          elsif v_char = pv_csv_qualifier then 
+            null;  -- Just ignore for now.
+          else 
+            v_column := v_column || v_char;
+          end if;
+        else
+          if v_char = c_delimiter then 
+            tv_columns(tv_columns.count+1) := v_column;
+            v_column := null;
+          elsif v_char = pv_csv_qualifier and v_prev_char = c_delimiter then 
+            v_in_text := true;
+            v_char := null;
+          else 
+            v_column := v_column || v_char;
+          end if;
         end if;
       end loop;
-      -- Add the remainder of the row to the columns collection.
-      if length(v_column) > 0 then 
+      if nvl(length(v_column),0) > 0 then 
         tv_columns(tv_columns.count+1) := v_column;
       end if;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Extract CSV Columns',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Extract CSV Columns');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end extract_csv_columns;
-    
+
     function extract_fixed_width_field(i_field_no in fflu_common.st_size,o_process_field out boolean) return fflu_common.st_string is
       v_end_position fflu_common.st_size;
       v_result fflu_common.st_string;
@@ -1038,7 +1077,7 @@ package body fflu_data as
       return v_result;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Extract Fixed Width Field',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Extract Fixed Width Field');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end extract_fixed_width_field;
@@ -1059,7 +1098,7 @@ package body fflu_data as
       return v_result;
     exception 
       when others then 
-        fflu_utils.log_interface_error('Data Parser - Extract CSV Field',sqlcode,sqlerrm);
+        fflu_utils.log_interface_exception('Data Parser - Extract CSV Field');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end extract_csv_field;
@@ -1077,7 +1116,7 @@ package body fflu_data as
       v_counter := 0;
       v_finished := false;
       v_field_mode := c_field_mode_no_record;
-      v_data_len := length(v_data);
+      v_data_len := nvl(length(v_data),0);
       -- If this is a csv file type, then lets extract all the columns first.
       if pv_filetype = fflu_common.gc_file_type_csv then 
         extract_csv_columns;
@@ -1119,7 +1158,11 @@ package body fflu_data as
         end if;
         -- If we are still processing field then perform, ie no error in the extraction.
         if v_process_field = true then 
-          process_field(v_counter,v_field);
+          if pv_csv_header = true then 
+            check_header(v_counter,v_field);
+          else
+            process_field(v_counter,v_field);
+          end if;
           -- Now check if this field was a record type field and if it successfully parsed as this record type.
           if ptv_fields(v_counter).field_type = pc_field_type_record then 
             if ptv_fields(v_counter).was_parsed = true  then 
@@ -1131,8 +1174,8 @@ package body fflu_data as
         end if;
       end loop;
     exception 
-      when others then 
-        fflu_utils.log_interface_error('Data Parser - Parse Record',sqlcode,sqlerrm);
+      when others then
+        fflu_utils.log_interface_exception('Data Parser - Parse Record');
         v_error_count := v_error_count + 1;
         pv_errors := true;
     end parse_record;
@@ -1152,7 +1195,7 @@ package body fflu_data as
       clear_data();
       -- Now take off the line feed at the end of the line if it exists.
       v_data := i_data;
-      v_data_len := length(v_data);
+      v_data_len := nvl(length(v_data),0);
       if v_data_len > 0 then 
         if substr(v_data,v_data_len,1) = chr(10) then 
           v_data := substr(v_data,1,v_data_len-1);
@@ -1166,6 +1209,11 @@ package body fflu_data as
       if v_error_count > 0 then 
         v_result := false;
       end if;
+      -- If this was a csv header record we just checked then now clear that flag for future records.
+      if pv_csv_header = true then 
+        pv_csv_header := false;
+        v_result := false;  -- Always return false for header rows.  A check for was errors can be performed.
+      end if;
     else
       -- If the system was uninitilised.
       v_result := false;
@@ -1173,7 +1221,7 @@ package body fflu_data as
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Parse Data',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Parse Data');
       return false;
   end parse_data;
 
@@ -1215,7 +1263,7 @@ package body fflu_data as
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Record Type',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Get Record Type');
       pv_errors := true;
       return null;        
   end get_record_type;
@@ -1224,35 +1272,18 @@ package body fflu_data as
   NAME:      GET_CHAR_FIELD                                               PUBLIC
 *******************************************************************************/  
   function get_char_field(
-    i_column in fflu_common.st_column) return varchar2 is
+    i_field_name in fflu_common.st_name) return varchar2 is
     v_field_no fflu_common.st_size;
     v_result fflu_common.st_string;
   begin
     v_result := null;
-    if check_initialised = true and find_column(i_column,v_field_no) = true then
+    if check_initialised = true and find_column(i_field_name,v_field_no) = true then
       v_result := ptv_fields(v_field_no).value_char;
     end if;
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Char Field',sqlcode,sqlerrm);
-      pv_errors := true;
-      return null;        
-  end get_char_field;
-  
-  function get_char_field(
-    i_column_name in fflu_common.st_name) return varchar2 is
-    v_field_no fflu_common.st_size;
-    v_result fflu_common.st_string;
-  begin
-    v_result := null;
-    if check_initialised = true and find_column(i_column_name,v_field_no) = true then
-      v_result := ptv_fields(v_field_no).value_char;
-    end if;
-    return v_result;
-  exception 
-    when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Char Field',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Get Char Field');
       pv_errors := true;
       return null;        
   end get_char_field;
@@ -1261,73 +1292,38 @@ package body fflu_data as
   NAME:      GET_NUMBER_FIELD                                             PUBLIC
 *******************************************************************************/  
   function get_number_field(
-    i_column in fflu_common.st_column) return number is
+    i_field_name in fflu_common.st_name) return number is
     v_field_no fflu_common.st_size;
     v_result number;
   begin
     v_result := null;
-    if check_initialised = true and find_column(i_column,v_field_no) = true then
+    if check_initialised = true and find_column(i_field_name,v_field_no) = true then
       v_result := ptv_fields(v_field_no).value_number;
     end if;
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Number Field',sqlcode,sqlerrm);
-      pv_errors := true;
-      return null;        
-  end get_number_field;
-  
-  function get_number_field(
-    i_column_name in fflu_common.st_name) return number is
-    v_field_no fflu_common.st_size;
-    v_result number;
-  begin
-    v_result := null;
-    if check_initialised = true and find_column(i_column_name,v_field_no) = true then
-      v_result := ptv_fields(v_field_no).value_number;
-    end if;
-    return v_result;
-  exception 
-    when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Number Field',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Get Number Field');
       pv_errors := true;
       return null;    
   end get_number_field;
-
 
 /*******************************************************************************
   NAME:      GET_DATE_FIELD                                               PUBLIC
 *******************************************************************************/  
   function get_date_field(
-    i_column in fflu_common.st_column) return date is
+    i_field_name in fflu_common.st_name) return date is
     v_field_no fflu_common.st_size;
     v_result date;
   begin
     v_result := null;
-    if check_initialised = true and find_column(i_column,v_field_no) = true then
+    if check_initialised = true and find_column(i_field_name,v_field_no) = true then
       v_result := ptv_fields(v_field_no).value_date;
     end if;
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Date Field',sqlcode,sqlerrm);
-      pv_errors := true;
-      return null;    
-  end get_date_field;
-    
-  function get_date_field(
-    i_column_name in fflu_common.st_name) return date is
-    v_field_no fflu_common.st_size;
-    v_result date;
-  begin
-    v_result := null;
-    if check_initialised = true and find_column(i_column_name,v_field_no) = true then
-      v_result := ptv_fields(v_field_no).value_date;
-    end if;
-    return v_result;
-  exception 
-    when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Date Field',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Get Date Field');
       pv_errors := true;
       return null;
   end get_date_field;
@@ -1337,35 +1333,18 @@ package body fflu_data as
   NAME:      GET_MARS_DATE_FIELD                                          PUBLIC
 *******************************************************************************/  
   function get_mars_date_field(
-    i_column in fflu_common.st_column) return number is
+    i_field_name in fflu_common.st_name) return number is
     v_field_no fflu_common.st_size;
     v_result number;
   begin
     v_result := null;
-    if check_initialised = true and find_column(i_column,v_field_no) = true then
+    if check_initialised = true and find_column(i_field_name,v_field_no) = true then
       v_result := ptv_fields(v_field_no).value_number;
     end if;
     return v_result;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Mars Date Field',sqlcode,sqlerrm);
-      pv_errors := true;
-      return null;
-  end get_mars_date_field;
-    
-  function get_mars_date_field(
-    i_column_name in fflu_common.st_name) return number is
-    v_field_no fflu_common.st_size;
-    v_result number;
-  begin
-    v_result := null;
-    if check_initialised = true and find_column(i_column_name,v_field_no) = true then
-      v_result := ptv_fields(v_field_no).value_number;
-    end if;
-    return v_result;
-  exception 
-    when others then 
-      fflu_utils.log_interface_error('Data Parser - Get Mars Date Field',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Get Mars Date Field');
       pv_errors := true;
       return null;
   end get_mars_date_field;
@@ -1374,11 +1353,11 @@ package body fflu_data as
   NAME:      LOG_FIELD_ERROR                                              PUBLIC
 *******************************************************************************/  
   procedure log_field_error(
-    i_column in fflu_common.st_column, 
+    i_field_name in fflu_common.st_name, 
     i_message in fflu_common.st_string) is
     v_field_no fflu_common.st_size;
   begin
-    if check_initialised = true and find_column(i_column,v_field_no) = true then 
+    if check_initialised = true and find_column(i_field_name,v_field_no) = true then 
       if pv_filetype = fflu_common.gc_file_type_csv then 
         fflu_utils.log_interface_data_error(
           ptv_fields(v_field_no).column_name,ptv_fields(v_field_no).column_no,get_field_value_as_string(v_field_no),i_message);
@@ -1392,30 +1371,7 @@ package body fflu_data as
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Log Field Error',sqlcode,sqlerrm);
-      pv_errors := true;
-  end log_field_error;
-    
-  procedure log_field_error(
-    i_column_name in fflu_common.st_name, 
-    i_message in fflu_common.st_string) is
-    v_field_no fflu_common.st_size;
-  begin
-    if check_initialised = true and find_column(i_column_name,v_field_no) = true then 
-      if pv_filetype = fflu_common.gc_file_type_csv then 
-        fflu_utils.log_interface_data_error(
-          ptv_fields(v_field_no).column_name,ptv_fields(v_field_no).column_no,get_field_value_as_string(v_field_no),i_message);
-      elsif pv_filetype = fflu_common.gc_file_type_fixed_width then 
-        fflu_utils.log_interface_data_error(
-          ptv_fields(v_field_no).column_name,ptv_fields(v_field_no).position,
-          ptv_fields(v_field_no).len,get_field_value_as_string(v_field_no),i_message);
-      end if;
-      pv_errors := true;
-      ptv_fields(v_field_no).error_count := ptv_fields(v_field_no).error_count + 1;
-    end if;
-  exception 
-    when others then 
-      fflu_utils.log_interface_error('Data Parser - Log Field Error',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Log Field Error');
       pv_errors := true;
   end log_field_error;
 
@@ -1446,7 +1402,7 @@ package body fflu_data as
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_error('Data Parser - Cleanup',sqlcode,sqlerrm);
+      fflu_utils.log_interface_exception('Data Parser - Cleanup');
   end cleanup;
 
 /*******************************************************************************
@@ -1460,4 +1416,5 @@ begin
   pv_have_parsed := false;
   pv_errors := false;
   ptv_fields.delete;
+  pv_csv_header := false;
 end fflu_data;

@@ -176,7 +176,7 @@ package body fflu_utils as
     -- Now construct the string.  
     loop
       v_lics_message := '{"label":"' ||escape_json_string(v_label) ||'","position":' || json_number(i_position) || ',"length":' || json_number(i_length) || ',"value":"'||escape_json_string(v_value)||'","message":"'||escape_json_string(v_message)||'"}';
-      exit when lengthb(v_lics_message) <= 4000;
+      exit when nvl(lengthb(v_lics_message),0) <= 4000;
       -- Use a brute force approach to truncating the message keeping some of each part.
       if lengthb(v_message) > 1000 then
         v_message := substr(v_message,1,length(v_message)-1);
@@ -189,5 +189,14 @@ package body fflu_utils as
     -- Now add the exception message.
     lics_inbound_utility.add_exception(v_lics_message);
   end log_interface_data_error;
+  
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_ERROR                                          PUBLIC
+*******************************************************************************/  
+  procedure log_interface_exception (
+    i_method fflu_common.st_buffer) is
+  begin
+    log_interface_error('Method',i_method,'EXCEPTION : ' || SQLERRM);
+  end log_interface_exception;
   
 end fflu_utils;
