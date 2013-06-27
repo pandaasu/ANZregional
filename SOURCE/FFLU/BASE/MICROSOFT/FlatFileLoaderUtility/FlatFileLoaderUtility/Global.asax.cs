@@ -43,5 +43,13 @@ namespace FlatFileLoaderUtility
             if (exception != null)
                 exception.HandleException(new HttpContextWrapper(this.Context));
         }
+
+        protected void Application_BeginRequest(object sender, EventArgs e)
+        {
+            if (!HttpContext.Current.Request.IsSecureConnection && !Properties.Settings.Default.IsDev)
+            {
+                Response.Redirect("https://" + Request.ServerVariables["HTTP_HOST"] + HttpContext.Current.Request.RawUrl);
+            }
+        }
     }
 }
