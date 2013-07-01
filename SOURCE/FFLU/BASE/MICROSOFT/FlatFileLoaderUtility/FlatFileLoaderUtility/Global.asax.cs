@@ -46,7 +46,7 @@ namespace FlatFileLoaderUtility
 
         protected void Application_BeginRequest(object sender, EventArgs e)
         {
-            if (!HttpContext.Current.Request.IsSecureConnection && !Properties.Settings.Default.IsDev)
+            if (!HttpContext.Current.Request.IsSecureConnection && Properties.Settings.Default.UseSsl)
             {
                 Response.Redirect("https://" + Request.ServerVariables["HTTP_HOST"] + HttpContext.Current.Request.RawUrl);
             }

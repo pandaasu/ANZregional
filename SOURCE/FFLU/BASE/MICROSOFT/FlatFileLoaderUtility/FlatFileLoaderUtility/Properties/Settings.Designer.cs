@@ -166,5 +166,14 @@ namespace FlatFileLoaderUtility.Properties {
                 return ((int)(this["SegmentBytes"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseSsl {
+            get {
+                return ((bool)(this["UseSsl"]));
+            }
+        }
     }
 }

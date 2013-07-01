@@ -43,6 +43,7 @@ namespace FlatFileLoaderUtility.Controllers
             filterContext.Controller.ViewBag.Access = this.Container.Access;
             filterContext.Controller.ViewBag.User = new User(); // Populated in case of exception
             filterContext.Controller.ViewBag.IsTest = Properties.Settings.Default.IsTest;
+            filterContext.Controller.ViewBag.IsSecure = this.Request.IsSecureConnection;
 
             // If the user is setting the connection, do not populate any of the connection-dependend data
             if (filterContext.ActionDescriptor.ActionName != "SetConnection")

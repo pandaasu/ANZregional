@@ -22,6 +22,9 @@ namespace FlatFileLoaderUtility.Controllers
 
         public ActionResult SwitchUser()
         {
+            if (!this.Request.IsSecureConnection)
+                return this.RedirectToAction("Index", "Uploads");
+
             return this.View();
         }
 

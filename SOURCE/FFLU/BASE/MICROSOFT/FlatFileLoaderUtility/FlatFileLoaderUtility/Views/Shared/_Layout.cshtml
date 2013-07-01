@@ -79,13 +79,16 @@
                         @:class="current" 
                     }>
                         <a href="#" style="cursor:default;" onclick="return false;"><span>@ViewBag.Access.Username</span></a>
-                        <ul>
-                            <li><a href="@Url.Action("SwitchUser", "User")"><span>Switch User</span></a></li>
-                            @if (ViewBag.Access.IsImpersonating)
+                        @if (ViewBag.IsSecure ?? false)
+                        {
+                            <ul>
+                                <li><a href="@Url.Action("SwitchUser", "User")"><span>Switch User</span></a></li>
+                                @if (ViewBag.Access.IsImpersonating)
                             {
-                                <li><a href="@Url.Action("Logoff", "User")"><span>Logoff</span></a></li>
+                                    <li><a href="@Url.Action("Logoff", "User")"><span>Logoff</span></a></li>
                             }
-                        </ul>
+                            </ul>
+                        }
                     </li>
 		        </ul>
             </div>
