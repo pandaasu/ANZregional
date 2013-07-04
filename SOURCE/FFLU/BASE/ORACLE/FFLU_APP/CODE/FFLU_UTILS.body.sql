@@ -64,6 +64,7 @@ package body fflu_utils as
     v_string := replace(v_string,'\','\\');
     v_string := replace(v_string,'/','\/');
     v_string := replace(v_string,'''','\''');
+    v_string := replace(v_string,'"','\"');
     v_string := replace(v_string,'' || chr(7) || '',' ');
     v_string := trim(v_string);
     return v_string;

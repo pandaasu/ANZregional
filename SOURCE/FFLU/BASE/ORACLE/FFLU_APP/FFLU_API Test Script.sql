@@ -9,6 +9,8 @@ select * from table(fflu_api.get_authorised_user('HORNCHR'));  -- Should return 
 
 select * from table(fflu_api.get_interface_list()); -- Should return the list of available interfaces in the system.
 
+exec dbms_session.reset_package;
+
 select * from table(fflu_api.get_interface_group_list()); -- Returns the list of interface groups. 
 
 select * from table(fflu_api.get_interface_group_join()); -- Returns the list of interface groups. 

@@ -49,9 +49,9 @@ select * from table(fflu_api_dev.get_xaction_list(
 
 -- Call to fetch the other trace executions that have been run for this 
 -- interface
-select * from table(fflu_api_dev.get_xaction_trace_list(
+select * from table(fflu_api.get_xaction_trace_list(
   'HORNCHR', -- i_user_code in varchar2
-  2032647));
+  2037672));
 
 
 -- Call to return the data rows of an interface and the number of errors for each row for a given trace.
@@ -90,10 +90,10 @@ select * from table (fflu_api_dev.get_xaction_data_errors_by_pge(
 ));
 
 -- Call to return all the errors that would belong on a page of data rows. 
-select * from table (fflu_api_dev.get_xaction_data_errors_by_row(
+select * from table (fflu_api.get_xaction_data_errors_by_row(
   'HORNCHR', -- i_user_code in varchar2
-  2032878, -- i_xaction_seq in fflu_common.st_sequence,
-  2, -- i_xaction_trace_seq in fflu_common.st_trace,
+  2036722, -- i_xaction_seq in fflu_common.st_sequence,
+  20, -- i_xaction_trace_seq in fflu_common.st_trace,
   1, -- i_from_data_row fflu_common.st_count,
   2 -- i_to_data_row fflu_common.st_count
 ));
