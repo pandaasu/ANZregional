@@ -249,6 +249,13 @@
                 });
             });
 
+            $("#selectAll").click(function () {
+                if ($(this).is(":checked"))
+                    $(".reprocess").attr("checked", "checked");
+                else
+                    $(".reprocess").removeAttr("checked");
+            });
+
             // Document ready actions
             //Load all records when page is first shown
             $("#btnFilter").click();
@@ -359,12 +366,13 @@
                         <option value="10">10</option>
                         <option value="15" selected="selected">15</option>
                         <option value="20">20</option>
-                        <option value="25">25</option>
                         <option value="30">30</option>
-                        <option value="35">35</option>
                         <option value="40">40</option>
-                        <option value="45">45</option>
                         <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="150">150</option>
+                        <option value="200">200</option>
+                        <option value="250">250</option>
                     </select>
                 </td>
             </tr>
@@ -381,7 +389,11 @@
 </div>
 <div id="TableContainer">
 </div>
-<button id="btnReprocess" class="reprocessButton">Reprocess</button>
+<span class="footerOptions">
+    <input type="checkbox" id="selectAll" />
+    <label for="selectAll">Select all</label>&nbsp;&nbsp;&nbsp;
+    <button id="btnReprocess">Reprocess</button>
+</span>
 <br />
 <div id="dialogConfirm" style="display:none;">
     <p id="confirmText">Are you sure you want to reprocess the selected interfaces?</p>

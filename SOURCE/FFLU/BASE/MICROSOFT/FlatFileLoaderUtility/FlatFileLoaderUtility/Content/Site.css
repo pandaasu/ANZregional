@@ -742,10 +742,16 @@ pre.colcount
     padding: 0px;
 }
 
-.reprocessButton
+.footerOptions
 {
     float:right;
-    margin-top:-23px;
+    position:relative;
+    top:-23px;
+}
+.footerOptions input 
+{
+    position:relative;
+    top:2px;
 }
 
 .tick 
