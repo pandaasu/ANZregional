@@ -28,7 +28,7 @@ var Status = function () {
 
 // Data Operations
 
-function GetInterfaceOptions(interfaceGroupCode, interfaceTypeCode, $list, isProcessRequired, isMonitorRequired) {
+function GetInterfaceOptions(interfaceGroupCode, interfaceTypeCode, $list, isLoaderRequired, isMonitorRequired) {
 
     if (!CheckIdentifierForOptions(interfaceGroupCode, $list))
         return;
@@ -38,7 +38,7 @@ function GetInterfaceOptions(interfaceGroupCode, interfaceTypeCode, $list, isPro
         {
             interfaceGroupCode: interfaceGroupCode,
             interfaceTypeCode: interfaceTypeCode,
-            isProcessRequired: isProcessRequired,
+            isLoaderRequired: isLoaderRequired,
             isMonitorRequired: isMonitorRequired
         },
         $list
@@ -86,10 +86,6 @@ function FillOptionsList(url, postData, $list, value) {
                     $list.val($list.find("option:eq(1)").val());
                 $list.change();
                 $list.trigger("liszt:updated");
-                if (response.Options.length == 0)
-                    $list.attr("disabled", "disabled");
-                else
-                    $list.removeAttr("disabled");
             }
             else {
                 alert("Error: " + response.Message);
