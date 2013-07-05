@@ -33,8 +33,7 @@ package fflu_data as
     - get_mars_date_field         Returns a mars date field out.
     - log_field_error             Logs and error associated with a field.
     - was_errors                  Return if any errors have been recorded.
-  + Other Functions
-
+  
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-13  Chris Horn            Defined the specification.
@@ -341,7 +340,7 @@ package fflu_data as
   1.0   2013-06-18 Chris Horn           Defined.
 
 *******************************************************************************/  
-  procedure log_field_error(
+  procedure log_field_error (
     i_field_name in fflu_common.st_name, 
     i_message in fflu_common.st_string);
   

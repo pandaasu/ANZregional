@@ -21,11 +21,15 @@ package fflu_utils as
     - log_interface_progress     An interface hook to update its progress.
     - log_interface_error        Adds a JSON formatted interface error to LICS.
     - log_interface_data_error   Adds a JSON formatted interface error to LICS
+    - get_interface_suffix       Returns the interface suffix, everything after .
+    - get_interface_filename     Returns the interface filename.
+    - get_interface_row          Returns the current interface row number. 
 
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-06  Chris Horn            Implemented the interface log progress.
   2013-06-13  Chris Horn            Added log interface errors functions.
+  2013-07-05  Chris Horn            Added interface suffix,filename,row code.
   
 *******************************************************************************/
 
@@ -116,7 +120,49 @@ package fflu_utils as
   procedure log_interface_exception (
     i_method fflu_common.st_buffer); 
 
+
+/*******************************************************************************
+  NAME:      GET_INTERFACE_SUFFIX
+  PURPOSE:   Returns the interface suffix.  
+             
+             Fetches the interface code definition from callback_interface.  
+             Then returns everything after the first . found in the string.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-07-05 Chris Horn           Created
+
+*******************************************************************************/  
+  function get_interface_suffix return fflu_common.st_interface;
   
+/*******************************************************************************
+  NAME:      GET_INTERFACE_FILENAME
+  PURPOSE:   Just returns the interface file name straight from the call back.
+             Only here for conveniance.
+             
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-07-05 Chris Horn           Created
+
+*******************************************************************************/  
+  function get_interface_filename return fflu_common.st_filename;
+
+/*******************************************************************************
+  NAME:      GET_INTERFACE_ROW
+  PURPOSE:   Just returns the interface row straight from the call back.
+             Only here for conveniance.
+             
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-07-05 Chris Horn           Created
+
+*******************************************************************************/  
+  function get_interface_row return fflu_common.st_count;
   
 /*******************************************************************************
 EXAMPLE JSON MESSAGES.

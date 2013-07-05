@@ -200,4 +200,32 @@ package body fflu_utils as
     log_interface_error('Method',i_method,'EXCEPTION : ' || SQLERRM);
   end log_interface_exception;
   
+/*******************************************************************************
+  NAME:      GET_INTERFACE_SUFFIX                                         PUBLIC
+*******************************************************************************/  
+  function get_interface_suffix return fflu_common.st_interface is
+    v_suffix fflu_common.st_interface;
+    v_pos fflu_common.st_size;
+  begin
+    v_suffix := lics_inbound_processor.callback_interface;
+    v_suffix := substr(v_suffix,instr(v_suffix,'.')+1);
+    return v_suffix;
+  end get_interface_suffix;
+  
+/*******************************************************************************
+  NAME:      GET_INTERFACE_FILENAME                                       PUBLIC
+*******************************************************************************/  
+  function get_interface_filename return fflu_common.st_filename is
+  begin
+    return lics_inbound_processor.callback_file_name; 
+  end get_interface_filename;
+  
+/*******************************************************************************
+  NAME:      GET_INTERFACE_ROW                                            PUBLIC
+*******************************************************************************/  
+  function get_interface_row return fflu_common.st_count is
+  begin
+    return lics_inbound_processor.callback_row;
+  end get_interface_row;
+  
 end fflu_utils;
