@@ -1,7 +1,7 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package lics_security_configuration as
+CREATE OR REPLACE package LICS_APP.lics_security_configuration as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -22,8 +22,7 @@ create or replace package lics_security_configuration as
     -------   ------         -----------
     2007/06   Steve Gregan   Created
     2008/07   Trevor Keon    Added interface security support
-	2012/07	  Ben Halicki	 Added grants for LICS_EXEC
-
+    2012/05   Derek Wu       Recording the ppl who add/update user and when
    *******************************************************************************/
 
    /**/
@@ -32,11 +31,15 @@ create or replace package lics_security_configuration as
    function insert_user(par_user in varchar2,
                         par_description in varchar2,
                         par_menu in varchar2,
-                        par_status in varchar2) return varchar2;
+                        par_status in varchar2,
+                        par_user_ldpdp in varchar2
+                        ) return varchar2;
    function update_user(par_user in varchar2,
                         par_description in varchar2,
                         par_menu in varchar2,
-                        par_status in varchar2) return varchar2;
+                        par_status in varchar2,
+                        par_user_ldpdp in varchar2
+                        ) return varchar2;
    function delete_user(par_user in varchar2) return varchar2;
    function insert_menu(par_menu in varchar2,
                         par_description in varchar2) return varchar2;
@@ -64,7 +67,7 @@ create or replace package lics_security_configuration as
                            par_interface_new in varchar2,
                            par_user_new in varchar2) return varchar2;
    function delete_int_sec(par_interface in varchar2,
-                           par_user in varchar2) return varchar2;                                                      
+                           par_user in varchar2) return varchar2;
 
 end lics_security_configuration;
 /
@@ -72,7 +75,7 @@ end lics_security_configuration;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body lics_security_configuration as
+CREATE OR REPLACE package body LICS_APP.lics_security_configuration as
 
    /*-*/
    /* Private exceptions
@@ -95,7 +98,9 @@ create or replace package body lics_security_configuration as
    function insert_user(par_user in varchar2,
                         par_description in varchar2,
                         par_menu in varchar2,
-                        par_status in varchar2) return varchar2 is
+                        par_status in varchar2,
+                        par_user_ldpdp in varchar2  
+                        ) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -106,13 +111,13 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_user_01 is 
+      cursor csr_lics_sec_user_01 is
          select *
            from lics_sec_user t01
           where t01.seu_user = rcd_lics_sec_user.seu_user;
       rcd_lics_sec_user_01 csr_lics_sec_user_01%rowtype;
 
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_user.seu_menu;
@@ -136,7 +141,8 @@ create or replace package body lics_security_configuration as
       rcd_lics_sec_user.seu_description := par_description;
       rcd_lics_sec_user.seu_menu := upper(par_menu);
       rcd_lics_sec_user.seu_status := par_status;
-
+      rcd_lics_sec_user.seu_user_ldpdp := upper(par_user_ldpdp);
+      
       /*-*/
       /* Validate the parameter values
       /*-*/
@@ -187,11 +193,17 @@ create or replace package body lics_security_configuration as
          (seu_user,
           seu_description,
           seu_menu,
-          seu_status)
+          seu_status,
+          seu_user_ldpdp,
+          seu_user_ldpdt
+          )
          values(rcd_lics_sec_user.seu_user,
                 rcd_lics_sec_user.seu_description,
                 rcd_lics_sec_user.seu_menu,
-                rcd_lics_sec_user.seu_status);
+                rcd_lics_sec_user.seu_status,
+                rcd_lics_sec_user.seu_user_ldpdp,
+                current_date
+                );
 
       /*-*/
       /* Commit the database
@@ -234,7 +246,9 @@ create or replace package body lics_security_configuration as
    function update_user(par_user in varchar2,
                         par_description in varchar2,
                         par_menu in varchar2,
-                        par_status in varchar2) return varchar2 is
+                        par_status in varchar2,
+                        par_user_ldpdp in varchar2
+                        ) return varchar2 is
 
       /*-*/
       /* Local definitions
@@ -245,13 +259,13 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_user_01 is 
+      cursor csr_lics_sec_user_01 is
          select *
            from lics_sec_user t01
           where t01.seu_user = rcd_lics_sec_user.seu_user;
       rcd_lics_sec_user_01 csr_lics_sec_user_01%rowtype;
 
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_user.seu_menu;
@@ -275,6 +289,7 @@ create or replace package body lics_security_configuration as
       rcd_lics_sec_user.seu_description := par_description;
       rcd_lics_sec_user.seu_menu := upper(par_menu);
       rcd_lics_sec_user.seu_status := par_status;
+      rcd_lics_sec_user.seu_user_ldpdp := par_user_ldpdp;
 
       /*-*/
       /* Validate the parameter values
@@ -325,7 +340,9 @@ create or replace package body lics_security_configuration as
       update lics_sec_user
          set seu_description = rcd_lics_sec_user.seu_description,
              seu_menu = rcd_lics_sec_user.seu_menu,
-             seu_status = rcd_lics_sec_user.seu_status
+             seu_status = rcd_lics_sec_user.seu_status,
+             seu_user_ldpdp = rcd_lics_sec_user.seu_user_ldpdp,
+             seu_user_ldpdt = current_date
          where seu_user = rcd_lics_sec_user.seu_user;
 
       /*-*/
@@ -377,7 +394,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_user_01 is 
+      cursor csr_lics_sec_user_01 is
          select *
            from lics_sec_user t01
           where t01.seu_user = rcd_lics_sec_user.seu_user;
@@ -479,7 +496,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_menu.sem_menu;
@@ -588,7 +605,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_menu.sem_menu;
@@ -697,13 +714,13 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_menu.sem_menu;
       rcd_lics_sec_menu_01 csr_lics_sec_menu_01%rowtype;
 
-      cursor csr_lics_sec_user_01 is 
+      cursor csr_lics_sec_user_01 is
          select *
            from lics_sec_user t01
           where t01.seu_menu = rcd_lics_sec_menu.sem_menu;
@@ -822,7 +839,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_link.sel_menu;
@@ -926,19 +943,19 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_menu_01 is 
+      cursor csr_lics_sec_menu_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_link.sel_menu;
       rcd_lics_sec_menu_01 csr_lics_sec_menu_01%rowtype;
 
-      cursor csr_lics_sec_link_01 is 
+      cursor csr_lics_sec_link_01 is
          select *
            from lics_sec_menu t01
           where t01.sem_menu = rcd_lics_sec_link.sel_link;
       rcd_lics_sec_link_01 csr_lics_sec_link_01%rowtype;
 
-      cursor csr_lics_sec_link_02 is 
+      cursor csr_lics_sec_link_02 is
          select *
            from lics_sec_option t01
           where t01.seo_option = rcd_lics_sec_link.sel_link;
@@ -1089,7 +1106,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_option_01 is 
+      cursor csr_lics_sec_option_01 is
          select *
            from lics_sec_option t01
           where t01.seo_option = rcd_lics_sec_option.seo_option;
@@ -1212,7 +1229,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_option_01 is 
+      cursor csr_lics_sec_option_01 is
          select *
            from lics_sec_option t01
           where t01.seo_option = rcd_lics_sec_option.seo_option;
@@ -1328,7 +1345,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_option_01 is 
+      cursor csr_lics_sec_option_01 is
          select *
            from lics_sec_option t01
           where t01.seo_option = rcd_lics_sec_option.seo_option;
@@ -1417,7 +1434,7 @@ create or replace package body lics_security_configuration as
    /* End routine */
    /*-------------*/
    end delete_option;
-   
+
    function insert_int_sec(par_interface in varchar2,
                            par_user in varchar2) return varchar2 is
       /*-*/
@@ -1429,7 +1446,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_interface_01 is 
+      cursor csr_lics_sec_interface_01 is
          select *
            from lics_sec_interface t01
           where t01.sei_interface = rcd_lics_sec_interface.sei_interface
@@ -1523,7 +1540,7 @@ create or replace package body lics_security_configuration as
    /* End routine */
    /*-------------*/
    end insert_int_sec;
-                              
+
    function update_int_sec(par_interface in varchar2,
                            par_user in varchar2,
                            par_interface_new in varchar2,
@@ -1537,7 +1554,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_interface_01 is 
+      cursor csr_lics_sec_interface_01 is
          select *
            from lics_sec_interface t01
           where t01.sei_interface = rcd_lics_sec_interface.sei_interface
@@ -1630,8 +1647,8 @@ create or replace package body lics_security_configuration as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end update_int_sec;    
-                          
+   end update_int_sec;
+
    function delete_int_sec(par_interface in varchar2,
                            par_user in varchar2) return varchar2 is
       /*-*/
@@ -1643,7 +1660,7 @@ create or replace package body lics_security_configuration as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_sec_interface_01 is 
+      cursor csr_lics_sec_interface_01 is
          select *
            from lics_sec_interface t01
           where t01.sei_interface = rcd_lics_sec_interface.sei_interface
@@ -1731,10 +1748,11 @@ create or replace package body lics_security_configuration as
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end delete_int_sec;                                   
+   end delete_int_sec;
 
 end lics_security_configuration;
-/  
+/
+
 
 /**************************/
 /* Package Synonym/Grants */
