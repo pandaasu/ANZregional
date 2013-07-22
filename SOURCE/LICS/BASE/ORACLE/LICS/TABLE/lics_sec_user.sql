@@ -24,7 +24,9 @@ create table lics_sec_user
    (seu_user                     varchar2(32 char)               not null,
     seu_description              varchar2(128 char)              not null,
     seu_menu                     varchar2(32 char)               not null,
-    seu_status                   varchar2(1 char)                not null);
+    seu_status                   varchar2(1 char)                not null,
+    SEU_USER_LDPDP   		 VARCHAR2(32 CHAR),
+    SEU_USER_LDPDT   		 DATE					);
 
 /**/
 /* Comments
