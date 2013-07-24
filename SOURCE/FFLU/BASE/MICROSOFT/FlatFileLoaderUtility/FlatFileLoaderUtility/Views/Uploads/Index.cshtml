@@ -125,7 +125,7 @@
                 $("form :input").attr("disabled", "disabled").trigger("liszt:updated");
                 $("#resumeOptions").hide();
                 $("#rowDescriptionResume").show();
-                UploadCancel();
+                UploadCancel(false);
                 return false;
             });
 
@@ -152,13 +152,16 @@
         /**************************************************/
         
         // Called to cancel an upload
-        function UploadCancel(isCancelResume) {
+        function UploadCancel(silentCancel) {
+            var doSilentCancel = silentCancel;
             $.ajax({
                 type: "post",
                 url: "/Uploads/Cancel",
                 contentType: "application/json",
                 async: true,
                 success: function (response) {
+                    if (doSilentCancel)
+                        return;
                     if (response.Result != "OK") {
                         status.Message = "Error while cancelling the upload.";
                         status.Exception = response.Message;
@@ -174,6 +177,8 @@
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
+                    if (doSilentCancel)
+                        return;
                     status.Message = "Error communicating with server.";
                     status.Exception = (isTest) ? thrownError : "";
                     status.IsError = true;
@@ -339,8 +344,18 @@
                     while (status.Remainder.length > 0) {
                         if (status.Remainder.length > status.SegmentBytes - status.MaxRowSize - 10) {
                             var index = status.SegmentBytes - status.MaxRowSize - 10;
-                            while (index < status.Remainder.length && status.Remainder[index] != "\n")
+                            while (index < status.Remainder.length && status.Remainder[index] != "\n") {
                                 index++;
+                                if (index > status.SegmentBytes) {
+                                    // The line exceeds the maximum line length. Terminate upload process.
+                                    status.IsError = true;
+                                    status.Message = "End of line not found within maximum line length."
+                                    status.Exception = "Please check line length and end of line encoding in the file."
+                                    UploadCancel(true);
+                                    ShowResult(false);
+                                    return;
+                                }
+                            }
                             index++;
                             segment = status.Remainder.substring(0, index);
                             status.Remainder = status.Remainder.substr(index);
@@ -396,6 +411,17 @@
                                 break;
                             }
                             aryData[x++] = c;
+
+                            if (x > (status.MaxRowSize / 2) + 5) {
+                                // The line exceeds the maximum line length. Terminate upload process.
+                                status.File.Close();
+                                status.IsError = true;
+                                status.Message = "End of line not found within maximum line length."
+                                status.Exception = "Please check line length and end of line encoding in the file."
+                                UploadCancel(true);
+                                ShowResult(false);
+                                return;
+                            }
                         }
                         status.SegmentCount++;
 
