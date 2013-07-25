@@ -25,6 +25,8 @@ package body fflu_data as
     column_no fflu_common.st_column,
     column_name fflu_common.st_name,
     position fflu_common.st_position,
+    offset fflu_common.st_position, -- This is the position within the field that we should start looking for the field.
+    offset_len fflu_common.st_length, -- The length to extract from the offset.
     len fflu_common.st_length,    -- This is the fixed width length expected.
     min_len fflu_common.st_size,  -- The minimum length of a char field.
     max_len fflu_common.st_size,  -- The maxiumm length of a char field.
@@ -374,6 +376,68 @@ package body fflu_data as
   end check_mars_date_column;
 
 /*******************************************************************************
+  NAME:      CHECK_OFFSET
+  PURPOSE:   Checks that supplied offset information is valid and correct. 
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-07-19 Chris Horn           Created
+  
+*******************************************************************************/
+  function check_offset(
+    i_field_name in fflu_common.st_name,
+    i_offset in fflu_common.st_position default null,
+    i_offset_len in fflu_common.st_length default null) return boolean is
+    v_result boolean;
+    v_error_sufix fflu_common.st_string;
+    v_column_name fflu_common.st_name;
+    v_end_position fflu_common.st_position;
+  begin
+    v_result := true;
+    v_error_sufix := ' For column name [' || i_field_name || '].';
+    -- Check that if off set are being used then the lenght must be specified.
+    if i_offset is not null then 
+      if i_offset <= 0 then 
+        fflu_utils.log_interface_error('Offset',i_offset,'Supplied column offset cannot be less than or equal to zero.' || v_error_sufix);
+        pv_errors := true;
+        v_result := false;
+      elsif i_offset > 4000 then 
+        fflu_utils.log_interface_error('Offset',i_offset,'Supplied column offset cannot be greater than 4000.' || v_error_sufix);
+        pv_errors := true;
+        v_result := false;
+      end if;
+      if i_offset_len is null then 
+        fflu_utils.log_interface_error('Offset Len','null','Supplied column offset length cannot be null when an offset has been defined.' || v_error_sufix);
+        pv_errors := true;
+        v_result := false;
+      else
+        if i_offset_len <= 0 then 
+          fflu_utils.log_interface_error('Offset Len',i_offset_len,'Supplied column offset length cannot be less than or equal to zero.' || v_error_sufix);
+          pv_errors := true;
+          v_result := false;
+        elsif i_offset_len > 4000 then 
+          fflu_utils.log_interface_error('Offset Len',i_offset_len,'Supplied column offset length cannot be greater than 4000.' || v_error_sufix);
+          pv_errors := true;
+          v_result := false;
+        end if;
+        -- Now perform a check of the offset + offset_length
+        v_end_position := i_offset + i_offset_len - 1;
+        if v_end_position > 4000 then 
+          fflu_utils.log_interface_error('Offset End Position',v_end_position,'Calculated offset end position cannot be greater than 4000.' || v_error_sufix);
+          pv_errors := true;
+          v_result := false;
+        end if;
+      end if;
+    end if;
+    -- Check the column length.
+    return v_result;
+  end check_offset;
+
+       
+
+
+/*******************************************************************************
   NAME:      INITIALISE                                                   PUBLIC
 *******************************************************************************/  
   procedure initialise(
@@ -616,6 +680,8 @@ package body fflu_data as
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
+    i_offset in fflu_common.st_position default null,
+    i_offset_len in fflu_common.st_length default null,
     i_min_date in date default null, 
     i_max_date in date default null,
     i_allow_null in boolean default false,
@@ -623,13 +689,16 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and 
+      check_filetype_is_csv(i_field_name) = true and check_offset(i_field_name,i_offset,i_offset_len) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_date;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
       rv_field.format := i_format;
+      rv_field.offset := i_offset;
+      rv_field.offset := i_offset_len;  
       rv_field.min_date := i_min_date;
       rv_field.max_date := i_max_date;
       rv_field.allow_null := i_allow_null;
@@ -684,6 +753,8 @@ package body fflu_data as
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
+    i_offset in fflu_common.st_position default null,
+    i_offset_len in fflu_common.st_length default null,
     i_min_number in number default null, 
     i_max_number in number default null,
     i_allow_null in boolean default false,
@@ -692,13 +763,15 @@ package body fflu_data as
   begin
     -- Check system is initialised and column definition is valid.
     if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true
-        and check_mars_date_column(i_field_name, i_mars_date_column) = true then 
+        and check_mars_date_column(i_field_name, i_mars_date_column) = true and check_offset(i_field_name,i_offset,i_offset_len) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_mars_date;
       rv_field.column_no := i_column;
       rv_field.column_name := i_column_name;
       rv_field.format := i_format;
+      rv_field.offset := i_offset;
+      rv_field.offset_len := i_offset_len; 
       rv_field.min_number := i_min_number;
       rv_field.max_number := i_max_number;
       rv_field.allow_null := i_allow_null;
@@ -1089,6 +1162,10 @@ package body fflu_data as
       o_process_field := true;
       if ptv_fields(i_field_no).column_no <= tv_columns.count then 
         v_result := tv_columns(ptv_fields(i_field_no).column_no);
+        -- Now apply any offset that may have been specified for CSV sub field.
+        if ptv_fields(i_field_no).offset is not null then 
+          v_result := substr(v_result,ptv_fields(i_field_no).offset,ptv_fields(i_field_no).offset_len);
+        end if;
       else
         if pv_allow_missing = false then 
           o_process_field := false;

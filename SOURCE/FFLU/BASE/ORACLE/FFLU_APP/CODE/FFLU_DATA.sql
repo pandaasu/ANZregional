@@ -42,6 +42,7 @@ package fflu_data as
   2013-06-25  Chris Horn            Completed the CSV extraction logic.
   2013-06-25  Chris Horn            Added a check for the header fields matching.
   2013-06-25  Chris Horn            Moved to a unique field name arrangement.
+  2013-07-19  Chris Horn            Added field offset to date functions.  
 
 *******************************************************************************/
 
@@ -180,6 +181,7 @@ package fflu_data as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-13 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
+  1.2   2013-07-19 Chris Horn           Added a position offset for date extraction.
 
 *******************************************************************************/  
   procedure add_date_field_csv(
@@ -187,6 +189,8 @@ package fflu_data as
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
+    i_offset in fflu_common.st_position default null,
+    i_offset_len in fflu_common.st_length default null, 
     i_min_date in date default null, 
     i_max_date in date default null,
     i_allow_null in boolean default false,
@@ -212,6 +216,7 @@ package fflu_data as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-18 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
+  1.2   2013-07-19 Chris Horn           Added a position offset for date extraction.
 
 *******************************************************************************/  
   procedure add_mars_date_field_csv(
@@ -220,6 +225,8 @@ package fflu_data as
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
     i_format in fflu_common.st_name default null,
+    i_offset in fflu_common.st_position default null,
+    i_offset_len in fflu_common.st_length default null, 
     i_min_number in number default null, 
     i_max_number in number default null,
     i_allow_null in boolean default false,
