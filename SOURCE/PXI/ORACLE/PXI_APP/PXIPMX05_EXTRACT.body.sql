@@ -1,5 +1,5 @@
 create or replace 
-PACKAGE BODY          PXIPMX07_EXTRACT as
+PACKAGE BODY          PXIPMX05_EXTRACT as
 
    /*-*/
    /* Private exceptions
@@ -29,44 +29,41 @@ PACKAGE BODY          PXIPMX07_EXTRACT as
           as data 
         from 
 
-
-select 
-  hdr_division_code,
-  company_code,
-  sold_to_cust_code,
-  billing_doc_num, 
-  billing_doc_line_num, 
-  matl_entd,
-  (select order_eff_date from dw_order_base t0 where t0.order_doc_num = t1.order_doc_num and t0.order_doc_line_num = t1.order_doc_line_num) as order_eff_date,
-  billing_eff_date,
-  billed_qty_base_uom, 
-  billed_gsv,
-  doc_currcy_code
-from dw_sales_base t1 where company_code = 149 and creatn_date = to_date('31/12/2001','DD/MM/YYYY');
+Mal, Suggest we move interface constants into the top formatting query.  
 
 
-select 
-  t1.hdr_division_code,
-  t1.company_code,
-  t1.sold_to_cust_code,
-  t1.billing_doc_num, 
-  t1.billing_doc_line_num, 
-  t1.matl_entd,
-  t2.order_eff_date,
-  t1.billing_eff_date,
-  t1.billed_qty_base_uom, 
-  t1.billed_gsv,
-  t1.doc_currcy_code
-from dw_sales_base t1,
-     dw_order_base t2
-where 
-  t1.company_code = 149 and t1.creatn_date = to_date('31/12/2001','DD/MM/YYYY') and
-  t1.order_doc_num = t2.order_doc_num (+) and
-  t1.order_doc_line_num = t2.order_doc_line_num (+)
+select '347001'
+     ||rpad(vendor_code,10)
+     ||rpad(company_code,4)
+     ||rpad(sales_org_code,4)
+     ||rpad(distribution_channel,2)
+     ||rpad(division,2)
+     ||PACSVendor
+     ||rpad(substr(Longname,1,40),40)
+     ||tax_exempt
+     ||rpad(attribute,20)
+     ||rpad(pxdivcode,10)
+     ||rpad(pxcompanycode,10) as extract_line
+from (
+select a.vendor_code  AS vendor_code
+     , b.company_code AS company_code
+     , '149'          AS sales_org_code
+     , ' '            AS distribution_channel
+     , ' '            AS division
+     , 'Y'            AS PACSVendor
+     , a.vendor_name_01 ||' '|| a.vendor_name_02 AS Longname
+     , '1'            AS tax_exempt
+     , a.customer_code AS Attribute
+     , '149'          AS pxdivcode
+     , '149'          AS pxcompanycode
+from bds_vend_header a, bds_vend_comp b
+where a.vendor_code = b.vendor_code
+and b.company_code = '149'
+and group_key like 'PMX%'
+and a.posting_block_flag is null
+and A.PURCHASING_BLOCK_FLAG is null
+)
 
-select * from dw_order_base
-
-select * from dw_sales_base
 
    /*-------------*/
    /* Begin block */
@@ -87,7 +84,7 @@ select * from dw_sales_base
          /* Create the new interface when required
          /*-*/
          if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX07_EXTRACT');
+            var_instance := lics_outbound_loader.create_interface('PXIPMX05');
          end if;
 
          /*-*/
@@ -125,4 +122,4 @@ select * from dw_sales_base
    /*-------------*/
    end execute;
 
-end PXIPMX07_EXTRACT;
+end PXIPMX05_EXTRACT;

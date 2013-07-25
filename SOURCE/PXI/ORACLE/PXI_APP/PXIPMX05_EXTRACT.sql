@@ -1,27 +1,26 @@
 create or replace 
-PACKAGE          PXIPMX07_EXTRACT as
+PACKAGE          PXIPMX05_EXTRACT as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
- System  : VENUS
- Package : PXIPMX07_EXTRACT
+ System  : LADS
+ Package : PXIPMX05_EXTRACT
  Owner   : DDS_APP
  Author  : Chris Horn & Mal Chambeyron
 
  Description
  -----------
-    VENUS -> LADS (Pass Through) -> Promax PX - Sales Data - PX Interface 306
+    LADS (Outbound) -> Promax PX - Vendor Data - PX Interface 347
 
- This interface selects sales data for the specific creation date and company 
- 149 and extracts that data and then onsends it to Lads for Pass through.
+ This interface selects Vendor Data for New Zealand.
 
  Date          Author                Description
  ------------  --------------------  -----------
- 23/07/2013    Chris Horn            Created.
+ 24/07/2013    Chris Horn            Created.
  
 *******************************************************************************/
 
-   procedure execute(i_creation_date in date default sysdate-1);
+   procedure execute();
 
-end PXIPMX07_EXTRACT;
+end PXIPMX05_EXTRACT;
