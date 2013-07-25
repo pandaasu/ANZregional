@@ -1,4 +1,5 @@
-create or replace package PXIDFN01_LOADER as
+create or replace 
+package        PXIDFN01_LOADER as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -13,7 +14,7 @@ create or replace package PXIDFN01_LOADER as
   Description
   ------------------------------------------------------------------------------
   This package will take the promax demand forecast data and convert it into 
-  the Applo Demand Forecast Format and load it into the demand forecast loading
+  the Apollo Demand Forecast Format and load it into the demand forecast loading
   table and then trigger the normal demand forecast processing job.  
   
   Functions
@@ -29,6 +30,8 @@ create or replace package PXIDFN01_LOADER as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-04  Chris Horn            Created Interface
+  2013-07-18  Jonathan Girling      Updated Interface to reference 
+                                    px_dmnd_lookup table.
 
 *******************************************************************************/
   -- LICS Hooks.

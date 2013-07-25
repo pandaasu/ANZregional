@@ -4,18 +4,18 @@ package body        PXIDFN01_LOADER as
 /*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/  
-  pc_field_week_date constant fflu_common.st_name := 'WeekDate';
-  pc_field_account_code constant fflu_common.st_name := 'AccountCode';
-  pc_field_stock_code constant fflu_common.st_name := 'StockCode';
+  pc_field_week_date        constant fflu_common.st_name := 'WeekDate';
+  pc_field_account_code     constant fflu_common.st_name := 'AccountCode';
+  pc_field_stock_code       constant fflu_common.st_name := 'StockCode';
   pc_field_estimated_volume constant fflu_common.st_name := 'EstEstimatedVolme';
 
 /*******************************************************************************
   Interface Sufix's
 *******************************************************************************/  
   pc_interface_snack constant fflu_common.st_interface := '1';
-  pc_interface_food constant fflu_common.st_interface  := '2';
-  pc_interface_pet  constant fflu_common.st_interface  := '3';
-  pc_interface_nz  constant fflu_common.st_interface   := '4';
+  pc_interface_food  constant fflu_common.st_interface := '2';
+  pc_interface_pet   constant fflu_common.st_interface := '3';
+  pc_interface_nz    constant fflu_common.st_interface := '4';
   
 /*******************************************************************************
   Package Variables
@@ -59,10 +59,10 @@ package body        PXIDFN01_LOADER as
     case fflu_utils.get_interface_suffix 
       when pc_interface_snack then 
         prv_load_file.moe_code := '0009';
+      when pc_interface_food then 
+        prv_load_file.moe_code := '0021';
       when pc_interface_pet then 
         prv_load_file.moe_code := '0196';
-      when pc_interface_snack then 
-        prv_load_file.moe_code := '0009';
       when pc_interface_nz then 
         prv_load_file.moe_code := '0086';
       else 
@@ -117,25 +117,19 @@ package body        PXIDFN01_LOADER as
       WHERE matl_code = reference_functions.full_matl_code (i_zrep_code);
       
     -- Used to lookup the reverse lookup the demand group information.
-    CURSOR csr_demand_group(i_dmnd_plng_node in varchar2) is
+    CURSOR csr_demand_group(i_dmnd_plng_node in varchar2, i_bus_sgmnt_code in varchar2) is
       select 
-        t1.dmnd_grp_code
-      from 
-        dmnd_grp t1
-      where t1.dmnd_plng_node = lpad(i_dmnd_plng_node,10,'0');
+        t1.dmnd_plng_node
+      from
+        px_dmnd_lookup t1
+      where 
+        t1.dmnd_grp_code = lpad(i_dmnd_plng_node,10,'0')
+        and t1.bus_sgmnt_code = lpad(i_bus_sgmnt_code,2,'0');
     -- Record used for createing the load demand data record.
     rv_load_dmnd load_dmnd%rowtype;
   begin
     if fflu_data.parse_data(p_row) = true then
-      -- Now lookup the demand group code.
-      open csr_demand_group (fflu_data.get_char_field(pc_field_account_code));
-      fetch csr_demand_group into rv_load_dmnd.dmdgroup;
-      if csr_demand_group%notfound then 
-        fflu_data.log_field_error(pc_field_account_code,'Could not find account code as a demand planning node in demand group configuration.');
-        rv_load_dmnd.dmdgroup    := null;
-      end if;
-      close csr_demand_group;
-
+      
       -- Now lookup and supply key data. 
       rv_load_dmnd.dmdunit             := null;
       rv_load_dmnd.loc                 := null;
@@ -151,7 +145,8 @@ package body        PXIDFN01_LOADER as
       rv_load_dmnd.file_line           := fflu_utils.get_interface_row;
       rv_load_dmnd.zrep_code           := fflu_data.get_char_field(pc_field_stock_code);
       rv_load_dmnd.source_code         := demand_forecast.get_source_code (rv_load_dmnd.zrep_code);
-
+    
+    
       -- Now perform the matl code validation
       open csr_matl_code (rv_load_dmnd.zrep_code);
       fetch csr_matl_code into rv_matl_code;
@@ -168,9 +163,18 @@ package body        PXIDFN01_LOADER as
       fetch csr_bus_sgmnt_code into rv_load_dmnd.bus_sgmnt_code;
       if csr_bus_sgmnt_code%notfound then 
         fflu_data.log_field_error(pc_field_stock_code,'Could not find business segment for the supplied stock code.');
-        rv_load_dmnd.bus_sgmnt_code      := null;
+        rv_load_dmnd.bus_sgmnt_code := null;
       end if;
       close csr_bus_sgmnt_code;
+      
+      -- Now lookup the demand group code.
+      open csr_demand_group (fflu_data.get_char_field(pc_field_account_code), rv_load_dmnd.bus_sgmnt_code);
+      fetch csr_demand_group into rv_load_dmnd.dmdgroup;
+      if csr_demand_group%notfound then 
+        fflu_data.log_field_error(pc_field_account_code,'Could not find account code as a demand planning node in demand group configuration.');
+        rv_load_dmnd.dmdgroup := null;
+      end if;
+      close csr_demand_group;
 
       -- Initialise the loading variables and reset the processing error flag before processing.      
       rv_load_dmnd.status              := common.gc_loaded;
@@ -196,9 +200,9 @@ package body        PXIDFN01_LOADER as
          bus_sgmnt_code,
          status,
          mars_week,
-         error_msg)
-      VALUES 
-        (rv_load_dmnd.dmdunit, 
+         error_msg
+      ) VALUES (
+         rv_load_dmnd.dmdunit, 
          rv_load_dmnd.dmdgroup, 
          rv_load_dmnd.loc, 
          rv_load_dmnd.casting_mars_week, 
@@ -294,4 +298,3 @@ end PXIDFN01_LOADER;
          where file_id = rv_loaded_file.file_id;
       end if;
       */
-
