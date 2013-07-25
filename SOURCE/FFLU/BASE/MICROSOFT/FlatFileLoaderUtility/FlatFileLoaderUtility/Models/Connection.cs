@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Web;
 using System.Xml;
+using System.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using FlatFileLoaderUtility.Models.Shared;
@@ -82,6 +83,17 @@ namespace FlatFileLoaderUtility.Models
                 if (connection != null)
                     return connection;
 
+                // Restore from cookie, if available
+                var connectionCookie = context.Request.Cookies["conn"];
+                if (connectionCookie != null)
+                {
+                    connection = (from x in connections 
+                                  where x.ConnectionId == Tools.ZeroInvalidInt(connectionCookie.Value) 
+                                  select x).FirstOrDefault();
+                    if (connection != null)
+                        return connection;
+                }
+
                 connection = (connections.Count > 0) ? connections[0] : default(Connection);
 
                 context.Session["Connection"] = connection;
@@ -101,7 +113,14 @@ namespace FlatFileLoaderUtility.Models
                 if (context == null)
                     return;
 
+                // Save in session
                 context.Session["Connection"] = connection;
+
+                // Save in cookie for longer term remembering
+                var cookie = new HttpCookie("conn", connection.ConnectionId.ToString());
+                cookie.Expires = DateTime.Now.AddYears(5);
+                context.Response.Cookies.Add(cookie);
+
             }
             catch (Exception ex)
             {
