@@ -7,7 +7,7 @@ PACKAGE          PXIPMX07_EXTRACT as
  System  : VENUS
  Package : PXIPMX07_EXTRACT
  Owner   : DDS_APP
- Author  : Chris Horn & Mal Chambeyron
+ Author  : Chris Horn and Mal Chambeyron
 
  Description
  -----------
@@ -19,9 +19,11 @@ PACKAGE          PXIPMX07_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  23/07/2013    Chris Horn            Created.
+ 25/07/2013    Mal Chambeyron        Formatted SQL Output         
  
 *******************************************************************************/
 
    procedure execute(i_creation_date in date default sysdate-1);
 
 end PXIPMX07_EXTRACT;
+/
