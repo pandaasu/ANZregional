@@ -7,7 +7,7 @@ PACKAGE          PXIPMX05_EXTRACT as
  System  : LADS
  Package : PXIPMX05_EXTRACT
  Owner   : DDS_APP
- Author  : Chris Horn & Mal Chambeyron
+ Author  : Chris Horn and Mal Chambeyron
 
  Description
  -----------
@@ -18,9 +18,10 @@ PACKAGE          PXIPMX05_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.
+ 26/07/2013    Mal Chambeyron        Formatted SQL Output         
  
 *******************************************************************************/
 
-   procedure execute();
+   procedure execute;
 
 end PXIPMX05_EXTRACT;

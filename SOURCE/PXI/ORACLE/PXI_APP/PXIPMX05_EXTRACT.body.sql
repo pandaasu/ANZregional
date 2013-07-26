@@ -10,7 +10,7 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(i_datime in date default sysdate-1) is
+   procedure execute is
 
       /*-*/
       /* Local definitions
@@ -22,48 +22,28 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
       /* Local cursors
       /*-*/
       cursor csr_input is
-        select RPAD(xx,10,' ') ||
-        RPAD(xx,10,' ') ||
-        RPAD(xx,10,' ') ||
-        RPAD(xx,10,' ') ||
-          as data 
-        from 
-
-Mal, Suggest we move interface constants into the top formatting query.  
-
-
-select '347001'
-     ||rpad(vendor_code,10)
-     ||rpad(company_code,4)
-     ||rpad(sales_org_code,4)
-     ||rpad(distribution_channel,2)
-     ||rpad(division,2)
-     ||PACSVendor
-     ||rpad(substr(Longname,1,40),40)
-     ||tax_exempt
-     ||rpad(attribute,20)
-     ||rpad(pxdivcode,10)
-     ||rpad(pxcompanycode,10) as extract_line
-from (
-select a.vendor_code  AS vendor_code
-     , b.company_code AS company_code
-     , '149'          AS sales_org_code
-     , ' '            AS distribution_channel
-     , ' '            AS division
-     , 'Y'            AS PACSVendor
-     , a.vendor_name_01 ||' '|| a.vendor_name_02 AS Longname
-     , '1'            AS tax_exempt
-     , a.customer_code AS Attribute
-     , '149'          AS pxdivcode
-     , '149'          AS pxcompanycode
-from bds_vend_header a, bds_vend_comp b
-where a.vendor_code = b.vendor_code
-and b.company_code = '149'
-and group_key like 'PMX%'
-and a.posting_block_flag is null
-and A.PURCHASING_BLOCK_FLAG is null
-)
-
+        select
+          rpad(trim('347001'), 6, ' ') || -- CONSTANT '347001' -> ICRecordType
+          rpad(trim(company_code), 10, ' ') || -- bds_vend_comp.company_code -> VendorNumber
+          rpad(trim(alias_longname), 40, ' ') || -- bds_vend_header.alias_longname -> Longname
+          rpad(trim('Y'), 1, ' ') || -- CONSTANT 'Y' -> PACSVendor
+          rpad(trim('1'), 1, ' ') || -- CONSTANT '1' -> TaxExempt
+          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
+          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXDivisionCode
+        from (
+          select a.vendor_code,
+            b.company_code,
+            a.vendor_name_01 ||' '|| a.vendor_name_02 as alias_longname
+          from 
+            bds_vend_header a, 
+            bds_vend_comp b
+          where 
+            a.vendor_code = b.vendor_code
+            and b.company_code = '149'
+            and group_key like 'PMX%'
+            and a.posting_block_flag is null
+            and a.purchasing_block_flag is null
+        );
 
    /*-------------*/
    /* Begin block */
