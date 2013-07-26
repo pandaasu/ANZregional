@@ -689,18 +689,18 @@
         <table cellspacing="4">
             <tr>
                 <td style="width:100px;"><label for="ddlInterfaceGroup">Interface Group</label></td>
-                <td style="width:420px;">@Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup" })</td>
+                <td style="width:480px;">@Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style = "width:467px" })</td>
                 <td></td>
             </tr>
             <tr>
                 <td><label for="ddlInterface">Interface</label></td>
-                <td>@Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", @class = "validate[required]" })</td>
+                <td>@Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", @class = "validate[required]", style = "width:467px" })</td>
                 <td id="tdFileType"></td>
             </tr>
             <tr>
                 <td><label for="fakefile">File</label></td>
                 <td>
-                    <input id="fakefile" /> <button id="fakefileButton">Browse...</button>
+                    <input id="fakefile" style="width:368px;" /> <button id="fakefileButton">Browse...</button>
                     <div style="display:none;"><input type="file" id="file" class="validate[required]" /></div>
                 </td>
                 <td></td>
