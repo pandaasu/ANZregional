@@ -45,7 +45,8 @@ PACKAGE BODY FFLU_COMMON AS
 *******************************************************************************/
   function sqlerror_string(i_message in varchar2) return st_string is
   begin
-    return substrb(i_message || ' : ' || SQLERRM, 1, 4000);
+    -- Note the replace to Oracle is done so that the code in the flu front end doesn't remove it.  
+    return substrb(i_message || ' : [' || replace(SQLERRM,'ORA-','Oracle-') || ']', 1, 4000);  
   end sqlerror_string;
 
 

@@ -21,28 +21,28 @@ declare
 begin
   v_count := fflu_api.get_xaction_count(
     'HORNCHR', -- i_user_code in varchar2
-    null, -- interface_group_code in varchar2,
+    'LAWS_OF_GROWTH', -- interface_group_code in varchar2,
     null, -- i_interface_code in varchar2, 
     null, -- i_interface_type_code in varchar2, 
     null, -- i_xaction_seq in fflu_common.st_sequence,
     '7', -- i_xaction_status_code in fflu_common.st_status,
-    sysdate-3, -- i_start_datetime in date,
-    sysdate-2 -- i_end_datetime in date
+    null, -- i_start_datetime in date,
+    null -- i_end_datetime in date
     );
   dbms_output.put_line('Filer Count : ' || v_count);
 end;
 
 -- Call to fetch the current page of interface data to be displayed.  
-select * from table(fflu_api_dev.get_xaction_list(
+select * from table(fflu_api.get_xaction_list(
     'HORNCHR', -- i_user_code in varchar2
-    null, -- interface_group_code in varchar2,
+    'EFXCDW_INBOUND', -- interface_group_code in varchar2,
     null, -- i_interface_code in varchar2, 
     null, -- i_interface_type_code in varchar2, 
     null, -- i_xaction_seq in fflu_common.st_sequence,
     null, -- i_xaction_status_code in fflu_common.st_status,
-    sysdate-3, -- i_start_datetime in date,
-    sysdate-2, -- i_end_datetime in date,
-    11, -- i_start_row in fflu_common.st_count,
+    null, -- i_start_datetime in date,
+    null, -- i_end_datetime in date,
+    1, -- i_start_row in fflu_common.st_count,
     10 -- i_no_rows in fflu_common.st_count
 ));
 
@@ -97,6 +97,8 @@ select * from table (fflu_api.get_xaction_data_errors_by_row(
   1, -- i_from_data_row fflu_common.st_count,
   2 -- i_to_data_row fflu_common.st_count
 ));
+
+
 
 
 
