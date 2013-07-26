@@ -25,3 +25,4 @@ PACKAGE          PXIPMX05_EXTRACT as
    procedure execute;
 
 end PXIPMX05_EXTRACT;
+/

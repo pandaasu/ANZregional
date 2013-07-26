@@ -29,14 +29,14 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
           rpad(trim('Y'), 1, ' ') || -- CONSTANT 'Y' -> PACSVendor
           rpad(trim('1'), 1, ' ') || -- CONSTANT '1' -> TaxExempt
           rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
-          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXDivisionCode
+          rpad(trim('149'), 10, ' ') -- CONSTANT '149' -> PXDivisionCode
         from (
           select a.vendor_code,
             b.company_code,
             a.vendor_name_01 ||' '|| a.vendor_name_02 as alias_longname
           from 
-            bds_vend_header a, 
-            bds_vend_comp b
+            bds_vend_header@ap0064p_promax_testing a, 
+            bds_vend_comp@ap0064p_promax_testing b
           where 
             a.vendor_code = b.vendor_code
             and b.company_code = '149'
@@ -103,3 +103,4 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
    end execute;
 
 end PXIPMX05_EXTRACT;
+/
