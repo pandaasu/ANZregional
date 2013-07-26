@@ -79,7 +79,7 @@ namespace FlatFileLoaderUtility.Repositories.DataAccess
                 this.Command.CommandType = CommandType.Text;
                 this.Command.CommandText = "begin :result := " + Properties.Settings.Default.DatabasePackageName + ".get_xaction_count(:i_user_code, :i_interface_group_code, :i_interface_code, :i_interface_type_code, :i_xaction_seq, :i_xaction_status_code, :i_start_datetime, :i_end_datetime); end;";
                 this.Command.Parameters.Add("i_user_code", OracleType.VarChar, 30).Value = userCode;
-                this.Command.Parameters.Add("i_interface_group_code", OracleType.VarChar, 10).Value = interfaceGroupCode.ToSqlNullable("*");
+                this.Command.Parameters.Add("i_interface_group_code", OracleType.VarChar, 32).Value = interfaceGroupCode.ToSqlNullable("*");
                 this.Command.Parameters.Add("i_interface_code", OracleType.VarChar, 32).Value = interfaceCode.ToSqlNullable();
                 this.Command.Parameters.Add("i_interface_type_code", OracleType.VarChar, 10).Value = interfaceTypeCode.ToSqlNullable();
                 this.Command.Parameters.Add("i_xaction_seq", OracleType.Int32).Value = licsId.ToSqlNullable<int>();
