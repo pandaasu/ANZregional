@@ -37,6 +37,8 @@ PACKAGE BODY          PXIPMX07_EXTRACT as
           rpad(trim(doc_currcy_code), 5, ' ') -- dw_sales_base.doc_currcy_code -> Currency
           as data 
         from (
+        ------------------------------------------------------------------------
+        ------------------------------------------------------------------------
           select 
             t1.hdr_division_code,
             t1.company_code,
@@ -58,6 +60,8 @@ PACKAGE BODY          PXIPMX07_EXTRACT as
             -- and t1.creatn_date = trunc(i_datime) 
             and t1.order_doc_num = t2.order_doc_num (+) 
             and t1.order_doc_line_num = t2.order_doc_line_num (+)
+        ------------------------------------------------------------------------
+        ------------------------------------------------------------------------
         );
 
    /*-------------*/

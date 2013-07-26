@@ -31,6 +31,8 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
           rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
           rpad(trim('149'), 10, ' ') -- CONSTANT '149' -> PXDivisionCode
         from (
+        ------------------------------------------------------------------------
+        ------------------------------------------------------------------------
           select a.vendor_code,
             b.company_code,
             a.vendor_name_01 ||' '|| a.vendor_name_02 as alias_longname
@@ -43,6 +45,8 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
             and group_key like 'PMX%'
             and a.posting_block_flag is null
             and a.purchasing_block_flag is null
+        ------------------------------------------------------------------------
+        ------------------------------------------------------------------------
         );
 
    /*-------------*/
