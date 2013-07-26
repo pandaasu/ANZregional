@@ -238,7 +238,7 @@
                             status.Message = "Error while retrieving details.";
                             status.Exception = response.Message;
                             status.IsError = true;
-                            ShowResult();
+                            ShowResult(false);
                         }
                         else {
                             $(":input").removeAttr("disabled").trigger("liszt:updated");
@@ -270,7 +270,7 @@
                         status.Message = "Error communicating with server.";
                         status.Exception = (isTest) ? thrownError : "";
                         status.IsError = true;
-                        ShowResult();
+                        ShowResult(false);
                     }
                 });
             });
@@ -297,6 +297,7 @@
                     modal: true,
                     close: function (event, ui) {
                         continueMonitoring = false;
+                        location.reload(true);
                     }
                 });
 
@@ -332,7 +333,7 @@
                             status.Message = "Error while resubmitting the interface.";
                             status.Exception = response.Message;
                             status.IsError = true;
-                            ShowResult();
+                            ShowResult(false);
                         }
                         else {
                             $(":input").removeAttr("disabled").trigger("liszt:updated");
@@ -344,7 +345,7 @@
                         status.Message = "Error communicating with server.";
                         status.Exception = (isTest) ? thrownError : "";
                         status.IsError = true;
-                        ShowResult();
+                        ShowResult(false);
                     }
                 });
             });
@@ -368,7 +369,9 @@
         }
 
         // Called to show the result of an operation
-        function ShowResult() {
+        function ShowResult(refreshOnClose) {
+            var doRefreshOnClose = refreshOnClose;
+            
             // Re-enable the form underneath the dialog
             $(":input").removeAttr("disabled").trigger("liszt:updated");
 
@@ -410,8 +413,11 @@
                 buttons: {
                     Ok: function () {
                         $(this).dialog("close");
-                        location.reload();
                     }
+                },
+                close: function (event, ui) {
+                    if (doRefreshOnClose)
+                        location.reload(true);
                 }
             });
         }
@@ -435,7 +441,7 @@
                         status.IsError = true;
                         status.Message = "Error while monitoring status."
                         status.Exception = response.Message;
-                        ShowResult();
+                        ShowResult(true);
                     }
                     else {
                         if (response.Total > 0 && response.Current > 0)
@@ -457,7 +463,7 @@
                             status.Exception = "";
                             status.InterfaceErrorCount = response.InterfaceErrorCount;
                             status.RowErrorCount = response.RowErrorCount;
-                            ShowResult();
+                            ShowResult(true);
                         }
                         else {
                             // Wait a second before polling again
@@ -470,7 +476,7 @@
                     status.IsError = true;
                     status.Message = "Error communicating with server.";
                     status.Exception = (isTest) ? thrownError : "";
-                    ShowResult();
+                    ShowResult(true);
                 }
             });
         }
