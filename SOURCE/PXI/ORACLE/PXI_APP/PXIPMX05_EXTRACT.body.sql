@@ -22,20 +22,26 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
       /* Local cursors
       /*-*/
       cursor csr_input is
+        --======================================================================
         select
-          rpad(trim('347001'), 6, ' ') || -- CONSTANT '347001' -> ICRecordType
-          rpad(trim(company_code), 10, ' ') || -- bds_vend_comp.company_code -> VendorNumber
-          rpad(trim(alias_longname), 40, ' ') || -- bds_vend_header.alias_longname -> Longname
-          rpad(trim('Y'), 1, ' ') || -- CONSTANT 'Y' -> PACSVendor
-          rpad(trim('1'), 1, ' ') || -- CONSTANT '1' -> TaxExempt
-          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
-          rpad(trim('149'), 10, ' ') -- CONSTANT '149' -> PXDivisionCode
+        ------------------------------------------------------------------------
+        -- FORMAT OUTPUT
+        ------------------------------------------------------------------------
+          pxi_common.char_format('347001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '347001' -> ICRecordType
+          pxi_common.char_format(company_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- company_code -> VendorNumber
+          pxi_common.char_format(longname, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- longname -> Longname
+          pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSVendor
+          pxi_common.char_format('1', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '1' -> TaxExempt
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) -- CONSTANT '149' -> PXDivisionCode
+        ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
+        -- SQL
         ------------------------------------------------------------------------
           select a.vendor_code,
             b.company_code,
-            a.vendor_name_01 ||' '|| a.vendor_name_02 as alias_longname
+            a.vendor_name_01 ||' '|| a.vendor_name_02 as longname
           from 
             bds_vend_header@ap0064p_promax_testing a, 
             bds_vend_comp@ap0064p_promax_testing b
@@ -46,8 +52,8 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
             and a.posting_block_flag is null
             and a.purchasing_block_flag is null
         ------------------------------------------------------------------------
-        ------------------------------------------------------------------------
         );
+        --======================================================================
 
    /*-------------*/
    /* Begin block */

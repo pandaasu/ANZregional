@@ -22,19 +22,25 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
       /* Local cursors
       /*-*/
       cursor csr_input is
+        --======================================================================
         select
-          rpad(trim('300001'), 6, ' ') || -- CONSTANT '300001' -> ICRecordType
-          rpad(trim(customer_code), 10, ' ') || -- .customer_code -> CustomerNumber
-          rpad(trim(customer_name), 40, ' ') || -- .customer_name -> Longname
-          rpad(trim('Y'), 1, ' ') || -- CONSTANT 'Y' -> PACSCustomer
-          rpad(trim(payer_customer_code), 10, ' ') || -- .payer_customer_code -> PayerCode
-          rpad(trim(tax_exempt), 1, ' ') || -- .tax_exempt -> TaxExempt
-          rpad(trim('NZD'), 3, ' ') || -- CONSTANT 'NZD' -> DefaultCurrenty
-          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXDivisionCode
-          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
-          rpad(trim('149'), 3, ' ') -- CONSTANT '149' -> SalesOrg
+        ------------------------------------------------------------------------
+        -- FORMAT OUTPUT
+        ------------------------------------------------------------------------
+          pxi_common.char_format('300001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '300001' -> ICRecordType
+          pxi_common.char_format(customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- customer_code -> CustomerNumber
+          pxi_common.char_format(customer_name, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_name -> Longname
+          pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSCustomer
+          pxi_common.char_format(payer_customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- payer_customer_code -> PayerCode
+          pxi_common.char_format(tax_exempt, 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- tax_exempt -> TaxExempt
+          pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'NZD' -> DefaultCurrenty
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '149' -> SalesOrg
+        ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
+        -- SQL
         ------------------------------------------------------------------------
           select 
             t10.customer_code, 
@@ -86,8 +92,8 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
               t1.customer_code not like '004%'
             ) t10
         ------------------------------------------------------------------------
-        ------------------------------------------------------------------------
         );
+        --======================================================================
 
    /*-------------*/
    /* Begin block */

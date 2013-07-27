@@ -22,22 +22,27 @@ PACKAGE BODY          PXIPMX07_EXTRACT as
       /* Local cursors
       /*-*/
       cursor csr_input is
+        --======================================================================
         select 
-          rpad(trim('306001'), 6, ' ') || -- CONSTANT '306001' -> ICRecordType
-          rpad(trim('149'), 10, ' ') || -- CONSTANT '149' -> PXCompanyCode
-          rpad(trim(hdr_division_code), 10, ' ') || -- dw_sales_base.hdr_division_code -> PXDivisionCode
-          rpad(trim(sold_to_cust_code), 20, ' ') || -- dw_sales_base.sold_to_cust_code -> CustomerNumber
-          rpad(trim(billing_doc_num), 10, ' ') || -- dw_sales_base.billing_doc_num -> InvoiceNumber
-          rpad(trim(billing_doc_line_num), 6, ' ') || -- dw_sales_base.billing_doc_line_num -> InvoiceLineNumber
-          rpad(trim(matl_entd), 18, ' ') || -- dw_sales_base.matl_entd -> Material
-          lpad(to_char(order_eff_date, 'dd/mm/yyyy'), 10, ' ') || -- dw_order_base.order_eff_date -> OrderDate
-          lpad(to_char(billing_eff_date, 'dd/mm/yyyy'), 10, ' ') || -- dw_sales_base.billing_eff_date -> InvoiceDate
-          lpad(to_char(billed_qty_base_uom, '9999999999999.00'), 17, ' ') || -- dw_sales_base.billed_qty_base_uom -> QuantityInvoiced
-          lpad(to_char(billed_gsv, '999999999.00'), 13, ' ') || -- dw_sales_base.billed_gsv -> GrossAmount
-          rpad(trim(doc_currcy_code), 5, ' ') -- dw_sales_base.doc_currcy_code -> Currency
-          as data 
+        ------------------------------------------------------------------------
+        -- FORMAT OUTPUT
+        ------------------------------------------------------------------------
+          pxi_common.char_format('306001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '306001' -> ICRecordType
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format(hdr_division_code, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- hdr_division_code -> PXDivisionCode
+          pxi_common.char_format(sold_to_cust_code, 20, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- sold_to_cust_code -> CustomerNumber
+          pxi_common.char_format(billing_doc_num, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- billing_doc_num -> InvoiceNumber
+          pxi_common.char_format(billing_doc_line_num, 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- billing_doc_line_num -> InvoiceLineNumber
+          pxi_common.char_format(matl_entd, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- matl_entd -> Material
+          pxi_common.date_format(order_eff_date, 'dd/mm/yyyy', pxi_common.is_not_nullable) || -- order_eff_date -> OrderDate
+          pxi_common.date_format(billing_eff_date, 'dd/mm/yyyy', pxi_common.is_not_nullable) || -- billing_eff_date -> InvoiceDate
+          pxi_common.numb_format(billed_qty_base_uom, 'S9999999999990.00', pxi_common.is_not_nullable) || -- billed_qty_base_uom -> QuantityInvoiced
+          pxi_common.numb_format(billed_gsv, 'S999999990.00', pxi_common.is_not_nullable) || -- billed_gsv -> GrossAmount
+          pxi_common.char_format(doc_currcy_code, 5, pxi_common.format_type_none, pxi_common.is_nullable) -- doc_currcy_code -> Currency
+        ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
+        -- SQL
         ------------------------------------------------------------------------
           select 
             t1.hdr_division_code,
@@ -52,17 +57,16 @@ PACKAGE BODY          PXIPMX07_EXTRACT as
             t1.billed_gsv,
             t1.doc_currcy_code
           from 
-            dw_sales_base t1,
-            dw_order_base t2
+            dw_sales_base@db1270p_promax_testing t1,
+            dw_order_base@db1270p_promax_testing t2
           where 
             t1.company_code = 149 
-            and t1.creatn_date = to_date('31/12/2001','DD/MM/YYYY') 
-            -- and t1.creatn_date = trunc(i_datime) 
+            and t1.creatn_date = trunc(i_creation_date) 
             and t1.order_doc_num = t2.order_doc_num (+) 
             and t1.order_doc_line_num = t2.order_doc_line_num (+)
         ------------------------------------------------------------------------
-        ------------------------------------------------------------------------
         );
+        --======================================================================
 
    /*-------------*/
    /* Begin block */
