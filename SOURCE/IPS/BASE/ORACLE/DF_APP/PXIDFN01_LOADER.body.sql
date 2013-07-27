@@ -34,10 +34,10 @@ package body        PXIDFN01_LOADER as
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier);
     -- Now define the column structure
-    fflu_data.add_date_field_txt(pc_field_week_date,9,8,'DDMMYYYY');
-    fflu_data.add_char_field_txt(pc_field_account_code,57,10);
-    fflu_data.add_char_field_txt(pc_field_stock_code,125,18);
-    fflu_data.add_number_field_txt(pc_field_estimated_volume,143,10,'9999999999');
+    fflu_data.add_date_field_txt(pc_field_week_date,1,8,'DDMMYYYY');
+    fflu_data.add_char_field_txt(pc_field_account_code,9,10);
+    fflu_data.add_char_field_txt(pc_field_stock_code,19,18);
+    fflu_data.add_number_field_txt(pc_field_estimated_volume,37,10,'9999999999');
     
     -- Assign the inferface file name to the loading table record.
     prv_load_file.file_name := fflu_utils.get_interface_filename;
@@ -119,11 +119,11 @@ package body        PXIDFN01_LOADER as
     -- Used to lookup the reverse lookup the demand group information.
     CURSOR csr_demand_group(i_dmnd_plng_node in varchar2, i_bus_sgmnt_code in varchar2) is
       select 
-        t1.dmnd_plng_node
+        t1.dmnd_grp_code
       from
         px_dmnd_lookup t1
       where 
-        t1.dmnd_grp_code = lpad(i_dmnd_plng_node,10,'0')
+        t1.dmnd_plng_node = lpad(i_dmnd_plng_node,10,'0')
         and t1.bus_sgmnt_code = lpad(i_bus_sgmnt_code,2,'0');
     -- Record used for createing the load demand data record.
     rv_load_dmnd load_dmnd%rowtype;
@@ -145,7 +145,6 @@ package body        PXIDFN01_LOADER as
       rv_load_dmnd.file_line           := fflu_utils.get_interface_row;
       rv_load_dmnd.zrep_code           := fflu_data.get_char_field(pc_field_stock_code);
       rv_load_dmnd.source_code         := demand_forecast.get_source_code (rv_load_dmnd.zrep_code);
-    
     
       -- Now perform the matl code validation
       open csr_matl_code (rv_load_dmnd.zrep_code);
@@ -171,7 +170,7 @@ package body        PXIDFN01_LOADER as
       open csr_demand_group (fflu_data.get_char_field(pc_field_account_code), rv_load_dmnd.bus_sgmnt_code);
       fetch csr_demand_group into rv_load_dmnd.dmdgroup;
       if csr_demand_group%notfound then 
-        fflu_data.log_field_error(pc_field_account_code,'Could not find account code as a demand planning node in demand group configuration.');
+        fflu_data.log_field_error(pc_field_account_code,'Could not find account code as a demand planning node in promax demand lookup table for material business segment [' || rv_load_dmnd.bus_sgmnt_code || '].');
         rv_load_dmnd.dmdgroup := null;
       end if;
       close csr_demand_group;
