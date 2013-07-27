@@ -11,9 +11,7 @@ PACKAGE          PXIPMX05_EXTRACT as
 
  Description
  -----------
-    LADS (Outbound) -> Promax PX - Vendor Data - PX Interface 347
-
- This interface selects Vendor Data for New Zealand.
+ LADS (Outbound) -> Promax PX - Vendor Data - PX Interface 347 (New Zealand)
 
  Date          Author                Description
  ------------  --------------------  -----------

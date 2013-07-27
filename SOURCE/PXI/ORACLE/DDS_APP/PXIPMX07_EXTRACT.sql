@@ -11,7 +11,7 @@ PACKAGE          PXIPMX07_EXTRACT as
 
  Description
  -----------
-    VENUS -> LADS (Pass Through) -> Promax PX - Sales Data - PX Interface 306
+ VENUS -> LADS (Pass Through) -> Promax PX - Sales Data - PX Interface 306
 
  This interface selects sales data for the specific creation date and company 
  149 and extracts that data and then onsends it to Lads for Pass through.

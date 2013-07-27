@@ -5,16 +5,14 @@ PACKAGE          PXIPMX03_EXTRACT as
 /******************************************************************************/
 /**
  System  : LADS
- Package : PXIPMX05_EXTRACT
+ Package : PXIPMX03_EXTRACT
  Owner   : DDS_APP
  Author  : Chris Horn and Mal Chambeyron
 
  Description
  -----------
-    LADS (Outbound) -> Promax PX - Customer Data - PX Interface 300
-
- This interface selects Vendor Data for New Zealand.
-
+ LADS (Outbound) -> Promax PX - Customer Data - PX Interface 300 (New Zealand)
+ 
  Date          Author                Description
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.

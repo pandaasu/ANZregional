@@ -1,18 +1,18 @@
 create or replace 
-PACKAGE          PXIPMX01_EXTRACT as
+PACKAGE          PXIPMX06_EXTRACT as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
  System  : LADS
- Package : PXIPMX01_EXTRACT
+ Package : PXIPMX06_EXTRACT
  Owner   : DDS_APP
  Author  : Chris Horn and Mal Chambeyron
 
  Description
  -----------
- LADS (Outbound) -> Promax PX - Product Data - PX Interface 302 (New Zealand)
-
+ LADS (Outbound) -> Promax PX - Price Data - PX Interface 330 (New Zealand)
+ 
  Date          Author                Description
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.
@@ -22,5 +22,5 @@ PACKAGE          PXIPMX01_EXTRACT as
 
    procedure execute;
 
-end PXIPMX01_EXTRACT;
+end PXIPMX06_EXTRACT;
 /
