@@ -232,24 +232,20 @@ package body        PXIDFN01_LOADER as
 *******************************************************************************/  
   procedure on_end is 
    -- Demand Constants. 
-   c_dmnd_alt_group constant common.st_name := 'FCST_ALERT';
-   c_dmnd_alt_code constant common.st_name := 'DEMAND_PROCESSING';
-   c_dmnd_ema_group constant common.st_name := 'FCST_EMAIL_GROUP';
-   c_dmnd_ema_code constant common.st_name := 'DEMAND_PROCESSING';
-   c_dmnd_tri_group constant common.st_name := 'FCST_JOB_GROUP';
-   c_dmnd_tri_code constant common.st_name := 'DEMAND_PROCESSING';
+   c_parameter_moe constant common.st_name := 'MOE';
+   c_parameter_file_id constant common.st_name := 'FILE_ID';
+   c_stream_package constant common.st_name := 'DF_DEMAND_DRAFT';
   begin 
     -- Only perform a commit if there were no errors at all. 
     if fflu_data.was_errors = true then 
       rollback;
     else 
       commit;
-      -- Now trigger the necessary lics processing jobs.
-      lics_trigger_loader.execute('Forecast Processing - Demand',
-                                  'df_app.fcst_processing.process(''' || prv_load_file.wildcard || ''')',
-                                  lics_setting_configuration.retrieve_setting(c_dmnd_alt_group, c_dmnd_alt_code),
-                                  lics_setting_configuration.retrieve_setting(c_dmnd_ema_group, c_dmnd_ema_code),
-                                  lics_setting_configuration.retrieve_setting(c_dmnd_tri_group, c_dmnd_tri_code));
+      -- Now trigger the necessary lics stream processing jobs.
+      lics_stream_loader.clear_parameters;
+      lics_stream_loader.set_parameter(c_parameter_moe,prv_load_file.file_id);
+      lics_stream_loader.set_parameter(c_parameter_file_id,to_char(prv_load_file.file_id));
+      lics_stream_loader.execute(c_stream_package,null);
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;
@@ -276,24 +272,3 @@ package body        PXIDFN01_LOADER as
   end on_get_csv_qualifier;
 
 end PXIDFN01_LOADER;
-
-
-      /* CHRIS HORN 05/07/2013 - THIS OLD CODE SHOULD NOT BE NEEDED, BUT NEEDS TO BE VALIDATED BEFORE REMOVING. =>  ON_START
-      CURSOR csr_loaded_file (i_file_name in varchar2) IS
-         SELECT file_id
-         FROM load_file
-         WHERE upper(file_name) = upper(i_file_name);
-      rv_loaded_file csr_loaded_file%ROWTYPE;
-      rcd_load_file.file_name    := lics_inbound_processor.callback_file_name;
-      open csr_loaded_file (rcd_load_file.file_name);
-      fetch csr_loaded_file into rv_loaded_file;
-      close csr_loaded_file;
-      if (rv_loaded_file.file_id is not null) then
-         delete
-         from load_dmnd
-         where file_id = rv_loaded_file.file_id;
-         delete
-         from load_file
-         where file_id = rv_loaded_file.file_id;
-      end if;
-      */
