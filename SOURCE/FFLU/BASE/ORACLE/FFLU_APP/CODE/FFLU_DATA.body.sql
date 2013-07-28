@@ -552,8 +552,8 @@ package body fflu_data as
     i_column_name in fflu_common.st_name,
     i_min_length in fflu_common.st_size default null,
     i_max_length in fflu_common.st_size default null,
-    i_allow_null in boolean default false,
-    i_trim in boolean default false
+    i_allow_null in boolean default gc_not_allow_null,
+    i_trim in boolean default gc_not_trim
     ) is
     rv_field rt_field;
   begin
@@ -582,8 +582,8 @@ package body fflu_data as
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_min_length in fflu_common.st_size default null,
-    i_allow_null in boolean default false,
-    i_trim in boolean default true) is
+    i_allow_null in boolean default gc_not_allow_null,
+    i_trim in boolean default gc_trim) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -616,7 +616,7 @@ package body fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin
@@ -647,7 +647,7 @@ package body fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin
@@ -684,7 +684,7 @@ package body fflu_data as
     i_offset_len in fflu_common.st_length default null,
     i_min_date in date default null, 
     i_max_date in date default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin
@@ -719,7 +719,7 @@ package body fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_date in date default null, 
     i_max_date in date default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin
@@ -757,7 +757,7 @@ package body fflu_data as
     i_offset_len in fflu_common.st_length default null,
     i_min_number in number default null, 
     i_max_number in number default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin
@@ -794,7 +794,7 @@ package body fflu_data as
     i_format in fflu_common.st_name default null,
     i_min_number in number default null, 
     i_max_number in number default null,
-    i_allow_null in boolean default false,
+    i_allow_null in boolean default gc_not_allow_null,
     i_nls_options in varchar2 default null) is
     rv_field rt_field;
   begin

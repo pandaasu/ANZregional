@@ -21,6 +21,7 @@ package fflu_utils as
     - log_interface_progress     An interface hook to update its progress.
     - log_interface_error        Adds a JSON formatted interface error to LICS.
     - log_interface_data_error   Adds a JSON formatted interface error to LICS
+    - log_interface_exception    Adds a JSON formatted interface exception to LICS.
     - get_interface_suffix       Returns the interface suffix, everything after .
     - get_interface_filename     Returns the interface filename.
     - get_interface_row          Returns the current interface row number. 
