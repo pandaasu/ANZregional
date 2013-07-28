@@ -91,7 +91,7 @@ package body pxipmx02_extract as
             v_found := true;
             -- Check that the parent node and name are the same.
             if i_node_name <> tv_hierarchy(v_counter).node_name or i_parent_node_code <> tv_hierarchy(v_counter).parent_node_code then 
-              raise_application_error(pc_application_exception,'Node : ' || i_node_code || ' Node Name or Parenet Node Code did not match a previous instance.');
+              raise_application_error(pc_application_exception,'Node : ' || i_node_code || ' Node Name or Parent Node Code did not match a previous instance.');
             end if;
           elsif i_node_code < tv_hierarchy(v_counter).node_code then 
             v_stop := true;  
@@ -176,13 +176,14 @@ package body pxipmx02_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('303001', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303001' -> ICRecordType
-          pxi_common.char_format(node_code, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- node_code -> Attribute
-          pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
-          pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
-          pxi_common.char_format(material_code, 18, pxi_common.format_type_none, pxi_common.is_nullable) || -- material_code -> MaterialNumber
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) -- CONSTANT '149' -> PXDivisionCode
+        pxi_common.char_format('303002', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
+        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+        pxi_common.char_format(node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- node_code -> Attribute
+        pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
+        pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
+        pxi_common.char_format(material_code, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- material_code -> MaterialNumber
+
         ------------------------------------------------------------------------
         from 
           table(get_product_hierarchy);
