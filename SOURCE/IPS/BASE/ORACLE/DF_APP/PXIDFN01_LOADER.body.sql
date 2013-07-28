@@ -34,7 +34,7 @@ package body        PXIDFN01_LOADER as
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier);
     -- Now define the column structure
-    fflu_data.add_date_field_txt(pc_field_week_date,1,8,'DDMMYYYY');
+    fflu_data.add_date_field_txt(pc_field_week_date,1,8,'YYYYMMDD');
     fflu_data.add_char_field_txt(pc_field_account_code,9,10);
     fflu_data.add_char_field_txt(pc_field_stock_code,19,18);
     fflu_data.add_number_field_txt(pc_field_estimated_volume,37,10,'9999999999');
