@@ -112,13 +112,13 @@ package body pxipmx04_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('303001', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303001' -> ICRecordType
-          pxi_common.char_format(node_code, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- node_code -> Attribute
-          pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
-          pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
-          pxi_common.char_format(material_code, 18, pxi_common.format_type_none, pxi_common.is_nullable) || -- material_code -> MaterialNumber
+          pxi_common.char_format('301001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '301001' -> ICRecordType
+          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
           pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- cust_code -> CustomerNumber
+          pxi_common.char_format(cust_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- cust_name -> CustomerDescription
+          pxi_common.char_format(sales_org_code, 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- sales_org_code -> CustomerSalesOrg
+          pxi_common.char_format(parent_cust_code, 10, pxi_common.format_type_none, pxi_common.is_nullable) -- parent_cust_code -> ParentCustomerNumber
         ------------------------------------------------------------------------
         from 
           table(get_product_hierarchy);
