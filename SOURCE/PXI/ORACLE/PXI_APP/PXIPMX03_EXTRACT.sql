@@ -6,7 +6,7 @@ PACKAGE          PXIPMX03_EXTRACT as
 /**
  System  : LADS
  Package : PXIPMX03_EXTRACT
- Owner   : DDS_APP
+ Owner   : PXI_APP
  Author  : Chris Horn and Mal Chambeyron
 
  Description
