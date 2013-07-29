@@ -43,6 +43,7 @@ package fflu_data as
   2013-06-25  Chris Horn            Added a check for the header fields matching.
   2013-06-25  Chris Horn            Moved to a unique field name arrangement.
   2013-07-19  Chris Horn            Added field offset to date functions.  
+  2013-07-29  Chris Horn            Added constants various true false values.
 
 *******************************************************************************/
 
