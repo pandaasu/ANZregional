@@ -126,9 +126,9 @@ create or replace public synonym logr_wod_advert_effctvnss for ods.logr_wod_adve
 grant select, insert, update, delete on logr_wod_advert_effctvnss to ods_app;
 
 -- TV ADVERTISING ACTIVITY
-drop table logr_wod_tv_adverts;
+drop table logr_wod_tv_activity;
 
-create table logr_wod_tv_adverts (
+create table logr_wod_tv_activity (
   version number(6,0),
   brand varchar2(100),
   sgmnt varchar2(100),
@@ -138,11 +138,11 @@ create table logr_wod_tv_adverts (
   four_weekly_reach number(30,10)
 );
 
-create index logr_wod_tv_adverts_nu01 on logr_wod_tv_adverts (version);
+create index logr_wod_tv_activity_nu01 on logr_wod_tv_activity (version);
 
-create or replace public synonym logr_wod_tv_adverts for ods.logr_wod_tv_adverts;
+create or replace public synonym logr_wod_tv_activity for ods.logr_wod_tv_activity;
 
-grant select, insert, update, delete on logr_wod_tv_adverts to ods_app;
+grant select, insert, update, delete on logr_wod_tv_activity to ods_app;
 
 
 -- HOUSEHOLD PENETRATION
