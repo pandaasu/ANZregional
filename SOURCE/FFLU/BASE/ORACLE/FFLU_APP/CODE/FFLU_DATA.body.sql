@@ -443,8 +443,8 @@ package body fflu_data as
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default null,
-    i_csv_header in boolean default false, 
-    i_allow_missing in boolean default false) is
+    i_csv_header in boolean default gc_no_csv_header, 
+    i_allow_missing in boolean default gc_not_allow_missing) is
   begin
     pv_initialised := true;
     pv_errors := false;

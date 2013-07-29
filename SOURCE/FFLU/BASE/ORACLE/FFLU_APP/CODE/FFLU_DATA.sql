@@ -51,10 +51,16 @@ package fflu_data as
   The following system constants are available for use with various functions 
   below for easy reability of source code.
 *******************************************************************************/
-  gc_allow_null     boolean := true;
-  gc_not_allow_null boolean := false;
-  gc_trim           boolean := true;
-  gc_not_trim       boolean := false;
+  -- Data Parser Initialisation Constants.
+  gc_csv_header        boolean := true;
+  gc_no_csv_header     boolean := false;
+  gc_allow_missing     boolean := true;
+  gc_not_allow_missing boolean := false;
+  -- Field Constants
+  gc_allow_null        boolean := true;
+  gc_not_allow_null    boolean := false;
+  gc_trim              boolean := true;
+  gc_not_trim          boolean := false;
 
 /*******************************************************************************
   NAME:      INITIALISE
@@ -76,8 +82,8 @@ package fflu_data as
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default null,
-    i_csv_header in boolean default false, 
-    i_allow_missing in boolean default false);
+    i_csv_header in boolean default gc_no_csv_header, 
+    i_allow_missing in boolean default gc_not_allow_missing);
     
 
 /*******************************************************************************
