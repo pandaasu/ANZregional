@@ -28,6 +28,8 @@ PACKAGE BODY          PXIPMX01_EXTRACT as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('302001', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '302001' -> RecordType
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
           pxi_common.char_format(zrep_matl_code, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- zrep_matl_code -> ProductItemNumber
           pxi_common.char_format(zrep_matl_desc, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- zrep_matl_desc -> Description
           pxi_common.char_format('1', 2, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '1' -> Status
@@ -38,8 +40,6 @@ PACKAGE BODY          PXIPMX01_EXTRACT as
           pxi_common.char_format(tdu_uom, 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- tdu_uom -> SellableUOM
           pxi_common.numb_format(rsus_per_tdu, '99999999999990', pxi_common.is_nullable) || -- rsus_per_tdu -> UnitsPerCase
           pxi_common.numb_format(rsus_per_tdu, '99999999999990', pxi_common.is_nullable) || -- rsus_per_tdu -> BaseUnitsPerSellable
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
           pxi_common.char_format('0', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '0' -> Type
           pxi_common.numb_format(tdu_net_weight, '9999999990.000', pxi_common.is_nullable) || -- tdu_net_weight -> ShipperNetWeightKG
           pxi_common.numb_format(tdu_height, '9999999990', pxi_common.is_nullable) || -- tdu_height -> CaseHeight
@@ -154,6 +154,7 @@ PACKAGE BODY          PXIPMX01_EXTRACT as
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
+         raise;
 
    /*-------------*/
    /* End routine */

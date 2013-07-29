@@ -540,13 +540,13 @@ package body pxipmx04_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-        pxi_common.char_format('301001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '301001' -> ICRecordType
-        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-        pxi_common.char_format(cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- cust_code -> CustomerNumber
-        pxi_common.char_format(cust_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- cust_name -> CustomerDescription
-        pxi_common.char_format(sales_org_code, 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- sales_org_code -> CustomerSalesOrg
-        pxi_common.char_format(parent_cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- parent_cust_code -> ParentCustomerNumber
+          pxi_common.char_format('301001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '301001' -> ICRecordType
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- cust_code -> CustomerNumber
+          pxi_common.char_format(cust_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- cust_name -> CustomerDescription
+          pxi_common.char_format(sales_org_code, 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- sales_org_code -> CustomerSalesOrg
+          pxi_common.char_format(parent_cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- parent_cust_code -> ParentCustomerNumber
         ------------------------------------------------------------------------
         from 
           table(get_customer_hierarchy);
@@ -603,6 +603,7 @@ package body pxipmx04_extract as
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
+         raise;
 
    /*-------------*/
    /* End routine */

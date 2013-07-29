@@ -28,14 +28,14 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('330002', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '330002' -> RecordType
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '149' -> PXDivisionCode
           pxi_common.char_format('DIV_1', 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- CONSTANT 'DIV_1' -> CustomerCode
           pxi_common.char_format(prodcode, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- prodcode -> MaterialCode
-          pxi_common.date_format(startdate, 'dd/mm/yyyy', pxi_common.is_not_nullable) || -- startdate -> StartDate
-          pxi_common.date_format(enddate, 'dd/mm/yyyy', pxi_common.is_nullable) || -- enddate -> EndDate
+          pxi_common.date_format(startdate, 'yyyymmdd', pxi_common.is_not_nullable) || -- startdate -> StartDate
+          pxi_common.date_format(enddate, 'yyyymmdd', pxi_common.is_nullable) || -- enddate -> EndDate
           pxi_common.numb_format(listprice, '999999990.00', pxi_common.is_nullable) || -- listprice -> ListPrice
-          pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'NZD' -> Currency
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) -- CONSTANT 'NZD' -> Currency
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -167,6 +167,7 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
+         raise;
 
    /*-------------*/
    /* End routine */

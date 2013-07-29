@@ -176,14 +176,13 @@ package body pxipmx02_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-        pxi_common.char_format('303002', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
-        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-        pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-        pxi_common.char_format(node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- node_code -> Attribute
-        pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
-        pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
-        pxi_common.char_format(material_code, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- material_code -> MaterialNumber
-
+          pxi_common.char_format('303002', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- node_code -> Attribute
+          pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
+          pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
+          pxi_common.char_format(material_code, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- material_code -> MaterialNumber
         ------------------------------------------------------------------------
         from 
           table(get_product_hierarchy);
@@ -240,6 +239,7 @@ package body pxipmx02_extract as
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
+         raise;
 
    /*-------------*/
    /* End routine */

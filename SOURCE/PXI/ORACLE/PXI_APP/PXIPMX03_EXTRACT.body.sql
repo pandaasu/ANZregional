@@ -27,15 +27,15 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('300001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '300001' -> ICRecordType
+          pxi_common.char_format('300001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '300001' -> RecordType
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
           pxi_common.char_format(customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- customer_code -> CustomerNumber
           pxi_common.char_format(customer_name, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_name -> Longname
           pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSCustomer
           pxi_common.char_format(payer_customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- payer_customer_code -> PayerCode
           pxi_common.char_format(tax_exempt, 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- tax_exempt -> TaxExempt
           pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'NZD' -> DefaultCurrenty
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format('149', 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
           pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '149' -> SalesOrg
         ------------------------------------------------------------------------
         from (
@@ -146,6 +146,7 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
+         raise;
 
    /*-------------*/
    /* End routine */

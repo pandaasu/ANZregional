@@ -56,7 +56,7 @@ PACKAGE PXIPMX08_EXTRACT AS
     reason_code varchar2(3 char),
     accounting_doc_no varchar2(10 char),
     fiscal_year number(4,0),
-    line_item_no number(3,0),
+    line_item_no varchar2(3),
     bus_partner_ref varchar2(12 char),
     tax_code varchar2(2 char)
   );
@@ -65,7 +65,7 @@ PACKAGE PXIPMX08_EXTRACT AS
 
   type tt_inbound_array is table of rt_inbound index by binary_integer;
 
-  -- function get_inbound return tt_inbound pipelined;
+  function get_inbound return tt_inbound pipelined;
 
 END PXIPMX08_EXTRACT;
 /

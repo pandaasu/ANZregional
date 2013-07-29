@@ -1,5 +1,5 @@
 create or replace 
-PACKAGE BODY          PXIPMX05_EXTRACT as
+PACKAGE BODY          PXIPMX09_EXTRACT as
 
    /*-*/
    /* Private exceptions
@@ -27,30 +27,42 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('347001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '347001' -> ICRecordType
+          pxi_common.char_format('336002', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '336002' -> RecordType
           pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
           pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(company_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- company_code -> VendorNumber
-          pxi_common.char_format(longname, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- longname -> Longname
-          pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSVendor
-          pxi_common.char_format('1', 1, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '1' -> TaxExempt
+          pxi_common.char_format(invoicenumber, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- invoicenumber -> InvoiceNumber
+          pxi_common.char_format(invoicelinenumber, 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
+          pxi_common.char_format(customerhierarchy, 8, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
+          pxi_common.char_format(material, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- material -> Material
+          pxi_common.date_format(invoicedate, 'yyyymmdd', pxi_common.is_not_nullable) || -- invoicedate -> InvoiceDate
+          pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.is_not_nullable) || -- discountgiven -> DiscountGiven
+          pxi_common.char_format(conditiontype, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) -- conditiontype -> ConditionType
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
         ------------------------------------------------------------------------
-          select a.vendor_code,
-            b.company_code,
-            a.vendor_name_01 ||' '|| a.vendor_name_02 as longname
+          select 
+              '336002' as ICRecordType,
+              sales_org as px_company_code,
+              '149' as px_division_code,
+              invoice_no as invoiceNumber,
+              line_no as invoiceLineNumber,
+              t02.kunnr as customerHierarchy,
+              zrep_matl_code as material,
+              to_date(invoice_date, 'yyyymmdd') as invoiceDate,
+              discount as discountGiven,
+              '170534' as conditionType       -- TBC with the business. In issues log.
           from 
-            bds_vend_header@ap0064p_promax_testing a, 
-            bds_vend_comp@ap0064p_promax_testing b
+              promax_prom_inv_ext_view@ap0064p_promax_testing t01,
+              lads_prc_lst_hdr@ap0064p_promax_testing t02
           where 
-            a.vendor_code = b.vendor_code
-            and b.company_code = '149'
-            and group_key like 'PMX%'
-            and a.posting_block_flag is null
-            and a.purchasing_block_flag is null
+              t01.pmnum = t02.kosrt and
+              t01.sales_org = t02.vkorg and
+              t01.cust_division = t02.spart and
+              t01.zrep_matl_code = t02.matnr and
+              t01.lads_date > trunc(sysdate) and
+              t01.sales_org = '149' 
         ------------------------------------------------------------------------
         );
         --======================================================================
@@ -74,7 +86,7 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
          /* Create the new interface when required
          /*-*/
          if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX05');
+            var_instance := lics_outbound_loader.create_interface('PXIPMX09');
          end if;
 
          /*-*/
@@ -113,5 +125,5 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
    /*-------------*/
    end execute;
 
-end PXIPMX05_EXTRACT;
+end PXIPMX09_EXTRACT;
 /
