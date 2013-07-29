@@ -44,6 +44,7 @@ package fflu_data as
   2013-06-25  Chris Horn            Moved to a unique field name arrangement.
   2013-07-19  Chris Horn            Added field offset to date functions.  
   2013-07-29  Chris Horn            Added constants various true false values.
+  2013-07-30  Chris Horn            Added constant values for mins and maxes.
 
 *******************************************************************************/
 
@@ -62,6 +63,18 @@ package fflu_data as
   gc_not_allow_null    boolean := false;
   gc_trim              boolean := true;
   gc_not_trim          boolean := false;
+  -- Null Field Constants
+  gc_null_min_length    constant fflu_common.st_size      := null;
+  gc_null_max_length    constant fflu_common.st_size      := null;
+  gc_null_format        constant fflu_common.st_name      := null;    
+  gc_null_min_number    constant number                   := null; 
+  gc_null_max_number    constant number                   := null;
+  gc_null_nls_options   constant fflu_common.st_string    := null;
+  gc_null_offset        constant fflu_common.st_position  := null;
+  gc_null_offset_len    constant fflu_common.st_length    := null; 
+  gc_null_min_date      constant date                     := null; 
+  gc_null_max_date      constant date                     := null;
+  
 
 /*******************************************************************************
   NAME:      INITIALISE
@@ -82,7 +95,7 @@ package fflu_data as
 *******************************************************************************/  
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
-    i_csv_qualifier in fflu_common.st_qualifier default null,
+    i_csv_qualifier in fflu_common.st_qualifier default fflu_common.gc_csv_qualifier_null,
     i_csv_header in boolean default gc_no_csv_header, 
     i_allow_missing in boolean default gc_not_allow_missing);
     
@@ -131,8 +144,8 @@ package fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
-    i_min_length in fflu_common.st_size default null,
-    i_max_length in fflu_common.st_size default null,
+    i_min_length in fflu_common.st_size default gc_null_min_length,
+    i_max_length in fflu_common.st_size default gc_null_max_length,
     i_allow_null in boolean default gc_not_allow_null,
     i_trim in boolean default gc_not_trim);
   
@@ -140,7 +153,7 @@ package fflu_data as
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_min_length in fflu_common.st_size default null,
+    i_min_length in fflu_common.st_size default gc_null_min_length,
     i_allow_null in boolean default gc_not_allow_null,
     i_trim in boolean default gc_trim);
   
@@ -167,21 +180,21 @@ package fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
 
   procedure add_number_field_txt(
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
   
   
 /*******************************************************************************
@@ -205,23 +218,23 @@ package fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_offset in fflu_common.st_position default null,
-    i_offset_len in fflu_common.st_length default null, 
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_offset in fflu_common.st_position default gc_null_offset,
+    i_offset_len in fflu_common.st_length default gc_null_offset_len, 
+    i_min_date in date default gc_null_min_date, 
+    i_max_date in date default gc_null_max_date,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
 
   procedure add_date_field_txt(
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_format in fflu_common.st_name default null,
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_date in date default gc_null_min_date, 
+    i_max_date in date default gc_null_max_date,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
 
 /*******************************************************************************
   NAME:      ADD_MARS_DATE_FIELD
@@ -241,24 +254,24 @@ package fflu_data as
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_offset in fflu_common.st_position default null,
-    i_offset_len in fflu_common.st_length default null, 
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_offset in fflu_common.st_position default gc_null_offset,
+    i_offset_len in fflu_common.st_length default gc_null_offset_len, 
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
 
   procedure add_mars_date_field_txt(
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_mars_date_column in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null);
+    i_nls_options in varchar2 default gc_null_nls_options);
     
 /*******************************************************************************
   NAME:      PARSE_DATA

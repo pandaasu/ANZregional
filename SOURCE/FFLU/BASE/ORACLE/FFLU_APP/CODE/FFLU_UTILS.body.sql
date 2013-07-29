@@ -227,5 +227,13 @@ package body fflu_utils as
   begin
     return lics_inbound_processor.callback_row;
   end get_interface_row;
+
+/*******************************************************************************
+  NAME:      GET_INTERFACE_ROW                                            PUBLIC
+*******************************************************************************/  
+  function get_interface_user return fflu_common.st_user is
+  begin
+    null;
+  end get_interface_user;
   
 end fflu_utils;

@@ -22,15 +22,17 @@ package fflu_utils as
     - log_interface_error        Adds a JSON formatted interface error to LICS.
     - log_interface_data_error   Adds a JSON formatted interface error to LICS
     - log_interface_exception    Adds a JSON formatted interface exception to LICS.
-    - get_interface_suffix       Returns the interface suffix, everything after .
-    - get_interface_filename     Returns the interface filename.
-    - get_interface_row          Returns the current interface row number. 
+    - get_interface_suffix       The interface suffix, everything after .
+    - get_interface_filename     The interface filename.
+    - get_interface_row          The current interface row number. 
+    - get_interface_user         The user that loaded or reprocessed file 
 
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-06  Chris Horn            Implemented the interface log progress.
   2013-06-13  Chris Horn            Added log interface errors functions.
   2013-07-05  Chris Horn            Added interface suffix,filename,row code.
+  2013-07-30  Chris Horn            Added function to return the user.
   
 *******************************************************************************/
 
@@ -164,6 +166,22 @@ package fflu_utils as
 
 *******************************************************************************/  
   function get_interface_row return fflu_common.st_count;
+
+/*******************************************************************************
+  NAME:      GET_INTERFACE_USER
+  PURPOSE:   Returns the user that loaded or reprocessed the file.  If the file
+             was loaded directly, or reprocessed by old lics then the system 
+             user will be returned.
+             
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-07-30 Chris Horn           Created
+
+*******************************************************************************/  
+  function get_interface_user return fflu_common.st_user;
+
   
 /*******************************************************************************
 EXAMPLE JSON MESSAGES.

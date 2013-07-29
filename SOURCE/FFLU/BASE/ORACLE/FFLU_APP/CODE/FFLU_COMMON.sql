@@ -34,6 +34,7 @@ PACKAGE fflu_common AS
   2013-05-24  Chris Horn            Created.
   2013-06-05  Chris Horn            Moved Load Execute and Housekeeping here.
   2013-06-13  Chris Horn            Added user code reprocess writeback.
+  2013-07-30  Chris Horn            Added the csv null qualifier.
 
 *******************************************************************************/
 
@@ -95,6 +96,7 @@ PACKAGE fflu_common AS
   -- Expected CSV Qualifiers 
   gc_csv_qualifier_single_quote constant st_qualifier := '''';
   gc_csv_qualifier_double_quote constant st_qualifier := '"';
+  gc_csv_qualifier_null         constant st_qualifier := null;
 
 /*******************************************************************************
   NAME:      VALIDATE_NON_EMPTY_STRING                                    PUBLIC

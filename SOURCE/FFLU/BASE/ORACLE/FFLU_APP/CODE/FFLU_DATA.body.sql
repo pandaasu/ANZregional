@@ -442,7 +442,7 @@ package body fflu_data as
 *******************************************************************************/  
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
-    i_csv_qualifier in fflu_common.st_qualifier default null,
+    i_csv_qualifier in fflu_common.st_qualifier default fflu_common.gc_csv_qualifier_null,
     i_csv_header in boolean default gc_no_csv_header, 
     i_allow_missing in boolean default gc_not_allow_missing) is
   begin
@@ -550,8 +550,8 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
-    i_min_length in fflu_common.st_size default null,
-    i_max_length in fflu_common.st_size default null,
+    i_min_length in fflu_common.st_size default gc_null_min_length,
+    i_max_length in fflu_common.st_size default gc_null_max_length,
     i_allow_null in boolean default gc_not_allow_null,
     i_trim in boolean default gc_not_trim
     ) is
@@ -581,7 +581,7 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_min_length in fflu_common.st_size default null,
+    i_min_length in fflu_common.st_size default gc_null_min_length,
     i_allow_null in boolean default gc_not_allow_null,
     i_trim in boolean default gc_trim) is
     rv_field rt_field;
@@ -613,11 +613,11 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -644,11 +644,11 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -679,13 +679,13 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_offset in fflu_common.st_position default null,
-    i_offset_len in fflu_common.st_length default null,
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_offset in fflu_common.st_position default gc_null_offset,
+    i_offset_len in fflu_common.st_length default gc_null_offset_len,
+    i_min_date in date default gc_null_min_date, 
+    i_max_date in date default gc_null_max_date,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -716,11 +716,11 @@ package body fflu_data as
     i_field_name in fflu_common.st_name,
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
-    i_format in fflu_common.st_name default null,
-    i_min_date in date default null, 
-    i_max_date in date default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_date in date default gc_null_min_date, 
+    i_max_date in date default gc_null_max_date,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -752,13 +752,13 @@ package body fflu_data as
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
     i_mars_date_column in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_offset in fflu_common.st_position default null,
-    i_offset_len in fflu_common.st_length default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_offset in fflu_common.st_position default gc_null_offset,
+    i_offset_len in fflu_common.st_length default gc_null_offset_len,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
@@ -791,11 +791,11 @@ package body fflu_data as
     i_position in fflu_common.st_position,
     i_length in fflu_common.st_length,
     i_mars_date_column in fflu_common.st_name,
-    i_format in fflu_common.st_name default null,
-    i_min_number in number default null, 
-    i_max_number in number default null,
+    i_format in fflu_common.st_name default gc_null_format,
+    i_min_number in number default gc_null_min_number, 
+    i_max_number in number default gc_null_max_number,
     i_allow_null in boolean default gc_not_allow_null,
-    i_nls_options in varchar2 default null) is
+    i_nls_options in varchar2 default gc_null_nls_options) is
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
