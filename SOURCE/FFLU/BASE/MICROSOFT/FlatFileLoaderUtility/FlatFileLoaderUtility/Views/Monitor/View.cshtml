@@ -304,6 +304,10 @@
                 return false;
             });
 
+            $("#requestRefresh").click(function () {
+                location.reload(true);
+            });
+
             $("#cancel").click(function () {
                 $(".ui-dialog-content").dialog("destroy");
             });
@@ -483,12 +487,14 @@
     </script>
 }
 
-@if (Model.HasProcessAccess) {
-    <div class="actions">
-        <h3>Actions</h3>
+<div class="actions">
+    <h3>Actions</h3>
+    @if (Model.HasProcessAccess) {
         <button id="requestReprocess">Reprocess</button>
-    </div>
-}
+    }
+    <button id="requestRefresh">Refresh</button>
+</div>
+
 
 <h3>Trace History</h3>
 <div class="jtable-main-container">
