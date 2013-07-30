@@ -1,21 +1,149 @@
 create or replace 
 package body          pmxlad01_loader as
 
-   /*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+/*******************************************************************************
+  Interface Field Definitions
+*******************************************************************************/  
+  pc_ic_record_type fflu_common.st_name := 'IC Record Type';
+pc_px_company_code fflu_common.st_name := 'PX Company Code';
+pc_px_division_code fflu_common.st_name := 'PX Division Code';
+pc_rec_type fflu_common.st_name := 'Rec Type';
+pc_document_date fflu_common.st_name := 'Document Date';
+pc_posting_date fflu_common.st_name := 'Posting Date';
+pc_document_type fflu_common.st_name := 'Document Type';
+pc_currency fflu_common.st_name := 'Currency';
+pc_reference fflu_common.st_name := 'Reference';
+pc_document_header_text fflu_common.st_name := 'Document Header Text';
+pc_posting_key fflu_common.st_name := 'Posting Key';
+pc_account fflu_common.st_name := 'Account';
+pc_pa_assignment_flag fflu_common.st_name := 'PA Assignment Flag';
+pc_amount fflu_common.st_name := 'Amount';
+pc_payment_method fflu_common.st_name := 'Payment Method';
+pc_allocation fflu_common.st_name := 'Allocation';
+pc_text fflu_common.st_name := 'Text';
+pc_profit_centre fflu_common.st_name := 'Profit Centre';
+pc_cost_centre fflu_common.st_name := 'cost Centre';
+pc_sales_organisation fflu_common.st_name := 'Sales Organisation';
+pc_sales_office fflu_common.st_name := 'Sales Office';
+pc_product_number fflu_common.st_name := 'Product Number';
+pc_pa_code fflu_common.st_name := 'PA Code';
+pc_glt_row_id fflu_common.st_name := 'GLT Row Id';
+pc_user_1 fflu_common.st_name := 'User 1';
+pc_user_2 fflu_common.st_name := 'User 2';
+pc_buy_start_date fflu_common.st_name := 'Buy Start Date';
+pc_buy_stop_date fflu_common.st_name := 'Buy Stop Date';
+pc_start_date fflu_common.st_name := 'Start Date';
+pc_stop_date fflu_common.st_name := 'Stop Date';
+pc_quantity fflu_common.st_name := 'Quantity';
+pc_additional_info fflu_common.st_name := 'Additional Info';
+pc_promotio_is_closed fflu_common.st_name := 'Promotio Is Closed';
 
-   /*-*/
-   /* Private declarations
-   /*-*/
-   --procedure process_record_ctl(par_record in varchar2);
-   --procedure process_record_hdr(par_record in varchar2);
 
-   /*-*/
-   /* Private definitions
-   /*-*/
+/*******************************************************************************
+  Package Variables
+*******************************************************************************/  
+
+/*******************************************************************************
+  NAME:      ON_START                                                     PUBLIC
+*******************************************************************************/  
+  procedure on_start is 
+  begin
+    -- Now initialise the data parsing wrapper.
+    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
+    -- Now define the column structure
+    fflu_data.add_char_field_txt(pc_ic_record_type,0,6,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_px_company_code,6,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_px_division_code,9,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_rec_type,12,1,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_date_field_txt(pc_document_date,13,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_date_field_txt(pc_posting_date,21,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_char_field_txt(pc_document_type,29,2,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_currency,31,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_reference,34,16,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_document_header_text,50,25,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_posting_key,75,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_account,79,17,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_pa_assignment_flag,96,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_number_field_txt(pc_amount,97,13,'9999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_char_field_txt(pc_payment_method,110,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_allocation,111,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_text,129,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_profit_centre,159,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_cost_centre,169,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_sales_organisation,179,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_sales_office,183,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_product_number,188,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_pa_code,206,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_glt_row_id,211,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_user_1,221,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_user_2,231,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_date_field_txt(pc_buy_start_date,241,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_date_field_txt(pc_buy_stop_date,249,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_date_field_txt(pc_start_date,257,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_date_field_txt(pc_stop_date,265,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+fflu_data.add_char_field_txt(pc_quantity,273,15,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_additional_info,288,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+fflu_data.add_char_field_txt(pc_promotio_is_closed,298,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On Start');
+end on_start;
+
+/*******************************************************************************
+  NAME:      ON_START                                                     PUBLIC
+*******************************************************************************/  
+  procedure on_data(p_row in varchar2) is 
+    v_ok boolean;
+  begin
+    if fflu_data.parse_data(p_row) = true then
+        null;
+    end if;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On Data');
+  end on_data;
+  
+/*******************************************************************************
+  NAME:      ON_END                                                       PUBLIC
+*******************************************************************************/  
+  procedure on_end is 
+  begin 
+    -- Only perform a commit if there were no errors at all. 
+    if fflu_data.was_errors = true then 
+      rollback;
+    else 
+      commit;
+    end if;
+    -- Perform a final cleanup and a last progress logging.
+    fflu_data.cleanup;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On End');
+  end on_end;
+
+/*******************************************************************************
+  NAME:      ON_GET_FILE_TYPE                                             PUBLIC
+*******************************************************************************/  
+  function on_get_file_type return varchar2 is 
+  begin 
+    return fflu_common.gc_file_type_fixed_width;
+  end on_get_file_type;
+  
+/*******************************************************************************
+  NAME:      ON_GET_CSV_QUALIFER                                          PUBLIC
+*******************************************************************************/  
+  function on_get_csv_qualifier return varchar2 is
+  begin 
+    return fflu_common.gc_csv_qualifier_null;
+  end on_get_csv_qualifier;
+
+-- Initialise this package.  
+begin
+  null;
+end pmxlad01_loader;
+
+/*
+   -- Private definitions
    var_trn_error boolean;
    var_trn_count number;
    --var_trn_interface varchar2(32);
@@ -27,14 +155,9 @@ package body          pmxlad01_loader as
    var_trn_user varchar2(20);
    
 
-   /************************************************/
-   /* This procedure performs the on start routine */
-   /************************************************/
    procedure on_start is
 
-   /*-*/
-   /* Lookup Interface Number - pmx_accrls
-   /*-*/ --TODO - Cleanup with actual interface number lookup.
+   -- Lookup Interface Number - pmx_accrls
    cursor csr_interface_num is
     select max(int_num) as int_num
     from
@@ -46,23 +169,17 @@ package body          pmxlad01_loader as
     );
    rcd_interface_num csr_interface_num%rowtype;
 
-   /*-*/
-   /* Lookup Current User
-   /*-*/   
+   -- Lookup Current User
    cursor csr_logon_usr is
       select sys_context('USERENV', 'OS_USER') as username 
       from dual;
    rcd_logon_usr csr_logon_usr%rowtype;
 
    
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
+   -- Begin block.
    begin
 
-      /*-*/
-      /* Initialise the transaction variables
-      /*-*/
+      -- Initialise the transaction variables
       var_trn_error := false;
       var_trn_count := 0;
       --var_trn_interface := null;
@@ -72,9 +189,7 @@ package body          pmxlad01_loader as
       var_trn_user := null;
 
       
-      /*-*/
-      /* Obtain the interface number
-      /*-*/ -- TODO
+      -- Obtain the interface number
       open csr_interface_num;
       fetch csr_interface_num into rcd_interface_num;
         if csr_interface_num%notfound then
@@ -87,9 +202,7 @@ package body          pmxlad01_loader as
         end if;
       close csr_interface_num;
       
-      /*-*/
-      /* Obtain the logon name for bill_raw_hdr
-      /*-*/
+      -- Obtain the logon name for bill_raw_hdr
       open csr_logon_usr;
       fetch csr_logon_usr into rcd_logon_usr;
         if csr_logon_usr%notfound then
@@ -100,13 +213,8 @@ package body          pmxlad01_loader as
         end if;
       close csr_logon_usr;
       
-      
-      
-      /*-*/
-      /* Initialise the inbound definitions
-      /*-*/
+      -- Initialise the inbound definitions
       lics_inbound_utility.clear_definition;
-      /*-*/
 
       lics_inbound_utility.set_definition('DTL','IC_REC_TYPE',6);
       lics_inbound_utility.set_definition('DTL','REC_TYPE',1);
@@ -142,21 +250,10 @@ package body          pmxlad01_loader as
       lics_inbound_utility.set_definition('DTL','PROM_IS_CLOSED',1);
       lics_inbound_utility.set_definition('DTL','PX_DIVISION_CODE',10);
       --lics_inbound_utility.set_definition('DTL','PX_COMPANY_CODE',10);        -- CONFIRM IF FIELD WILL BE ADDED. Commented out below
-      
-      
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
    end on_start;
 
-   /***********************************************/
-   /* This procedure performs the on data routine */
-   /***********************************************/
    procedure on_data(par_record in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
+      -- Local definitions
       var_record_identifier varchar2(3);
       
       var_result number;
@@ -165,21 +262,10 @@ package body          pmxlad01_loader as
       var_plant_code nvarchar2(20);
       var_distbn_chnl_code nvarchar2(20);
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
    begin
-
-      /*-------------------------------*/
-      /* PARSE - Parse the data record */
-      /*-------------------------------*/
 
       lics_inbound_utility.parse_record('DTL', par_record);
 
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
-      
       var_trn_count := var_trn_count + 1;
       
       rcd_pmx_accrls.int_id := var_trn_interface; 
@@ -220,8 +306,6 @@ package body          pmxlad01_loader as
       rcd_pmx_accrls.px_division_code := lics_inbound_utility.get_variable('PX_DIVISION_CODE');
       rcd_pmx_accrls.px_company_code := null; --lics_inbound_utility.get_variable('PX_COMPANY_CODE');        -- CONFIRM ABOVE
       
-      /* these require lookup functions */
-      
       var_result := pmx_interface_lookup.lookup_matl_tdu_num(rcd_pmx_accrls.product_number, var_matl_tdu_code, rcd_pmx_accrls.buy_start_date, rcd_pmx_accrls.buy_stop_date);
       --var_result := pmx_interface_lookup.lookup_division_code(rcd_pmx_accrls.product_number, var_division_code);
       var_result := pmx_interface_lookup.lookup_division_code(var_matl_tdu_code, var_division_code);
@@ -244,7 +328,7 @@ package body          pmxlad01_loader as
       end if;
       
       
-      /* these are hard coded for now based on the values from the PDS (Promax) logic*/
+      -- these are hard coded for now based on the values from the PDS (Promax) logic
       rcd_pmx_accrls.gl_tax_code := 'GL';
       rcd_pmx_accrls.cust_vndr_code := ' ';
       rcd_pmx_accrls.int_claim_num := 0;
@@ -253,59 +337,12 @@ package body          pmxlad01_loader as
       rcd_pmx_accrls.last_updtd_time := sysdate;
 
 
-      /*-*/
-      /* Exceptions raised
-      /*-*/
+      -- Exceptions raised
       if lics_inbound_utility.has_errors = true then
          var_trn_error := true;
          return;
       end if;
 
-      /*------------------------------*/
-      /* INSERT - Update the database */
-      /*------------------------------*/
-
       insert into pmx_accrls values rcd_pmx_accrls;
 
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /*-*/
-      /* Exception trap
-      /*-*/
-      when others then
-         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
-         var_trn_error := true;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end on_data;
-
-   /**********************************************/
-   /* This procedure performs the on end routine */
-   /**********************************************/
-   procedure on_end is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Commit/rollback as required
-      /*-*/
-      if var_trn_error = true then
-         rollback;
-      else
-         commit;
-      end if;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end on_end;
-
-end pmxlad01_loader;
+*/

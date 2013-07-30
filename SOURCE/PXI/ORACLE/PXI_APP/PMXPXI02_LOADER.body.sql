@@ -1,21 +1,157 @@
 create or replace 
 package body          pmxpxi02_loader as
 
-   /*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+/*******************************************************************************
+  Interface Field Definitions
+*******************************************************************************/  
+  pc_ic_record_type fflu_common.st_name := 'IC Record Type';
+  pc_px_company_code fflu_common.st_name := 'PX Company Code';
+  pc_px_division_code fflu_common.st_name := 'PX Division Code';
+  pc_type fflu_common.st_name := 'Type';
+  pc_document_date fflu_common.st_name := 'Document Date';
+  pc_posting_date fflu_common.st_name := 'Posting Date';
+  pc_claim_date fflu_common.st_name := 'Claim Date';
+  pc_reference fflu_common.st_name := 'Reference';
+  pc_document_header_text fflu_common.st_name := 'Document Header Text';
+  pc_expenditure_type fflu_common.st_name := 'Expenditure Type';
+  pc_posting_key fflu_common.st_name := 'Posting Key';
+  pc_account_code fflu_common.st_name := 'Account Code';
+  pc_amount fflu_common.st_name := 'Amount';
+  pc_spend_amount fflu_common.st_name := 'Spend Amount';
+  pc_tax_amount fflu_common.st_name := 'Tax Amount';
+  pc_payment_method fflu_common.st_name := 'Payment Method';
+  pc_allocation fflu_common.st_name := 'Allocation';
+  pc_pc_reference fflu_common.st_name := 'PC Reference';
+  pc_px_reference fflu_common.st_name := 'PX Reference';
+  pc_ext_reference fflu_common.st_name := 'Ext Reference';
+  pc_product_number fflu_common.st_name := 'Product Number';
+  pc_transaction_code fflu_common.st_name := 'Transaction Code';
+  pc_deduction_ac_code fflu_common.st_name := 'Deduction AC Code';
+  pc_payee_code fflu_common.st_name := 'Payee Code';
+  pc_customer_is_a_vendor fflu_common.st_name := 'Customer Is A Vendor';
+  pc_currency fflu_common.st_name := 'Currency';
+  pc_promo_claim_detail_row_id fflu_common.st_name := 'Promo Claim Detail Row ID';
+  pc_promo_claim_group_row_id fflu_common.st_name := 'Promo Claim Group Row ID';
+  pc_promo_claim_group_pub_id fflu_common.st_name := 'Promo Claim Group Pub Id';
+  pc_reason_code fflu_common.st_name := 'Reason Code';
+  pc_pc_message fflu_common.st_name := 'PC Message';
+  pc_pc_comment fflu_common.st_name := 'PC Comment';
+  pc_text_1 fflu_common.st_name := 'Text 1';
+  pc_text_2 fflu_common.st_name := 'Text 2';
+  pc_buy_start_date fflu_common.st_name := 'Buy Start Date';
+  pc_buy_stop_date fflu_common.st_name := 'Buy Stop Date';
+  pc_bom_header_sku_stock_code fflu_common.st_name := 'BOM Header Sku Stock Code';
 
-   /*-*/
-   /* Private declarations
-   /*-*/
-   --procedure process_record_ctl(par_record in varchar2);
-   --procedure process_record_hdr(par_record in varchar2);
+/*******************************************************************************
+  Package Variables
+*******************************************************************************/  
 
-   /*-*/
-   /* Private definitions
-   /*-*/
+/*******************************************************************************
+  NAME:      ON_START                                                     PUBLIC
+*******************************************************************************/  
+  procedure on_start is 
+  begin
+    -- Now initialise the data parsing wrapper.
+    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
+    -- Now define the column structure
+    fflu_data.add_char_field_txt(pc_ic_record_type,0,6,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_px_company_code,6,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_px_division_code,9,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_type,12,1,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_date_field_txt(pc_document_date,13,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_posting_date,21,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_claim_date,29,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_reference,37,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_document_header_text,47,25,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_expenditure_type,72,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_posting_key,77,7,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_account_code,84,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_number_field_txt(pc_amount,94,14,'99999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_txt(pc_spend_amount,108,14,'99999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_txt(pc_tax_amount,122,14,'99999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_payment_method,136,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_allocation,137,12,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_pc_reference,149,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_px_reference,167,60,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_ext_reference,227,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_product_number,292,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_transaction_code,310,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_deduction_ac_code,350,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_payee_code,370,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_customer_is_a_vendor,380,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_currency,381,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_detail_row_id,384,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_group_row_id,394,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_group_pub_id,404,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_reason_code,434,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_pc_message,439,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_pc_comment,504,200,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_text_1,704,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_txt(pc_text_2,744,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_date_field_txt(pc_buy_start_date,784,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_buy_stop_date,792,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_bom_header_sku_stock_code,800,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On Start');
+end on_start;
+
+/*******************************************************************************
+  NAME:      ON_START                                                     PUBLIC
+*******************************************************************************/  
+  procedure on_data(p_row in varchar2) is 
+    v_ok boolean;
+  begin
+    if fflu_data.parse_data(p_row) = true then
+        null;
+    end if;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On Data');
+  end on_data;
+  
+/*******************************************************************************
+  NAME:      ON_END                                                       PUBLIC
+*******************************************************************************/  
+  procedure on_end is 
+  begin 
+    -- Only perform a commit if there were no errors at all. 
+    if fflu_data.was_errors = true then 
+      rollback;
+    else 
+      commit;
+    end if;
+    -- Perform a final cleanup and a last progress logging.
+    fflu_data.cleanup;
+  exception 
+    when others then 
+      fflu_utils.log_interface_exception('On End');
+  end on_end;
+
+/*******************************************************************************
+  NAME:      ON_GET_FILE_TYPE                                             PUBLIC
+*******************************************************************************/  
+  function on_get_file_type return varchar2 is 
+  begin 
+    return fflu_common.gc_file_type_fixed_width;
+  end on_get_file_type;
+  
+/*******************************************************************************
+  NAME:      ON_GET_CSV_QUALIFER                                          PUBLIC
+*******************************************************************************/  
+  function on_get_csv_qualifier return varchar2 is
+  begin 
+    return fflu_common.gc_csv_qualifier_null;
+  end on_get_csv_qualifier;
+
+-- Initialise this package.  
+begin
+  null;
+end pmxpxi02_loader;
+
+
+/** OLD CODE USE FOR REFERENCE ONLY
+
    var_trn_error boolean;
    var_trn_count number;
 
@@ -24,15 +160,8 @@ package body          pmxpxi02_loader as
    var_trn_interface number;
    var_trn_user varchar2(20);
    
-
-   /************************************************/
-   /* This procedure performs the on start routine */
-   /************************************************/
    procedure on_start is
 
-   /*-*/
-   /* Lookup Interface Number - pmx_payments
-   /*-*/ --TODO - Cleanup with actual interface number lookup.
    cursor csr_interface_num is
 	select max(int_num) as int_num
 	from
@@ -44,23 +173,14 @@ package body          pmxpxi02_loader as
 	);
    rcd_interface_num csr_interface_num%rowtype;
 
-   /*-*/
-   /* Lookup Current User
-   /*-*/   
    cursor csr_logon_usr is
       select sys_context('USERENV', 'OS_USER') as username 
       from dual;
    rcd_logon_usr csr_logon_usr%rowtype;
 
    
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
    begin
 
-      /*-*/
-      /* Initialise the transaction variables
-      /*-*/
       var_trn_error := false;
       var_trn_count := 0;
 
@@ -68,9 +188,6 @@ package body          pmxpxi02_loader as
 	  var_trn_user := null;
 
 	  
-	  /*-*/
-      /* Obtain the interface number
-      /*-*/ -- TODO
 	  open csr_interface_num;
       fetch csr_interface_num into rcd_interface_num;
         if csr_interface_num%notfound then
@@ -83,9 +200,7 @@ package body          pmxpxi02_loader as
         end if;
       close csr_interface_num;
 	  
-	  /*-*/
-      /* Obtain the logon name for bill_raw_hdr
-      /*-*/
+      -- Obtain the logon name for bill_raw_hdr
       open csr_logon_usr;
       fetch csr_logon_usr into rcd_logon_usr;
         if csr_logon_usr%notfound then
@@ -95,67 +210,10 @@ package body          pmxpxi02_loader as
            var_trn_user := rcd_logon_usr.username;
         end if;
       close csr_logon_usr;
-	  
-	  
-	  
-      /*-*/
-      /* Initialise the inbound definitions
-      /*-*/
-      lics_inbound_utility.clear_definition;
-	  
-      /*-*/
-      lics_inbound_utility.set_definition('DTL','ICMESSAGE',6);
-      lics_inbound_utility.set_definition('DTL','REC_TYPE',1);
-      lics_inbound_utility.set_definition('DTL','DOC_DATE',8);
-      lics_inbound_utility.set_definition('DTL','POSTING_DATE',8);
-      lics_inbound_utility.set_definition('DTL','CLAIM_DATE',8);
-      lics_inbound_utility.set_definition('DTL','REFERENCE',10);
-      lics_inbound_utility.set_definition('DTL','DOC_HDR_TXT',25);
-      lics_inbound_utility.set_definition('DTL','EXPENDITURE_TYPE',5);
-      lics_inbound_utility.set_definition('DTL','POSTING_KEY',7);
-      lics_inbound_utility.set_definition('DTL','ACCOUNT_CODE',10);
-      lics_inbound_utility.set_definition('DTL','AMOUNT',14);
-      lics_inbound_utility.set_definition('DTL','SPEND_AMOUNT',14);
-      lics_inbound_utility.set_definition('DTL','TAX_AMOUNT',14);
-      lics_inbound_utility.set_definition('DTL','PAYMENT_METHOD',1);
-      lics_inbound_utility.set_definition('DTL','ALLOCATION',12);       
-      lics_inbound_utility.set_definition('DTL','PC_REFERENCE',18);
-      lics_inbound_utility.set_definition('DTL','PX_REFERENCE',60);
-      lics_inbound_utility.set_definition('DTL','EXT_REFERENCE',65);
-      lics_inbound_utility.set_definition('DTL','PRODUCT_NUM',18);
-      lics_inbound_utility.set_definition('DTL','TRANSACTION_CODE',40);
-      lics_inbound_utility.set_definition('DTL','DEDUCTION_AC_CODE',20); -- NOT IN TABLE -- IGNORE FIELD.
-      lics_inbound_utility.set_definition('DTL','PAYEE_CODE',10);
-      lics_inbound_utility.set_definition('DTL','CUSTOMER_IS_A_VENDOR',1);
-      lics_inbound_utility.set_definition('DTL','CURRENCY',3);
-      lics_inbound_utility.set_definition('DTL','PX_DIVISION_CODE',10);
-      lics_inbound_utility.set_definition('DTL','PX_COMPANY_CODE',10);
-      lics_inbound_utility.set_definition('DTL','PROMO_CLAIM_DETAIL_ROW_ID',10);
-      lics_inbound_utility.set_definition('DTL','PROMO_CLAIM_GRP_ROW_ID',10);
-      lics_inbound_utility.set_definition('DTL','PROMO_CLAIM_GRP_PUB_ID',30);
-      lics_inbound_utility.set_definition('DTL','REASON_CODE',5);
-      lics_inbound_utility.set_definition('DTL','PC_MESSAGE',65);
-      lics_inbound_utility.set_definition('DTL','PC_COMMENT',200);
-      lics_inbound_utility.set_definition('DTL','TEXT_1',40);
-      lics_inbound_utility.set_definition('DTL','TEXT_2',40);
-      lics_inbound_utility.set_definition('DTL','BUY_START_DATE',8);
-      lics_inbound_utility.set_definition('DTL','BUY_STOP_DATE',8);
-      lics_inbound_utility.set_definition('DTL','BOM_HEADER_SKU_DATE',40);
-
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
    end on_start;
 
-   /***********************************************/
-   /* This procedure performs the on data routine */
-   /***********************************************/
    procedure on_data(par_record in varchar2) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
       var_record_identifier varchar2(3);
       
       var_result number;
@@ -164,20 +222,11 @@ package body          pmxpxi02_loader as
       var_plant_code nvarchar2(20);
       var_distbn_chnl_code nvarchar2(20);
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
    begin
 
-      /*-------------------------------*/
-      /* PARSE - Parse the data record */
-      /*-------------------------------*/
 
       lics_inbound_utility.parse_record('DTL', par_record);
 
-      /*--------------------------------------*/
-      /* RETRIEVE - Retrieve the field values */
-      /*--------------------------------------*/
 	  
 	  var_trn_count := var_trn_count + 1;
 	  
@@ -222,9 +271,7 @@ package body          pmxpxi02_loader as
       rcd_pmx_payments.buy_stop_date := lics_inbound_utility.get_date('BUY_STOP_DATE', 'ddmmyyyy');
       rcd_pmx_payments.bom_header_sku_date := lics_inbound_utility.get_date('BOM_HEADER_SKU_DATE', 'ddmmyyyy');
 	  
-        
-      /* these require lookup functions */
-      
+      -- Lookup Functions 
       var_result := pmx_interface_lookup.lookup_matl_tdu_num(rcd_pmx_payments.product_num, var_matl_tdu_code, rcd_pmx_payments.buy_start_date, rcd_pmx_payments.buy_stop_date);
       var_result := pmx_interface_lookup.lookup_division_code(rcd_pmx_payments.product_num, var_division_code);
       var_result := pmx_interface_lookup.lookup_plant_code(rcd_pmx_payments.product_num, var_plant_code);
@@ -249,60 +296,5 @@ package body          pmxpxi02_loader as
 	  rcd_pmx_payments.last_updtd_user := var_trn_user;
 	  rcd_pmx_payments.last_updtd_time := sysdate;
 
-
-      /*-*/
-      /* Exceptions raised
-      /*-*/
-      if lics_inbound_utility.has_errors = true then
-         var_trn_error := true;
-         return;
-      end if;
-
-      /*------------------------------*/
-      /* INSERT - Update the database */
-      /*------------------------------*/
-
 	  insert into pmx_payments values rcd_pmx_payments;
-
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
-
-      /*-*/
-      /* Exception trap
-      /*-*/
-      when others then
-         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
-         var_trn_error := true;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end on_data;
-
-   /**********************************************/
-   /* This procedure performs the on end routine */
-   /**********************************************/
-   procedure on_end is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Commit/rollback as required
-      /*-*/
-      if var_trn_error = true then
-         rollback;
-      else
-         commit;
-      end if;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end on_end;
-
-end pmxpxi02_loader;
+*/

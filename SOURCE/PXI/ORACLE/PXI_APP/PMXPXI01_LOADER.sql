@@ -1,28 +1,48 @@
 create or replace 
 package          pmxlad01_loader as
 
-   /******************************************************************************/
-   /* Package Definition                                                         */
-   /******************************************************************************/
-   /**
-    Package : pmxlad01_loader
-    Owner   : pmx_app
+/*******************************************************************************
+** PACKAGE DEFINITION
+********************************************************************************
 
-    Description
-    -----------
-    PMX Inbound Interface - Accruals 325
+  System    : PXI
+  Owner     : PXI_APP
+  Package   : PMXPXI01_LOADER
+  Author    : Chris Horn
+  Interface : Promax PX Payments to Atlas Interface
 
-    YYYY/MM   Author                 Description
-    -------   ------                 -----------
-    2013/05   Jonathan Girling       Created
+  Description
+  ------------------------------------------------------------------------------
+  This package is used for processing Promax Accrual information from Promax.
+  
+  It will then use the generic PXIATL01 Interface code to create a general 
+  ledger document for on sending to Atlas.  
+  
+  Below is an example of the flow below. 
+  
+  Promax PX Accruals 335 -> LADS (Inbound) -> Atlas PXIATL01 - Accruals
 
-   *******************************************************************************/
+  Functions
+  ------------------------------------------------------------------------------
+  + LICS Hooks 
+    - on_start                   Called on starting the interface.
+    - on_data(i_row in varchar2) Called for each row of data in the interface.
+    - on_end                     Called at the end of processing.
+  + FFLU Hooks
+    - on_get_file_type           Returns the type of file format expected.
+    - on_get_csv_qualifier       Returns the CSV file format qualifier.  
 
-   /*-*/
-   /* Public declarations
-   /*-*/
-   procedure on_start;
-   procedure on_data(par_record in varchar2);
-   procedure on_end;
+  Date        Author                Description
+  ----------  --------------------  --------------------------------------------
+  2013-07-30  Chris Horn            Created Interface
+
+*******************************************************************************/
+  -- LICS Hooks.
+  procedure on_start;
+  procedure on_data(p_row in varchar2);
+  procedure on_end;
+  -- FFLU Hooks.
+  function on_get_file_type return varchar2;
+  function on_get_csv_qualifier return varchar2;
 
 end pmxlad01_loader;
