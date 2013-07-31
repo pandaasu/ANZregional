@@ -54,27 +54,28 @@ package          pxiatl01_extract as
   gc_tax_code_gl st_tax_code := 'GL';  -- General Ledger Tax
   
 /*******************************************************************************
-  Generic Table Interface Types
+  Generic General Ledger Table 
 *******************************************************************************/
+  -- General Ledger Record
   type rt_gl_record is record (
     document_date date,
     posting_date date,
-    account_code st_code,
-    cost_center st_code,
-    profit_center st_code,
-    amount st_amount,
-    currency st_code,
+    account_code pxi_common.st_gl_code,
+    cost_center pxi_common.st_gl_code,
+    profit_center pxi_common.st_gl_code,
+    amount pxi_common.st_amount,
+    currency pxi_common.st_currency,
     tax_code st_tax_code,
-    allocation_ref st_code,
-    item_text st_text,
+    allocation_ref pxi_common.st_reference,
+    item_text pxi_common.st_text,
     -- COPA Related Fields
-    customer_code st_code,
-    material_code st_code,
-    plant_code st_code,
-    sales_org st_code,
-    dstrbtn_chnnl st_code
+    customer_code pxi_common.st_customer,
+    material_code pxi_common.st_material,
+    plant_code pxi_common.st_plant_code,
+    sales_org pxi_common.st_company,
+    dstrbtn_chnnl pxi_common.st_dstrbtn_chnnl
   );
-  
+  -- General Ledger Table.
   type tt_gl_data is table of rt_gl_record index by pls_integer;
 
   
@@ -122,7 +123,7 @@ package          pxiatl01_extract as
 *******************************************************************************/
   procedure add_general_ledger_record(ti_data in out tt_data, 
       i_account in st_data, i_cost_center in st_data, i_profit_center in st_data, 
-      i_amount in st_amount, i_item_text in st_data, i_alloc_number in st_data,
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data,
       i_tax_code in st_tax_code, i_material in st_data, 
       i_plant_code in st_data, i_cust_code in st_data, i_sales_org in st_data,
       i_distribution_channel in st_data);
@@ -157,7 +158,7 @@ package          pxiatl01_extract as
 *******************************************************************************/
   procedure add_payment_record(ti_data in out tt_data, 
       i_account in st_data, i_vendor in st_data, 
-      i_amount in st_amount, i_item_text in st_data, i_alloc_number in st_data);
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data);
 
 
 /*******************************************************************************
@@ -195,9 +196,9 @@ package          pxiatl01_extract as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-procedure add_header_record(ti_data in out tt_data, i_company in st_data, 
-   i_division in st_data,i_currency in st_data, i_doc_type in st_doc_type, 
-   i_doc_date in date, i_posting_date in date, i_reference_doc_no in st_data);
+  procedure add_header_record(ti_data in out tt_data, i_company in st_data, 
+    i_division in st_data,i_currency in st_data, i_doc_type in st_doc_type, 
+    i_doc_date in date, i_posting_date in date, i_reference_doc_no in st_data);
 
 
 /*******************************************************************************
@@ -226,7 +227,7 @@ procedure add_header_record(ti_data in out tt_data, i_company in st_data,
 
 *******************************************************************************/
   procedure add_tax_record(ti_data in out tt_data, i_tax_code in st_tax_code, 
-      i_tax in st_amount, i_tax_base in st_amount);
+      i_tax in pxi_common.st_amount, i_tax_base in pxi_common.st_amount);
 
 /*******************************************************************************
   NAME:      CREATE_INTERFACE                                             PUBLIC
@@ -239,7 +240,7 @@ procedure add_header_record(ti_data in out tt_data, i_company in st_data,
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-   procedure create_interface(ti_data in out tt_data);
+  procedure create_interface(ti_data in out tt_data);
 
 /*******************************************************************************
   NAME:      DEBUG_INTERFACE                                              PUBLIC
@@ -252,7 +253,20 @@ procedure add_header_record(ti_data in out tt_data, i_company in st_data,
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-   procedure debug_interface(ti_data in tt_data);
+  procedure debug_interface(ti_data in tt_data);
+
+/*******************************************************************************
+  NAME:      SEND_DATA                                                    PUBLIC
+  PURPOSE:   This procedure takes the supplied gl data records and creates 
+             the corresponding set of Atlas IDOC interfaces.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure send_data(ti_gl_data in tt_gl_data, i_doc_type in st_doc_type);
 
 end pxiatl01_extract;
 

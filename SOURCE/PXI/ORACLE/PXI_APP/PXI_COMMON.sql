@@ -41,7 +41,7 @@ create or replace package pxi_common as
   Common Package Types
 *******************************************************************************/
   -- Package Sub Types
-  subtype st_matl_code is varchar2(18);      -- Material Codes. 
+  subtype st_material is varchar2(18);      -- Material Codes. 
   subtype st_gl_code is varchar2(10);        -- GL Account, Account Code, Cost Object
   subtype st_company is varchar2(3);         -- Company 
   subtype st_customer is varchar2(10);       -- Customer
@@ -52,19 +52,28 @@ create or replace package pxi_common as
   subtype st_string is varchar2(4000);       -- Long String field for messages.
   subtype st_package_name is varchar2(32);   -- Package Names  
   subtype st_bus_sgmnt is varchar2(2);       -- Business Segment Code
+  subtype st_plant_code is varchar2(4);      -- Atlas Plant Code.
+  subtype st_dstrbtn_chnnl is varchar2(2);   -- Distribution Channel
   subtype st_promax_division is varchar2(3); -- Promax Division  
+  subtype st_currency is varchar2(3);        -- Currency Information
 
 /*******************************************************************************
   Common Constants
 *******************************************************************************/
-  gc_bus_sgmnt_snack   st_bus_sgmnt := '01';
-  gc_bus_sgmnt_food    st_bus_sgmnt := '02';
-  gc_bus_sgmnt_petcare st_bus_sgmnt := '05';
+  -- Company Constants / Sales Org Constants
+  gc_new_zealand  st_company := '149';
+  gc_australia    st_company := '147';
+  -- Business Segment Constants
+  gc_bus_sgmnt_snack    st_bus_sgmnt := '01';
+  gc_bus_sgmnt_food     st_bus_sgmnt := '02';
+  gc_bus_sgmnt_petcare  st_bus_sgmnt := '05';
+  -- Distribution Channel 
+  gc_distrbtn_channel_primary   st_dstrbtn_chnnl := '10'; -- Primary Channel
 
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
   PURPOSE:   This function formats a the current SQL Error message with a 
-             message and raises it as an application exception. 
+             message and raises it as an application exception.
 
   REVISIONS:
   Ver   Date       Author               Description
@@ -101,7 +110,7 @@ create or replace package pxi_common as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  function full_matl_code(i_matl_code in st_matl_code) return st_matl_code;
+  function full_matl_code(i_matl_code in st_material) return st_material;
 
 /*******************************************************************************
   NAME:      SHORT_MATL_CODE                                              PUBLIC
@@ -114,7 +123,21 @@ create or replace package pxi_common as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  function short_matl_code(i_matl_code in st_matl_code) return st_matl_code;
+  function short_matl_code(i_matl_code in st_material) return st_material;
+
+
+/*******************************************************************************
+  NAME:      FULL_CUST_CODE                                               PUBLIC
+  PURPOSE:   This procedure correctly formats a customer code into is long 
+             normal SAP format.  Returns zeros if customer code is null.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  function full_cust_code (i_cust_code in st_customer) return st_customer;
 
 /*******************************************************************************
   NAME:      LOOKUP_TDU_FROM_ZREP                                         PUBLIC
@@ -130,16 +153,17 @@ create or replace package pxi_common as
 *******************************************************************************/
   function lookup_tdu_from_zrep (
     i_sales_org in st_company,
-    i_zrep_matl_code in st_matl_code,
+    i_zrep_matl_code in st_material,
     i_buy_start_date in date,
     i_buy_end_date in date
-    ) return st_matl_code;
+    ) return st_material;
 
 /*******************************************************************************
   NAME:      DETERMINE_BUS_SGMNT                                          PUBLIC
   PURPOSE:   This function uses the promax disvision to determine
              the business sgement we should be using for subsequent processing
-             for New Zealand 
+             for New Zealand it will find the business segement from the 
+             current zrep material.  
 
   REVISIONS:
   Ver   Date       Author               Description
@@ -150,7 +174,43 @@ create or replace package pxi_common as
   function determine_bus_sgmnt (
     i_sales_org in st_company,
     i_promax_division in st_promax_division,
-    i_zrep_matl_code in st_matl_code) return st_bus_sgmnt;
+    i_zrep_matl_code in st_material) return st_bus_sgmnt;
+
+
+/*******************************************************************************
+  NAME:      DETERMINE_DSTRBTN_CHNNL                                      PUBLIC
+  PURPOSE:   Using the sales org, material and customer information search for 
+             distribution channel infromation.  Giving preference to 
+             distribution channel '10'.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+ FUNCTION determine_dstrbtn_chnnl (
+    i_sales_org in st_company, 
+    i_matl_code IN st_material, 
+    i_cust_code in st_customer
+    ) RETURN st_dstrbtn_chnnl;
+
+/*******************************************************************************
+  NAME:      DETERMINE_MATL_PLANT_CODE                                    PUBLIC
+  PURPOSE:   Using company information and material information find an 
+             approperiate plant code to use for the lookup. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  FUNCTION determine_matl_plant_code (
+    i_company_code in st_company,
+    i_matl_code IN st_material)
+    return st_plant_code;
+
 
 /*******************************************************************************
 ********************************************************************************

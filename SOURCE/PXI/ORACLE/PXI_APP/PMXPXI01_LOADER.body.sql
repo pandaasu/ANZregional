@@ -40,10 +40,10 @@ package body          pmxlad01_loader as
 
   -- Posting Key
   subtype st_posting_key is varchar2(4);
-  pc_posting_key_dr st_posting_key := 'DR';    -- Debit
-  pc_posting_key_cr st_posting_key := 'CR';    -- Credit
-  pc_posting_key_wcr st_posting_key := 'WCR';  -- Writeback Credit
-  pc_posting_key_wdr st_posting_key := 'WDR';  -- Writeback Debit
+  pc_posting_key_dr st_posting_key := 'DR';    -- Debit   Positive
+  pc_posting_key_cr st_posting_key := 'CR';    -- Credit  Negative
+  pc_posting_key_wcr st_posting_key := 'WCR';  -- Writeback Credit  Positive
+  pc_posting_key_wdr st_posting_key := 'WDR';  -- Writeback Debit   Negative
 
 /*******************************************************************************
   Package Variables
@@ -56,7 +56,7 @@ package body          pmxlad01_loader as
   procedure on_start is 
   begin
     -- Ensure that the general ledger data is empty.
-    ptv_gl.delete; 
+    ptv_gl_data.delete; 
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
@@ -103,37 +103,41 @@ end on_start;
 *******************************************************************************/  
   procedure on_data(p_row in varchar2) is 
     rv_gl pxiatl01_extract.rt_gl_record;
-    v_bus_sgmnt_code st_bus_sgmnt; 
+    v_bus_sgmnt_code pxi_common.st_bus_sgmnt; 
   begin
     -- Initialse Variable
-    v_bus_sgmnt := null;
+    v_bus_sgmnt_code := null;
     -- Now parse the row. 
     if fflu_data.parse_data(p_row) = true then
       -- Only look for detail records at this time.  
       -- NOTE: Possible Enhacnement check could be to ensure this detail line's 
       -- header fields match the previous header.
-      if fflu_data.get_char_field(pc_field_rec_type) = 'D' then 
+      if fflu_data.get_char_field(pc_rec_type) = 'D' then 
         -- Header Reference Fields.
         rv_gl.posting_date := fflu_data.get_date_field(pc_posting_date);
         rv_gl.document_date := fflu_data.get_date_field(pc_document_date);
         rv_gl.currency := fflu_data.get_char_field(pc_currency);
         -- Now commence processing this accrual into actual atlas extract records.
-        rv_gl.account_code :=  fflu_data.get_char_field(pc_field_account);
-        case fflu_data.get_char_field(pc_posting_key)
-          when pc_posting_key_dr then 
-          when pc_posting_key_cr then 
-          when pc_posting_key_wcr then 
-          when pc_posting_key wdr then
-          else
-            fflu_data.log_field_error(pc_field_posting_key,'Unknown Posting Key');
-        end if;
+        rv_gl.account_code :=  fflu_data.get_char_field(pc_account);
         rv_gl.profit_center := fflu_data.get_char_field(pc_profit_center);
         rv_gl.cost_center := fflu_data.get_char_field(pc_cost_center);
         rv_gl.amount := fflu_data.get_number_field(pc_amount);
+        case fflu_data.get_char_field(pc_posting_key)
+          when pc_posting_key_dr then 
+            rv_gl.amount := rv_gl.amount * 1;
+          when pc_posting_key_cr then 
+            rv_gl.amount := rv_gl.amount * -1;
+          when pc_posting_key_wcr then 
+            rv_gl.amount := rv_gl.amount * 1;
+          when pc_posting_key_wdr then
+            rv_gl.amount := rv_gl.amount * -1;
+          else
+            fflu_data.log_field_error(pc_field_posting_key,'Unknown Posting Key');
+        end case;
         -- Create the Item Reference Field.  Product, Customer, Promo, Text.
         rv_gl.item_text := rpad(
           fflu_data.get_char_field(pc_field_product_number) || ' ' || -- ZREP
-          fflu_data.get_char_field(pc_field_account) || ' ' ||  -- Customer
+          fflu_data.get_char_field(pc_field_allocation) || ' ' ||  -- Customer
           fflu_data.get_char_field(pc_field_reference) ||  ' ' || -- Promo Num
           fflu_data.get_char_field(pc_field_text), -- Accrual Text 
           50);
@@ -170,37 +174,20 @@ end on_start;
                 rv_gl.profit_center := '0000110005';
               else 
                 fflu_data.log_field_error(pc_profit_center,'As profit center was null, tried to determine from business segment.  Which was unknown [' || v_bus_sgmnt || ']');
-            end if;          
+            end case;
           end if;
         end if; 
         rv_gl.customer_code := fflu_data.get_char_field(pc_field_allocation);
         -- Now lookup the plant code and distribution channels.  
-        rv_gl.plant_code := 
-        rv_gl.dstrbtn_chnnl := 
-        
-        
-      --var_result := pmx_interface_lookup.lookup_division_code(rcd_pmx_accrls.product_number, var_division_code);
-      var_result := pmx_interface_lookup.lookup_division_code(var_matl_tdu_code, var_division_code);
-      var_result := pmx_interface_lookup.lookup_plant_code(rcd_pmx_accrls.product_number, var_plant_code);
-      var_result := pmx_interface_lookup.lookup_distbn_chnl_code(rcd_pmx_accrls.product_number, var_distbn_chnl_code);
-      
-	  var_result := pmx_common.format_matl_code(var_matl_tdu_code, var_matl_tdu_code);
-	  
-      rcd_pmx_accrls.matl_tdu_code := var_matl_tdu_code;
-      rcd_pmx_accrls.bus_sgmnt := var_division_code;
-      rcd_pmx_accrls.plant_code := var_plant_code;
-      rcd_pmx_accrls.distbn_chnl_code := var_distbn_chnl_code;
-      
-
-      
-      
-      -- these are hard coded for now based on the values from the PDS (Promax) logic
-      rcd_pmx_accrls.gl_tax_code := 'GL';
-      rcd_pmx_accrls.cust_vndr_code := ' ';
-      rcd_pmx_accrls.int_claim_num := 0;
-        
-        
-        
+        rv_gl.plant_code := pxi_common.determine_plant_code(
+          fflu_data.get_char_field(pc_px_company_code),
+          fflu_data.get_char_field(pc_product_number));
+        rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
+          fflu_data.get_char_field(pc_px_company_code),
+          fflu_data.get_char_field(pc_product_number),
+          fflu_data.get_char_field(pc_field_allocation));
+        -- Now add this record to the general ledger collection.
+        ptv_gl_data(tv_gl_data.count+1) := rv_gl;
       end if;
     end if;
   exception 
@@ -217,6 +204,7 @@ end on_start;
     if fflu_data.was_errors = false then 
       -- Now lets create the atlas IDOC interfaces with the data we have in 
       -- memoruy.
+      pxiatl01_extract.send_data(ptv_gl_data,pxiatl01_extract.gc_doc_type_accrual);
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;

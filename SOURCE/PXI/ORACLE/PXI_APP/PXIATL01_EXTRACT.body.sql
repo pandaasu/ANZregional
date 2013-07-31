@@ -49,7 +49,7 @@ package body          pxiatl01_extract as
 /*******************************************************************************
   NAME:      ADD_TAX_RECORD                                               PUBLIC
 *******************************************************************************/
-  procedure add_tax_record(ti_data in out tt_data, i_tax_code in st_tax_code, i_tax in st_amount, i_tax_base in st_amount) is
+  procedure add_tax_record(ti_data in out tt_data, i_tax_code in st_tax_code, i_tax in pxi_common.st_amount, i_tax_base in pxi_common.st_amount) is
     v_data st_data;
   begin
     -- Now generate the tax data line.
@@ -74,7 +74,7 @@ package body          pxiatl01_extract as
 *******************************************************************************/
   procedure add_general_ledger_record(ti_data in out tt_data, 
       i_account in st_data, i_cost_center in st_data, i_profit_center in st_data, 
-      i_amount in st_amount, i_item_text in st_data, i_alloc_number in st_data,
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data,
       i_tax_code in st_tax_code, i_material in st_data, 
       i_plant_code in st_data, i_cust_code in st_data, i_sales_org in st_data,
       i_distribution_channel in st_data) is
@@ -93,7 +93,7 @@ package body          pxiatl01_extract as
       rpad(' ',24) ||                                           -- WBS_ELEMENT 
       rpad(' ',13) ||                                           -- QUANTITY
       rpad(' ',3) ||                                            -- BASE_UOM
-      rpad(nvl(i_material,' '),18) ||                           -- MATERIAL
+      rpad(nvl(pxi_common.full_matl_code(i_material),' '),18) ||-- MATERIAL
       rpad(nvl(i_plant_code,' '),4) ||                          -- PLANT_CODE
       rpad(nvl(i_cust_code,' '),10) ||                          -- CUSTOMER
       lpad(nvl(i_profit_center,' '),10) ||                      -- PROFIT CENTER
@@ -108,7 +108,7 @@ package body          pxiatl01_extract as
 *******************************************************************************/
   procedure add_payment_record(ti_data in out tt_data, 
       i_account in st_data, i_vendor in st_data, 
-      i_amount in st_amount, i_item_text in st_data, i_alloc_number in st_data) is
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data) is
     v_data st_data;
   begin
     -- Now generate the general ledger line.
@@ -174,6 +174,15 @@ package body          pxiatl01_extract as
      dbms_output.put_line('----------------------------------');
      dbms_output.put_line('');
    end debug_interface;
+
+/*******************************************************************************
+  NAME:      SEND_DATA                                                    PUBLIC
+*******************************************************************************/
+   procedure send_data(ti_gl_data in tt_gl_data, i_doc_type in st_doc_type) is
+   begin
+     null;
+   end send_data;
+
 
 end pxiatl01_extract;
 
