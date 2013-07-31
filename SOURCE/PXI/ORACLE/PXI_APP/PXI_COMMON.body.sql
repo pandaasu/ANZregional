@@ -1,15 +1,130 @@
 create or replace package body pxi_common is
---------------------------------------------------------------------------------
-  -- Private : Application Exception
-  pv_application_exception exception;
-  pragma exception_init(pv_application_exception, -20000);
+
+/*******************************************************************************
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant st_package_name := 'PXI_COMMON';
+
+/*******************************************************************************
+  NAME:  RERAISE_PROMAX_EXCEPTION                                         PUBLIC
+*******************************************************************************/
+  procedure reraise_promax_exception(i_method in st_string) is
+  begin
+    raise_application_error(gc_application_exception,substr(i_method || ' ' || SQLERRM,1,4000));
+  end reraise_promax_exception;
   
-  -- Private : Constants
-  pv_package_name constant varchar2(30 char) := 'pmi_common';
+/*******************************************************************************
+  NAME:  RAISE_PROMAX_EXCEPTION                                           PUBLIC
+*******************************************************************************/
+  procedure raise_promax_error(i_message in st_string) is
+  begin
+    raise_application_error(gc_application_exception,substr(i_message,1,4000));
+  end raise_promax_error;
+
+/*******************************************************************************
+  NAME:  FULL_MATL_CODE                                                   PUBLIC
+*******************************************************************************/
+  function full_matl_code (i_matl_code in st_matl_code) return st_matl_code is
+    v_result st_matl_code;
+    v_firstchar st_matl_code;
+  begin
+    -- Trim the inputted Material Code.
+    v_result := ltrim(i_matl_code);
   
-  --                               0        1         2         3         4         5         6         7         8         9         10          
-  --                               1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-  pv_spaces varchar2(100 char) := '                                                                                                    ';
+    -- Return zero if Material Code is null.
+    if v_result is null then
+      v_result := '0';
+    end if;
+  
+    -- Check whether the first character is a number. If so, then left pad with zero's to
+    -- eighteen characters. Otherwise right pad with white spaces to eighteen characters.
+    v_firstchar := substr(v_result,1,1); 
+    if v_firstchar >= '0' and v_firstchar <= '9' then
+      v_result := lpad(v_result,18,'0');
+    else
+      v_result := rpad(v_result,18,' ');
+    end if;
+    return v_result;
+  exception
+    when others then 
+      reraise_promax_exception('Full Matl Code');
+  end full_matl_code;
+
+/*******************************************************************************
+  NAME:  SHORT_MATL_CODE                                                  PUBLIC
+*******************************************************************************/
+  function short_matl_code (i_matl_code in st_matl_code) return st_matl_code is
+  begin
+    return trim (ltrim (i_matl_code, '0') );
+  exception 
+    when others then 
+      reraise_promax_exception('Short Matl Code');
+  end short_matl_code;
+
+/*******************************************************************************
+  NAME:  LOOKUP_TDU_FROM_ZREP                                             PUBLIC
+*******************************************************************************/
+  function lookup_tdu_from_zrep (
+    i_sales_org in st_company,
+    i_zrep_matl_code in st_matl_code,
+    i_buy_start_date in date,
+    i_buy_end_date in date
+    ) return st_matl_code is
+    -- Cursor to find the TDU. 
+    cursor csr_zrep_tdu is
+      select
+        sales_organisation,
+        dstrbtn_channel,
+        sold_to_code,
+        zrep_material_code,
+        start_date,
+        end_date,
+        tdu_material_code
+      from
+        bds_refrnc_material_zrep t01,
+        bds_refrnc_material_tdu t02
+      where 
+        t01.condition_record_no = t02.condition_record_no
+        and t01.material_dtrmntn_type = 'Z001'
+        and t01.sales_organisation = i_sales_org
+        and t01.zrep_material_code = full_matl_code(i_zrep_matl_code)
+        and not (i_buy_end_date < start_date or i_buy_start_date > end_date)
+      order by start_date desc;
+    rv_zrep_tdu csr_zrep_tdu%rowtype;
+    v_result st_matl_code;
+begin
+  -- Set the initial result.
+  v_result := null;
+  -- Perform the material determination lookup
+  open csr_zrep_tdu;
+  fetch csr_zrep_tdu into rv_zrep_tdu;
+  if csr_zrep_tdu%found = true then
+    v_result  := rv_zrep_tdu.tdu_material_code;
+  end if;
+  close csr_zrep_tdu;
+  -- Return the result. 
+  return v_result;
+exception
+  when others then 
+    reraise_promax_exception('Lookup TDU From ZREP');
+end lookup_tdu_from_zrep;
+
+
+  function determine_bus_sgmnt (
+    i_sales_org in st_company,
+    i_promax_division in st_promax_division,
+    i_zrep_matl_code in st_matl_code) return st_bus_sgmnt is 
+    begin
+     null;
+     end;
+
+/*******************************************************************************
+********************************************************************************
+  CODE BELOW HERE STILL NEEDS TO BE REFORMATTED AND TIDIED UP.
+********************************************************************************
+*******************************************************************************/
+
+
 --------------------------------------------------------------------------------
 function is_nullable return number is begin return 1; end;
 function is_not_nullable return number is begin return 0; end;
@@ -21,13 +136,10 @@ function format_type_rtrim return number is begin return 3; end;
 function format_type_ltrim_zeros return number is begin return 4; end;
 --------------------------------------------------------------------------------
 function char_format(i_value in varchar2, i_length in number, i_format_type in number, i_value_is_nullable in number) return varchar2 is
-
   v_value varchar2(4000 char);
-
 begin
-
   if i_length is null then
-      raise_application_error(-20000, 'Length CANNOT be NULL');
+    raise_application_error(-20000, 'Length CANNOT be NULL');
   end if;
   
   if i_format_type is null then
@@ -40,9 +152,9 @@ begin
   
   if i_value is null then
     if i_value_is_nullable = pxi_common.is_nullable then
-      return substr(pv_spaces, 1, i_length); -- return empty string of correct length
+      return rpad(' ', i_length,' '); -- return empty string of correct length
     else 
-      raise_application_error(-20000, 'Value CANNOT be NULL');
+      raise_promax_error('Value CANNOT be NULL');
     end if;
   end if;
   
@@ -69,8 +181,7 @@ begin
   
 exception
   when others then
-    raise_application_error(-20000, substr('['||pv_package_name||'.char_format] : '||SQLERRM, 1, 4000));
-
+    raise_application_error(-20000, substr('['||pc_package_name||'.char_format] : '||SQLERRM, 1, 4000));
 end char_format;
 --------------------------------------------------------------------------------
 function numb_format(i_value in number, i_format in varchar2, i_value_is_nullable in number) return varchar2 is
@@ -86,33 +197,44 @@ begin
   if i_value_is_nullable is null then
       raise_application_error(-20000, 'Value Is Nullable CANNOT be NULL');
   end if;
-  
+
   if i_value is null then
     if i_value_is_nullable = pxi_common.is_nullable then
-      return substr(pv_spaces, 1, length(i_format)); -- return empty string of correct length
-    else 
+      return rpad(' ', length(i_format)); -- return empty string of correct length
+    else
       raise_application_error(-20000, 'Value CANNOT be NULL');
     end if;
+  elsif i_value < 0 and upper(substr(i_format,1,1)) != 'S' then
+    raise_application_error(-20000, 'Value ['||i_value||'] CANNOT be Negative, without Format ['||i_format||'] Including S Prefix');
   end if;
 
   begin
-    v_value := to_char(i_value, i_format);
+    v_value := trim(to_char(i_value, i_format));
   exception
     when others then
       raise_application_error(-20000, substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
   end;
-  
+
   if instr(v_value, '#') > 0 then
-      raise_application_error(-20000, substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
+      raise_application_error(-20000, 'Format ['||i_format||'] on Value ['||i_value||']');
   end if;
-  
-  return replace(v_value, '+', ' ');
-  
+
+  if upper(substr(i_format,1,1)) != 'S' then
+    v_value := replace(v_value, '+', '');
+  end if;
+
+  if length(v_value) > length(i_format) then
+      raise_application_error(-20000, 'Format Length ['||i_format||']['||length(i_format)||'] < Value Length ['||i_value||']['||length(v_value)||']');
+  end if;
+
+  return lpad(v_value, length(i_format));
+
 exception
   when others then
-    raise_application_error(-20000, substr('['||pv_package_name||'.numb_format] : '||SQLERRM, 1, 4000));
-
+    raise_application_error(-20000, substr('['||pc_package_name||'.numb_format] : '||SQLERRM, 1, 4000));
 end numb_format;
+
+
 --------------------------------------------------------------------------------
 function date_format(i_value in date, i_format in varchar2, i_value_is_nullable in number) return varchar2 is
 
@@ -128,7 +250,7 @@ begin
 
   if i_value is null then
     if i_value_is_nullable = pxi_common.is_nullable then
-      return substr(pv_spaces, 1, length(i_format)); -- return empty string of correct length
+      return rpad(' ',length(i_format)); -- return empty string of correct length
     else 
       raise_application_error(-20000, 'Value CANNOT be NULL');
     end if;
@@ -143,7 +265,7 @@ begin
   
 exception
   when others then
-    raise_application_error(-20000, substr('['||pv_package_name||'.date_format] : '||SQLERRM, 1, 4000));
+    raise_application_error(-20000, substr('['||pc_package_name||'.date_format] : '||SQLERRM, 1, 4000));
 
 end date_format;
 
@@ -317,7 +439,6 @@ function lookup_matl_tdu_num (
     v_matl_zrep_code  varchar2(18);
     v_matl_tdu_code   varchar2(18);
       
-      
     /*-*/ 
     /* Lookup Current User
     /*-*/   
@@ -341,9 +462,7 @@ function lookup_matl_tdu_num (
             and not (i_buy_end_date < start_date or i_buy_start_date > end_date)
             order by start_date desc;
     rcd_matl_tdu csr_matl_tdu%rowtype;
-
 BEGIN
-  
     -- Format the ZREP Code  
     v_result := format_matl_code(i_matl_zrep_code, v_matl_zrep_code);
 

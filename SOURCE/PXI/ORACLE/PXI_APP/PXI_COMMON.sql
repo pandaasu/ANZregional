@@ -1,5 +1,163 @@
 create or replace package pxi_common as
 
+/*******************************************************************************
+** PACKAGE DEFINITION
+********************************************************************************
+
+  System    : PXI
+  Owner     : PXI_APP
+  Package   : PXI_COMMON
+  Author    : Chris Horn, Mal Chamberyron, Jonathan Girling
+  Interface : Promax PX Common Interfacing System Utilities
+
+  Description
+  ------------------------------------------------------------------------------
+  This package is used to supply common handling and processing functions to 
+  the various Promax PX interfacing packages.
+
+  Functions
+  ------------------------------------------------------------------------------
+  + Formatting Functions
+    - full_matl_code             Correctly formats material codes.
+    - short_matl_code            Correctly formats short material codes.
+  + Lookup Functions.
+    - lookup_tdu_from_zrep       Looks up a TDU from a ZREP based on dates.  
+
+  Date        Author                Description
+  ----------  --------------------  --------------------------------------------
+  2013-07-30  Chris Horn            Updated this package with comments and
+                                    material functions. 
+
+*******************************************************************************/
+
+/*******************************************************************************
+  Common Promax PX Interfacing System Constants / Exception Definitions
+*******************************************************************************/
+  gc_application_exception pls_integer := -20000;  -- Custom Exception Code.
+  ge_application_exception exception;
+  pragma exception_init(ge_application_exception, -20000);
+
+/*******************************************************************************
+  Common Package Types
+*******************************************************************************/
+  -- Package Sub Types
+  subtype st_matl_code is varchar2(18);      -- Material Codes. 
+  subtype st_gl_code is varchar2(10);        -- GL Account, Account Code, Cost Object
+  subtype st_company is varchar2(3);         -- Company 
+  subtype st_customer is varchar2(10);       -- Customer
+  subtype st_vendor is varchar2(10);         -- Vendor
+  subtype st_amount is number(22,2);         -- Dollars / Amounts
+  subtype st_reference is varchar2(18);      -- Reference Fields.
+  subtype st_text is varchar2(50);           -- Text Fields.
+  subtype st_string is varchar2(4000);       -- Long String field for messages.
+  subtype st_package_name is varchar2(32);   -- Package Names  
+  subtype st_bus_sgmnt is varchar2(2);       -- Business Segment Code
+  subtype st_promax_division is varchar2(3); -- Promax Division  
+
+/*******************************************************************************
+  Common Constants
+*******************************************************************************/
+  gc_bus_sgmnt_snack   st_bus_sgmnt := '01';
+  gc_bus_sgmnt_food    st_bus_sgmnt := '02';
+  gc_bus_sgmnt_petcare st_bus_sgmnt := '05';
+
+/*******************************************************************************
+  NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
+  PURPOSE:   This function formats a the current SQL Error message with a 
+             message and raises it as an application exception. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure raise_promax_error(i_message in st_string);
+
+/*******************************************************************************
+  NAME:      RERAISE_PROMAX_EXCEPTION                                     PUBLIC
+  PURPOSE:   This function formats a the current SQL Error message with a 
+             message and reraises it as an application exception. 
+             
+             This can be called in the when others sections of most methods
+             as needed.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure reraise_promax_exception(i_method in st_string);
+  
+/*******************************************************************************
+  NAME:      FULL_MATL_CODE                                               PUBLIC
+  PURPOSE:   This procedure correctly formats a material code into is long 
+             normal SAP format.  Returns zeros if material code is null.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  function full_matl_code(i_matl_code in st_matl_code) return st_matl_code;
+
+/*******************************************************************************
+  NAME:      SHORT_MATL_CODE                                              PUBLIC
+  PURPOSE:   This procedure correctly formats a material code into is short 
+             format.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  function short_matl_code(i_matl_code in st_matl_code) return st_matl_code;
+
+/*******************************************************************************
+  NAME:      LOOKUP_TDU_FROM_ZREP                                         PUBLIC
+  PURPOSE:   This function looks up a current tdu for a given zrep and sales
+             organisation and buying dates.  Null is returned if no 
+             material could be found within that range.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  function lookup_tdu_from_zrep (
+    i_sales_org in st_company,
+    i_zrep_matl_code in st_matl_code,
+    i_buy_start_date in date,
+    i_buy_end_date in date
+    ) return st_matl_code;
+
+/*******************************************************************************
+  NAME:      DETERMINE_BUS_SGMNT                                          PUBLIC
+  PURPOSE:   This function uses the promax disvision to determine
+             the business sgement we should be using for subsequent processing
+             for New Zealand 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+
+*******************************************************************************/
+  function determine_bus_sgmnt (
+    i_sales_org in st_company,
+    i_promax_division in st_promax_division,
+    i_zrep_matl_code in st_matl_code) return st_bus_sgmnt;
+
+/*******************************************************************************
+********************************************************************************
+  CODE BELOW HERE STILL NEEDS TO BE REFORMATTED AND TIDIED UP.
+********************************************************************************
+*******************************************************************************/
+
 
 /*******************************************************************************
   NAME:      format_cust_code

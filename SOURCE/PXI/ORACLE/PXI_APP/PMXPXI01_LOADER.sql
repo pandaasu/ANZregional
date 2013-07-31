@@ -20,7 +20,7 @@ package          pmxlad01_loader as
   
   Below is an example of the flow below. 
   
-  Promax PX Accruals 335 -> LADS (Inbound) -> Atlas PXIATL01 - Accruals
+  Promax PX Accruals 325 -> LADS (Inbound) -> Atlas PXIATL01 - Accruals
 
   Functions
   ------------------------------------------------------------------------------
