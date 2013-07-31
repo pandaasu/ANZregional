@@ -698,7 +698,7 @@ package body fflu_data as
       rv_field.column_name := i_column_name;
       rv_field.format := i_format;
       rv_field.offset := i_offset;
-      rv_field.offset := i_offset_len;  
+      rv_field.offset_len := i_offset_len;  
       rv_field.min_date := i_min_date;
       rv_field.max_date := i_max_date;
       rv_field.allow_null := i_allow_null;
