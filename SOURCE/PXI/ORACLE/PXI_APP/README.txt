@@ -20,3 +20,16 @@ PXIPMX05_EXTRACT - Vendor Data Extract
 
 PXIPMX06_EXTRACT - Price List
                    Promax PI Interface Number : 330
+
+
+PMXPXI01_LOADER  - Promax Accruals to Promax PX Interfacing then onto Atlas.
+                   Promax PI Interface Number : 325
+
+PMXPXI02_LOADER  - Promax Payments to Promax PX Interfacing the onto Atlas.
+                   Promax PI Interface Number : 331
+
+
+PXIATL01_EXTRACT - Promax PX Interfacing to Atlas.
+                   ICS Interface Definition Document : CISATL03, IDOC:ACC_DOCUMENT02.
+
+
