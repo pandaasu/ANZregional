@@ -435,7 +435,9 @@ package body pxipmx04_extract as
         -- Only include customers that are not deleted.
         t3.deletion_flag is null and
         -- Only include not rasw and packs or affiliate customers
-        t3.distbn_chnl_code not in ('98','99');
+        t3.distbn_chnl_code not in ('98','99') and 
+        -- Do not include demand planning nodes.
+        t1.demand_plan_group_code is null;
     rv_cust_level csr_cust_level_data%rowtype; 
     -- Define the table structure for the product hierarchy.
     type tt_hierachy_collection is table of rt_hierarchy_node index by pls_integer;
