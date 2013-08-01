@@ -41,9 +41,10 @@ create or replace package pxi_common as
   Common Package Types
 *******************************************************************************/
   -- Package Sub Types
-  subtype st_material is varchar2(18);      -- Material Codes. 
-  subtype st_gl_code is varchar2(10);        -- GL Account, Account Code, Cost Object
   subtype st_company is varchar2(3);         -- Company 
+  subtype st_promax_division is varchar2(3); -- Promax Division  
+  subtype st_material is varchar2(18);       -- Material Codes. 
+  subtype st_gl_code is varchar2(10);        -- GL Account, Account Code, Cost Object
   subtype st_customer is varchar2(10);       -- Customer
   subtype st_vendor is varchar2(10);         -- Vendor
   subtype st_amount is number(22,2);         -- Dollars / Amounts
@@ -54,7 +55,6 @@ create or replace package pxi_common as
   subtype st_bus_sgmnt is varchar2(2);       -- Business Segment Code
   subtype st_plant_code is varchar2(4);      -- Atlas Plant Code.
   subtype st_dstrbtn_chnnl is varchar2(2);   -- Distribution Channel
-  subtype st_promax_division is varchar2(3); -- Promax Division  
   subtype st_currency is varchar2(3);        -- Currency Information
 
 /*******************************************************************************
@@ -81,7 +81,10 @@ create or replace package pxi_common as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure raise_promax_error(i_message in st_string);
+  procedure raise_promax_error(
+    i_package_name in st_package_name,
+    i_method in st_string, 
+    i_message in st_string);
 
 /*******************************************************************************
   NAME:      RERAISE_PROMAX_EXCEPTION                                     PUBLIC
@@ -97,7 +100,9 @@ create or replace package pxi_common as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure reraise_promax_exception(i_method in st_string);
+  procedure reraise_promax_exception(
+    i_package_name in st_package_name,
+    i_method in st_string);
   
 /*******************************************************************************
   NAME:      FULL_MATL_CODE                                               PUBLIC

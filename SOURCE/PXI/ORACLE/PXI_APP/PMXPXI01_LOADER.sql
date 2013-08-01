@@ -1,5 +1,5 @@
 create or replace 
-package          pmxlad01_loader as
+package          pmxpxi01_loader as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -45,4 +45,4 @@ package          pmxlad01_loader as
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
 
-end pmxlad01_loader;
+end pmxpxi01_loader;

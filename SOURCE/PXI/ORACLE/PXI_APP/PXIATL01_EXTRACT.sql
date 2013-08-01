@@ -58,13 +58,19 @@ package          pxiatl01_extract as
 *******************************************************************************/
   -- General Ledger Record
   type rt_gl_record is record (
+    -- Key Document Header Fields New IDOC on a change on any of these records.
+    company pxi_common.st_company,
+    promax_division pxi_common.st_promax_division,
     document_date date,
     posting_date date,
+    currency pxi_common.st_currency,
+    -- General detail records 
     account_code pxi_common.st_gl_code,
     cost_center pxi_common.st_gl_code,
     profit_center pxi_common.st_gl_code,
     amount pxi_common.st_amount,
-    currency pxi_common.st_currency,
+    tax_amount pxi_common.st_amount,
+    tax_amount_base pxi_common.st_amount,
     tax_code st_tax_code,
     allocation_ref pxi_common.st_reference,
     item_text pxi_common.st_text,
@@ -78,7 +84,6 @@ package          pxiatl01_extract as
   -- General Ledger Table.
   type tt_gl_data is table of rt_gl_record index by pls_integer;
 
-  
 /*******************************************************************************
   Package Constants
 *******************************************************************************/
@@ -266,7 +271,10 @@ package          pxiatl01_extract as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure send_data(ti_gl_data in tt_gl_data, i_doc_type in st_doc_type);
+  procedure send_data(
+    ti_gl_data in tt_gl_data, 
+    i_doc_type in st_doc_type,
+    i_doc_reference in st_data);
 
 end pxiatl01_extract;
 

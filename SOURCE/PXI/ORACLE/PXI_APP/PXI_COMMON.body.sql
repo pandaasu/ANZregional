@@ -8,17 +8,23 @@ create or replace package body pxi_common is
 /*******************************************************************************
   NAME:  RERAISE_PROMAX_EXCEPTION                                         PUBLIC
 *******************************************************************************/
-  procedure reraise_promax_exception(i_method in st_string) is
+  procedure reraise_promax_exception(
+    i_package_name in st_package_name,
+    i_method in st_string
+  ) is
   begin
-    raise_application_error(gc_application_exception,substr(i_method || ' ' || SQLERRM,1,4000));
+    raise_application_error(gc_application_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || SQLERRM,1,4000));
   end reraise_promax_exception;
   
 /*******************************************************************************
   NAME:  RAISE_PROMAX_EXCEPTION                                           PUBLIC
 *******************************************************************************/
-  procedure raise_promax_error(i_message in st_string) is
+  procedure raise_promax_error(
+    i_package_name in st_package_name,
+    i_method in st_string, 
+    i_message in st_string) is
   begin
-    raise_application_error(gc_application_exception,substr(i_message,1,4000));
+    raise_application_error(gc_application_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || i_message,1,4000));
   end raise_promax_error;
 
 /*******************************************************************************
@@ -47,7 +53,7 @@ create or replace package body pxi_common is
     return v_result;
   exception
     when others then 
-      reraise_promax_exception('Full Matl Code');
+      reraise_promax_exception(pc_package_name,'FULL_MATL_CODE');
   end full_matl_code;
 
 /*******************************************************************************
@@ -58,7 +64,7 @@ create or replace package body pxi_common is
     return trim (ltrim (i_matl_code, '0') );
   exception 
     when others then 
-      reraise_promax_exception('Short Matl Code');
+      reraise_promax_exception(pc_package_name,'SHORT_MATL_CODE');
   end short_matl_code;
 
 /*******************************************************************************
@@ -69,7 +75,7 @@ create or replace package body pxi_common is
     return lpad(nvl(i_cust_code,'0'),10,'0');
   exception
     when others then 
-      reraise_promax_exception('Full Cust Code');
+      reraise_promax_exception(pc_package_name,'FULL_CUST_CODE');
   end full_cust_code;
 
 
@@ -118,7 +124,7 @@ create or replace package body pxi_common is
     return v_result;
   exception
     when others then 
-      reraise_promax_exception('Lookup TDU From ZREP');
+      reraise_promax_exception(pc_package_name,'LOOKUP_TDU_FROM_ZREP');
   end lookup_tdu_from_zrep;
 
 /*******************************************************************************
@@ -143,7 +149,7 @@ create or replace package body pxi_common is
       close csr_bus_sgmnt;
     else
       if length(i_promax_division) > 2 then 
-        raise_promax_error('Supplied Promax Division was meant to be less than 3 characters.  But was [' || i_promax_division || ']'); 
+        raise_promax_error(pc_package_name,'DETERMINE_BUS_SGMNT','Supplied Promax Division was meant to be less than 3 characters.  But was [' || i_promax_division || ']'); 
       else 
         v_result := i_promax_division;
       end if;
@@ -152,7 +158,7 @@ create or replace package body pxi_common is
     return v_result;
   exception
     when others then 
-      reraise_promax_exception('Determine Bus Sgmnt'); 
+      reraise_promax_exception(pc_package_name,'DETERMINE_BUS_SGMNT'); 
   end determine_bus_sgmnt;
 
 /*******************************************************************************
@@ -181,7 +187,6 @@ create or replace package body pxi_common is
   BEGIN
     -- Initialise Result Variable
     v_result := null;
-   /*
     -- Open csr_distn_chnl cursor.
     OPEN csr_distn_chnl;
     LOOP
@@ -191,19 +196,18 @@ create or replace package body pxi_common is
       -- There can be multiple records for a matl_code and cust_code, return 10 if
       -- it is a valid value for the matl_code and cust_code, otherwise return
       -- another of the matl_code and cust_code's valid values.
-      IF rv_distn_chnl.dstrbtn_chnl = gc_distrbtn_channel_primary THEN
+      IF rv_distn_chnl.DSTRBTN_CHANNEL = gc_distrbtn_channel_primary THEN
         v_result := gc_distrbtn_channel_primary;
-      ELSIF rv_distn_chnl.dstrbtn_chnl != gc_distrbtn_channel_primary AND v_result is null THEN
-        v_result := rv_distn_chnl.dstrbtn_chnl;
+      ELSIF rv_distn_chnl.DSTRBTN_CHANNEL != gc_distrbtn_channel_primary AND v_result is null THEN
+        v_result := rv_distn_chnl.DSTRBTN_CHANNEL;
       END IF;
     END LOOP;
     close csr_distn_chnl;
     -- Now return the resulting distribution channel.
-    */  
     return v_result;
   exception
       when others then 
-        reraise_promax_exception('Determine Distribution Channel'); 
+        reraise_promax_exception(pc_package_name,'DETERMINE_DSTRBTN_CHNNL'); 
   END determine_dstrbtn_chnnl;
 
 
@@ -237,8 +241,8 @@ create or replace package body pxi_common is
       v_cmpny_prefix :='AU';
     ELSIF i_company_code = gc_new_zealand THEN
       v_cmpny_prefix :='NZ';
-    ELSE
-      raise_promax_error('Invalid Company Code. Valid Company Code values include ''147'' and ''149''.');
+    else
+      raise_promax_error(pc_package_name,'DETERMINE_MATL_PLANT_CODE','Invalid Company Code. Valid Company Code values include ''147'' and ''149''.');
     END IF;
   
     -- Fetch the plant code.
@@ -250,7 +254,7 @@ create or replace package body pxi_common is
     return v_result;
   exception
      when others then 
-       reraise_promax_exception('Determine Distribution Channel'); 
+       reraise_promax_exception(pc_package_name,'DETERMINE_MATL_PLANT_CODE'); 
   END determine_matl_plant_code;
 
 
@@ -259,7 +263,6 @@ create or replace package body pxi_common is
   CODE BELOW HERE STILL NEEDS TO BE REFORMATTED AND TIDIED UP.
 ********************************************************************************
 *******************************************************************************/
-
 
 --------------------------------------------------------------------------------
 function is_nullable return number is begin return 1; end;
@@ -290,7 +293,7 @@ begin
     if i_value_is_nullable = pxi_common.is_nullable then
       return rpad(' ', i_length,' '); -- return empty string of correct length
     else 
-      raise_promax_error('Value CANNOT be NULL');
+      raise_promax_error(pc_package_name,'char_format','Value CANNOT be NULL');
     end if;
   end if;
   
