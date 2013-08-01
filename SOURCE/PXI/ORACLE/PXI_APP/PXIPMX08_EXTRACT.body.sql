@@ -9,31 +9,31 @@ PACKAGE body PXIPMX08_EXTRACT AS
 /*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/
-  gc_rec_type fflu_common.st_name := 'Rec Type';
-  gc_rec_type_control fflu_common.st_string := 'CTL';
-  gc_rec_type_detail fflu_common.st_string := 'DET';
+  pc_rec_type constant fflu_common.st_name := 'Rec Type';
+  pc_rec_type_control constant fflu_common.st_string := 'CTL';
+  pc_rec_type_detail constant fflu_common.st_string := 'DET';
 
-  -- CTL (gc_rec_type_control)
-  gc_idoc_type fflu_common.st_name := 'iDoc Type';
-  gc_idoc_no fflu_common.st_name := 'iDoc No';
-  gc_idoc_date fflu_common.st_name := 'iDoc Date';
+  -- CTL (pc_rec_type_control)
+  pc_idoc_type constant fflu_common.st_name := 'iDoc Type';
+  pc_idoc_no constant fflu_common.st_name := 'iDoc No';
+  pc_idoc_date constant fflu_common.st_name := 'iDoc Date';
 
-  -- DET (gc_rec_type_detail)
-  gc_company_code fflu_common.st_name := 'Company Code';
-  gc_div_code fflu_common.st_name := 'Div Code';
-  gc_cust_code fflu_common.st_name := 'Cust Code';
-  gc_claim_amount fflu_common.st_name := 'Claim Amount';
-  gc_claim_ref fflu_common.st_name := 'Claim Ref';
-  gc_assignment_no fflu_common.st_name := 'Assignment No';
-  gc_tax_base fflu_common.st_name := 'Tax Base';
-  gc_posting_date fflu_common.st_name := 'Posting Date';
-  gc_fiscal_period fflu_common.st_name := 'Fiscal Period';
-  gc_reason_code fflu_common.st_name := 'Reason Code';
-  gc_accounting_doc_no fflu_common.st_name := 'Accounting Doc No';
-  gc_fiscal_year fflu_common.st_name := 'Fiscal Year';
-  gc_line_item_no fflu_common.st_name := 'Line Item No';
-  gc_bus_partner_ref fflu_common.st_name := 'Bus Partner Ref';
-  gc_tax_code fflu_common.st_name := 'Tax Code';
+  -- DET (pc_rec_type_detail)
+  pc_company_code constant fflu_common.st_name := 'Company Code';
+  pc_div_code constant fflu_common.st_name := 'Div Code';
+  pc_cust_code constant fflu_common.st_name := 'Cust Code';
+  pc_claim_amount constant fflu_common.st_name := 'Claim Amount';
+  pc_claim_ref constant fflu_common.st_name := 'Claim Ref';
+  pc_assignment_no constant fflu_common.st_name := 'Assignment No';
+  pc_tax_base constant fflu_common.st_name := 'Tax Base';
+  pc_posting_date constant fflu_common.st_name := 'Posting Date';
+  pc_fiscal_period constant fflu_common.st_name := 'Fiscal Period';
+  pc_reason_code constant fflu_common.st_name := 'Reason Code';
+  pc_accounting_doc_no constant fflu_common.st_name := 'Accounting Doc No';
+  pc_fiscal_year constant fflu_common.st_name := 'Fiscal Year';
+  pc_line_item_no constant fflu_common.st_name := 'Line Item No';
+  pc_bus_partner_ref constant fflu_common.st_name := 'Bus Partner Ref';
+  pc_tax_code constant fflu_common.st_name := 'Tax Code';
 
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -44,34 +44,34 @@ PACKAGE body PXIPMX08_EXTRACT AS
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_no_csv_header,fflu_data.gc_allow_missing);
 
     -- Control Record - Type
-    fflu_data.add_record_type_txt(gc_rec_type,1,3,gc_rec_type_control);
+    fflu_data.add_record_type_txt(pc_rec_type,1,3,pc_rec_type_control);
     -- Control Record - Fields
-    fflu_data.add_char_field_txt(gc_idoc_type,4,30,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_txt(gc_idoc_no,34,16,'9999999999999990',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(gc_idoc_date,50,14,'yyyymmddhh24miss',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    
+    fflu_data.add_char_field_txt(pc_idoc_type,4,30,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_txt(pc_idoc_no,34,16,'9999999999999990',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_idoc_date,50,14,'yyyymmddhh24miss',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+
     -- Detail Record - Type
-    fflu_data.add_record_type_txt(gc_rec_type,1,3,gc_rec_type_detail);
+    fflu_data.add_record_type_txt(pc_rec_type,1,3,pc_rec_type_detail);
     -- Detail Record - Fields
-    fflu_data.add_char_field_txt(gc_company_code,4,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_txt(gc_div_code,7,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_txt(gc_cust_code,10,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_txt(gc_claim_amount,20,15,'9999999990.0000',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(gc_claim_ref,35,12,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_txt(gc_assignment_no,47,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_txt(gc_tax_base,65,15,'9999999990.0000',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(gc_posting_date,80,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_number_field_txt(gc_fiscal_period,88,2,'90',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(gc_reason_code,90,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_txt(gc_accounting_doc_no,93,10,fflu_data.gc_null_format,fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_number_field_txt(gc_fiscal_year,103,4,'9990',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(gc_line_item_no,107,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_txt(gc_bus_partner_ref,110,12,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_txt(gc_tax_code,122,2,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    
+    fflu_data.add_char_field_txt(pc_company_code,4,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_div_code,7,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_cust_code,10,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_txt(pc_claim_amount,20,15,'9999999990.0000',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_claim_ref,35,12,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_assignment_no,47,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_txt(pc_tax_base,65,15,'9999999990.0000',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_posting_date,80,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_txt(pc_fiscal_period,88,2,'90',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_reason_code,90,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_txt(pc_accounting_doc_no,93,10,fflu_data.gc_null_format,fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_txt(pc_fiscal_year,103,4,'9990',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_line_item_no,107,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_bus_partner_ref,110,12,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_tax_code,122,2,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+
     -- Empty Inbound Array
     pv_inbound_array.delete;
-    
+
   exception
     when others then
       fflu_utils.log_interface_exception('On Start');
@@ -87,42 +87,42 @@ PACKAGE body PXIPMX08_EXTRACT AS
 
       -- Switch on Record Type ..
       case fflu_data.get_record_type
-        when gc_rec_type_control then
+        when pc_rec_type_control then
           begin
-            if trim(fflu_data.get_char_field(gc_idoc_type)) = 'FIDCCP02' then
-              pv_inbound_rec.idoc_type := fflu_data.get_char_field(gc_idoc_type);
-              pv_inbound_rec.idoc_no := fflu_data.get_number_field(gc_idoc_no);
-              pv_inbound_rec.idoc_date := fflu_data.get_date_field(gc_idoc_date);
+            if trim(fflu_data.get_char_field(pc_idoc_type)) = 'FIDCCP02' then
+              pv_inbound_rec.idoc_type := fflu_data.get_char_field(pc_idoc_type);
+              pv_inbound_rec.idoc_no := fflu_data.get_number_field(pc_idoc_no);
+              pv_inbound_rec.idoc_date := fflu_data.get_date_field(pc_idoc_date);
             else
-              fflu_data.log_field_error(gc_rec_type,'Unexpected iDoc Type Value [' || fflu_data.get_char_field(gc_idoc_type) || '].');
+              fflu_data.log_field_error(pc_rec_type,'Unexpected iDoc Type Value [' || fflu_data.get_char_field(pc_idoc_type) || '].');
             end if;
           end;
-        when gc_rec_type_detail then null;
+        when pc_rec_type_detail then null;
           begin
-            pv_inbound_rec.company_code := fflu_data.get_char_field(gc_company_code);
-            pv_inbound_rec.div_code := fflu_data.get_char_field(gc_div_code);
-            pv_inbound_rec.cust_code := fflu_data.get_char_field(gc_cust_code);
-            pv_inbound_rec.claim_amount := fflu_data.get_number_field(gc_claim_amount);
-            pv_inbound_rec.claim_ref := fflu_data.get_char_field(gc_claim_ref);
-            pv_inbound_rec.assignment_no := fflu_data.get_char_field(gc_assignment_no);
-            pv_inbound_rec.tax_base := fflu_data.get_number_field(gc_tax_base);
-            pv_inbound_rec.posting_date := fflu_data.get_date_field(gc_posting_date);
-            pv_inbound_rec.fiscal_period := fflu_data.get_number_field(gc_fiscal_period);
-            pv_inbound_rec.reason_code := fflu_data.get_char_field(gc_reason_code);
-            pv_inbound_rec.accounting_doc_no := fflu_data.get_number_field(gc_accounting_doc_no);
-            pv_inbound_rec.fiscal_year := fflu_data.get_number_field(gc_fiscal_year);
-            pv_inbound_rec.line_item_no := fflu_data.get_char_field(gc_line_item_no);
-            pv_inbound_rec.bus_partner_ref := fflu_data.get_char_field(gc_bus_partner_ref);
-            pv_inbound_rec.tax_code := fflu_data.get_char_field(gc_tax_code);
+            pv_inbound_rec.company_code := fflu_data.get_char_field(pc_company_code);
+            pv_inbound_rec.div_code := fflu_data.get_char_field(pc_div_code);
+            pv_inbound_rec.cust_code := fflu_data.get_char_field(pc_cust_code);
+            pv_inbound_rec.claim_amount := fflu_data.get_number_field(pc_claim_amount);
+            pv_inbound_rec.claim_ref := fflu_data.get_char_field(pc_claim_ref);
+            pv_inbound_rec.assignment_no := fflu_data.get_char_field(pc_assignment_no);
+            pv_inbound_rec.tax_base := fflu_data.get_number_field(pc_tax_base);
+            pv_inbound_rec.posting_date := fflu_data.get_date_field(pc_posting_date);
+            pv_inbound_rec.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
+            pv_inbound_rec.reason_code := fflu_data.get_char_field(pc_reason_code);
+            pv_inbound_rec.accounting_doc_no := fflu_data.get_number_field(pc_accounting_doc_no);
+            pv_inbound_rec.fiscal_year := fflu_data.get_number_field(pc_fiscal_year);
+            pv_inbound_rec.line_item_no := fflu_data.get_char_field(pc_line_item_no);
+            pv_inbound_rec.bus_partner_ref := fflu_data.get_char_field(pc_bus_partner_ref);
+            pv_inbound_rec.tax_code := fflu_data.get_char_field(pc_tax_code);
             --
             /******************************************************************/
             /* 31/07/2006 CF: Only load TP Claims into PDS (previously all Accounting Document lines were loaded).
             /* Division (Business Segment) is derived in ICS only for Accounting Document lines which
-            /* have a TP Claim Reason Codes .. 
+            /* have a TP Claim Reason Codes ..
             /* - Food =  '40', '41', '51'
             /* - Snack = '42', '43', '53'
             /* - Pet =   '44', '45', '55'
-            /* Ignore any Accounting Document line which does not have a Division (as it will be non-TP) 
+            /* Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
             /******************************************************************/
             if trim(pv_inbound_rec.reason_code) in ('40', '41', '42', '43', '44', '45', '51', '53', '55') then
               pv_inbound_array(pv_inbound_array.count+1) := pv_inbound_rec;
@@ -130,7 +130,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           end;
         else
           begin
-            fflu_data.log_field_error(gc_rec_type,'Unexpected Record Type Value [' || fflu_data.get_record_type || '].');
+            fflu_data.log_field_error(pc_rec_type,'Unexpected Record Type Value [' || fflu_data.get_record_type || '].');
           end;
       end case;
 
@@ -183,20 +183,20 @@ PACKAGE body PXIPMX08_EXTRACT AS
         -- SQL
         ------------------------------------------------------------------------
           /*****************************
-          /* TP Claim Reason Codes .. 
+          /* TP Claim Reason Codes ..
           /* - Food =  '40', '41', '51'
           /* - Snack = '42', '43', '53'
           /* - Pet =   '44', '45', '55'
-            --  
+            --
           *****************************/
           select
             trim(t1.bus_partner_ref) as bus_partner_ref,
-            decode(nvl(trim(t1.reason_code),'99'), '40', 'No Tax', '42', 'No Tax', '44', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Reason Code 40, 42, 44 .. Else Inc Tax 
+            decode(nvl(trim(t1.reason_code),'99'), '40', 'No Tax', '42', 'No Tax', '44', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Reason Code 40, 42, 44 .. Else Inc Tax
             t1.posting_date,
             t1.claim_ref,
             t1.assignment_no,
             t1.reason_code,
-            t1.claim_amount + t1.tax_base as amount, 
+            t1.claim_amount + t1.tax_base as amount,
             t1.tax_base as tax_amount
          from
             table(get_inbound) t1
@@ -287,7 +287,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
      end loop;
 
   end get_inbound;
-  
+
 /*******************************************************************************
   NAME:      ON_GET_FILE_TYPE                                             PUBLIC
 *******************************************************************************/
