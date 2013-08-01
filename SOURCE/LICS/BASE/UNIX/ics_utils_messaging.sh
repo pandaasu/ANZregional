@@ -13,10 +13,11 @@
 # 07-MAR-2008   L. Glen     Added set_permission call within process_passthru_mqft
 # 13-MAY-2008   S. Gregan   Added pipe to TMP_OUT for java calls within get_file_from_sap
 # 13-MAY-2008   S. Gregan   Added oracle classes12.jar to java calls within get_file_from_sap
-# 18-JUN-2008   T. Keon     Added SHLIB_PATH variable
+# 18-JUN-2008   T. `eon     Added SHLIB_PATH variable
 # 18-JUN-2009   T. Keon     Added Linux support to inbound SAP processing
 # 25-NOV-2011   S. Gordon   Modify send_file_via_mqft_to_CDW() to send to directory with interface name
 # 20-JUL-2012   B. Halicki	Added MQIF_LITE functionality
+# 20-JUN-2013   S. Gordon   Add a sleep and error logging for MQIF
 #
 # ---------------------------------------------------------------------------
 
@@ -206,11 +207,15 @@ get_mq_message()
 {
     log_file "INFO: [get_mq_message] Executing MQIF command [${AMI_PATH}/bin/mq/mqif.pl -g -h -q ${QUEUE} -o ${Q_FILE}]" "HARMLESS"   
 
+    sleep 1 # Sleep for 1 second to avoid race condition between script instanc
+es
+
     # get the mq message
     MQIF_RC=`${AMI_PATH}/bin/mq/mqif.pl -g -h -q ${QUEUE} -o ${Q_FILE} 2>&1`
     rc=$?
     if [[ $rc -ne 0 ]] ; then
-        error_exit "ERROR: [get_mq_message] MQIF return non-zero. MQIF rc [${rc}]"
+         echo `date` - $Q_FILE - $MQIF_RC >> /tmp/mqif.err
+         error_exit "ERROR: [get_mq_message] MQIF return non-zero. MQIF rc [${rc}]. MQIF output logged to /tmp/mqif.err"
     fi
     
     echo "MQIF sequence [${MSG_SEQ}] return [${MQIF_RC}]" >> $TMP_OUT
@@ -273,6 +278,31 @@ process_inbound()
         MSG_SEQ=`expr $MSG_SEQ + 1`
         queue_depth "GET_MSG" 1
     done
+}
+
+# --------------------------------------------------------------------------
+#
+# reprocess_inbound_dj Description:
+# Reprocess an inbound data junction interface.
+#
+# Parameters: <none>
+#
+# --------------------------------------------------------------------------
+reprocess_inbound_dj()
+{
+    load_file $LOAD_FILE_INBOUND "${DJ_MAP}" "${Q_FILE}"
+
+    # Send files via MQFT to CDW if param is not equal to *NONE
+    if [[ ! -z $FORWARD_Q && $FORWARD_Q != *NONE ]] ; then
+        send_file_via_mqft_to_CDW
+    fi
+
+    # Send files via MQFT to HK if param is not equal to *NO
+    if [[ ! -z $FORWARD_HK && $FORWARD_HK != *NO ]] ; then
+        send_file_via_mqft_to_HK
+    fi
+
+    archive_file "${Q_FILE}"
 }
 
 # --------------------------------------------------------------------------
@@ -431,11 +461,11 @@ process_outbound()
             log_file "INFO: [process_outbound] Executing command [${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}]" "HARMLESS"
             ${MQFT_SEND_PATH} -source ${S_QMGR},${FILE_INT} -target ${T_QMGR},${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM} >> ${TMP_OUT} 2>&1
             ;;
-		$MQFT_LITE)
+  	    $MQFT_LITE)
             log_file "INFO: [process_outbound] Executing command [${MQFT_SEND_PATH} -srcqmgr ${S_QMGR} -srcfile ${S_FILE_NAME} -tgtqmgr ${T_QMGR} -tgtfile ${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM}]" "HARMLESS"
             ${MQFT_SEND_PATH} -srcqmgr ${S_QMGR} -srcfile ${S_FILE_NAME} -tgtqmgr ${T_QMGR} -tgtfile ${DEST_DIR}/${T_FILE_NAME} ${MQFT_SEND_PARAM} >> ${TMP_OUT} 2>&1
 	        ;;
-		$MQIF_LITE)
+		    $MQIF_LITE)
             log_file "INFO: [process_outbound] Executing command [cat ${FILE_INT} | ${MQIF_PATH}/mqif -p -q ${QUEUE} -r -0 -o ${T_FILE_NAME}]" "HARMLESS"
             cat ${FILE_INT} | ${MQIF_PATH}/mqif -p -q ${QUEUE} -r -0 -o ${T_FILE_NAME}>> ${TMP_OUT} 2>&1
             ;;			
