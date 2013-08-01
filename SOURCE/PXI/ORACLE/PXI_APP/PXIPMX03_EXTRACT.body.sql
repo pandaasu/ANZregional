@@ -83,10 +83,8 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
               -- Only show the main english customer name.
               t2.address_version = '*NONE' and
               -- Still include customer in the extract even if order block is in place if they have had sales in the last 12 weeks.
-              (t1.order_block_flag is null or (t1.order_block_flag is not null and exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and 
-              (t3.order_block_flag is null or (t3.order_block_flag is not null and exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and 
-              -- Only include customers that are not deleted.
-              t3.deletion_flag is null and
+              ((t1.order_block_flag is null and t1.deletion_flag is null and t3.order_block_flag is null and t3.deletion_flag is null) or 
+               (exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and 
               -- Only include not rasw and packs or affiliate customers
               t3.distbn_chnl_code not in ('98','99') and 
               -- Customer is not a hierachy customer code
