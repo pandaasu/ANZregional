@@ -16,7 +16,8 @@ PACKAGE          PXIPMX03_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.
- 26/07/2013    Mal Chambeyron        Formatted SQL Output         
+ 26/07/2013    Mal Chambeyron        Formatted SQL Output    
+ 30/07/2013    Chris Horn            Added an additional order block check.
  
 *******************************************************************************/
 
