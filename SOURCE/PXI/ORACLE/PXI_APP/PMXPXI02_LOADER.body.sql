@@ -302,3 +302,4 @@ end pmxpxi02_loader;
 
 	  insert into pmx_payments values rcd_pmx_payments;
 */
+
