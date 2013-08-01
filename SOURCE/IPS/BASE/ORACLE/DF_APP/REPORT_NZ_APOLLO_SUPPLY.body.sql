@@ -209,7 +209,7 @@ PACKAGE BODY        report_nz_apollo_supply AS
         '   ''DF_UPLOAD'' as description, ' || 
         '   ''1'' as type, ' || 
         '   ''7D'' as duration,  ' || 
-        '   (select min(t0.calendar_date) from mars_date t0 where t0.mars_week = t10.mars_week) as start_date, ' || 
+        '   to_char((select min(t0.calendar_date) from mars_date t0 where t0.mars_week = t10.mars_week), ''yyyy/mm/dd'') as start_date, ' || 
         '   t10.qty_in_base_uom ' || 
         ' FROM  ' || 
         ' ( ' || 
@@ -391,4 +391,4 @@ PACKAGE BODY        report_nz_apollo_supply AS
       logit.leave_method;
       RETURN common.gc_error;
   END setup_report_options;
-END report_nz_apollo_supply; 
+END report_nz_apollo_supply;
