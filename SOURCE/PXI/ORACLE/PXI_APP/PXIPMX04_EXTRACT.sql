@@ -29,6 +29,7 @@ PACKAGE          PXIPMX04_EXTRACT as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-07-28 Chris Horn           Created.
+  1.1   2013-08-01 Chris Horn           Added a check on order block at header level.
   
 *******************************************************************************/
   -- Hierarchy Node Record

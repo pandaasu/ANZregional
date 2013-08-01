@@ -13,6 +13,8 @@ package body pxipmx04_extract as
     cursor csr_cust_level_data is
       select 
         t1.customer_code, 
+        t1.order_block_flag,
+        t3.deletion_flag, 
         t3.sales_org_code,
         t3.distbn_chnl_code,
         t3.division_code,
@@ -431,6 +433,7 @@ package body pxipmx04_extract as
         -- Only show the main english customer name.
         t2.address_version = '*NONE' and
         -- Still include customer in the extract even if order block is in place if they have had sales in the last 12 weeks.
+        (t1.order_block_flag is null or (t1.order_block_flag is not null and exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and
         (t3.order_block_flag is null or (t3.order_block_flag is not null and exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and 
         -- Only include customers that are not deleted.
         t3.deletion_flag is null and
