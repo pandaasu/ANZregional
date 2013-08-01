@@ -301,5 +301,6 @@ end pmxpxi02_loader;
 	  rcd_pmx_payments.last_updtd_time := sysdate;
 
 	  insert into pmx_payments values rcd_pmx_payments;
-*/
+<<<<<<< .mine*/=======*/
 
+>>>>>>> .theirs
