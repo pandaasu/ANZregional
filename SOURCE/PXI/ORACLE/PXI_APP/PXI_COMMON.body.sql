@@ -1,4 +1,5 @@
-create or replace package body pxi_common is
+create or replace 
+package body pxi_common is
 
 /*******************************************************************************
   Package Cosntants
@@ -358,8 +359,8 @@ begin
       raise_application_error(-20000, 'Format ['||i_format||'] on Value ['||i_value||']');
   end if;
 
-  if upper(substr(i_format,1,1)) != 'S' then
-    v_value := replace(v_value, '+', '');
+  if upper(substr(i_format,1,1)) = 'S' then
+    v_value := replace(v_value, '+', ' ');
   end if;
 
   if length(v_value) > length(i_format) then

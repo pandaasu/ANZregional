@@ -1,4 +1,5 @@
-create or replace package pxi_common as
+create or replace 
+package pxi_common as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
