@@ -60,39 +60,39 @@ package body          pmxpxi01_loader as
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_char_field_txt(pc_ic_record_type,0,6,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_px_company_code,6,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_px_division_code,9,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_rec_type,12,1,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_date_field_txt(pc_document_date,13,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_posting_date,21,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(pc_document_type,29,2,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_currency,31,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_reference,34,16,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_document_header_text,50,25,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_posting_key,75,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_account,79,17,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_pa_assignment_flag,96,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_txt(pc_amount,97,13,'9999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(pc_payment_method,110,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_allocation,111,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_text,129,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_profit_centre,159,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_cost_centre,169,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_sales_organisation,179,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_sales_office,183,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_product_number,188,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_pa_code,206,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_glt_row_id,211,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_user_1,221,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_user_2,231,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_date_field_txt(pc_buy_start_date,241,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_buy_stop_date,249,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_start_date,257,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_stop_date,265,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(pc_quantity,273,15,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_additional_info,288,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_promotion_is_closed,298,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_ic_record_type,1,6,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_px_company_code,7,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_px_division_code,10,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_rec_type,13,1,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_date_field_txt(pc_document_date,14,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_posting_date,22,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_document_type,30,2,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_currency,32,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_reference,35,16,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_document_header_text,51,25,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_posting_key,76,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_account,80,17,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_pa_assignment_flag,97,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_txt(pc_amount,98,13,'9999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_payment_method,111,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_allocation,112,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_text,130,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_profit_centre,160,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_cost_centre,170,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_sales_organisation,180,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_sales_office,184,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_product_number,189,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_pa_code,207,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_glt_row_id,212,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_user_1,222,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_user_2,232,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_date_field_txt(pc_buy_start_date,242,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_buy_stop_date,250,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_start_date,258,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_stop_date,266,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_quantity,274,15,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_additional_info,289,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_promotion_is_closed,299,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
   exception 
     when others then 
       fflu_utils.log_interface_exception('On Start');
@@ -238,3 +238,5 @@ end on_start;
 begin
   ptv_gl_data.delete;
 end pmxpxi01_loader;
+/
+
