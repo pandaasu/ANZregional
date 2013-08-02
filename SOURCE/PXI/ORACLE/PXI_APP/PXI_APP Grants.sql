@@ -13,6 +13,8 @@ grant execute on PXIPMX02_EXTRACT to lics_app;
 grant execute on PXIPMX04_EXTRACT to lics_app;
 grant execute on pxiatl01_extract to lics_app;
 grant execute on pxi_common to lics_app;
+grant execute on PMXPXI03_LOADER to lics_app;
+
 
 grant execute on PXIPMX04_EXTRACT to fflu_app;
 grant execute on PXIATL02_EXTRACT to fflu_app;
@@ -26,3 +28,4 @@ grant execute on PXIPMX02_EXTRACT to fflu_app;
 grant execute on PXI_COMMON to fflu_app;
 grant execute on PXIATL01_EXTRACT to fflu_app;
 grant execute on PXIPMX01_EXTRACT to fflu_app;
+grant execute on PMXPXI03_LOADER to fflu_app;
