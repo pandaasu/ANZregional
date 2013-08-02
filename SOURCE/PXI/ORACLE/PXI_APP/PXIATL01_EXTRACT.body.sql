@@ -58,8 +58,8 @@ package body          pxiatl01_extract as
     v_data := 
       rpad('T',1) ||                                                -- INDICATOR
       rpad(nvl(i_tax_code,' '),2) ||                                -- TAX_CODE
-      lpad(nvl(to_char(i_tax,'9999999999999999999.99'),'0.00'),' ',23) || -- AMOUNT
-      lpad(nvl(to_char(i_tax_base,'9999999999999999999.99'),'0.00'),' ',23) || -- AMT_BASE
+      lpad(nvl(to_char(i_tax,'9999999999999999990.00'),'0.00'),23,' ') || -- AMOUNT
+      lpad(nvl(to_char(i_tax_base,'9999999999999999990.00'),'0.00'),23,' ') || -- AMT_BASE
       rpad(' ',4) ||                                                -- COND_KEY
       rpad(' ',3) ||                                                -- ACCT_KEY
       rpad(' ',1);                                                  -- AUTO_TAX
@@ -84,12 +84,13 @@ package body          pxiatl01_extract as
       i_plant_code in st_data, i_cust_code in st_data, i_sales_org in st_data,
       i_distribution_channel in st_data) is
     v_data st_data;
+    
   begin
     -- Now generate the general ledger line.
     v_data := 
       rpad('G',1) ||                                            -- INDICATOR
       lpad(nvl(i_account,'0'),10,'0') ||                        -- GL_ACCOUNT
-      lpad(nvl(to_char(i_amount,'9999999999999999999.99'),'0.00'),' ',23) || -- AMOUNT
+      lpad(nvl(to_char(i_amount,'9999999999999999990.00'),'0.00'),23, ' ') || -- AMOUNT
       rpad(nvl(i_item_text,' '),50) ||                          -- ITEM_TEXT
       rpad(nvl(i_alloc_number,' '),18) ||                       -- ALLOC_NMBR
       rpad(nvl(i_tax_code,' '),2) ||                            -- TAX_CODE
@@ -123,7 +124,7 @@ package body          pxiatl01_extract as
     v_data := 
       rpad('P',1) ||                                            -- INDICATOR
       lpad(nvl(i_vendor,'0'),10,'0') ||                         -- VENDOR_NO
-      lpad(nvl(to_char(i_amount,'9999999999999999999.99'),'0.00'),' ',23) || -- AMOUNT
+      lpad(nvl(to_char(i_amount,'9999999999999999990.00'),'0.00'),23,' ') || -- AMOUNT
       rpad('*',4) ||                                            -- PMNTTRMS
       rpad(' ',8) ||                                            -- BLINE_DATE
       rpad('B',1) ||                                            -- PMNT_BLOCK
@@ -151,7 +152,7 @@ package body          pxiatl01_extract as
     v_data := 
       rpad('R',1) ||                                            -- INDICATOR
       lpad(pxi_common.full_cust_code(i_cust_code),10,'0') ||    -- CUSTOMER
-      lpad(nvl(to_char(i_amount,'9999999999999999999.99'),'0.00'),' ',23) || -- AMOUNT
+      lpad(nvl(to_char(i_amount,'9999999999999999990.00'),'0.00'),23,' ') || -- AMOUNT
       rpad(' ',4) ||                                            -- PMNTTRMS
       rpad(' ',8) ||                                            -- BLINE_DATE
       rpad(' ',1) ||                                            -- PMNT_BLOCK
@@ -361,6 +362,3 @@ package body          pxiatl01_extract as
    end send_data;
 
 end pxiatl01_extract;
-
-
-
