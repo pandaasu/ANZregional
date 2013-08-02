@@ -33,6 +33,7 @@ package fflu_utils as
   2013-06-13  Chris Horn            Added log interface errors functions.
   2013-07-05  Chris Horn            Added interface suffix,filename,row code.
   2013-07-30  Chris Horn            Added function to return the user.
+  2013-08-01  Chris Horn            Added function to get interface number.  
   
 *******************************************************************************/
 
@@ -120,8 +121,7 @@ package fflu_utils as
   1.0   2013-06-26 Chris Horn           Created
 
 *******************************************************************************/  
-  procedure log_interface_exception (
-    i_method fflu_common.st_buffer); 
+  procedure log_interface_exception (i_method fflu_common.st_buffer); 
 
 
 /*******************************************************************************
@@ -152,6 +152,19 @@ package fflu_utils as
 
 *******************************************************************************/  
   function get_interface_filename return fflu_common.st_filename;
+
+/*******************************************************************************
+  NAME:      GET_INTERFACE_NO
+  PURPOSE:   This function returns the current ICS interface ID number.
+             
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-08-01 Chris Horn           Created
+
+*******************************************************************************/  
+  function get_interface_no return fflu_common.st_sequence;
 
 /*******************************************************************************
   NAME:      GET_INTERFACE_ROW

@@ -223,6 +223,14 @@ package body fflu_utils as
 /*******************************************************************************
   NAME:      GET_INTERFACE_ROW                                            PUBLIC
 *******************************************************************************/  
+  function get_interface_no return fflu_common.st_sequence is
+  begin
+    return lics_inbound_processor.callback_header;
+  end get_interface_no; 
+  
+/*******************************************************************************
+  NAME:      GET_INTERFACE_ROW                                            PUBLIC
+*******************************************************************************/  
   function get_interface_row return fflu_common.st_count is
   begin
     return lics_inbound_processor.callback_row;
