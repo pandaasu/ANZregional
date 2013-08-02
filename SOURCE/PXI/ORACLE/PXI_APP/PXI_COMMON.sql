@@ -28,6 +28,7 @@ package pxi_common as
   ----------  --------------------  --------------------------------------------
   2013-07-30  Chris Horn            Updated this package with comments and
                                     material functions. 
+  2013-08-02  Chris Horn            Added added additional logic checks. 
 
 *******************************************************************************/
 
@@ -42,21 +43,23 @@ package pxi_common as
   Common Package Types
 *******************************************************************************/
   -- Package Sub Types
-  subtype st_company is varchar2(3);         -- Company 
-  subtype st_promax_division is varchar2(3); -- Promax Division  
-  subtype st_material is varchar2(18);       -- Material Codes. 
-  subtype st_gl_code is varchar2(10);        -- GL Account, Account Code, Cost Object
-  subtype st_customer is varchar2(10);       -- Customer
-  subtype st_vendor is varchar2(10);         -- Vendor
-  subtype st_amount is number(22,2);         -- Dollars / Amounts
-  subtype st_reference is varchar2(18);      -- Reference Fields.
-  subtype st_text is varchar2(50);           -- Text Fields.
-  subtype st_string is varchar2(4000);       -- Long String field for messages.
-  subtype st_package_name is varchar2(32);   -- Package Names  
-  subtype st_bus_sgmnt is varchar2(2);       -- Business Segment Code
-  subtype st_plant_code is varchar2(4);      -- Atlas Plant Code.
-  subtype st_dstrbtn_chnnl is varchar2(2);   -- Distribution Channel
-  subtype st_currency is varchar2(3);        -- Currency Information
+  subtype st_company is varchar2(3 char);         -- Company 
+  subtype st_promax_division is varchar2(3 char); -- Promax Division  
+  subtype st_material is varchar2(18 char);       -- Material Codes. 
+  subtype st_gl_code is varchar2(10 char);        -- GL Account, Account Code, Cost Object
+  subtype st_customer is varchar2(10 char);       -- Customer
+  subtype st_vendor is varchar2(10 char);         -- Vendor
+  subtype st_amount is number(22,2);              -- Dollars / Amounts
+  subtype st_reference is varchar2(18 char);      -- Reference Fields.
+  subtype st_text is varchar2(50 char);           -- Text Fields.
+  subtype st_string is varchar2(4000 char);       -- Long String field for messages.
+  subtype st_package_name is varchar2(32 char);   -- Package Names  
+  subtype st_bus_sgmnt is varchar2(2 char);       -- Business Segment Code
+  subtype st_plant_code is varchar2(4 char);      -- Atlas Plant Code.
+  subtype st_dstrbtn_chnnl is varchar2(2 char);   -- Distribution Channel
+  subtype st_currency is varchar2(3 char);        -- Currency Information
+  subtype st_reason_code is varchar2(2 char);     -- Reason Code
+  subtype st_tax_code is varchar2(2);             -- Tax Code
 
 /*******************************************************************************
   Common Constants
@@ -70,7 +73,12 @@ package pxi_common as
   gc_bus_sgmnt_petcare  st_bus_sgmnt := '05';
   -- Distribution Channel 
   gc_distrbtn_channel_primary   st_dstrbtn_chnnl := '10'; -- Primary Channel
-
+  -- Tax Codes
+  gc_tax_code_gl               st_tax_code := 'GL';  -- General Ledger Tax Code
+  gc_tax_code_s1               st_tax_code := 'S1';  -- S1 - Tax Rate 1
+  gc_tax_code_s2               st_tax_code := 'S2';  -- S2 - Tax Rate 2
+  gc_tax_code_s3               st_tax_code := 'S3';  -- S3 - No Tax.
+  
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
   PURPOSE:   This function formats a the current SQL Error message with a 
@@ -146,6 +154,19 @@ package pxi_common as
   function full_cust_code (i_cust_code in st_customer) return st_customer;
 
 /*******************************************************************************
+  NAME:      FULL_VEND_CODE                                             PUBLIC
+  PURPOSE:   This procedure correctly formats a vendor code into is long 
+             normal SAP format.  Returns zeros if vendor code is null.  
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-08-02 Chris Horn           Created.
+
+*******************************************************************************/
+  function full_vend_code (i_vendor_code in st_vendor) return st_vendor;
+
+/*******************************************************************************
   NAME:      LOOKUP_TDU_FROM_ZREP                                         PUBLIC
   PURPOSE:   This function looks up a current tdu for a given zrep and sales
              organisation and buying dates.  Null is returned if no 
@@ -216,6 +237,25 @@ package pxi_common as
     i_company_code in st_company,
     i_matl_code IN st_material)
     return st_plant_code;
+
+/*******************************************************************************
+  NAME:      DETERMINE_TAX_CODE_FROM_REASON                               PUBLIC
+  PURPOSE:   This function will determine the tax code to use from the 
+             available reason code information.
+
+             * TP Claim Reason Codes
+             - Food =  '40', '41', '51'
+             - Snack = '42', '43', '53' 
+             - Pet =   '44', '45', '55' 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-08-03 Chris Horn           Created.
+
+*******************************************************************************/
+  function determine_tax_code_from_reason(i_reason_code in st_reason_code) 
+    return st_tax_code;
 
 
 /*******************************************************************************

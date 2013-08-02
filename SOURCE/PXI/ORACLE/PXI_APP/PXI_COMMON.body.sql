@@ -79,6 +79,17 @@ package body pxi_common is
       reraise_promax_exception(pc_package_name,'FULL_CUST_CODE');
   end full_cust_code;
 
+/*******************************************************************************
+  NAME:  FULL_VEND_CODE                                                   PUBLIC
+*******************************************************************************/
+  function full_vend_code (i_vendor_code in st_vendor) return st_vendor is
+  begin
+    return lpad(nvl(i_vendor_code,'0'),10,'0');
+  exception
+    when others then 
+      reraise_promax_exception(pc_package_name,'FULL_VEND_CODE');
+  end full_vend_code;
+
 
 /*******************************************************************************
   NAME:  LOOKUP_TDU_FROM_ZREP                                             PUBLIC
@@ -158,6 +169,8 @@ package body pxi_common is
     -- Now return the business segment.
     return v_result;
   exception
+    when ge_application_exception then
+      raise; 
     when others then 
       reraise_promax_exception(pc_package_name,'DETERMINE_BUS_SGMNT'); 
   end determine_bus_sgmnt;
@@ -254,10 +267,46 @@ package body pxi_common is
     -- Now Return the plant code.
     return v_result;
   exception
-     when others then 
-       reraise_promax_exception(pc_package_name,'DETERMINE_MATL_PLANT_CODE'); 
+    when ge_application_exception then 
+      raise;
+    when others then 
+      reraise_promax_exception(pc_package_name,'DETERMINE_MATL_PLANT_CODE'); 
   END determine_matl_plant_code;
 
+/*******************************************************************************
+  NAME:  DETERMINE_TAX_CODE_FROM_REASON                                   PUBLIC
+*******************************************************************************/
+  function determine_tax_code_from_reason(i_reason_code in st_reason_code) 
+    return st_tax_code is
+    v_result st_tax_code; 
+  begin
+    case i_reason_code
+      when '40' then 
+        v_result := 'S3'; 
+      when '41' then 
+        v_result := 'S1'; 
+      when '42' then 
+        v_result := 'S3'; 
+      when '43' then 
+        v_result := 'S1';
+      when '44' then 
+        v_result := 'S3';
+      when '45' then 
+        v_result := 'S1'; 
+      when '51' then 
+        v_result := 'S2'; 
+      when '53' then 
+        v_result := 'S2'; 
+      when '55' then 
+        v_result := 'S2';
+      else 
+        v_result := null;
+    end case;
+    return v_result;
+  exception
+     when others then 
+       reraise_promax_exception(pc_package_name,'DETERMINE_TAX_CODE_FROM_REASON'); 
+  end determine_tax_code_from_reason;
 
 /*******************************************************************************
 ********************************************************************************

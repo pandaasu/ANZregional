@@ -36,7 +36,7 @@ package body          pmxpxi01_loader as
   pc_stop_date fflu_common.st_name := 'Stop Date';
   pc_quantity fflu_common.st_name := 'Quantity';
   pc_additional_info fflu_common.st_name := 'Additional Info';
-  pc_promotion_is_closed fflu_common.st_name := 'Promotio Is Closed';
+  pc_promotion_is_closed fflu_common.st_name := 'Promotion Is Closed';
 
   -- Posting Key
   subtype st_posting_key is varchar2(4);
@@ -123,9 +123,11 @@ end on_start;
         rv_gl.account_code :=  fflu_data.get_char_field(pc_account);
         rv_gl.profit_center := fflu_data.get_char_field(pc_profit_centre);
         rv_gl.cost_center := fflu_data.get_char_field(pc_cost_centre);
+        -- Assign the various number fields.
         rv_gl.tax_amount := 0;
         rv_gl.tax_amount_base := 0;
         rv_gl.amount := fflu_data.get_number_field(pc_amount);
+        -- Update the amount field based on the various posting keys.  
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_dr then 
             rv_gl.amount := rv_gl.amount * 1;
@@ -146,11 +148,13 @@ end on_start;
           fflu_data.get_char_field(pc_text), -- Accrual Text 
           50);
         -- Promax Internal Reference ID.
-        rv_gl.allocation_ref := fflu_data.get_char_field(pc_glt_row_id);
+        rv_gl.alloc_ref := fflu_data.get_char_field(pc_glt_row_id);
         -- Define the tax Code as a Constant.
-        rv_gl.tax_code := pxiatl01_extract.gc_tax_code_gl;
+        rv_gl.tax_code := pxi_common.gc_tax_code_gl;
         -- COPA Related Fields
         rv_gl.sales_org := fflu_data.get_char_field(pc_px_company_code);
+        -- Assign an empty vendor value to this field.
+        rv_gl.vendor_code := pxi_common.full_vend_code(null);  
         -- Lookup the business segment for the curent material. 
         v_bus_sgmnt := pxi_common.determine_bus_sgmnt(
           fflu_data.get_char_field(pc_px_company_code),
@@ -191,6 +195,8 @@ end on_start;
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
           fflu_data.get_char_field(pc_allocation));  -- Customer
+        -- Other unused fields.
+        rv_gl.claim_text := null;
         -- Now add this record to the general ledger collection.
         ptv_gl_data(ptv_gl_data.count+1) := rv_gl;
       end if;

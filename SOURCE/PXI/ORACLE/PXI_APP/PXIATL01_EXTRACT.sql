@@ -48,13 +48,8 @@ package          pxiatl01_extract as
   subtype st_doc_type is varchar2(2); 
   gc_doc_type_accrual          st_doc_type := 'ZA'; -- Accrual
   gc_doc_type_accrual_reversal st_doc_type := 'ZB'; -- Accrual Reversal
-  gc_doc_type_journal          st_doc_type := 'KN'; -- Journal
-  gc_doc_type_claim            st_doc_type := 'UE'; -- Claim
-  
-  -- Tax Codes
-  subtype st_tax_code is varchar2(2);
-  gc_tax_code_gl               st_tax_code := 'GL';  -- General Ledger Tax
-  gc_tax_code_s3               st_tax_code := 'S3';  -- S3 Tax Code
+  gc_doc_type_ap_claim         st_doc_type := 'KN'; -- Accounts Payable Journal
+  gc_doc_type_ar_claim         st_doc_type := 'UE'; -- Accounts Receivable
   
 /*******************************************************************************
   Generic General Ledger Table 
@@ -74,15 +69,19 @@ package          pxiatl01_extract as
     amount pxi_common.st_amount,
     tax_amount pxi_common.st_amount,
     tax_amount_base pxi_common.st_amount,
-    tax_code st_tax_code,
-    allocation_ref pxi_common.st_reference,
+    tax_code pxi_common.st_tax_code,
+    alloc_ref pxi_common.st_reference,
     item_text pxi_common.st_text,
-    -- COPA Related Fields
+    -- COPA / Transactional Fields.
+    vendor_code pxi_common.st_vendor,
     customer_code pxi_common.st_customer,
+    -- COPA Related Fields
     material_code pxi_common.st_material,
     plant_code pxi_common.st_plant_code,
     sales_org pxi_common.st_company,
-    dstrbtn_chnnl pxi_common.st_dstrbtn_chnnl
+    dstrbtn_chnnl pxi_common.st_dstrbtn_chnnl,
+    -- Claims fields
+    claim_text pxi_common.st_text
   );
   -- General Ledger Table.
   type tt_gl_data is table of rt_gl_record index by pls_integer;
@@ -94,6 +93,8 @@ package          pxiatl01_extract as
   gc_max_idoc_rows constant pls_integer := 909;  
   -- Search for a general ledger balancing record with x records of full idoc.
   gc_search_for_balance constant pls_integer := 20; 
+  -- Number of rows to allow for the header and footer. 
+  gc_rows_for_header_footer constant pls_integer := 3;
 
 /*******************************************************************************
   NAME:      ADD_GENERAL_LEDGER_RECORD                                   PRIVATE
@@ -132,13 +133,13 @@ package          pxiatl01_extract as
 *******************************************************************************/
   procedure add_general_ledger_record(ti_data in out tt_data, 
       i_account in st_data, i_cost_center in st_data, i_profit_center in st_data, 
-      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data,
-      i_tax_code in st_tax_code, i_material in st_data, 
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_ref in st_data,
+      i_tax_code in pxi_common.st_tax_code, i_material in st_data, 
       i_plant_code in st_data, i_cust_code in st_data, i_sales_org in st_data,
       i_distribution_channel in st_data);
 
 /*******************************************************************************
-  NAME:      ADD_PAYMENT_RECORD                                          PUBLIC
+  NAME:      ADD_AP_CLAIM_RECORD                                          PUBLIC
   PURPOSE:   This procedure creates a correctly formatted vendor payment record.
           
              Note : This should be called before creating the header and tax 
@@ -165,13 +166,13 @@ package          pxiatl01_extract as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure add_payment_record(ti_data in out tt_data, 
-      i_account in st_data, i_vendor in st_data, 
-      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data);
+  procedure add_ap_claim_record(ti_data in out tt_data, 
+      i_vendor in st_data, i_amount in pxi_common.st_amount, 
+      i_alloc_ref in st_data, i_item_text in st_data);
 
 
 /*******************************************************************************
-  NAME:      ADD_CLAIM_RECORD                                             PUBLIC
+  NAME:      ADD_AR_CLAIM_RECORD                                          PUBLIC
   PURPOSE:   The procedure creates a correctly formatted customer cliam record.
           
              Note : This should be called before creating the header and tax 
@@ -197,9 +198,9 @@ package          pxiatl01_extract as
   1.1   2013-08-02 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure add_cliam_record(ti_data in out tt_data, 
-      i_account in st_data, i_cust_code in st_data, 
-      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data);
+  procedure add_ar_claim_record(ti_data in out tt_data, 
+    i_cust_code in st_data, i_amount in pxi_common.st_amount, 
+    i_alloc_ref in st_data, i_item_text in st_data);
 
 /*******************************************************************************
   NAME:      ADD_HEADER_RECORD                                             
@@ -266,7 +267,7 @@ package          pxiatl01_extract as
   1.1   2013-07-30 Chris Horn           Created.
 
 *******************************************************************************/
-  procedure add_tax_record(ti_data in out tt_data, i_tax_code in st_tax_code, 
+  procedure add_tax_record(ti_data in out tt_data, i_tax_code in pxi_common.st_tax_code, 
       i_tax in pxi_common.st_amount, i_tax_base in pxi_common.st_amount);
 
 /*******************************************************************************
@@ -307,8 +308,7 @@ package          pxiatl01_extract as
   1.1   2013-08-02 Chris Horn           Created.
 
 *******************************************************************************/
-  function sum_gl_data(
-    ti_gl_data in tt_gl_data) return pxi_common.st_amount;
+  function sum_gl_data(ti_gl_data in tt_gl_data) return pxi_common.st_amount;
 
 /*******************************************************************************
   NAME:      SEND_DATA                                                    PUBLIC
