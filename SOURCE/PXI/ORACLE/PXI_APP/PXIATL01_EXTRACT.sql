@@ -32,6 +32,7 @@ package          pxiatl01_extract as
   ----------  --------------------  --------------------------------------------
   2013-06-29  Chris Horn            Created
   2013-07-30  Chris Horn            Completed First Version
+  2013-08-02  Chris Horn            Included Code Balanced IDOC amounts. 
 
 *******************************************************************************/
 
@@ -47,11 +48,13 @@ package          pxiatl01_extract as
   subtype st_doc_type is varchar2(2); 
   gc_doc_type_accrual          st_doc_type := 'ZA'; -- Accrual
   gc_doc_type_accrual_reversal st_doc_type := 'ZB'; -- Accrual Reversal
-  gc_doc_type_accrual_journal  st_doc_type := 'KN'; -- Journal
+  gc_doc_type_journal          st_doc_type := 'KN'; -- Journal
+  gc_doc_type_claim            st_doc_type := 'UE'; -- Claim
   
   -- Tax Codes
   subtype st_tax_code is varchar2(2);
-  gc_tax_code_gl st_tax_code := 'GL';  -- General Ledger Tax
+  gc_tax_code_gl               st_tax_code := 'GL';  -- General Ledger Tax
+  gc_tax_code_s3               st_tax_code := 'S3';  -- S3 Tax Code
   
 /*******************************************************************************
   Generic General Ledger Table 
@@ -87,9 +90,10 @@ package          pxiatl01_extract as
 /*******************************************************************************
   Package Constants
 *******************************************************************************/
-  gc_max_idoc_rows constant pls_integer := 900;  -- Maximum rows per idoc output. 
-                                     --Actually 909.  But to be on the safe side. 
-
+  -- Maximum rows per idoc output. 
+  gc_max_idoc_rows constant pls_integer := 909;  
+  -- Search for a general ledger balancing record with x records of full idoc.
+  gc_search_for_balance constant pls_integer := 20; 
 
 /*******************************************************************************
   NAME:      ADD_GENERAL_LEDGER_RECORD                                   PRIVATE
@@ -165,6 +169,37 @@ package          pxiatl01_extract as
       i_account in st_data, i_vendor in st_data, 
       i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data);
 
+
+/*******************************************************************************
+  NAME:      ADD_CLAIM_RECORD                                             PUBLIC
+  PURPOSE:   The procedure creates a correctly formatted customer cliam record.
+          
+             Note : This should be called before creating the header and tax 
+                    records.
+
+  ------------------------------------------------------------------------------------------------------------
+  Field Name           Description                                     Record FldOutputField  Copybook # Times
+  ------------------------------------------------------------------------------------------------------------
+  INDICATOR            Record Type = "R"                                   1.3  1     1X(1)                  5
+  CUSTOMER             Customer Number                                     1.3  2    10X(10)                 2
+  AMOUNT               Amount                                              1.3  3    23X(23)                 4
+  PMNTTRMS             Payment Terms                                       1.3  4     4X(4)                  2
+  BLINE_DATE           Baseline Date                                       1.3  5     8YYYYMMDD              2
+  PMNT_BLOCK           Payment Block                                       1.3  6     1X(1)                  2
+  ALLOC_NMBR           Allocation Number                                   1.3  7    18X(18)                 3
+  ITEM_TEXT            Item Text                                           1.3  8    50X(50)                 3
+  DUNN_BLOCK           Dunn Block                                          1.3  9     1X                     1
+  ------------------------------------------------------------------------------------------------------------
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-08-02 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure add_cliam_record(ti_data in out tt_data, 
+      i_account in st_data, i_cust_code in st_data, 
+      i_amount in pxi_common.st_amount, i_item_text in st_data, i_alloc_number in st_data);
 
 /*******************************************************************************
   NAME:      ADD_HEADER_RECORD                                             
@@ -260,6 +295,23 @@ package          pxiatl01_extract as
 *******************************************************************************/
   procedure debug_interface(ti_data in tt_data);
 
+  
+/*******************************************************************************
+  NAME:      SUM_AMMOUNT                                                  PUBLIC
+  PURPOSE:   This procedure takes the supplied GL Records and sums the amount
+             fields.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-08-02 Chris Horn           Created.
+
+*******************************************************************************/
+  function sum_gl_data(
+    ti_gl_data in tt_gl_data) return pxi_common.st_amount;
+  
+  
+
 /*******************************************************************************
   NAME:      SEND_DATA                                                    PUBLIC
   PURPOSE:   This procedure takes the supplied gl data records and creates 
@@ -277,22 +329,4 @@ package          pxiatl01_extract as
     i_doc_reference in st_data);
 
 end pxiatl01_extract;
-
-/*******************************************************************************  
-Interface - Other Interface Structures Not Yet Implemented.
-********************************************************************************
-
-Field Name           Description                                     Record FldOutputField  Copybook # Times
-------------------------------------------------------------------------------------------------------------
-INDICATOR            Record Type = "R"                                   1.3  1     1X(1)                  5
-CUSTOMER             Customer Number                                     1.3  2    10X(10)                 2
-AMOUNT               Amount                                              1.3  3    23X(23)                 4
-PMNTTRMS             Payment Terms                                       1.3  4     4X(4)                  2
-BLINE_DATE           Baseline Date                                       1.3  5     8YYYYMMDD              2
-PMNT_BLOCK           Payment Block                                       1.3  6     1X(1)                  2
-ALLOC_NMBR           Allocation Number                                   1.3  7    18X(18)                 3
-ITEM_TEXT            Item Text                                           1.3  8    50X(50)                 3
-DUNN_BLOCK           Dunn Block                                          1.3  9     1X                     1
-
-*******************************************************************************/
 

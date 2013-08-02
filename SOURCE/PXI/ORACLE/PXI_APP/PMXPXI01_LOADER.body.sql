@@ -207,9 +207,16 @@ end on_start;
   begin 
     -- Only perform a commit if there were no errors at all. 
     if fflu_data.was_errors = false then 
-      -- Now lets create the atlas IDOC interfaces with the data we have in 
-      -- memoruy.
-      pxiatl01_extract.send_data(ptv_gl_data,pxiatl01_extract.gc_doc_type_accrual,'ICS ID : ' || fflu_utils.get_interface_no);
+      if pxiatl01_extract.sum_gl_data(ptv_gl_data) <> 0 then 
+        fflu_utils.log_interface_error(
+         pc_amount,pxiatl01_extract.sum_gl_data(ptv_gl_data),'Expected sum of accrual amounts to equal zero.');
+      elsif ptv_gl_data.count = 0 then
+        fflu_utils.log_interface_error('General Ledger Count',ptv_gl_data.count,'No accrual detail records were supplied.');
+      else 
+        -- Now lets create the atlas IDOC interfaces with the data we have in 
+        -- memory.
+        pxiatl01_extract.send_data(ptv_gl_data,pxiatl01_extract.gc_doc_type_accrual,'ICS ID : ' || fflu_utils.get_interface_no);
+      end if;
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;
