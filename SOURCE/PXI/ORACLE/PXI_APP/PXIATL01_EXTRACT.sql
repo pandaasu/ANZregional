@@ -309,8 +309,6 @@ package          pxiatl01_extract as
 *******************************************************************************/
   function sum_gl_data(
     ti_gl_data in tt_gl_data) return pxi_common.st_amount;
-  
-  
 
 /*******************************************************************************
   NAME:      SEND_DATA                                                    PUBLIC
