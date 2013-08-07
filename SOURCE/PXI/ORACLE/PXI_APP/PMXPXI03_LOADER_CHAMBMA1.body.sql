@@ -2,12 +2,21 @@ create or replace
 package body pmxpxi03_loader_chambma1 as
 
 /*******************************************************************************
+  Application Exception
+*******************************************************************************/
+  g_application_exception exception;
+  pragma exception_init(g_application_exception, -20000);
+
+/*******************************************************************************
   Package Variables
 *******************************************************************************/
   -- prv_inbound rt_inbound;
   -- pv_inbound_array tt_inbound_array;
 
   prv_inbound site_app.pmx_359_promotions%rowtype;
+
+  pv_previous_xactn_seq number(15,0);
+  pv_previous_px_xactn_id number(10,0);
 
 /*******************************************************************************
   Package Definitions
@@ -78,7 +87,7 @@ package body pmxpxi03_loader_chambma1 as
     fflu_data.add_char_field_txt(pc_px_company_code,7,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_px_division_code,10,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_customer_hierarchy,13,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_sales_deal,23,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_sales_deal,23,10,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_material,33,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_date_field_txt(pc_buy_start_date,51,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_date_field_txt(pc_buy_stop_date,59,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
@@ -107,6 +116,17 @@ package body pmxpxi03_loader_chambma1 as
 
     -- Empty Inbound Array
     -- pv_inbound_array.delete;
+
+    -- Get Previous Transaction Seq *** UNIQUIE ACROSS ALL RECORDS
+    select nvl(max(xactn_seq),0) into pv_previous_xactn_seq -- pv_previous_xactn_seq MUST not be modified after setting here
+    from pmx_359_promotions;
+
+    -- Preset Transaction Seq
+    prv_inbound.xactn_seq := pv_previous_xactn_seq;
+
+    -- Get Last Promax Transaction Id
+    select nvl(max(px_xactn_id),0) into pv_previous_px_xactn_id
+    from pmx_359_promotions;
 
     -- Get Next Batch Seq
     select nvl(max(batch_seq),0)+1 into prv_inbound.batch_seq
@@ -194,16 +214,28 @@ package body pmxpxi03_loader_chambma1 as
       /******************************************************************/
       if trim(fflu_data.get_char_field(pc_customer_hierarchy)) is not null then
 
-        -- format customer hierarchy
+        -- Check Action Code
+        if nvl(prv_inbound.action_code, 'X') not in ('A', 'M', 'D') then
+          fflu_data.log_field_error(pc_action_code,'Action Code ['||prv_inbound.action_code||'] MUST be one of [''A'',''M'',''D'']');
+        end if;
+
+        -- Extract and Check Transaction Id
+        prv_inbound.px_xactn_id := to_number(substr(prv_inbound.description, instr(prv_inbound.description, ':')+1),'9999999990');
+        if prv_inbound.px_xactn_id < pv_previous_px_xactn_id then
+          fflu_data.log_field_error(pc_description,'PX Transaction Id ['||prv_inbound.px_xactn_id||'] is Less Than Previous PX Transaction Id ['||pv_previous_px_xactn_id||'] - Unrecoverable, Must be Resolved Manually');
+        end if;
+        pv_previous_px_xactn_id := prv_inbound.px_xactn_id;
+
+        -- Format Customer Hierarchy
         prv_inbound.new_customer_hierarchy := pxi_common.full_cust_code(fflu_data.get_char_field(pc_customer_hierarchy));
 
-        -- format material
+        -- Format Material
         prv_inbound.new_material := pxi_common.full_matl_code(fflu_data.get_char_field(pc_material));
 
         -- Determine Business Segment
         prv_inbound.business_segment := pxi_common.determine_bus_sgmnt(fflu_data.get_char_field(pc_px_company_code),fflu_data.get_char_field(pc_px_division_code), prv_inbound.new_material);
 
-        -- condition flag
+        -- Set Condition Flag
         if fflu_data.get_char_field(pc_condition_pricing_unit) = pc_condition_unit_dollar then
           prv_inbound.condition_flag := pc_condition_flag_dollar;
         else
@@ -268,6 +300,9 @@ package body pmxpxi03_loader_chambma1 as
           prv_inbound.new_rate_multiplier := rpad(' ', 5);
         end if;
 
+        -- Increment Transaction Seq
+        prv_inbound.xactn_seq := prv_inbound.xactn_seq + 1;
+
         -- Increment Batch Rec Seq
         prv_inbound.batch_rec_seq := prv_inbound.batch_rec_seq + 1;
 
@@ -284,102 +319,233 @@ package body pmxpxi03_loader_chambma1 as
   end on_data;
 
 /*******************************************************************************
+  NAME:      RAISE_OUTBOUND_EXCEPTION                                    PRIVATE
+*******************************************************************************/
+  procedure raise_outbound_exception(p_exception_msg in varchar2) is
+
+  begin
+
+    fflu_utils.log_interface_exception(p_exception_msg);
+    lics_outbound_loader.add_exception(p_exception_msg);
+    raise_application_error(-20000, p_exception_msg);
+
+  end raise_outbound_exception;
+
+/*******************************************************************************
+  NAME:      FORMAT_REC                                                  PRIVATE
+*******************************************************************************/
+  function format_record(pr_record in pmx_359_promotions%rowtype) return varchar2 is
+
+  begin
+
+    return
+      pxi_common.char_format('A', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
+      pxi_common.char_format(pr_record.condition_table_ref, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_table_ref -> CondTable
+      pxi_common.char_format('V', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'V' -> Application
+      pxi_common.char_format(pr_record.VAKEY, 50, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- VAKEY -> VAKEY
+      pxi_common.char_format(pr_record.px_company_code, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- px_company_code -> CompanyCode
+      pxi_common.char_format(pr_record.cust_div_code, 2, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- cust_div_code -> Division
+      pxi_common.char_format(pr_record.new_customer_hierarchy, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_hierarchy -> Customer
+      pxi_common.char_format(pr_record.new_material, 18, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- material -> Material
+      pxi_common.date_format(pr_record.buy_start_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_start_date -> ValidFrom
+      pxi_common.date_format(pr_record.buy_stop_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_stop_date -> ValidTo
+      pxi_common.char_format(pr_record.pricing_condition_code, 4, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- pricing_cndtn_code -> Condition
+      pxi_common.char_format(pr_record.condition_type_code, 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_type_code -> ConditionType
+      pxi_common.numb_format(pr_record.new_rate, 'S9999990.00', pxi_common.is_not_nullable) || -- rate -> Rate
+      pxi_common.char_format(pr_record.new_rate_unit, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_unit -> RateUnit
+      pxi_common.char_format('EA', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'EA' -> UOM
+      pxi_common.char_format(pr_record.sales_deal, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- sales_deal -> PromoNum
+      pxi_common.char_format(pr_record.new_rate_multiplier, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_multiplier -> PriceUnit
+      pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.format_type_none, pxi_common.is_nullable); -- order_type_code -> OrderType
+
+  exception
+    when others then
+      fflu_utils.log_interface_exception('Format Record');
+  end format_record;
+
+/*******************************************************************************
   NAME:      EXECUTE (*MUST* be loacated before ON_END, as is Private)   PRIVATE
 *******************************************************************************/
-   procedure execute is
+  procedure execute(p_xactn_seq in number) is
 
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_instance number(15,0);
-      var_data varchar2(4000);
+    -- Local definitions
+    v_outbound_interface_instance number(15,0);
+    v_key_message varchar2(4000 char);
 
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_input is
-        --======================================================================
-        select
-        ------------------------------------------------------------------------
-        -- FORMAT OUTPUT
-        ------------------------------------------------------------------------
-          pxi_common.char_format('A', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
-          pxi_common.char_format(condition_table_ref, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_table_ref -> CondTable
-          pxi_common.char_format('V', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'V' -> Application
-          pxi_common.char_format(VAKEY, 50, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- VAKEY -> VAKEY
-          pxi_common.char_format(px_company_code, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- px_company_code -> CompanyCode
-          pxi_common.char_format(cust_div_code, 2, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- cust_div_code -> Division
-          pxi_common.char_format(customer_hierarchy, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_hierarchy -> Customer
-          pxi_common.char_format(material, 18, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- material -> Material
-          pxi_common.date_format(buy_start_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_start_date -> ValidFrom
-          pxi_common.date_format(buy_stop_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_stop_date -> ValidTo
-          pxi_common.char_format(pricing_condition_code, 4, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- pricing_cndtn_code -> Condition
-          pxi_common.char_format(condition_type_code, 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_type_code -> ConditionType
-          pxi_common.numb_format(rate, 'S9999990.00', pxi_common.is_not_nullable) || -- rate -> Rate
-          pxi_common.char_format(rate_unit, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_unit -> RateUnit
-          pxi_common.char_format('EA', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'EA' -> UOM
-          pxi_common.char_format(sales_deal, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- sales_deal -> PromoNum
-          pxi_common.char_format(rate_multiplier, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_multiplier -> PriceUnit
-          pxi_common.char_format(order_type_code, 4, pxi_common.format_type_none, pxi_common.is_nullable) -- order_type_code -> OrderType
-        ------------------------------------------------------------------------
-        from (
-        ------------------------------------------------------------------------
-        -- SQL
-        ------------------------------------------------------------------------
-          select
-            t1.condition_table_ref,
-            vakey,
-            t1.px_company_code,
-            t1.cust_div_code,
-            t1.new_customer_hierarchy as customer_hierarchy,
-            t1.new_material as material,
-            t1.buy_start_date,
-            t1.buy_stop_date,
-            t1.pricing_condition_code,
-            t1.condition_type_code,
-            t1.new_rate as rate,
-            t1.new_rate_unit as rate_unit,
-            t1.sales_deal,
-            t1.new_rate_multiplier as rate_multiplier,
-            t1.order_type_code
-          -- FROM table(get_inbound) t1
-          FROM pmx_359_promotions t1
-        ------------------------------------------------------------------------
+    v_previous_state_found boolean;
+    v_prev_state_found_in_current boolean;
+
+    v_clash_count number(15,0);
+
+    vr_previous_state pmx_359_promotions%rowtype;
+
+  begin
+
+    -- Loop Over Current Transactions
+    for vr_current in (
+      select * 
+      from ( -- to get around the fact you can't order a implicit cursor
+        select *
+        from pmx_359_promotions
+        where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
+          select vakey,
+            pricing_condition_code,
+            sales_deal,
+            max(xactn_seq) as xactn_seq
+          from pmx_359_promotions
+          where xactn_seq > p_xactn_seq
+          group by vakey,
+            pricing_condition_code,
+            sales_deal
+        )
+        order by xactn_seq
+      )    
+    )
+    loop
+      -- Set Key Message for Use in Log Messages
+      v_key_message := 'VAKEY ['||vr_current.vakey||'] Pricing Condition ['||vr_current.pricing_condition_code||'] Sales Deal ['||vr_current.sales_deal||'] Action Code ['||vr_current.action_code||']';
+
+      -- Check Previous State, before Current Transaction (Batch)
+      v_previous_state_found := false;
+      v_prev_state_found_in_current := false;
+      begin
+        select * into vr_previous_state
+        from pmx_359_promotions
+        where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
+          select vakey,
+            pricing_condition_code,
+            sales_deal,
+            max(xactn_seq) as xactn_seq
+          from pmx_359_promotions
+          where xactn_seq <= p_xactn_seq -- before Current Transaction (Batch)
+          and vakey = vr_current.vakey
+          and pricing_condition_code = vr_current.pricing_condition_code
+          and sales_deal = vr_current.sales_deal
+          group by vakey,
+            pricing_condition_code,
+            sales_deal
         );
-        --======================================================================
+        v_previous_state_found := true;
+      exception
+        when no_data_found then
+          -- Check Previous State, *WITHIN* Current Transaction (Batch)
+          begin
+            select * into vr_previous_state
+            from pmx_359_promotions
+            where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
+              select vakey,
+                pricing_condition_code,
+                sales_deal,
+                max(xactn_seq) as xactn_seq
+              from pmx_359_promotions
+              where xactn_seq > p_xactn_seq -- *WITHIN* Current Transaction (Batch)
+              and xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
+              and vakey = vr_current.vakey
+              and pricing_condition_code = vr_current.pricing_condition_code
+              and sales_deal = vr_current.sales_deal
+              group by vakey,
+                pricing_condition_code,
+                sales_deal
+            );
+            v_previous_state_found := true;
+            v_prev_state_found_in_current := true;
+          exception
+            when no_data_found then
+              if vr_current.action_code = 'M' then
+                raise_outbound_exception('Previous Transaction State NOT FOUND for MODIFY, '||v_key_message);
+              elsif vr_current.action_code = 'D' then
+                raise_outbound_exception('Previous Transaction State NOT FOUND for DELETE, '||v_key_message);
+              else
+                null; -- NOT an ERROR for ADDS
+              end if;
+          end;
+      end;
 
-   BEGIN
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into var_data;
-         if csr_input%notfound then
-            exit;
-         end if;
+      if not (vr_current.action_code = 'D' and v_prev_state_found_in_current) then -- Ignores Superfluous DELETES
 
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIATL02');
-         end if;
+        -- Error Conditions ------------------------------------------------------
+        if v_previous_state_found then -- Previous State FOUND
+          if vr_current.action_code = 'A' then
+              raise_outbound_exception('Previous Transaction State FOUND for ADD, '||v_key_message);
+          elsif vr_current.action_code = 'D' and vr_previous_state.action_code = 'D' then
+              raise_outbound_exception('Previous Transaction State Already DELETE for DELETE, '||v_key_message);
+          end if;
+        else -- Previous State NOT FOUND
+          if vr_current.action_code = 'M' then
+              raise_outbound_exception('Previous Transaction State NOT FOUND for MODIFY, '||v_key_message);
+          elsif vr_current.action_code = 'D' then
+              raise_outbound_exception('Previous Transaction State NOT FOUND for DELETE, '||v_key_message);
+          end if;
+        end if;
 
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(var_data);
+        -- Check If the Promax (3 Key) Will Clash with an Atlas (2 Key) --------
+        --   Promax 3 Key .. VAKEY, Pricing Condition Code, Sales Deal
+        --   Atlas 2 Key .. VAKEY, Pricing Condition Code
 
-      end loop;
-      close csr_input;
+        if vr_current.action_code <> 'D' then
+        
+          begin
+            select count(1) into v_clash_count
+            from pmx_359_promotions
+            where action_code <> 'D'
+            and (vakey, pricing_condition_code, xactn_seq) in (
+              select vakey,
+                pricing_condition_code,
+                max(xactn_seq) as xactn_seq
+              from pmx_359_promotions
+              where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
+              and vakey = vr_current.vakey
+              and pricing_condition_code = vr_current.pricing_condition_code
+              and sales_deal <> vr_current.sales_deal
+              and (
+                buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
+                or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
+              )
+              group by vakey,
+                pricing_condition_code
+            );
+          exception
+            when others then
+              raise_outbound_exception('Clash Count SQL Raised Exception : '||SQLERRM);
+          end;            
+  
+          if v_clash_count > 0 then
+            raise_outbound_exception('Transaction Would Clash with Existing Transaction, '||v_key_message);
+          end if;
+          
+        end if;
 
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+        -- Process Transaction ---------------------------------------------------
+        if v_previous_state_found then -- ZERO Previous State IF FOUND
+          if not v_prev_state_found_in_current then -- Ignore ZERO of Previous State IF FOUND in Current Transaction (BATCH)
+            -- Create Outbound Interface When Required
+            if not lics_outbound_loader.is_created then
+              v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02_CHAMBMA1');
+            end if;
+            -- ZERO Previous State RATE
+            vr_previous_state.new_rate := 0;
+            -- Append Record
+            lics_outbound_loader.append_data(format_record(vr_previous_state));
+          end if;
+        end if;
+        
+        if vr_current.action_code <> 'D' then -- DELETES taken care of in the last BLOCK
+          -- Create Outbound Interface When Required
+          if not lics_outbound_loader.is_created then
+            v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02_CHAMBMA1');
+          end if;
+          -- Append Record
+          lics_outbound_loader.append_data(format_record(vr_current));
+        end if;
+
       end if;
+
+    end loop;
+
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created then
+       lics_outbound_loader.finalise_interface;
+    end if;
 
    exception
 
@@ -403,7 +569,7 @@ package body pmxpxi03_loader_chambma1 as
     if fflu_data.was_errors = true then
       rollback;
     else
-      execute; -- outbound processing
+      execute(pv_previous_xactn_seq); -- outbound processing
       commit;
     end if;
     -- Perform a final cleanup and a last progress logging.
@@ -413,25 +579,6 @@ package body pmxpxi03_loader_chambma1 as
       fflu_utils.log_interface_exception('On End');
   end on_end;
 
-/*******************************************************************************
-  NAME:      GET_INBOUND                                                  PUBLIC
-*******************************************************************************/
-/*
-  function get_inbound return tt_inbound pipelined is
-
-    v_counter pls_integer;
-
-  begin
-
-     v_counter := 0;
-     loop
-       v_counter := v_counter + 1;
-       exit when v_counter > pv_inbound_array.count;
-       pipe row(pv_inbound_array(v_counter));
-     end loop;
-
-  end get_inbound;
-*/
 /*******************************************************************************
   NAME:      ON_GET_FILE_TYPE                                             PUBLIC
 *******************************************************************************/
