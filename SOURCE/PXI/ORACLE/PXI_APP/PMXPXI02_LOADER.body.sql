@@ -136,7 +136,6 @@ end on_start;
         rv_gl.document_date := fflu_data.get_date_field(pc_document_date);
         rv_gl.currency := fflu_data.get_char_field(pc_currency);
         -- Now commence processing this accrual into actual atlas extract records.
-        rv_gl.account_code :=  fflu_data.get_char_field(pc_account_code);
         rv_gl.cost_center := null;
         rv_gl.profit_center := null;
         rv_gl.amount := fflu_data.get_number_field(pc_amount);
@@ -164,24 +163,24 @@ end on_start;
         end case;
         -- Specific AP Claims processing / Setup
         if fflu_data.get_char_field(pc_customer_is_a_vendor) = pc_cust_is_vendor then 
-          -- No distribution channel is relevant for vendor
-          rv_gl.dstrbtn_chnnl := null;
+          -- Set the account code to be the same as the promax debit code field.
+          rv_gl.account_code :=  fflu_data.get_char_field(pc_credit_code);
           -- Set the vendor and customer
-          rv_gl.vendor_code := fflu_data.get_char_field(pc_account_code);
+          rv_gl.vendor_code := fflu_data.get_char_field(pc_payee_code);
           rv_gl.customer_code := pxi_common.full_cust_code(null);
           -- Accounts Payable GL Item Text.
           rv_gl.item_text := rpad(
             'AP ' || 
-            'IC#' || 
-            fflu_data.get_char_field(pc_pc_reference) || 
-            ' Promo#' || 
-            fflu_data.get_char_field(pc_reference),50);
+            'Ref#' || 
+            fflu_data.get_char_field(pc_allocation) || 
+            ' Pm#' || 
+            fflu_data.get_char_field(pc_reference) || ' Vn#' || 
+            fflu_data.get_char_field(pc_payee_code)
+            ,50);
+          -- Set the allocation reference field to be allocation field from promax as well.
+          rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
         else 
           -- Specific AR Claims Processing / Setup
-          rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
-            fflu_data.get_char_field(pc_px_company_code),
-            fflu_data.get_char_field(pc_product_number),
-            fflu_data.get_char_field(pc_account_code));  -- Customer
           -- Set the vendor and customer
           rv_gl.vendor_code := pxi_common.full_vend_code(null);
           rv_gl.customer_code := fflu_data.get_char_field(pc_account_code);        
@@ -196,11 +195,17 @@ end on_start;
             fflu_data.get_char_field(pc_product_number) ||
             ' Cs#' ||
             fflu_data.get_char_field(pc_account_code),50);
+          -- Set the allocation reference field to be the external supplied promax reference.
+          rv_gl.alloc_ref := fflu_data.get_char_field(pc_ext_reference);
         end if;
-        -- Set the allocation reference field to be the external supplied promax reference.
-        rv_gl.alloc_ref := fflu_data.get_char_field(pc_ext_reference);
         -- COPA Related Fields
+        -- Set the sales organsiation
         rv_gl.sales_org := fflu_data.get_char_field(pc_px_company_code);
+        -- Set the distribution channel.
+        rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
+          fflu_data.get_char_field(pc_px_company_code),
+          fflu_data.get_char_field(pc_product_number),
+          fflu_data.get_char_field(pc_account_code));  -- Customer
         -- Lookup the business segment for the curent material. 
         v_bus_sgmnt := pxi_common.determine_bus_sgmnt(
           fflu_data.get_char_field(pc_px_company_code),
@@ -229,10 +234,10 @@ end on_start;
               fflu_data.log_field_error(pc_product_number,'Tried to determine profit center from business segment.  Which was unknown [' || v_bus_sgmnt || ']');
           end case;
         end if; 
-        -- Now lookup the plant code and distribution channels.  
+        -- Now lookup the plant code from the traded unit material code.  
         rv_gl.plant_code := pxi_common.determine_matl_plant_code(
           fflu_data.get_char_field(pc_px_company_code),
-          fflu_data.get_char_field(pc_product_number));
+          rv_gl.material_code);
         -- Now add this record to the general ledger collections / if V put as a vendor payment. 
         if fflu_data.get_char_field(pc_customer_is_a_vendor) = pc_cust_is_vendor then 
           ptv_gl_ap_data(ptv_gl_ap_data.count+1) := rv_gl;
@@ -255,10 +260,10 @@ end on_start;
     if fflu_data.was_errors = false then 
       -- Now lets create the atlas IDOC interfaces with the data we have in 
       -- memory.
-      -- Send Accounts Payable Data
-      pxiatl01_extract.send_data(ptv_gl_ap_data,pxiatl01_extract.gc_doc_type_ap_claim,'ICS ID : ' || fflu_utils.get_interface_no);
+      -- Send Accounts Payable Data  
+      pxiatl01_extract.send_data(ptv_gl_ap_data,pxiatl01_extract.gc_doc_type_ap_claim,null);
       -- Send Accounts Receivable Claims
-      pxiatl01_extract.send_data(ptv_gl_ar_data,pxiatl01_extract.gc_doc_type_ar_claim,'ICS ID : ' || fflu_utils.get_interface_no);
+      pxiatl01_extract.send_data(ptv_gl_ar_data,pxiatl01_extract.gc_doc_type_ar_claim,null);
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;

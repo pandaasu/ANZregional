@@ -149,7 +149,7 @@ package body          pxiatl01_extract as
       rpad('*',4) ||                                            -- PMNTTRMS
       rpad(' ',8) ||                                            -- BLINE_DATE
       rpad('B',1) ||                                            -- PMNT_BLOCK
-      rpad(nvl(i_alloc_ref,' '),18) ||                       -- ALLOC_NMBR
+      rpad(nvl(i_alloc_ref,' '),18) ||                          -- ALLOC_NMBR
       rpad(nvl(i_item_text,' '),50) ||                          -- ITEM_TEXT
       rpad(' ',2) ||                                            -- W_TAX_CODE
       rpad(' ',23);                                             -- DISC_BASE
@@ -326,7 +326,7 @@ package body          pxiatl01_extract as
          i_doc_type,
          v_cur_doc_date,
          v_cur_posting_date,
-         i_doc_reference);
+         nvl(i_doc_reference,v_cur_alloc_ref));   -- For AP AR Claims use the alloc ref as the header.
        -- Now add a tax line data. 
        add_tax_record(tv_data,v_cur_tax_code,v_sum_tax,v_sum_tax_base);
        -- Now acutally create the interface and send it.
@@ -392,7 +392,7 @@ package body          pxiatl01_extract as
          ti_gl_data(v_counter).account_code,
          ti_gl_data(v_counter).cost_center, 
          ti_gl_data(v_counter).profit_center,
-         ti_gl_data(v_counter).amount, 
+         ti_gl_data(v_counter).tax_amount_base,
          ti_gl_data(v_counter).item_text, 
          ti_gl_data(v_counter).alloc_ref,
          ti_gl_data(v_counter).tax_code,

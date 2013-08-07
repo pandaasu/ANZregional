@@ -187,10 +187,10 @@ end on_start;
           end if;
         end if; 
         rv_gl.customer_code := fflu_data.get_char_field(pc_allocation);
-        -- Now lookup the plant code and distribution channels.  
+        -- Now lookup the plant code from the traded unit and distribution channels from the zrep.
         rv_gl.plant_code := pxi_common.determine_matl_plant_code(
           fflu_data.get_char_field(pc_px_company_code),
-          fflu_data.get_char_field(pc_product_number));
+          rv_gl.material_code);
         rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
