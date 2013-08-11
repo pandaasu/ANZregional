@@ -64,7 +64,7 @@ PACKAGE body LOGRWOD01_LOADER AS
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
     fflu_data.add_char_field_csv(pc_field_period,1,pc_column_time,null,14,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_mars_date_field_csv(pc_field_mars_period,1,pc_column_time,'MARS_PERIOD','DD/MM/YY',5,8);
+    fflu_data.add_date_field_csv(pc_field_mars_period,1,pc_column_time,'DD/MM/YY',5,8);
     fflu_data.add_char_field_csv(pc_field_measure,2,'Measure',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_csv(pc_field_product,3,'Product',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_csv(pc_field_market,4,'Market',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
@@ -91,18 +91,31 @@ end on_start;
 *******************************************************************************/  
   procedure on_data(p_row in varchar2) is 
     v_ok boolean;
+    v_mars_period number(6,0);
+    cursor csr_mars_period(i_calendar_date in date) is 
+      select mars_period 
+      from mars_date 
+      where calendar_date = i_calendar_date;
   begin
     if fflu_data.parse_data(p_row) = true then
       -- Set an OK Tracking variable.
       v_ok := true;
+      -- Now determine the mars period, from the supplied date - 1.  This is done as data file is supplying the first day of the new period.
+      open csr_mars_period(fflu_data.get_date_field(pc_field_mars_period)-1);
+      fetch csr_mars_period into v_mars_period;
+      if csr_mars_period%notfound = true then 
+        fflu_data.log_field_error(pc_field_mars_period,'Mars Period could not be found for specified calendar date.');
+        v_ok := false;
+      end if;
+      close csr_mars_period;
       -- Check if this is the first data row and if the current mars period is set. 
-      if pv_prev_mars_period is null then 
-        pv_prev_mars_period := fflu_data.get_mars_date_field(pc_field_mars_period);
+      if pv_prev_mars_period is null and v_mars_period is not null then 
+        pv_prev_mars_period := v_mars_period;
         -- Clear out any previous data for this same mars period.
         delete from logr_wod_sales_scan where mars_period = pv_prev_mars_period and data_animal_type = pv_data_animal_type;
       else
         -- Now check that each supplied mars period is the same as the first one that was supplied in the file. 
-        if pv_prev_mars_period <> fflu_data.get_mars_date_field(pc_field_mars_period) then 
+        if pv_prev_mars_period <> v_mars_period then 
           fflu_data.log_field_error(pc_field_mars_period,'Mars period was different to first period found in data file. [' || pv_prev_mars_period || '].');
           v_ok := false;
         end if;
@@ -137,7 +150,7 @@ end on_start;
           multi_pack
         ) values (
           fflu_data.get_char_field(pc_field_period), 
-          fflu_data.get_mars_date_field(pc_field_mars_period),
+          v_mars_period,
           pv_data_animal_type,
           initcap(fflu_data.get_char_field(pc_field_measure)),
           initcap(fflu_data.get_char_field(pc_field_product)),
