@@ -76,7 +76,6 @@ package fflu_utils as
     i_value fflu_common.st_buffer,    -- Value that is relevant at interface.
     i_message fflu_common.st_buffer); -- The actual error message.
   
-  
 /*******************************************************************************
   NAME:      LOG_INTERFACE_DATA_ERROR
   PURPOSE:   This can be called to define a new data interface error for the
@@ -105,7 +104,6 @@ package fflu_utils as
     i_length fflu_common.st_length,     -- The length of the field.
     i_value fflu_common.st_buffer,    -- The value found or not found if null. 
     i_message fflu_common.st_buffer); -- The actual error message.
-  
 
 /*******************************************************************************
   NAME:      LOG_INTERFACE_EXCEPTION
