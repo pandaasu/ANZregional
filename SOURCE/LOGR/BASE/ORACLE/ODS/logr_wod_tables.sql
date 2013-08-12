@@ -1,7 +1,6 @@
 -- Laws of Growth - Table Creation Script for Wodonga - Petcare Tables 
 --------------------------------------------------------------------------------
 
-
 -- SALES SCAN TABLE.
 drop table logr_wod_sales_scan;
 
@@ -15,7 +14,6 @@ create table logr_wod_sales_scan (
   data_value number(30,10),
   manufacturer varchar2(100),
   brand varchar2(100),
-  department varchar2(100),
   catgry varchar2(100),
   sgmnt varchar2(100),
   packtype varchar2(100),
@@ -24,7 +22,9 @@ create table logr_wod_sales_scan (
   ean varchar2(100),
   sub_brand varchar2(100),
   multiple varchar2(100),
-  multi_pack varchar2(100)
+  multi_pack varchar2(100),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index log_wod_sales_scan_nu01 on logr_wod_sales_scan (mars_period,data_animal_type);
@@ -42,7 +42,9 @@ create table logr_wod_dstnctv_asset (
   catgry varchar2(100),
   brand varchar2(100),
   dstnctv_asset_target number(8,0),
-  dstnctv_asset_count number(8,0)
+  dstnctv_asset_count number(8,0),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index logr_wod_dstnctv_asset_nu01 on logr_wod_dstnctv_asset (mars_period);
@@ -67,9 +69,10 @@ create table logr_wod_share_of_shelf (
   sgmnt varchar2(100),
   manufacturer varchar2(100),
   single_multi varchar2(100),
-  department varchar2(100),
   packsize varchar2(100),
-  packtype varchar2(100)
+  packtype varchar2(100),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index logr_wod_share_of_shelf_nu01 on logr_wod_share_of_shelf (mars_period,account);
@@ -93,7 +96,9 @@ create table logr_wod_pack_effctvnss (
   spi_mars number(30,10),
   time_to_find_cmpttr number(30,10), 
   percent_wrong_cmpttr number(30,10),
-  spi_cmpttr number(30,10)
+  spi_cmpttr number(30,10),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index logr_wod_pack_effctvnss_nu01 on logr_wod_pack_effctvnss (mars_period);
@@ -116,7 +121,9 @@ create table logr_wod_advert_effctvnss (
   avi_score number(30,10),
   performance_vs_market varchar2(100),
   ipsos_score number(30,10),
-  on_air_currently varchar2(100)
+  on_air_currently varchar2(100),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index logr_wod_advert_effctvnss_nu01 on logr_wod_advert_effctvnss (mars_period);
@@ -135,7 +142,9 @@ create table logr_wod_tv_activity (
   period number(2,0),
   year number(4,0),
   weeks_on_air number(30,10),
-  four_weekly_reach number(30,10)
+  four_weekly_reach number(30,10),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create index logr_wod_tv_activity_nu01 on logr_wod_tv_activity (version);
@@ -157,7 +166,9 @@ create table logr_wod_house_pntrtn (
   sub_catgry varchar2(100),
   quarter varchar2(100),
   quarter_period number(6,0),
-  rltv_pntrtn number(30,10)
+  rltv_pntrtn number(30,10),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
 create or replace public synonym logr_wod_house_pntrtn for ods.logr_wod_house_pntrtn;
@@ -168,12 +179,14 @@ grant select, insert, update, delete on logr_wod_house_pntrtn to ods_app;
 drop table logr_wod_prdct_prfrmnc;
 
 create table logr_wod_prdct_prfrmnc (
-  something varchar2(100)
+  something varchar2(100),
+  last_updtd_user varchar2(30),
+  last_updtd_time date
 );
 
-create or replace public synonym logr_wod_house_pntrtn for ods.logr_wod_house_pntrtn;
+create or replace public synonym logr_wod_prdct_prfrmnc for ods.logr_wod_prdct_prfrmnc;
 
-grant select, insert, update, delete on logr_wod_house_pntrtn to ods_app;
+grant select, insert, update, delete on logr_wod_prdct_prfrmnc to ods_app;
 
 -- TABLE COMMENTS
 COMMENT ON TABLE LOGR_WOD_ADVERT_EFFCTVNSS IS 'Data for advertising effectiveness of the Australian Petcare business.';
@@ -181,7 +194,7 @@ COMMENT ON TABLE LOGR_WOD_DSTNCTV_ASSET IS 'Data for distinctive asset informati
 COMMENT ON TABLE LOGR_WOD_PACK_EFFCTVNSS IS 'Data for packaging effectiveness of the Australian Petcare business.';
 COMMENT ON TABLE LOGR_WOD_SALES_SCAN IS 'Data for sales scan information of the Australian Petcare business.';
 COMMENT ON TABLE LOGR_WOD_SHARE_OF_SHELF IS 'Data for share of shelf information of the Australian Petcare business.';
-COMMENT ON TABLE LOGR_WOD_TV_ADVERTS IS 'Data for tv advertisitment actuals and plans of the Australian Petcare business.';
+COMMENT ON TABLE logr_wod_tv_activity IS 'Data for tv advertisitment actuals and plans of the Australian Petcare business.';
 COMMENT ON TABLE LOGR_WOD_HOUSE_PNTRTN IS 'Data for house hold penetration information of the Australia Petcare business.';
 COMMENT ON TABLE LOGR_WOD_PRDCT_PRFRMNC IS 'Data for product performance information of the Australia Petcare business.';
 
@@ -189,7 +202,7 @@ COMMENT ON TABLE LOGR_WOD_PRDCT_PRFRMNC IS 'Data for product performance informa
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.ACCOUNT IS 'Customer Account.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.ANIMAL_TYPE IS 'Product Animal Type.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.AVI_SCORE IS 'Advertising Effectiveness AVI Score.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.BRAND IS 'Brand.';
+COMMENT ON COLUMN logr_wod_tv_activity.BRAND IS 'Brand.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.BRAND IS 'Brand.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.BRAND IS 'Brand.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.BRAND IS 'Brand.';
@@ -204,13 +217,12 @@ COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.CLSTER IS 'Geographic Cluster of the C
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.COPY IS 'The advertising campaign - copy.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.DATA_VALUE IS 'The value associated with this scan data mesaure.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.DEPARTMENT IS 'Department.';
-COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.DEPARTMENT IS 'Department.';
 COMMENT ON COLUMN LOGR_WOD_DSTNCTV_ASSET.DSTNCTV_ASSET_COUNT IS 'Distinctive Asset Count in Top Right Quadrant.';
 COMMENT ON COLUMN LOGR_WOD_DSTNCTV_ASSET.DSTNCTV_ASSET_TARGET IS 'Distinctive Asset Target.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.EAN IS 'Product EAN Code - Barcode.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.EAN IS 'Product EAN Code - Barcode.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.EAN_NAME IS 'Product Name.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.FOUR_WEEKLY_REACH IS 'TV Four Weekly Reach Measure.';
+COMMENT ON COLUMN logr_wod_tv_activity.FOUR_WEEKLY_REACH IS 'TV Four Weekly Reach Measure.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.IPSOS_SCORE IS 'Advertising Effectiveness IPSOS Score.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.LINEAR_SPACE IS 'This is the linear shelf space that this product occupies.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.MANUFACTURER IS 'The product''s Manufacturer.';
@@ -232,12 +244,12 @@ COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.PACKTYPE IS 'Product Pack Type';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.PERCENT_WRONG_CMPTTR IS 'Percentage person picked wrong product when looking for specific Competitor product.';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.PERCENT_WRONG_MARS IS 'Percentage person picked wrong product when looking for specific Mars product.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.PERFORMANCE_VS_MARKET IS 'Description about advert''s performance verses the market.  ie.  Average.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.PERIOD IS 'Mars Period.  Period number only, no year.';
+COMMENT ON COLUMN logr_wod_tv_activity.PERIOD IS 'Mars Period.  Period number only, no year.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.PRODUCT IS 'Product';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.SGMNT IS 'Product Segement';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.SGMNT IS 'Product Segment';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.SGMNT IS 'Product Segment';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.SGMNT IS 'Product Segment';
+COMMENT ON COLUMN logr_wod_tv_activity.SGMNT IS 'Product Segment';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.SGMNT IS 'Product Segment';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.SINGLE_MULTI IS 'If this product is a single or multi pack product.';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.SPECIFIC_SKU IS 'Description of Product.';
@@ -247,9 +259,9 @@ COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.SUB_BRAND IS 'Sub Brand';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.SZE_GRAMS IS 'Size of the product in grams.';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.TIME_TO_FIND_CMPTTR IS 'Time it took the person to find the specific competitor product.';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.TIME_TO_FIND_MARS IS 'Time it took the person to find the specific mars product.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.VERSION IS 'The advertising plan version, similar to a casting period.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.WEEKS_ON_AIR IS 'Number of weeks this advert has been on air.';
-COMMENT ON COLUMN LOGR_WOD_TV_ADVERTS.YEAR IS 'The year.';
+COMMENT ON COLUMN logr_wod_tv_activity.VERSION IS 'The advertising plan version, similar to a casting period.';
+COMMENT ON COLUMN logr_wod_tv_activity.WEEKS_ON_AIR IS 'Number of weeks this advert has been on air.';
+COMMENT ON COLUMN logr_wod_tv_activity.YEAR IS 'The year.';
 comment on column logr_wod_house_pntrtn.market is 'The market associated with this data.';
 comment on column logr_wod_house_pntrtn.shopper_level is 'The relative grouping of the shoper.';
 comment on column logr_wod_house_pntrtn.product is 'The type of product that the penetration data is for.';
@@ -258,3 +270,19 @@ comment on column logr_wod_house_pntrtn.catgry is 'The product category.';
 comment on column logr_wod_house_pntrtn.sub_catgry is 'The product sub category.';
 comment on column logr_wod_house_pntrtn.quarter is 'The end date of the quarter, converted to mars YYYYPP.';
 comment on column logr_wod_house_pntrtn.rltv_pntrtn is 'The relative percentage of the house hold penetration.';
+comment on column logr_wod_advert_effctvnss.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_dstnctv_asset.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_pack_effctvnss.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_sales_scan.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_share_of_shelf.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+COMMENT ON column logr_wod_tv_activity.last_updtd_user IS 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_house_pntrtn.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_prdct_prfrmnc.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';
+comment on column logr_wod_advert_effctvnss.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_dstnctv_asset.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_pack_effctvnss.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_sales_scan.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_share_of_shelf.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+COMMENT ON column logr_wod_tv_activity.last_updtd_time IS 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_house_pntrtn.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_prdct_prfrmnc.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
