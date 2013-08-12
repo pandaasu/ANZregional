@@ -27,7 +27,7 @@ namespace FlatFileLoaderUtility.Controllers
         {
             var viewModel = new InterfaceMonitorListViewModel();
 
-            viewModel.InterfaceGroups = this.GetInterfaceGroups(false, string.Empty);
+            viewModel.InterfaceGroups = this.GetInterfaceGroups(false, "*ALL");
             viewModel.Interfaces = this.GetInterfaces(true, string.Empty, string.Empty, string.Empty, false, true);
             viewModel.IcsStatuses = this.GetIcsStatuses(string.Empty);
             viewModel.InterfaceTypes = this.GetInterfaceTypes(string.Empty);

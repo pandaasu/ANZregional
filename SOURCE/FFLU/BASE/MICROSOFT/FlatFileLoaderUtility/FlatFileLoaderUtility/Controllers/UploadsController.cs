@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Web.Mvc;
 using System.Threading;
+using System.Web;
 using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -31,8 +32,11 @@ namespace FlatFileLoaderUtility.Controllers
         {
             var viewModel = new FileUploadViewModel();
 
-            viewModel.InterfaceGroups = this.GetInterfaceGroups(false, string.Empty);
-            viewModel.Interfaces = this.GetInterfaces(true, string.Empty, "*INBOUND", string.Empty, true, false);
+            // Restore seelcted interface cookie, if available
+            var interfaceCookie = this.Request.Cookies["interface"];
+            
+            viewModel.InterfaceGroups = this.GetInterfaceGroups(false, "*ALL");
+            viewModel.Interfaces = this.GetInterfaces(true, string.Empty, "*INBOUND", (interfaceCookie != null) ? interfaceCookie.Value : string.Empty, true, false);
             viewModel.Status = Status.GetStatus(this.Container.Access.Username, this.Container.Connection);
 
             if (viewModel.Status != null)
@@ -107,6 +111,11 @@ namespace FlatFileLoaderUtility.Controllers
                 uploader.Status.Thread = thread;
 
                 thread.Start();
+
+                // Save the interface in cookie to pre-select the last used interface on next page load
+                var cookie = new HttpCookie("interface", interfaceCode);
+                cookie.Expires = DateTime.Now.AddYears(5);
+                this.Response.Cookies.Add(cookie);
 
                 return this.Json(new { Result = "OK" });
             }

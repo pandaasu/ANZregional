@@ -172,7 +172,7 @@ namespace FlatFileLoaderUtility.Controllers
                          }).ToList();
 
             if (withSelectOption)
-                items.Insert(0, new SelectListItem { Text = "- select -", Value = string.Empty });
+                items.Insert(0, new SelectListItem { Text = "- select -", Value = string.Empty, Selected = true });
 
             return items;
         }
