@@ -20,6 +20,7 @@ PACKAGE body LOGRWOD06_LOADER AS
   Package Variables
 *******************************************************************************/  
   pv_prev_version logr_wod_tv_activity.version%type;
+  pv_user fflu_common.st_user;
   
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -28,12 +29,13 @@ PACKAGE body LOGRWOD06_LOADER AS
   begin
     -- Initialise any package processing variables.
     pv_prev_version := null;
+    pv_user := null;
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,false);
     -- Now define the column structure
-    fflu_data.add_number_field_csv(pc_field_version,1,'Version',null,1900,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_brand,2,'Brand',null,100,fflu_data.gc_allow_null);
-    fflu_data.add_char_field_csv(pc_field_segment,3,'Segment',null,100,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_csv(pc_field_version,1,'Version',null,190000,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_csv(pc_field_brand,2,'Brand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_segment,3,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_number_field_csv(pc_field_period,4,'Period',null,1,13,fflu_data.gc_not_allow_null);
     fflu_data.add_number_field_csv(pc_field_year,5,'Year',null,1900,9999,fflu_data.gc_not_allow_null);
     fflu_data.add_number_field_csv(pc_field_weeks_on_air,6,'Weeks on Air',null,0,null,fflu_data.gc_allow_null);
@@ -74,15 +76,19 @@ end on_start;
           period,
           year,
           weeks_on_air,
-          four_weekly_reach
+          four_weekly_reach,
+          last_updtd_user,
+          last_updtd_time
         ) values (
           fflu_data.get_number_field(pc_field_version), 
-          fflu_data.get_char_field(pc_field_brand),
-          fflu_data.get_char_field(pc_field_segment),
+          initcap(fflu_data.get_char_field(pc_field_brand)),
+          initcap(fflu_data.get_char_field(pc_field_segment)),
           fflu_data.get_number_field(pc_field_period),
           fflu_data.get_number_field(pc_field_year),
           fflu_data.get_number_field(pc_field_weeks_on_air),
-          fflu_data.get_number_field(pc_field_4_weekly_reach)
+          fflu_data.get_number_field(pc_field_4_weekly_reach),
+          pv_user,
+          sysdate
         );
       end if;
     end if;
@@ -129,4 +135,5 @@ end on_start;
 -- Initialise this package.  
 begin
   pv_prev_version := null;
+  pv_user := null;
 END LOGRWOD06_LOADER;

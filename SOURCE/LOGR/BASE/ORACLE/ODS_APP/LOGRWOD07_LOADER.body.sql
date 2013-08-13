@@ -2,34 +2,49 @@ create or replace
 PACKAGE body LOGRWOD07_LOADER AS 
 
 /*******************************************************************************
-  Interface Field Definitions
+  Data File Column Headings.
 *******************************************************************************/  
-  pc_field_time constant fflu_common.st_name := 'Time';
-  pc_field_period constant fflu_common.st_name := 'Period';
-  pc_field_mars_period constant fflu_common.st_name := 'Mars Period';
-  pc_field_measure constant fflu_common.st_name := 'Measure';
-  pc_field_product constant fflu_common.st_name := 'Product';
-  pc_field_market constant fflu_common.st_name := 'Market';
-  pc_field_data_value constant fflu_common.st_name := 'Data Value';
-  pc_field_manufacturer constant fflu_common.st_name := 'Manufacturer';
-  pc_field_brand constant fflu_common.st_name := 'Brand';
-  pc_field_animal_type constant fflu_common.st_name := 'Animal Type';
-  pc_field_department constant fflu_common.st_name := 'Department';
-  pc_field_category constant fflu_common.st_name := 'Category';
-  pc_field_segment constant fflu_common.st_name := 'Segment';
-  pc_field_packtype constant fflu_common.st_name := 'Packtype';
-  pc_field_packsize constant fflu_common.st_name := 'Packsize';
-  pc_field_size constant fflu_common.st_name := 'Size';
-  pc_field_ean constant fflu_common.st_name := 'Ean';
+  pc_column_sdesc constant fflu_common.st_name := 'SDESC';
 
 /*******************************************************************************
-  Interface Sufix's
+  Data File Expected Values
 *******************************************************************************/  
+  pc_market_value constant fflu_common.st_name := 'AUS';
+  pc_shopper_level_value constant fflu_common.st_name := 'ALL SHOPPERS';
+
+/*******************************************************************************
+  Interface Field Definitions
+*******************************************************************************/  
+  pc_field_market constant fflu_common.st_name := 'Market';
+  pc_field_shopper_level constant fflu_common.st_name := 'Shopper Level';
+  pc_field_quarter constant fflu_common.st_name := 'Quarter';
+  pc_field_quarter_period constant fflu_common.st_name := 'Quarter Period';
+  pc_field_product constant fflu_common.st_name := 'Product';
+  pc_field_sub_category constant fflu_common.st_name := 'Sub Category';
+  pc_field_brand constant fflu_common.st_name := 'Brand';
+  pc_field_sub_brand constant fflu_common.st_name := 'Sub Brand';
+  pc_field_packtype constant fflu_common.st_name := 'Pack Type';
+  pc_field_serving_size constant fflu_common.st_name := 'Serving Size';
+  pc_field_relative_penetration constant fflu_common.st_name := 'Relative Penetration';
+
+/*******************************************************************************
+  Interface Suffix's
+*******************************************************************************/  
+  pc_suffix_dog constant fflu_common.st_interface := '1';
+  pc_suffix_cat constant fflu_common.st_interface := '2';
+
+/*******************************************************************************
+  Data Animal Types
+*******************************************************************************/  
+  pc_data_animal_type_dog constant logr_wod_sales_scan.data_animal_type%type := 'Dog';
+  pc_data_animal_type_cat constant logr_wod_sales_scan.data_animal_type%type := 'Cat';
   
 /*******************************************************************************
   Package Variables
 *******************************************************************************/  
   pv_prev_mars_period logr_wod_sales_scan.mars_period%type;
+  pv_data_animal_type logr_wod_sales_scan.data_animal_type%type;
+  pv_user fflu_common.st_user;
   
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -38,25 +53,33 @@ PACKAGE body LOGRWOD07_LOADER AS
   begin
     -- Initialise any package processing variables.
     pv_prev_mars_period := null;
+    pv_data_animal_type := null;
+    pv_user := null;
+    -- Now determine what the interface sufix was and hence the data animal type. 
+    case fflu_utils.get_interface_suffix
+      when pc_suffix_dog then pv_data_animal_type := pc_data_animal_type_dog;
+      when pc_suffix_cat then pv_data_animal_type := pc_data_animal_type_cat;
+      else 
+        fflu_utils.log_interface_error('Interface Suffix',fflu_utils.get_interface_suffix,'Unknown Interface Suffix.');
+    end case;
     -- Now initialise the data parsing wrapper.
-    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,false);
+    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_char_field_csv(pc_field_period,1,pc_field_time,null,14);
-    fflu_data.add_mars_date_field_csv(pc_field_mars_period,1,pc_field_time,'MARS_PERIOD','DD/MM/YY',6,8);
-    fflu_data.add_char_field_csv(pc_field_measure,2,pc_field_measure,null,100);
-    fflu_data.add_char_field_csv(pc_field_product,3,pc_field_product,null,100);
-    fflu_data.add_char_field_csv(pc_field_market,4,pc_field_market,null,100);
-    fflu_data.add_number_field_csv(pc_field_data_value,5,pc_field_data_value,null,-1000000,1000000,true);
-    fflu_data.add_char_field_csv(pc_field_manufacturer,6,pc_field_manufacturer,null,100);
-    fflu_data.add_char_field_csv(pc_field_brand,7,pc_field_brand,null,100);
-    fflu_data.add_char_field_csv(pc_field_animal_type,8,pc_field_animal_type,null,100);
-    fflu_data.add_char_field_csv(pc_field_department,9,pc_field_department,null,100);
-    fflu_data.add_char_field_csv(pc_field_category,10,pc_field_category,null,100);
-    fflu_data.add_char_field_csv(pc_field_segment,11,pc_field_segment,null,100,true);
-    fflu_data.add_char_field_csv(pc_field_packtype,12,pc_field_packtype,null,100,true);
-    fflu_data.add_char_field_csv(pc_field_packsize,13,pc_field_packsize,null,100,true);
-    fflu_data.add_number_field_csv(pc_field_size,14,pc_field_size,null,0,100000,false);
-    fflu_data.add_char_field_csv(pc_field_ean,15,pc_field_ean,null,100);
+    fflu_data.add_char_field_csv(pc_field_market,1,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_shopper_level,2,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_quarter,3,pc_column_sdesc,null,17,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_mars_date_field_csv(pc_field_quarter_period,3,pc_column_sdesc,'MARS_PERIOD','DD/MM/YYYY',8,10,190001,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_csv(pc_field_product,4,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_sub_category,5,'SUBCATEGORY',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_brand,6,'BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_sub_brand,7,'SUB_BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_packtype,8,'PACKTYPE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_csv(pc_field_serving_size,9,'SERVING_SIZE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_csv(pc_field_relative_penetration,10,'Relative Penetration (AUS)',null,-1000000,1000000,fflu_data.gc_allow_null);
+    -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
+    pv_user := fflu_utils.get_interface_user;
+    -- Delete out any previously loaded data for this data animal type.
+    delete from logr_wod_house_pntrtn where data_animal_type = pv_data_animal_type;
   exception 
     when others then 
       fflu_utils.log_interface_exception('On Start');
@@ -72,54 +95,56 @@ end on_start;
     if fflu_data.parse_data(p_row) = true then
       -- Set an OK Tracking variable.
       v_ok := true;
-      -- Check if this is the first data row and if the current mars period is set. 
-      if pv_prev_mars_period is null then 
-        pv_prev_mars_period := fflu_data.get_mars_date_field(pc_field_mars_period);
-        -- Clear out any previous data for this same mars period.
-        delete from logr_wod_sales_scan where mars_period = pv_prev_mars_period;
-      else
-        -- Now check that each supplied mars period is the same as the first one that was supplied in the file. 
-        if pv_prev_mars_period <> fflu_data.get_mars_date_field(pc_field_mars_period) then 
-          fflu_data.log_field_error(pc_field_mars_period,'Mars period was different to first period found in data file. [' || pv_prev_mars_period || '].');
-          v_ok := false;
-        end if;
+      -- Now perform a sense check that the category if it contains Dog or Cat that it matches the interface suffix for this file.
+      if instr(initcap(fflu_data.get_char_field(pc_field_sub_category)),pc_data_animal_type_dog) > 0 and fflu_utils.get_interface_suffix <> pc_suffix_dog then
+        fflu_data.log_field_error(pc_field_sub_category,'This category contained reference to '|| pc_data_animal_type_dog ||' which was not expected for this interface.');
+        v_ok := false;
+      end if;
+      if instr(initcap(fflu_data.get_char_field(pc_field_sub_category)),pc_data_animal_type_cat) > 0 and fflu_utils.get_interface_suffix <> pc_suffix_cat then
+        fflu_data.log_field_error(pc_field_sub_category,'This category contained reference to '|| pc_data_animal_type_cat ||' which was not expected for this interface.');
+        v_ok := false;
+      end if;
+      -- Check that market and shopper level are the expected values.
+      if upper(fflu_data.get_char_field(pc_field_market)) <> pc_market_value then 
+        fflu_data.log_field_error(pc_field_market,'Expected value to be ' || pc_market_value || '.');
+        v_ok := false;
+      end if;
+      if upper(fflu_data.get_char_field(pc_field_shopper_level)) <> pc_shopper_level_value then 
+        fflu_data.log_field_error(pc_field_shopper_level,'Expected value to be ' || pc_shopper_level_value || '.');
+        v_ok := false;
       end if;
       -- Now insert the logr sales scan data.
       if v_ok = true then 
-        insert into logr_wod_sales_scan (
-          period, 
-          mars_period, 
-          measure, 
-          product, 
-          market, 
-          data_value, 
-          MANUFACTURER,
-          BRAND,
-          ANIMAL_TYPE,
-          DEPARTMENT,
-          CATGRY,
-          SGMNT,
-          PACKTYPE,
-          PACKSIZE,
-          SZE_GRAMS,
-          EAN
+        insert into logr_wod_house_pntrtn (
+          market,
+          shopper_level,
+          quarter,
+          quarter_period,
+          data_animal_type,
+          product,
+          sub_catgry,
+          brand,
+          sub_brand,
+          packtype,
+          serving_size,
+          rltv_pntrtn,
+          last_updtd_user,
+          last_updtd_time
         ) values (
-          fflu_data.get_char_field(pc_field_period), 
-          fflu_data.get_mars_date_field(pc_field_mars_period),
-          fflu_data.get_char_field(pc_field_measure),
-          fflu_data.get_char_field(pc_field_product),
-          fflu_data.get_char_field(pc_field_market),
-          fflu_data.get_number_field(pc_field_data_value),
-          fflu_data.get_char_field(pc_field_manufacturer),
-          fflu_data.get_char_field(pc_field_brand),
-          fflu_data.get_char_field(pc_field_animal_type),
-          fflu_data.get_char_field(pc_field_department),
-          fflu_data.get_char_field(pc_field_category),
-          fflu_data.get_char_field(pc_field_segment),
-          fflu_data.get_char_field(pc_field_packtype),
-          fflu_data.get_char_field(pc_field_packsize),
-          fflu_data.get_number_field(pc_field_size),
-          fflu_data.get_char_field(pc_field_ean)
+          upper(fflu_data.get_char_field(pc_field_market)), 
+          upper(fflu_data.get_char_field(pc_field_shopper_level)), 
+          fflu_data.get_char_field(pc_field_quarter),
+          fflu_data.get_mars_date_field(pc_field_quarter_period),
+          pv_data_animal_type,
+          initcap(fflu_data.get_char_field(pc_field_product)),
+          initcap(fflu_data.get_char_field(pc_field_sub_category)),
+          initcap(fflu_data.get_char_field(pc_field_brand)),
+          initcap(fflu_data.get_char_field(pc_field_sub_brand)),
+          initcap(fflu_data.get_char_field(pc_field_packtype)),
+          initcap(fflu_data.get_char_field(pc_field_serving_size)),
+          fflu_data.get_number_field(pc_field_relative_penetration),
+          pv_user,
+          sysdate
         );
       end if;
     end if;
@@ -166,4 +191,6 @@ end on_start;
 -- Initialise this package.  
 begin
   pv_prev_mars_period := null;
+  pv_data_animal_type := null;
+  pv_user := null;
 END LOGRWOD07_LOADER;

@@ -44,6 +44,7 @@ PACKAGE body LOGRWOD01_LOADER AS
 *******************************************************************************/  
   pv_prev_mars_period logr_wod_sales_scan.mars_period%type;
   pv_data_animal_type logr_wod_sales_scan.data_animal_type%type;
+  pv_user fflu_common.st_user;
   
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -53,6 +54,7 @@ PACKAGE body LOGRWOD01_LOADER AS
     -- Initialise any package processing variables.
     pv_prev_mars_period := null;
     pv_data_animal_type := null;
+    pv_user := null;
     -- Now determine what the interface sufix was and hence the data animal type. 
     case fflu_utils.get_interface_suffix
       when pc_suffix_dog then pv_data_animal_type := pc_data_animal_type_dog;
@@ -80,6 +82,8 @@ PACKAGE body LOGRWOD01_LOADER AS
     fflu_data.add_char_field_csv(pc_field_sub_brand,14,'Subbrand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_csv(pc_field_multiple,15,'Multiple',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_csv(pc_field_multi_pack,16,'Multi_pack',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
+    pv_user := fflu_utils.get_interface_user;
   exception 
     when others then 
       fflu_utils.log_interface_exception('On Start');
@@ -123,9 +127,11 @@ end on_start;
       -- Now perform a sense check that the category if it contains Dog or Cat that it matches the interface suffix for this file.
       if instr(initcap(fflu_data.get_char_field(pc_field_category)),pc_data_animal_type_dog) > 0 and fflu_utils.get_interface_suffix <> pc_suffix_dog then
         fflu_data.log_field_error(pc_field_category,'This category contained reference to '|| pc_data_animal_type_dog ||' which was not expected for this interface.');
+        v_ok := false;
       end if;
       if instr(initcap(fflu_data.get_char_field(pc_field_category)),pc_data_animal_type_cat) > 0 and fflu_utils.get_interface_suffix <> pc_suffix_cat then
         fflu_data.log_field_error(pc_field_category,'This category contained reference to '|| pc_data_animal_type_cat ||' which was not expected for this interface.');
+        v_ok := false;
       end if;
       -- Now insert the logr sales scan data.
       if v_ok = true then 
@@ -147,7 +153,9 @@ end on_start;
           ean,
           sub_brand,
           multiple,
-          multi_pack
+          multi_pack,
+          last_updtd_user, 
+          last_updtd_time
         ) values (
           fflu_data.get_char_field(pc_field_period), 
           v_mars_period,
@@ -166,7 +174,9 @@ end on_start;
           fflu_data.get_char_field(pc_field_ean),
           initcap(fflu_data.get_char_field(pc_field_sub_brand)),
           initcap(fflu_data.get_char_field(pc_field_multiple)),
-          initcap(fflu_data.get_char_field(pc_field_multi_pack))
+          initcap(fflu_data.get_char_field(pc_field_multi_pack)),
+          pv_user,
+          sysdate
         );
       end if;
     end if;
@@ -214,4 +224,5 @@ end on_start;
 begin
   pv_prev_mars_period := null;
   pv_data_animal_type := null;
+  pv_user := null;
 END LOGRWOD01_LOADER;

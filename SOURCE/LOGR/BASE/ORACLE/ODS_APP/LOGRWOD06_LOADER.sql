@@ -27,6 +27,7 @@ PACKAGE LOGRWOD06_LOADER AS
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-19  Chris Horn            Created Interface
+  2013-08-11  Chris Horn            Added the last updated user and time fields.
 
 *******************************************************************************/
   -- LICS Hooks.

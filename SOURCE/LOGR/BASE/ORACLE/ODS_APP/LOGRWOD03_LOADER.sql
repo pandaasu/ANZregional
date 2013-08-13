@@ -12,7 +12,9 @@ PACKAGE LOGRWOD03_LOADER AS
 
   Description
   ------------------------------------------------------------------------------
-  This package perform and upload of share of shelf data.
+  This package perform and upload of share of shelf data.  
+  
+  Interface Sufix 1 = Coles, 2 = Woolworths
 
   Functions
   ------------------------------------------------------------------------------

@@ -14,6 +14,8 @@ PACKAGE LOGRWOD07_LOADER AS
   ------------------------------------------------------------------------------
   This package performs an upload of house hold penetration data.
 
+  Interface Sufix 1 = Dog, 2 = Cat
+
   Functions
   ------------------------------------------------------------------------------
   + LICS Hooks 

@@ -121,7 +121,6 @@ create table logr_wod_advert_effctvnss (
   avi_score number(30,10),
   performance_vs_market varchar2(100),
   ipsos_score number(30,10),
-  on_air_currently varchar2(100),
   last_updtd_user varchar2(30),
   last_updtd_time date
 );
@@ -160,16 +159,21 @@ drop table logr_wod_house_pntrtn;
 create table logr_wod_house_pntrtn (
   market varchar2(100),
   shopper_level varchar2(100),
-  product varchar2(100),
-  brand varchar2(100),
-  catgry varchar2(100),
-  sub_catgry varchar2(100),
   quarter varchar2(100),
   quarter_period number(6,0),
+  data_animal_type varchar2(20),
+  product varchar2(100),
+  sub_catgry varchar2(100),
+  brand varchar2(100),
+  sub_brand varchar2(100),
+  packtype varchar2(100),
+  serving_size varchar2(100),
   rltv_pntrtn number(30,10),
   last_updtd_user varchar2(30),
   last_updtd_time date
 );
+
+create index logr_wod_house_pntrtn_nu01 on logr_wod_house_pntrtn (data_animal_type);
 
 create or replace public synonym logr_wod_house_pntrtn for ods.logr_wod_house_pntrtn;
 
@@ -200,7 +204,8 @@ COMMENT ON TABLE LOGR_WOD_PRDCT_PRFRMNC IS 'Data for product performance informa
 
 -- TABLE COLUMN COMMENTS
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.ACCOUNT IS 'Customer Account.';
-COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.ANIMAL_TYPE IS 'Product Animal Type.';
+comment on column logr_wod_sales_scan.data_animal_type is 'Animal Type based on interface load.';
+COMMENT ON COLUMN LOGR_WOD_house_pntrtn.DATA_ANIMAL_TYPE IS 'Animal Type based on interface load.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.AVI_SCORE IS 'Advertising Effectiveness AVI Score.';
 COMMENT ON COLUMN logr_wod_tv_activity.BRAND IS 'Brand.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.BRAND IS 'Brand.';
@@ -216,7 +221,6 @@ COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.CATGRY IS 'Product Category.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.CLSTER IS 'Geographic Cluster of the Customer Account.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.COPY IS 'The advertising campaign - copy.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.DATA_VALUE IS 'The value associated with this scan data mesaure.';
-COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.DEPARTMENT IS 'Department.';
 COMMENT ON COLUMN LOGR_WOD_DSTNCTV_ASSET.DSTNCTV_ASSET_COUNT IS 'Distinctive Asset Count in Top Right Quadrant.';
 COMMENT ON COLUMN LOGR_WOD_DSTNCTV_ASSET.DSTNCTV_ASSET_TARGET IS 'Distinctive Asset Target.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.EAN IS 'Product EAN Code - Barcode.';
@@ -266,8 +270,9 @@ comment on column logr_wod_house_pntrtn.market is 'The market associated with th
 comment on column logr_wod_house_pntrtn.shopper_level is 'The relative grouping of the shoper.';
 comment on column logr_wod_house_pntrtn.product is 'The type of product that the penetration data is for.';
 comment on column logr_wod_house_pntrtn.brand is 'The product brand.';
-comment on column logr_wod_house_pntrtn.catgry is 'The product category.';
+comment on column logr_wod_house_pntrtn.sub_brand is 'The product sub brand.';
 comment on column logr_wod_house_pntrtn.sub_catgry is 'The product sub category.';
+comment on column logr_wod_house_pntrtn.serving_size is 'The serving size information.';
 comment on column logr_wod_house_pntrtn.quarter is 'The end date of the quarter, converted to mars YYYYPP.';
 comment on column logr_wod_house_pntrtn.rltv_pntrtn is 'The relative percentage of the house hold penetration.';
 comment on column logr_wod_advert_effctvnss.last_updtd_user is 'The user that uploaded or reprocessed the interface that supplied this data.';

@@ -13,6 +13,8 @@ PACKAGE LOGRWOD01_LOADER AS
   Description
   ------------------------------------------------------------------------------
   This package perform a sales data upload of scan data. 
+  
+  Interface Sufix 1 = Dog, 2 = Cat
 
   Functions
   ------------------------------------------------------------------------------
@@ -29,6 +31,7 @@ PACKAGE LOGRWOD01_LOADER AS
   2013-06-25  Chris Horn            Created Interface
   2013-07-19  Chris Horn            Updated Interface
   2013-07-26  Chris Horn            Split Cat and Dog and updated fields.
+  2013-08-11  Chris Horn            Added last updated time, user fields.
 
 *******************************************************************************/
   -- LICS Hooks.
