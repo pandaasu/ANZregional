@@ -49,7 +49,7 @@ PACKAGE body LOGRWOD05_LOADER AS
     delete from logr_wod_advert_effctvnss;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('On Start');
 end on_start;
 
 
@@ -106,7 +106,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
   
@@ -125,7 +125,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 /*******************************************************************************

@@ -60,7 +60,7 @@ PACKAGE body LOGRWOD01_LOADER AS
       when pc_suffix_dog then pv_data_animal_type := pc_data_animal_type_dog;
       when pc_suffix_cat then pv_data_animal_type := pc_data_animal_type_cat;
       else 
-        fflu_utils.log_interface_error('Interface Suffix',fflu_utils.get_interface_suffix,'Unknown Interface Suffix.');
+        fflu_data.log_interface_error('Interface Suffix',fflu_utils.get_interface_suffix,'Unknown Interface Suffix.');
     end case;
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
@@ -86,7 +86,7 @@ PACKAGE body LOGRWOD01_LOADER AS
     pv_user := fflu_utils.get_interface_user;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('On Start');
 end on_start;
 
 
@@ -170,7 +170,7 @@ end on_start;
           initcap(fflu_data.get_char_field(pc_field_segment)),
           initcap(fflu_data.get_char_field(pc_field_packtype)),
           initcap(fflu_data.get_char_field(pc_field_packsize)),
-          initcap(fflu_data.get_number_field(pc_field_size)),
+          fflu_data.get_number_field(pc_field_size),
           fflu_data.get_char_field(pc_field_ean),
           initcap(fflu_data.get_char_field(pc_field_sub_brand)),
           initcap(fflu_data.get_char_field(pc_field_multiple)),
@@ -182,7 +182,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
   
@@ -201,7 +201,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 /*******************************************************************************

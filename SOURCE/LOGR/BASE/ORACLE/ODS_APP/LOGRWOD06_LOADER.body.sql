@@ -42,7 +42,7 @@ PACKAGE body LOGRWOD06_LOADER AS
     fflu_data.add_number_field_csv(pc_field_4_weekly_reach,7,'4 Weekly Reach',null,0,null,fflu_data.gc_allow_null);
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('On Start');
 end on_start;
 
 
@@ -94,7 +94,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
   
@@ -113,7 +113,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 /*******************************************************************************

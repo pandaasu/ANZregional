@@ -60,7 +60,7 @@ PACKAGE body LOGRWOD07_LOADER AS
       when pc_suffix_dog then pv_data_animal_type := pc_data_animal_type_dog;
       when pc_suffix_cat then pv_data_animal_type := pc_data_animal_type_cat;
       else 
-        fflu_utils.log_interface_error('Interface Suffix',fflu_utils.get_interface_suffix,'Unknown Interface Suffix.');
+        fflu_data.log_interface_error('Interface Suffix',fflu_utils.get_interface_suffix,'Unknown Interface Suffix.');
     end case;
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
@@ -82,7 +82,7 @@ PACKAGE body LOGRWOD07_LOADER AS
     delete from logr_wod_house_pntrtn where data_animal_type = pv_data_animal_type;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('On Start');
 end on_start;
 
 
@@ -150,7 +150,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
   
@@ -169,7 +169,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 /*******************************************************************************

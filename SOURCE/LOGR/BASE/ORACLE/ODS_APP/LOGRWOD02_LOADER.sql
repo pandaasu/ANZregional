@@ -27,6 +27,7 @@ PACKAGE LOGRWOD02_LOADER AS
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-19  Chris Horn            Created Interface
+  2013-08-14  Chris Horn            Implemented Interface
 
 *******************************************************************************/
   -- LICS Hooks.

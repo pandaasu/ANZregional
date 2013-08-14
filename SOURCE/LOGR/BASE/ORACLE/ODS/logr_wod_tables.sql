@@ -97,6 +97,7 @@ create table logr_wod_pack_effctvnss (
   time_to_find_cmpttr number(30,10), 
   percent_wrong_cmpttr number(30,10),
   spi_cmpttr number(30,10),
+  performance number(30,10),
   last_updtd_user varchar2(30),
   last_updtd_time date
 );
@@ -183,7 +184,14 @@ grant select, insert, update, delete on logr_wod_house_pntrtn to ods_app;
 drop table logr_wod_prdct_prfrmnc;
 
 create table logr_wod_prdct_prfrmnc (
-  something varchar2(100),
+  mars_period number(6,0),
+  animal varchar2(100),
+  catgry varchar2(100),
+  brand varchar2(100), 
+  product_family varchar2(100),
+  palatability_result varchar2(100),
+  digestibility_result varchar2(100),
+  faeces_qlty_result varchar2(100),
   last_updtd_user varchar2(30),
   last_updtd_time date
 );
@@ -191,6 +199,18 @@ create table logr_wod_prdct_prfrmnc (
 create or replace public synonym logr_wod_prdct_prfrmnc for ods.logr_wod_prdct_prfrmnc;
 
 grant select, insert, update, delete on logr_wod_prdct_prfrmnc to ods_app;
+
+-- Table Grants for the QV User
+grant select on LOGR_WOD_ADVERT_EFFCTVNSS to qv_user;
+grant select on LOGR_WOD_DSTNCTV_ASSET to qv_user;
+grant select on LOGR_WOD_PACK_EFFCTVNSS to qv_user;
+grant select on LOGR_WOD_SALES_SCAN to qv_user;
+grant select on LOGR_WOD_SHARE_OF_SHELF to qv_user;
+grant select on logr_wod_tv_activity to qv_user;
+grant select on logr_wod_house_pntrtn to qv_user;
+grant select on LOGR_WOD_ADVERT_EFFCTVNSS to qv_user;
+grant select on logr_wod_advert_effctvnss to qv_user;
+grant select on LOGR_WOD_PRDCT_PRFRMNC to qv_user;
 
 -- TABLE COMMENTS
 COMMENT ON TABLE LOGR_WOD_ADVERT_EFFCTVNSS IS 'Data for advertising effectiveness of the Australian Petcare business.';
@@ -238,7 +258,6 @@ COMMENT ON COLUMN LOGR_WOD_DSTNCTV_ASSET.MARS_PERIOD IS 'The Mars Period.';
 COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.MARS_PERIOD IS 'The Mars Period.';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.MARS_PERIOD IS 'The Mars Period.';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.MEASURE IS 'The type of data being collected, measured.';
-COMMENT ON COLUMN LOGR_WOD_ADVERT_EFFCTVNSS.ON_AIR_CURRENTLY IS 'If the advert is currently on the air.';
 COMMENT ON COLUMN LOGR_WOD_SHARE_OF_SHELF.PACKSIZE IS 'Product Pack Size';
 COMMENT ON COLUMN LOGR_WOD_SALES_SCAN.PACKSIZE IS 'Product Pack Size';
 COMMENT ON COLUMN LOGR_WOD_PACK_EFFCTVNSS.PACKTYPE IS 'Product Pack Type';
@@ -291,3 +310,19 @@ comment on column logr_wod_share_of_shelf.last_updtd_time is 'The time that this
 COMMENT ON column logr_wod_tv_activity.last_updtd_time IS 'The time that this supplied data was loaded or reprocessed.';
 comment on column logr_wod_house_pntrtn.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
 comment on column logr_wod_prdct_prfrmnc.last_updtd_time is 'The time that this supplied data was loaded or reprocessed.';
+comment on column logr_wod_prdct_prfrmnc.mars_period is 'The Mars Period.';
+comment on column logr_wod_prdct_prfrmnc.animal is 'The animal type this data is associated with.';
+comment on column logr_wod_prdct_prfrmnc.catgry is 'The product category.';
+comment on column logr_wod_prdct_prfrmnc.brand is 'The product brand.';
+comment on column logr_wod_prdct_prfrmnc.product_family is 'The product family.';
+comment on column logr_wod_prdct_prfrmnc.palatability_result is 'Palatability Result.';
+comment on column logr_wod_prdct_prfrmnc.digestibility_result is 'Digestibility Result.';
+comment on column logr_wod_prdct_prfrmnc.faeces_qlty_result is 'Faeces Quality Result';
+comment on column logr_wod_house_pntrtn.quarter_period is 'The mars period at the end of the quater.';
+comment on column logr_wod_house_pntrtn.packtype is 'The product packaging type.';
+comment on column logr_wod_pack_effctvnss.performance is 'A calculation of the difference between mars and competitor SPI scores.';
+comment on column logr_wod_sales_scan.period is 'The supplied text and date representing the current period.';
+comment on column logr_wod_sales_scan.multi_pack is 'If this product is sold as a multi pack.';
+comment on column logr_wod_sales_scan.multiple is 'Supporting information if this product is sold as a multi pack.';
+comment on column logr_wod_sales_scan.sub_brand is 'The products sub brand.';
+

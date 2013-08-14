@@ -29,6 +29,8 @@ PACKAGE LOGRWOD07_LOADER AS
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-19  Chris Horn            Created Interface
+  2013-08-12  Chris Horn            Implemented Interface
+  2013-08-14  Chris Horn            Updated error and exception handling.
 
 *******************************************************************************/
   -- LICS Hooks.
