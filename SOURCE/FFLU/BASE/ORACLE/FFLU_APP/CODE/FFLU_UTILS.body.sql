@@ -237,11 +237,26 @@ package body fflu_utils as
   end get_interface_row;
 
 /*******************************************************************************
-  NAME:      GET_INTERFACE_ROW                                            PUBLIC
+  NAME:      GET_INTERFACE_USER                                           PUBLIC
 *******************************************************************************/  
   function get_interface_user return fflu_common.st_user is
+    v_user fflu_common.st_user;
   begin
-    null;
+    -- Initialise the user.
+    v_user := null;
+    -- If the sequence is defined and the trace is set.
+    if lics_inbound_processor.callback_header is not null and lics_inbound_processor.callback_trace is not null then 
+      -- Check if there is a user code waiting in the writeback table for processing.
+      select het_user into v_user 
+      from lics_hdr_trace 
+      where 
+        het_header = lics_inbound_processor.callback_header and 
+        het_hdr_trace = lics_inbound_processor.callback_trace;
+    end if;
+    -- Now return the use code.
+    return v_user;
+  exception
+    when others then 
+      lics_inbound_utility.add_exception(fflu_common.sqlerror_string('Exception whilst determining interface user.'));
   end get_interface_user;
-  
 end fflu_utils;

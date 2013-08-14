@@ -34,6 +34,7 @@ package fflu_utils as
   2013-07-05  Chris Horn            Added interface suffix,filename,row code.
   2013-07-30  Chris Horn            Added function to return the user.
   2013-08-01  Chris Horn            Added function to get interface number.  
+  2013-08-11  Chris Horn            Fixed implementation of get interface user.
   
 *******************************************************************************/
 
@@ -189,6 +190,7 @@ package fflu_utils as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-07-30 Chris Horn           Created
+  1.1   2013-08-11 Chris Horn           Recreated the implementation.  
 
 *******************************************************************************/  
   function get_interface_user return fflu_common.st_user;

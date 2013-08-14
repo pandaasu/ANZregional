@@ -1459,7 +1459,30 @@ package body fflu_data as
   begin
     return pv_errors;
   end was_errors;
-  
+
+
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_ERROR                                          PUBLIC
+*******************************************************************************/  
+  procedure log_interface_error(
+    i_label fflu_common.st_buffer,    -- Label, specific for interface. 
+    i_value fflu_common.st_buffer,    -- Value that is relevant at interface.
+    i_message fflu_common.st_buffer) is -- The actual error message.
+  begin
+    fflu_utils.log_interface_error(i_label,i_value,i_message);
+    pv_errors := true;
+  end log_interface_error;
+
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_ERROR                                          PUBLIC
+*******************************************************************************/  
+  procedure log_interface_exception (
+    i_method fflu_common.st_buffer) is
+  begin
+    fflu_utils.log_interface_exception(i_method);
+    pv_errors := true;
+  end log_interface_exception;
+
 /*******************************************************************************
   NAME:      LOG_FIELD_ERROR                                              PUBLIC
 *******************************************************************************/  

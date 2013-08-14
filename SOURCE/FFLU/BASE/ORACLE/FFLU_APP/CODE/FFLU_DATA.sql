@@ -32,6 +32,8 @@ package fflu_data as
     - get_date_field              Returns a date field.
     - get_mars_date_field         Returns a mars date field out.
     - log_field_error             Logs and error associated with a field.
+    - log_interface_error         Calls utils log interface error.
+    - log_interface_exception     Calls utils log interface exception.
     - was_errors                  Return if any errors have been recorded.
   
   Date        Author                Description
@@ -45,6 +47,7 @@ package fflu_data as
   2013-07-19  Chris Horn            Added field offset to date functions.  
   2013-07-29  Chris Horn            Added constants various true false values.
   2013-07-30  Chris Horn            Added constant values for mins and maxes.
+  2013-08-14  Chris Horn            Added interface error and exception methods.
 
 *******************************************************************************/
 
@@ -380,6 +383,37 @@ package fflu_data as
   procedure log_field_error (
     i_field_name in fflu_common.st_name, 
     i_message in fflu_common.st_string);
+
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_ERROR
+  PURPOSE:   This method calls the utils implemetation by the same name, but
+             also updates if there have been errors during this load.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-08-14 Chris Horn           Defined.
+  
+*******************************************************************************/  
+  procedure log_interface_error(
+    i_label fflu_common.st_buffer,    -- Label, specific for interface. 
+    i_value fflu_common.st_buffer,    -- Value that is relevant at interface.
+    i_message fflu_common.st_buffer); -- The actual error message.
+
+/*******************************************************************************
+  NAME:      LOG_INTERFACE_EXCEPTION
+  PURPOSE:   This method calls the utils implemetation by the same name, but
+             also updates if there have been errors during this load.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-08-14 Chris Horn           Created
+
+*******************************************************************************/  
+  procedure log_interface_exception (i_method fflu_common.st_buffer); 
+
+
   
 /*******************************************************************************
   NAME:      WAS_ERRORS
