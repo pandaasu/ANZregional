@@ -833,7 +833,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     -- Perform a security check. 
     user_interface_security_check(v_user_code,v_interface_code, get_const_loader_option);
     -- Now fetch the load status and validate.
-    if v_load_status in (fflu_common.gc_load_status_loading) then 
+    if v_load_status in (fflu_common.gc_load_status_started,fflu_common.gc_load_status_loading) then 
       -- Now update the status of the header to loading.
       update fflu_load_header set load_status = fflu_common.gc_load_status_completed,
         load_complete_time = sysdate
@@ -874,7 +874,8 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       v_result := v_result - v_time_taken;
       return v_result;
     exception 
-      -- If for any reason the calculation overflows, just return 1.  Could happen if someone monitors a job that has been going for a very long time.
+      -- If for any reason the calculation overflows, just return 1.  Could happen if someone monitors a job that has been going for a very long time or if
+      -- there is a division by zero error.
       when others then 
         return 1; 
     end calc_estimated; 
@@ -904,9 +905,15 @@ function get_interface_group_list return tt_interface_group_list pipelined is
     select * into rv_header from fflu_load_header where load_seq = i_load_sequence;
     -- Perform a security check. 
     user_interface_security_check(v_user_code,rv_header.interface_code, get_const_monitor_option);
+    -- Now manipulate the row count to prevent division by zero errors.
+    if rv_header.row_count is null then 
+      rv_header.row_count := 1;
+    elsif rv_header.row_count = 0 then 
+      rv_header.row_count := 1;
+    end if;
     -- Now perform the row calculation and transfer of records.
     rv_monitor.rows_complete := rv_header.row_count_tran; 
-    rv_monitor.percent_complete := nvl(rv_header.row_count_tran,0) * 100 / nvl(rv_header.row_count,1); -- Use 1 for row count if null to prevent division by zero error.
+    rv_monitor.percent_complete := nvl(rv_header.row_count_tran,0) * 100 / rv_header.row_count; 
     rv_monitor.estimated_time := calc_estimated(rv_header.row_count, rv_header.row_count_tran, rv_header.load_complete_time);
     rv_monitor.load_status := rv_header.load_status;
     rv_monitor.lics_int_sequence := rv_header.lics_header_seq;
@@ -953,9 +960,15 @@ begin
     open csr_xaction;
     fetch csr_xaction into rv_xaction;
     close csr_xaction;
+    -- Manipulate the row count as required to prevent divsion by zero errors.
+    if rv_xaction.row_count is null then 
+      rv_xaction.row_count := 1;
+    elsif rv_xaction.row_count = 0 then 
+      rv_xaction.row_count := 1;
+    end if;
     -- Now update the output row details.  
     rv_monitor.rows_complete := rv_xaction.rows_complete;
-    rv_monitor.percent_complete := nvl(rv_xaction.rows_complete,0) * 100 / nvl(rv_xaction.row_count,1); -- Use 1 for row count if null to prevent division by zero error.
+    rv_monitor.percent_complete := nvl(rv_xaction.rows_complete,0) * 100 / rv_xaction.row_count; 
     if rv_xaction.end_time is not null then 
       rv_monitor.estimated_time := calc_estimated(rv_xaction.row_count, rv_xaction.rows_complete, rv_xaction.start_time);
     else 
