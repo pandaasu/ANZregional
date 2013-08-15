@@ -202,6 +202,7 @@ end on_start;
   exception 
     when others then 
       fflu_data.log_interface_exception('On End');
+      rollback;
   end on_end;
 
 /*******************************************************************************
