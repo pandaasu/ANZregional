@@ -1713,5 +1713,5 @@ end ods_atlods05;
 /**************************/
 /* Package Synonym/Grants */
 /**************************/
-create or replace public synonym ods_atlods05 for sap_app.ods_atlods05;
+create or replace public synonym ods_atlods05 for ods_app.ods_atlods05;
 grant execute on ods_atlods05 to lics_app;
