@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package ods_app.efxcdw18_loader as
+CREATE OR REPLACE package         efxcdw18_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -17,6 +14,7 @@ create or replace package ods_app.efxcdw18_loader as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2010/05   Steve Gregan   Created
+    2013/08   Upul Dangalle  process_record_hdr - Add status column in the update  
 
    *******************************************************************************/
 
@@ -30,10 +28,8 @@ create or replace package ods_app.efxcdw18_loader as
 end efxcdw18_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body ods_app.efxcdw18_loader as
+
+CREATE OR REPLACE package body         efxcdw18_loader as
 
    /*-*/
    /* Private exceptions
@@ -278,7 +274,8 @@ create or replace package body ods_app.efxcdw18_loader as
                    valdtn_status = rcd_efex_assmnt_assgnmnt.valdtn_status,
                    efex_mkt_id = rcd_efex_assmnt_assgnmnt.efex_mkt_id
              where assmnt_id = rcd_efex_assmnt_assgnmnt.assmnt_id
-               and efex_cust_id = rcd_efex_assmnt_assgnmnt.efex_cust_id;
+               and efex_cust_id = rcd_efex_assmnt_assgnmnt.efex_cust_id
+               and status = rcd_efex_assmnt_assgnmnt.status;
       end;
 
    /*-------------------*/
@@ -300,9 +297,3 @@ create or replace package body ods_app.efxcdw18_loader as
 
 end efxcdw18_loader;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw18_loader for ods_app.efxcdw18_loader;
-grant execute on ods_app.efxcdw18_loader to lics_app;
