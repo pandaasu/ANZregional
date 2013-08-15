@@ -299,7 +299,13 @@
                 fr.onload = function (e) {
                     status.Remainder = e.target.result;
                     status.TotalLength = status.Remainder.length;
-                    ProcessSegment();
+
+                    if (status.TotalLength == 0) {
+                        SetNoMoreSegments();
+                    }
+                    else {
+                        ProcessSegment();
+                    }
                 };
 
                 fr.readAsText(fileData, "UTF-8");
@@ -324,7 +330,13 @@
                 // Now that the file is accessed, the size is available
                 $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(status.TotalLength)/1024))) + " kB");
                 
-                ProcessSegment();
+                if (status.TotalLength == 0) {
+                    status.File.Close();
+                    SetNoMoreSegments();
+                }
+                else {
+                    ProcessSegment();
+                }
             }
         }
 
@@ -472,6 +484,40 @@
                     }
                     else {
                         ProcessSegment();
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    status.IsError = true;
+                    status.Message = "Error communicating with server.";
+                    status.Exception = (isTest) ? thrownError : "";
+                    ShowResult(false);
+                }
+            });
+        }
+
+        // Called to indicate that there will be no more segments uploaded
+        // Used only when the uploaded file has a size of 0 bytes
+        function SetNoMoreSegments() {
+            $.ajax({
+                type: "post",
+                url: "/Uploads/SetNoMoreSegments",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    interfaceCode: status.InterfaceCode,
+                    filename: status.FileName
+                }),
+                async: true,
+                success: function (response) {
+                    if (response.Result != "OK") {
+                        status.IsError = true;
+                        status.Message = "Error while setting file upload complete."
+                        status.Exception = response.Message;
+                        status.UploadId = response.UploadId;
+                        status.LicsId = response.LicsId;
+                        ShowResult(false);
+                    }
+                    else {
+                        UploadMonitor();
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {

@@ -121,6 +121,17 @@ namespace FlatFileLoaderUtility.Models
         }
 
         /// <summary>
+        /// Required to support 0 byte files.
+        /// </summary>
+        public void SetIsAllUploaded()
+        {
+            lock (mLock)
+            {
+                this.IsAllUploaded = true;
+            }
+        }
+
+        /// <summary>
         /// Returns next string to process if there are any unprocessed strings.
         /// Returns empty string if it is waiting for more data to be uploaded.
         /// Returns null if there is no more data expected.

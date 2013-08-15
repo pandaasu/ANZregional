@@ -221,6 +221,68 @@ namespace FlatFileLoaderUtility.Controllers
         }
 
         [HttpPost]
+        public JsonResult SetNoMoreSegments(string interfaceCode, string filename)
+        {
+            // This is used only for uploading of files with size of 0 bytes
+
+            var status = default(Status);
+
+            try
+            {
+                status = Status.GetOrSetStatus(this.Container.Access.Username, this.Container.Connection, interfaceCode, filename);
+
+                if (status.Exception != null)
+                    throw status.Exception;
+
+                if (status.IsError)
+                    throw new Exception(status.ErrorMessage);
+
+                if (status.IsDone)
+                    throw new Exception("Upload has terminated");
+
+                if (!status.IsDone && !status.Thread.IsAlive)
+                {
+                    // Thread needs re-starting, apparently.
+                    // This can happen if there has been more than 5 minutes since the thread last had a data packet to process
+                    var uploader = new Uploader(this.Container.Connection, this.Container.Access, this.Container.User);
+                    uploader.Status = status;
+
+                    var threadStart = new ThreadStart(uploader.Upload);
+                    var thread = new Thread(threadStart);
+                    thread.IsBackground = false;
+                    uploader.Status.Thread = thread;
+
+                    thread.Start();
+                }
+
+                if (interfaceCode != status.InterfaceCode)
+                    throw new Exception("Expected interface code is " + status.InterfaceCode);
+
+                if (filename != status.FileName)
+                    throw new Exception("Expected filename is " + status.FileName);
+
+                // To flag the end of the upload
+                status.SetIsAllUploaded();
+
+                return this.Json(new { Result = "OK" });
+            }
+            catch (Exception ex)
+            {
+                Logs.Log(1, ex.ToString());
+
+                Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
+
+                return this.Json(new
+                {
+                    Result = "ERROR",
+                    Message = ex.ApplicationMessage(),
+                    UploadId = 0,
+                    LicsId = 0
+                });
+            }
+        }
+
+        [HttpPost]
         public JsonResult Cancel()
         {
             var status = default(Status);
