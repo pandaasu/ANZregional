@@ -1,5 +1,8 @@
 create or replace 
 PACKAGE body LOGRWOD06_LOADER AS 
+/*******************************************************************************
+  Interface : Laws of Growth - Australia Petcare - TV Advertising Activity
+*******************************************************************************/
 
 /*******************************************************************************
   Interface Field Definitions
@@ -40,6 +43,8 @@ PACKAGE body LOGRWOD06_LOADER AS
     fflu_data.add_number_field_csv(pc_field_year,5,'Year',null,1900,9999,fflu_data.gc_not_allow_null);
     fflu_data.add_number_field_csv(pc_field_weeks_on_air,6,'Weeks on Air',null,0,null,fflu_data.gc_allow_null);
     fflu_data.add_number_field_csv(pc_field_4_weekly_reach,7,'4 Weekly Reach',null,0,null,fflu_data.gc_allow_null);
+    -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
+    pv_user := fflu_utils.get_interface_user;
   exception 
     when others then 
       fflu_data.log_interface_exception('On Start');

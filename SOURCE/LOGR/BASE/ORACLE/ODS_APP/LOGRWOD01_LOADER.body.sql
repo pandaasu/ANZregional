@@ -1,5 +1,8 @@
 create or replace 
 PACKAGE body LOGRWOD01_LOADER AS 
+/*******************************************************************************
+  Interface : Laws of Growth - Australia Petcare - Sales Scan Data
+*******************************************************************************/
 
 /*******************************************************************************
   Data File Column Headings.
