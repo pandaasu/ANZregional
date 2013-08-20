@@ -12,7 +12,7 @@ package body pxi_common is
 *******************************************************************************/
   procedure reraise_promax_exception(
     i_package_name in st_package_name,
-    i_method in st_string
+    i_method in st_method_name
   ) is
   begin
     raise_application_error(pc_promax_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || SQLERRM,1,4000));
@@ -23,7 +23,7 @@ package body pxi_common is
 *******************************************************************************/
   procedure raise_promax_error(
     i_package_name in st_package_name,
-    i_method in st_string, 
+    i_method in st_method_name, 
     i_message in st_string) is
   begin
     raise_application_error(pc_promax_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || i_message,1,4000));

@@ -117,7 +117,7 @@ package pxi_common as
 *******************************************************************************/
   procedure raise_promax_error(
     i_package_name in st_package_name,
-    i_method in st_string, 
+    i_method in st_method_name, 
     i_message in st_string);
 
 /*******************************************************************************
@@ -136,7 +136,7 @@ package pxi_common as
 *******************************************************************************/
   procedure reraise_promax_exception(
     i_package_name in st_package_name,
-    i_method in st_string);
+    i_method in st_method_name);
   
 /*******************************************************************************
   NAME:      FULL_MATL_CODE                                               PUBLIC
