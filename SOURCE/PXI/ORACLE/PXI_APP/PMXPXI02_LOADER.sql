@@ -40,6 +40,7 @@ package          pmxpxi02_loader as
   2013-07-30  Chris Horn            Created Interface
   2013-08-06  Jonathan Girling      Updated Interface mapping
   2013-08-06  Jonathan Girling		Updated No Tax Code from S3 to SE.
+  2013-08-16  Jonathan Girling		Updated posting_key_reversal_debit logic
 
 *******************************************************************************/
   -- LICS Hooks.

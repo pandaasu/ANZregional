@@ -156,9 +156,12 @@ end on_start;
         -- NOTE : Of which there is no special processing at this stage. Left as a template for future if required.  
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_payment_debit then null;
-          when pc_posting_key_payment_credit then null;
-          when pc_posting_key_reversal_debit then null;
-          when pc_posting_key_reversal_credit then null;
+          when pc_posting_key_payment_credit then null;  -- This only occurs on the header record.
+          when pc_posting_key_reversal_debit then 
+			rv_gl.amount := rv_gl.amount*-1;
+			rv_gl.tax_amount := rv_gl.tax_amount*-1;
+			rv_gl.tax_amount_base := rv_gl.tax_amount_base*-1;
+          when pc_posting_key_reversal_credit then null;  -- This only occurs on the header record.  
           else
             fflu_data.log_field_error(pc_posting_key,'Unknown Posting Key');
         end case;
