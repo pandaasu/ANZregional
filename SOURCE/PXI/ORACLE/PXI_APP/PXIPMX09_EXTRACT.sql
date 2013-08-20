@@ -1,5 +1,4 @@
-create or replace 
-PACKAGE          PXIPMX09_EXTRACT as
+CREATE OR REPLACE PACKAGE SITE_APP.PXIPMX09_EXTRACT as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
@@ -16,8 +15,8 @@ PACKAGE          PXIPMX09_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.
- 27/07/2013    Mal Chambeyron        Formatted SQL Output         
- 
+ 27/07/2013    Mal Chambeyron        Formatted SQL Output
+
 *******************************************************************************/
 
    procedure execute;

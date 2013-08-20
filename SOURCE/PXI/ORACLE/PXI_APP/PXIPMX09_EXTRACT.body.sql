@@ -1,5 +1,4 @@
-create or replace 
-PACKAGE BODY          PXIPMX09_EXTRACT as
+CREATE OR REPLACE PACKAGE BODY SITE_APP.PXIPMX09_EXTRACT as
 
    /*-*/
    /* Private exceptions
@@ -36,13 +35,16 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
           pxi_common.char_format(material, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- material -> Material
           pxi_common.date_format(invoicedate, 'yyyymmdd', pxi_common.is_not_nullable) || -- invoicedate -> InvoiceDate
           pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.is_not_nullable) || -- discountgiven -> DiscountGiven
-          pxi_common.char_format(conditiontype, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) -- conditiontype -> ConditionType
+          pxi_common.char_format(conditiontype, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- conditiontype -> ConditionType
+          pxi_common.char_format(currency, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- currency -> Currency
+          pxi_common.char_format(promotion_number, 10, pxi_common.format_type_none, pxi_common.is_not_nullable)  -- promotion_number -> number
+
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
         ------------------------------------------------------------------------
-          select 
+          select
               '336002' as ICRecordType,
               sales_org as px_company_code,
               '149' as px_division_code,
@@ -52,17 +54,19 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
               zrep_matl_code as material,
               to_date(invoice_date, 'yyyymmdd') as invoiceDate,
               discount as discountGiven,
-              '170534' as conditionType       -- TBC with the business. In issues log.
-          from 
-              promax_prom_inv_ext_view@ap0064p_promax_testing t01,
-              lads_prc_lst_hdr@ap0064p_promax_testing t02
-          where 
+              rpad(t01.pricing_condition,6) as conditionType,       -- TBC with the business. In issues log.
+              t01.pmnum as promotion_number,      
+              'NZD' as currency
+          from
+              promax_prom_inv_ext_view/*@ap0064p_promax_testing*/ t01,
+              lads_prc_lst_hdr/*@ap0064p_promax_testing*/ t02
+          where
               t01.pmnum = t02.kosrt and
               t01.sales_org = t02.vkorg and
               t01.cust_division = t02.spart and
               t01.zrep_matl_code = t02.matnr and
               t01.lads_date > trunc(sysdate) and
-              t01.sales_org = '149' 
+              t01.sales_org = '149'
         ------------------------------------------------------------------------
         );
         --======================================================================
