@@ -1,5 +1,5 @@
 create or replace 
-package body          pxiatl01_extract as
+package body pxiatl01_extract as
 
 /*******************************************************************************
   Application Exception Definitions
@@ -209,7 +209,7 @@ package body          pxiatl01_extract as
        lics_outbound_loader.finalise_interface;
      end if;
    exception
-     when pxi_common.ge_application_exception then 
+     when pxi_common.ge_promax_exception then 
        raise;
      when others then
        if lics_outbound_loader.is_created = true then
