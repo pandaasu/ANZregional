@@ -115,7 +115,7 @@ package body pxi_common is
     i_format_type in number, 
     i_value_is_nullable in number) return varchar2 is
     c_method_name constant st_method_name := 'CHAR_FORMAT';
-    v_value varchar2(4000 char);
+    v_value st_data;
   begin
     if i_length is null then
       raise_promax_error(pc_package_name,c_method_name,'Length CANNOT be NULL');
@@ -261,6 +261,80 @@ package body pxi_common is
       reraise_promax_exception(pc_package_name,c_method_name);
   end date_format;
 
---------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:  PROMAX_CONFIG                                                    PUBLIC
+*******************************************************************************/
+  function promax_config(
+    i_promax_company in st_company default null, 
+    i_promax_division in st_promax_division default null
+    ) return tt_promax_config pipelined is
+    c_method_name constant st_method_name := 'PROMAX_CONFIG';
+    c_live constant boolean := true;
+    c_not_live constant boolean := false;
+    rv_row rt_promax_config;
+    
+    function add_row(i_live in boolean) return boolean is
+      v_result boolean;
+    begin
+      v_result := false;
+      -- Check if both records have been supplied in which case return then even if not yet live.
+      if i_promax_company is not null and i_promax_division is not null then
+        if rv_row.promax_company = i_promax_company and rv_row.promax_division = i_promax_division then 
+          v_result := true;
+        end if;
+      else 
+        -- Only include rows that are live from this point onwards.
+        if i_live = true then
+          if i_promax_company is null and i_promax_division is null then 
+            v_result := true;
+          else 
+            if i_promax_company is null and rv_row.promax_division = i_promax_division then 
+              v_result := true;
+            end if;
+            if i_promax_division is null and rv_row.promax_company = i_promax_company then 
+              v_result := true;
+            end if;
+          end if;
+        end if;
+      end if;
+      return v_result;
+    end add_row;
+    
+  begin
+    -- Now add new zealand data as necessary. 
+    rv_row.promax_company := gc_new_zealand;
+    rv_row.promax_division := gc_new_zealand;  
+    if add_row(c_live) = true then 
+      pipe row(rv_row);
+    end if;
+
+    -- Add Australia Petcare Configuration
+    rv_row.promax_company := gc_australia;
+    rv_row.promax_division := gc_bus_sgmnt_petcare;
+    if add_row(c_not_live) = true then 
+      pipe row(rv_row);
+    end if;
+
+    -- Add Australia Food Configuration
+    rv_row.promax_company := gc_australia;
+    rv_row.promax_division := gc_bus_sgmnt_food;  
+    if add_row(c_not_live) = true then 
+      pipe row(rv_row);
+    end if;
+
+    -- Add Australia Snackfood Configuration
+    rv_row.promax_company := gc_australia;
+    rv_row.promax_division := gc_bus_sgmnt_snack;  
+    if add_row(c_not_live) = true then 
+      pipe row(rv_row);
+    end if;
+   
+  exception
+    when ge_promax_exception then 
+      raise;
+    when others then 
+      reraise_promax_exception(pc_package_name,c_method_name);
+  end promax_config;
+
 end pxi_common;
 /
