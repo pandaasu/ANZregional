@@ -1,4 +1,25 @@
-CREATE OR REPLACE package DW_APP.nzmkt_pricing as
+create or replace package DW_APP.nzmkt_pricing as
+
+   /******************************************************************************/
+   /* Package Definition                                                         */
+   /******************************************************************************/
+   /**
+    Package : nzmkt_pricing 
+    Owner   : dw_app 
+
+    Description
+    -----------
+    Dimensional Data Store - NZ Market Pricing 
+
+    This package contain the NZ Market Pricing procedures. The package exposes one
+    procedure EXECUTE that performs the pricing update.  No parameters are required.
+
+    YYYY/MM   Author            Description
+    -------   ------            -----------
+    ????/??   ???               Created 
+    2013/09   Trevor Keon       Added support for new 996 Condition Table (KOTABNR) 
+
+   *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -7,7 +28,7 @@ CREATE OR REPLACE package DW_APP.nzmkt_pricing as
 
 end nzmkt_pricing;
 
-CREATE OR REPLACE package body DW_APP.nzmkt_pricing as
+create or replace package body DW_APP.nzmkt_pricing as
 
    /*-*/
    /* Private exceptions
