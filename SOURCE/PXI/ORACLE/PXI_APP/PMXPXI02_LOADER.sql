@@ -38,6 +38,8 @@ package          pmxpxi02_loader as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-30  Chris Horn            Created Interface
+  2013-08-06  Jonathan Girling      Updated Interface mapping
+  2013-08-06  Jonathan Girling		Updated No Tax Code from S3 to SE.
 
 *******************************************************************************/
   -- LICS Hooks.

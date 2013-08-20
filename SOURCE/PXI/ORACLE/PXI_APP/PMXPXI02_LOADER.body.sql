@@ -133,7 +133,8 @@ end on_start;
         rv_gl.company := fflu_data.get_char_field(pc_px_company_code);
         rv_gl.promax_division := fflu_data.get_char_field(pc_px_division_code);
         rv_gl.posting_date := fflu_data.get_date_field(pc_posting_date);
-        rv_gl.document_date := fflu_data.get_date_field(pc_document_date);
+        -- changed from pc_document_date to pc_claim_date
+        rv_gl.document_date := fflu_data.get_date_field(pc_claim_date);
         rv_gl.currency := fflu_data.get_char_field(pc_currency);
         -- Now commence processing this accrual into actual atlas extract records.
         rv_gl.cost_center := null;
@@ -149,7 +150,7 @@ end on_start;
         if rv_gl.tax_amount > 0 then 
           rv_gl.tax_code := pxi_common.gc_tax_code_s2;
         else 
-          rv_gl.tax_code := pxi_common.gc_tax_code_s3; 
+          rv_gl.tax_code := pxi_common.gc_tax_code_se; 
         end if;
         -- Perform any speicifc posting key functionality.  
         -- NOTE : Of which there is no special processing at this stage. Left as a template for future if required.  
@@ -179,24 +180,39 @@ end on_start;
             ,50);
           -- Set the allocation reference field to be allocation field from promax as well.
           rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
+          rv_gl.claim_text := rpad(
+                              'Pm# ' || fflu_data.get_char_field(pc_reference) ||
+                              ' ICS# ' || fflu_utils.get_interface_no ||
+                              ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
         else 
           -- Specific AR Claims Processing / Setup
+		  -- Set the account code to be the same as the promax debit code field.
+          rv_gl.account_code :=  fflu_data.get_char_field(pc_credit_code);
           -- Set the vendor and customer
           rv_gl.vendor_code := pxi_common.full_vend_code(null);
-          rv_gl.customer_code := fflu_data.get_char_field(pc_account_code);        
+          --rv_gl.customer_code := fflu_data.get_char_field(pc_account_code);        
+		  rv_gl.customer_code := fflu_data.get_char_field(pc_payee_code);        
           -- Accounts Receivable GL Item Text.
           rv_gl.item_text := rpad(
             'AR ' ||
-            'IC#' ||
-            fflu_data.get_char_field(pc_pc_reference) || 
-            ' Prom#' || 
+            'Ref#' ||
+            --fflu_data.get_char_field(pc_pc_reference) || 
+			fflu_data.get_char_field(pc_allocation) || 
+            ' Pm#' || 
             fflu_data.get_char_field(pc_reference) ||
             ' Mt#' ||
             fflu_data.get_char_field(pc_product_number) ||
             ' Cs#' ||
-            fflu_data.get_char_field(pc_account_code),50);
+            --fflu_data.get_char_field(pc_account_code),50);
+			fflu_data.get_char_field(pc_payee_code),50);
           -- Set the allocation reference field to be the external supplied promax reference.
-          rv_gl.alloc_ref := fflu_data.get_char_field(pc_ext_reference);
+          --rv_gl.alloc_ref := fflu_data.get_char_field(pc_ext_reference);
+          rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
+          -- Set the Claim Text to be (Promo, ICS ID, Ref)
+          rv_gl.claim_text := rpad(
+                              'Pm# ' || fflu_data.get_char_field(pc_reference) ||
+                              ' ICS# ' || fflu_utils.get_interface_no ||
+                              ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
         end if;
         -- COPA Related Fields
         -- Set the sales organsiation
