@@ -125,18 +125,20 @@ end on_start;
         rv_gl.cost_center := fflu_data.get_char_field(pc_cost_centre);
         -- Assign the various number fields.
         rv_gl.tax_amount := 0;
-        rv_gl.tax_amount_base := 0;
-        rv_gl.amount := fflu_data.get_number_field(pc_amount);
-        -- Update the amount field based on the various posting keys.  
+        --rv_gl.tax_amount_base := 0;
+		rv_gl.tax_amount_base := fflu_data.get_number_field(pc_amount);
+        --rv_gl.amount := fflu_data.get_number_field(pc_amount);
+		rv_gl.amount := 0;
+        -- Update the amount field based on the various posting keys.  TODO: Verify this change from amount to tax amount base.
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_dr then 
-            rv_gl.amount := rv_gl.amount * 1;
+            rv_gl.tax_amount_base := rv_gl.tax_amount_base * 1;
           when pc_posting_key_cr then 
-            rv_gl.amount := rv_gl.amount * -1;
+            rv_gl.tax_amount_base := rv_gl.tax_amount_base * -1;
           when pc_posting_key_wcr then 
-            rv_gl.amount := rv_gl.amount * 1;
+            rv_gl.tax_amount_base := rv_gl.tax_amount_base * 1;
           when pc_posting_key_wdr then
-            rv_gl.amount := rv_gl.amount * -1;
+            rv_gl.tax_amount_base := rv_gl.tax_amount_base * -1;
           else
             fflu_data.log_field_error(pc_posting_key,'Unknown Posting Key');
         end case;

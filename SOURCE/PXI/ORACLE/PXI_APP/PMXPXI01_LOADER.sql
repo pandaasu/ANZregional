@@ -35,6 +35,7 @@ package          pmxpxi01_loader as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-07-30  Chris Horn            Created Interface
+  2013-08-08  Jonathan Girling	    Updated Interface mapping
 
 *******************************************************************************/
   -- LICS Hooks.
