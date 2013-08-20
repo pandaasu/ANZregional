@@ -43,6 +43,8 @@ PACKAGE body LOGRWOD06_LOADER AS
     fflu_data.add_number_field_csv(pc_field_year,5,'Year',null,1900,9999,fflu_data.gc_not_allow_null);
     fflu_data.add_number_field_csv(pc_field_weeks_on_air,6,'Weeks on Air',null,0,null,fflu_data.gc_allow_null);
     fflu_data.add_number_field_csv(pc_field_4_weekly_reach,7,'4 Weekly Reach',null,0,null,fflu_data.gc_allow_null);
+    -- Now clear all previous data 
+    delete from logr_wod_tv_activity;
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
   exception 
@@ -63,8 +65,6 @@ end on_start;
       -- Check if this is the first data row and if the current mars period is set. 
       if pv_prev_version is null then 
         pv_prev_version := fflu_data.get_number_field(pc_field_version);
-        -- Clear out any previous data for this same mars period.
-        delete from logr_wod_tv_activity where version = pv_prev_version;
       else
         -- Now check that each supplied mars period is the same as the first one that was supplied in the file. 
         if pv_prev_version <> fflu_data.get_number_field(pc_field_version) then 
