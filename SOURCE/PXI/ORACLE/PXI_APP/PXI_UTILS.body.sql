@@ -1,105 +1,20 @@
 create or replace 
-package body pxi_common is
+package body pxi_utils is
 
 /*******************************************************************************
   Package Cosntants
 *******************************************************************************/
-  pc_package_name constant st_package_name := 'PXI_COMMON';
-
-/*******************************************************************************
-  NAME:  RERAISE_PROMAX_EXCEPTION                                         PUBLIC
-*******************************************************************************/
-  procedure reraise_promax_exception(
-    i_package_name in st_package_name,
-    i_method in st_string
-  ) is
-  begin
-    raise_application_error(gc_application_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || SQLERRM,1,4000));
-  end reraise_promax_exception;
-  
-/*******************************************************************************
-  NAME:  RAISE_PROMAX_EXCEPTION                                           PUBLIC
-*******************************************************************************/
-  procedure raise_promax_error(
-    i_package_name in st_package_name,
-    i_method in st_string, 
-    i_message in st_string) is
-  begin
-    raise_application_error(gc_application_exception,substr(upper(i_package_name) || '.' || upper(i_method) || ' - ' || i_message,1,4000));
-  end raise_promax_error;
-
-/*******************************************************************************
-  NAME:  FULL_MATL_CODE                                                   PUBLIC
-*******************************************************************************/
-  function full_matl_code (i_matl_code in st_material) return st_material is
-    v_result st_material;
-    v_firstchar st_material;
-  begin
-    -- Trim the inputted Material Code.
-    v_result := ltrim(i_matl_code);
-  
-    -- Return zero if Material Code is null.
-    if v_result is null then
-      v_result := '0';
-    end if;
-  
-    -- Check whether the first character is a number. If so, then left pad with zero's to
-    -- eighteen characters. Otherwise right pad with white spaces to eighteen characters.
-    v_firstchar := substr(v_result,1,1); 
-    if v_firstchar >= '0' and v_firstchar <= '9' then
-      v_result := lpad(v_result,18,'0');
-    else
-      v_result := rpad(v_result,18,' ');
-    end if;
-    return v_result;
-  exception
-    when others then 
-      reraise_promax_exception(pc_package_name,'FULL_MATL_CODE');
-  end full_matl_code;
-
-/*******************************************************************************
-  NAME:  SHORT_MATL_CODE                                                  PUBLIC
-*******************************************************************************/
-  function short_matl_code (i_matl_code in st_material) return st_material is
-  begin
-    return trim (ltrim (i_matl_code, '0') );
-  exception 
-    when others then 
-      reraise_promax_exception(pc_package_name,'SHORT_MATL_CODE');
-  end short_matl_code;
-
-/*******************************************************************************
-  NAME:  FULL_CUST_CODE                                                  PUBLIC
-*******************************************************************************/
-  function full_cust_code (i_cust_code in st_customer) return st_customer is
-  begin
-    return lpad(nvl(i_cust_code,'0'),10,'0');
-  exception
-    when others then 
-      reraise_promax_exception(pc_package_name,'FULL_CUST_CODE');
-  end full_cust_code;
-
-/*******************************************************************************
-  NAME:  FULL_VEND_CODE                                                   PUBLIC
-*******************************************************************************/
-  function full_vend_code (i_vendor_code in st_vendor) return st_vendor is
-  begin
-    return lpad(nvl(i_vendor_code,'0'),10,'0');
-  exception
-    when others then 
-      reraise_promax_exception(pc_package_name,'FULL_VEND_CODE');
-  end full_vend_code;
-
+  pc_package_name constant pxi_common.st_package_name := 'PXI_UTILS';
 
 /*******************************************************************************
   NAME:  LOOKUP_TDU_FROM_ZREP                                             PUBLIC
 *******************************************************************************/
   function lookup_tdu_from_zrep (
-    i_sales_org in st_company,
-    i_zrep_matl_code in st_material,
+    i_sales_org in pxi_common.st_company,
+    i_zrep_matl_code in pxi_common.st_material,
     i_buy_start_date in date,
     i_buy_end_date in date
-    ) return st_material is
+    ) return pxi_common.st_material is
     -- Cursor to find the TDU. 
     cursor csr_zrep_tdu is
       select
@@ -117,11 +32,11 @@ package body pxi_common is
         t01.condition_record_no = t02.condition_record_no
         and t01.material_dtrmntn_type = 'Z001'
         and t01.sales_organisation = i_sales_org
-        and t01.zrep_material_code = full_matl_code(i_zrep_matl_code)
+        and t01.zrep_material_code = pxi_common.full_matl_code(i_zrep_matl_code)
         and not (i_buy_end_date < start_date or i_buy_start_date > end_date)
       order by start_date desc;
     rv_zrep_tdu csr_zrep_tdu%rowtype;
-    v_result st_material;
+    v_result pxi_common.st_material;
   begin
     -- Set the initial result.
     v_result := null;
@@ -136,32 +51,33 @@ package body pxi_common is
     return v_result;
   exception
     when others then 
-      reraise_promax_exception(pc_package_name,'LOOKUP_TDU_FROM_ZREP');
+      pxi_common.reraise_promax_exception(pc_package_name,'LOOKUP_TDU_FROM_ZREP');
   end lookup_tdu_from_zrep;
 
 /*******************************************************************************
   NAME:  DETERMINE_BUS_SGMNT                                              PUBLIC
 *******************************************************************************/
   function determine_bus_sgmnt (
-    i_sales_org in st_company,
-    i_promax_division in st_promax_division,
-    i_zrep_matl_code in st_material) return st_bus_sgmnt is 
+    i_sales_org in pxi_common.st_company,
+    i_promax_division in pxi_common.st_promax_division,
+    i_zrep_matl_code in pxi_common.st_material) return pxi_common.st_bus_sgmnt is 
+    c_method_name constant pxi_common.st_method_name := 'DETERMINE_BUS_SGMNT';
     cursor csr_bus_sgmnt is 
       select sap_bus_sgmnt_code 
       from bds_material_classfctn 
-      where sap_material_code = full_matl_code(i_zrep_matl_code);
-    v_result st_bus_sgmnt; 
+      where sap_material_code = pxi_common.full_matl_code(i_zrep_matl_code);
+    v_result pxi_common.st_bus_sgmnt; 
   begin
     -- Initialise the result. 
     v_result := null;
-    if i_sales_org = gc_new_zealand and i_promax_division = gc_new_zealand then
+    if i_sales_org = pxi_common.gc_new_zealand and i_promax_division = pxi_common.gc_new_zealand then
       -- Now lookup the business segment from the material. 
       open csr_bus_sgmnt;
       fetch csr_bus_sgmnt into v_result;
       close csr_bus_sgmnt;
     else
       if length(i_promax_division) > 2 then 
-        raise_promax_error(pc_package_name,'DETERMINE_BUS_SGMNT','Supplied Promax Division was meant to be less than 3 characters.  But was [' || i_promax_division || ']'); 
+        pxi_common.raise_promax_error(pc_package_name,c_method_name,'Supplied Promax Division was meant to be less than 3 characters.  But was [' || i_promax_division || ']'); 
       else 
         v_result := i_promax_division;
       end if;
@@ -169,20 +85,20 @@ package body pxi_common is
     -- Now return the business segment.
     return v_result;
   exception
-    when ge_application_exception then
+    when pxi_common.ge_promax_exception then
       raise; 
     when others then 
-      reraise_promax_exception(pc_package_name,'DETERMINE_BUS_SGMNT'); 
+      pxi_common.reraise_promax_exception(pc_package_name,c_method_name); 
   end determine_bus_sgmnt;
 
 /*******************************************************************************
   NAME:  determine_dstrbtn_chnnl                                              PUBLIC
 *******************************************************************************/
   function determine_dstrbtn_chnnl (
-    i_sales_org in st_company, 
-    i_matl_code IN st_material, 
-    i_cust_code IN st_customer
-    ) return st_dstrbtn_chnnl is
+    i_sales_org in pxi_common.st_company, 
+    i_matl_code in pxi_common.st_material, 
+    i_cust_code IN pxi_common.st_customer
+    ) return pxi_common.st_dstrbtn_chnnl is
     
     CURSOR csr_distn_chnl IS
       SELECT
@@ -190,14 +106,14 @@ package body pxi_common is
       from
         bds_material_dstrbtn_chain a,
         bds_cust_sales_area b
-      where a.sap_material_code = full_matl_code(i_matl_code)
-        and b.customer_code = full_cust_code(i_cust_code)
+      where a.sap_material_code = pxi_common.full_matl_code(i_matl_code)
+        and b.customer_code = pxi_common.full_cust_code(i_cust_code)
         and a.SALES_ORGANISATION = b.sales_org_code
         and a.SALES_ORGANISATION = i_sales_org 
         and a.DSTRBTN_CHANNEL = b.DISTBN_CHNL_CODE;
       rv_distn_chnl csr_distn_chnl%rowtype;
     
-    v_result st_dstrbtn_chnnl;
+    v_result pxi_common.st_dstrbtn_chnnl;
   BEGIN
     -- Initialise Result Variable
     v_result := null;
@@ -210,9 +126,9 @@ package body pxi_common is
       -- There can be multiple records for a matl_code and cust_code, return 10 if
       -- it is a valid value for the matl_code and cust_code, otherwise return
       -- another of the matl_code and cust_code's valid values.
-      IF rv_distn_chnl.DSTRBTN_CHANNEL = gc_distrbtn_channel_primary THEN
-        v_result := gc_distrbtn_channel_primary;
-      ELSIF rv_distn_chnl.DSTRBTN_CHANNEL != gc_distrbtn_channel_primary AND v_result is null THEN
+      if rv_distn_chnl.dstrbtn_channel = pxi_common.gc_distrbtn_channel_primary then
+        v_result := pxi_common.gc_distrbtn_channel_primary;
+      ELSIF rv_distn_chnl.DSTRBTN_CHANNEL != pxi_common.gc_distrbtn_channel_primary AND v_result is null THEN
         v_result := rv_distn_chnl.DSTRBTN_CHANNEL;
       END IF;
     END LOOP;
@@ -221,19 +137,20 @@ package body pxi_common is
     return v_result;
   exception
       when others then 
-        reraise_promax_exception(pc_package_name,'DETERMINE_DSTRBTN_CHNNL'); 
+        pxi_common.reraise_promax_exception(pc_package_name,'DETERMINE_DSTRBTN_CHNNL'); 
   END determine_dstrbtn_chnnl;
 
 
 /*******************************************************************************
   NAME:  DETERMINE_MATL_PLANT_CODE                                        PUBLIC
 *******************************************************************************/
-  FUNCTION determine_matl_plant_code (
-    i_company_code IN st_company,
-    i_matl_code IN st_material)
-    return st_plant_code is 
+  function determine_matl_plant_code (
+    i_company_code IN pxi_common.st_company,
+    i_matl_code in pxi_common.st_material)
+    return pxi_common.st_plant_code is 
+    c_method_name constant pxi_common.st_method_name := 'DETERMINE_MATL_PLANT_CODE';
 
-    v_cmpny_prefix st_company;
+    v_cmpny_prefix pxi_common.st_company;
   
     -- CURSOR DECLARATIONS
     CURSOR csr_matl_plant IS
@@ -242,21 +159,21 @@ package body pxi_common is
       from
         bds_material_plant_hdr t1
       where
-        t1.sap_material_code = full_matl_code(i_matl_code)
+        t1.sap_material_code = pxi_common.full_matl_code(i_matl_code)
         and substr(t1.plant_code, 1, 2) = v_cmpny_prefix
         and t1.plant_code != 'AU10' -- Note: No sales occur from this plant.
-      ORDER BY t1.plant_code; 
-      v_result st_plant_code;
+      order by t1.plant_code; 
+      v_result pxi_common.st_plant_code;
   begin
     -- Initialise the result.
     v_result := null;
     -- Set the plant prefix based on Company Code.
-    IF i_company_code = gc_australia THEN
+    IF i_company_code = pxi_common.gc_australia THEN
       v_cmpny_prefix :='AU';
-    ELSIF i_company_code = gc_new_zealand THEN
+    ELSIF i_company_code = pxi_common.gc_new_zealand THEN
       v_cmpny_prefix :='NZ';
     else
-      raise_promax_error(pc_package_name,'DETERMINE_MATL_PLANT_CODE','Invalid Company Code. Valid Company Code values include ''147'' and ''149''.');
+      pxi_common.raise_promax_error(pc_package_name,c_method_name,'Invalid Company Code. Valid Company Code values include ''147'' and ''149''.');
     END IF;
   
     -- Fetch the plant code.
@@ -267,18 +184,18 @@ package body pxi_common is
     -- Now Return the plant code.
     return v_result;
   exception
-    when ge_application_exception then 
+    when pxi_common.ge_promax_exception then 
       raise;
     when others then 
-      reraise_promax_exception(pc_package_name,'DETERMINE_MATL_PLANT_CODE'); 
+      pxi_common.reraise_promax_exception(pc_package_name,c_method_name); 
   END determine_matl_plant_code;
 
 /*******************************************************************************
   NAME:  DETERMINE_TAX_CODE_FROM_REASON                                   PUBLIC
 *******************************************************************************/
-  function determine_tax_code_from_reason(i_reason_code in st_reason_code) 
-    return st_tax_code is
-    v_result st_tax_code; 
+  function determine_tax_code_from_reason(i_reason_code in pxi_common.st_reason_code) 
+    return pxi_common.st_tax_code is
+    v_result pxi_common.st_tax_code; 
   begin
     case i_reason_code
       when '40' then 
@@ -305,7 +222,7 @@ package body pxi_common is
     return v_result;
   exception
      when others then 
-       reraise_promax_exception(pc_package_name,'DETERMINE_TAX_CODE_FROM_REASON'); 
+       pxi_common.reraise_promax_exception(pc_package_name,'DETERMINE_TAX_CODE_FROM_REASON'); 
   end determine_tax_code_from_reason;
 
 /*******************************************************************************
@@ -313,151 +230,6 @@ package body pxi_common is
   CODE BELOW HERE STILL NEEDS TO BE REFORMATTED AND TIDIED UP.
 ********************************************************************************
 *******************************************************************************/
-
---------------------------------------------------------------------------------
-function is_nullable return number is begin return 1; end;
-function is_not_nullable return number is begin return 0; end;
---------------------------------------------------------------------------------
-function format_type_none return number is begin return 0; end;
-function format_type_trim return number is begin return 1; end;
-function format_type_ltrim return number is begin return 2; end;
-function format_type_rtrim return number is begin return 3; end;
-function format_type_ltrim_zeros return number is begin return 4; end;
---------------------------------------------------------------------------------
-function char_format(i_value in varchar2, i_length in number, i_format_type in number, i_value_is_nullable in number) return varchar2 is
-  v_value varchar2(4000 char);
-begin
-  if i_length is null then
-    raise_application_error(-20000, 'Length CANNOT be NULL');
-  end if;
-  
-  if i_format_type is null then
-      raise_application_error(-20000, 'Format Type CANNOT be NULL');
-  end if;
-
-  if i_value_is_nullable is null then
-      raise_application_error(-20000, 'Value Is Nullable CANNOT be NULL');
-  end if;
-  
-  if i_value is null then
-    if i_value_is_nullable = pxi_common.is_nullable then
-      return rpad(' ', i_length,' '); -- return empty string of correct length
-    else 
-      raise_promax_error(pc_package_name,'char_format','Value CANNOT be NULL');
-    end if;
-  end if;
-  
-  case i_format_type
-    when format_type_none then
-      v_value := i_value;
-    when format_type_trim then
-      v_value := trim(i_value);
-    when format_type_ltrim then
-      v_value := ltrim(i_value);
-    when format_type_rtrim then
-      v_value := rtrim(i_value);
-    when format_type_ltrim_zeros then
-      v_value := ltrim(i_value, '0');
-    else
-      raise_application_error(-20000, 'Invalid Format Type ['||i_format_type||']');
-  end case;
-
-  if length(v_value) > i_length then
-      raise_application_error(-20000, 'Value ['||v_value||'] Length ['||length(v_value)||'] Greater Than Length Provided ['||i_length||']');
-  else
-    return rpad(v_value, i_length, ' ');
-  end if;
-  
-exception
-  when others then
-    raise_application_error(-20000, substr('['||pc_package_name||'.char_format] : '||SQLERRM, 1, 4000));
-end char_format;
---------------------------------------------------------------------------------
-function numb_format(i_value in number, i_format in varchar2, i_value_is_nullable in number) return varchar2 is
-
-  v_value varchar2(128 char);
-
-begin
-
-  if i_format is null then
-      raise_application_error(-20000, 'Format CANNOT be NULL');
-  end if;
-
-  if i_value_is_nullable is null then
-      raise_application_error(-20000, 'Value Is Nullable CANNOT be NULL');
-  end if;
-
-  if i_value is null then
-    if i_value_is_nullable = pxi_common.is_nullable then
-      return rpad(' ', length(i_format)); -- return empty string of correct length
-    else
-      raise_application_error(-20000, 'Value CANNOT be NULL');
-    end if;
-  elsif i_value < 0 and upper(substr(i_format,1,1)) != 'S' then
-    raise_application_error(-20000, 'Value ['||i_value||'] CANNOT be Negative, without Format ['||i_format||'] Including S Prefix');
-  end if;
-
-  begin
-    v_value := trim(to_char(i_value, i_format));
-  exception
-    when others then
-      raise_application_error(-20000, substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
-  end;
-
-  if instr(v_value, '#') > 0 then
-      raise_application_error(-20000, 'Format ['||i_format||'] on Value ['||i_value||']');
-  end if;
-
-  if upper(substr(i_format,1,1)) = 'S' then
-    v_value := replace(v_value, '+', ' ');
-  end if;
-
-  if length(v_value) > length(i_format) then
-      raise_application_error(-20000, 'Format Length ['||i_format||']['||length(i_format)||'] < Value Length ['||i_value||']['||length(v_value)||']');
-  end if;
-
-  return lpad(v_value, length(i_format));
-
-exception
-  when others then
-    raise_application_error(-20000, substr('['||pc_package_name||'.numb_format] : '||SQLERRM, 1, 4000));
-end numb_format;
-
-
---------------------------------------------------------------------------------
-function date_format(i_value in date, i_format in varchar2, i_value_is_nullable in number) return varchar2 is
-
-begin
-
-  if i_format is null then
-      raise_application_error(-20000, 'Format CANNOT be NULL');
-  end if;
-  
-  if i_value_is_nullable is null then
-      raise_application_error(-20000, 'Value Is Nullable CANNOT be NULL');
-  end if;
-
-  if i_value is null then
-    if i_value_is_nullable = pxi_common.is_nullable then
-      return rpad(' ',length(i_format)); -- return empty string of correct length
-    else 
-      raise_application_error(-20000, 'Value CANNOT be NULL');
-    end if;
-  end if;
-
-  begin
-    return to_char(i_value, i_format);
-  exception
-    when others then
-      raise_application_error(-20000, substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
-  end;
-  
-exception
-  when others then
-    raise_application_error(-20000, substr('['||pc_package_name||'.date_format] : '||SQLERRM, 1, 4000));
-
-end date_format;
-
 
 
 FUNCTION format_cust_code (
@@ -823,5 +595,5 @@ BEGIN
 end lookup_plant_code;
 
 --------------------------------------------------------------------------------
-end pxi_common;
+end pxi_utils;
 /

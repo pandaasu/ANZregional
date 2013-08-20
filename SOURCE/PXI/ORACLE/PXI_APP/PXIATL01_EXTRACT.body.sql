@@ -2,9 +2,13 @@ create or replace
 package body pxiatl01_extract as
 
 /*******************************************************************************
-  Application Exception Definitions
+  Interface : Lads to Atlas GL Documents Interface
 *******************************************************************************/
-   pc_package_name pxi_common.st_package_name := 'PXIATL01_EXTRACT';
+
+/*******************************************************************************
+  Package Constants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIATL01_EXTRACT';
 
 /*******************************************************************************
   NAME:      INSERT_BLANK_RECORD                                         PRIVATE

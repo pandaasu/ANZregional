@@ -1,49 +1,54 @@
 create or replace 
-package body          pmxpxi01_loader as
+package body pmxpxi01_loader as
 
+/*******************************************************************************
+  Package Constants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PMXPXI01_LOADER';
+  
 /*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/  
-  pc_ic_record_type fflu_common.st_name := 'IC Record Type';
-  pc_px_company_code fflu_common.st_name := 'PX Company Code';
-  pc_px_division_code fflu_common.st_name := 'PX Division Code';
-  pc_rec_type fflu_common.st_name := 'Rec Type';
-  pc_document_date fflu_common.st_name := 'Document Date';
-  pc_posting_date fflu_common.st_name := 'Posting Date';
-  pc_document_type fflu_common.st_name := 'Document Type';
-  pc_currency fflu_common.st_name := 'Currency';
-  pc_reference fflu_common.st_name := 'Reference';
-  pc_document_header_text fflu_common.st_name := 'Document Header Text';
-  pc_posting_key fflu_common.st_name := 'Posting Key';
-  pc_account fflu_common.st_name := 'Account';
-  pc_pa_assignment_flag fflu_common.st_name := 'PA Assignment Flag';
-  pc_amount fflu_common.st_name := 'Amount';
-  pc_payment_method fflu_common.st_name := 'Payment Method';
-  pc_allocation fflu_common.st_name := 'Allocation';
-  pc_text fflu_common.st_name := 'Text';
-  pc_profit_centre fflu_common.st_name := 'Profit Centre';
-  pc_cost_centre fflu_common.st_name := 'cost Centre';
-  pc_sales_organisation fflu_common.st_name := 'Sales Organisation';
-  pc_sales_office fflu_common.st_name := 'Sales Office';
-  pc_product_number fflu_common.st_name := 'Product Number';
-  pc_pa_code fflu_common.st_name := 'PA Code';
-  pc_glt_row_id fflu_common.st_name := 'GLT Row Id';
-  pc_user_1 fflu_common.st_name := 'User 1';
-  pc_user_2 fflu_common.st_name := 'User 2';
-  pc_buy_start_date fflu_common.st_name := 'Buy Start Date';
-  pc_buy_stop_date fflu_common.st_name := 'Buy Stop Date';
-  pc_start_date fflu_common.st_name := 'Start Date';
-  pc_stop_date fflu_common.st_name := 'Stop Date';
-  pc_quantity fflu_common.st_name := 'Quantity';
-  pc_additional_info fflu_common.st_name := 'Additional Info';
-  pc_promotion_is_closed fflu_common.st_name := 'Promotion Is Closed';
+  pc_ic_record_type constant fflu_common.st_name := 'IC Record Type';
+  pc_px_company_code constant fflu_common.st_name := 'PX Company Code';
+  pc_px_division_code constant fflu_common.st_name := 'PX Division Code';
+  pc_rec_type constant fflu_common.st_name := 'Rec Type';
+  pc_document_date constant fflu_common.st_name := 'Document Date';
+  pc_posting_date constant fflu_common.st_name := 'Posting Date';
+  pc_document_type constant fflu_common.st_name := 'Document Type';
+  pc_currency constant fflu_common.st_name := 'Currency';
+  pc_reference constant fflu_common.st_name := 'Reference';
+  pc_document_header_text constant fflu_common.st_name := 'Document Header Text';
+  pc_posting_key constant fflu_common.st_name := 'Posting Key';
+  pc_account constant fflu_common.st_name := 'Account';
+  pc_pa_assignment_flag constant fflu_common.st_name := 'PA Assignment Flag';
+  pc_amount constant fflu_common.st_name := 'Amount';
+  pc_payment_method constant fflu_common.st_name := 'Payment Method';
+  pc_allocation constant fflu_common.st_name := 'Allocation';
+  pc_text constant fflu_common.st_name := 'Text';
+  pc_profit_centre constant fflu_common.st_name := 'Profit Centre';
+  pc_cost_centre constant fflu_common.st_name := 'cost Centre';
+  pc_sales_organisation constant fflu_common.st_name := 'Sales Organisation';
+  pc_sales_office constant fflu_common.st_name := 'Sales Office';
+  pc_product_number constant fflu_common.st_name := 'Product Number';
+  pc_pa_code constant fflu_common.st_name := 'PA Code';
+  pc_glt_row_id constant fflu_common.st_name := 'GLT Row Id';
+  pc_user_1 constant fflu_common.st_name := 'User 1';
+  pc_user_2 constant fflu_common.st_name := 'User 2';
+  pc_buy_start_date constant fflu_common.st_name := 'Buy Start Date';
+  pc_buy_stop_date constant fflu_common.st_name := 'Buy Stop Date';
+  pc_start_date constant fflu_common.st_name := 'Start Date';
+  pc_stop_date constant fflu_common.st_name := 'Stop Date';
+  pc_quantity constant fflu_common.st_name := 'Quantity';
+  pc_additional_info constant fflu_common.st_name := 'Additional Info';
+  pc_promotion_is_closed constant fflu_common.st_name := 'Promotion Is Closed';
 
   -- Posting Key
   subtype st_posting_key is varchar2(4);
-  pc_posting_key_dr st_posting_key := 'DR';    -- Debit   Positive
-  pc_posting_key_cr st_posting_key := 'CR';    -- Credit  Negative
-  pc_posting_key_wcr st_posting_key := 'WCR';  -- Writeback Credit  Positive
-  pc_posting_key_wdr st_posting_key := 'WDR';  -- Writeback Debit   Negative
+  pc_posting_key_dr constant st_posting_key := 'DR';    -- Debit   Positive
+  pc_posting_key_cr constant st_posting_key := 'CR';    -- Credit  Negative
+  pc_posting_key_wcr constant st_posting_key := 'WCR';  -- Writeback Credit  Positive
+  pc_posting_key_wdr constant st_posting_key := 'WDR';  -- Writeback Debit   Negative
 
 /*******************************************************************************
   Package Variables
@@ -95,11 +100,11 @@ package body          pmxpxi01_loader as
     fflu_data.add_char_field_txt(pc_promotion_is_closed,299,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('ON_START');
 end on_start;
 
 /*******************************************************************************
-  NAME:      ON_START                                                     PUBLIC
+  NAME:      ON_DATA                                                      PUBLIC
 *******************************************************************************/  
   procedure on_data(p_row in varchar2) is 
     rv_gl pxiatl01_extract.rt_gl_record;
@@ -109,9 +114,7 @@ end on_start;
     v_bus_sgmnt := null;
     -- Now parse the row. 
     if fflu_data.parse_data(p_row) = true then
-      -- Only look for detail records at this time.  
-      -- NOTE: Possible Enhacnement check could be to ensure this detail line's 
-      -- header fields match the previous header.
+      -- Only look for detail records at this time, header records are ignored.
       if fflu_data.get_char_field(pc_rec_type) = 'D' then 
         -- Header Reference Fields.
         rv_gl.company := fflu_data.get_char_field(pc_px_company_code);
@@ -129,7 +132,7 @@ end on_start;
 		rv_gl.tax_amount_base := fflu_data.get_number_field(pc_amount);
         --rv_gl.amount := fflu_data.get_number_field(pc_amount);
 		rv_gl.amount := 0;
-        -- Update the amount field based on the various posting keys.  TODO: Verify this change from amount to tax amount base.
+        -- Update the amount field based on the various posting keys.  
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_dr then 
             rv_gl.tax_amount_base := rv_gl.tax_amount_base * 1;
@@ -158,7 +161,7 @@ end on_start;
         -- Assign an empty vendor value to this field.
         rv_gl.vendor_code := pxi_common.full_vend_code(null);  
         -- Lookup the business segment for the curent material. 
-        v_bus_sgmnt := pxi_common.determine_bus_sgmnt(
+        v_bus_sgmnt := pxi_utils.determine_bus_sgmnt(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_px_division_code),
           fflu_data.get_char_field(pc_product_number));
@@ -166,7 +169,7 @@ end on_start;
           fflu_data.log_field_error(pc_px_division_code,'Could not determine a business segment from company, promax division, and zrep.');
         end if;
         -- Now lookup the traded unit material code.
-        rv_gl.material_code := pxi_common.lookup_tdu_from_zrep(
+        rv_gl.material_code := pxi_utils.lookup_tdu_from_zrep(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
           fflu_data.get_date_field(pc_buy_start_date),
@@ -190,10 +193,10 @@ end on_start;
         end if; 
         rv_gl.customer_code := fflu_data.get_char_field(pc_allocation);
         -- Now lookup the plant code from the traded unit and distribution channels from the zrep.
-        rv_gl.plant_code := pxi_common.determine_matl_plant_code(
+        rv_gl.plant_code := pxi_utils.determine_matl_plant_code(
           fflu_data.get_char_field(pc_px_company_code),
           rv_gl.material_code);
-        rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
+        rv_gl.dstrbtn_chnnl := pxi_utils.determine_dstrbtn_chnnl(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
           fflu_data.get_char_field(pc_allocation));  -- Customer
@@ -205,7 +208,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('ON_DATA');
   end on_data;
   
 /*******************************************************************************
@@ -230,7 +233,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_utils.log_interface_exception('ON_END');
   end on_end;
 
 /*******************************************************************************

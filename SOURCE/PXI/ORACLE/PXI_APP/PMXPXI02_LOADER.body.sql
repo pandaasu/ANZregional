@@ -2,6 +2,15 @@ create or replace
 package body          pmxpxi02_loader as
 
 /*******************************************************************************
+  Interface : Promax PX Payments to Atlas Interface
+******************************************************************************
+
+/*******************************************************************************
+  Package Constants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PMXPXI02_LOADER';
+
+/*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/  
   pc_ic_record_type constant fflu_common.st_name := 'IC Record Type';
@@ -46,12 +55,12 @@ package body          pmxpxi02_loader as
 
   -- Posting Key
   subtype st_posting_key is varchar2(2);
-  pc_posting_key_payment_credit  st_posting_key := '11';   -- Payment Credit
-  pc_posting_key_payment_debit   st_posting_key := '40';   -- Payment Debit
-  pc_posting_key_reversal_credit st_posting_key := '1';    -- Reversal Credit
-  pc_posting_key_reversal_debit  st_posting_key := '50';   -- Reversal Debit
+  pc_posting_key_payment_credit constant st_posting_key := '11';   -- Payment Credit
+  pc_posting_key_payment_debit  constant st_posting_key := '40';   -- Payment Debit
+  pc_posting_key_reversal_credit constant st_posting_key := '1';    -- Reversal Credit
+  pc_posting_key_reversal_debit  constant st_posting_key := '50';   -- Reversal Debit
   subtype st_flag is varchar2(2 char);
-  pc_cust_is_vendor st_flag := 'V';   -- This is a vendor payment.
+  pc_cust_is_vendor constant st_flag := 'V';   -- This is a vendor payment.
 
 /*******************************************************************************
   Package Variables
@@ -111,11 +120,11 @@ package body          pmxpxi02_loader as
     fflu_data.add_char_field_txt(pc_bom_header_sku_stock_code,841,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('ON_START');
 end on_start;
 
 /*******************************************************************************
-  NAME:      ON_START                                                     PUBLIC
+  NAME:      ON_DATA                                                      PUBLIC
 *******************************************************************************/  
   procedure on_data(p_row in varchar2) is 
     rv_gl pxiatl01_extract.rt_gl_record;
@@ -125,9 +134,7 @@ end on_start;
     v_bus_sgmnt := null;
     -- Now parse the row. 
     if fflu_data.parse_data(p_row) = true then
-      -- Only look for detail records at this time.  
-      -- NOTE: Possible Enhacnement check could be to ensure this detail line's 
-      -- header fields match the previous header.
+      -- Only look for detail records at this time.  Header records are ignored.
       if fflu_data.get_char_field(pc_type) = 'D' then 
         -- Header Reference Fields.
         rv_gl.company := fflu_data.get_char_field(pc_px_company_code);
@@ -155,13 +162,16 @@ end on_start;
         -- Perform any speicifc posting key functionality.  
         -- NOTE : Of which there is no special processing at this stage. Left as a template for future if required.  
         case fflu_data.get_char_field(pc_posting_key)
-          when pc_posting_key_payment_debit then null;
-          when pc_posting_key_payment_credit then null;  -- This only occurs on the header record.
+          when pc_posting_key_payment_debit then 
+            null;
+          when pc_posting_key_payment_credit then 
+            null;  -- This only occurs on the header record, therefor no processing required.
           when pc_posting_key_reversal_debit then 
-			rv_gl.amount := rv_gl.amount*-1;
-			rv_gl.tax_amount := rv_gl.tax_amount*-1;
-			rv_gl.tax_amount_base := rv_gl.tax_amount_base*-1;
-          when pc_posting_key_reversal_credit then null;  -- This only occurs on the header record.  
+            rv_gl.amount := rv_gl.amount*-1;
+            rv_gl.tax_amount := rv_gl.tax_amount*-1;
+            rv_gl.tax_amount_base := rv_gl.tax_amount_base*-1;
+          when pc_posting_key_reversal_credit then 
+            null;  -- This only occurs on the header record, therefore no processing required.
           else
             fflu_data.log_field_error(pc_posting_key,'Unknown Posting Key');
         end case;
@@ -184,49 +194,46 @@ end on_start;
           -- Set the allocation reference field to be allocation field from promax as well.
           rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
           rv_gl.claim_text := rpad(
-                              'Pm# ' || fflu_data.get_char_field(pc_reference) ||
-                              ' ICS# ' || fflu_utils.get_interface_no ||
-                              ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
+            'Pm# ' || fflu_data.get_char_field(pc_reference) ||
+            ' ICS# ' || fflu_utils.get_interface_no ||
+            ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
         else 
           -- Specific AR Claims Processing / Setup
-		  -- Set the account code to be the same as the promax debit code field.
+		      -- Set the account code to be the same as the promax debit code field.
           rv_gl.account_code :=  fflu_data.get_char_field(pc_credit_code);
           -- Set the vendor and customer
           rv_gl.vendor_code := pxi_common.full_vend_code(null);
           --rv_gl.customer_code := fflu_data.get_char_field(pc_account_code);        
-		  rv_gl.customer_code := fflu_data.get_char_field(pc_payee_code);        
+          rv_gl.customer_code := fflu_data.get_char_field(pc_payee_code);        
           -- Accounts Receivable GL Item Text.
           rv_gl.item_text := rpad(
             'AR ' ||
             'Ref#' ||
-            --fflu_data.get_char_field(pc_pc_reference) || 
-			fflu_data.get_char_field(pc_allocation) || 
+            fflu_data.get_char_field(pc_allocation) || 
             ' Pm#' || 
             fflu_data.get_char_field(pc_reference) ||
             ' Mt#' ||
             fflu_data.get_char_field(pc_product_number) ||
             ' Cs#' ||
-            --fflu_data.get_char_field(pc_account_code),50);
-			fflu_data.get_char_field(pc_payee_code),50);
+            fflu_data.get_char_field(pc_payee_code),50);
           -- Set the allocation reference field to be the external supplied promax reference.
-          --rv_gl.alloc_ref := fflu_data.get_char_field(pc_ext_reference);
           rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
           -- Set the Claim Text to be (Promo, ICS ID, Ref)
           rv_gl.claim_text := rpad(
-                              'Pm# ' || fflu_data.get_char_field(pc_reference) ||
-                              ' ICS# ' || fflu_utils.get_interface_no ||
-                              ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
+            'Pm# ' || fflu_data.get_char_field(pc_reference) ||
+            ' ICS# ' || fflu_utils.get_interface_no ||
+            ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
         end if;
         -- COPA Related Fields
         -- Set the sales organsiation
         rv_gl.sales_org := fflu_data.get_char_field(pc_px_company_code);
         -- Set the distribution channel.
-        rv_gl.dstrbtn_chnnl := pxi_common.determine_dstrbtn_chnnl(
+        rv_gl.dstrbtn_chnnl := pxi_utils.determine_dstrbtn_chnnl(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
           fflu_data.get_char_field(pc_account_code));  -- Customer
         -- Lookup the business segment for the curent material. 
-        v_bus_sgmnt := pxi_common.determine_bus_sgmnt(
+        v_bus_sgmnt := pxi_utils.determine_bus_sgmnt(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_px_division_code),
           fflu_data.get_char_field(pc_product_number));
@@ -234,7 +241,7 @@ end on_start;
           fflu_data.log_field_error(pc_px_division_code,'Could not determine a business segment from company, promax division, and zrep.');
         end if;
         -- Now lookup the traded unit material code.
-        rv_gl.material_code := pxi_common.lookup_tdu_from_zrep(
+        rv_gl.material_code := pxi_utils.lookup_tdu_from_zrep(
           fflu_data.get_char_field(pc_px_company_code),
           fflu_data.get_char_field(pc_product_number),
           fflu_data.get_date_field(pc_buy_start_date),
@@ -254,7 +261,7 @@ end on_start;
           end case;
         end if; 
         -- Now lookup the plant code from the traded unit material code.  
-        rv_gl.plant_code := pxi_common.determine_matl_plant_code(
+        rv_gl.plant_code := pxi_utils.determine_matl_plant_code(
           fflu_data.get_char_field(pc_px_company_code),
           rv_gl.material_code);
         -- Now add this record to the general ledger collections / if V put as a vendor payment. 
@@ -267,7 +274,7 @@ end on_start;
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
 /*******************************************************************************
@@ -288,7 +295,7 @@ end on_start;
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 /*******************************************************************************

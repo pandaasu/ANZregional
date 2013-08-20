@@ -89,20 +89,20 @@ package pxi_common as
   Common Constants
 *******************************************************************************/
   -- Company Constants / Sales Org Constants
-  gc_new_zealand  st_company := '149';
-  gc_australia    st_company := '147';
+  gc_new_zealand  constant st_company := '149';
+  gc_australia    constant st_company := '147';
   -- Business Segment Constants
-  gc_bus_sgmnt_snack    st_bus_sgmnt := '01';
-  gc_bus_sgmnt_food     st_bus_sgmnt := '02';
-  gc_bus_sgmnt_petcare  st_bus_sgmnt := '05';
+  gc_bus_sgmnt_snack    constant st_bus_sgmnt := '01';
+  gc_bus_sgmnt_food     constant st_bus_sgmnt := '02';
+  gc_bus_sgmnt_petcare  constant st_bus_sgmnt := '05';
   -- Distribution Channel 
-  gc_distrbtn_channel_primary   st_dstrbtn_chnnl := '10'; -- Primary Channel
+  gc_distrbtn_channel_primary  constant st_dstrbtn_chnnl := '10'; -- Primary Channel
   -- Tax Codes
-  gc_tax_code_gl               st_tax_code := 'GL';  -- General Ledger Tax Code
-  gc_tax_code_s1               st_tax_code := 'S1';  -- S1 - Tax Rate 1
-  gc_tax_code_s2               st_tax_code := 'S2';  -- S2 - Tax Rate 2
-  gc_tax_code_s3               st_tax_code := 'S3';  -- S3 - No Tax.
-  gc_tax_code_se               st_tax_code := 'SE';  -- SE - No Tax.
+  gc_tax_code_gl               constant st_tax_code := 'GL';  -- General Ledger Tax Code
+  gc_tax_code_s1               constant st_tax_code := 'S1';  -- S1 - Tax Rate 1
+  gc_tax_code_s2               constant st_tax_code := 'S2';  -- S2 - Tax Rate 2
+  gc_tax_code_s3               constant st_tax_code := 'S3';  -- S3 - No Tax.
+  gc_tax_code_se               constant st_tax_code := 'SE';  -- SE - No Tax.
   
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
