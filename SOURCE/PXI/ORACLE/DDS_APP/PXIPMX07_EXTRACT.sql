@@ -32,6 +32,10 @@ PACKAGE          PXIPMX07_EXTRACT as
              for sales from yesterday.  If null is supplied as the creation data
              it will generate all sales history from the hard coded sales 
              history date.
+             
+             Note that if no date is supplied it will try and extract all 
+             relevant data from 01/01/2012 to yesterday.  This may cause 
+             issues and fail to run.
 
   REVISIONS:
   Ver   Date       Author               Description
