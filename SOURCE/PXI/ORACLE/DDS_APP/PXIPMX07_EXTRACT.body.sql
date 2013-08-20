@@ -21,9 +21,8 @@ PACKAGE BODY PXIPMX07_EXTRACT as
      cursor csr_input is
         select
           pxi_common.char_format('306001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '306001' -> ICRecordType
-          pxi_common.char_format(company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          -- TODO Need to confirm if this should be t4.promax_division instead of hdr_division_code
-          pxi_common.char_format(hdr_division_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- hdr_division_code -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- hdr_division_code -> PXDivisionCode
           pxi_common.char_format(sold_to_cust_code, 20, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- sold_to_cust_code -> CustomerNumber
           pxi_common.char_format(billing_doc_num, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- billing_doc_num -> InvoiceNumber
           pxi_common.char_format(billing_doc_line_num, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- billing_doc_line_num -> InvoiceLineNumber
@@ -35,8 +34,8 @@ PACKAGE BODY PXIPMX07_EXTRACT as
           pxi_common.char_format(doc_currcy_code, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- doc_currcy_code -> Currency
         from (
           select
-            t1.hdr_division_code,
-            t1.company_code,
+            t4.promax_company,
+            t4.promax_division,
             t1.sold_to_cust_code,
             t1.billing_doc_num,
             t1.billing_doc_line_num,
@@ -47,9 +46,9 @@ PACKAGE BODY PXIPMX07_EXTRACT as
             t1.billed_gsv,
             t1.doc_currcy_code
           from
-            dw_sales_base@db1270p_promax_testing t1,
-            dw_order_base@db1270p_promax_testing t2,
-            matl_dim@db1270p_promax_testing t3,
+            dw_sales_base t1,  -- @db1270p_promax_testing
+            dw_order_base t2,  -- @db1270p_promax_testing
+            matl_dim t3, -- @db1270p_promax_testing
             table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4
           where
             -- Join to promax configuration table.
@@ -67,44 +66,27 @@ PACKAGE BODY PXIPMX07_EXTRACT as
             and t2.order_eff_date is not null
         );
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   BEGIN
-
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into v_data;
-         if csr_input%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            v_instance := lics_outbound_loader.create_interface('PXIPMX07');
-         end if;
-
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(v_data);
-
-      end loop;
-      close csr_input;
-
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+   begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into v_data;
+       exit when csr_input%notfound;
+      -- Create the new interface when required
+      if lics_outbound_loader.is_created = false then
+        v_instance := lics_outbound_loader.create_interface('PXIPMX07');
       end if;
+      -- Append the interface data
+      lics_outbound_loader.append_data(v_data);
+    end loop;
+    close csr_input;
 
-   exception
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
+
+  exception
      when others then
        rollback;
        if lics_outbound_loader.is_created = true then
