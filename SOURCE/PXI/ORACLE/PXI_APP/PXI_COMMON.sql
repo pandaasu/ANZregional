@@ -29,6 +29,7 @@ package pxi_common as
   2013-07-30  Chris Horn            Updated this package with comments and
                                     material functions. 
   2013-08-02  Chris Horn            Added added additional logic checks. 
+  2013-08-09  Jonathan Girling		Added SE Tax Code
 
 *******************************************************************************/
 
@@ -78,6 +79,7 @@ package pxi_common as
   gc_tax_code_s1               st_tax_code := 'S1';  -- S1 - Tax Rate 1
   gc_tax_code_s2               st_tax_code := 'S2';  -- S2 - Tax Rate 2
   gc_tax_code_s3               st_tax_code := 'S3';  -- S3 - No Tax.
+  gc_tax_code_se			   st_tax_code := 'SE';  -- SE - No Tax.
   
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
