@@ -8,37 +8,56 @@ package pxi_common as
   System    : PXI
   Owner     : PXI_APP
   Package   : PXI_COMMON
-  Author    : Chris Horn, Mal Chamberyron, Jonathan Girling
+  Author    : Chris Horn, Mal Chambeyron, Jonathan Girling
   Interface : Promax PX Common Interfacing System Utilities
 
   Description
   ------------------------------------------------------------------------------
   This package is used to supply common handling and processing functions to 
-  the various Promax PX interfacing packages.
+  the various Promax PX interfacing packages.  The Promax Extract formatting 
+  constants and functions in particular are used within SQL queries to 
+  quickly produces extracts for promax in the correct layout and format.
 
   Functions
   ------------------------------------------------------------------------------
-  + Formatting Functions
+  + Exception and Error Handling
+    - raise_promax_error         Creates a promax error as an exception.
+    - raise_promax_exception     Used to report "when others" exceptions.
+  + Code Formatting Functions
     - full_matl_code             Correctly formats material codes.
     - short_matl_code            Correctly formats short material codes.
-  + Lookup Functions.
-    - lookup_tdu_from_zrep       Looks up a TDU from a ZREP based on dates.  
+    - full_cust_code             Correctly formats full customer code.
+    - full_vend_code             Correctly formats full vendor code.
+  + Promax Extract Formatting Constants
+    - fc_is_nullable             Function constant for nullable fields.
+    - fc_is_not_nullable         Function constant for not nullable fields.
+    - fc_format_type_none        Function constant for no triming. 
+    - fc_format_type_trim        Function constant for timing whitespace.
+    - fc_format_type_ltrim       Function constant for triming left whitepace.
+    - fc_format_type_rtrim       Function constant for triming right whitespace.
+    - fc_format_type_ltrim_zeros Function constant for triming leading zeros.
+  + Promax Extract Formatting Functions
+    - char_format                Formats character fields.
+    - numb_format                Formats number fields.
+    - date_format                Formats date fields.
 
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
+  2013-07-27  Mal Chambeyron        Initial promax formatting functions created.
   2013-07-30  Chris Horn            Updated this package with comments and
                                     material functions. 
   2013-08-02  Chris Horn            Added added additional logic checks. 
   2013-08-09  Jonathan Girling		  Added SE Tax Code
+  2013-08-20  Chris Horn            Split out to make common between Venus and
+                                    LADS.
 
 *******************************************************************************/
 
 /*******************************************************************************
   Common Promax PX Interfacing System Constants / Exception Definitions
 *******************************************************************************/
-  gc_application_exception pls_integer := -20000;  -- Custom Exception Code.
-  ge_application_exception exception;
-  pragma exception_init(ge_application_exception, -20000);
+  ge_promax_exception exception;
+  pragma exception_init(ge_promax_exception, -20000);
 
 /*******************************************************************************
   Common Package Types
@@ -55,6 +74,7 @@ package pxi_common as
   subtype st_text is varchar2(50 char);           -- Text Fields.
   subtype st_string is varchar2(4000 char);       -- Long String field for messages.
   subtype st_package_name is varchar2(32 char);   -- Package Names  
+  subtype st_method_name is varchar2(32 char);    -- Oracle Procedure / Function names  
   subtype st_bus_sgmnt is varchar2(2 char);       -- Business Segment Code
   subtype st_plant_code is varchar2(4 char);      -- Atlas Plant Code.
   subtype st_dstrbtn_chnnl is varchar2(2 char);   -- Distribution Channel
@@ -79,7 +99,7 @@ package pxi_common as
   gc_tax_code_s1               st_tax_code := 'S1';  -- S1 - Tax Rate 1
   gc_tax_code_s2               st_tax_code := 'S2';  -- S2 - Tax Rate 2
   gc_tax_code_s3               st_tax_code := 'S3';  -- S3 - No Tax.
-  gc_tax_code_se			   st_tax_code := 'SE';  -- SE - No Tax.
+  gc_tax_code_se               st_tax_code := 'SE';  -- SE - No Tax.
   
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
@@ -168,131 +188,80 @@ package pxi_common as
 *******************************************************************************/
   function full_vend_code (i_vendor_code in st_vendor) return st_vendor;
 
-
 /*******************************************************************************
-********************************************************************************
-  CODE BELOW HERE STILL NEEDS TO BE REFORMATTED AND TIDIED UP.
-********************************************************************************
+  NAME:      FUNCTIONS AS CONSTANTS FOR FORMATTING FUNCTIONS              PUBLIC
+  PURPOSE:   The following function constants are used as input paramters
+             into the formatting functions used when producing correctly
+             formatted output files for Promax. 
+  
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-26 Mal Chambeyron       Created.
+  1.2   2013-08-20 Chris Horn           Updated with new exception logic.
+
 *******************************************************************************/
-
-/*******************************************************************************
-  NAME:      format_cust_code
-  PURPOSE:   This function formats Customer Codes by left padding with '0' to
-             10 characters with numeric Customer Codes.  If the Customer Code
-             is not numeric then it is right padded with spaces to 10 characters.
-             This is the required format when extracting to SAP.
-
-********************************************************************************/
-FUNCTION format_cust_code (
-  i_cust_code IN VARCHAR2,
-  o_cust_code OUT VARCHAR2
-  --i_log_level IN NUMBER,
-  --o_result_msg OUT VARCHAR2
-  ) RETURN NUMBER;
-
-/*******************************************************************************
-  NAME:      format_pmx_cust_code
-  PURPOSE:   This function formats Promax Customer Codes by left trimming '0's from
-             the passed Customer Code.
-
-********************************************************************************/
-FUNCTION format_pmx_cust_code (
-  i_cust_code IN VARCHAR2,
-  o_pmx_cust_code OUT VARCHAR2
-  --i_log_level IN NUMBER,
-  --o_result_msg OUT VARCHAR2
-  ) RETURN NUMBER;
-
-/*******************************************************************************
-  NAME:      format_matl_code
-  PURPOSE:   Materials have leading zeroes if they are numeric, otherwise the
-             field is left justified with spaces padding (on the right). The
-             width returned is 18 characters.
-
-********************************************************************************/
-FUNCTION format_matl_code (
-  i_matl_code IN VARCHAR2,
-  o_matl_code OUT VARCHAR2
-  --i_log_level IN NUMBER,
-  --o_result_msg OUT VARCHAR2
-  ) RETURN NUMBER;
-  
-
-/*******************************************************************************
-  NAME:      format_pmx_matl_code
-  PURPOSE:   Material Codes have leading zeroes if they are numeric. These leading
-             zeroes need to be trimmed if they are to be inserted into Promax.
-
-********************************************************************************/
-FUNCTION format_pmx_matl_code (
-  i_matl_code IN VARCHAR2,
-  o_matl_code OUT VARCHAR2
-  --i_log_level IN NUMBER,
-  --o_result_msg OUT VARCHAR2
-  ) RETURN NUMBER;
-
-
-
-function char_format(i_value in varchar2, i_length in number, i_format_type in number, i_value_is_nullable in number) return varchar2;
-function numb_format(i_value in number, i_format in varchar2, i_value_is_nullable in number) return varchar2;
-function date_format(i_value in date, i_format in varchar2, i_value_is_nullable in number) return varchar2;
-
-function is_nullable return number;
-function is_not_nullable return number;
-
-function format_type_none return number;
-function format_type_trim return number;
-function format_type_ltrim return number;
-function format_type_rtrim return number;
-function format_type_ltrim_zeros return number;
-
-
-
-
-/*******************************************************************************
-  NAME:      lookup_matl_tdu_num
-  PURPOSE:   This function looks up the material TDU Number.
-
-********************************************************************************/
-function lookup_matl_tdu_num (
-    i_matl_zrep_code    in  varchar2,
-    o_matl_tdu_code     out varchar2,
-    i_buy_start_date    in  date,
-    i_buy_end_date      in  date
-  ) return number;
-  
+  -- Null / Not Null Functions
+  function fc_is_nullable return number;
+  function fc_is_not_nullable return number;
+  -- Format Type Functions. 
+  function fc_format_type_none return number;
+  function fc_format_type_trim return number;
+  function fc_format_type_ltrim return number;
+  function fc_format_type_rtrim return number;
+  function fc_format_type_ltrim_zeros return number;
   
 /*******************************************************************************
-  NAME:      lookup_distbn_chnl_code
-  PURPOSE:   This function looks up the distribution channel code. 
-  
-********************************************************************************/
-function lookup_distbn_chnl_code (
-    i_cust_code         in  varchar2,
-    o_distbn_chnl_code     out varchar2
-  ) return number;
+  NAME:      CHAR_FORMAT                                                  PUBLIC
+  PURPOSE:   This function produces correctly formated text fields of the 
+             correct length and type, and also performs necessary validations.
 
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-27 Mal Chameyron        Created.
+  1.2   2013-08-20 Chris Horn           Updated exception handling and format.
 
-/*******************************************************************************
-  NAME:      lookup_division_code
-  PURPOSE:   This function looks up the division code. 
-  
-********************************************************************************/
-function lookup_division_code (
-    i_matl_tdu_code     in  varchar2,
-    o_division_code     out varchar2
-  ) return number;
-
+*******************************************************************************/
+  function char_format(
+    i_value in varchar2, 
+    i_length in number, 
+    i_format_type in number, 
+    i_value_is_nullable in number) return varchar2;
 
 /*******************************************************************************
-  NAME:      lookup_plant_code
-  PURPOSE:   This function looks up the plant code. 
-  
-********************************************************************************/
-function lookup_plant_code (
-    i_matl_tdu_code     in  varchar2,
-    o_plant_code        out varchar2
-  ) return number;
+  NAME:      NUMB_FORMAT                                                  PUBLIC
+  PURPOSE:   This function produces correctly formated number fields of the 
+             correct length and type, and also performs necessary validations.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-27 Mal Chameyron        Created.
+  1.2   2013-08-20 Chris Horn           Updated exception handling and format.
+
+*******************************************************************************/
+  function numb_format(
+    i_value in number, 
+    i_format in varchar2, 
+    i_value_is_nullable in number) return varchar2;
+
+/*******************************************************************************
+  NAME:      DATE_FORMAT                                                  PUBLIC
+  PURPOSE:   This function produces correctly formated date fields of the 
+             correct length and type, and also performs necessary validations.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-27 Mal Chameyron        Created.
+  1.2   2013-08-20 Chris Horn           Updated exception handling and format.
+
+*******************************************************************************/
+  function date_format(
+    i_value in date, 
+    i_format in varchar2, 
+    i_value_is_nullable in number) return varchar2;
 
 end pxi_common;
 /
