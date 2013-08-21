@@ -305,4 +305,3 @@ PACKAGE body PXIPMX08_EXTRACT AS
   end on_get_csv_qualifier;
 
 END PXIPMX08_EXTRACT;
-/

@@ -84,11 +84,11 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
                                    AS price1,
                                 0 AS mnfcost,
                                 0 AS rrp
-                           FROM lads_prc_lst_hdr a,
-                                lads_prc_lst_det c,
-                                mfanz_matl f,
-                                mfanz_fg_matl_clssfctn g,
-                                mfanz_matl_by_sales_area h
+                           FROM lads_prc_lst_hdr/*@ap0064p_promax_testing*/ a,
+                                lads_prc_lst_det/*@ap0064p_promax_testing*/ c,
+                                mfanz_matl/*@ap0064p_promax_testing*/ f,
+                                mfanz_fg_matl_clssfctn/*@ap0064p_promax_testing*/ g,
+                                mfanz_matl_by_sales_area/*@ap0064p_promax_testing*/ h
                           WHERE     a.vakey = c.vakey
                                 AND a.datab = c.datab
                                 AND a.kschl = c.kschl
@@ -174,5 +174,4 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
    /*-------------*/
    end execute;
 
-end PXIPMX06_EXTRACT;
-/
+end PXIPMX06_EXTRACT; 

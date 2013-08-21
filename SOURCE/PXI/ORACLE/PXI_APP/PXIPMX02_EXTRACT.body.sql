@@ -1,9 +1,11 @@
 create or replace 
 package body pxipmx02_extract as
-   -- Private exceptions
-   pc_application_exception pls_integer := -20000;
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+
+/*******************************************************************************
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIPMX02_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX02';
 
 /*******************************************************************************
   NAME:      GET_PRODUCT_HIERARCHY                                        PUBLIC
@@ -25,29 +27,29 @@ package body pxipmx02_extract as
                trim(substr(t01.z_data,5,4)) as vkorg,
                trim(SUBSTR(t01.z_data,9,20)) AS vtext
              from 
-               lads_ref_dat@ap0064p_promax_testing t01
+               lads_ref_dat/*@ap0064p_promax_testing*/ t01
              where 
                t01.z_tabname = 'TVKOT' and 
                -- Remove any records that have been deleted by a D in the z_chgtyp column
                substr(t01.z_data,1,28) not in (
-                 select substr(t01.z_data,1,28) from lads_ref_dat@ap0064p_promax_testing t01 
+                 select substr(t01.z_data,1,28) from lads_ref_dat/*@ap0064p_promax_testing */ t01 
                  where t01.z_tabname = 'TVKOT' and z_chgtyp ='D')
              ) t10 where t10.spras = 'E'
              -- End of code for view.
              ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED') as level1_desc,
        nvl(t3.sap_bus_sgmnt_code,'##') as level2, -- Business Segment aka Division 
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc,
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc,
        nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') as level3, -- Trade Sector, Business Segment
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' ||
-         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,  
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' ||
+         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,  
        nvl(t3.sap_nz_launch_ranking_code,'###') as level4, -- NZ Launch Ranking Code
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc,
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc,
        nvl(t3.sap_nz_promotional_grp_code,'###') as level5, -- NZ Promotional Group
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc
      from 
-       bds_material_hdr@ap0064p_promax_testing t1,  -- TDU Material Header Information
-       bds_material_dstrbtn_chain@ap0064p_promax_testing t2, -- Material Sales Area Information
-       bds_material_classfctn@ap0064p_promax_testing t3 -- Material Classification Data
+       bds_material_hdr/*@ap0064p_promax_testing */ t1,  -- TDU Material Header Information
+       bds_material_dstrbtn_chain /*@ap0064p_promax_testing */ t2, -- Material Sales Area Information
+       bds_material_classfctn /*@ap0064p_promax_testing */ t3 -- Material Classification Data
      where
        -- Table Joins
        t2.sap_material_code = t1.sap_material_code and 
@@ -91,7 +93,7 @@ package body pxipmx02_extract as
             v_found := true;
             -- Check that the parent node and name are the same.
             if i_node_name <> tv_hierarchy(v_counter).node_name or i_parent_node_code <> tv_hierarchy(v_counter).parent_node_code then 
-              raise_application_error(pc_application_exception,'Node : ' || i_node_code || ' Node Name or Parent Node Code did not match a previous instance.');
+              pxi_common.raise_promax_error(pc_package_name,'ADD_PATH','Node : ' || i_node_code || ' Node Name or Parent Node Code did not match a previous instance.');
             end if;
           elsif i_node_code < tv_hierarchy(v_counter).node_code then 
             v_stop := true;  
@@ -160,91 +162,62 @@ package body pxipmx02_extract as
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
 *******************************************************************************/
-  procedure execute is
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_instance number(15,0);
-      var_data varchar2(4000);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_input is
+  procedure execute(
+    i_pmx_company in pxi_common.st_company default null,
+    i_pmx_division in pxi_common.st_promax_division default null, 
+    i_creation_date in date default sysdate-1) is
+     -- Variables     
+     v_instance number(15,0);
+     v_data pxi_common.st_data;
+ 
+     -- The extract query.
+     cursor csr_input is
         --======================================================================
         select
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('303002', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- node_code -> Attribute
-          pxi_common.char_format(node_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- node_name -> NodeName
-          pxi_common.char_format(parent_node_code, 40, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- parent_node_code -> ParrentAttribute
-          pxi_common.char_format(material_code, 18, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- material_code -> MaterialNumber
+          pxi_common.char_format('303002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(node_code, 40, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- node_code -> Attribute
+          pxi_common.char_format(node_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- node_name -> NodeName
+          pxi_common.char_format(parent_node_code, 40, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) || -- parent_node_code -> ParrentAttribute
+          pxi_common.char_format(material_code, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- material_code -> MaterialNumber
         ------------------------------------------------------------------------
         from 
           table(get_product_hierarchy);
         --======================================================================
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   BEGIN
-
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into var_data;
-         if csr_input%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX02');
-         end if;
-
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(var_data);
-
-      end loop;
-      close csr_input;
-
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+    
+   begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into v_data;
+       exit when csr_input%notfound;
+      -- Create the new interface when required
+      if lics_outbound_loader.is_created = false then
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
       end if;
+      -- Append the interface data
+      lics_outbound_loader.append_data(v_data);
+    end loop;
+    close csr_input;
 
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
 
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-         rollback;
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
-         end if;
-         raise;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
+  exception
+     when others then
+       rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
-end PXIPMX02_EXTRACT;
-/
+
+end PXIPMX02_EXTRACT; 

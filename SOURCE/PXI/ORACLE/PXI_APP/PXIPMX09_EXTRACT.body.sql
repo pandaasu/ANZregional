@@ -1,4 +1,5 @@
-CREATE OR REPLACE PACKAGE BODY SITE_APP.PXIPMX09_EXTRACT as
+create or replace 
+PACKAGE BODY          PXIPMX09_EXTRACT as
 
    /*-*/
    /* Private exceptions
@@ -129,5 +130,4 @@ CREATE OR REPLACE PACKAGE BODY SITE_APP.PXIPMX09_EXTRACT as
    /*-------------*/
    end execute;
 
-end PXIPMX09_EXTRACT;
-/
+end PXIPMX09_EXTRACT; 

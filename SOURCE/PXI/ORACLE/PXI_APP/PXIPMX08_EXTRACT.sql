@@ -26,7 +26,8 @@ PACKAGE PXIPMX08_EXTRACT AS
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-25  Chris Horn            Created Interface
-  2013-07-28  Mal Chambeyron
+  2013-07-28  Mal Chambeyron        Updated SQL Formatting
+  2013-08-21  Chris Horn            Cleaned Up Code
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -68,4 +69,3 @@ PACKAGE PXIPMX08_EXTRACT AS
   function get_inbound return tt_inbound pipelined;
 
 END PXIPMX08_EXTRACT;
-/

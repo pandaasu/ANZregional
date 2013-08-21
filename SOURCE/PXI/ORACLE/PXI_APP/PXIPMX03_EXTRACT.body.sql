@@ -153,4 +153,3 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
    end execute;
 
 end PXIPMX03_EXTRACT;
-/

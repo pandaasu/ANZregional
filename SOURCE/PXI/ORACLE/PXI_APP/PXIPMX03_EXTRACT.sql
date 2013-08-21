@@ -18,10 +18,10 @@ PACKAGE          PXIPMX03_EXTRACT as
  24/07/2013    Chris Horn            Created.
  26/07/2013    Mal Chambeyron        Formatted SQL Output    
  30/07/2013    Chris Horn            Added an additional order block check.
+ 21/08/2013    Chris Horn            Cleaned Up Code.
  
 *******************************************************************************/
 
    procedure execute;
 
 end PXIPMX03_EXTRACT;
-/

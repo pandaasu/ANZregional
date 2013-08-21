@@ -16,6 +16,7 @@ PACKAGE          PXIPMX04_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  28/07/2013    Chris Horn            Created.
+ 20/08/2013    Chris Horn            Cleaned Up Code.
  
 *******************************************************************************/
    procedure execute;
@@ -46,4 +47,3 @@ PACKAGE          PXIPMX04_EXTRACT as
   function get_customer_hierarchy return tt_hierachy pipelined;
 
 end PXIPMX04_EXTRACT;
-/

@@ -1,11 +1,12 @@
-CREATE OR REPLACE PACKAGE SITE_APP.PXIPMX09_EXTRACT as
+create or replace 
+PACKAGE          PXIPMX09_EXTRACT as
 /******************************************************************************/
 /* Package Definition                                                         */
 /******************************************************************************/
 /**
  System  : LADS
  Package : PXIPMX09_EXTRACT
- Owner   : DDS_APP
+ Owner   : PXI_APP
  Author  : Chris Horn and Mal Chambeyron
 
  Description
@@ -16,10 +17,10 @@ CREATE OR REPLACE PACKAGE SITE_APP.PXIPMX09_EXTRACT as
  ------------  --------------------  -----------
  24/07/2013    Chris Horn            Created.
  27/07/2013    Mal Chambeyron        Formatted SQL Output
+ 21/08/2013    Chris Horn            Cleaned Up Code
 
 *******************************************************************************/
 
    procedure execute;
 
 end PXIPMX09_EXTRACT;
-/

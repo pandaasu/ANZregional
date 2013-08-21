@@ -30,7 +30,7 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
           pxi_common.char_format('347001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '347001' -> ICRecordType
           pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
           pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(company_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- company_code -> VendorNumber
+          pxi_common.char_format(vendor_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- company_code -> VendorNumber
           pxi_common.char_format(longname, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- longname -> Longname
           pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSVendor
           pxi_common.char_format('1', 1, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '1' -> TaxExempt
@@ -42,10 +42,10 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
           select a.vendor_code,
             b.company_code,
             a.vendor_name_01 ||' '|| a.vendor_name_02 as longname
-          from 
-            bds_vend_header@ap0064p_promax_testing a, 
+          from
+            bds_vend_header@ap0064p_promax_testing a,
             bds_vend_comp@ap0064p_promax_testing b
-          where 
+          where
             a.vendor_code = b.vendor_code
             and b.company_code = '149'
             and group_key like 'PMX%'
@@ -113,5 +113,4 @@ PACKAGE BODY          PXIPMX05_EXTRACT as
    /*-------------*/
    end execute;
 
-end PXIPMX05_EXTRACT;
-/
+end PXIPMX05_EXTRACT; 

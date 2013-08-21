@@ -1,5 +1,5 @@
 create or replace 
-package body pxipmx04_extract as
+package body          pxipmx04_extract as
    -- Private exceptions
    pc_application_exception pls_integer := -20000;
    application_exception exception;
@@ -32,9 +32,9 @@ package body pxipmx04_extract as
         t4.level_06_cust_code,
         t4.level_06_cust_name_en
       from 
-        bds_cust_header t1,  
-        bds_addr_customer t2,
-        bds_cust_sales_area t3, 
+        bds_cust_header@ap0064p_promax_testing t1,  
+        bds_addr_customer@ap0064p_promax_testing t2,
+        bds_cust_sales_area@ap0064p_promax_testing t3, 
         (
           -- Venus Customer Hiearchy Query 
           SELECT
@@ -232,23 +232,23 @@ package body pxipmx04_extract as
               K.datab  AS LEVEL_10_START_DATE,
               K.datbi  AS LEVEL_10_END_DATE
             FROM
-              lads_hie_cus_hdr A, -- Header Information
-              lads_hie_cus_det B, -- Level 1
-              lads_hie_cus_det C, -- Level 2
-              lads_hie_cus_det D, -- Level 3
-              lads_hie_cus_det E, -- Level 4
-              lads_hie_cus_det F, -- Level 5
-              lads_hie_cus_det G, -- Level 6
-              lads_hie_cus_det H, -- Level 7
-              lads_hie_cus_det I, -- Level 8
-              lads_hie_cus_det J, -- Level 9
-              lads_hie_cus_det K  -- Level 10
+              lads_hie_cus_hdr@ap0064p_promax_testing A, -- Header Information
+              lads_hie_cus_det@ap0064p_promax_testing B, -- Level 1
+              lads_hie_cus_det@ap0064p_promax_testing C, -- Level 2
+              lads_hie_cus_det@ap0064p_promax_testing D, -- Level 3
+              lads_hie_cus_det@ap0064p_promax_testing E, -- Level 4
+              lads_hie_cus_det@ap0064p_promax_testing F, -- Level 5
+              lads_hie_cus_det@ap0064p_promax_testing G, -- Level 6
+              lads_hie_cus_det@ap0064p_promax_testing H, -- Level 7
+              lads_hie_cus_det@ap0064p_promax_testing I, -- Level 8
+              lads_hie_cus_det@ap0064p_promax_testing J, -- Level 9
+              lads_hie_cus_det@ap0064p_promax_testing K  -- Level 10
             WHERE
               A.lads_status = '1'
               AND A.hdrdat = (SELECT
                                 MAX(G.hdrdat)
                               FROM
-                                lads_hie_cus_hdr G)
+                                lads_hie_cus_hdr@ap0064p_promax_testing G)
               AND A.hityp = 'A'
               AND A.datab <= TO_CHAR(sysdate, 'YYYYMMDD')
               AND A.datbi >= TO_CHAR(sysdate, 'YYYYMMDD')
@@ -295,16 +295,16 @@ package body pxipmx04_extract as
                                   DECODE(J.vkorg, '149', 1,
                                     DECODE(K.vkorg, '149', 1, 0)))))))))) = 1
             ) L,
-            lads_adr_det M,
-            lads_adr_det N,
-            lads_adr_det O,
-            lads_adr_det P,
-            lads_adr_det Q,
-            lads_adr_det R,
-            lads_adr_det S,
-            lads_adr_det T,
-            lads_adr_det U,
-            lads_adr_det V
+            lads_adr_det@ap0064p_promax_testing M,
+            lads_adr_det@ap0064p_promax_testing N,
+            lads_adr_det@ap0064p_promax_testing O,
+            lads_adr_det@ap0064p_promax_testing P,
+            lads_adr_det@ap0064p_promax_testing Q,
+            lads_adr_det@ap0064p_promax_testing R,
+            lads_adr_det@ap0064p_promax_testing S,
+            lads_adr_det@ap0064p_promax_testing T,
+            lads_adr_det@ap0064p_promax_testing U,
+            lads_adr_det@ap0064p_promax_testing V
           WHERE
             DECODE(L.LEVEL_02_START_DATE, NULL, '00000000', L.LEVEL_02_START_DATE) <= TO_CHAR(sysdate, 'YYYYMMDD')
             AND DECODE(L.LEVEL_02_END_DATE, NULL, '99999999', L.LEVEL_02_END_DATE) >= TO_CHAR(sysdate, 'YYYYMMDD')
@@ -424,10 +424,10 @@ package body pxipmx04_extract as
         -- Table Joins
         t1.customer_code = t2.customer_code and 
         t1.customer_code = t3.customer_code and 
-        t4.cust_code (+) = t3.customer_code and 
-        t4.sales_org_code (+) = t3.sales_org_code and 
-        t4.distbn_chnl_code (+) = t3.distbn_chnl_code and
-        t4.division_code (+) = t3.division_code and    
+        t4.cust_code  = t3.customer_code and 
+        t4.sales_org_code  = t3.sales_org_code and 
+        t4.distbn_chnl_code  = t3.distbn_chnl_code and
+        t4.division_code  = t3.division_code and    
         -- Only Customers extended into sales organisation for New Zealand.
         t3.sales_org_code = '149' and 
         -- Only show the main english customer name.
@@ -613,5 +613,4 @@ package body pxipmx04_extract as
    /*-------------*/
    end execute;
 
-end PXIPMX04_EXTRACT;
-/
+end PXIPMX04_EXTRACT; 
