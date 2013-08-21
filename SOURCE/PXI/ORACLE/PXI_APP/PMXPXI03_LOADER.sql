@@ -1,5 +1,5 @@
 create or replace 
-package pmxpxi03_loader_chambma1 as
+package pmxpxi03_loader as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -7,7 +7,7 @@ package pmxpxi03_loader_chambma1 as
 
   System    : PXI
   Owner     : PXI_APP
-  Package   : PMXPXI03_LOADER_CHAMBMA1
+  Package   : PMXPXI03_LOADER
   Author    : Jonathan Girling
   Interface : Promax PX Promotions to Atlas Interface
 
@@ -34,6 +34,8 @@ package pmxpxi03_loader_chambma1 as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-08-02  Jonathan Girling      Created Interface
+  2013-08-15  Mal Chambeyron        Added deletion / synchronization logic.
+  2013-08-21  Chris Horn            Basic Clean Up.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -46,5 +48,5 @@ package pmxpxi03_loader_chambma1 as
 
   procedure execute(p_xactn_seq in number);
   
-end pmxpxi03_loader_chambma1;
+end pmxpxi03_loader;
 /

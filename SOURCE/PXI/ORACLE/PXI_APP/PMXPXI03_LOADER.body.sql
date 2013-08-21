@@ -1,20 +1,15 @@
 create or replace 
-package body pmxpxi03_loader_chambma1 as
+package body pmxpxi03_loader as
 
 /*******************************************************************************
-  Application Exception
+  Package Constants
 *******************************************************************************/
-  g_application_exception exception;
-  pragma exception_init(g_application_exception, -20000);
-
+  pc_package_name constant pxi_common.st_package_name := 'PMXPXI03_LOADER';
+  
 /*******************************************************************************
   Package Variables
 *******************************************************************************/
-  -- prv_inbound rt_inbound;
-  -- pv_inbound_array tt_inbound_array;
-
-  prv_inbound site_app.pmx_359_promotions%rowtype;
-
+  prv_inbound pmx_359_promotions%rowtype;
   pv_previous_xactn_seq number(15,0);
   pv_previous_px_xactn_id number(10,0);
 
@@ -114,9 +109,6 @@ package body pmxpxi03_loader_chambma1 as
     fflu_data.add_char_field_txt(pc_transaction_amount,336,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_payer_code,346,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
 
-    -- Empty Inbound Array
-    -- pv_inbound_array.delete;
-
     -- Get Previous Transaction Seq *** UNIQUIE ACROSS ALL RECORDS
     select nvl(max(xactn_seq),0) into pv_previous_xactn_seq -- pv_previous_xactn_seq MUST not be modified after setting here
     from pmx_359_promotions;
@@ -137,21 +129,17 @@ package body pmxpxi03_loader_chambma1 as
 
   exception
     when others then
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('ON_START');
   end on_start;
 
 /*******************************************************************************
   NAME:      ON_DATA                                                      PUBLIC
 *******************************************************************************/
   procedure on_data(p_row in varchar2) is
-    /*-*
-    /*  Local Definitions
-    /*-*/
+    -- Variables
     v_ok boolean;
 
-    /*-*/
-    /* Lookup Pricing Conditions
-    /*-*/
+    -- Lookup Pricing Conditions
     cursor csr_prom_config(i_company_code in pxi_common.st_company, i_condition_flag in st_condition_flag, i_pricing_condition in st_pricing_condition, i_bus_sgmnt in pxi_common.st_bus_sgmnt) is
 		select
       t01.cmpny_code as cmpny_code,
@@ -233,7 +221,7 @@ package body pmxpxi03_loader_chambma1 as
         prv_inbound.new_material := pxi_common.full_matl_code(fflu_data.get_char_field(pc_material));
 
         -- Determine Business Segment
-        prv_inbound.business_segment := pxi_common.determine_bus_sgmnt(fflu_data.get_char_field(pc_px_company_code),fflu_data.get_char_field(pc_px_division_code), prv_inbound.new_material);
+        prv_inbound.business_segment := pxi_utils.determine_bus_sgmnt(fflu_data.get_char_field(pc_px_company_code),fflu_data.get_char_field(pc_px_division_code), prv_inbound.new_material);
 
         -- Set Condition Flag
         if fflu_data.get_char_field(pc_condition_pricing_unit) = pc_condition_unit_dollar then
@@ -308,59 +296,52 @@ package body pmxpxi03_loader_chambma1 as
 
         insert into pmx_359_promotions values prv_inbound;
 
-        -- pv_inbound_array(pv_inbound_array.count+1) := prv_inbound;
-
       end if;
 
     end if;
   exception
     when others then
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('ON_DATA');
   end on_data;
 
 /*******************************************************************************
   NAME:      RAISE_OUTBOUND_EXCEPTION                                    PRIVATE
 *******************************************************************************/
   procedure raise_outbound_exception(p_exception_msg in varchar2) is
-
   begin
-
-    fflu_utils.log_interface_exception(p_exception_msg);
+    fflu_data.log_interface_exception(p_exception_msg);
     lics_outbound_loader.add_exception(p_exception_msg);
-    raise_application_error(-20000, p_exception_msg);
-
+    pxi_common.raise_promax_error(pc_package_name,'RAISE_OUTBOUND_EXCEPTION',p_exception_msg);
   end raise_outbound_exception;
 
 /*******************************************************************************
   NAME:      FORMAT_REC                                                  PRIVATE
 *******************************************************************************/
   function format_record(pr_record in pmx_359_promotions%rowtype) return varchar2 is
-
   begin
-
     return
-      pxi_common.char_format('A', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
-      pxi_common.char_format(pr_record.condition_table_ref, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_table_ref -> CondTable
-      pxi_common.char_format('V', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'V' -> Application
-      pxi_common.char_format(pr_record.VAKEY, 50, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- VAKEY -> VAKEY
-      pxi_common.char_format(pr_record.px_company_code, 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- px_company_code -> CompanyCode
-      pxi_common.char_format(pr_record.cust_div_code, 2, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- cust_div_code -> Division
-      pxi_common.char_format(pr_record.new_customer_hierarchy, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_hierarchy -> Customer
-      pxi_common.char_format(pr_record.new_material, 18, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- material -> Material
-      pxi_common.date_format(pr_record.buy_start_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_start_date -> ValidFrom
-      pxi_common.date_format(pr_record.buy_stop_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- buy_stop_date -> ValidTo
-      pxi_common.char_format(pr_record.pricing_condition_code, 4, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- pricing_cndtn_code -> Condition
-      pxi_common.char_format(pr_record.condition_type_code, 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- condition_type_code -> ConditionType
-      pxi_common.numb_format(pr_record.new_rate, 'S9999990.00', pxi_common.is_not_nullable) || -- rate -> Rate
-      pxi_common.char_format(pr_record.new_rate_unit, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_unit -> RateUnit
-      pxi_common.char_format('EA', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'EA' -> UOM
-      pxi_common.char_format(pr_record.sales_deal, 10, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- sales_deal -> PromoNum
-      pxi_common.char_format(pr_record.new_rate_multiplier, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- rate_multiplier -> PriceUnit
-      pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.format_type_none, pxi_common.is_nullable); -- order_type_code -> OrderType
+      pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
+      pxi_common.char_format(pr_record.condition_table_ref, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_table_ref -> CondTable
+      pxi_common.char_format('V', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'V' -> Application
+      pxi_common.char_format(pr_record.vakey, 50, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- VAKEY -> VAKEY
+      pxi_common.char_format(pr_record.px_company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- px_company_code -> CompanyCode
+      pxi_common.char_format(pr_record.cust_div_code, 2, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- cust_div_code -> Division
+      pxi_common.char_format(pr_record.new_customer_hierarchy, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- customer_hierarchy -> Customer
+      pxi_common.char_format(pr_record.new_material, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- material -> Material
+      pxi_common.date_format(pr_record.buy_start_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- buy_start_date -> ValidFrom
+      pxi_common.date_format(pr_record.buy_stop_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- buy_stop_date -> ValidTo
+      pxi_common.char_format(pr_record.pricing_condition_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- pricing_cndtn_code -> Condition
+      pxi_common.char_format(pr_record.condition_type_code, 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_type_code -> ConditionType
+      pxi_common.numb_format(pr_record.new_rate, 'S9999990.00', pxi_common.fc_is_not_nullable) || -- rate -> Rate
+      pxi_common.char_format(pr_record.new_rate_unit, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_unit -> RateUnit
+      pxi_common.char_format('EA', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'EA' -> UOM
+      pxi_common.char_format(pr_record.sales_deal, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- sales_deal -> PromoNum
+      pxi_common.char_format(pr_record.new_rate_multiplier, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_multiplier -> PriceUnit
+      pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable); -- order_type_code -> OrderType
 
   exception
     when others then
-      fflu_utils.log_interface_exception('Format Record');
+      fflu_data.log_interface_exception('FORMAT_RECORD');
   end format_record;
 
 /*******************************************************************************
@@ -550,7 +531,7 @@ package body pmxpxi03_loader_chambma1 as
    exception
 
       when others then
-         fflu_utils.log_interface_exception('Execute - Outbound Processing');
+         fflu_data.log_interface_exception('EXECUTE');
          rollback;
          if lics_outbound_loader.is_created = true then
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
@@ -576,7 +557,7 @@ package body pmxpxi03_loader_chambma1 as
     fflu_data.cleanup;
   exception
     when others then
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('ON_END');
   end on_end;
 
 /*******************************************************************************
@@ -595,5 +576,5 @@ package body pmxpxi03_loader_chambma1 as
     return fflu_common.gc_csv_qualifier_null;
   end on_get_csv_qualifier;
 
-end pmxpxi03_loader_chambma1;
+end pmxpxi03_loader;
 /
