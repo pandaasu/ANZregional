@@ -1,4 +1,4 @@
-create or replace package DW_APP.nzmkt_pricing as
+CREATE OR REPLACE package DW_APP.nzmkt_pricing as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -28,7 +28,7 @@ create or replace package DW_APP.nzmkt_pricing as
 
 end nzmkt_pricing;
 
-create or replace package body DW_APP.nzmkt_pricing as
+CREATE OR REPLACE package body DW_APP.nzmkt_pricing as
 
    /*-*/
    /* Private exceptions
@@ -64,8 +64,18 @@ create or replace package body DW_APP.nzmkt_pricing as
             and t01.datab = t02.datab
             and t01.knumh = t02.knumh
             and t01.kschl = 'ZV01'
-            and t01.kotabnr = '969'
-            and t01.vakey = lpad(nvl(rcd_nzmkt_base.nzmkt_vendor_code,'0'),10,'0')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
+            and
+            (
+               (
+                t01.kotabnr = '969'
+                and t01.vakey = lpad(nvl(rcd_nzmkt_base.nzmkt_vendor_code,'0'),10,'0')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
+               )
+               or
+               (
+                t01.kotabnr = '996'
+                and t01.vakey = lpad(nvl(rcd_nzmkt_base.nzmkt_vendor_code,'0'),10,'0')||rpad(rcd_nzmkt_base.company_code,4,' ')||rpad(rcd_nzmkt_base.ods_matl_code,18,' ')||'0'
+               )       
+            )            
             and (t01.datab <= to_char(rcd_nzmkt_base.purch_order_eff_date,'yyyymmdd') and
                  t01.datbi >= to_char(rcd_nzmkt_base.purch_order_eff_date,'yyyymmdd'))
             and t02.detseq = 1
