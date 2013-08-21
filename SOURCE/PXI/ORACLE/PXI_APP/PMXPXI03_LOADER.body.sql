@@ -501,7 +501,7 @@ package body pmxpxi03_loader as
           if not v_prev_state_found_in_current then -- Ignore ZERO of Previous State IF FOUND in Current Transaction (BATCH)
             -- Create Outbound Interface When Required
             if not lics_outbound_loader.is_created then
-              v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02_CHAMBMA1');
+              v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
             end if;
             -- ZERO Previous State RATE
             vr_previous_state.new_rate := 0;
@@ -513,7 +513,7 @@ package body pmxpxi03_loader as
         if vr_current.action_code <> 'D' then -- DELETES taken care of in the last BLOCK
           -- Create Outbound Interface When Required
           if not lics_outbound_loader.is_created then
-            v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02_CHAMBMA1');
+            v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
           end if;
           -- Append Record
           lics_outbound_loader.append_data(format_record(vr_current));
