@@ -496,12 +496,9 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       from (
           select a.int_interface interface_code,
             a.int_type interface_type,
-            a.int_usr_invocation interface_load_status,
-            nvl(b.sei_user, get_const_all_code) user_code
-          from lics_interface a,
-            lics_sec_interface b
+            a.int_usr_invocation interface_load_status
+          from lics_interface a
           where a.int_status = lics_constant.status_active
-          and a.int_interface = b.sei_interface(+)
         ) a,
         (  
           select distinct v_user_code as user_code,
@@ -527,9 +524,11 @@ function get_interface_group_list return tt_interface_group_list pipelined is
           and a.seu_user in (get_const_guest_code, v_user_code) -- include *GUEST and user options
           and a.seu_menu = b.option_group_code
         ) b
-      where a.user_code in (get_const_all_code, v_user_code) -- include *ALL and user interfaces
-      -- for option ICS_INT_LOADER .. filter for interfaces type *INBOUND and flagged as loadable 
-      and ((b.option_code = get_const_loader_option and a.interface_type = get_const_int_type_inbound and a.interface_load_status = lics_constant.status_active) or b.option_code != get_const_loader_option)
+      where 
+        -- for option ICS_INT_LOADER .. filter for interfaces type *INBOUND and flagged as loadable 
+        ((b.option_code = get_const_loader_option and a.interface_type = get_const_int_type_inbound and a.interface_load_status = lics_constant.status_active) or b.option_code != get_const_loader_option) and
+        (((select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) > 0 and exists (select t0.sei_interface from lics_sec_interface t0 where a.interface_code = t0.sei_interface and t0.sei_user = v_user_code)) or
+         (select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) = 0)
       order by 2, 3 
     )
     loop
