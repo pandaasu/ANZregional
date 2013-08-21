@@ -32,7 +32,7 @@ package body pxipmx02_extract as
                t01.z_tabname = 'TVKOT' and 
                -- Remove any records that have been deleted by a D in the z_chgtyp column
                substr(t01.z_data,1,28) not in (
-                 select substr(t01.z_data,1,28) from lads_ref_dat/*@ap0064p_promax_testing */ t01 
+                 select substr(t01.z_data,1,28) from lads_ref_dat /*@ap0064p_promax_testing */  t01 
                  where t01.z_tabname = 'TVKOT' and z_chgtyp ='D')
              ) t10 where t10.spras = 'E'
              -- End of code for view.

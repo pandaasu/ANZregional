@@ -2,6 +2,12 @@ create or replace
 PACKAGE body PXIPMX08_EXTRACT AS
 
 /*******************************************************************************
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIPMX08_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX08';
+
+/*******************************************************************************
   Package Variables
 *******************************************************************************/
   pv_inbound_rec rt_inbound;
@@ -74,7 +80,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
 
   exception
     when others then
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('ON_START');
   end on_start;
 
 /*******************************************************************************
@@ -137,46 +143,41 @@ PACKAGE body PXIPMX08_EXTRACT AS
     end if;
   exception
     when others then
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('ON_DATA');
   end on_data;
 
 /*******************************************************************************
   NAME:      EXECUTE (*MUST* be loacated before ON_END, as is Private)   PRIVATE
 *******************************************************************************/
    procedure execute is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_instance number(15,0);
-      var_data varchar2(4000);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_input is
+    -- Variables     
+     v_instance number(15,0);
+     v_data pxi_common.st_data;
+ 
+     -- The extract query.
+     cursor csr_input is
         --======================================================================
         select
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('361001', 6, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '361001' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(bus_partner_ref, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- bus_partner_ref -> AccountCode
-          pxi_common.char_format(tax_cust_ref, 20, pxi_common.format_type_none, pxi_common.is_nullable) || -- tax_cust_ref -> Reference
-          pxi_common.char_format('A', 1, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'A' -> ActionFlag
-          pxi_common.char_format('1', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '1' -> Type
-          pxi_common.date_format(posting_date, 'yyyymmdd', pxi_common.is_not_nullable) || -- posting_date -> Date
-          pxi_common.char_format(claim_ref, 18, pxi_common.format_type_none, pxi_common.is_nullable) || -- claim_ref -> Number
-          pxi_common.char_format('0', 18, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '0' -> ParentNumber
-          pxi_common.char_format(assignment_no, 65, pxi_common.format_type_none, pxi_common.is_nullable) || -- assignment_no -> ExtReference
-          pxi_common.char_format('', 80, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '' -> InvoiceLink
-          pxi_common.char_format(reason_code, 5, pxi_common.format_type_none, pxi_common.is_nullable) || -- reason_code -> ReasonCode
-          pxi_common.numb_format(amount, '9999999990.00', pxi_common.is_not_nullable) || -- amount -> Amount
-          pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.is_not_nullable) || -- tax_amount -> TaxAmount
-          pxi_common.char_format('', 256, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '' -> Note
-          pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) -- CONSTANT 'NZD' -> Currency
+          pxi_common.char_format('361001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '361001' -> ICRecordType
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(bus_partner_ref, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- bus_partner_ref -> AccountCode
+          pxi_common.char_format(tax_cust_ref, 20, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- tax_cust_ref -> Reference
+          pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> ActionFlag
+          pxi_common.char_format('1', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '1' -> Type
+          pxi_common.date_format(posting_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- posting_date -> Date
+          pxi_common.char_format(claim_ref, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- claim_ref -> Number
+          pxi_common.char_format('0', 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '0' -> ParentNumber
+          pxi_common.char_format(assignment_no, 65, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- assignment_no -> ExtReference
+          pxi_common.char_format('', 80, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> InvoiceLink
+          pxi_common.char_format(reason_code, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- reason_code -> ReasonCode
+          pxi_common.numb_format(amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- amount -> Amount
+          pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
+          pxi_common.char_format('', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
+          pxi_common.char_format('NZD', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT 'NZD' -> Currency
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -204,51 +205,34 @@ PACKAGE body PXIPMX08_EXTRACT AS
         );
         --======================================================================
 
-   BEGIN
-
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into var_data;
-         if csr_input%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX08');
-         end if;
-
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(var_data);
-
-      end loop;
-      close csr_input;
-
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+  begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into v_data;
+       exit when csr_input%notfound;
+      -- Create the new interface when required
+      if lics_outbound_loader.is_created = false then
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
       end if;
+      -- Append the interface data
+      lics_outbound_loader.append_data(v_data);
+    end loop;
+    close csr_input;
 
-   exception
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
 
-      when others then
-         fflu_utils.log_interface_exception('Execute - Outbound Processing');
-         rollback;
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
-         end if;
-         raise;
-
+  exception
+     when others then
+       rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
 /*******************************************************************************
@@ -267,25 +251,21 @@ PACKAGE body PXIPMX08_EXTRACT AS
     fflu_data.cleanup;
   exception
     when others then
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('ON_END');
   end on_end;
 
 /*******************************************************************************
   NAME:      GET_INBOUND                                                  PUBLIC
 *******************************************************************************/
   function get_inbound return tt_inbound pipelined is
-
     v_counter pls_integer;
-
   begin
-
      v_counter := 0;
      loop
        v_counter := v_counter + 1;
        exit when v_counter > pv_inbound_array.count;
        pipe row(pv_inbound_array(v_counter));
      end loop;
-
   end get_inbound;
 
 /*******************************************************************************

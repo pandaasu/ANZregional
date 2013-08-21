@@ -69,11 +69,11 @@ PACKAGE BODY PXIPMX01_EXTRACT as
             t5.width as rsu_width, -- UnitWidth
             t5.height as rsu_height -- UnitHeight
           from 
-            bds_material_hdr t1, -- @ap0064p_promax_testing -- TDU Material Header Information
-            bds_material_dstrbtn_chain t2, -- @ap0064p_promax_testing -- Material Sales Area Information
-            bds_material_bom_all t3, -- @ap0064p_promax_testing -- TDU to RSU Information
-            bds_material_hdr t4, -- @ap0064p_promax_testing -- Zrep Material Description.  
-            bds_material_hdr t5 -- @ap0064p_promax_testing -- RSU Material Information
+            bds_material_hdr@ap0064p_promax_testing t1, -- @ap0064p_promax_testing -- TDU Material Header Information
+            bds_material_dstrbtn_chain@ap0064p_promax_testing t2, -- @ap0064p_promax_testing -- Material Sales Area Information
+            bds_material_bom_all@ap0064p_promax_testing t3, -- @ap0064p_promax_testing -- TDU to RSU Information
+            bds_material_hdr@ap0064p_promax_testing t4, -- @ap0064p_promax_testing -- Zrep Material Description.  
+            bds_material_hdr@ap0064p_promax_testing t5 -- @ap0064p_promax_testing -- RSU Material Information
           where
             -- Table Joins
             t2.sap_material_code = t1.sap_material_code and 
@@ -98,7 +98,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
 --            t3.child_material_type in ('FERT','ZREP') and t3.child_rsu_flag = 'X' and 
             t3.child_material_type in ('ZREP') and t3.child_rsu_flag = 'X' and
             -- Make sure only the current bom is being used for the TDU to RSU information
-            t3.bom_eff_date = (select max(t0.bom_eff_date) from bds_material_bom_all/*@ap0064p_promax_testing*/ t0 where t0.bom_eff_date <= trunc(sysdate) and t0.parent_material_code = decode(t3.child_material_type,'FERT',t1.sap_material_code,'ZREP',t4.sap_material_code))
+            t3.bom_eff_date = (select max(t0.bom_eff_date) from bds_material_bom_all@ap0064p_promax_testing/*@ap0064p_promax_testing*/ t0 where t0.bom_eff_date <= trunc(sysdate) and t0.parent_material_code = decode(t3.child_material_type,'FERT',t1.sap_material_code,'ZREP',t4.sap_material_code))
         ------------------------------------------------------------------------
         );
       

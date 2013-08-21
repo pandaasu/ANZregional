@@ -1,42 +1,40 @@
 create or replace 
 PACKAGE BODY          PXIPMX03_EXTRACT as
 
-   /*-*/
-   /* Private exceptions
-   /*-*/
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+/*******************************************************************************
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIPMX03_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX03';
 
-   /***********************************************/
-   /* This procedure performs the execute routine */
-   /***********************************************/
-   procedure execute is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_instance number(15,0);
-      var_data varchar2(4000);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_input is
+/*******************************************************************************
+  NAME:  EXECUTE                                                          PUBLIC
+*******************************************************************************/
+   procedure execute(
+     i_pmx_company in pxi_common.st_company default null,
+     i_pmx_division in pxi_common.st_promax_division default null, 
+     i_creation_date in date default sysdate-1) is
+     -- Variables     
+     v_instance number(15,0);
+     v_data pxi_common.st_data;
+ 
+     -- The extract query.
+     cursor csr_input is
         --======================================================================
         select
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('300001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '300001' -> RecordType
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format(customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- customer_code -> CustomerNumber
-          pxi_common.char_format(customer_name, 40, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- customer_name -> Longname
-          pxi_common.char_format('Y', 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT 'Y' -> PACSCustomer
-          pxi_common.char_format(payer_customer_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) || -- payer_customer_code -> PayerCode
-          pxi_common.char_format(tax_exempt, 1, pxi_common.format_type_none, pxi_common.is_nullable) || -- tax_exempt -> TaxExempt
-          pxi_common.char_format('NZD', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT 'NZD' -> DefaultCurrenty
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_nullable) -- CONSTANT '149' -> SalesOrg
+          pxi_common.char_format('300001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '300001' -> RecordType
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format(customer_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customer_code -> CustomerNumber
+          pxi_common.char_format(customer_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- customer_name -> Longname
+          pxi_common.char_format('Y', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT 'Y' -> PACSCustomer
+          pxi_common.char_format(payer_customer_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) || -- payer_customer_code -> PayerCode
+          pxi_common.char_format(tax_exempt, 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- tax_exempt -> TaxExempt
+          pxi_common.char_format('NZD', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'NZD' -> DefaultCurrenty
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- CONSTANT '149' -> SalesOrg
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -94,62 +92,34 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
         );
         --======================================================================
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   BEGIN
-
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into var_data;
-         if csr_input%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX03');
-         end if;
-
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(var_data);
-
-      end loop;
-      close csr_input;
-
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+   begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into v_data;
+       exit when csr_input%notfound;
+      -- Create the new interface when required
+      if lics_outbound_loader.is_created = false then
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
       end if;
+      -- Append the interface data
+      lics_outbound_loader.append_data(v_data);
+    end loop;
+    close csr_input;
 
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
 
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-         rollback;
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
-         end if;
-         raise;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
+  exception
+     when others then
+       rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
 end PXIPMX03_EXTRACT;

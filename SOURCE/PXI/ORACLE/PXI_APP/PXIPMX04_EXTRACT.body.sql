@@ -1,9 +1,11 @@
 create or replace 
 package body          pxipmx04_extract as
-   -- Private exceptions
-   pc_application_exception pls_integer := -20000;
-   application_exception exception;
-   pragma exception_init(application_exception, -20000);
+
+/*******************************************************************************
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIPMX04_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX04';
 
 /*******************************************************************************
   NAME:      GET_CUSTOMER_HIERARCHY                                        PUBLIC
@@ -467,7 +469,7 @@ package body          pxipmx04_extract as
               v_found := true;
               -- Check that the parent node and name are the same.
               if i_cust_name <> tv_hierarchy(v_counter).cust_name or i_parent_cust_code <> tv_hierarchy(v_counter).parent_cust_code then 
-                raise_application_error(pc_application_exception,'Cust Node : ' || i_cust_code || ' Cust Name or Parent Cust Code did not match a previous instance.');
+                pxi_common.raise_promax_error(pc_package_name,'GET_CUSTOMER_HIERARCH','Cust Node : ' || i_cust_code || ' Cust Name or Parent Cust Code did not match a previous instance.');
               end if;
             elsif i_cust_code < tv_hierarchy(v_counter).cust_code then 
               v_stop := true;  
@@ -527,90 +529,61 @@ package body          pxipmx04_extract as
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
 *******************************************************************************/
-  procedure execute is
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_instance number(15,0);
-      var_data varchar2(4000);
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_input is
+  procedure execute(
+    i_pmx_company in pxi_common.st_company default null,
+    i_pmx_division in pxi_common.st_promax_division default null, 
+    i_creation_date in date default sysdate-1) is
+     -- Variables     
+     v_instance number(15,0);
+     v_data pxi_common.st_data;
+ 
+     -- The extract query.
+     cursor csr_input is
         --======================================================================
         select
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('301001', 6, pxi_common.format_type_none, pxi_common.is_nullable) || -- CONSTANT '301001' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.format_type_none, pxi_common.is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_not_nullable) || -- cust_code -> CustomerNumber
-          pxi_common.char_format(cust_name, 40, pxi_common.format_type_none, pxi_common.is_nullable) || -- cust_name -> CustomerDescription
-          pxi_common.char_format(sales_org_code, 3, pxi_common.format_type_none, pxi_common.is_nullable) || -- sales_org_code -> CustomerSalesOrg
-          pxi_common.char_format(parent_cust_code, 10, pxi_common.format_type_ltrim_zeros, pxi_common.is_nullable) -- parent_cust_code -> ParentCustomerNumber
+          pxi_common.char_format('301001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '301001' -> ICRecordType
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
+          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- cust_code -> CustomerNumber
+          pxi_common.char_format(cust_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- cust_name -> CustomerDescription
+          pxi_common.char_format(sales_org_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- sales_org_code -> CustomerSalesOrg
+          pxi_common.char_format(parent_cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- parent_cust_code -> ParentCustomerNumber
         ------------------------------------------------------------------------
         from 
           table(get_customer_hierarchy);
         --======================================================================
 
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   BEGIN
-
-      /*-*/
-      /* Retrieve the rows
-      /*-*/
-      open csr_input;
-      loop
-         fetch csr_input into var_data;
-         if csr_input%notfound then
-            exit;
-         end if;
-
-         /*-*/
-         /* Create the new interface when required
-         /*-*/
-         if lics_outbound_loader.is_created = false then
-            var_instance := lics_outbound_loader.create_interface('PXIPMX04');
-         end if;
-
-         /*-*/
-         /* Append the interface data
-         /*-*/
-         lics_outbound_loader.append_data(var_data);
-
-      end loop;
-      close csr_input;
-
-      /*-*/
-      /* Finalise the interface when required
-      /*-*/
-      if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.finalise_interface;
+    begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into v_data;
+       exit when csr_input%notfound;
+      -- Create the new interface when required
+      if lics_outbound_loader.is_created = false then
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
       end if;
+      -- Append the interface data
+      lics_outbound_loader.append_data(v_data);
+    end loop;
+    close csr_input;
 
-   /*-------------------*/
-   /* Exception handler */
-   /*-------------------*/
-   exception
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
 
-      /**/
-      /* Exception trap
-      /**/
-      when others then
-         rollback;
-         if lics_outbound_loader.is_created = true then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
-         end if;
-         raise;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
+  exception
+     when others then
+       rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
 end PXIPMX04_EXTRACT; 

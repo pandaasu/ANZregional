@@ -23,7 +23,7 @@ PACKAGE          PXIPMX02_EXTRACT as
 
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
-  PURPOSE:   This interface creates an extract of product data.
+  PURPOSE:   This interface creates an extract of product hierarchy data.
   
              It defaults to all available live promax companies and divisions 
              and just current data as of yesterday.  If null is supplied as 

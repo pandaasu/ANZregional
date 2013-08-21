@@ -6,7 +6,7 @@ PACKAGE PXIPMX08_EXTRACT AS
 
   System  : LADS
   Package : PXIPMX08_EXTRACT
-  Owner   : DDS_APP
+  Owner   : PXI_APP
   Author  : Chris Horn
 
   Description
@@ -27,7 +27,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   ----------  --------------------  --------------------------------------------
   2013-06-25  Chris Horn            Created Interface
   2013-07-28  Mal Chambeyron        Updated SQL Formatting
-  2013-08-21  Chris Horn            Cleaned Up Code
+  2013-08-22  Chris Horn            Cleaned Up Code
 
 *******************************************************************************/
   -- LICS Hooks.
