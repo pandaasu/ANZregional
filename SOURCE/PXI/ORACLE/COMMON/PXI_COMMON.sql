@@ -64,7 +64,12 @@ package pxi_common as
 /*******************************************************************************
   Common Package Types
 *******************************************************************************/
-  -- Package Sub Types
+  -- Package System Sub Types
+  subtype st_interface_name is varchar2(32 char); -- The ICS Interface Name.
+  subtype st_package_name is varchar2(32 char);   -- Package Names  
+  subtype st_method_name is varchar2(32 char);    -- Oracle Procedure / Function names  
+  subtype st_data is varchar2(4000);              -- Data field for large data records.
+  -- Promax Data Types.
   subtype st_company is varchar2(3 char);         -- Company 
   subtype st_promax_division is varchar2(3 char); -- Promax Division  
   subtype st_material is varchar2(18 char);       -- Material Codes. 
@@ -75,15 +80,12 @@ package pxi_common as
   subtype st_reference is varchar2(18 char);      -- Reference Fields.
   subtype st_text is varchar2(50 char);           -- Text Fields.
   subtype st_string is varchar2(4000 char);       -- Long String field for messages.
-  subtype st_package_name is varchar2(32 char);   -- Package Names  
-  subtype st_method_name is varchar2(32 char);    -- Oracle Procedure / Function names  
   subtype st_bus_sgmnt is varchar2(2 char);       -- Business Segment Code
   subtype st_plant_code is varchar2(4 char);      -- Atlas Plant Code.
   subtype st_dstrbtn_chnnl is varchar2(2 char);   -- Distribution Channel
   subtype st_currency is varchar2(3 char);        -- Currency Information
   subtype st_reason_code is varchar2(2 char);     -- Reason Code
   subtype st_tax_code is varchar2(2);             -- Tax Code
-  subtype st_data is varchar2(4000);              -- Data field for large data records.
 
 /*******************************************************************************
   Common Constants
