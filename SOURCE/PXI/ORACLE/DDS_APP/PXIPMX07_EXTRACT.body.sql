@@ -5,6 +5,7 @@ PACKAGE BODY PXIPMX07_EXTRACT as
   Package Cosntants
 *******************************************************************************/
   pc_package_name constant pxi_common.st_package_name := 'PXIPMX07_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX07';
 
 /*******************************************************************************
   NAME:  EXECUTE                                                          PUBLIC
@@ -74,7 +75,7 @@ PACKAGE BODY PXIPMX07_EXTRACT as
        exit when csr_input%notfound;
       -- Create the new interface when required
       if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface('PXIPMX07');
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
       end if;
       -- Append the interface data
       lics_outbound_loader.append_data(v_data);
