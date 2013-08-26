@@ -202,7 +202,7 @@ package body pxiatl01_extract as
      -- Check the number of rows in the created data file. 
      if ti_data.count = 0 then 
        pxi_common.raise_promax_error(pc_package_name,'CREATE_INTERFACE','No data was supplied for creating interface.');
-     elsif ti_data.count > gc_max_idoc_rows then 
+     elsif ti_data.count > pxi_common.gc_max_idoc_rows then 
        pxi_common.raise_promax_error(pc_package_name,'CREATE_INTERFACE','More data than is allowed in interface was supplied.');
      else
        -- Now output the current data extract as an IDOC.   Note that header record starts in position zero.
@@ -349,15 +349,15 @@ package body pxiatl01_extract as
      loop 
        -- Now send the current data block if it is currently getting full.  But only send once the document balances to zero.  Start checking for zero 
        if i_doc_type in (gc_doc_type_accrual, gc_doc_type_accrual_reversal) then 
-         if tv_data.count >= gc_max_idoc_rows - gc_search_for_balance and tv_data.count > 0 and v_sum_amount = 0 then 
+         if tv_data.count >= pxi_common.gc_max_idoc_rows - gc_search_for_balance and tv_data.count > 0 and v_sum_amount = 0 then 
            perform_send;
          end if;
          -- Now check if we have execeed the maximum rows, less the tax and header rows.
-         if tv_data.count >= gc_max_idoc_rows - 2 then 
-           pxi_common.raise_promax_error(pc_package_name,c_method_name,'Unable to find a record to balance this idoc data to zero within the last ' || gc_search_for_balance || ' rows of data.  Max IDOC size : ' || gc_max_idoc_rows || '.');
+         if tv_data.count >= pxi_common.gc_max_idoc_rows - 2 then 
+           pxi_common.raise_promax_error(pc_package_name,c_method_name,'Unable to find a record to balance this idoc data to zero within the last ' || gc_search_for_balance || ' rows of data.  Max IDOC size : ' || pxi_common.gc_max_idoc_rows || '.');
          end if;
        else 
-         if tv_data.count >= gc_max_idoc_rows - gc_rows_for_header_footer and tv_data.count > 0 then 
+         if tv_data.count >= pxi_common.gc_max_idoc_rows - gc_rows_for_header_footer and tv_data.count > 0 then 
            perform_send;
          end if;
        end if;

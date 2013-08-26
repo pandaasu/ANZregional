@@ -89,8 +89,6 @@ package          pxiatl01_extract as
 /*******************************************************************************
   Package Constants
 *******************************************************************************/
-  -- Maximum rows per idoc output. 
-  gc_max_idoc_rows constant pls_integer := 909;  
   -- Search for a general ledger balancing record with x records of full idoc.
   gc_search_for_balance constant pls_integer := 20; 
   -- Number of rows to allow for the header and footer. 
