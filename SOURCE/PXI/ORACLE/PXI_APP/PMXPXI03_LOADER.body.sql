@@ -1,21 +1,16 @@
 create or replace 
 package body pmxpxi03_loader as
 
-/*******************************************************************************
-  Package Constants
-*******************************************************************************/
+  -- Package Constants
   pc_package_name constant pxi_common.st_package_name := 'PMXPXI03_LOADER';
   
-/*******************************************************************************
-  Package Variables
-*******************************************************************************/
+  -- Package Variables
   prv_inbound pmx_359_promotions%rowtype;
   pv_previous_xactn_seq number(15,0);
   pv_previous_px_xactn_id number(10,0);
+  pv_outbound_interface_instance number(15,0);
+  pv_outbound_record_count number(3,0);
 
-/*******************************************************************************
-  Package Definitions
-*******************************************************************************/
   -- Subtypes: Pricing Condition
   subtype st_condition_unit is varchar2(1 char);
   subtype st_condition_flag is varchar2(1 char);
@@ -26,9 +21,7 @@ package body pmxpxi03_loader as
   pc_condition_flag_percentage  constant st_condition_flag := 'T';
   pc_condition_flag_dollar      constant st_condition_flag := 'F';
 
-/*******************************************************************************
-  Interface Field Definitions
-*******************************************************************************/
+  -- Interface Field Definitions
   pc_ic_record_type constant fflu_common.st_name := 'IC Record Type';
   pc_px_company_code constant fflu_common.st_name := 'PX Company Code';
   pc_px_division_code constant fflu_common.st_name := 'PX Division Code';
@@ -69,9 +62,7 @@ package body pmxpxi03_loader as
   pc_cust_div_code constant fflu_common.st_name := 'Cust Div Code';
   pc_order_type_code constant fflu_common.st_name := 'Order Type Code';
 
-/*******************************************************************************
-  NAME:      ON_START                                                     PUBLIC
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   procedure on_start is
   begin
     -- Now initialise the data parsing wrapper.
@@ -121,20 +112,20 @@ package body pmxpxi03_loader as
     from pmx_359_promotions;
 
     -- Get Next Batch Seq
-    select nvl(max(batch_seq),0)+1 into prv_inbound.batch_seq
-    from pmx_359_promotions;
+    prv_inbound.batch_seq := pmx_359_promotions_seq.nextval;
 
     -- Reset Batch Rec Seq
     prv_inbound.batch_rec_seq := 0;
 
+    -- Reset Outbound Record Count
+    pv_outbound_record_count := 0;    
+    
   exception
     when others then
       fflu_data.log_interface_exception('ON_START');
   end on_start;
 
-/*******************************************************************************
-  NAME:      ON_DATA                                                      PUBLIC
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   procedure on_data(p_row in varchar2) is
     -- Variables
     v_ok boolean;
@@ -196,10 +187,8 @@ package body pmxpxi03_loader as
       prv_inbound.transaction_amount := fflu_data.get_char_field(pc_transaction_amount);
       prv_inbound.payer_code := fflu_data.get_char_field(pc_payer_code);
 
-      /******************************************************************/
-      /* Ignore any Records that do not have a Customer Hierarchy fields.
-      /* These records are header records and not required.
-      /******************************************************************/
+      -- Ignore any Records that do not have a Customer Hierarchy fields.
+      -- * These records are header records and not required.
       if trim(fflu_data.get_char_field(pc_customer_hierarchy)) is not null then
 
         -- Check Action Code
@@ -304,9 +293,7 @@ package body pmxpxi03_loader as
       fflu_data.log_interface_exception('ON_DATA');
   end on_data;
 
-/*******************************************************************************
-  NAME:      RAISE_OUTBOUND_EXCEPTION                                    PRIVATE
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   procedure raise_outbound_exception(p_exception_msg in varchar2) is
   begin
     fflu_data.log_interface_exception(p_exception_msg);
@@ -314,12 +301,20 @@ package body pmxpxi03_loader as
     pxi_common.raise_promax_error(pc_package_name,'RAISE_OUTBOUND_EXCEPTION',p_exception_msg);
   end raise_outbound_exception;
 
-/*******************************************************************************
-  NAME:      FORMAT_REC                                                  PRIVATE
-*******************************************************************************/
-  function format_record(pr_record in pmx_359_promotions%rowtype) return varchar2 is
+  ------------------------------------------------------------------------------
+  procedure append_record(pr_record in pmx_359_promotions%rowtype) is
   begin
-    return
+  
+    pv_outbound_record_count := pv_outbound_record_count + 1;
+    
+    -- If greater than max idoc rows, finalise and create new interface
+    if pv_outbound_record_count > pxi_common.gc_max_idoc_rows then 
+      pv_outbound_record_count := 1;
+      lics_outbound_loader.finalise_interface;
+      pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+    end if;
+
+    lics_outbound_loader.append_data(  
       pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
       pxi_common.char_format(pr_record.condition_table_ref, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_table_ref -> CondTable
       pxi_common.char_format('V', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'V' -> Application
@@ -337,20 +332,18 @@ package body pmxpxi03_loader as
       pxi_common.char_format('EA', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'EA' -> UOM
       pxi_common.char_format(pr_record.sales_deal, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- sales_deal -> PromoNum
       pxi_common.char_format(pr_record.new_rate_multiplier, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_multiplier -> PriceUnit
-      pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable); -- order_type_code -> OrderType
-
+      pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- order_type_code -> OrderType
+    );
+      
   exception
     when others then
-      fflu_data.log_interface_exception('FORMAT_RECORD');
-  end format_record;
+      fflu_data.log_interface_exception('APPEND_RECORD');
+  end append_record;
 
-/*******************************************************************************
-  NAME:      EXECUTE (*MUST* be loacated before ON_END, as is Private)   PRIVATE
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   procedure execute(i_xactn_seq in number) is
 
     -- Local definitions
-    v_outbound_interface_instance number(15,0);
     v_key_message varchar2(4000 char);
 
     v_previous_state_found boolean;
@@ -501,22 +494,22 @@ package body pmxpxi03_loader as
           if not v_prev_state_found_in_current then -- Ignore ZERO of Previous State IF FOUND in Current Transaction (BATCH)
             -- Create Outbound Interface When Required
             if not lics_outbound_loader.is_created then
-              v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+              pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
             end if;
             -- ZERO Previous State RATE
             vr_previous_state.new_rate := 0;
             -- Append Record
-            lics_outbound_loader.append_data(format_record(vr_previous_state));
+            append_record(vr_previous_state);
           end if;
         end if;
         
         if vr_current.action_code <> 'D' then -- DELETES taken care of in the last BLOCK
           -- Create Outbound Interface When Required
           if not lics_outbound_loader.is_created then
-            v_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+            pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
           end if;
           -- Append Record
-          lics_outbound_loader.append_data(format_record(vr_current));
+          append_record(vr_previous_state);
         end if;
 
       end if;
@@ -541,9 +534,7 @@ package body pmxpxi03_loader as
 
    end execute;
 
-/*******************************************************************************
-  NAME:      ON_END                                                       PUBLIC
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   procedure on_end is
   begin
     -- Only perform a commit if there were no errors at all.
@@ -560,17 +551,13 @@ package body pmxpxi03_loader as
       fflu_data.log_interface_exception('ON_END');
   end on_end;
 
-/*******************************************************************************
-  NAME:      ON_GET_FILE_TYPE                                             PUBLIC
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   function on_get_file_type return varchar2 is
   begin
     return fflu_common.gc_file_type_fixed_width;
   end on_get_file_type;
 
-/*******************************************************************************
-  NAME:      ON_GET_CSV_QUALIFER                                          PUBLIC
-*******************************************************************************/
+  ------------------------------------------------------------------------------
   function on_get_csv_qualifier return varchar2 is
   begin
     return fflu_common.gc_csv_qualifier_null;

@@ -20,6 +20,9 @@ package pmxpxi03_loader as
   Below is an example of the flow below. 
 
   Promax PX Promotions 359 -> LADS (Inbound) -> Atlas PXIATL02 - Pricing Conditions
+  
+  * NOTE This Package should NOT be executed in parallel .. and WILL FAIL on 
+  * Duplicate XACTN_SEQ should it be executed in parallel.
 
   Functions
   ------------------------------------------------------------------------------
@@ -36,6 +39,8 @@ package pmxpxi03_loader as
   2013-08-02  Jonathan Girling      Created Interface
   2013-08-15  Mal Chambeyron        Added deletion / synchronization logic.
   2013-08-21  Chris Horn            Basic Clean Up.
+  2013-08-26  Mal Chambeyron        Added Atlas document split logic .. 
+                                    on pxi_common.gc_max_idoc_rows
 
 *******************************************************************************/
   -- LICS Hooks.
