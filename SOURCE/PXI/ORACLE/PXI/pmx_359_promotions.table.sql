@@ -1,62 +1,131 @@
--- This script creates the table used by PMXPXI03_LOADER.  
+--------------------------------------------------------------------------------
+-- Table
 
-  CREATE TABLE "PMX_359_PROMOTIONS" 
-   (	"XACTN_SEQ" NUMBER(15,0), 
-	"BATCH_SEQ" NUMBER(15,0), 
-	"BATCH_REC_SEQ" NUMBER(10,0), 
-	"IC_RECORD_TYPE" VARCHAR2(6 CHAR), 
-	"PX_COMPANY_CODE" VARCHAR2(3 CHAR), 
-	"PX_DIVISION_CODE" VARCHAR2(3 CHAR), 
-	"CUSTOMER_HIERARCHY" VARCHAR2(10 CHAR), 
-	"SALES_DEAL" VARCHAR2(10 CHAR), 
-	"MATERIAL" VARCHAR2(18 CHAR), 
-	"BUY_START_DATE" DATE, 
-	"BUY_STOP_DATE" DATE, 
-	"TRANSACTION_CODE" VARCHAR2(4 CHAR), 
-	"DESCRIPTION" VARCHAR2(40 CHAR), 
-	"SALES_ORG" VARCHAR2(4 CHAR), 
-	"RATE" NUMBER(12,2), 
-	"USER_1" VARCHAR2(10 CHAR), 
-	"USER_2" VARCHAR2(10 CHAR), 
-	"ACTION_CODE" VARCHAR2(1 CHAR), 
-	"BONUS_STOCK_DESCRIPTION" VARCHAR2(100 CHAR), 
-	"BONUS_STOCK_HURDLE" NUMBER(9,2), 
-	"BONUS_STOCK_RECEIVE" NUMBER(9,2), 
-	"BONUS_STOCK_SKU_CODE" VARCHAR2(18 CHAR), 
-	"RATE_UNIT" VARCHAR2(5 CHAR), 
-	"CONDITION_PRICING_UNIT" VARCHAR2(5 CHAR), 
-	"CONDITION_UOM" VARCHAR2(3 CHAR), 
-	"SAP_PROMO_NUMBER" VARCHAR2(10 CHAR), 
-	"CURRENCY" VARCHAR2(3 CHAR), 
-	"UOM_STR_UNIT" VARCHAR2(3 CHAR), 
-	"UOM_STR_SALEABLE" VARCHAR2(3 CHAR), 
-	"PROMO_PRICE_SALEABLE" VARCHAR2(10 CHAR), 
-	"PROMO_PRICE_UNIT" VARCHAR2(10 CHAR), 
-	"TRANSACTION_AMOUNT" VARCHAR2(10 CHAR), 
-	"PAYER_CODE" VARCHAR2(20 CHAR), 
-	"CONDITION_FLAG" VARCHAR2(1 CHAR), 
-	"BUSINESS_SEGMENT" VARCHAR2(2 CHAR), 
-	"RATE_MULTIPLIER" NUMBER(4,0), 
-	"CONDITION_TYPE_CODE" VARCHAR2(1 CHAR), 
-	"PRICING_CONDITION_CODE" VARCHAR2(4 CHAR), 
-	"CONDITION_TABLE_REF" VARCHAR2(5 CHAR), 
-	"CUST_DIV_CODE" VARCHAR2(2 CHAR), 
-	"ORDER_TYPE_CODE" VARCHAR2(4 CHAR), 
-	"VAKEY" VARCHAR2(50 CHAR), 
-	"PX_XACTN_ID" NUMBER(10,0), 
-	"NEW_CUSTOMER_HIERARCHY" VARCHAR2(10 CHAR), 
-	"NEW_MATERIAL" VARCHAR2(18 CHAR), 
-	"NEW_RATE" NUMBER(12,2), 
-	"NEW_RATE_UNIT" VARCHAR2(5 CHAR), 
-	"NEW_RATE_MULTIPLIER" varchar2(5 char), 
-	 CONSTRAINT "PMX_359_PROMOTIONS_PK" PRIMARY KEY ("XACTN_SEQ"));
+drop table pxi.pmx_359_promotions cascade constraints;
 
-  CREATE UNIQUE INDEX "PMX_359_PROMOTIONS_BATCH_SEQ" ON "PMX_359_PROMOTIONS" ("BATCH_SEQ", "BATCH_REC_SEQ");
+create table pxi.pmx_359_promotions (
+  -- Batch Control Fields
+  xactn_seq number(15,0),
+  batch_seq number(15,0),
+  batch_rec_seq number(10,0),
+  -- Promax 359 Promotions Record Fields  
+  ic_record_type varchar2(6 char),
+  px_company_code varchar2(3 char),
+  px_division_code varchar2(3 char),
+  customer_hierarchy varchar2(10 char),
+  sales_deal varchar2(10 char),
+  material varchar2(18 char),
+  buy_start_date date,
+  buy_stop_date date,
+  transaction_code varchar2(4 char),
+  description varchar2(40 char),
+  sales_org varchar2(4 char),
+  rate number(12,2),
+  user_1 varchar2(10 char),
+  user_2 varchar2(10 char),
+  action_code varchar2(1 char),
+  bonus_stock_description varchar2(100 char),
+  bonus_stock_hurdle number(9,2),
+  bonus_stock_receive number(9,2),
+  bonus_stock_sku_code varchar2(18 char),
+  rate_unit varchar2(5 char),
+  condition_pricing_unit varchar2(5 char),
+  condition_uom varchar2(3 char),
+  sap_promo_number varchar2(10 char),
+  currency varchar2(3 char),
+  uom_str_unit varchar2(3 char),
+  uom_str_saleable varchar2(3 char),
+  promo_price_saleable varchar2(10 char),
+  promo_price_unit varchar2(10 char),
+  transaction_amount varchar2(10 char),
+  payer_code varchar2(20 char),
+  -- Enriched Fields
+  condition_flag varchar2(1 char),
+  business_segment varchar2(2 char),
+  rate_multiplier number(4),
+  condition_type_code varchar2(1 char),
+  pricing_condition_code varchar2(4 char),
+  condition_table_ref varchar2(5 char),
+  cust_div_code varchar2(2 char),
+  order_type_code varchar2(4 char),
+  -- Calculated Fields
+  vakey varchar2(50 char),
+  px_xactn_id number(10,0),
+  new_customer_hierarchy varchar2(10 char),
+  new_material varchar2(18 char),
+  new_rate number(12,2),
+  new_rate_unit varchar2(5 char),
+  new_rate_multiplier varchar2(5 char)
+);
 
-  CREATE INDEX "PMX_359_PROMOTIONS_PX_XACTN_ID" ON "PMX_359_PROMOTIONS" ("PX_XACTN_ID");
+-- Batch Control Fields
+comment on column pxi.pmx_359_promotions.xactn_seq is 'Unique Transaction Sequence';
+comment on column pxi.pmx_359_promotions.batch_seq is 'Unique Batch Sequence per Inbound File';
+comment on column pxi.pmx_359_promotions.batch_rec_seq is 'Record Sequence within Batch';
+-- Promax 359 Promotions Record Fields  
+comment on column pxi.pmx_359_promotions.ic_record_type is 'IC Record Type';
+comment on column pxi.pmx_359_promotions.px_company_code is 'PX Company Code';
+comment on column pxi.pmx_359_promotions.px_division_code is 'PX Division Code';
+comment on column pxi.pmx_359_promotions.customer_hierarchy is 'Customer Hierarchy';
+comment on column pxi.pmx_359_promotions.sales_deal is 'Sales Deal';
+comment on column pxi.pmx_359_promotions.material is 'Material';
+comment on column pxi.pmx_359_promotions.buy_start_date is 'Buy Start Date';
+comment on column pxi.pmx_359_promotions.buy_stop_date is 'Buy Stop Date';
+comment on column pxi.pmx_359_promotions.transaction_code is 'Transaction Code';
+comment on column pxi.pmx_359_promotions.description is 'Description';
+comment on column pxi.pmx_359_promotions.sales_org is 'Sales Org';
+comment on column pxi.pmx_359_promotions.rate is 'Rate';
+comment on column pxi.pmx_359_promotions.user_1 is 'User 1';
+comment on column pxi.pmx_359_promotions.user_2 is 'User 2';
+comment on column pxi.pmx_359_promotions.action_code is 'Action Code';
+comment on column pxi.pmx_359_promotions.bonus_stock_description is 'Bonus Stock Description';
+comment on column pxi.pmx_359_promotions.bonus_stock_hurdle is 'Bonus Stock Hurdle';
+comment on column pxi.pmx_359_promotions.bonus_stock_receive is 'Bonus Stock Receive';
+comment on column pxi.pmx_359_promotions.bonus_stock_sku_code is 'Bonus Stock SKU Code';
+comment on column pxi.pmx_359_promotions.rate_unit is 'Rate Unit';
+comment on column pxi.pmx_359_promotions.condition_pricing_unit is 'Condition Pricing Unit';
+comment on column pxi.pmx_359_promotions.condition_uom is 'Condition UOM';
+comment on column pxi.pmx_359_promotions.sap_promo_number is 'SAP Promo Number';
+comment on column pxi.pmx_359_promotions.currency is 'Currency';
+comment on column pxi.pmx_359_promotions.uom_str_unit is 'UOM Str Unit';
+comment on column pxi.pmx_359_promotions.uom_str_saleable is 'UOM Str Saleable';
+comment on column pxi.pmx_359_promotions.promo_price_saleable is 'Promo Price Saleable';
+comment on column pxi.pmx_359_promotions.promo_price_unit is 'Promo Price Unit';
+comment on column pxi.pmx_359_promotions.transaction_amount is 'Transaction Amount';
+comment on column pxi.pmx_359_promotions.payer_code is 'Payer Code';
+-- Enriched Fields
+comment on column pxi.pmx_359_promotions.condition_flag is 'Condition Flag .. If Condition Pricing Unit = 1 Then Condition Flag = F (Dollar) Else Condition Flag = T (Percentage)';
+comment on column pxi.pmx_359_promotions.business_segment is 'Business Segment .. Determined from Company Code / Material';
+comment on column pxi.pmx_359_promotions.rate_multiplier is 'Rate Multiplier .. Lookup (pmx_prom_config)';
+comment on column pxi.pmx_359_promotions.condition_type_code is 'Condition Type Code .. Lookup (pmx_prom_config)';
+comment on column pxi.pmx_359_promotions.pricing_condition_code is 'Pricing Condition Code .. Lookup (pmx_prom_config)';
+comment on column pxi.pmx_359_promotions.condition_table_ref is 'Condition Table Ref .. Lookup (pmx_prom_config)';
+comment on column pxi.pmx_359_promotions.cust_div_code is 'Cust Div Code .. Lookup (pmx_prom_config)';
+comment on column pxi.pmx_359_promotions.order_type_code is 'Order Type Code .. Lookup (pmx_prom_config)';
+-- Calculated Fields
+comment on column pxi.pmx_359_promotions.vakey is 'VAKEY';
+comment on column pxi.pmx_359_promotions.px_xactn_id is 'PX Transaction Id .. Embedded in Description .. after [:]';
+comment on column pxi.pmx_359_promotions.new_customer_hierarchy is 'FULL Customer Hierarchy';
+comment on column pxi.pmx_359_promotions.new_material is 'FULL Material';
+comment on column pxi.pmx_359_promotions.new_rate is 'Rate .. Calc';
+comment on column pxi.pmx_359_promotions.new_rate_unit is 'Rate Unit .. If Percentage Then Null Else Currency';
+comment on column pxi.pmx_359_promotions.new_rate_multiplier is 'Rate Multiplier .. Calc';
 
-  CREATE UNIQUE INDEX "PMX_359_PROMOTIONS_UK" ON "PMX_359_PROMOTIONS" ("VAKEY", "PRICING_CONDITION_CODE", "XACTN_SEQ", "SALES_DEAL");
-  
-  create or replace public synonym pmx_359_promotions for pxi.pmx_359_promotions;
-  
-  grant select, insert, update, delete on pmx_359_promotions to pxi_app;
+comment on table pxi.pmx_359_promotions is 'Promax PX Promotions / Pricing Conditions Transaction Table';
+
+-- Primary Key
+alter table pxi.pmx_359_promotions add constraint pmx_359_promotions_pk primary key (xactn_seq)
+  using index (create unique index pxi.pmx_359_promotions_pk on pxi.pmx_359_promotions (xactn_seq));
+
+create unique index pxi.pmx_359_promotions_uk on pxi.pmx_359_promotions (vakey, pricing_condition_code, xactn_seq, sales_deal);
+
+create unique index pxi.pmx_359_promotions_batch_seq on pxi.pmx_359_promotions (batch_seq, batch_rec_seq);
+
+create index pxi.pmx_359_promotions_px_xactn_id on pxi.pmx_359_promotions (px_xactn_id);
+
+-- Synonym
+create or replace public synonym pmx_359_promotions for pxi.pmx_359_promotions;
+
+-- Grants
+grant select, insert, update, delete on pxi.pmx_359_promotions to pxi_app;
+
