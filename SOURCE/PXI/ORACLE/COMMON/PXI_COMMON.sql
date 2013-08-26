@@ -105,6 +105,8 @@ package pxi_common as
   gc_tax_code_s2               constant st_tax_code := 'S2';  -- S2 - Tax Rate 2
   gc_tax_code_s3               constant st_tax_code := 'S3';  -- S3 - No Tax.
   gc_tax_code_se               constant st_tax_code := 'SE';  -- SE - No Tax.
+  -- Maximum rows per idoc output. 
+  gc_max_idoc_rows constant pls_integer := 909;  
   
 /*******************************************************************************
   NAME:      RAISE_PROMAX_ERROR                                           PUBLIC
