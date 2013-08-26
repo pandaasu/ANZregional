@@ -46,7 +46,19 @@ package pmxpxi03_loader as
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
 
-  procedure execute(p_xactn_seq in number);
+/*******************************************************************************
+  NAME:      EXECUTE                                                      PUBLIC
+  PURPOSE:   Carries out the processing required based on the transaction 
+             sequence number.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Jonathan Girling     Created.
+  1.2   2013-08-26 Chris Horn           Cleaned Up.
+
+*******************************************************************************/
+  procedure execute(i_xactn_seq in number);
   
 end pmxpxi03_loader;
 /

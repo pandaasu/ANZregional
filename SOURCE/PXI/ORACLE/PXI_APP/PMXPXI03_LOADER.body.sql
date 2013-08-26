@@ -347,7 +347,7 @@ package body pmxpxi03_loader as
 /*******************************************************************************
   NAME:      EXECUTE (*MUST* be loacated before ON_END, as is Private)   PRIVATE
 *******************************************************************************/
-  procedure execute(p_xactn_seq in number) is
+  procedure execute(i_xactn_seq in number) is
 
     -- Local definitions
     v_outbound_interface_instance number(15,0);
@@ -374,7 +374,7 @@ package body pmxpxi03_loader as
             sales_deal,
             max(xactn_seq) as xactn_seq
           from pmx_359_promotions
-          where xactn_seq > p_xactn_seq
+          where xactn_seq > i_xactn_seq
           group by vakey,
             pricing_condition_code,
             sales_deal
@@ -398,7 +398,7 @@ package body pmxpxi03_loader as
             sales_deal,
             max(xactn_seq) as xactn_seq
           from pmx_359_promotions
-          where xactn_seq <= p_xactn_seq -- before Current Transaction (Batch)
+          where xactn_seq <= i_xactn_seq -- before Current Transaction (Batch)
           and vakey = vr_current.vakey
           and pricing_condition_code = vr_current.pricing_condition_code
           and sales_deal = vr_current.sales_deal
@@ -419,7 +419,7 @@ package body pmxpxi03_loader as
                 sales_deal,
                 max(xactn_seq) as xactn_seq
               from pmx_359_promotions
-              where xactn_seq > p_xactn_seq -- *WITHIN* Current Transaction (Batch)
+              where xactn_seq > i_xactn_seq -- *WITHIN* Current Transaction (Batch)
               and xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
               and vakey = vr_current.vakey
               and pricing_condition_code = vr_current.pricing_condition_code
