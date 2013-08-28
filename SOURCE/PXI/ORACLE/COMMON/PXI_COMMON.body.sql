@@ -303,7 +303,8 @@ package body pxi_common is
   begin
     -- Now add new zealand data as necessary. 
     rv_row.promax_company := gc_new_zealand;
-    rv_row.promax_division := gc_new_zealand;  
+    rv_row.promax_division := gc_new_zealand;
+    rv_row.cust_division := gc_cust_division_non_specific;
     if add_row(c_live) = true then 
       pipe row(rv_row);
     end if;
@@ -311,6 +312,7 @@ package body pxi_common is
     -- Add Australia Petcare Configuration
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_petcare;
+    rv_row.cust_division := gc_cust_division_petcare;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;
@@ -318,6 +320,7 @@ package body pxi_common is
     -- Add Australia Food Configuration
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_food;  
+    rv_row.cust_division := gc_cust_division_food;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;
@@ -325,6 +328,7 @@ package body pxi_common is
     -- Add Australia Snackfood Configuration
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_snack;  
+    rv_row.cust_division := gc_cust_division_snack;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;

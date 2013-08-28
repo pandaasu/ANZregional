@@ -52,6 +52,7 @@ package pxi_common as
   2013-08-09  Jonathan Girling		  Added SE Tax Code
   2013-08-20  Chris Horn            Split out to make common between Venus and
                                     LADS, added promax configuration pipe table.
+  2013-08-28  Chris Horn            Added customer division codes.
 
 *******************************************************************************/
 
@@ -81,6 +82,7 @@ package pxi_common as
   subtype st_text is varchar2(50 char);           -- Text Fields.
   subtype st_string is varchar2(4000 char);       -- Long String field for messages.
   subtype st_bus_sgmnt is varchar2(2 char);       -- Business Segment Code
+  subtype st_cust_division is varchar2(2 char);   -- Customer Division
   subtype st_plant_code is varchar2(4 char);      -- Atlas Plant Code.
   subtype st_dstrbtn_chnnl is varchar2(2 char);   -- Distribution Channel
   subtype st_currency is varchar2(3 char);        -- Currency Information
@@ -93,10 +95,16 @@ package pxi_common as
   -- Company Constants / Sales Org Constants
   gc_new_zealand  constant st_company := '149';
   gc_australia    constant st_company := '147';
-  -- Business Segment Constants
+  -- Business Segment / Material Division Constants
   gc_bus_sgmnt_snack    constant st_bus_sgmnt := '01';
   gc_bus_sgmnt_food     constant st_bus_sgmnt := '02';
   gc_bus_sgmnt_petcare  constant st_bus_sgmnt := '05';
+  -- Customer Divivision Constants 
+  gc_cust_division_non_specific constant st_cust_division := '51';
+  gc_cust_division_food         constant st_cust_division := '57';
+  gc_cust_division_snack        constant st_cust_division := '55';
+  gc_cust_division_petcare      constant st_cust_division := '56';
+
   -- Distribution Channel 
   gc_distrbtn_channel_primary  constant st_dstrbtn_chnnl := '10'; -- Primary Channel
   -- Tax Codes
@@ -298,7 +306,8 @@ package pxi_common as
   -- Interface Group List Record
   type rt_promax_config is record (
     promax_company st_company,          -- Valid companies
-    promax_division st_promax_division -- Valid division for this company.
+    promax_division st_promax_division, -- Valid division for this company.
+    cust_division st_cust_division    -- Equivalent Customer Division.
   );
 
   -- Interface Group List Table
