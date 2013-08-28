@@ -17,9 +17,9 @@ PACKAGE          PXIPMX02_EXTRACT as
  ------------  --------------------  -----------
  28/07/2013    Chris Horn            Created.
  21/08/2013    Chris Horn            Cleaned Up Code.
+ 28/08/2013    Chris Horn            Made code more generic for OZ and NZ.
  
 *******************************************************************************/
-
 
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
@@ -52,10 +52,13 @@ PACKAGE          PXIPMX02_EXTRACT as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-07-28 Chris Horn           Created.
+  1.1   2013-08-28 Chris Horn           Added Promax Company and Division Info.
   
 *******************************************************************************/
   -- Hierarchy Node Record
   type rt_hierarchy_node is record (
+      promax_company pxi_common.st_company,
+      promax_division pxi_common.st_promax_division,
       node_code varchar2(40),
       node_name varchar2(40),
       parent_node_code varchar2(40),
@@ -65,6 +68,9 @@ PACKAGE          PXIPMX02_EXTRACT as
   -- Define the hierarchy table type.
   type tt_hierachy is table of rt_hierarchy_node;
   -- The pipelined table function to return the product hierarchy nodes.
-  function get_product_hierarchy return tt_hierachy pipelined;
+  function get_product_hierarchy(
+    i_pmx_company in pxi_common.st_company,
+    i_pmx_division in pxi_common.st_promax_division 
+    ) return tt_hierachy pipelined;
 
 end PXIPMX02_EXTRACT;

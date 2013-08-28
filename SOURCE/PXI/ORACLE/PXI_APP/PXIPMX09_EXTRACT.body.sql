@@ -25,8 +25,8 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('336002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336002' -> RecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format(invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
           pxi_common.char_format(invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
           pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
@@ -35,7 +35,7 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
           pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
           pxi_common.char_format(conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
           pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
-          pxi_common.char_format(promotion_number, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable)  -- promotion_number -> number
+          pxi_common.char_format(promotion_number, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- promotion_number -> PromotionNumber
 
         ------------------------------------------------------------------------
         from (
@@ -43,28 +43,30 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
         -- SQL
         ------------------------------------------------------------------------
           select
-              '336002' as ICRecordType,
-              sales_org as px_company_code,
-              '149' as px_division_code,
-              invoice_no as invoiceNumber,
-              line_no as invoiceLineNumber,
-              t02.kunnr as customerHierarchy,
-              zrep_matl_code as material,
-              to_date(invoice_date, 'yyyymmdd') as invoiceDate,
-              discount as discountGiven,
+              t03.promax_company,
+              t03.promax_division,
+              t01.invoice_no as invoicenumber,
+              t01.line_no as invoiceLineNumber,
+              t02.kunnr as customerhierarchy,
+              t01.zrep_matl_code as material,
+              to_date(t01.invoice_date, 'yyyymmdd') as invoicedate,
+              t01.discount as discountGiven,
               rpad(t01.pricing_condition,6) as conditionType,       -- TBC with the business. In issues log.
               t01.pmnum as promotion_number,      
-              'NZD' as currency
+              case t01.sales_org when  pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
           from
-              promax_prom_inv_ext_view/*@ap0064p_promax_testing*/ t01,
-              lads_prc_lst_hdr/*@ap0064p_promax_testing*/ t02
+              promax_prom_inv_ext_view@ap0064p_promax_testing t01,
+              lads_prc_lst_hdr@ap0064p_promax_testing t02,
+              table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t03  -- Promax Configuration table
           where
               t01.pmnum = t02.kosrt and
               t01.sales_org = t02.vkorg and
               t01.cust_division = t02.spart and
               t01.zrep_matl_code = t02.matnr and
               t01.lads_date > trunc(i_creation_date) and
-              t01.sales_org = '149'
+              -- Now make sure the correct data is being extracted.
+              t01.sales_org = t03.promax_company and 
+              ((t01.sales_org = pxi_common.gc_australia and t01.cust_division = t03.cust_division) or (t01.sales_org = pxi_common.gc_new_zealand))
         ------------------------------------------------------------------------
         );
         --======================================================================

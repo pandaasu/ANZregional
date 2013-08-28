@@ -18,6 +18,7 @@ PACKAGE          PXIPMX01_EXTRACT as
  24/07/2013    Chris Horn            Created.
  27/07/2013    Mal Chambeyron        Formatted SQL Output.
  21/08/2013    Chris Horn            Cleaned Up Code.
+ 27/08/2013    Chris Horn            Updated logic. 
 
 *******************************************************************************/
 
@@ -35,6 +36,7 @@ PACKAGE          PXIPMX01_EXTRACT as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
+  1.3   2013-08-27 Chris Horn           Implemented New Product Logic.
 
 *******************************************************************************/
   procedure execute(

@@ -20,6 +20,7 @@ PACKAGE          PXIPMX05_EXTRACT as
  24/07/2013    Chris Horn            Created.
  26/07/2013    Mal Chambeyron        Formatted SQL Output
  21/08/2013    Chris Horn            Cleaned Up Code
+ 28/08/2013    Chris Horn            Made more generic for OZ.
 
 *******************************************************************************/
 
@@ -37,6 +38,7 @@ PACKAGE          PXIPMX05_EXTRACT as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
+  1.3   2013-08-28 Chris Horn           Made generic for OZ.
 
 *******************************************************************************/
    procedure execute(

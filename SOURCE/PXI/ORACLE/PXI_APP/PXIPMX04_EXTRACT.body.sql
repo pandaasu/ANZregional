@@ -10,10 +10,15 @@ package body          pxipmx04_extract as
 /*******************************************************************************
   NAME:      GET_CUSTOMER_HIERARCHY                                        PUBLIC
 *******************************************************************************/
-  function get_customer_hierarchy return tt_hierachy pipelined is
+  function get_customer_hierarchy(
+    i_pmx_company in pxi_common.st_company,
+    i_pmx_division in pxi_common.st_promax_division 
+    )  return tt_hierachy pipelined is
     -- This cursor generates the product level data in a flatterned table structure.
     cursor csr_cust_level_data is
       select 
+        t5.promax_company,
+        t5.promax_division,
         t1.customer_code, 
         t1.order_block_flag,
         t3.deletion_flag, 
@@ -421,7 +426,8 @@ package body          pxipmx04_extract as
             LEVEL_10_SORT_LEVEL,
             level_10_start_date desc,
             level_10_end_date desc
-        ) t4
+        ) t4,
+        table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t5  -- Promax Configuration table
       where 
         -- Table Joins
         t1.customer_code = t2.customer_code and 
@@ -431,12 +437,13 @@ package body          pxipmx04_extract as
         t4.distbn_chnl_code  = t3.distbn_chnl_code and
         t4.division_code  = t3.division_code and    
         -- Only Customers extended into sales organisation for New Zealand.
-        t3.sales_org_code = '149' and 
+        t3.sales_org_code = t5.promax_company and 
+        ((t3.sales_org_code = pxi_common.gc_australia and t3.division_code = t5.cust_division) or (t3.sales_org_code = pxi_common.gc_new_zealand and t3.division_code = pxi_common.gc_cust_division_non_specific)) and
         -- Only show the main english customer name.
         t2.address_version = '*NONE' and
         -- Still include customer in the extract even if order block is in place if they have had sales in the last 12 weeks.
         ((t1.order_block_flag is null and t1.deletion_flag is null and t3.order_block_flag is null and t3.deletion_flag is null) or 
-         (exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and 
+         (exists (select * from sale_cdw_gsv@ap0064p_promax_testing t0 where t0.sold_to_cust_code = t1.customer_code))) and 
         -- Only include not rasw and packs or affiliate customers
         t3.distbn_chnl_code not in ('98','99') and 
         -- Do not include demand planning nodes.
@@ -448,7 +455,7 @@ package body          pxipmx04_extract as
     v_counter pls_integer;
      
     -- This procedure looks through the existing node paths and checks if one already exists.  
-    procedure add_path(i_cust_code in varchar2, i_cust_name in varchar2,i_parent_cust_code in varchar2,i_level in number,i_sales_org_code in varchar2) is
+    procedure add_path(i_pmx_company in pxi_common.st_company, i_pmx_division in pxi_common.st_promax_division, i_cust_code in varchar2, i_cust_name in varchar2,i_parent_cust_code in varchar2,i_level in number,i_sales_org_code in varchar2) is
       rv_node rt_hierarchy_node;
       v_counter pls_integer;
       v_mover pls_integer;
@@ -465,13 +472,13 @@ package body          pxipmx04_extract as
           exit when v_counter > tv_hierarchy.count;
           -- Check if we reached the end of the nodes at this level that we need and the record hadn't been found.
           if tv_hierarchy(v_counter).node_level = i_level then
-            if i_cust_code = tv_hierarchy(v_counter).cust_code then 
+            if i_cust_code = tv_hierarchy(v_counter).cust_code and i_pmx_company = tv_hierarchy(v_counter).promax_company and i_pmx_division = tv_hierarchy(v_counter).promax_division then 
               v_found := true;
               -- Check that the parent node and name are the same.
               if i_cust_name <> tv_hierarchy(v_counter).cust_name or i_parent_cust_code <> tv_hierarchy(v_counter).parent_cust_code then 
                 pxi_common.raise_promax_error(pc_package_name,'GET_CUSTOMER_HIERARCH','Cust Node : ' || i_cust_code || ' Cust Name or Parent Cust Code did not match a previous instance.');
               end if;
-            elsif i_cust_code < tv_hierarchy(v_counter).cust_code then 
+            elsif i_cust_code < tv_hierarchy(v_counter).cust_code and i_pmx_company = tv_hierarchy(v_counter).promax_company and i_pmx_division = tv_hierarchy(v_counter).promax_division then 
               v_stop := true;  
             end if;
           elsif i_level < tv_hierarchy(v_counter).node_level then
@@ -492,6 +499,8 @@ package body          pxipmx04_extract as
         end if;
         -- If the node was not found then assign this node to the current position of the counter.
         if v_found = false then 
+          rv_node.promax_company := i_pmx_company;
+          rv_node.promax_division := i_pmx_division;
           rv_node.cust_code := i_cust_code;
           rv_node.cust_name := i_cust_name;
           rv_node.parent_cust_code := i_parent_cust_code;
@@ -509,12 +518,12 @@ package body          pxipmx04_extract as
        fetch csr_cust_level_data into rv_cust_level;
        exit when csr_cust_level_data%notfound;
        -- Now process the material. 
-       add_path(rv_cust_level.level_01_cust_code,rv_cust_level.level_01_cust_name_en,null,1,rv_cust_level.sales_org_code);
-       add_path(rv_cust_level.level_02_cust_code,rv_cust_level.level_02_cust_name_en,rv_cust_level.level_01_cust_code,2,rv_cust_level.sales_org_code);
-       add_path(rv_cust_level.level_03_cust_code,rv_cust_level.level_03_cust_name_en,rv_cust_level.level_02_cust_code,3,rv_cust_level.sales_org_code);
-       add_path(rv_cust_level.level_04_cust_code,rv_cust_level.level_04_cust_name_en,rv_cust_level.level_03_cust_code,4,rv_cust_level.sales_org_code);
-       add_path(rv_cust_level.level_05_cust_code,rv_cust_level.level_05_cust_name_en,rv_cust_level.level_04_cust_code,5,rv_cust_level.sales_org_code);
-       add_path(rv_cust_level.level_06_cust_code,rv_cust_level.level_06_cust_name_en,rv_cust_level.level_05_cust_code,6,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_01_cust_code,rv_cust_level.level_01_cust_name_en,null,1,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_02_cust_code,rv_cust_level.level_02_cust_name_en,rv_cust_level.level_01_cust_code,2,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_03_cust_code,rv_cust_level.level_03_cust_name_en,rv_cust_level.level_02_cust_code,3,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_04_cust_code,rv_cust_level.level_04_cust_name_en,rv_cust_level.level_03_cust_code,4,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_05_cust_code,rv_cust_level.level_05_cust_name_en,rv_cust_level.level_04_cust_code,5,rv_cust_level.sales_org_code);
+       add_path(rv_cust_level.promax_company, rv_cust_level.promax_division,rv_cust_level.level_06_cust_code,rv_cust_level.level_06_cust_name_en,rv_cust_level.level_05_cust_code,6,rv_cust_level.sales_org_code);
      end loop;
      close csr_cust_level_data;
      -- Now output the actual hierarchy rows. 
@@ -544,16 +553,15 @@ package body          pxipmx04_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('301001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '301001' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- cust_code -> CustomerNumber
           pxi_common.char_format(cust_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- cust_name -> CustomerDescription
           pxi_common.char_format(sales_org_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- sales_org_code -> CustomerSalesOrg
           pxi_common.char_format(parent_cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- parent_cust_code -> ParentCustomerNumber
         ------------------------------------------------------------------------
         from 
-          table(get_customer_hierarchy);
+          table(get_customer_hierarchy(i_pmx_company,i_pmx_division));
         --======================================================================
 
     begin

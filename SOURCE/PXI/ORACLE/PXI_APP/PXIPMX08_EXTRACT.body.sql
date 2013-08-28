@@ -162,8 +162,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('361001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '361001' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format(bus_partner_ref, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- bus_partner_ref -> AccountCode
           pxi_common.char_format(tax_cust_ref, 20, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- tax_cust_ref -> Reference
           pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> ActionFlag
@@ -177,7 +177,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           pxi_common.numb_format(amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- amount -> Amount
           pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
           pxi_common.char_format('', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
-          pxi_common.char_format('NZD', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT 'NZD' -> Currency
+          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- currency -> Currency
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -191,6 +191,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
             --
           *****************************/
           select
+            t1.company_code as promax_company,
+            case t1.company_code when pxi_common.gc_australia then t1.div_code when pxi_common.gc_new_zealand then pxi_common.gc_new_zealand else null end as promax_division,
             trim(t1.bus_partner_ref) as bus_partner_ref,
             decode(nvl(trim(t1.reason_code),'99'), '40', 'No Tax', '42', 'No Tax', '44', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Reason Code 40, 42, 44 .. Else Inc Tax
             t1.posting_date,
@@ -198,7 +200,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
             t1.assignment_no,
             t1.reason_code,
             t1.claim_amount + t1.tax_base as amount,
-            t1.tax_base as tax_amount
+            t1.tax_base as tax_amount,
+            case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
             table(get_inbound) t1
         ------------------------------------------------------------------------

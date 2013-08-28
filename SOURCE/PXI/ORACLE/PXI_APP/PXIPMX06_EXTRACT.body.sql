@@ -26,25 +26,28 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('330002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '330002' -> RecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format('DIV_1', 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- CONSTANT 'DIV_1' -> CustomerCode
           pxi_common.char_format(prodcode, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- prodcode -> MaterialCode
           pxi_common.date_format(startdate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- startdate -> StartDate
           pxi_common.date_format(enddate, 'yyyymmdd', pxi_common.fc_is_nullable) || -- enddate -> EndDate
           pxi_common.numb_format(listprice, '999999990.00', pxi_common.fc_is_nullable) || -- listprice -> ListPrice
-          pxi_common.char_format('NZD', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT 'NZD' -> Currency
+          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- currency -> Currency
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
         ------------------------------------------------------------------------
           select
-              custcode,
-              prodcode,
-              startdate,
-              enddate,
-              PRICE1 as listprice
+            t20.promax_company,
+            t20.promax_division,
+            t10.custcode,
+            t10.prodcode,
+            t10.startdate,
+            t10.enddate,
+            t10.price1 as listprice,
+            case t10.cocode when  pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
           FROM (SELECT t01.*,
                         RANK ()
                         OVER (
@@ -82,11 +85,11 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
                                    AS price1,
                                 0 AS mnfcost,
                                 0 AS rrp
-                           FROM lads_prc_lst_hdr/*@ap0064p_promax_testing*/ a,
-                                lads_prc_lst_det/*@ap0064p_promax_testing*/ c,
-                                mfanz_matl/*@ap0064p_promax_testing*/ f,
-                                mfanz_fg_matl_clssfctn/*@ap0064p_promax_testing*/ g,
-                                mfanz_matl_by_sales_area/*@ap0064p_promax_testing*/ h
+                           FROM lads_prc_lst_hdr@ap0064p_promax_testing a,
+                                lads_prc_lst_det@ap0064p_promax_testing c,
+                                mfanz_matl@ap0064p_promax_testing f,
+                                mfanz_fg_matl_clssfctn@ap0064p_promax_testing g,
+                                mfanz_matl_by_sales_area@ap0064p_promax_testing h
                           WHERE     a.vakey = c.vakey
                                 AND a.datab = c.datab
                                 AND a.kschl = c.kschl
@@ -106,10 +109,14 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
                                 AND c.knumh = a.knumh
                                 AND c.kschl IN ('ZR05', 'ZN00')
                                 AND c.kmein = 'EA'
-                                AND c.loevm_ko IS NULL -- If this is marked 'X' it means the condition is no longer active
-                                AND a.datbi >= TO_CHAR (SYSDATE, 'yyyymmdd')) t01) t01
-          WHERE t01.rnkseq <= 3
-          and cocode = '149'
+                                and c.loevm_ko is null -- If this is marked 'X' it means the condition is no longer active
+                                and a.datbi >= to_char (sysdate, 'yyyymmdd')) t01) t10, 
+            table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t20  -- Promax Configuration table
+          where 
+            t10.rnkseq <= 3 and 
+            -- Now join to current information
+            t10.cocode = t20.promax_company and 
+            ((t10.cocode = pxi_common.gc_australia and t10.divcode = t20.promax_division) or (t10.cocode = pxi_common.gc_new_zealand))
         ------------------------------------------------------------------------
         );
         --======================================================================

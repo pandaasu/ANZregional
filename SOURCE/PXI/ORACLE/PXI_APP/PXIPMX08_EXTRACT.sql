@@ -28,6 +28,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-06-25  Chris Horn            Created Interface
   2013-07-28  Mal Chambeyron        Updated SQL Formatting
   2013-08-22  Chris Horn            Cleaned Up Code
+  2013-08-28  Chris Horn            Made code generic for OZ.
 
 *******************************************************************************/
   -- LICS Hooks.

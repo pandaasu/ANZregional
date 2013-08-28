@@ -10,10 +10,18 @@ package body pxipmx02_extract as
 /*******************************************************************************
   NAME:      GET_PRODUCT_HIERARCHY                                        PUBLIC
 *******************************************************************************/
-  function get_product_hierarchy return tt_hierachy pipelined is
+-- NOTE : When coding australian product hierachy.  This can be built into this
+-- query by providing case / decode statements around each level based on the 
+-- t4.promax_company and t4.promax_division values as needed.  
+  function get_product_hierarchy(
+    i_pmx_company in pxi_common.st_company,
+    i_pmx_division in pxi_common.st_promax_division 
+    ) return tt_hierachy pipelined is
     -- This cursor generates the product level data in a flatterned table structure.
     cursor csr_product_level_data is
       select 
+       t4.promax_company,
+       t4.promax_division,
        t1.sap_material_code as zrep_code,
        t1.bds_material_desc_en as zrep_desc,
        nvl(t2.sales_organisation,'###') as level1,  -- Sales Organisation
@@ -27,7 +35,7 @@ package body pxipmx02_extract as
                trim(substr(t01.z_data,5,4)) as vkorg,
                trim(SUBSTR(t01.z_data,9,20)) AS vtext
              from 
-               lads_ref_dat/*@ap0064p_promax_testing*/ t01
+               lads_ref_dat@ap0064p_promax_testing t01
              where 
                t01.z_tabname = 'TVKOT' and 
                -- Remove any records that have been deleted by a D in the z_chgtyp column
@@ -38,18 +46,19 @@ package body pxipmx02_extract as
              -- End of code for view.
              ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED') as level1_desc,
        nvl(t3.sap_bus_sgmnt_code,'##') as level2, -- Business Segment aka Division 
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc,
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc,
        nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') as level3, -- Trade Sector, Business Segment
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' ||
-         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,  
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' ||
+         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,  
        nvl(t3.sap_nz_launch_ranking_code,'###') as level4, -- NZ Launch Ranking Code
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc,
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc,
        nvl(t3.sap_nz_promotional_grp_code,'###') as level5, -- NZ Promotional Group
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value/*@ap0064p_promax_testing*/ t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc
      from 
-       bds_material_hdr/*@ap0064p_promax_testing */ t1,  -- TDU Material Header Information
-       bds_material_dstrbtn_chain /*@ap0064p_promax_testing */ t2, -- Material Sales Area Information
-       bds_material_classfctn /*@ap0064p_promax_testing */ t3 -- Material Classification Data
+       bds_material_hdr@ap0064p_promax_testing  t1,  -- TDU Material Header Information
+       bds_material_dstrbtn_chain@ap0064p_promax_testing t2, -- Material Sales Area Information
+       bds_material_classfctn@ap0064p_promax_testing t3, -- Material Classification Data
+       table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4  -- Promax Configuration table
      where
        -- Table Joins
        t2.sap_material_code = t1.sap_material_code and 
@@ -62,11 +71,13 @@ package body pxipmx02_extract as
        t2.dstrbtn_channel not in ('98','99') and
        -- Make sure the distribution channel status is not inactive
        t2.dstrbtn_chain_status != '99' and
-       -- Filter for new zealand.
-       t2.sales_organisation = '149' and 
        -- Ensure the data hasn't been deleted and is correct in lads.
        t1.deletion_flag is null and t1.bds_lads_status = 1 and t2.dstrbtn_chain_delete_indctr is null and
-       t3.bds_lads_status = 1;
+       t3.bds_lads_status = 1 and 
+       -- Now join to the sales organisation and division information.
+       t2.sales_organisation = t4.promax_company and 
+       ((t2.sales_organisation = pxi_common.gc_australia and t1.material_division = t4.promax_division) or (t2.sales_organisation = pxi_common.gc_new_zealand)); 
+    -- Record variable to hold the hierarch output.       
     rv_product_level csr_product_level_data%rowtype; 
     -- Define the table structure for the product hierarchy.
     type tt_hierachy_collection is table of rt_hierarchy_node index by pls_integer;
@@ -74,7 +85,7 @@ package body pxipmx02_extract as
     v_counter pls_integer;
      
     -- This procedure looks through the existing node paths and checks if one already exists.  
-    procedure add_path(i_node_code in varchar2, i_node_name in varchar2,i_parent_node_code in varchar2,i_level in number) is
+    procedure add_path(i_pmx_company in pxi_common.st_company, i_pmx_division in pxi_common.st_promax_division, i_node_code in varchar2, i_node_name in varchar2,i_parent_node_code in varchar2,i_level in number) is
       rv_node rt_hierarchy_node;
       v_counter pls_integer;
       v_mover pls_integer;
@@ -89,13 +100,13 @@ package body pxipmx02_extract as
         exit when v_counter > tv_hierarchy.count;
         -- Check if we reached the end of the nodes at this level that we need and the record hadn't been found.
         if tv_hierarchy(v_counter).node_level = i_level then
-          if i_node_code = tv_hierarchy(v_counter).node_code then 
+          if i_node_code = tv_hierarchy(v_counter).node_code and i_pmx_company = tv_hierarchy(v_counter).promax_company and i_pmx_division = tv_hierarchy(v_counter).promax_division then 
             v_found := true;
             -- Check that the parent node and name are the same.
             if i_node_name <> tv_hierarchy(v_counter).node_name or i_parent_node_code <> tv_hierarchy(v_counter).parent_node_code then 
               pxi_common.raise_promax_error(pc_package_name,'ADD_PATH','Node : ' || i_node_code || ' Node Name or Parent Node Code did not match a previous instance.');
             end if;
-          elsif i_node_code < tv_hierarchy(v_counter).node_code then 
+          elsif i_node_code < tv_hierarchy(v_counter).node_code and i_pmx_company = tv_hierarchy(v_counter).promax_company and i_pmx_division = tv_hierarchy(v_counter).promax_division then 
             v_stop := true;  
           end if;
         elsif i_level < tv_hierarchy(v_counter).node_level then
@@ -116,6 +127,8 @@ package body pxipmx02_extract as
       end if;
       -- If the node was not found then assign this node to the current position of the counter.
       if v_found = false then 
+        rv_node.promax_company := i_pmx_company;
+        rv_node.promax_division := i_pmx_division;
         rv_node.node_code := i_node_code;
         rv_node.node_name := i_node_name;
         rv_node.parent_node_code := i_parent_node_code;
@@ -124,9 +137,11 @@ package body pxipmx02_extract as
       end if;
     end;
     
-    procedure add_material(i_zrep_code in varchar2, i_zrep_name in varchar2,i_parent_node_code in varchar2,i_level in number) is
+    procedure add_material(i_pmx_company in pxi_common.st_company, i_pmx_division in pxi_common.st_promax_division, i_zrep_code in varchar2, i_zrep_name in varchar2,i_parent_node_code in varchar2,i_level in number) is
       rv_material rt_hierarchy_node;
     begin
+      rv_material.promax_company := i_pmx_company;
+      rv_material.promax_division := i_pmx_division;
       rv_material.node_code := i_zrep_code;
       rv_material.node_name := i_zrep_name;
       rv_material.parent_node_code := i_parent_node_code;
@@ -142,12 +157,12 @@ package body pxipmx02_extract as
        fetch csr_product_level_data into rv_product_level;
        exit when csr_product_level_data%notfound;
        -- Now process the material. 
-       add_path('L1'||rv_product_level.level1,rv_product_level.level1_desc,null,1);
-       add_path('L2'||rv_product_level.level1||rv_product_level.level2,rv_product_level.level2_desc,'L1'||rv_product_level.level1,2);
-       add_path('L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,rv_product_level.level3_desc,'L2'||rv_product_level.level1||rv_product_level.level2,3);
-       add_path('L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,rv_product_level.level4_desc,'L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,4);
-       add_path('L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,rv_product_level.level5_desc,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,5);
-       add_material(rv_product_level.zrep_code,rv_product_level.zrep_desc,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,6);
+       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L1'||rv_product_level.level1,rv_product_level.level1_desc,null,1);
+       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L2'||rv_product_level.level1||rv_product_level.level2,rv_product_level.level2_desc,'L1'||rv_product_level.level1,2);
+       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,rv_product_level.level3_desc,'L2'||rv_product_level.level1||rv_product_level.level2,3);
+       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,rv_product_level.level4_desc,'L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,4);
+       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,rv_product_level.level5_desc,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,5);
+       add_material(rv_product_level.promax_company, rv_product_level.promax_division,rv_product_level.zrep_code,rv_product_level.zrep_desc,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,6);
      end loop;
      close csr_product_level_data;
      -- Now output the actual hierarchy rows. 
@@ -178,15 +193,15 @@ package body pxipmx02_extract as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('303002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '303002' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format(node_code, 40, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- node_code -> Attribute
           pxi_common.char_format(node_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- node_name -> NodeName
           pxi_common.char_format(parent_node_code, 40, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) || -- parent_node_code -> ParrentAttribute
           pxi_common.char_format(material_code, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- material_code -> MaterialNumber
         ------------------------------------------------------------------------
         from 
-          table(get_product_hierarchy);
+          table(get_product_hierarchy(i_pmx_company, i_pmx_division));
         --======================================================================
     
    begin

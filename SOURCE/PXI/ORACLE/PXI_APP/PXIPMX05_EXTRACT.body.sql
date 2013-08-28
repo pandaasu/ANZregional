@@ -26,29 +26,36 @@ PACKAGE BODY PXIPMX05_EXTRACT as
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
           pxi_common.char_format('347001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '347001' -> ICRecordType
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXCompanyCode
-          pxi_common.char_format('149', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '149' -> PXDivisionCode
-          pxi_common.char_format(vendor_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- company_code -> VendorNumber
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+          pxi_common.char_format(vendor_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- vendor_code -> VendorNumber
           pxi_common.char_format(longname, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- longname -> Longname
           pxi_common.char_format('Y', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT 'Y' -> PACSVendor
           pxi_common.char_format('1', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- CONSTANT '1' -> TaxExempt
+
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
         ------------------------------------------------------------------------
-          select a.vendor_code,
-            b.company_code,
-            a.vendor_name_01 ||' '|| a.vendor_name_02 as longname
+          select 
+            t3.promax_company,
+            t3.promax_division,
+            t1.vendor_code,
+            t2.company_code,
+            t1.vendor_name_01 ||' '|| t1.vendor_name_02 as longname
           from
-            bds_vend_header@ap0064p_promax_testing a,
-            bds_vend_comp@ap0064p_promax_testing b
+            bds_vend_header@ap0064p_promax_testing t1,
+            bds_vend_comp@ap0064p_promax_testing t2,
+            table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t3  -- Promax Configuration table
           where
-            a.vendor_code = b.vendor_code
-            and b.company_code = '149'
+            t1.vendor_code = t2.vendor_code
             and group_key like 'PMX%'
-            and a.posting_block_flag is null
-            and a.purchasing_block_flag is null
+            and t1.posting_block_flag is null
+            and t1.purchasing_block_flag is null and 
+            -- This join, since there does not appear to be any customer or 
+            -- material division information the vendor will result in a cross product output. when multiple australian segments are live.
+            t2.company_code = t3.promax_company 
         ------------------------------------------------------------------------
         );
         --======================================================================

@@ -17,6 +17,7 @@ PACKAGE          PXIPMX04_EXTRACT as
  ------------  --------------------  -----------
  28/07/2013    Chris Horn            Created.
  20/08/2013    Chris Horn            Cleaned Up Code.
+ 28/08/2013    Chris Horn            Made generic for OZ.
  
 *******************************************************************************/
 
@@ -34,6 +35,7 @@ PACKAGE          PXIPMX04_EXTRACT as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
+  1.3   2013-08-28 Chris Horn           Made more generic for OZ.
 
 *******************************************************************************/
    procedure execute(
@@ -56,6 +58,8 @@ PACKAGE          PXIPMX04_EXTRACT as
 *******************************************************************************/
   -- Hierarchy Node Record
   type rt_hierarchy_node is record (
+      promax_company pxi_common.st_company,
+      promax_division pxi_common.st_promax_division,
       cust_code varchar2(20),
       cust_name varchar2(40),
       sales_org_code varchar2(3),
@@ -65,6 +69,9 @@ PACKAGE          PXIPMX04_EXTRACT as
   -- Define the hierarchy table type.
   type tt_hierachy is table of rt_hierarchy_node;
   -- The pipelined table function to return the product hierarchy nodes.
-  function get_customer_hierarchy return tt_hierachy pipelined;
+  function get_customer_hierarchy(
+    i_pmx_company in pxi_common.st_company,
+    i_pmx_division in pxi_common.st_promax_division 
+    ) return tt_hierachy pipelined;
 
 end PXIPMX04_EXTRACT;

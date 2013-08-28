@@ -7,6 +7,11 @@ package body pxi_utils is
   pc_package_name constant pxi_common.st_package_name := 'PXI_UTILS';
 
 /*******************************************************************************
+  Package Variables
+*******************************************************************************/
+  pv_matl_dtrmntn_populated boolean;
+
+/*******************************************************************************
   NAME:  LOOKUP_TDU_FROM_ZREP                                             PUBLIC
 *******************************************************************************/
   function lookup_tdu_from_zrep (
@@ -224,6 +229,72 @@ package body pxi_utils is
      when others then 
        pxi_common.reraise_promax_exception(pc_package_name,'DETERMINE_TAX_CODE_FROM_REASON'); 
   end determine_tax_code_from_reason;
+  
+/*******************************************************************************
+  NAME:  DETERMINE_TDU_MATL_FROM_ZREP                                     PUBLIC
+*******************************************************************************/
+  function determine_tdu_from_zrep(
+    i_zrep_matl_code in pxi_common.st_material,
+    i_sales_org in pxi_common.st_company,
+    i_dstrbtn_chnnl in pxi_common.st_dstrbtn_chnnl default null,
+    i_cust_code in pxi_common.st_customer default null,
+    i_date in date default sysdate
+    ) return pxi_common.st_material is
+    cursor csr_matl_dtrmntn is 
+      select 
+        subst_matl_code
+      from 
+        pmx_matl_dtrmntn
+      where 
+        matl_code = i_zrep_matl_code and 
+        to_char(i_date,'YYYYMMDD') between start_date and end_date and 
+        sales_org = i_sales_org and 
+        (distbn_chnl is null or i_dstrbtn_chnnl is null or distbn_chnl = i_dstrbtn_chnnl) and
+        (cust_code is null or i_cust_code is null or cust_code = i_cust_code) 
+      order by 
+        accss_level desc;
+    v_result pxi_common.st_material; 
+    
+    procedure ensure_material_determination is
+      pragma autonomous_transaction;
+    begin
+      if pv_matl_dtrmntn_populated = false then 
+        -- Now materialise a copy of the data into the temporary table.
+        delete from pmx_matl_dtrmntn;  
+        insert into pmx_matl_dtrmntn (
+          accss_seq, accss_level, sales_org, distbn_chnl, cust_code, matl_code, start_date, end_date, subst_matl_code
+        ) 
+        select 
+          accss_seq, accss_level, sales_org, distbn_chnl, cust_code, matl_code, start_date, end_date, subst_matl_code 
+        from 
+          mfanz_matl_dtrmntn_promax_vw@ap0064p_promax_testing;
+        -- Now make sure that temporary data is committed.
+        commit;
+        pv_matl_dtrmntn_populated := true;
+      end if;
+    end ensure_material_determination;
+
+  begin
+    v_result := null;
+    -- Check if we have a refresh copy of the material determination information.
+    ensure_material_determination;    
+    -- Now perform the lookup, ie Take the first resulting record found.
+    open csr_matl_dtrmntn;
+    fetch csr_matl_dtrmntn into v_result;
+    if csr_matl_dtrmntn%notfound then 
+      v_result := null;
+    end if;
+    close csr_matl_dtrmntn;
+    -- Now return the result.
+    return v_result;
+  exception
+     when others then 
+       pxi_common.reraise_promax_exception(pc_package_name,'DETERMINE_TDU_FROM_ZREP'); 
+  end determine_tdu_from_zrep;  
 --------------------------------------------------------------------------------
+
+begin
+  -- Initialise that the global tempoary table for material determination information hasn't as yet been populated.
+  pv_matl_dtrmntn_populated := false;
 end pxi_utils;
 /

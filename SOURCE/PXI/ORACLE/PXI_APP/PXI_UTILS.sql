@@ -119,5 +119,30 @@ package pxi_utils as
   function determine_tax_code_from_reason(i_reason_code in pxi_common.st_reason_code) 
     return pxi_common.st_tax_code;
 
+
+/*******************************************************************************
+  NAME:      DETERMINE_TDU_FROM_ZREP                                      PUBLIC
+  PURPOSE:   This function uses material determine view used by promax already
+             MFANZ_MATL_DTMNTN_PROMAX_VW to find a TDU material 
+             that can be used.  Returns null if no TDU could be found 
+             for the zrep.
+             
+             This function will materialise a copy of this view before returning
+             results into a global session based temporary table.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-08-27 Chris Horn           Created.
+
+*******************************************************************************/
+  function determine_tdu_from_zrep(
+    i_zrep_matl_code in pxi_common.st_material,
+    i_sales_org in pxi_common.st_company,
+    i_dstrbtn_chnnl in pxi_common.st_dstrbtn_chnnl default null,
+    i_cust_code in pxi_common.st_customer default null,
+    i_date in date default sysdate
+    ) return pxi_common.st_material;
+
 end pxi_utils;
 /
