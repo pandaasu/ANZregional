@@ -19,6 +19,7 @@ PACKAGE          PXIPMX01_EXTRACT as
  27/07/2013    Mal Chambeyron        Formatted SQL Output.
  21/08/2013    Chris Horn            Cleaned Up Code.
  27/08/2013    Chris Horn            Updated logic. 
+ 29/08/2013    Chris Horn            Fixed a bug in the RSU determination logic.
 
 *******************************************************************************/
 

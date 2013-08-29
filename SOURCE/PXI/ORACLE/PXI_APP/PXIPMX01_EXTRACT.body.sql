@@ -131,9 +131,9 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                 where
                   t02.sap_material_code = t01.child_material_code and 
                   -- Ensure we have the correct TDU to RSU Bom Details 
-                  t01.bom_plant = '*NONE' and t01.bom_alternative = 1 and
+                  t01.bom_plant = '*NONE' and t01.bom_alternative = '01' and
                   -- Units Per Case Usage Case 
-                  t01.bom_usage = 5 and 
+                  t01.bom_usage = '5' and 
                   -- Production Bom Status
                   t01.bom_status in (1, 7) and 
                   -- That we are after where the child is the RSU
@@ -142,7 +142,9 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                   t01.bom_eff_date = (
                     select max(t0.bom_eff_date) 
                     from bds_material_bom_all@ap0064p_promax_testing t0 -- /*@ap0064p_promax_testing
-                    where t0.bom_eff_date <= trunc(sysdate) and t0.parent_material_code = t01.parent_material_code
+                    where t0.bom_eff_date <= trunc(sysdate) and t0.parent_material_code = t01.parent_material_code and 
+                      t0.bom_status = t01.bom_status and t0.bom_usage = t01.bom_usage and
+                      t0.child_rsu_flag = t01.child_rsu_flag
                   )
                 union
                 -- Bring in a record for when the ZREP is the RSU.
