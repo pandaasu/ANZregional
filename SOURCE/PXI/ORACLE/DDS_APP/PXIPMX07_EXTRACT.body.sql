@@ -39,10 +39,10 @@ PACKAGE BODY PXIPMX07_EXTRACT as
             t4.promax_division,
             t1.sold_to_cust_code,
             t1.billing_doc_num,
-            t1.billing_doc_line_num,
+            decode(substr(t1.billing_doc_line_num,7,4),'_ADD','1'||substr(t1.billing_doc_line_num,2,5),'_REM','2'||substr(t1.billing_doc_line_num,2,5),t1.billing_doc_line_num) as billing_doc_line_num,
             t3.rep_item,
-            t2.order_eff_date,
-            t1.billing_eff_date,
+            nvl(decode(to_char(t2.order_eff_date,'DY'),'SUN',t2.order_eff_date +1,t2.order_eff_date),decode(to_char(t1.billing_eff_date,'DY'),'SUN',t1.billing_eff_date +1,t1.billing_eff_date)) as order_eff_date,
+            decode(to_char(t1.billing_eff_date,'DY'),'SUN',t1.billing_eff_date +1,t1.billing_eff_date) as billing_eff_date,
             t1.billed_qty_base_uom,
             t1.billed_gsv,
             t1.doc_currcy_code
@@ -64,7 +64,6 @@ PACKAGE BODY PXIPMX07_EXTRACT as
             and t1.matl_code = t3.matl_code
             -- Not null check added to accommodate new restrictions on output format
             and t1.matl_entd is not null
-            and t2.order_eff_date is not null
         );
 
    begin

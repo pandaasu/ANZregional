@@ -21,6 +21,7 @@ PACKAGE          PXIPMX07_EXTRACT as
  2013-07-23    Chris Horn            Created.
  2013-07-25    Mal Chambeyron        Formatted SQL Output
  2013-08-20    Chris Horn            Updated with revision.
+ 2013-08-29    Chris Horn            Updated the a revised sales query.
  
 
 *******************************************************************************/
@@ -41,6 +42,7 @@ PACKAGE          PXIPMX07_EXTRACT as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Chris Horn           Created.
+  1.2   2013-08-29 Chris Horn           Updated sales query.
 
 *******************************************************************************/
    procedure execute(
