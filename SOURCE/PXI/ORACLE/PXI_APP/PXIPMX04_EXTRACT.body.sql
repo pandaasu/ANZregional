@@ -1,5 +1,4 @@
-create or replace 
-package body          pxipmx04_extract as
+CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
 
 /*******************************************************************************
   Package Cosntants
@@ -553,6 +552,7 @@ package body          pxipmx04_extract as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
+          pxi_common.char_format('301001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '301001' -> ICRecordType
           pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
           pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
           pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- cust_code -> CustomerNumber
@@ -594,4 +594,5 @@ package body          pxipmx04_extract as
        pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
-end PXIPMX04_EXTRACT; 
+end PXIPMX04_EXTRACT;
+/
