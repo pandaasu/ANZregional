@@ -26,7 +26,7 @@ PACKAGE BODY PXIPMX07_EXTRACT as
           pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- hdr_division_code -> PXDivisionCode
           pxi_common.char_format(sold_to_cust_code, 20, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- sold_to_cust_code -> CustomerNumber
           pxi_common.char_format(billing_doc_num, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- billing_doc_num -> InvoiceNumber
-          pxi_common.char_format(billing_doc_line_num, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- billing_doc_line_num -> InvoiceLineNumber
+          pxi_common.char_format(billing_doc_line_num, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- billing_doc_line_num -> InvoiceLineNumber
           pxi_common.char_format(rep_item, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- matl_entd -> Material
           pxi_common.date_format(order_eff_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- order_eff_date -> OrderDate
           pxi_common.date_format(billing_eff_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- billing_eff_date -> InvoiceDate
