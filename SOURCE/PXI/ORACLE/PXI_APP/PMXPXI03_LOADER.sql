@@ -41,6 +41,8 @@ package pmxpxi03_loader as
   2013-08-21  Chris Horn            Basic Clean Up.
   2013-08-26  Mal Chambeyron        Added Atlas document split logic .. 
                                     on pxi_common.gc_max_idoc_rows
+  2013-09-03  Mal Chambeyron        Add RAISE in APPEND_DATA
+                                    Add Better On NULL Error Messages
 
 *******************************************************************************/
   -- LICS Hooks.

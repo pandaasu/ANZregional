@@ -3,6 +3,7 @@ package body pmxpxi03_loader as
 
   -- Package Constants
   pc_package_name constant pxi_common.st_package_name := 'PMXPXI03_LOADER';
+  pc_outbound_interface constant varchar2(30) := 'PXIATL02';
   
   -- Package Variables
   prv_inbound pmx_359_promotions%rowtype;
@@ -76,7 +77,8 @@ package body pmxpxi03_loader as
     fflu_data.add_char_field_txt(pc_sales_deal,23,10,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_material,33,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_date_field_txt(pc_buy_start_date,51,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_buy_stop_date,59,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    -- fflu_data.add_date_field_txt(pc_buy_stop_date,59,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_buy_stop_date,59,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_txt(pc_transaction_code,67,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_description,71,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_sales_org,111,4,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
@@ -205,9 +207,15 @@ package body pmxpxi03_loader as
 
         -- Format Customer Hierarchy
         prv_inbound.new_customer_hierarchy := pxi_common.full_cust_code(fflu_data.get_char_field(pc_customer_hierarchy));
+        if prv_inbound.new_customer_hierarchy is null then
+          fflu_data.log_field_error(pc_customer_hierarchy,'Full Customer Code Lookup (pxi_common.full_cust_code) - Cannot be Null');          
+        end if;
 
         -- Format Material
         prv_inbound.new_material := pxi_common.full_matl_code(fflu_data.get_char_field(pc_material));
+        if prv_inbound.new_material is null then
+          fflu_data.log_field_error(pc_material,'Full Material Code Lookup (pxi_common.full_matl_code) - Cannot be Null');          
+        end if;
 
         -- Determine Business Segment
         prv_inbound.business_segment := pxi_utils.determine_bus_sgmnt(fflu_data.get_char_field(pc_px_company_code),fflu_data.get_char_field(pc_px_division_code), prv_inbound.new_material);
@@ -223,13 +231,31 @@ package body pmxpxi03_loader as
         open csr_prom_config(prv_inbound.px_company_code, prv_inbound.condition_flag, prv_inbound.user_1, prv_inbound.business_segment);
         fetch csr_prom_config into rcd_prom_config;
           if csr_prom_config%notfound then
-            fflu_data.log_field_error(pc_user_1,'Unable to determine Pricing Condition information [Company:' || prv_inbound.px_company_code || 'Div:' || prv_inbound.business_segment || 'Pricing Condition:' || prv_inbound.user_1 || 'Condition Flag:' || prv_inbound.condition_flag || '].');
+            fflu_data.log_field_error(pc_description,'Pricing Condition, Not Found - Company [' || prv_inbound.px_company_code || '] Business Segment [' || prv_inbound.business_segment || '] User 1 [' || prv_inbound.user_1 || '] Condition Flag [' || prv_inbound.condition_flag || ']');
           else
+            --
             prv_inbound.rate_multiplier := rcd_prom_config.rate_multiplier;
+            --
             prv_inbound.condition_type_code := rcd_prom_config.cndtn_type_code;
+            if prv_inbound.condition_type_code is null then
+              fflu_data.log_field_error(pc_description,'Condition Type Code, Cannot be Null - Pricing Condition - Company [' || prv_inbound.px_company_code || '] Business Segment [' || prv_inbound.business_segment || '] User 1 [' || prv_inbound.user_1 || '] Condition Flag [' || prv_inbound.condition_flag || ']');          
+            end if;
+            --
             prv_inbound.pricing_condition_code := rcd_prom_config.pricing_cndtn_code;
+            if prv_inbound.pricing_condition_code is null then
+              fflu_data.log_field_error(pc_description,'Pricing Condition Code, Cannot be Null - Pricing Condition - Company [' || prv_inbound.px_company_code || '] Business Segment [' || prv_inbound.business_segment || '] User 1 [' || prv_inbound.user_1 || '] Condition Flag [' || prv_inbound.condition_flag || ']');          
+            end if;
+            --
             prv_inbound.condition_table_ref := rcd_prom_config.cndtn_table_ref;
+            if prv_inbound.condition_table_ref is null then
+              fflu_data.log_field_error(pc_description,'Condition Table Reference, Cannot be Null - Pricing Condition - Company [' || prv_inbound.px_company_code || '] Business Segment [' || prv_inbound.business_segment || '] User 1 [' || prv_inbound.user_1 || '] Condition Flag [' || prv_inbound.condition_flag || ']');          
+            end if;
+            --
             prv_inbound.cust_div_code := rcd_prom_config.cust_div_code;
+            if prv_inbound.cust_div_code is null then
+              fflu_data.log_field_error(pc_description,'Customer Division Code, Cannot be Null - Pricing Condition - Company [' || prv_inbound.px_company_code || '] Business Segment [' || prv_inbound.business_segment || '] User 1 [' || prv_inbound.user_1 || '] Condition Flag [' || prv_inbound.condition_flag || ']');          
+            end if;
+            --
             prv_inbound.order_type_code := rcd_prom_config.order_type_code;
           end if;
         close csr_prom_config;
@@ -311,7 +337,7 @@ package body pmxpxi03_loader as
     if pv_outbound_record_count > pxi_common.gc_max_idoc_rows then 
       pv_outbound_record_count := 1;
       lics_outbound_loader.finalise_interface;
-      pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+      pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
     end if;
 
     lics_outbound_loader.append_data(  
@@ -338,6 +364,7 @@ package body pmxpxi03_loader as
   exception
     when others then
       fflu_data.log_interface_exception('APPEND_RECORD');
+      raise;
   end append_record;
 
   ------------------------------------------------------------------------------
@@ -494,7 +521,7 @@ package body pmxpxi03_loader as
           if not v_prev_state_found_in_current then -- Ignore ZERO of Previous State IF FOUND in Current Transaction (BATCH)
             -- Create Outbound Interface When Required
             if not lics_outbound_loader.is_created then
-              pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+              pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
             end if;
             -- ZERO Previous State RATE
             vr_previous_state.new_rate := 0;
@@ -506,10 +533,10 @@ package body pmxpxi03_loader as
         if vr_current.action_code <> 'D' then -- DELETES taken care of in the last BLOCK
           -- Create Outbound Interface When Required
           if not lics_outbound_loader.is_created then
-            pv_outbound_interface_instance := lics_outbound_loader.create_interface('PXIATL02');
+            pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
           end if;
           -- Append Record
-          append_record(vr_previous_state);
+          append_record(vr_current);
         end if;
 
       end if;
