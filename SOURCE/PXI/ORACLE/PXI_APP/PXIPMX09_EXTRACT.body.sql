@@ -55,8 +55,8 @@ PACKAGE BODY          PXIPMX09_EXTRACT as
               t01.pmnum as promotion_number,      
               case t01.sales_org when  pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
           from
-              promax_prom_inv_ext_view@ap0064p_promax_testing t01,
-              lads_prc_lst_hdr@ap0064p_promax_testing t02,
+              promax_prom_inv_ext_view t01, --@ap0064p_promax_testing t01,
+              lads_prc_lst_hdr t02, --@ap0064p_promax_testing t02,
               table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t03  -- Promax Configuration table
           where
               t01.pmnum = t02.kosrt and
