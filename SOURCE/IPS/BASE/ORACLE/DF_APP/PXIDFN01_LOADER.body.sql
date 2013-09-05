@@ -44,12 +44,12 @@ package body        PXIDFN01_LOADER as
 
     -- Fetch a unique run id.
     IF demand_object_tracking.get_new_id ('LOAD_FILE', 'RUN_ID', prv_load_file.run_id, v_result_msg) != common.gc_success THEN
-       fflu_utils.log_interface_error('Load File Run ID',null,v_result_msg);
+       fflu_data.log_interface_error('Load File Run ID',null,v_result_msg);
     END IF;
 
     -- Fetch a unique record id.
     IF demand_object_tracking.get_new_id ('LOAD_FILE', 'FILE_ID', prv_load_file.file_id, v_result_msg) != common.gc_success THEN
-      fflu_utils.log_interface_error('Load File File ID',null,v_result_msg);
+      fflu_data.log_interface_error('Load File File ID',null,v_result_msg);
     END IF;
 
     -- Now assign the other field records.
@@ -67,7 +67,7 @@ package body        PXIDFN01_LOADER as
         prv_load_file.moe_code := '0086';
       else 
         prv_load_file.moe_code := null;
-        fflu_utils.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unknown Interface Suffix Configuration.');
+        fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unknown Interface Suffix Configuration.');
     end case;
 
     -- Populate other values.
@@ -94,7 +94,7 @@ package body        PXIDFN01_LOADER as
     );
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Start');
+      fflu_data.log_interface_exception('On Start');
   end on_start;
 
 
@@ -224,7 +224,7 @@ package body        PXIDFN01_LOADER as
     end if;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On Data');
+      fflu_data.log_interface_exception('On Data');
   end on_data;
   
 /*******************************************************************************
@@ -251,7 +251,7 @@ package body        PXIDFN01_LOADER as
     fflu_data.cleanup;
   exception 
     when others then 
-      fflu_utils.log_interface_exception('On End');
+      fflu_data.log_interface_exception('On End');
   end on_end;
 
 

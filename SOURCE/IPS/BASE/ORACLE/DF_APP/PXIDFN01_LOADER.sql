@@ -5,8 +5,8 @@ package        PXIDFN01_LOADER as
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
+  System    : DF
+  Owner     : DF_APP
   Package   : PXIDFN01_LOADER
   Author    : Chris Horn, Jonathan Girling
   Interface : Promax to Demand Financials Demand Forecast
@@ -14,7 +14,7 @@ package        PXIDFN01_LOADER as
   Description
   ------------------------------------------------------------------------------
   This package will take the promax demand forecast data and convert it into 
-  the Apollo Demand Forecast Format and load it into the demand forecast loading
+  the Applo Demand Forecast Format and load it into the demand forecast loading
   table and then trigger the normal demand forecast processing job.  
   
   Functions
@@ -32,6 +32,7 @@ package        PXIDFN01_LOADER as
   2013-07-04  Chris Horn            Created Interface
   2013-07-18  Jonathan Girling      Updated Interface to reference 
                                     px_dmnd_lookup table.
+  2013-09-05  Chris Horn            Updated error exeception handling.
 
 *******************************************************************************/
   -- LICS Hooks.
