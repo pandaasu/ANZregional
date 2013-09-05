@@ -460,7 +460,7 @@ package body fflu_data as
       pv_initialised := false;
     else
       -- Check if the supplied file type was unknown.
-      if pv_filetype not in (fflu_common.gc_file_type_csv, fflu_common.gc_file_type_fixed_width) then 
+      if pv_filetype not in (fflu_common.gc_file_type_csv, fflu_common.gc_file_type_fixed_width, fflu_common.gc_file_type_tab) then 
         fflu_utils.log_interface_error(
           'File Type',i_filetype,'Data Parsing was initialised with an unknown file type.'); 
         pv_errors := true;
