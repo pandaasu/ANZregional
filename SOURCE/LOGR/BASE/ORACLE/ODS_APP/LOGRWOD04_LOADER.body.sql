@@ -36,19 +36,19 @@ PACKAGE body LOGRWOD04_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_number_field_csv(pc_field_mars_period,1,'Period',null,190001,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_category,2,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_brand,3,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_segment,4,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_packtype,5,'Pack type',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_specific_sku,6,'Specific SKU',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_time_to_find_mars,7,'Time to find MARS',null,0,10000,fflu_data.gc_allow_null);
-    fflu_data.add_number_field_csv(pc_field_percent_wrong_mars,8,'% people who got it wrong MARS',null,0,500,fflu_data.gc_not_allow_null);
-    fflu_data.add_number_field_csv(pc_field_spi_mars,9,'SPI MARS',null,0,10000,fflu_data.gc_allow_null);
-    fflu_data.add_number_field_csv(pc_field_time_to_find_cmpttr,10,'Time to find competitor (sec)',null,0,100000,fflu_data.gc_not_allow_null);
-    fflu_data.add_number_field_csv(pc_field_percent_wrong_cmpttr,11,'% people who got it wrong Comp',null,0,500,fflu_data.gc_allow_null);
-    fflu_data.add_number_field_csv(pc_field_spi_cmpttr,12,'SPI Competitor',null,0,10000,fflu_data.gc_not_allow_null);
-    fflu_data.add_number_field_csv(pc_field_performance,13,'Performance',null,-10000,10000,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_mars_period,1,'Period',null,190001,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_category,2,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_brand,3,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_segment,4,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_packtype,5,'Pack type',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_specific_sku,6,'Specific SKU',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_time_to_find_mars,7,'Time to find MARS',null,0,10000,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_percent_wrong_mars,8,'% people who got it wrong MARS',null,0,500,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_spi_mars,9,'SPI MARS',null,0,10000,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_time_to_find_cmpttr,10,'Time to find competitor (sec)',null,0,100000,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_percent_wrong_cmpttr,11,'% people who got it wrong Comp',null,0,500,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_spi_cmpttr,12,'SPI Competitor',null,0,10000,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_performance,13,'Performance',null,-10000,10000,fflu_data.gc_not_allow_null);
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
     -- Now clear out the table for the complete reload that is about to commence.

@@ -68,17 +68,17 @@ PACKAGE body LOGRWOD07_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_char_field_csv(pc_field_market,1,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_shopper_level,2,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_quarter,3,pc_column_sdesc,null,17,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_mars_date_field_csv(pc_field_quarter_period,3,pc_column_sdesc,'MARS_PERIOD','DD/MM/YYYY',8,10,190001,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_product,4,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_sub_category,5,'SUBCATEGORY',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_brand,6,'BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_sub_brand,7,'SUB_BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_packtype,8,'PACKTYPE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_serving_size,9,'SERVING_SIZE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_relative_penetration,10,'Relative Penetration (AUS)',null,-1000000,1000000,fflu_data.gc_allow_null);
+    fflu_data.add_char_field_del(pc_field_market,1,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_shopper_level,2,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_quarter,3,pc_column_sdesc,null,17,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_mars_date_field_del(pc_field_quarter_period,3,pc_column_sdesc,'MARS_PERIOD','DD/MM/YYYY',8,10,190001,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_product,4,pc_column_sdesc,null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_sub_category,5,'SUBCATEGORY',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_brand,6,'BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_sub_brand,7,'SUB_BRAND',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_packtype,8,'PACKTYPE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_serving_size,9,'SERVING_SIZE',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_relative_penetration,10,'Relative Penetration (AUS)',null,-1000000,1000000,fflu_data.gc_allow_null);
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
     -- Delete out any previously loaded data for this data animal type.

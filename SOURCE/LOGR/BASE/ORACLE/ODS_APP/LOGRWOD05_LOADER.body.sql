@@ -37,15 +37,15 @@ PACKAGE body LOGRWOD05_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_number_field_csv(pc_field_mars_period,1,'Period',null,190001,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_category,2,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_brand,3,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_segment,4,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_packtype,5,'Pack type',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_copy,6,'Copy',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_avi_score,7,'AVI Score',null,0,100000,fflu_data.gc_allow_null);
-    fflu_data.add_char_field_csv(pc_field_performance_vs_market,8,'Performance vs. Market',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_ipsos_score,9,'IPSOS Score',null,0,100000,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_mars_period,1,'Period',null,190001,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_category,2,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_brand,3,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_segment,4,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_packtype,5,'Pack type',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_copy,6,'Copy',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_avi_score,7,'AVI Score',null,0,100000,fflu_data.gc_allow_null);
+    fflu_data.add_char_field_del(pc_field_performance_vs_market,8,'Performance vs. Market',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_ipsos_score,9,'IPSOS Score',null,0,100000,fflu_data.gc_allow_null);
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
     -- A full replace of the table is done each time this file is loaded.

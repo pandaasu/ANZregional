@@ -36,13 +36,13 @@ PACKAGE body LOGRWOD06_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,false);
     -- Now define the column structure
-    fflu_data.add_number_field_csv(pc_field_version,1,'Version',null,190000,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_brand,2,'Brand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_segment,3,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_period,4,'Period',null,1,13,fflu_data.gc_not_allow_null);
-    fflu_data.add_number_field_csv(pc_field_year,5,'Year',null,1900,9999,fflu_data.gc_not_allow_null);
-    fflu_data.add_number_field_csv(pc_field_weeks_on_air,6,'Weeks on Air',null,0,null,fflu_data.gc_allow_null);
-    fflu_data.add_number_field_csv(pc_field_4_weekly_reach,7,'4 Weekly Reach',null,0,null,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_version,1,'Version',null,190000,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_brand,2,'Brand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_segment,3,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_period,4,'Period',null,1,13,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_year,5,'Year',null,1900,9999,fflu_data.gc_not_allow_null);
+    fflu_data.add_number_field_del(pc_field_weeks_on_air,6,'Weeks on Air',null,0,null,fflu_data.gc_allow_null);
+    fflu_data.add_number_field_del(pc_field_4_weekly_reach,7,'4 Weekly Reach',null,0,null,fflu_data.gc_allow_null);
     -- Now clear all previous data 
     delete from logr_wod_tv_activity;
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.

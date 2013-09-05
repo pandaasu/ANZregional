@@ -33,14 +33,14 @@ PACKAGE body LOGRWOD08_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_number_field_csv(pc_field_mars_period,1,'YYYYPP (Period Published)',null,190001,999913,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_animal,2,'Animal',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_category,3,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_brand,4,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_product_family,5,'Product Family',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_palatability_result,6,'Palatability Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_digestibility_result,7,'Digestibility Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_faeces_qlty_result,8,'Faeces Quality Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_mars_period,1,'YYYYPP (Period Published)',null,190001,999913,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_animal,2,'Animal',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_category,3,'Category',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_brand,4,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_product_family,5,'Product Family',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_palatability_result,6,'Palatability Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_digestibility_result,7,'Digestibility Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_faeces_qlty_result,8,'Faeces Quality Result',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
   exception 

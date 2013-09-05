@@ -68,23 +68,23 @@ PACKAGE body LOGRWOD01_LOADER AS
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
-    fflu_data.add_char_field_csv(pc_field_period,1,pc_column_time,null,14,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_date_field_csv(pc_field_mars_period,1,pc_column_time,'DD/MM/YY',5,8);
-    fflu_data.add_char_field_csv(pc_field_measure,2,'Measure',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_product,3,'Product',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_market,4,'Market',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_data_value,5,'Data Value',null,-1000000,1000000,fflu_data.gc_allow_null);
-    fflu_data.add_char_field_csv(pc_field_manufacturer,6,'Manufacturer',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_brand,7,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_category,8,'Category',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_segment,9,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_packtype,10,'Packtype',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_packsize,11,'Packsize',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_number_field_csv(pc_field_size,12,'Size',null,0,100000,fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_csv(pc_field_ean,13,'EAN',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_sub_brand,14,'Subbrand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_multiple,15,'Multiple',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_csv(pc_field_multi_pack,16,'Multi_pack',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_period,1,pc_column_time,null,14,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_date_field_del(pc_field_mars_period,1,pc_column_time,'DD/MM/YY',5,8);
+    fflu_data.add_char_field_del(pc_field_measure,2,'Measure',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_product,3,'Product',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_market,4,'Market',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_data_value,5,'Data Value',null,-1000000,1000000,fflu_data.gc_allow_null);
+    fflu_data.add_char_field_del(pc_field_manufacturer,6,'Manufacturer',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_brand,7,'Brand',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_category,8,'Category',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_segment,9,'Segment',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_packtype,10,'Packtype',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_packsize,11,'Packsize',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_number_field_del(pc_field_size,12,'Size',null,0,100000,fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_field_ean,13,'EAN',null,100,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_sub_brand,14,'Subbrand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_multiple,15,'Multiple',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_del(pc_field_multi_pack,16,'Multi_pack',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
   exception 
