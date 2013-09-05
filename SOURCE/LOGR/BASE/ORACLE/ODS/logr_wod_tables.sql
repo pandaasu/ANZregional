@@ -210,7 +210,19 @@ grant select on logr_wod_tv_activity to qv_user;
 grant select on logr_wod_house_pntrtn to qv_user;
 grant select on LOGR_WOD_ADVERT_EFFCTVNSS to qv_user;
 grant select on logr_wod_advert_effctvnss to qv_user;
-grant select on LOGR_WOD_PRDCT_PRFRMNC to qv_user;
+grant select on logr_wod_prdct_prfrmnc to qv_user;
+-- Table Grants for the APPSUPPORT User
+grant select on LOGR_WOD_ADVERT_EFFCTVNSS to appsupport;
+grant select on LOGR_WOD_DSTNCTV_ASSET to appsupport;
+grant select on LOGR_WOD_PACK_EFFCTVNSS to appsupport;
+grant select on LOGR_WOD_SALES_SCAN to appsupport;
+grant select on LOGR_WOD_SHARE_OF_SHELF to appsupport;
+grant select on logr_wod_tv_activity to appsupport;
+grant select on logr_wod_house_pntrtn to appsupport;
+grant select on LOGR_WOD_ADVERT_EFFCTVNSS to appsupport;
+grant select on logr_wod_advert_effctvnss to appsupport;
+grant select on logr_wod_prdct_prfrmnc to appsupport;
+
 
 -- TABLE COMMENTS
 COMMENT ON TABLE LOGR_WOD_ADVERT_EFFCTVNSS IS 'Data for advertising effectiveness of the Australian Petcare business.';
