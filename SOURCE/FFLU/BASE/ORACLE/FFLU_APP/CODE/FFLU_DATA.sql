@@ -35,7 +35,7 @@ package fflu_data as
     - log_interface_error         Calls utils log interface error.
     - log_interface_exception     Calls utils log interface exception.
     - was_errors                  Return if any errors have been recorded.
-  
+    
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2013-06-13  Chris Horn            Defined the specification.
@@ -48,6 +48,7 @@ package fflu_data as
   2013-07-29  Chris Horn            Added constants various true false values.
   2013-07-30  Chris Horn            Added constant values for mins and maxes.
   2013-08-14  Chris Horn            Added interface error and exception methods.
+  2013-09-05  Chris Horn            Added tab delimted file formatting.
 
 *******************************************************************************/
 
@@ -57,8 +58,8 @@ package fflu_data as
   below for easy reability of source code.
 *******************************************************************************/
   -- Data Parser Initialisation Constants.
-  gc_csv_header        boolean := true;
-  gc_no_csv_header     boolean := false;
+  gc_file_header       boolean := true;
+  gc_no_file_header    boolean := false;
   gc_allow_missing     boolean := true;
   gc_not_allow_missing boolean := false;
   -- Field Constants
@@ -94,12 +95,13 @@ package fflu_data as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-03 Chris Horn           Defined.
   1.1   2013-06-25 Chris Horn           Added if csv file contains a header.
+  1.2   2013-09-05 Chris Horn           Changed csv header to file header.
   
 *******************************************************************************/  
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default fflu_common.gc_csv_qualifier_null,
-    i_csv_header in boolean default gc_no_csv_header, 
+    i_file_header in boolean default gc_no_file_header, 
     i_allow_missing in boolean default gc_not_allow_missing);
     
 
@@ -119,9 +121,10 @@ package fflu_data as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-18 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
+  1.2   2013-09-05 Chris Horn           Renamed csv to del to make generic.
 
 *******************************************************************************/  
-  procedure add_record_type_csv(
+  procedure add_record_type_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
@@ -141,9 +144,10 @@ package fflu_data as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-13 Chris Horn           Defined.
+  1.1   2013-09-05 Chris Horn           Renamed csv to del to make generic.
 
 *******************************************************************************/  
-  procedure add_char_field_csv(
+  procedure add_char_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
@@ -177,9 +181,10 @@ package fflu_data as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-13 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
+  1.2   2013-09-05 Chris Horn           Renamed csv to del to make generic.
   
 *******************************************************************************/  
-  procedure add_number_field_csv(
+  procedure add_number_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
@@ -215,9 +220,10 @@ package fflu_data as
   1.0   2013-06-13 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
   1.2   2013-07-19 Chris Horn           Added a position offset for date extraction.
+  1.3   2013-09-05 Chris Horn           Renamed csv to del to make generic.
 
 *******************************************************************************/  
-  procedure add_date_field_csv(
+  procedure add_date_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
@@ -243,6 +249,7 @@ package fflu_data as
   NAME:      ADD_MARS_DATE_FIELD
   PURPOSE:   This function defines a mars date field.  The mars date column is 
             the name of the mars date table return column.
+            
              
   REVISIONS:
   Ver   Date       Author               Description
@@ -250,9 +257,10 @@ package fflu_data as
   1.0   2013-06-18 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
   1.2   2013-07-19 Chris Horn           Added a position offset for date extraction.
+  1.3   2013-09-05 Chris Horn           Renamed csv to col to make generic.
 
 *******************************************************************************/  
-  procedure add_mars_date_field_csv(
+  procedure add_mars_date_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
@@ -367,6 +375,8 @@ package fflu_data as
 
 *******************************************************************************/  
   function get_mars_date_field(i_field_name in fflu_common.st_name) return number; 
+  
+  
 
 /*******************************************************************************
   NAME:      LOG_FIELD_ERROR
@@ -383,6 +393,23 @@ package fflu_data as
   procedure log_field_error (
     i_field_name in fflu_common.st_name, 
     i_message in fflu_common.st_string);
+
+/*******************************************************************************
+  NAME:      LOG_FIELD_EXCEPTION
+  PURPOSE:   This procedure allows you to quickly log an field exception.
+             Its position, column and value information will be correctly 
+             passed to the fflu_utils.log_interface_data_error function.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-09-05 Chris Horn           Defined.
+
+*******************************************************************************/  
+  procedure log_field_exception (
+    i_field_name in fflu_common.st_name, 
+    i_message in fflu_common.st_string);
+
 
 /*******************************************************************************
   NAME:      LOG_INTERFACE_ERROR

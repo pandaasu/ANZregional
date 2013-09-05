@@ -55,7 +55,7 @@ package body fflu_data as
   pv_initialised boolean;                    -- Tracks if data parsing has been initalised.
   pv_filetype fflu_common.st_filetype;       -- Holds the file type being parsed.
   pv_csv_qualifier fflu_common.st_qualifier; -- Holds the csv text qualifier.
-  pv_csv_header boolean;                     -- Tracks if this csv file has a header.
+  pv_file_header boolean;                     -- Tracks if this csv file has a header.
   pv_allow_missing boolean;                  -- Tracks if we allow missing columns after the last bit of data.
   pv_have_parsed boolean;                    -- Set to true if we have successfully parsed a row of data.
   pv_errors boolean;                         -- Tracks if any errors have been raised since the last initialisation.
@@ -198,24 +198,26 @@ package body fflu_data as
   end check_initialised;
   
 /*******************************************************************************
-  NAME:      CHECK_FILETYPE_IS_CSV
-  PURPOSE:   This function checks that the initialised file type is csv.
+  NAME:      CHECK_FILETYPE_IS_DEL
+  PURPOSE:   This function checks that the initialised file type is csv or 
+             tab delimted.
              
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-06-18 Chris Horn           Created
+  1.1   2013-09-05 Chris Horn           Added tab delimeted functionality.
   
 *******************************************************************************/   
-  function check_filetype_is_csv(i_field_name in fflu_common.st_name) return boolean is
+  function check_filetype_is_del(i_field_name in fflu_common.st_name) return boolean is
   begin
-    if pv_filetype <> fflu_common.gc_file_type_csv then 
+    if pv_filetype not in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab) then 
       fflu_utils.log_interface_error(
-           'File Type',pv_filetype,'Data Parsing expected a csv file type for field definition [' || i_field_name || '].');
+           'File Type',pv_filetype,'Data Parsing expected a csv or tab file type for field definition [' || i_field_name || '].');
       pv_errors := true;
     end if;
-    return pv_filetype = fflu_common.gc_file_type_csv;
-  end check_filetype_is_csv;
+    return pv_filetype in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab);
+  end check_filetype_is_del;
 
 /*******************************************************************************
   NAME:      CHECK_FILETYPE_IS_FIXED_WIDTH
@@ -443,7 +445,7 @@ package body fflu_data as
   procedure initialise(
     i_filetype in fflu_common.st_filetype,
     i_csv_qualifier in fflu_common.st_qualifier default fflu_common.gc_csv_qualifier_null,
-    i_csv_header in boolean default gc_no_csv_header, 
+    i_file_header in boolean default gc_no_file_header, 
     i_allow_missing in boolean default gc_not_allow_missing) is
   begin
     pv_initialised := true;
@@ -476,10 +478,10 @@ package body fflu_data as
         pv_initialised := false;
       end if;
     end if;
-    if pv_filetype = fflu_common.gc_file_type_csv then
-      pv_csv_header := i_csv_header;
+    if pv_filetype in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab) then
+      pv_file_header := i_file_header;
     else
-      pv_csv_header := false;
+      pv_file_header := false;
     end if;
     pv_allow_missing := i_allow_missing;
     pv_have_parsed := false;
@@ -491,7 +493,7 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_RECORD_TYPE                                              PUBLIC
 *******************************************************************************/  
-  procedure add_record_type_csv(
+  procedure add_record_type_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
@@ -499,7 +501,7 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_del(i_field_name) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_record;
@@ -515,7 +517,7 @@ package body fflu_data as
     when others then 
       fflu_utils.log_interface_error('Data Parser - Add Record Type Error',sqlcode,sqlerrm);
       pv_errors := true;
-  end add_record_type_csv;
+  end add_record_type_del;
 
   procedure add_record_type_txt(
     i_field_name in fflu_common.st_name,
@@ -546,7 +548,7 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_CHAR_FIELD                                               PUBLIC
 *******************************************************************************/  
-  procedure add_char_field_csv(
+  procedure add_char_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
@@ -558,7 +560,7 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_del(i_field_name) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_char;
@@ -575,7 +577,7 @@ package body fflu_data as
     when others then 
       fflu_utils.log_interface_exception('Data Parser - Add Char Field');
       pv_errors := true;
-  end add_char_field_csv;
+  end add_char_field_del;
   
   procedure add_char_field_txt(
     i_field_name in fflu_common.st_name,
@@ -609,7 +611,7 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_NUMBER_FIELD                                             PUBLIC
 *******************************************************************************/  
-  procedure add_number_field_csv(
+  procedure add_number_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column, 
     i_column_name in fflu_common.st_name,
@@ -621,7 +623,7 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true then 
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_del(i_field_name) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_number;
@@ -638,7 +640,7 @@ package body fflu_data as
     when others then 
       fflu_utils.log_interface_exception('Data Parser - Add Number Field');
       pv_errors := true;    
-  end add_number_field_csv;
+  end add_number_field_del;
 
   procedure add_number_field_txt(
     i_field_name in fflu_common.st_name,
@@ -675,7 +677,7 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_DATE_FIELD                                               PUBLIC
 *******************************************************************************/  
-  procedure add_date_field_csv(
+  procedure add_date_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
@@ -690,7 +692,7 @@ package body fflu_data as
   begin
     -- Check system is initialised and column definition is valid.
     if check_initialised = true and check_column(i_field_name,i_column) = true and 
-      check_filetype_is_csv(i_field_name) = true and check_offset(i_field_name,i_offset,i_offset_len) = true then 
+      check_filetype_is_del(i_field_name) = true and check_offset(i_field_name,i_offset,i_offset_len) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
       rv_field.field_type := pc_field_type_date;
@@ -710,7 +712,7 @@ package body fflu_data as
     when others then 
       fflu_utils.log_interface_exception('Data Parser - Add Date Field');
       pv_errors := true;    
-  end add_date_field_csv;
+  end add_date_field_del;
     
   procedure add_date_field_txt(
     i_field_name in fflu_common.st_name,
@@ -747,7 +749,7 @@ package body fflu_data as
 /*******************************************************************************
   NAME:      ADD_MARS_DATE_FIELD                                          PUBLIC 
 *******************************************************************************/  
-  procedure add_mars_date_field_csv(
+  procedure add_mars_date_field_del(
     i_field_name in fflu_common.st_name,
     i_column in fflu_common.st_column,
     i_column_name in fflu_common.st_name,
@@ -762,7 +764,7 @@ package body fflu_data as
     rv_field rt_field;
   begin
     -- Check system is initialised and column definition is valid.
-    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_csv(i_field_name) = true
+    if check_initialised = true and check_column(i_field_name,i_column) = true and check_filetype_is_del(i_field_name) = true
         and check_mars_date_column(i_field_name, i_mars_date_column) = true and check_offset(i_field_name,i_offset,i_offset_len) = true then 
       -- Setup the field definition.
       rv_field.field_name := i_field_name;
@@ -784,7 +786,7 @@ package body fflu_data as
     when others then 
       fflu_utils.log_interface_exception('Data Parser - Add Mars Date Field');
       pv_errors := true;
-  end add_mars_date_field_csv;
+  end add_mars_date_field_del;
 
   procedure add_mars_date_field_txt(
     i_field_name in fflu_common.st_name,
@@ -862,7 +864,7 @@ package body fflu_data as
       i_message in fflu_common.st_string) is
     begin
       v_error_count := v_error_count + 1;
-      if pv_filetype = fflu_common.gc_file_type_csv then 
+      if pv_filetype in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab) then 
         fflu_utils.log_interface_data_error(
           ptv_fields(i_field_no).column_name,ptv_fields(i_field_no).column_no,get_field_value_as_string(i_field_no),i_message);
       elsif pv_filetype = fflu_common.gc_file_type_fixed_width then 
@@ -1071,6 +1073,43 @@ package body fflu_data as
         pv_errors := true;
     end check_header;
     
+    procedure extract_tab_columns is 
+      c_delimiter constant fflu_common.st_string := chr(9);
+      v_position fflu_common.st_size;
+      v_char fflu_common.st_string;
+      v_prev_char fflu_common.st_string;
+      v_column fflu_common.st_string;
+    begin
+      v_char := null;
+      v_prev_char := null;
+      v_position := 0;
+      v_column := null;
+      loop 
+        v_position := v_position + 1;
+        exit when v_position > v_data_len;
+        -- Track the current characters.
+        v_prev_char := v_char;
+        v_char := substr(v_data,v_position,1);
+        -- Now process the current data. 
+        if v_char = c_delimiter then 
+          if v_prev_char is not null then 
+            tv_columns(tv_columns.count+1) := v_column;
+            v_column := null;
+          end if;
+        else 
+          v_column := v_column || v_char;
+        end if;
+      end loop;
+      if nvl(length(v_column),0) > 0 then 
+        tv_columns(tv_columns.count+1) := v_column;
+      end if;
+    exception 
+      when others then 
+        fflu_utils.log_interface_exception('Data Parser - Extract Tabbed Columns');
+        v_error_count := v_error_count + 1;
+        pv_errors := true;
+    end extract_tab_columns;
+    
     procedure extract_csv_columns is
       c_delimiter constant fflu_common.st_string := ',';
       v_position fflu_common.st_size;
@@ -1155,30 +1194,30 @@ package body fflu_data as
         pv_errors := true;
     end extract_fixed_width_field;
     
-    function extract_csv_field(i_field_no in fflu_common.st_size,o_process_field out boolean) return fflu_common.st_string is
+    function extract_del_field(i_field_no in fflu_common.st_size,o_process_field out boolean) return fflu_common.st_string is
       v_result fflu_common.st_string;
     begin
       v_result := null;
       o_process_field := true;
       if ptv_fields(i_field_no).column_no <= tv_columns.count then 
         v_result := tv_columns(ptv_fields(i_field_no).column_no);
-        -- Now apply any offset that may have been specified for CSV sub field.
+        -- Now apply any offset that may have been specified for the sub field.
         if ptv_fields(i_field_no).offset is not null then 
           v_result := substr(v_result,ptv_fields(i_field_no).offset,ptv_fields(i_field_no).offset_len);
         end if;
       else
         if pv_allow_missing = false then 
           o_process_field := false;
-          log_field_parse_error(i_field_no,'CSV line record did not contain a column ' || ptv_fields(i_field_no).column_no || '.');
+          log_field_parse_error(i_field_no,'Delimited line record did not contain a column ' || ptv_fields(i_field_no).column_no || '.');
         end if;
       end if;
       return v_result;
     exception 
       when others then 
-        fflu_utils.log_interface_exception('Data Parser - Extract CSV Field');
+        fflu_utils.log_interface_exception('Data Parser - Extract Delimited Field');
         v_error_count := v_error_count + 1;
         pv_errors := true;
-    end extract_csv_field;
+    end extract_del_field;
     
     procedure parse_record is
       v_counter fflu_common.st_size;
@@ -1197,6 +1236,8 @@ package body fflu_data as
       -- If this is a csv file type, then lets extract all the columns first.
       if pv_filetype = fflu_common.gc_file_type_csv then 
         extract_csv_columns;
+      elsif pv_filetype = fflu_common.gc_file_type_tab then 
+        extract_tab_columns;
       end if;
       -- Now process each actual field definition.
       loop 
@@ -1229,13 +1270,13 @@ package body fflu_data as
         if v_process_field = true then 
           if pv_filetype = fflu_common.gc_file_type_fixed_width then 
             v_field := extract_fixed_width_field(v_counter,v_process_field); 
-          elsif pv_filetype = fflu_common.gc_file_type_csv then 
-            v_field := extract_csv_field(v_counter,v_process_field);
+          elsif pv_filetype in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab) then 
+            v_field := extract_del_field(v_counter,v_process_field);
           end if;
         end if;
         -- If we are still processing field then perform, ie no error in the extraction.
         if v_process_field = true then 
-          if pv_csv_header = true then 
+          if pv_file_header = true then 
             check_header(v_counter,v_field);
           else
             process_field(v_counter,v_field);
@@ -1287,8 +1328,8 @@ package body fflu_data as
         v_result := false;
       end if;
       -- If this was a csv header record we just checked then now clear that flag for future records.
-      if pv_csv_header = true then 
-        pv_csv_header := false;
+      if pv_file_header = true then 
+        pv_file_header := false;
         v_result := false;  -- Always return false for header rows.  A check for was errors can be performed.
       end if;
     else
@@ -1435,7 +1476,7 @@ package body fflu_data as
     v_field_no fflu_common.st_size;
   begin
     if check_initialised = true and find_column(i_field_name,v_field_no) = true then 
-      if pv_filetype = fflu_common.gc_file_type_csv then 
+      if pv_filetype in (fflu_common.gc_file_type_csv,fflu_common.gc_file_type_tab) then 
         fflu_utils.log_interface_data_error(
           ptv_fields(v_field_no).column_name,ptv_fields(v_field_no).column_no,get_field_value_as_string(v_field_no),i_message);
       elsif pv_filetype = fflu_common.gc_file_type_fixed_width then 
@@ -1451,6 +1492,17 @@ package body fflu_data as
       fflu_utils.log_interface_exception('Data Parser - Log Field Error');
       pv_errors := true;
   end log_field_error;
+
+/*******************************************************************************
+  NAME:      LOG_FIELD_ERROR                                              PUBLIC
+*******************************************************************************/  
+  procedure log_field_exception(
+    i_field_name in fflu_common.st_name, 
+    i_message in fflu_common.st_string) is
+    v_field_no fflu_common.st_size;
+  begin
+    log_field_error(i_field_name,i_message || ' EXCEPTION : ' || SQLERRM);
+  end log_field_exception;
 
 /*******************************************************************************
   NAME:      LOG_FIELD_ERROR                                              PUBLIC
@@ -1516,5 +1568,5 @@ begin
   pv_have_parsed := false;
   pv_errors := false;
   ptv_fields.delete;
-  pv_csv_header := false;
+  pv_file_header := false;
 end fflu_data;
