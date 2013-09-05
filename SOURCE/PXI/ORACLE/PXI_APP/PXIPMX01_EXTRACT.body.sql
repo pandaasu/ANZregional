@@ -111,7 +111,8 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                       bds_material_hdr@ap0064p_promax_testing t00 
                     where 
                       t0.matl_code = t00.sap_material_code and 
-                      t00.MARS_RPRSNTTV_ITEM_CODE = t01.sap_material_code)))
+                      t00.MARS_RPRSNTTV_ITEM_CODE = t01.sap_material_code and 
+                      t0.sales_org_code = t03.promax_company)))
             ) t1,
             bds_material_hdr@ap0064p_promax_testing t2, -- @ap0064p_promax_testing -- TDU Material Header Information
             (  -- Bring in the records for when tdu to rsu no information. 
