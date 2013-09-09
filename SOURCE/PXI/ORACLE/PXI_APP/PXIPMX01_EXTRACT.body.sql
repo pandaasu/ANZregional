@@ -6,6 +6,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
 *******************************************************************************/
   pc_package_name constant pxi_common.st_package_name := 'PXIPMX01_EXTRACT';
   pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX01';
+  pc_days_to_send_deletions constant number(5) := 10; -- Days
 
 /*******************************************************************************
   NAME:  EXECUTE                                                          PUBLIC
@@ -16,7 +17,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
      i_creation_date in date default sysdate-1) is
      -- Variables     
      v_instance number(15,0);
-     v_data pxi_common.st_data;
+     v_include boolean;
  
      -- The extract query.
      cursor csr_input is
@@ -45,7 +46,12 @@ PACKAGE BODY PXIPMX01_EXTRACT as
           pxi_common.numb_format(tdu_length, '9999999990', pxi_common.fc_is_nullable) || -- tdu_length -> CaseLength
           pxi_common.numb_format(rsu_height, '9999999990', pxi_common.fc_is_nullable) || -- rsu_height -> UnitHeight
           pxi_common.numb_format(rsu_width, '9999999990', pxi_common.fc_is_nullable) || -- rsu_width -> UnitWidth
-          pxi_common.numb_format(rsu_length, '9999999990', pxi_common.fc_is_nullable)  -- rsu_length -> UnitLength
+          pxi_common.numb_format(rsu_length, '9999999990', pxi_common.fc_is_nullable) -- rsu_length -> UnitLength
+          as row_data,
+          promax_company,
+          promax_division,
+          zrep_matl_code,
+          dstrbtn_chain_status
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -56,6 +62,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
             t1.promax_division,
             t1.sales_org,
             t1.dstrbtn_channel,
+            t1.dstrbtn_chain_status,
             case when t1.dstrbtn_chain_status = '99' then 5 else 1 end as product_status,
             t1.zrep_matl_code, -- ZREP Material Code
             t1.zrep_matl_desc, -- ZREP Material Description.
@@ -101,18 +108,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                 t02.sap_material_code = t01.sap_material_code and 
                 -- Distribution Channel Filtering
                 -- Make sure this product is not being sold to affilate markers or as a raws and packs product.
-                t02.dstrbtn_channel not in ('98','99') and
-                -- Make sure the distribution channel status is not inactive
-                (t02.dstrbtn_chain_status != '99' or (t02.dstrbtn_chain_status = '99' and 
-                  exists (
-                    select * 
-                    from 
-                      sale_cdw_gsv@ap0064p_promax_testing t0, 
-                      bds_material_hdr@ap0064p_promax_testing t00 
-                    where 
-                      t0.matl_code = t00.sap_material_code and 
-                      t00.MARS_RPRSNTTV_ITEM_CODE = t01.sap_material_code and 
-                      t0.sales_org_code = t03.promax_company)))
+                t02.dstrbtn_channel not in ('98','99')
             ) t1,
             bds_material_hdr@ap0064p_promax_testing t2, -- @ap0064p_promax_testing -- TDU Material Header Information
             (  -- Bring in the records for when tdu to rsu no information. 
@@ -177,19 +173,92 @@ PACKAGE BODY PXIPMX01_EXTRACT as
             -- If looking for missing materials, outer join t2 and t3 values, including the all the t2 fitler predicates.
         ------------------------------------------------------------------------
         );
+        -- Record type to hold the promax extract data and the extra determination / mainteance criteria for the sending table. 
+        rv_product csr_input%rowtype;
       
+     -- This function updates the product history table.
+     procedure update_product_history is
+     begin
+       -- Perform an initial update for the time this record was last extracted. 
+       update pmx_matl_hist set last_extracted = sysdate
+         where cmpny_code = rv_product.promax_company 
+         and div_code = rv_product.promax_division and zrep_matl_code = rv_product.zrep_matl_code;
+       -- If no update was performed then add the record to the table.
+       if sql%rowcount = 0 then 
+         insert into pmx_matl_hist (cmpny_code,div_code,zrep_matl_code,dstrbtn_chain_status,change_date,last_extracted) values (
+           rv_product.promax_company, rv_product.promax_division, rv_product.zrep_matl_code,rv_product.dstrbtn_chain_status,sysdate,sysdate);
+       else 
+         update pmx_matl_hist set change_date = sysdate, dstrbtn_chain_status = rv_product.dstrbtn_chain_status 
+           where cmpny_code = rv_product.promax_company and div_code = rv_product.promax_division and
+           zrep_matl_code = rv_product.zrep_matl_code and
+           dstrbtn_chain_status <> rv_product.dstrbtn_chain_status;
+       end if;
+     exception 
+       when others then 
+         pxi_common.reraise_promax_exception(pc_package_name,'UPDATE_PRODUCT_HISTORY');
+     end update_product_history;
+
+     -- This function looks to see if the product was recently deleted.      
+     function deleted_recently return boolean is
+       v_result boolean;
+       cursor csr_matl_hist is
+         select 
+           dstrbtn_chain_status, 
+           change_date
+         from 
+           pmx_matl_hist
+         where 
+           cmpny_code = rv_product.promax_company and div_code = rv_product.promax_division and 
+           zrep_matl_code = rv_product.zrep_matl_code;
+       rv_matl_hist csr_matl_hist%rowtype;
+     begin
+       v_result := false;
+       open csr_matl_hist; 
+       fetch csr_matl_hist into rv_matl_hist;
+       if csr_matl_hist%found then 
+         -- If status not deleted.
+         if rv_matl_hist.dstrbtn_chain_status != '99' then
+           v_result := true;
+         else 
+           -- Check if the item was moved to deleted in the last x days.
+           if rv_matl_hist.change_date > sysdate - pc_days_to_send_deletions then
+             v_result := true;
+           end if;
+         end if;
+       end if;
+       close csr_matl_hist;
+       return v_result;
+     exception 
+       when others then 
+         pxi_common.reraise_promax_exception(pc_package_name,'DELETED_RECENTLY');
+     end deleted_recently; 
+        
    begin
      -- Open cursor with the extract data.
      open csr_input;
      loop
-       fetch csr_input into v_data;
+       fetch csr_input into rv_product;
        exit when csr_input%notfound;
-      -- Create the new interface when required
-      if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
+       -- Now determine if we should send this material.
+       v_include := false;
+       if rv_product.dstrbtn_chain_status != '99' then 
+         v_include := true;
+       else 
+         if deleted_recently = true then 
+           v_include := true;
+         end if;
+       end if;       
+       -- Only include this material in the extract if we need to.
+       if v_include then 
+         -- If we extracted this product then lets update the product history. 
+         update_product_history;   
+         -- Create the new interface when required
+         if lics_outbound_loader.is_created = false then
+           v_instance := lics_outbound_loader.create_interface(pc_interface_name);
+         end if;
+         -- Append the interface data
+         lics_outbound_loader.append_data(rv_product.row_data);
       end if;
-      -- Append the interface data
-      lics_outbound_loader.append_data(v_data);
     end loop;
     close csr_input;
 
@@ -197,6 +266,9 @@ PACKAGE BODY PXIPMX01_EXTRACT as
     if lics_outbound_loader.is_created = true then
       lics_outbound_loader.finalise_interface;
     end if;
+    
+    -- Now commit the changes that were made to the product history extract table.
+    commit;
 
   exception
      when others then
