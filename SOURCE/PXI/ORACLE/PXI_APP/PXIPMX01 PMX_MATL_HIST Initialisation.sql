@@ -2,6 +2,7 @@
             t4.promax_company as cmpny_code,
             t4.promax_division as div_code,
             pxi_common.full_matl_code(t3.rep_item) as zrep_matl_code,
+            '10' as xdstrbtn_chain_status,
             '20' as dstrbtn_chain_status,
             trunc(sysdate) as change_date,
             trunc(sysdate) as last_extracted

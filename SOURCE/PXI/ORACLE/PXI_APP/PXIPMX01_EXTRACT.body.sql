@@ -51,6 +51,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
           promax_company,
           promax_division,
           zrep_matl_code,
+          xdstrbtn_chain_status,
           dstrbtn_chain_status
         ------------------------------------------------------------------------
         from (
@@ -62,8 +63,9 @@ PACKAGE BODY PXIPMX01_EXTRACT as
             t1.promax_division,
             t1.sales_org,
             t1.dstrbtn_channel,
+            t1.xdstrbtn_chain_status,
             t1.dstrbtn_chain_status,
-            case when t1.dstrbtn_chain_status = '99' then 5 else 1 end as product_status,
+            case when t1.dstrbtn_chain_status != '99' and t1.xdstrbtn_chain_status = '10' then 1 else 5 end as product_status,
             t1.zrep_matl_code, -- ZREP Material Code
             t1.zrep_matl_desc, -- ZREP Material Description.
             t2.sap_material_code as tdu_matl_code, -- TDU Material Code
@@ -87,6 +89,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                 t03.promax_division,   -- Promax Division
                 t02.sales_organisation as sales_org, -- Sales Organisation
                 t02.dstrbtn_channel, -- Distribution Channel
+                t01.xdstrbtn_chain_status, -- Cross Distribution Channel Status
                 t02.dstrbtn_chain_status, -- Distribution Channel Status
                 t01.sap_material_code as zrep_matl_code,  -- ZREP Material Code
                 t01.bds_material_desc_en as zrep_matl_desc -- ZREP Material Description.
@@ -100,8 +103,6 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                 ((t02.sales_organisation = pxi_common.gc_australia and t01.material_division = t03.promax_division) or (t02.sales_organisation = pxi_common.gc_new_zealand)) and 
                 -- Get the traded unit zreps.
                 t01.material_type = 'ZREP' and t01.mars_traded_unit_flag = 'X' and 
-                -- Ensure that this product is allowed to be distributed.
-                t01.xdstrbtn_chain_status = '10' and 
                 -- Ensure the data hasn't been deleted and is correct in lads.
                 t01.deletion_flag is null and t01.bds_lads_status = 1 and 
                 -- Now check that this Zrep is distributed in the destination market.
@@ -184,14 +185,14 @@ PACKAGE BODY PXIPMX01_EXTRACT as
          where cmpny_code = rv_product.promax_company 
          and div_code = rv_product.promax_division and zrep_matl_code = rv_product.zrep_matl_code;
        -- If no update was performed then add the record to the table.
-       if sql%rowcount = 0 then 
-         insert into pmx_matl_hist (cmpny_code,div_code,zrep_matl_code,dstrbtn_chain_status,change_date,last_extracted) values (
-           rv_product.promax_company, rv_product.promax_division, rv_product.zrep_matl_code,rv_product.dstrbtn_chain_status,sysdate,sysdate);
+       if sql%rowcount = 0 then
+         insert into pmx_matl_hist (cmpny_code,div_code,zrep_matl_code,xdstrbtn_chain_status,dstrbtn_chain_status,change_date,last_extracted) values (
+           rv_product.promax_company, rv_product.promax_division, rv_product.zrep_matl_code,rv_product.xdstrbtn_chain_status,rv_product.dstrbtn_chain_status,sysdate,sysdate);
        else 
-         update pmx_matl_hist set change_date = sysdate, dstrbtn_chain_status = rv_product.dstrbtn_chain_status 
+         update pmx_matl_hist set change_date = sysdate, xdstrbtn_chain_status = rv_product.xdstrbtn_chain_status, dstrbtn_chain_status = rv_product.dstrbtn_chain_status 
            where cmpny_code = rv_product.promax_company and div_code = rv_product.promax_division and
            zrep_matl_code = rv_product.zrep_matl_code and
-           dstrbtn_chain_status <> rv_product.dstrbtn_chain_status;
+           (dstrbtn_chain_status <> rv_product.dstrbtn_chain_status or xdstrbtn_chain_status <> rv_product.xdstrbtn_chain_status);
        end if;
      exception 
        when others then 
@@ -203,6 +204,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
        v_result boolean;
        cursor csr_matl_hist is
          select 
+           xdstrbtn_chain_status,
            dstrbtn_chain_status, 
            change_date
          from 
@@ -216,11 +218,11 @@ PACKAGE BODY PXIPMX01_EXTRACT as
        open csr_matl_hist; 
        fetch csr_matl_hist into rv_matl_hist;
        if csr_matl_hist%found then 
-         -- If status not deleted.
-         if rv_matl_hist.dstrbtn_chain_status != '99' then
+         -- If the current status is not deleted then it must now have been recently deleted.
+         if rv_matl_hist.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status = '10' then
            v_result := true;
          else 
-           -- Check if the item was moved to deleted in the last x days.
+           -- Check if the item's status was changed in the last few days.
            if rv_matl_hist.change_date > sysdate - pc_days_to_send_deletions then
              v_result := true;
            end if;
@@ -241,7 +243,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
        exit when csr_input%notfound;
        -- Now determine if we should send this material.
        v_include := false;
-       if rv_product.dstrbtn_chain_status != '99' then 
+       if rv_product.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status = '10' then 
          v_include := true;
        else 
          if deleted_recently = true then 
