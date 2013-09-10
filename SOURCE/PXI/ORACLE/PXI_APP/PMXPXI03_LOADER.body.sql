@@ -67,7 +67,7 @@ package body pmxpxi03_loader as
   procedure on_start is
   begin
     -- Now initialise the data parsing wrapper.
-    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_no_csv_header,fflu_data.gc_allow_missing);
+    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_no_file_header,fflu_data.gc_allow_missing);
 
     -- Detail Record - Fields
     fflu_data.add_char_field_txt(pc_ic_record_type,1,6,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
