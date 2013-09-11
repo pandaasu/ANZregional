@@ -98,7 +98,7 @@ AS
     WHERE                                                      --'OUTSTANDING'
           t1.purch_order_line_status = '*OPEN'
       AND t1.matl_code = t2.matl_code(+)
-      AND (t2.bus_sgmnt_code <> '05' OR t2.bus_sgmnt_code IS NULL)
+      AND (t2.bus_sgmnt_code NOT IN ('01', '05') OR t2.bus_sgmnt_code IS NULL)
    UNION ALL
    SELECT t1.company_code AS company_code, 2 AS doc_xactn_type_code,
                                                             -- 2 = Sales Order
