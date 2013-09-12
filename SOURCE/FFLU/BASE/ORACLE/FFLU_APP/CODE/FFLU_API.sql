@@ -74,7 +74,6 @@ package fflu_api as
   function get_const_system_unit return varchar2;        -- System, eg. CDW | PROMAX
   function get_const_system_environment return varchar2; -- Tier, eg DEV | TEST | PROD
   function get_const_system_url return varchar2;         -- ICS URL
-  function get_const_log_database return varchar2;       -- ICS Database
   -- LICS Conventions
   function get_const_all_code return varchar2;                -- *ALL
   function get_const_guest_code return varchar2;              -- *GUEST

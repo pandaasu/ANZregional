@@ -304,7 +304,6 @@ package body fflu_api as
   function get_const_system_unit return varchar2          is begin return lics_parameter.system_unit; end get_const_system_unit; -- Unique System  Identifier .. eg. CDW | PROMAX | EFEX | .. 
   function get_const_system_environment return varchar2   is begin return lics_parameter.system_environment; end get_const_system_environment; -- Tier .. DEVP | TEST | PROD
   function get_const_system_url return varchar2           is begin return lics_parameter.system_url; end get_const_system_url; -- ICS URL
-  function get_const_log_database return varchar2         is begin return lics_parameter.log_database; end get_const_log_database; -- ICS Database
   -- LICS Conventions
   function get_const_all_code return varchar2             is begin return '*ALL'; end get_const_all_code; -- *ALL
   function get_const_guest_code return varchar2           is begin return '*GUEST'; end get_const_guest_code; -- *GUEST
@@ -494,9 +493,10 @@ function get_interface_group_list return tt_interface_group_list pipelined is
         a.interface_code,
         b.option_code
       from (
-          select a.int_interface interface_code,
-            a.int_type interface_type,
-            a.int_usr_invocation interface_load_status
+          select a.int_interface as interface_code,
+            a.int_type as interface_type,
+            a.int_usr_invocation as interface_load_status  -- ICS V2 Version, Comment Out When Compiling on ICS V1
+--            case when (select count(*) from lics_sec_interface t0 where t0.sei_interface = a.int_interface and t0.sei_user = v_user_code) > 0 then 1 else 0 end as interface_load_status -- ICS V1 Version, Comment Out When Compiling on ICS V2
           from lics_interface a
           where a.int_status = lics_constant.status_active
         ) a,
@@ -527,7 +527,7 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       where 
         -- for option ICS_INT_LOADER .. filter for interfaces type *INBOUND and flagged as loadable 
         ((b.option_code = get_const_loader_option and a.interface_type = get_const_int_type_inbound and a.interface_load_status = lics_constant.status_active) or b.option_code != get_const_loader_option) and
-        (((select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) > 0 and exists (select t0.sei_interface from lics_sec_interface t0 where a.interface_code = t0.sei_interface and t0.sei_user = v_user_code)) or
+        (((select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) > 0 and exists (select t0.sei_interface from lics_sec_interface t0 where t0.sei_interface = a.interface_code and t0.sei_user = v_user_code)) or
          (select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) = 0)
       order by 2, 3 
     )
