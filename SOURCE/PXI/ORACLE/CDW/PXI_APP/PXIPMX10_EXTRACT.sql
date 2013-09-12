@@ -1,10 +1,10 @@
-create or replace package pxipmx10_extract_loader as
+create or replace package pxipmx10_extract as
   /*****************************************************************************
   ** PACKAGE DEFINITION
   ******************************************************************************
   
     Schema    : pxi_app
-    Package   : pxipmx10_extract_loader
+    Package   : pxipmx10_extract
     Author    : Chris Horn          
   
     Description
@@ -36,4 +36,4 @@ create or replace package pxipmx10_extract_loader as
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
 
-end pxipmx10_extract_loader;
+end pxipmx10_extract;

@@ -1,4 +1,4 @@
-create or replace package body pxipmx10_extract_loader as 
+create or replace package body pxipmx10_extract as 
 
 /*******************************************************************************
   Package Constants
@@ -186,4 +186,4 @@ create or replace package body pxipmx10_extract_loader as
     return fflu_common.gc_csv_qualifier_double_quote;
   end on_get_csv_qualifier;
 
-end pxipmx10_extract_loader;
+end pxipmx10_extract;
