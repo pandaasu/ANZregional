@@ -23,8 +23,8 @@
   create table pxi.pmx_cogs (
     cmpny_code varchar2(3 char) not null,
     div_code varchar2(3 char) not null,
-    mars_period varchar2(100 char) not null,
-    zrep_matl_code number(8,0) not null,
+    mars_period number(6,0) not null,
+    zrep_matl_code varchar2(18 byte) not null,
     cost number(7,2) not null,
     last_update_date date not null,
     last_update_user varchar2(30 char) not null
