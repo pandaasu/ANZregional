@@ -1,39 +1,61 @@
-create or replace package pxipmx10_extract as
-  /*****************************************************************************
-  ** PACKAGE DEFINITION
-  ******************************************************************************
-  
-    Schema    : pxi_app
-    Package   : pxipmx10_extract
-    Author    : Chris Horn          
-  
-    Description
-    ----------------------------------------------------------------------------
-    [pxipmx10_extract] Promax - COGS Interface
-    [replace_on_key] Template
-    
-    Functions
-    ----------------------------------------------------------------------------
-    + LICS Hooks 
-      - on_start                   Called on starting the interface.
-      - on_data(i_row in varchar2) Called for each row of data in the interface.
-      - on_end                     Called at the end of processing.
-    + FFLU Hooks
-      - on_get_file_type           Returns the type of file format expected.
-      - on_get_csv_qualifier       Returns the CSV file format qualifier.  
-  
-    Date        Author                Description
-    ----------  --------------------  ------------------------------------------
-    2013-09-11  Chris Horn            [Auto Generated]
-  
-  *****************************************************************************/
+create or replace 
+PACKAGE          PXIPMX10_EXTRACT as
+/******************************************************************************/
+/* Package Definition                                                         */
+/******************************************************************************/
+/**
+ System  : VENUS
+ Package : PXIPMX07_EXTRACT
+ Owner   : DDS_APP
+ Author  : Chris Horn and Mal Chambeyron
 
-  -- LICS Hooks.
-  procedure on_start;
-  procedure on_data(p_row in varchar2);
-  procedure on_end;
-  -- FFLU Hooks.
-  function on_get_file_type return varchar2;
-  function on_get_csv_qualifier return varchar2;
+ Description
+ -----------
+    VENUS -> LADS (Pass Through) -> Promax PX - Cogs - PX Interface 336
 
-end pxipmx10_extract;
+ This interface selects sales data for the previous week and multiples the 
+ quanties by the cogs data for the given period.  If the cogs data is missing
+ the interface will fail.
+
+ Date          Author                Description
+ ------------  --------------------  -----------
+ 2013-09-15    Chris Horn            Created.
+
+*******************************************************************************/
+
+/*******************************************************************************
+  NAME:      EXECUTE                                                      PUBLIC
+  PURPOSE:   This function creates an extract of sales data for promax and 
+             multiplies it by the cogs data.
+
+             It defaults to all available promax companies and divisions and
+             for sales from last week.  ie.  The weel prior to the supplied \
+             date.
+             
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-09-15 Chris Horn           Created.
+
+*******************************************************************************/
+   procedure execute(
+     i_pmx_company in pxi_common.st_company default null,
+     i_pmx_division in pxi_common.st_promax_division default null, 
+     i_creation_date in date default sysdate);
+
+
+/*******************************************************************************
+  NAME:      COST_CALCULATION                                             PUBLIC
+  PURPOSE:   This function performs the cost calculation and ra
+             
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-09-15 Chris Horn           Created.
+
+*******************************************************************************/
+  function cost_calculation(i_billing_date in date, i_zrep_matl, i_qty in number, i_cost in number) return number;
+
+end PXIPMX10_EXTRACT;

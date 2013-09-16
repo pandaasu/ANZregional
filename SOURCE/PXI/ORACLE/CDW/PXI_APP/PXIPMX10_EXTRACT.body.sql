@@ -1,189 +1,109 @@
-create or replace package body pxipmx10_extract as 
+create or replace 
+PACKAGE BODY PXIPMX10_EXTRACT as
 
 /*******************************************************************************
-  Package Constants
-*******************************************************************************/  
-  -- Interface column constants
-  pc_mars_period constant fflu_common.st_name := 'Mars Period';
-  pc_zrep_matl_code constant fflu_common.st_name := 'ZREP Matl Code - Short';
-  pc_cost constant fflu_common.st_name := 'Cost of Goods Sold';  
-  
-  -- Interface Sufix's
-  pc_interface_snack constant fflu_common.st_interface := '1';
-  pc_interface_food  constant fflu_common.st_interface := '2';
-  pc_interface_pet   constant fflu_common.st_interface := '3';
-  pc_interface_nz    constant fflu_common.st_interface := '4';
-  
-  -- Package variables
-  pv_first_row_flag boolean;
-  pv_user fflu_common.st_user;
-  prv_initial_values pxi.pmx_cogs%rowtype;
- 
-  ------------------------------------------------------------------------------
-  -- LICS : ON_START 
-  ------------------------------------------------------------------------------
-  procedure on_start is
-  
-  begin
-    -- Now assign the moe code based on the interface configuration file information.
-    case fflu_utils.get_interface_suffix 
-      when pc_interface_snack then 
-        rpv_initial_values.cmpny_code := pxi_common.gc_australia;
-        rpv_initial_values.div_code := rv_insert_values.div_code;
-      when pc_interface_food then 
-        rpv_initial_values.cmpny_code := pxi_common.gc_australia;
-        rpv_initial_values.div_code := rv_insert_values.div_code;
-      when pc_interface_pet then 
-        rpv_initial_values.cmpny_code :=  pxi_common.gc_australia;
-        rpv_initial_values.div_code := rv_insert_values.div_code;
-      when pc_interface_nz then 
-        rpv_initial_values.cmpny_code :=  pxi_common.gc_new_zealand;
-        rpv_initial_values.div_code := rv_insert_values.div_code;
-      else 
-        rpv_initial_values.cmpny_code := null;
-        rpv_initial_values.div_code := null;
-        fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unknown Interface Suffix Configuration.');
-    end case;
+  Package Cosntants
+*******************************************************************************/
+  pc_package_name constant pxi_common.st_package_name := 'PXIPMX10_EXTRACT';
+  pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX10';
 
-    -- Initialise data parsing wrapper.
-    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_file_header,fflu_data.gc_not_allow_missing);
-    
-    -- Add column structure
-    fflu_data.add_char_field_del(pc_mars_period,1,'PERIOD',190001,999913,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_del(pc_zrep_matl_code,2,'ZREP_',fflu_data.gc_null_format,fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_number_field_del(pc_cost,3,'COGS','99999.99',0,fflu_data.gc_null_max_number,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    
-    -- Get user name - MUST be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
-    pv_user := fflu_utils.get_interface_user;
-    
-    -- Initialise First Row Flag
-    pv_first_row_flag := true;
-    
-  exception 
-    when others then 
-      fflu_data.log_interface_exception('On Start');
-  end on_start;
+/*******************************************************************************
+  NAME:  EXECUTE                                                          PUBLIC
+*******************************************************************************/
+   procedure execute(
+     i_pmx_company in pxi_common.st_company default null,
+     i_pmx_division in pxi_common.st_promax_division default null, 
+     i_creation_date in date default sysdate) is
+     -- Variables     
+     v_instance number(15,0);
+     
+     -- Extract Cursor.
+     cursor csr_input is
+        select
+          pxi_common.char_format('336003', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336003' -> RecordType
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+          pxi_common.char_format(invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
+          pxi_common.char_format(invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
+          pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
+          pxi_common.char_format(material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
+          pxi_common.date_format(orderdate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- orderdate -> OrderDate
+          pxi_common.numb_format(qty * cost, 'S9999990.00', pxi_common.fc_is_nullable) || -- discountgiven -> DiscountGiven
+          pxi_common.char_format('500', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '500' -> ConditionType
+          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
+          pxi_common.char_format(' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) as data, -- CONSTANT ' ' -> PromotionNumber
+          promax_company,
+          promax_division,
+          material,
+          billing_eff_date,
+          cost
+        from (
+           select
+            t4.promax_company,
+            t4.promax_division,
+            t1.billing_doc_num as invoicenumber,
+            decode(substr(t1.billing_doc_line_num,7,4),'_ADD','1'||substr(t1.billing_doc_line_num,2,5),'_REM','2'||substr(t1.billing_doc_line_num,2,5),t1.billing_doc_line_num) as invoicelinenumber,
+            t1.sold_to_cust_code as customerhierarchy,
+            t3.rep_item as material,
+            nvl(decode(to_char(t2.order_eff_date,'DY'),'SUN',t2.order_eff_date +1,t2.order_eff_date),decode(to_char(t1.billing_eff_date,'DY'),'SUN',t1.billing_eff_date +1,t1.billing_eff_date)) as orderdate,
+            t1.billing_eff_date,
+            t1.billed_qty_base_uom as qty,
+            t1.doc_currcy_code as currency,
+            (select t0.cost from pxi.pmx_cogs t0 where t0.cmpny_code = t4.promax_company and t0.div_code = t4.promax_division and t0.zrep_matl_code = pxi_common.full_matl_code(t3.rep_item) and 
+             t0.mars_period = (select t00.mars_period from mars_date t00 where t00.calendar_date = t1.billing_eff_date)) as cost
+          from
+            dw_sales_base@db1270p_promax_testing t1,  -- @db1270p_promax_testing
+            dw_order_base@db1270p_promax_testing t2,  -- @db1270p_promax_testing
+            matl_dim@db1270p_promax_testing t3, -- @db1270p_promax_testing
+            table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4
+          where
+            -- Join to promax configuration table.
+            t1.company_code = t4.promax_company 
+            and ((t1.company_code = pxi_common.gc_australia and t1.hdr_division_code = t4.promax_division) or (t1.company_code = pxi_common.gc_new_zealand))
+            -- Extract yesterdays data by default, otherwise extract a whole range of data. for history since 2012.
+            and t1.company_code = t2.company_code (+)
+            and t1.creatn_date between trunc(i_creation_date-7-to_char(sysdate,'D')) and trunc(sysdate-7+ (6-to_char(sysdate,'D')))
+            and t1.order_doc_num = t2.order_doc_num (+)
+            and t1.order_doc_line_num = t2.order_doc_line_num (+)
+            -- Now join to the material zrep detail
+            and t1.matl_code = t3.matl_code
+            -- Not null check added to accommodate new restrictions on output format
+            and t1.matl_entd is not null
+        );
+        rv_data csr_input%rowtype;
 
-  ------------------------------------------------------------------------------
-  -- LICS : ON_DATA
-  ------------------------------------------------------------------------------
-  procedure on_data(p_row in varchar2) is
-  
-    v_row_status_ok boolean;
-    v_current_field fflu_common.st_name;
-    
-    rv_insert_values pxi.pmx_cogs%rowtype;
+   begin
+     -- Open cursor with the extract data.
+     open csr_input;
+     loop
+       fetch csr_input into rv_data;
+       exit when csr_input%notfound;
+       -- Check if cost was in error.
+       if rv_data.cost is null then 
+         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Missing COGS Data for [' || rv_data.promax_company || ',' || rv_data.promax_division || '], billing date : ' || to_char(rv_data.billing_eff_date,'DD/MM/YYYY') || ', zrep material : ' || rv_data.material || '.');
+       end if;
+       -- Create the new interface when required
+       if lics_outbound_loader.is_created = false then
+         v_instance := lics_outbound_loader.create_interface(pc_interface_name);
+       end if;
+       -- Append the interface data
+       lics_outbound_loader.append_data(rv_data.data);
+    end loop;
+    close csr_input;
 
-  begin
-    if fflu_data.parse_data(p_row) = true then
-      -- Set row status
-      v_row_status_ok := true;
-            
-      -- Set insert row columns
-      begin
-        -- Assign Promax Company Code
-        v_current_field := pc_cmpny_code;
-        rv_insert_values.cmpny_code := fflu_data.get_char_field(pc_cmpny_code);
-        -- Assign Promax Division Code
-        v_current_field := pc_div_code;
-        rv_insert_values.div_code := fflu_data.get_char_field(pc_div_code);
-        -- Assign Mars Period
-        v_current_field := pc_mars_period;
-        rv_insert_values.mars_period := fflu_data.get_char_field(pc_mars_period);
-        -- Assign ZREP Matl Code - Short
-        v_current_field := pc_zrep_matl_code;
-        rv_insert_values.zrep_matl_code := pxi_common.full_matl_code(fflu_data.get_number_field(pc_zrep_matl_code));
-        -- Assign Cost of Goods Sold
-        v_current_field := pc_cost;
-        rv_insert_values.cost := fflu_data.get_number_field(pc_cost);
-
-        -- Default Columns .. Added to ALL Tables
-        -- Last Update User
-        v_current_field := 'Last Update User';        
-        rv_insert_values.last_update_user := pv_user;
-        -- Last Update Date
-        v_current_field := 'Last Update Date';        
-        rv_insert_values.last_update_date := sysdate;
-      exception
-        when others then
-          v_row_status_ok := false;
-          fflu_data.log_field_exception(v_current_field, 'Field Assignment Error');
-      end;
-      
-      -- "Replace Key" processing
-      if pv_first_row_flag = true then
-        pv_first_row_flag := false;
-        
-        -- Take initial copy of "Replace Key"
-        prv_initial_values.mars_period := rv_insert_values.mars_period;
-
-        -- Delete on "Replace Key"
-        delete from pxi.pmx_cogs
-        where cmpny_code = rpv_initial_values.cmpny_code
-        and div_code = rpv_initial_values.div_code
-        and mars_period = rpv_initial_values.mars_period;
-
-      else -- Check that "Replace Key" remains consistient
-      
-        if rpv_initial_values.cmpny_code != rv_insert_values.cmpny_code then
-          v_row_status_ok := false;
-          fflu_data.log_field_error(pc_cmpny_code, 'Replace Key Value Inconsistient');
-        end if;
-        if rpv_initial_values.div_code != rv_insert_values.div_code then
-          v_row_status_ok := false;
-          fflu_data.log_field_error(pc_div_code, 'Replace Key Value Inconsistient');
-        end if;
-        if rpv_initial_values.mars_period != rv_insert_values.mars_period then
-          v_row_status_ok := false;
-          fflu_data.log_field_error(pc_mars_period, 'Replace Key Value Inconsistient');
-        end if;
-
-      end if;
-      
-      -- Insert row, if row status is ok 
-      if v_row_status_ok = true then 
-        insert into pxi.pmx_cogs values rv_insert_values;
-      end if;   
-      
+    -- Finalise the interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
     end if;
-  exception 
-    when others then 
-      fflu_data.log_interface_exception('On Data');
-  end on_data;
-  
-  ------------------------------------------------------------------------------
-  -- LICS : ON_END
-  ------------------------------------------------------------------------------
-  procedure on_end is 
-  begin 
-    -- Only perform a commit if there were no errors at all 
-    if fflu_data.was_errors = true then 
-      rollback;
-    else 
-      commit;
-    end if;
-    -- Perform a final cleanup and a last progress logging
-    fflu_data.cleanup;
-  exception 
-    when others then 
-      fflu_data.log_interface_exception('On End');
-      rollback;
-  end on_end;
 
-  ------------------------------------------------------------------------------
-  -- FFLU : ON_GET_FILE_TYPE
-  ------------------------------------------------------------------------------
-  function on_get_file_type return varchar2 is 
-  begin 
-    return fflu_common.gc_file_type_csv;
-  end on_get_file_type;
+  exception
+     when others then
+       rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
+   end execute;
 
-  ------------------------------------------------------------------------------
-  -- FFLU : ON_GET_CSV_QUALIFER
-  ------------------------------------------------------------------------------
-  function on_get_csv_qualifier return varchar2 is
-  begin 
-    return fflu_common.gc_csv_qualifier_double_quote;
-  end on_get_csv_qualifier;
-
-end pxipmx10_extract;
+end PXIPMX10_EXTRACT; 
