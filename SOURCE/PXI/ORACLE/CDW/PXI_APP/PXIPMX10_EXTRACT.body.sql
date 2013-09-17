@@ -32,6 +32,7 @@ PACKAGE BODY PXIPMX10_EXTRACT as
           pxi_common.char_format('500', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '500' -> ConditionType
           pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
           pxi_common.char_format(' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) as data, -- CONSTANT ' ' -> PromotionNumber
+          -- Bring out the other fields required for validating the interface.
           promax_company,
           promax_division,
           material,

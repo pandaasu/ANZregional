@@ -6,8 +6,8 @@ PACKAGE          PXIPMX10_EXTRACT as
 /**
  System  : VENUS
  Package : PXIPMX07_EXTRACT
- Owner   : DDS_APP
- Author  : Chris Horn and Mal Chambeyron
+ Owner   : PXI_APP
+ Author  : Chris Horn
 
  Description
  -----------
@@ -19,7 +19,7 @@ PACKAGE          PXIPMX10_EXTRACT as
 
  Date          Author                Description
  ------------  --------------------  -----------
- 2013-09-15    Chris Horn            Created.
+ 2013-09-16    Chris Horn            Created.
 
 *******************************************************************************/
 
@@ -36,26 +36,12 @@ PACKAGE          PXIPMX10_EXTRACT as
   REVISIONS:
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
-  1.1   2013-09-15 Chris Horn           Created.
+  1.1   2013-09-16 Chris Horn           Created.
 
 *******************************************************************************/
-   procedure execute(
+   procedure execute (
      i_pmx_company in pxi_common.st_company default null,
      i_pmx_division in pxi_common.st_promax_division default null, 
      i_creation_date in date default sysdate);
-
-
-/*******************************************************************************
-  NAME:      COST_CALCULATION                                             PUBLIC
-  PURPOSE:   This function performs the cost calculation and ra
-             
-
-  REVISIONS:
-  Ver   Date       Author               Description
-  ----- ---------- -------------------- ----------------------------------------
-  1.1   2013-09-15 Chris Horn           Created.
-
-*******************************************************************************/
-  function cost_calculation(i_billing_date in date, i_zrep_matl, i_qty in number, i_cost in number) return number;
 
 end PXIPMX10_EXTRACT;
