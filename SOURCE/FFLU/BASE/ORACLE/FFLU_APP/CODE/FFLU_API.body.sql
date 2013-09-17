@@ -527,8 +527,9 @@ function get_interface_group_list return tt_interface_group_list pipelined is
       where 
         -- for option ICS_INT_LOADER .. filter for interfaces type *INBOUND and flagged as loadable 
         ((b.option_code = get_const_loader_option and a.interface_type = get_const_int_type_inbound and a.interface_load_status = lics_constant.status_active) or b.option_code != get_const_loader_option) and
-        (((select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) > 0 and exists (select t0.sei_interface from lics_sec_interface t0 where t0.sei_interface = a.interface_code and t0.sei_user = v_user_code)) or
-         (select count(*) from lics_sec_interface t0 where t0.sei_user = v_user_code) = 0)
+        -- Now check that only interfaces that have been granted explicitly or interfaces that have no explicit restrictions are listed.
+        (((select count(*) from lics_sec_interface t0 where t0.sei_interface = a.interface_code) > 0 and exists (select t0.sei_interface from lics_sec_interface t0 where t0.sei_interface = a.interface_code and t0.sei_user = v_user_code)) or
+         (select count(*) from lics_sec_interface t0 where t0.sei_interface = a.interface_code) = 0)
       order by 2, 3 
     )
     loop
