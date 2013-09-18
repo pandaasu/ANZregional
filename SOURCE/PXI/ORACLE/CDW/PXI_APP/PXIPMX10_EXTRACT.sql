@@ -20,6 +20,8 @@ PACKAGE          PXIPMX10_EXTRACT as
  Date          Author                Description
  ------------  --------------------  -----------
  2013-09-16    Chris Horn            Created.
+ 2013-09-18    Chris Horn            Reduced the column width by of the discount 
+                                     given field.
 
 *******************************************************************************/
 

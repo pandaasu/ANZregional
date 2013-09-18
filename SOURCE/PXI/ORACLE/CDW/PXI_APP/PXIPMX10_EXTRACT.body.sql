@@ -28,7 +28,7 @@ PACKAGE BODY PXIPMX10_EXTRACT as
           pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
           pxi_common.char_format(material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
           pxi_common.date_format(orderdate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- orderdate -> OrderDate
-          pxi_common.numb_format(qty * cost, 'S9999990.00', pxi_common.fc_is_nullable) || -- discountgiven -> DiscountGiven
+          pxi_common.numb_format(qty * cost, 'S999990.00', pxi_common.fc_is_nullable) || -- discountgiven -> DiscountGiven
           pxi_common.char_format('500', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '500' -> ConditionType
           pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
           pxi_common.char_format(' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) as data, -- CONSTANT ' ' -> PromotionNumber
