@@ -38,9 +38,9 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
         t4.level_06_cust_code,
         t4.level_06_cust_name_en
       from 
-        bds_cust_header@ap0064p_promax_testing t1,  
-        bds_addr_customer@ap0064p_promax_testing t2,
-        bds_cust_sales_area@ap0064p_promax_testing t3, 
+        bds_cust_header t1,  -- @ap0064p_promax_testing
+        bds_addr_customer t2, -- @ap0064p_promax_testing
+        bds_cust_sales_area t3, -- @ap0064p_promax_testing
         (
           -- Venus Customer Hiearchy Query 
           SELECT
@@ -238,23 +238,23 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
               K.datab  AS LEVEL_10_START_DATE,
               K.datbi  AS LEVEL_10_END_DATE
             FROM
-              lads_hie_cus_hdr@ap0064p_promax_testing A, -- Header Information
-              lads_hie_cus_det@ap0064p_promax_testing B, -- Level 1
-              lads_hie_cus_det@ap0064p_promax_testing C, -- Level 2
-              lads_hie_cus_det@ap0064p_promax_testing D, -- Level 3
-              lads_hie_cus_det@ap0064p_promax_testing E, -- Level 4
-              lads_hie_cus_det@ap0064p_promax_testing F, -- Level 5
-              lads_hie_cus_det@ap0064p_promax_testing G, -- Level 6
-              lads_hie_cus_det@ap0064p_promax_testing H, -- Level 7
-              lads_hie_cus_det@ap0064p_promax_testing I, -- Level 8
-              lads_hie_cus_det@ap0064p_promax_testing J, -- Level 9
-              lads_hie_cus_det@ap0064p_promax_testing K  -- Level 10
+              lads_hie_cus_hdr A, -- Header Information -- @ap0064p_promax_testing
+              lads_hie_cus_det B, -- Level 1  -- @ap0064p_promax_testing
+              lads_hie_cus_det C, -- Level 2  -- @ap0064p_promax_testing
+              lads_hie_cus_det D, -- Level 3  -- @ap0064p_promax_testing
+              lads_hie_cus_det E, -- Level 4  -- @ap0064p_promax_testing
+              lads_hie_cus_det F, -- Level 5  -- @ap0064p_promax_testing
+              lads_hie_cus_det G, -- Level 6  -- @ap0064p_promax_testing
+              lads_hie_cus_det H, -- Level 7  -- @ap0064p_promax_testing
+              lads_hie_cus_det I, -- Level 8  -- @ap0064p_promax_testing
+              lads_hie_cus_det J, -- Level 9  -- @ap0064p_promax_testing
+              lads_hie_cus_det K  -- Level 10 -- @ap0064p_promax_testing
             WHERE
               A.lads_status = '1'
               AND A.hdrdat = (SELECT
                                 MAX(G.hdrdat)
                               FROM
-                                lads_hie_cus_hdr@ap0064p_promax_testing G)
+                                lads_hie_cus_hdr G)  -- @ap0064p_promax_testing
               AND A.hityp = 'A'
               AND A.datab <= TO_CHAR(sysdate, 'YYYYMMDD')
               AND A.datbi >= TO_CHAR(sysdate, 'YYYYMMDD')
@@ -301,16 +301,16 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
                                   DECODE(J.vkorg, '149', 1,
                                     DECODE(K.vkorg, '149', 1, 0)))))))))) = 1
             ) L,
-            lads_adr_det@ap0064p_promax_testing M,
-            lads_adr_det@ap0064p_promax_testing N,
-            lads_adr_det@ap0064p_promax_testing O,
-            lads_adr_det@ap0064p_promax_testing P,
-            lads_adr_det@ap0064p_promax_testing Q,
-            lads_adr_det@ap0064p_promax_testing R,
-            lads_adr_det@ap0064p_promax_testing S,
-            lads_adr_det@ap0064p_promax_testing T,
-            lads_adr_det@ap0064p_promax_testing U,
-            lads_adr_det@ap0064p_promax_testing V
+            lads_adr_det M, -- @ap0064p_promax_testing
+            lads_adr_det N, -- @ap0064p_promax_testing
+            lads_adr_det O, -- @ap0064p_promax_testing
+            lads_adr_det P, -- @ap0064p_promax_testing
+            lads_adr_det Q, -- @ap0064p_promax_testing
+            lads_adr_det R, -- @ap0064p_promax_testing
+            lads_adr_det S, -- @ap0064p_promax_testing
+            lads_adr_det T, -- @ap0064p_promax_testing
+            lads_adr_det U, -- @ap0064p_promax_testing
+            lads_adr_det V  -- @ap0064p_promax_testing
           WHERE
             DECODE(L.LEVEL_02_START_DATE, NULL, '00000000', L.LEVEL_02_START_DATE) <= TO_CHAR(sysdate, 'YYYYMMDD')
             AND DECODE(L.LEVEL_02_END_DATE, NULL, '99999999', L.LEVEL_02_END_DATE) >= TO_CHAR(sysdate, 'YYYYMMDD')
@@ -442,7 +442,7 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
         t2.address_version = '*NONE' and
         -- Still include customer in the extract even if order block is in place if they have had sales in the last 12 weeks.
         ((t1.order_block_flag is null and t1.deletion_flag is null and t3.order_block_flag is null and t3.deletion_flag is null) or 
-         (exists (select * from sale_cdw_gsv@ap0064p_promax_testing t0 where t0.sold_to_cust_code = t1.customer_code))) and 
+         (exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and  -- @ap0064p_promax_testing
         -- Only include not rasw and packs or affiliate customers
         t3.distbn_chnl_code not in ('98','99') and 
         -- Do not include demand planning nodes.

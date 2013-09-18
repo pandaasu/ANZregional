@@ -60,7 +60,7 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
               t2.name as customer_name,
               -- Payer Customer Code
               ( select partner_cust_code 
-                from bds_cust_sales_area_pnrfun@ap0064p_promax_testing t0 
+                from bds_cust_sales_area_pnrfun t0 -- @ap0064p_promax_testing
                 where 
                   t0.customer_code = t3.customer_code and 
                   t0.sales_org_code = t3.sales_org_code and 
@@ -68,16 +68,16 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
                   t0.division_code = t3.division_code and t0.partner_text = 'Payer') as payer_customer_code,
               -- Tax Indicator
               ( select tax_classification_code 
-                from bds_cust_sales_area_taxind@ap0064p_promax_testing t0 
+                from bds_cust_sales_area_taxind t0  -- @ap0064p_promax_testing
                 where 
                   t0.customer_code = t3.customer_code and 
                   t0.sales_org_code = t3.sales_org_code and 
                   t0.distbn_chnl_code = t3.distbn_chnl_code and 
                   t0.division_code = t3.division_code and t0.tax_category_code = 'MWST') as tax_classification_code
             from 
-              bds_cust_header@ap0064p_promax_testing t1,  
-              bds_addr_customer@ap0064p_promax_testing t2,
-              bds_cust_sales_area@ap0064p_promax_testing t3,
+              bds_cust_header t1,   -- @ap0064p_promax_testing
+              bds_addr_customer t2,  -- @ap0064p_promax_testing
+              bds_cust_sales_area t3, -- @ap0064p_promax_testing
               table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4  -- Promax Configuration table
             where 
               -- Table Joins
@@ -91,7 +91,7 @@ PACKAGE BODY          PXIPMX03_EXTRACT as
               t2.address_version = '*NONE' and
               -- Still include customer in the extract even if order block is in place if they have had sales in the last 12 weeks.
               ((t1.order_block_flag is null and t1.deletion_flag is null and t3.order_block_flag is null and t3.deletion_flag is null) or 
-               (exists (select * from sale_cdw_gsv@ap0064p_promax_testing t0 where t0.sold_to_cust_code = t1.customer_code))) and 
+               (exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and -- @ap0064p_promax_testing
               -- Only include not rasw and packs or affiliate customers
               t3.distbn_chnl_code not in ('98','99') and 
               -- Customer is not a hierachy customer code

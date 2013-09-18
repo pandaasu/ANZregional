@@ -45,8 +45,8 @@ PACKAGE BODY PXIPMX05_EXTRACT as
             t2.company_code,
             t1.vendor_name_01 ||' '|| t1.vendor_name_02 as longname
           from
-            bds_vend_header@ap0064p_promax_testing t1,
-            bds_vend_comp@ap0064p_promax_testing t2,
+            bds_vend_header t1, -- @ap0064p_promax_testing
+            bds_vend_comp t2, --@ap0064p_promax_testing
             table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t3  -- Promax Configuration table
           where
             t1.vendor_code = t2.vendor_code

@@ -35,7 +35,7 @@ package body pxipmx02_extract as
                trim(substr(t01.z_data,5,4)) as vkorg,
                trim(SUBSTR(t01.z_data,9,20)) AS vtext
              from 
-               lads_ref_dat@ap0064p_promax_testing t01
+               lads_ref_dat t01 -- @ap0064p_promax_testing
              where 
                t01.z_tabname = 'TVKOT' and 
                -- Remove any records that have been deleted by a D in the z_chgtyp column
@@ -46,18 +46,18 @@ package body pxipmx02_extract as
              -- End of code for view.
              ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED') as level1_desc,
        nvl(t3.sap_bus_sgmnt_code,'##') as level2, -- Business Segment aka Division 
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc,
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc, -- @ap0064p_promax_testing
        nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') as level3, -- Trade Sector, Business Segment
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' ||
-         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,  
+       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' || -- @ap0064p_promax_testing
+         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,   -- @ap0064p_promax_testing
        nvl(t3.sap_nz_launch_ranking_code,'###') as level4, -- NZ Launch Ranking Code
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc,
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc, -- @ap0064p_promax_testing
        nvl(t3.sap_nz_promotional_grp_code,'###') as level5, -- NZ Promotional Group
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc
+       nvl((select t0.sap_charistic_value_desc from bds_charistic_value t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc -- @ap0064p_promax_testing
      from 
-       bds_material_hdr@ap0064p_promax_testing  t1,  -- TDU Material Header Information
-       bds_material_dstrbtn_chain@ap0064p_promax_testing t2, -- Material Sales Area Information
-       bds_material_classfctn@ap0064p_promax_testing t3, -- Material Classification Data
+       bds_material_hdr t1,  -- TDU Material Header Information  -- @ap0064p_promax_testing 
+       bds_material_dstrbtn_chain t2, -- Material Sales Area Information -- @ap0064p_promax_testing 
+       bds_material_classfctn t3, -- Material Classification Data  --@ap0064p_promax_testing  
        table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4  -- Promax Configuration table
      where
        -- Table Joins

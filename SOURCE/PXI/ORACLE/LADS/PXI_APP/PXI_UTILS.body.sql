@@ -267,7 +267,7 @@ package body pxi_utils is
         select 
           accss_seq, accss_level, sales_org, distbn_chnl, cust_code, matl_code, start_date, end_date, subst_matl_code 
         from 
-          mfanz_matl_dtrmntn_promax_vw@ap0064p_promax_testing;
+          mfanz_matl_dtrmntn_promax_vw; -- @ap0064p_promax_testing
         -- Now make sure that temporary data is committed.
         commit;
         pv_matl_dtrmntn_populated := true;

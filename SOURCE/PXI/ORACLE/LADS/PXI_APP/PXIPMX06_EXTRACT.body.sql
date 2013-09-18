@@ -85,11 +85,11 @@ PACKAGE BODY          PXIPMX06_EXTRACT as
                                    AS price1,
                                 0 AS mnfcost,
                                 0 AS rrp
-                           FROM lads_prc_lst_hdr@ap0064p_promax_testing a,
-                                lads_prc_lst_det@ap0064p_promax_testing c,
-                                mfanz_matl@ap0064p_promax_testing f,
-                                mfanz_fg_matl_clssfctn@ap0064p_promax_testing g,
-                                mfanz_matl_by_sales_area@ap0064p_promax_testing h
+                           FROM lads_prc_lst_hdr a, -- @ap0064p_promax_testing
+                                lads_prc_lst_det c, -- @ap0064p_promax_testing
+                                mfanz_matl f,-- @ap0064p_promax_testing
+                                mfanz_fg_matl_clssfctn g, -- @ap0064p_promax_testing
+                                mfanz_matl_by_sales_area h -- @ap0064p_promax_testing
                           WHERE     a.vakey = c.vakey
                                 AND a.datab = c.datab
                                 AND a.kschl = c.kschl
