@@ -14,6 +14,8 @@
  YYYY/MM   Author         Description
  -------   ------         -----------
  2007/09   Steve Gregan   Created
+ 2011/11   Steve Gregan   Added stt_tsk_type to allow dependency gates
+                          *GATE can only have *TOP as parent
 
 *******************************************************************************/
 
@@ -25,7 +27,8 @@ create table lics_str_task
     stt_tsk_code          varchar2(32 char)            not null,
     stt_tsk_pcde          varchar2(32 char)            not null,
     stt_tsk_seqn          number                       not null,
-    stt_tsk_text          varchar2(128 char)           not null);
+    stt_tsk_text          varchar2(128 char)           not null,
+    stt_tsk_type          varchar2(10 char)            not null);
 
 /**/
 /* Comments
@@ -36,6 +39,7 @@ comment on column lics_str_task.stt_tsk_code is 'Stream task - task code';
 comment on column lics_str_task.stt_tsk_pcde is 'Stream task - task parent';
 comment on column lics_str_task.stt_tsk_seqn is 'Stream task - task sequence';
 comment on column lics_str_task.stt_tsk_text is 'Stream task - task text';
+comment on column lics_str_task.stt_tsk_type is 'Stream task - task type (*EXEC=Execution or *GATE=Gate)';
 
 /**/
 /* Primary Key Constraint
@@ -47,7 +51,7 @@ alter table lics_str_task
 /* Authority
 /**/
 grant select, insert, update, delete on lics_str_task to lics_app;
-
+grant select on lics_str_task to lics_exec;
 /**/
 /* Synonym
 /**/
