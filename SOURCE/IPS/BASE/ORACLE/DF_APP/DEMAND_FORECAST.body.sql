@@ -3,8 +3,8 @@ PACKAGE BODY        demand_forecast AS
   -- Package Constants
   pc_package_name           CONSTANT common.st_package_name := 'DEMAND_FORECAST';
   -- House Keeping Files
-  pc_keep_old_files         CONSTANT common.st_counter      := 200;
-  pc_keep_old_draft_files   CONSTANT common.st_counter      := 200;
+  pc_keep_old_files         CONSTANT common.st_counter      := 14;
+  pc_keep_old_draft_files   CONSTANT common.st_counter      := 14;
   -- Archiving Constants
   pc_archive_days_123_fcst  CONSTANT common.st_counter      := 60;
   pc_archive_days_45_fcst   CONSTANT common.st_counter      := 400;
@@ -20,13 +20,7 @@ PACKAGE BODY        demand_forecast AS
 
   pv_source_code_cache               t_source_code_cache;
 
-  -- PPLAN: Added for creation of Snack file sending to Apollo
-  v_instance      NUMBER;
-  v_interface     VARCHAR2 (32) := 'DFNAPO01';
-  v_srcfile       VARCHAR2  (100) := 'DFNAPO01_0009.txt';
-  v_filename      VARCHAR2 (100) := 'IN_AP_DF_DEMAND_FCSTID_SUP_STG_FCSTID_0009.dat';
-  v_linetext      VARCHAR2 (3000);
-   
+
   FUNCTION get_source_code (i_material_code IN common.st_code)
     RETURN common.st_code IS
     c_default_source_code  common.st_code := 'OTHER';
@@ -883,7 +877,7 @@ PACKAGE BODY        demand_forecast AS
     v_end_period              common.st_code;
     v_result_msg              common.st_message_string;
 
-    -- cursor to check that supplied forecast id is valid, before copy starts
+    -- Cursor to check that supplied forecast id is valid, before copy starts
     CURSOR csr_forecast (i_fcst_id IN common.st_id) IS
       SELECT *
       FROM fcst t1
@@ -1299,12 +1293,10 @@ PACKAGE BODY        demand_forecast AS
   END copy_draft_forecast;
 
 
-
   FUNCTION fcst_compl_check (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
     RETURN common.st_result IS
      CURSOR csr_moe_setting (i_fcst_id IN common.st_id) IS
-      SELECT t1.moe_code, t1.sply_file, t1.dmnd_file, t2.fcst_id, 
-             RTRIM(t2.casting_year)||LPAD(RTRIM(t2.casting_period),2,'0')||LPAD(RTRIM(t2.casting_week),2,'0') casting_wk_date
+      SELECT t1.moe_code, t1.sply_file, t1.dmnd_file, t2.fcst_id
       FROM moe_setting t1, fcst t2
       WHERE t2.fcst_id = i_fcst_id AND t1.moe_code = t2.moe_code;
 
@@ -1313,8 +1305,6 @@ PACKAGE BODY        demand_forecast AS
     v_result_msg      common.st_message_string;
     v_complete        BOOLEAN;
     v_processing_msg  common.st_message_string;
-
-    e_casting_wk_date_invalid  EXCEPTION;
 
   BEGIN
     logit.enter_method (pc_package_name, 'FCST_COMPL_CHECK');
@@ -1353,28 +1343,6 @@ PACKAGE BODY        demand_forecast AS
                                                                                                                                               common.gc_success THEN
           RAISE common.ge_error;
         END IF;
-        
-        -- PPLAN: Prepare csv file for MOE 0009 to send to Apollo
-        IF  rv_moe_setting.moe_code = '0009' THEN
-          logit.LOG ('Composing Snack csv file for Apollo.');
-          /* Check the casting week date format is in line with YYYYPPW. Assume this case should never happen in real life */
-          IF LENGTH(rv_moe_setting.casting_wk_date) < 6 THEN
-            /*  raise an exception if format is wrong */  
-             v_processing_msg := 'Invalid casting week date format: '|| rv_moe_setting.casting_wk_date||' in processing fcst id: '|| i_fcst_id;
-             RAISE e_casting_wk_date_invalid;
-          END IF;
-          
-          /* Extract and send Snack file to Apollo */
-          /* Pre-condition: fcst_id is always a number */
-          v_linetext := rv_moe_setting.fcst_id||','||rv_moe_setting.moe_code||','||rv_moe_setting.casting_wk_date;
-
-          /* whenever v_linetext is composed, it contains data. So there is no need to validate the output file is empty and be sent or not*/ 
-          logit.LOG ('Launch outbound interface '||v_interface);
-          v_instance := lics_outbound_loader.create_interface(v_interface, v_srcfile, v_filename);
-          lics_outbound_loader.append_data(v_linetext);
-          lics_outbound_loader.finalise_interface;
-          logit.LOG ('Outbound inteface launched and completed');
-        END IF;
       END IF;
     ELSE
       --Raise exception
@@ -1395,11 +1363,6 @@ PACKAGE BODY        demand_forecast AS
       v_result := common.gc_error;
     WHEN common.ge_failure THEN
       o_result_msg := common.create_failure_msg ('Unable to find MOE code');
-      logit.LOG (o_result_msg);
-      logit.leave_method;
-      v_result := common.gc_failure;
-    WHEN e_casting_wk_date_invalid THEN
-      o_result_msg := common.create_failure_msg ('PPLAN: Unable create Snack Apollo file - invalid casting date format ['||rv_moe_setting.casting_wk_date||']');
       logit.LOG (o_result_msg);
       logit.leave_method;
       v_result := common.gc_failure;
