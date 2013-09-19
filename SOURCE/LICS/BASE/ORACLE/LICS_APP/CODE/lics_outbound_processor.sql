@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_outbound_processor as
+--
+-- LICS_OUTBOUND_PROCESSOR  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_outbound_processor as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -30,6 +30,7 @@ create or replace package lics_outbound_processor as
     2006/08   Steve Gregan   Added message name functionality
     2006/11   Steve Gregan   Added single processing functionality
     2011/02   Steve Gregan   End point architecture version
+    2013/05   S. Gordon      Add callback_header and callback_trace
 
    *******************************************************************************/
 
@@ -41,13 +42,24 @@ create or replace package lics_outbound_processor as
                      par_execution in number);
    procedure execute_single(par_header in number);
 
+   function callback_header return number; -- rcd_lics_header.hea_header
+   function callback_trace return number; -- rcd_lics_header.hea_trc_count
+
 end lics_outbound_processor;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_outbound_processor as
+
+--
+-- LICS_OUTBOUND_PROCESSOR  (Synonym) 
+--
+CREATE OR REPLACE PUBLIC SYNONYM LICS_OUTBOUND_PROCESSOR FOR LICS_APP.LICS_OUTBOUND_PROCESSOR;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_PROCESSOR TO PUBLIC;
+--
+-- LICS_OUTBOUND_PROCESSOR  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_outbound_processor as
 
    /*-*/
    /* Private exceptions
@@ -55,9 +67,9 @@ create or replace package body lics_outbound_processor as
    application_exception exception;
    pragma exception_init(application_exception, -20000);
 
-   /*-*/
+   /**/
    /* Private declarations
-   /*-*/
+   /**/
    procedure select_interface;
    procedure send_interface;
    procedure add_header_exception(par_exception in varchar2);
@@ -200,16 +212,16 @@ create or replace package body lics_outbound_processor as
             var_suspended := false;
          end if;
 
-      end loop; 
+      end loop;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /*-*/
+      /**/
       /* Exception trap
-      /*-*/
+      /**/
       when others then
 
          /*-*/
@@ -253,18 +265,24 @@ create or replace package body lics_outbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_header_01 is 
+      cursor csr_lics_header_01 is
          select t01.*
            from lics_header t01
           where t01.hea_header = par_header
                 for update nowait;
       rcd_lics_header_01 csr_lics_header_01%rowtype;
 
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.*
            from lics_interface t01
           where t01.int_interface = rcd_lics_header_01.hea_interface;
       rcd_lics_interface_01 csr_lics_interface_01%rowtype;
+
+      cursor csr_all_directories_01 is
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
+      rcd_all_directories_01 csr_all_directories_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -333,7 +351,17 @@ create or replace package body lics_outbound_processor as
       rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
       rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
       rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
-      rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
+
+      /**/
+      /* Retrieve the operating system directory name from the oracle directory
+      /**/
+      open csr_all_directories_01;
+      fetch csr_all_directories_01 into rcd_all_directories_01;
+      if csr_all_directories_01%notfound then
+         raise_application_error(-20000, 'Execute Single - Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
+      end if;
+      close csr_all_directories_01;
+      rcd_lics_interface.int_fil_path := rcd_all_directories_01.directory_path;
 
       /*-*/
       /* Update the header trace count and status
@@ -461,9 +489,9 @@ create or replace package body lics_outbound_processor as
    /*-------------------*/
    exception
 
-      /*-*/
+      /**/
       /* Exception trap
-      /*-*/
+      /**/
       when others then
 
          /*-*/
@@ -509,7 +537,7 @@ create or replace package body lics_outbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.int_interface,
                 t01.int_description,
                 t01.int_type,
@@ -517,8 +545,7 @@ create or replace package body lics_outbound_processor as
                 t01.int_fil_path,
                 t01.int_opr_alert,
                 t01.int_ema_group,
-                t01.int_procedure,
-                t01.int_lod_type
+                t01.int_procedure
            from lics_interface t01
           where t01.int_type = lics_constant.type_outbound
             and t01.int_group = var_search
@@ -527,7 +554,7 @@ create or replace package body lics_outbound_processor as
                 t01.int_interface asc;
       rcd_lics_interface_01 csr_lics_interface_01%rowtype;
 
-      cursor csr_lics_header_01 is 
+      cursor csr_lics_header_01 is
          select t01.hea_header
            from lics_header t01
           where t01.hea_interface = rcd_lics_interface.int_interface
@@ -535,7 +562,7 @@ create or replace package body lics_outbound_processor as
        order by t01.hea_header asc;
       rcd_lics_header_01 csr_lics_header_01%rowtype;
 
-      cursor csr_lics_header_02 is 
+      cursor csr_lics_header_02 is
          select t01.hea_header,
                 t01.hea_trc_count,
                 t01.hea_fil_name,
@@ -545,6 +572,12 @@ create or replace package body lics_outbound_processor as
           where t01.hea_header = var_header
                 for update nowait;
       rcd_lics_header_02 csr_lics_header_02%rowtype;
+
+      cursor csr_all_directories_01 is
+         select t01.directory_path
+           from all_directories t01
+          where t01.directory_name = rcd_lics_interface_01.int_fil_path;
+      rcd_all_directories_01 csr_all_directories_01%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -574,7 +607,17 @@ create or replace package body lics_outbound_processor as
          rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
          rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
-         rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
+
+         /**/
+         /* Retrieve the operating system directory name from the oracle directory
+         /**/
+         open csr_all_directories_01;
+         fetch csr_all_directories_01 into rcd_all_directories_01;
+         if csr_all_directories_01%notfound then
+            raise_application_error(-20000, 'Select Interface - Directory (' || rcd_lics_interface_01.int_fil_path || ') does not exist');
+         end if;
+         close csr_all_directories_01;
+         rcd_lics_interface.int_fil_path := rcd_all_directories_01.directory_path;
 
          /*-*/
          /* Process headers in batches (based on process count constant)
@@ -858,10 +901,10 @@ create or replace package body lics_outbound_processor as
    /*-------------*/
    begin
 
-      /*-*/
+      /**/
       /* Set the outbound path/file/message information
-      /*-*/
-      var_fil_path := lics_parameter.outbound_directory;
+      /**/
+      var_fil_path := rcd_lics_interface.int_fil_path;
       var_fil_name := rcd_lics_header.hea_fil_name;
       var_msg_name := rcd_lics_header.hea_msg_name;
       if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then
@@ -869,20 +912,22 @@ create or replace package body lics_outbound_processor as
       end if;
       var_pth_name := var_fil_path || var_fil_name;
 
-      /*-*/
+      /**/
       /* Perform the path/file/message substitution as required
-      /*-*/
+      /**/
       var_script := rcd_lics_interface.int_procedure;
       var_script := replace(var_script,'<PATH>',var_pth_name);
       var_script := replace(var_script,'<FILE>',var_fil_name);
       var_script := replace(var_script,'<MESG>',var_msg_name);
       var_script := replace(var_script,'<SCRIPT_PATH>',lics_parameter.script_directory);
 
-      /*-*/
+      /**/
       /* Execute the outbound send script
-      /*-*/
+      /**/
       begin
-         lics_filesystem.execute_external_procedure(var_script);
+         
+         java_utility.execute_external_procedure(var_script);
+         
       exception
          when others then
             add_header_exception('EXTERNAL PROCESS ERROR - Send Interface - ' || substr(SQLERRM, 1, 3900));
@@ -894,7 +939,7 @@ create or replace package body lics_outbound_processor as
    exception
 
       /*-*/
-      /* Exception trap
+      /* Exception trap */
       /*-*/
       when others then
          add_header_exception('SQL ERROR - Send Interface - ' || substr(SQLERRM, 1, 1024));
@@ -971,11 +1016,54 @@ create or replace package body lics_outbound_processor as
    /*-------------*/
    end add_header_exception;
 
-end lics_outbound_processor;
-/  
+   /******************************************************/
+   /* This function performs the callback header routine */
+   /******************************************************/
+   function callback_header return number is
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_outbound_processor for lics_app.lics_outbound_processor;
-grant execute on lics_outbound_processor to public;
+   /*-------------*/
+   /* Begin block */    
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the current interface
+      /*-*/
+      return rcd_lics_header.hea_header;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_header;
+
+   /*****************************************************/
+   /* This function performs the callback trace routine */
+   /*****************************************************/
+   function callback_trace return number is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the current interface
+      /*-*/
+      return rcd_lics_header.hea_trc_count;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_trace;
+ 
+end lics_outbound_processor;
+/
+
+
+--
+-- LICS_OUTBOUND_PROCESSOR  (Synonym) 
+--
+CREATE OR REPLACE PUBLIC SYNONYM LICS_OUTBOUND_PROCESSOR FOR LICS_APP.LICS_OUTBOUND_PROCESSOR;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_OUTBOUND_PROCESSOR TO PUBLIC;

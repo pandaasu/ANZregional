@@ -1,7 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package lics_inbound_processor as
+--
+-- LICS_INBOUND_PROCESSOR  (Package) 
+--
+CREATE OR REPLACE PACKAGE LICS_APP.lics_inbound_processor as
 
 /******************************************************************************/
 /* Package Definition                                                         */
@@ -38,6 +38,8 @@ create or replace package lics_inbound_processor as
  2005/11   Steve Gregan   Added callback_interface/callback_file_name functions
  2006/08   Steve Gregan   Added message name functionality
  2006/11   Steve Gregan   Added single processing functionality
+ 2013/05   S. Gordon      Add callback_header and callback_trace
+ 2013/06   S. Gordon      Add callback_row
 
 *******************************************************************************/
 
@@ -47,18 +49,30 @@ create or replace package lics_inbound_processor as
    procedure execute(par_group in varchar2,
                      par_job in varchar2,
                      par_execution in number);
+   procedure execute_single(par_header in number);
    procedure callback_exception(par_exception in varchar2);
+
    function callback_interface return varchar2;
    function callback_file_name return varchar2;
-   procedure execute_single(par_header in number);
+   function callback_header return number; -- rcd_lics_header.hea_header
+   function callback_trace return number; -- rcd_lics_header.hea_trc_count
+   function callback_row return number; -- rcd_lics_data.dat_dta_seq
 
 end lics_inbound_processor;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body lics_inbound_processor as
+
+--
+-- LICS_INBOUND_PROCESSOR  (Synonym) 
+--
+CREATE OR REPLACE PUBLIC SYNONYM LICS_INBOUND_PROCESSOR FOR LICS_APP.LICS_INBOUND_PROCESSOR;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_PROCESSOR TO PUBLIC;
+--
+-- LICS_INBOUND_PROCESSOR  (Package Body) 
+--
+CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_inbound_processor as
 
    /*-*/
    /* Private exceptions
@@ -216,7 +230,7 @@ create or replace package body lics_inbound_processor as
             var_suspended := false;
          end if;
 
-      end loop; 
+      end loop;
 
    /*-------------------*/
    /* Exception handler */
@@ -341,14 +355,14 @@ create or replace package body lics_inbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_header_01 is 
+      cursor csr_lics_header_01 is
          select t01.*
            from lics_header t01
           where t01.hea_header = par_header
                 for update nowait;
       rcd_lics_header_01 csr_lics_header_01%rowtype;
 
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.*
            from lics_interface t01
           where t01.int_interface = rcd_lics_header_01.hea_interface;
@@ -600,7 +614,7 @@ create or replace package body lics_inbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_interface_01 is 
+      cursor csr_lics_interface_01 is
          select t01.int_interface,
                 t01.int_description,
                 t01.int_type,
@@ -617,7 +631,7 @@ create or replace package body lics_inbound_processor as
                 t01.int_interface asc;
       rcd_lics_interface_01 csr_lics_interface_01%rowtype;
 
-      cursor csr_lics_header_01 is 
+      cursor csr_lics_header_01 is
          select t01.hea_header
            from lics_header t01
           where t01.hea_interface = rcd_lics_interface.int_interface
@@ -625,7 +639,7 @@ create or replace package body lics_inbound_processor as
        order by t01.hea_header asc;
       rcd_lics_header_01 csr_lics_header_01%rowtype;
 
-      cursor csr_lics_header_02 is 
+      cursor csr_lics_header_02 is
          select t01.hea_header,
                 t01.hea_trc_count,
                 t01.hea_status,
@@ -945,7 +959,7 @@ create or replace package body lics_inbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_data_01 is 
+      cursor csr_lics_data_01 is
          select t01.dat_header,
                 t01.dat_dta_seq,
                 t01.dat_record,
@@ -1047,7 +1061,7 @@ create or replace package body lics_inbound_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_lics_data_01 is 
+      cursor csr_lics_data_01 is
          select t01.dat_record
            from lics_data t01
           where t01.dat_header = rcd_lics_header.hea_header
@@ -1372,12 +1386,76 @@ create or replace package body lics_inbound_processor as
    /* End routine */
    /*-------------*/
    end add_data_exception;
+   
+      /******************************************************/
+   /* This function performs the callback header routine */
+   /******************************************************/
+   function callback_header return number is
+
+   /*-------------*/
+   /* Begin block */    
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the current interface
+      /*-*/
+      return rcd_lics_header.hea_header;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_header;
+
+   /*****************************************************/
+   /* This function performs the callback trace routine */
+   /*****************************************************/
+   function callback_trace return number is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the current interface
+      /*-*/
+      return rcd_lics_header.hea_trc_count;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_trace;
+
+   /*****************************************************/
+   /* This function performs the callback row routine */
+   /*****************************************************/
+   function callback_row return number is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Return the current interfaces data row number.
+      /*-*/
+      return rcd_lics_data.dat_dta_seq;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_row;
 
 end lics_inbound_processor;
-/  
+/
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym lics_inbound_processor for lics_app.lics_inbound_processor;
-grant execute on lics_inbound_processor to public;
+
+--
+-- LICS_INBOUND_PROCESSOR  (Synonym) 
+--
+CREATE OR REPLACE PUBLIC SYNONYM LICS_INBOUND_PROCESSOR FOR LICS_APP.LICS_INBOUND_PROCESSOR;
+
+
+GRANT EXECUTE ON LICS_APP.LICS_INBOUND_PROCESSOR TO PUBLIC;
+
