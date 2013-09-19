@@ -22,13 +22,14 @@ create or replace package lics_stream_loader as
     -------   ------         -----------
     2007/09   Steve Gregan   Created
     2009/01   Steve Gregan   Added parameter functionality
+    2011/10   Steve Gregan   Added stream multiple dependency functionality
 
-   /**/
+   /*-*/
    /* Public declarations
-   /**/
-   procedure clear_parameters;
+   /*-*/
+   procedure load(par_stream in varchar2, par_text in varchar2, par_procedure in varchar2);
    procedure set_parameter(par_code in varchar2, par_value in varchar2);
-   procedure execute(par_stream in varchar2, par_procedure in varchar2);
+   procedure execute;
 
 end lics_stream_loader;
 /
@@ -47,86 +48,17 @@ create or replace package body lics_stream_loader as
    /*-*/
    /* Private definitions
    /*-*/
-   type rcd_parameter is record(code varchar2(32 char), value varchar2(4000 char));
+   pvar_stream lics_str_exe_header.sth_str_code%type;
+   pvar_text lics_str_exe_header.sth_exe_text%type;
+   pvar_procedure lics_str_exe_event.ste_evt_proc%type;
+   type rcd_parameter is record(code varchar2(32 char), text varchar2(128 char), value varchar2(64 char));
    type typ_parameter is table of rcd_parameter index by binary_integer;
    tbl_parameter typ_parameter;
 
-   /********************************************************/
-   /* This procedure performs the clear parameters routine */
-   /********************************************************/
-   procedure clear_parameters is
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Clear the parameters
-      /*-*/
-      tbl_parameter.delete;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end clear_parameters;
-
-   /***********************************************/
-   /* This procedure performs the execute routine */
-   /***********************************************/
-   procedure set_parameter(par_code in varchar2, par_value in varchar2) is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_found boolean;
-
-   /*-------------*/
-   /* Begin block */
-   /*-------------*/
-   begin
-
-      /*-*/
-      /* Insert/update the parameter value
-      /*-*/
-      var_found := false;
-      for idx in 1..tbl_parameter.count loop
-         if tbl_parameter(idx).code = upper(par_code) then
-            tbl_parameter(idx).value := par_value;
-            var_found := true;
-            exit;
-         end if;
-      end loop;
-      if var_found = false then
-        tbl_parameter(tbl_parameter.count+1).code := upper(par_code);
-        tbl_parameter(tbl_parameter.count).value := par_value;
-      end if;
-
-   /*-------------*/
-   /* End routine */
-   /*-------------*/
-   end set_parameter;
-
-   /***********************************************/
-   /* This procedure performs the execute routine */
-   /***********************************************/
-   procedure execute(par_stream in varchar2, par_procedure in varchar2) is
-
-
-      /*-*/
-      /* Autonomous transaction
-      /*-*/
-      pragma autonomous_transaction;
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      rcd_lics_str_action lics_str_action%rowtype;
-      rcd_lics_str_parameter lics_str_parameter%rowtype;
-      var_procedure lics_str_action.sta_evt_proc%type;
-      var_str_seqn number;
-      var_tsk_seqn number;
-      var_evt_seqn number;
+   /***************************************************/
+   /* This procedure performs the stream load routine */
+   /***************************************************/
+   procedure load(par_stream in varchar2, par_text in varchar2, par_procedure in varchar2) is
 
       /*-*/
       /* Local cursors
@@ -134,26 +66,15 @@ create or replace package body lics_stream_loader as
       cursor csr_header is
          select t01.*
            from lics_str_header t01
-          where upper(t01.sth_str_code) = upper(par_stream);
+          where upper(t01.sth_str_code) = pvar_stream;
       rcd_header csr_header%rowtype;
 
-      cursor csr_task is
+      cursor csr_param is
          select t01.*
-           from lics_str_task t01
-          where t01.stt_str_code = rcd_header.sth_str_code
-          start with t01.stt_tsk_pcde = '*TOP'
-        connect by prior t01.stt_str_code = t01.stt_str_code
-                and prior t01.stt_tsk_code = t01.stt_tsk_pcde
-          order siblings by t01.stt_tsk_seqn;
-      rcd_task csr_task%rowtype;
-
-      cursor csr_event is
-         select t01.*
-           from lics_str_event t01
-          where t01.ste_str_code = rcd_task.stt_str_code
-            and t01.ste_tsk_code = rcd_task.stt_tsk_code
-          order by t01.ste_evt_seqn asc;
-      rcd_event csr_event%rowtype;
+           from lics_str_param t01
+          where t01.stp_str_code = rcd_header.sth_str_code
+          order by t01.stp_par_code asc;
+      rcd_param csr_param%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -164,9 +85,14 @@ create or replace package body lics_stream_loader as
       /* Validate the parameters
       /*-*/
       if par_stream is null then
-         raise_application_error(-20000, 'Parameter stream must be supplied');
+         raise_application_error(-20000, 'Stream code must be supplied');
       end if;
-      var_procedure := par_procedure;
+      if par_text is null then
+         raise_application_error(-20000, 'Stream execution text must be supplied');
+      end if;
+      pvar_stream := upper(par_stream);
+      pvar_text := par_text;
+      pvar_procedure := par_procedure;
 
       /*-*/
       /* Retrieve the stream header
@@ -174,110 +100,268 @@ create or replace package body lics_stream_loader as
       open csr_header;
       fetch csr_header into rcd_header;
       if csr_header%notfound then
-         raise_application_error(-20000, 'Stream (' || upper(par_stream) || ') does not exist');
+         raise_application_error(-20000, 'Stream (' || pvar_stream || ') does not exist');
+      end if;
+      close csr_header;
+
+      /*-*/
+      /* Load the parameter array
+      /*-*/
+      tbl_parameter.delete;
+      open csr_param;
+      loop
+         fetch csr_param into rcd_param;
+         if csr_param%notfound then
+            exit;
+         end if;
+         tbl_parameter(tbl_parameter.count+1).code := upper(rcd_param.stp_par_code);
+         tbl_parameter(tbl_parameter.count).text := rcd_param.stp_par_text;
+         tbl_parameter(tbl_parameter.count).value := rcd_param.stp_par_value;
+      end loop;
+      close csr_param;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end load;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure set_parameter(par_code in varchar2, par_value in varchar2) is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_found boolean;
+      var_fixed boolean;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Update the parameter value
+      /*-*/
+      var_found := false;
+      var_fixed := false;
+      for idx in 1..tbl_parameter.count loop
+         if tbl_parameter(idx).code = upper(par_code) then
+            if upper(tbl_parameter(idx).value) = '*SUPPLIED' then
+               tbl_parameter(idx).value := par_value;
+            else
+               var_fixed := true;
+            end if;
+            var_found := true;
+            exit;
+         end if;
+      end loop;
+      if var_fixed = true then
+         raise_application_error(-20000, 'Parameter (' || upper(par_code) || ') is fixed - unable to change');
+      end if;
+      if var_found = false then
+         raise_application_error(-20000, 'Parameter (' || upper(par_code) || ') does not exist in stream');
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end set_parameter;
+
+   /***********************************************/
+   /* This procedure performs the execute routine */
+   /***********************************************/
+   procedure execute is
+
+      /*-*/
+      /* Autonomous transaction
+      /*-*/
+      pragma autonomous_transaction;
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      rcd_lics_str_exe_header lics_str_exe_header%rowtype;
+      rcd_lics_str_exe_task lics_str_exe_task%rowtype;
+      rcd_lics_str_exe_depend lics_str_exe_depend%rowtype;
+      rcd_lics_str_exe_event lics_str_exe_event%rowtype;
+      rcd_lics_str_exe_param lics_str_exe_param%rowtype;
+      var_exe_seqn number;
+      var_par_code varchar2(32 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_header is
+         select t01.*
+           from lics_str_header t01
+          where upper(t01.sth_str_code) = pvar_stream;
+      rcd_header csr_header%rowtype;
+
+      cursor csr_event is
+         select t01.*
+           from lics_str_event t01
+          where t01.ste_str_code = rcd_header.sth_str_code
+          order by t01.ste_tsk_code asc,
+                   t01.ste_evt_code asc;
+      rcd_event csr_event%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Validate the parameters
+      /*-*/
+      if pvar_stream is null then
+         raise_application_error(-20000, 'Stream has not been loaded');
+      end if;
+
+      /*-*/
+      /* Check the parameter values
+      /*-*/
+      var_par_code := null;
+      for idx in 1..tbl_parameter.count loop
+         if upper(tbl_parameter(idx).value) = '*SUPPLIED' then
+            var_par_code := tbl_parameter(idx).code;
+            exit;
+         end if;
+      end loop;
+      if not(var_par_code is null) then
+         raise_application_error(-20000, 'Parameter type *SUPPLIED (' || var_par_code || ') does not have a value');
+      end if;
+
+      /*-*/
+      /* Retrieve the stream header
+      /*-*/
+      open csr_header;
+      fetch csr_header into rcd_header;
+      if csr_header%notfound then
+         raise_application_error(-20000, 'Stream (' || pvar_stream || ') does not exist');
       end if;
       close csr_header;
       if rcd_header.sth_status != '1' then
-         raise_application_error(-20000, 'Stream (' || upper(par_stream) || ') is not active');
+         raise_application_error(-20000, 'Stream (' || pvar_stream || ') is not active');
       end if;
 
       /*-*/
-      /* Initialise the sequence for current stream action
+      /* Initialise the sequence for current execution
       /*-*/
-      select lics_stream_sequence.nextval into var_str_seqn from dual;
+      select lics_stream_sequence.nextval into var_exe_seqn from dual;
 
       /*-*/
-      /* Retrieve the stream tasks
+      /* Create the stream execution header
       /*-*/
-      var_tsk_seqn := 0;
-      open csr_task;
-      loop
-         fetch csr_task into rcd_task;
-         if csr_task%notfound then
-            exit;
-         end if;
-         var_tsk_seqn := var_tsk_seqn + 1;
-
-         /*-*/
-         /* Retrieve the task events
-         /*-*/
-         var_evt_seqn := 0;
-         open csr_event;
-         loop
-            fetch csr_event into rcd_event;
-            if csr_event%notfound then
-               exit;
-            end if;
-            var_evt_seqn := var_evt_seqn + 1;
-
-            /*-*/
-            /* Create the stream action
-            /*-*/
-            rcd_lics_str_action.sta_str_seqn := var_str_seqn;
-            rcd_lics_str_action.sta_tsk_seqn := var_tsk_seqn;
-            rcd_lics_str_action.sta_evt_seqn := var_evt_seqn;
-            rcd_lics_str_action.sta_str_code := rcd_header.sth_str_code;
-            rcd_lics_str_action.sta_str_text := rcd_header.sth_str_text;
-            rcd_lics_str_action.sta_tsk_pcde := rcd_task.stt_tsk_pcde;
-            rcd_lics_str_action.sta_tsk_code := rcd_task.stt_tsk_code;
-            rcd_lics_str_action.sta_tsk_text := rcd_task.stt_tsk_text;
-            rcd_lics_str_action.sta_evt_code := rcd_event.ste_evt_code;
-            rcd_lics_str_action.sta_evt_text := rcd_event.ste_evt_text;
-            rcd_lics_str_action.sta_evt_lock := rcd_event.ste_evt_lock;
-            if upper(trim(rcd_event.ste_evt_lock)) = '*NONE' then
-               rcd_lics_str_action.sta_evt_lock := '*LOCK:' || to_char(var_str_seqn) || ':' || to_char(var_tsk_seqn) || ':' || to_char(var_evt_seqn);
-            end if;
-            rcd_lics_str_action.sta_evt_proc := rcd_event.ste_evt_proc;
-            if upper(trim(rcd_event.ste_evt_proc)) = '*SUPPLIED' then
-               rcd_lics_str_action.sta_evt_proc := var_procedure;
-            end if;
-            rcd_lics_str_action.sta_job_group := rcd_event.ste_job_group;
-            rcd_lics_str_action.sta_opr_alert := rcd_event.ste_opr_alert;
-            rcd_lics_str_action.sta_ema_group := rcd_event.ste_ema_group;
-            rcd_lics_str_action.sta_timestamp := sysdate;
-            rcd_lics_str_action.sta_status := '*CREATED';
-            if rcd_task.stt_tsk_pcde = '*TOP' then
-               rcd_lics_str_action.sta_status := '*OPENED';
-            end if;
-            rcd_lics_str_action.sta_selected := '0';
-            rcd_lics_str_action.sta_completed := '0';
-            rcd_lics_str_action.sta_failed := '0';
-            rcd_lics_str_action.sta_message := null;
-
-            /*-*/
-            /* Perform the parameter substitutions
-            /*-*/
-            for idx in 1..tbl_parameter.count loop
-               rcd_lics_str_action.sta_evt_lock := replace(rcd_lics_str_action.sta_evt_lock,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
-               rcd_lics_str_action.sta_evt_proc := replace(rcd_lics_str_action.sta_evt_proc,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
-               rcd_lics_str_action.sta_job_group := replace(rcd_lics_str_action.sta_job_group,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
-            end loop;
-
-            /*-*/
-            /* Create the stream action
-            /*-*/
-            insert into lics_str_action values rcd_lics_str_action;
-
-         end loop;
-         close csr_event;
-
-      end loop;
-      close csr_task;
+      insert into lics_str_exe_header
+         select var_exe_seqn,
+                pvar_text,
+                '*PENDING',
+                '*NONE',
+                sysdate,
+                sysdate,
+                sysdate,
+                t01.*
+           from lics_str_header t01
+          where t01.sth_str_code = rcd_header.sth_str_code;
 
       /*-*/
       /* Create the stream parameters
       /*-*/
       for idx in 1..tbl_parameter.count loop
-         rcd_lics_str_parameter.stp_str_seqn := var_str_seqn;
-         rcd_lics_str_parameter.stp_par_code := tbl_parameter(idx).code;
-         rcd_lics_str_parameter.stp_par_value := tbl_parameter(idx).value;
-         insert into lics_str_parameter values rcd_lics_str_parameter;
+         rcd_lics_str_exe_param.stp_exe_seqn := var_exe_seqn;
+         rcd_lics_str_exe_param.stp_str_code := rcd_header.sth_str_code;
+         rcd_lics_str_exe_param.stp_par_code := tbl_parameter(idx).code;
+         rcd_lics_str_exe_param.stp_par_text := tbl_parameter(idx).text;
+         rcd_lics_str_exe_param.stp_par_value := tbl_parameter(idx).value;
+         insert into lics_str_exe_param values rcd_lics_str_exe_param;
       end loop;
+
+      /*-*/
+      /* Create the stream execution tasks
+      /*-*/
+      insert into lics_str_exe_task
+         select var_exe_seqn,
+                '*PENDING',
+                sysdate,
+                sysdate,
+                t01.*
+           from lics_str_task t01
+          where t01.stt_str_code = rcd_header.sth_str_code;
+
+      /*-*/
+      /* Create the stream execution dependencies
+      /*-*/
+      insert into lics_str_exe_depend
+         select var_exe_seqn,
+                t01.*
+           from lics_str_depend t01
+          where t01.std_str_code = rcd_header.sth_str_code;
+
+      /*-*/
+      /* Create the stream execution events
+      /*-*/
+      open csr_event;
+      loop
+         fetch csr_event into rcd_event;
+         if csr_event%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Create the stream execution event
+         /*-*/
+         rcd_lics_str_exe_event.ste_exe_seqn := var_exe_seqn;
+         rcd_lics_str_exe_event.ste_exe_status := '*PENDING';
+         rcd_lics_str_exe_event.ste_exe_queued := sysdate;
+         rcd_lics_str_exe_event.ste_exe_open := sysdate;
+         rcd_lics_str_exe_event.ste_exe_start := sysdate;
+         rcd_lics_str_exe_event.ste_exe_end := sysdate;
+         rcd_lics_str_exe_event.ste_exe_message := null;
+         rcd_lics_str_exe_event.ste_str_code := rcd_event.ste_str_code;
+         rcd_lics_str_exe_event.ste_tsk_code := rcd_event.ste_tsk_code;
+         rcd_lics_str_exe_event.ste_evt_code := rcd_event.ste_evt_code;
+         rcd_lics_str_exe_event.ste_evt_seqn := rcd_event.ste_evt_seqn;
+         rcd_lics_str_exe_event.ste_evt_text := rcd_event.ste_evt_text;
+         rcd_lics_str_exe_event.ste_evt_lock := rcd_event.ste_evt_lock;
+         if upper(trim(rcd_event.ste_evt_lock)) = '*NONE' then
+            rcd_lics_str_exe_event.ste_evt_lock := '*LOCK:' || to_char(var_exe_seqn) || ':' || rcd_event.ste_tsk_code || ':' || rcd_event.ste_evt_code;
+         end if;
+         rcd_lics_str_exe_event.ste_evt_proc := rcd_event.ste_evt_proc;
+         if upper(trim(rcd_event.ste_evt_proc)) = '*SUPPLIED' then
+            rcd_lics_str_exe_event.ste_evt_proc := pvar_procedure;
+         end if;
+         rcd_lics_str_exe_event.ste_job_group := rcd_event.ste_job_group;
+         rcd_lics_str_exe_event.ste_opr_alert := rcd_event.ste_opr_alert;
+         rcd_lics_str_exe_event.ste_ema_group := rcd_event.ste_ema_group;
+
+         /*-*/
+         /* Perform the parameter substitutions
+         /*-*/
+         for idx in 1..tbl_parameter.count loop
+            rcd_lics_str_exe_event.ste_evt_lock := replace(rcd_lics_str_exe_event.ste_evt_lock,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
+            rcd_lics_str_exe_event.ste_evt_proc := replace(rcd_lics_str_exe_event.ste_evt_proc,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
+            rcd_lics_str_exe_event.ste_job_group := replace(rcd_lics_str_exe_event.ste_job_group,'<'||tbl_parameter(idx).code||'>',tbl_parameter(idx).value);
+         end loop;
+
+         /*-*/
+         /* Create the stream action
+         /*-*/
+         insert into lics_str_exe_event values rcd_lics_str_exe_event;
+
+      end loop;
+      close csr_event;
 
       /*-*/
       /* Commit the database
       /*-*/
       commit;
+
+      /*-*/
+      /* Reset the stream
+      /*-*/
+      pvar_stream := null;
 
    /*-------------------*/
    /* Exception handler */

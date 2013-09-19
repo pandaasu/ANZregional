@@ -1,10 +1,12 @@
 /*****************/
 /* Package Types */
 /*****************/
+drop type lics_stream_table;
+
 create or replace type lics_stream_object as object
    (str_depth                    number,
     str_type                     varchar2(1 char),
-    str_parent                   varchar2(32 char),
+    str_pcde                     varchar2(32 char),
     str_code                     varchar2(32 char),
     str_text                     varchar2(128 char),
     str_lock                     varchar2(32 char),

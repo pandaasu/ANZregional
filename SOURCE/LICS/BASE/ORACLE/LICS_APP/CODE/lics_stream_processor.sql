@@ -24,19 +24,21 @@ create or replace package lics_stream_processor as
     -------   ------         -----------
     2007/08   Steve Gregan   Created
     2009/01   Steve Gregan   Added parameter functionality
+    2011/11   Steve Gregan   Added stream multiple dependency functionality
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure execute(par_stream in number, par_task in number, par_event in number);
+   procedure execute(par_stream in number, par_task in varchar2, par_event in varchar2);
    function callback_event return varchar2;
    function callback_text return varchar2;
    function callback_lock return varchar2;
    function callback_alert return varchar2;
    function callback_email return varchar2;
    function callback_parameter(par_code in varchar2) return varchar2;
+   function callback_is_cancelled return boolean;
 
 end lics_stream_processor;
 /
@@ -55,17 +57,17 @@ create or replace package body lics_stream_processor as
    /*-*/
    /* Private definitions
    /*-*/
-   var_stream lics_str_action.sta_str_seqn%type;
-   var_event lics_str_action.sta_evt_code%type;
-   var_text lics_str_action.sta_evt_text%type;
-   var_lock lics_str_action.sta_evt_lock%type;
-   var_alert lics_str_action.sta_opr_alert%type;
-   var_email lics_str_action.sta_ema_group%type;
+   var_stream lics_str_exe_event.ste_exe_seqn%type;
+   var_event lics_str_exe_event.ste_evt_code%type;
+   var_text lics_str_exe_event.ste_evt_text%type;
+   var_lock lics_str_exe_event.ste_evt_lock%type;
+   var_alert lics_str_exe_event.ste_opr_alert%type;
+   var_email lics_str_exe_event.ste_ema_group%type;
 
    /***********************************************/
    /* This procedure performs the execute routine */
    /***********************************************/
-   procedure execute(par_stream in number, par_task in number, par_event in number) is
+   procedure execute(par_stream in number, par_task in varchar2, par_event in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -75,13 +77,13 @@ create or replace package body lics_stream_processor as
       /*-*/
       /* Local cursors
       /*-*/
-      cursor csr_action is 
+      cursor csr_event is 
          select t01.*
-           from lics_str_action t01
-          where t01.sta_str_seqn = par_stream
-            and t01.sta_tsk_seqn = par_task
-            and t01.sta_evt_seqn = par_event;
-      rcd_action csr_action%rowtype;
+           from lics_str_exe_event t01
+          where t01.ste_exe_seqn = par_stream
+            and t01.ste_tsk_code = par_task
+            and t01.ste_evt_code = par_event;
+      rcd_event csr_event%rowtype;
 
    /*-------------*/
    /* Begin block */
@@ -102,43 +104,55 @@ create or replace package body lics_stream_processor as
       /* Validate the parameters
       /*-*/
       if par_stream is null then
-         raise_application_error(-20000, 'Action stream sequence must be supplied');
+         raise_application_error(-20000, 'Stream sequence must be supplied');
       end if;
       if par_task is null then
-         raise_application_error(-20000, 'Action task sequence must be supplied');
+         raise_application_error(-20000, 'Task code must be supplied');
       end if;
       if par_event is null then
-         raise_application_error(-20000, 'Action event sequence must be supplied');
+         raise_application_error(-20000, 'Event code must be supplied');
       end if;
 
       /*-*/
-      /* Retrieve the stream action
+      /* Retrieve the stream event
       /*-*/
-      open csr_action;
-      fetch csr_action into rcd_action;
-      if csr_action%notfound then
-         raise_application_error(-20000, 'Stream action not found (' || to_char(par_stream) || '/' || to_char(par_task) || '/' || to_char(par_event) || ')');
+      open csr_event;
+      fetch csr_event into rcd_event;
+      if csr_event%notfound then
+         raise_application_error(-20000, 'Stream execution event not found (' || to_char(par_stream) || '/' || par_task || '/' || par_event || ')');
       end if;
-      close csr_action;
-      if rcd_action.sta_status != '*OPENED' then
-         raise_application_error(-20000, 'Stream action is not *OPENED (' || to_char(par_stream) || '/' || to_char(par_task) || '/' || to_char(par_event) || ')');
+      close csr_event;
+      if rcd_event.ste_exe_status != '*OPENED' then
+         raise_application_error(-20000, 'Stream execution event is not *OPENED (' || to_char(par_stream) || '/' || par_task || '/' || par_event || ')');
       end if;
 
       /*-*/
-      /* Process the event
+      /* Update the current event to *WORKING
+      /*-*/
+      update lics_str_exe_event
+         set ste_exe_status = '*WORKING',
+             ste_exe_start = sysdate,
+             ste_exe_end = sysdate
+       where ste_exe_seqn = rcd_event.ste_exe_seqn
+         and ste_tsk_code = rcd_event.ste_tsk_code
+         and ste_evt_code = rcd_event.ste_evt_code;
+      commit;
+
+      /*-*/
+      /* Process the execution event
       /* **notes**
       /* 1. Action procedure should always perform own commit or rollback
       /*    (this processor will always perform commit/rollback for safety)
       /*-*/
       var_error := null;
-      var_stream := rcd_action.sta_str_seqn;
-      var_event := rcd_action.sta_evt_code;
-      var_text := rcd_action.sta_evt_text;
-      var_lock := rcd_action.sta_evt_lock;
-      var_alert := rcd_action.sta_opr_alert;
-      var_email := rcd_action.sta_ema_group;
+      var_stream := rcd_event.ste_exe_seqn;
+      var_event := rcd_event.ste_evt_code;
+      var_text := rcd_event.ste_evt_text;
+      var_lock := rcd_event.ste_evt_lock;
+      var_alert := rcd_event.ste_opr_alert;
+      var_email := rcd_event.ste_ema_group;
       begin
-         execute immediate 'begin ' || rcd_action.sta_evt_proc || '; end;';
+         execute immediate 'begin ' || rcd_event.ste_evt_proc || '; end;';
          commit;
       exception
          when others then
@@ -153,36 +167,38 @@ create or replace package body lics_stream_processor as
       var_email := null;
 
       /*-*/
-      /* Update the stream action and commit
-      /* **note** 1. The update must happen after the stream action procedure has executed
-      /*             so that the strean poller does not trigger the next task until after
+      /* Update the stream event and commit
+      /* **note** 1. The update must happen after the stream event procedure has executed
+      /*             so that the stream poller does not trigger the next task until after
       /*             the current one completes.
       /*          2. The update must always happen regardless of the outcome of
-      /*             the stream action procedure.
+      /*             the stream event procedure.
       /*-*/
       if var_error is null then
 
          /*-*/
-         /* Update the current action to completed
+         /* Update the current event to *COMPLETED
          /*-*/
-         update lics_str_action
-            set sta_completed = '1'
-          where sta_str_seqn = rcd_action.sta_str_seqn
-            and sta_tsk_seqn = rcd_action.sta_tsk_seqn
-            and sta_evt_seqn = rcd_action.sta_evt_seqn;
+         update lics_str_exe_event
+            set ste_exe_status = '*COMPLETED',
+                ste_exe_end = sysdate
+          where ste_exe_seqn = rcd_event.ste_exe_seqn
+            and ste_tsk_code = rcd_event.ste_tsk_code
+            and ste_evt_code = rcd_event.ste_evt_code;
          commit;
 
       else
 
          /*-*/
-         /* Update the current action to *FAILED
+         /* Update the current event to *FAILED
          /*-*/
-         update lics_str_action
-            set sta_failed = '1',
-                sta_message = var_error
-          where sta_str_seqn = rcd_action.sta_str_seqn
-            and sta_tsk_seqn = rcd_action.sta_tsk_seqn
-            and sta_evt_seqn = rcd_action.sta_evt_seqn;
+         update lics_str_exe_event
+            set ste_exe_status = '*FAILED',
+                ste_exe_end = sysdate,
+                ste_exe_message = var_error
+          where ste_exe_seqn = rcd_event.ste_exe_seqn
+            and ste_tsk_code = rcd_event.ste_tsk_code
+            and ste_evt_code = rcd_event.ste_evt_code;
          commit;
 
          /*-*/
@@ -332,8 +348,8 @@ create or replace package body lics_stream_processor as
       /*-*/
       cursor csr_parameter is 
          select t01.stp_par_value
-           from lics_str_parameter t01
-          where t01.stp_str_seqn = var_stream
+           from lics_str_exe_param t01
+          where t01.stp_exe_seqn = var_stream
             and t01.stp_par_code = upper(par_code);
       rcd_parameter csr_parameter%rowtype;
 
@@ -362,6 +378,49 @@ create or replace package body lics_stream_processor as
    /* End routine */
    /*-------------*/
    end callback_parameter;
+
+   /************************************************************/
+   /* This function performs the callback is cancelled routine */
+   /************************************************************/
+   function callback_is_cancelled return boolean is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_return boolean;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_stream is 
+         select t01.*
+           from lics_str_exe_header t01
+          where t01.sth_exe_seqn = var_stream;
+      rcd_stream csr_stream%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Retrieve the stream status
+      /*-*/
+      var_return := false;
+      open csr_stream;
+      fetch csr_stream into rcd_stream;
+      if csr_stream%found then
+         if rcd_stream.sth_exe_status = '*OPNCANCEL' then
+            var_return := true;
+         end if;
+      end if;
+      close csr_stream;
+      return var_return;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end callback_is_cancelled;
 
 end lics_stream_processor;
 /
