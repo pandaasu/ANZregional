@@ -1,34 +1,15 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package iface_app.efxcdw25_extract as
+CREATE OR REPLACE package         efxcdw25_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : efxcdw25_extract
-    Owner   : iface_app
+    Package : efxcdw25_loader
+    Owner   : ods_app
 
     Description
     -----------
-    Efex Payment Data - EFEX to CDW
-
-    1. PAR_MARKET (MANDATORY)
-
-       ## - Market id for the extract
-
-    2. PAR_TIMESTAMP (MANDATORY)
-
-       ## - Timestamp (YYYYMMDDHH24MISS) for the extract
-
-    3. PAR_HISTORY (OPTIONAL)
-
-       ## - Number of days changes to extract
-       0 - Full extract (default)
-
-    This package extracts the EFEX payments that have been modified within the last
-    history number of days and sends the extract file to the CDW environment.
+    Operational Data Store - Efex Payment Data - EFEX to CDW
 
     YYYY/MM   Author         Description
     -------   ------         -----------
@@ -39,15 +20,16 @@ create or replace package iface_app.efxcdw25_extract as
    /*-*/
    /* Public declarations
    /*-*/
-   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number;
+   procedure on_start;
+   procedure on_data(par_record in varchar2);
+   procedure on_end;
 
-end efxcdw25_extract;
+end efxcdw25_loader; 
+ 
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body iface_app.efxcdw25_extract as
+
+CREATE OR REPLACE package body         efxcdw25_loader as
 
    /*-*/
    /* Private exceptions
@@ -56,90 +38,34 @@ create or replace package body iface_app.efxcdw25_extract as
    pragma exception_init(application_exception, -20000);
 
    /*-*/
+   /* Private declarations
+   /*-*/
+   procedure process_record_ctl(par_record in varchar2);
+   procedure process_record_hdr(par_record in varchar2);
+   procedure process_record_nte(par_record in varchar2);
+   procedure process_record_end(par_record in varchar2);
+   procedure process_record_deh(par_record in varchar2);
+   procedure process_record_ded(par_record in varchar2);
+   procedure process_record_det(par_record in varchar2);
+   procedure process_record_reh(par_record in varchar2);
+
+   /*-*/
    /* Private definitions
    /*-*/
-   con_group constant number := 500;
+   var_trn_error boolean;
+   var_trn_count number;
+   var_trn_interface varchar2(32);
+   var_trn_market number;
+   var_trn_extract varchar2(14);
+   rcd_efex_pmt efex_pmt%rowtype;
+   rcd_efex_pmt_deal efex_pmt_deal%rowtype;
+   rcd_efex_pmt_rtn efex_pmt_rtn%rowtype;
+   var_ret_claim varchar2(50);
 
-   /***********************************************/
-   /* This procedure performs the execute routine */
-   /***********************************************/
-   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_exception varchar2(4000);
-      var_history number;
-      var_instance number(15,0);
-      var_count integer;
-      var_return number;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_extract is
-         select to_char(t01.payment_id) as payment_id,
-                to_char(t01.customer_id) as customer_id,
-                to_char(t03.sales_territory_id) as sales_territory_id,
-                to_char(t06.segment_id) as segment_id,
-                to_char(t07.business_unit_id) as business_unit_id,
-                to_char(t01.user_id) as user_id,
-                to_char(t01.payment_date,'yyyymmddhh24miss') as payment_date,
-                t01.payment_method,
-                to_char(t01.release_date,'yyyymmddhh24miss') as release_date,
-                t01.processed_flg,
-                replace(replace(t01.payment_reference,chr(10),chr(14)),chr(13),chr(15)) as payment_reference,
-                replace(replace(t01.payment_notes,chr(10),chr(14)),chr(13),chr(15)) as payment_notes,
-                t01.payment_status,
-                to_char(t01.processed_date,'yyyymmddhh24miss') as processed_date,
-                to_char(t01.replicated_date,'yyyymmddhh24miss') as replicated_date,
-                to_char(t01.deducted) as deducted,
-                t01.status,
-                t01.return_claim_code
-           from payment t01,
-                customer t02,
-                cust_sales_territory t03,
-                sales_territory t04,
-                sales_area t05,
-                sales_region t06,
-                segment t07
-          where t01.customer_id = t02.customer_id
-            and t02.customer_id = t03.customer_id
-            and t03.sales_territory_id = t04.sales_territory_id
-            and t04.sales_area_id = t05.sales_area_id
-            and t05.sales_region_id = t06.sales_region_id
-            and t06.segment_id = t07.segment_id
-            and t02.market_id = par_market
-            and t03.primary_flg = 'Y'
-            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
-                 exists (select 'x' from payment_deal where payment_id = t01.payment_id and trunc(modified_date) >= trunc(sysdate) - var_history) or
-                 exists (select 'x' from payment_return where payment_id = t01.payment_id and trunc(modified_date) >= trunc(sysdate) - var_history));
-      rcd_extract csr_extract%rowtype;
-
-      cursor csr_deal is
-         select to_char(t01.payment_id) as payment_id,
-                to_char(t01.sequence_num) as sequence_num,
-                to_char(t01.order_id) as order_id,
-                replace(replace(t01.details,chr(10),chr(14)),chr(13),chr(15)) as details,
-                to_char(t01.deal_value) as deal_value,
-                t01.status
-           from payment_deal t01
-          where t01.payment_id = rcd_extract.payment_id
-          order by t01.sequence_num asc;
-      rcd_deal csr_deal%rowtype;
-
-      cursor csr_retn is
-         select to_char(t01.payment_id) as payment_id,
-                to_char(t01.sequence_num) as sequence_num,
-                to_char(t01.item_id) as item_id,
-                replace(replace(t01.return_reason,chr(10),chr(14)),chr(13),chr(15)) as return_reason,
-                to_char(t01.return_qty) as return_qty,
-                to_char(t01.return_value) as return_value,
-                t01.status
-           from payment_return t01
-          where t01.payment_id = rcd_extract.payment_id
-          order by t01.sequence_num asc;
-      rcd_retn csr_retn%rowtype;
+   /************************************************/
+   /* This procedure performs the on start routine */
+   /************************************************/
+   procedure on_start is
 
    /*-------------*/
    /* Begin block */
@@ -147,181 +73,626 @@ create or replace package body iface_app.efxcdw25_extract as
    begin
 
       /*-*/
-      /* Initialise procedure
+      /* Initialise the transaction variables
       /*-*/
-      var_instance := -1;
-      var_count := con_group;
-      var_return := 0;
-
-      /*-*/
-      /* Define number of days to extract
-      /*-*/
-      if par_history = 0 then
-         var_history := 99999;
-      else
-         var_history := par_history;
-      end if;
+      var_trn_error := false;
+      var_trn_count := 0;
+      var_trn_interface := null;
+      var_trn_market := 0;
+      var_trn_extract := null;
 
       /*-*/
-      /* Extract the order data
+      /* Initialise the inbound definitions
       /*-*/
-      open csr_extract;
-      loop
-         fetch csr_extract into rcd_extract;
-         if csr_extract%notfound then
-            exit;
-         end if;
+      lics_inbound_utility.clear_definition;
+      /*-*/
+      lics_inbound_utility.set_definition('CTL','RCD_ID',3);
+      lics_inbound_utility.set_definition('CTL','INT_ID',32);
+      lics_inbound_utility.set_definition('CTL','MKT_ID',10);
+      lics_inbound_utility.set_definition('CTL','EXT_ID',14);
+      /*-*/
+      lics_inbound_utility.set_definition('HDR','RCD_ID',3);
+      lics_inbound_utility.set_definition('HDR','PAY_ID',10);
+      lics_inbound_utility.set_definition('HDR','CUS_ID',10);
+      lics_inbound_utility.set_definition('HDR','STE_ID',10);
+      lics_inbound_utility.set_definition('HDR','SEG_ID',10);
+      lics_inbound_utility.set_definition('HDR','BUS_ID',10);
+      lics_inbound_utility.set_definition('HDR','USR_ID',10);
+      lics_inbound_utility.set_definition('HDR','PAY_DATE',14);
+      lics_inbound_utility.set_definition('HDR','PAY_METHOD',50);
+      lics_inbound_utility.set_definition('HDR','RLS_DATE',14);
+      lics_inbound_utility.set_definition('HDR','PRC_FLAG',1);
+      lics_inbound_utility.set_definition('HDR','CTR_REFNR',50);
+      lics_inbound_utility.set_definition('HDR','CTR_STATUS',50);
+      lics_inbound_utility.set_definition('HDR','CTR_PRC_DATE',14);
+      lics_inbound_utility.set_definition('HDR','CTR_REP_DATE',14);
+      lics_inbound_utility.set_definition('HDR','CTR_DEDUCTED',15);
+      lics_inbound_utility.set_definition('HDR','RET_CLAIM',50);
+      lics_inbound_utility.set_definition('HDR','STATUS',1);
+      /*-*/
+      lics_inbound_utility.set_definition('NTE','RCD_ID',3);
+      lics_inbound_utility.set_definition('NTE','NTE_TEXT',2000);
+      /*-*/
+      lics_inbound_utility.set_definition('END','RCD_ID',3);
+      /*-*/
+      lics_inbound_utility.set_definition('DEH','RCD_ID',3);
+      lics_inbound_utility.set_definition('DEH','PAY_ID',10);
+      lics_inbound_utility.set_definition('DEH','SEQ_NUM',10);
+      lics_inbound_utility.set_definition('DEH','ORD_ID',10);
+      lics_inbound_utility.set_definition('DEH','DEA_VALUE',15);
+      lics_inbound_utility.set_definition('DEH','STATUS',1);
+      /*-*/
+      lics_inbound_utility.set_definition('DED','RCD_ID',3);
+      lics_inbound_utility.set_definition('DED','DET_TEXT',2000);
+      /*-*/
+      lics_inbound_utility.set_definition('DET','RCD_ID',3);
+      /*-*/
+      lics_inbound_utility.set_definition('REH','RCD_ID',3);
+      lics_inbound_utility.set_definition('REH','PAY_ID',10);
+      lics_inbound_utility.set_definition('REH','SEQ_NUM',10);
+      lics_inbound_utility.set_definition('REH','ITM_ID',10);
+      lics_inbound_utility.set_definition('REH','RET_REASON',50);
+      lics_inbound_utility.set_definition('REH','RET_QTY',15);
+      lics_inbound_utility.set_definition('REH','RET_VALUE',15);
+      lics_inbound_utility.set_definition('REH','STATUS',1);
 
-         /*-*/
-         /* Create outbound interface when required
-         /*-*/
-         if var_count = con_group then
-            if var_instance != -1 then
-               lics_outbound_loader.finalise_interface;
-            end if;
-            var_instance := lics_outbound_loader.create_interface('EFXCDW25',null,'EFXCDW25.DAT');
-            lics_outbound_loader.append_data('CTL'||'EFXCDW25'||rpad(' ',32-length('EFXCDW25'),' ')||nvl(par_market,'0')||rpad(' ',10-length(nvl(par_market,'0')),' ')||nvl(par_timestamp,' ')||rpad(' ',14-length(nvl(par_timestamp,' ')),' '));
-            var_count := 0;
-         end if;
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_start;
 
-         /*-*/
-         /* Append data lines
-         /*-*/
-         var_count := var_count + 1;
-         var_return := var_return + 1;
-         lics_outbound_loader.append_data('HDR'||
-                                          nvl(rcd_extract.payment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.payment_id,'0')),' ') ||
-                                          nvl(rcd_extract.customer_id,'0')||rpad(' ',10-length(nvl(rcd_extract.customer_id,'0')),' ') ||
-                                          nvl(rcd_extract.sales_territory_id,'0')||rpad(' ',10-length(nvl(rcd_extract.sales_territory_id,'0')),' ') ||
-                                          nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
-                                          nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
-                                          nvl(rcd_extract.user_id,'0')||rpad(' ',10-length(nvl(rcd_extract.user_id,'0')),' ') ||
-                                          nvl(rcd_extract.payment_date,' ')||rpad(' ',14-length(nvl(rcd_extract.payment_date,' ')),' ') ||
-                                          nvl(rcd_extract.payment_method,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_method,' ')),' ') ||
-                                          nvl(rcd_extract.release_date,' ')||rpad(' ',14-length(nvl(rcd_extract.release_date,' ')),' ') ||
-                                          nvl(rcd_extract.processed_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.processed_flg,' ')),' ') ||
-                                          nvl(rcd_extract.payment_reference,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_reference,' ')),' ') ||
-                                          nvl(rcd_extract.payment_status,' ')||rpad(' ',50-length(nvl(rcd_extract.payment_status,' ')),' ') ||
-                                          nvl(rcd_extract.processed_date,' ')||rpad(' ',14-length(nvl(rcd_extract.processed_date,' ')),' ') ||
-                                          nvl(rcd_extract.replicated_date,' ')||rpad(' ',14-length(nvl(rcd_extract.replicated_date,' ')),' ') ||
-                                          nvl(rcd_extract.deducted,'0')||rpad(' ',15-length(nvl(rcd_extract.deducted,'0')),' ') ||
-                                          nvl(rcd_extract.return_claim_code,' ')||rpad(' ',50-length(nvl(rcd_extract.return_claim_code,' ')),' ') ||
-                                          nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' '));
-
-         /*-*/
-         /* Append note lines
-         /*-*/
-         lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.payment_notes,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.payment_notes,1,2000),' ')),' '));
-         if length(rcd_extract.payment_notes) > 2000 then
-            lics_outbound_loader.append_data('NTE' || nvl(substr(rcd_extract.payment_notes,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_extract.payment_notes,2001),' ')),' '));
-         end if;
-
-         /*-*/
-         /* Append end line
-         /*-*/
-         lics_outbound_loader.append_data('END');
-
-         /*-*/
-         /* Extract the payment deals
-         /*-*/
-         open csr_deal;
-         loop
-            fetch csr_deal into rcd_deal;
-            if csr_deal%notfound then
-               exit;
-            end if;
-            lics_outbound_loader.append_data('DEH'||
-                                             nvl(rcd_deal.payment_id,'0')||rpad(' ',10-length(nvl(rcd_deal.payment_id,'0')),' ') ||
-                                             nvl(rcd_deal.sequence_num,'0')||rpad(' ',10-length(nvl(rcd_deal.sequence_num,'0')),' ') ||
-                                             nvl(rcd_deal.order_id,' ')||rpad(' ',10-length(nvl(rcd_deal.order_id,' ')),' ') ||
-                                             nvl(rcd_deal.deal_value,' ')||rpad(' ',15-length(nvl(rcd_deal.deal_value,' ')),' ') ||
-                                             nvl(rcd_deal.status,' ')||rpad(' ',1-length(nvl(rcd_deal.status,' ')),' '));
-            lics_outbound_loader.append_data('DED' || nvl(substr(rcd_deal.details,1,2000),' ')||rpad(' ',2000-length(nvl(substr(rcd_deal.details,1,2000),' ')),' '));
-            if length(rcd_deal.details) > 2000 then
-               lics_outbound_loader.append_data('DED' || nvl(substr(rcd_deal.details,2001),' ')||rpad(' ',2000-length(nvl(substr(rcd_deal.details,2001),' ')),' '));
-            end if;
-            lics_outbound_loader.append_data('DET');
-          end loop;
-         close csr_deal;
-
-         /*-*/
-         /* Extract the payment returns
-         /*-*/
-         open csr_retn;
-         loop
-            fetch csr_retn into rcd_retn;
-            if csr_retn%notfound then
-               exit;
-            end if;
-            lics_outbound_loader.append_data('REH'||
-                                             nvl(rcd_retn.payment_id,'0')||rpad(' ',10-length(nvl(rcd_retn.payment_id,'0')),' ') ||
-                                             nvl(rcd_retn.sequence_num,'0')||rpad(' ',10-length(nvl(rcd_retn.sequence_num,'0')),' ') ||
-                                             nvl(rcd_retn.item_id,'0')||rpad(' ',10-length(nvl(rcd_retn.item_id,'0')),' ') ||
-                                             nvl(rcd_retn.return_reason,' ')||rpad(' ',50-length(nvl(rcd_retn.return_reason,' ')),' ') ||
-                                             nvl(rcd_retn.return_qty,'0')||rpad(' ',15-length(nvl(rcd_retn.return_qty,'0')),' ') ||
-                                             nvl(rcd_retn.return_value,'0')||rpad(' ',15-length(nvl(rcd_retn.return_value,'0')),' ') ||
-                                             nvl(rcd_retn.status,' ')||rpad(' ',1-length(nvl(rcd_retn.status,' ')),' '));
-          end loop;
-         close csr_retn;
-
-      end loop;
-      close csr_extract;
+   /***********************************************/
+   /* This procedure performs the on data routine */
+   /***********************************************/
+   procedure on_data(par_record in varchar2) is
 
       /*-*/
-      /* Finalise Interface
+      /* Local definitions
       /*-*/
-      if var_instance != -1 then
-         lics_outbound_loader.finalise_interface;
-      end if;
+      var_record_identifier varchar2(3);
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*-*/
-      /* Return the result
+      /* Process the data based on record identifier
       /*-*/
-      return var_return;
+      var_record_identifier := substr(par_record,1,3);
+      case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
+         when 'HDR' then process_record_hdr(par_record);
+         when 'NTE' then process_record_nte(par_record);
+         when 'END' then process_record_end(par_record);
+         when 'DEH' then process_record_deh(par_record);
+         when 'DED' then process_record_ded(par_record);
+         when 'DET' then process_record_det(par_record);
+         when 'REH' then process_record_reh(par_record);
+         else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
+      end case;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Save the exception
-         /*-*/
-         var_exception := substr(SQLERRM, 1, 1024);
-
-         /*-*/
-         /* Finalise the outbound loader when required
-         /*-*/
-         if var_instance != -1 then
-            lics_outbound_loader.add_exception(var_exception);
-            lics_outbound_loader.finalise_interface;
-         end if;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXCDW25 EXTRACT - ' || var_exception);
+         var_trn_error := true;
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end on_data;
 
-end efxcdw25_extract;
+   /**********************************************/
+   /* This procedure performs the on end routine */
+   /**********************************************/
+   procedure on_end is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Commit/rollback as required
+      /*-*/
+      if var_trn_error = true then
+         rollback;
+      else
+         efxcdw00_loader.update_interface(var_trn_interface, var_trn_market, var_trn_extract, var_trn_count);
+         commit;
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_end;
+
+   /**************************************************/
+   /* This procedure performs the record CTL routine */
+   /**************************************************/
+   procedure process_record_ctl(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('CTL', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      var_trn_interface := lics_inbound_utility.get_variable('INT_ID');
+      var_trn_market := lics_inbound_utility.get_number('MKT_ID',null);
+      var_trn_extract := lics_inbound_utility.get_variable('EXT_ID');
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
+
+   /**************************************************/
+   /* This procedure performs the record HDR routine */
+   /**************************************************/
+   procedure process_record_hdr(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('HDR', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_pmt.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt.efex_cust_id := lics_inbound_utility.get_number('CUS_ID',null);
+      rcd_efex_pmt.sales_terr_id := lics_inbound_utility.get_number('STE_ID',null);
+      rcd_efex_pmt.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_pmt.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_pmt.user_id := lics_inbound_utility.get_number('USR_ID',null);
+      rcd_efex_pmt.pmt_date := lics_inbound_utility.get_date('PAY_DATE','yyyymmddhh24miss');
+      rcd_efex_pmt.pmt_method := lics_inbound_utility.get_variable('PAY_METHOD');
+      rcd_efex_pmt.rlse_date := lics_inbound_utility.get_date('RLS_DATE','yyyymmddhh24miss');
+      rcd_efex_pmt.procd_flg := lics_inbound_utility.get_variable('PRC_FLAG');
+      rcd_efex_pmt.contra_pmt_ref := replace(replace(lics_inbound_utility.get_variable('CTR_REFNR'),chr(14),chr(10)),chr(15),chr(13));
+      rcd_efex_pmt.pmt_notes := null;
+      rcd_efex_pmt.contra_pmt_status := lics_inbound_utility.get_variable('CTR_STATUS');
+      rcd_efex_pmt.contra_procd_date := lics_inbound_utility.get_date('CTR_PRC_DATE','yyyymmddhh24miss');
+      rcd_efex_pmt.contra_replicated_date := lics_inbound_utility.get_date('CTR_REP_DATE','yyyymmddhh24miss');
+      rcd_efex_pmt.contra_deducted := lics_inbound_utility.get_number('CTR_DEDUCTED',null);
+      rcd_efex_pmt.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_pmt.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt.efex_mkt_id := var_trn_market;
+      var_ret_claim := lics_inbound_utility.get_variable('RET_CLAIM');
+      var_trn_count := var_trn_count + 1;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+      /*--------------------------------*/
+      /* DELETE - Delete any child rows */
+      /*--------------------------------*/
+
+      delete from efex_pmt_deal where pmt_id = rcd_efex_pmt.pmt_id;
+      delete from efex_pmt_rtn where pmt_id = rcd_efex_pmt.pmt_id;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_hdr;
+
+   /**************************************************/
+   /* This procedure performs the record NTE routine */
+   /**************************************************/
+   procedure process_record_nte(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('NTE', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_pmt.pmt_notes := rcd_efex_pmt.pmt_notes || replace(replace(lics_inbound_utility.get_variable('NTE_TEXT'),chr(14),chr(10)),chr(15),chr(13));
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_nte;
+
+   /**************************************************/
+   /* This procedure performs the record END routine */
+   /**************************************************/
+   procedure process_record_end(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('END', par_record);
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      begin
+         insert into efex_pmt values rcd_efex_pmt;
+      exception
+         when dup_val_on_index then
+            update efex_pmt
+               set efex_cust_id = rcd_efex_pmt.efex_cust_id,
+                   sales_terr_id = rcd_efex_pmt.sales_terr_id,
+                   sgmnt_id = rcd_efex_pmt.sgmnt_id,
+                   bus_unit_id = rcd_efex_pmt.bus_unit_id,
+                   user_id = rcd_efex_pmt.user_id,
+                   pmt_date = rcd_efex_pmt.pmt_date,
+                   pmt_method = rcd_efex_pmt.pmt_method,
+                   rlse_date = rcd_efex_pmt.rlse_date,
+                   procd_flg = rcd_efex_pmt.procd_flg,
+                   contra_pmt_ref = rcd_efex_pmt.contra_pmt_ref,
+                   pmt_notes = rcd_efex_pmt.pmt_notes,
+                   contra_pmt_status = rcd_efex_pmt.contra_pmt_status,
+                   contra_procd_date = rcd_efex_pmt.contra_procd_date,
+                   contra_replicated_date = rcd_efex_pmt.contra_replicated_date,
+                   contra_deducted = rcd_efex_pmt.contra_deducted,
+                   status = rcd_efex_pmt.status,
+                   valdtn_status = rcd_efex_pmt.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt.efex_mkt_id
+             where pmt_id = rcd_efex_pmt.pmt_id
+                AND efex_cust_id = rcd_efex_pmt.efex_cust_id;
+      end;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_end;
+
+   /**************************************************/
+   /* This procedure performs the record DEH routine */
+   /**************************************************/
+   procedure process_record_deh(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('DEH', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_pmt_deal.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt_deal.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
+      rcd_efex_pmt_deal.efex_order_id := lics_inbound_utility.get_variable('ORD_ID');
+      rcd_efex_pmt_deal.details := null;
+      rcd_efex_pmt_deal.deal_value := lics_inbound_utility.get_variable('DEA_VALUE');
+      rcd_efex_pmt_deal.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_pmt_deal.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt_deal.efex_mkt_id := var_trn_market;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_deh;
+
+   /**************************************************/
+   /* This procedure performs the record DED routine */
+   /**************************************************/
+   procedure process_record_ded(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('DED', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_pmt_deal.details := rcd_efex_pmt_deal.details || replace(replace(lics_inbound_utility.get_variable('DET_TEXT'),chr(14),chr(10)),chr(15),chr(13));
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ded;
+
+   /**************************************************/
+   /* This procedure performs the record DET routine */
+   /**************************************************/
+   procedure process_record_det(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('DET', par_record);
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      begin
+         insert into efex_pmt_deal values rcd_efex_pmt_deal;
+      exception
+         when dup_val_on_index then
+            update efex_pmt_deal
+               set efex_order_id = rcd_efex_pmt_deal.efex_order_id,
+                   details = rcd_efex_pmt_deal.details,
+                   deal_value = rcd_efex_pmt_deal.deal_value,
+                   status = rcd_efex_pmt_deal.status,
+                   valdtn_status = rcd_efex_pmt_deal.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt_deal.efex_mkt_id
+             where pmt_id = rcd_efex_pmt_deal.pmt_id
+               and seq_num = rcd_efex_pmt_deal.seq_num;
+      end;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_det;
+
+   /**************************************************/
+   /* This procedure performs the record REH routine */
+   /**************************************************/
+   procedure process_record_reh(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('REH', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_pmt_rtn.pmt_id := lics_inbound_utility.get_number('PAY_ID',null);
+      rcd_efex_pmt_rtn.seq_num := lics_inbound_utility.get_number('SEQ_NUM',null);
+      rcd_efex_pmt_rtn.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_pmt_rtn.rtn_claim_code := var_ret_claim;
+      rcd_efex_pmt_rtn.rtn_reason := replace(replace(lics_inbound_utility.get_variable('RET_REASON'),chr(14),chr(10)),chr(15),chr(13));
+      rcd_efex_pmt_rtn.rtn_qty := lics_inbound_utility.get_number('RET_QTY',null);
+      rcd_efex_pmt_rtn.rtn_value := lics_inbound_utility.get_number('RET_VALUE',null);
+      rcd_efex_pmt_rtn.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_pmt_rtn.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_pmt_rtn.efex_mkt_id := var_trn_market;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      begin
+         insert into efex_pmt_rtn values rcd_efex_pmt_rtn;
+      exception
+         when dup_val_on_index then
+            update efex_pmt_rtn
+               set efex_matl_id = rcd_efex_pmt_rtn.efex_matl_id,
+                   rtn_claim_code = rcd_efex_pmt_rtn.rtn_claim_code,
+                   rtn_reason = rcd_efex_pmt_rtn.rtn_reason,
+                   rtn_qty = rcd_efex_pmt_rtn.rtn_qty,
+                   rtn_value = rcd_efex_pmt_rtn.rtn_value,
+                   status = rcd_efex_pmt_rtn.status,
+                   valdtn_status = rcd_efex_pmt_rtn.valdtn_status,
+                   efex_mkt_id = rcd_efex_pmt_rtn.efex_mkt_id
+             where pmt_id = rcd_efex_pmt_rtn.pmt_id
+               and seq_num = rcd_efex_pmt_rtn.seq_num;
+      end;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_reh;
+
+end efxcdw25_loader;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw25_extract for iface_app.efxcdw25_extract;
-grant execute on efxcdw25_extract to public;
