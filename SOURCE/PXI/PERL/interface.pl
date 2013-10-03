@@ -29,9 +29,9 @@ my $conf = {
   #send_cmd => 'c:\mqft\mqft.exe #SRCEP# #SRCFILE# #DESTEP# /dummy/dest/dir/#DESTFILE#',
   send_cmd => 'D:\apps\global\mqft_light\test\shell\mqsend.cmd -srcqmgr #SRCEP# -srcfile #SRCFILE# -tgtqmgr #DESTEP# -tgtfile /ics/lad/test/inbound/#DESTFILE#',
   # Source endpoint
-  mqft_src_endpoint => 'DUMMYSRC',
+  mqft_src_endpoint => 'XPMXT01',
   # Destination endpoint
-  mqft_dest_endpoint => 'DUMMYDEST',
+  mqft_dest_endpoint => 'QM0218T',
 };
 
 my @inbound_file_order = qw(302PROD.txt 303PRODHIER.txt 300CUST.txt 301CUSTHIER.txt 347VEND.txt 330PRICE.txt 306SALES.txt 336PCACT.txt 361DEDUCT.txt);
