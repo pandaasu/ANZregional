@@ -262,31 +262,20 @@ sub send_file {
   return if @errors > 0; # If errors have been encountered already, don't do anything
   my $file = shift; return unless -f $file; # Skip non-files
   my $basefile = basename($file);
-  my $destfile = $basefile;
   
   if($basefile =~/^(\S{3}\D*)(\d*)(\.txt)$/) {
-	$destfile = "$1$3";
+	$basefile = "$1$3";
   }
   
   my $cmd = $conf->{send_cmd};
   $cmd =~ s/#SRCEP#/$conf->{mqft_src_endpoint}/g;
   $cmd =~ s/#SRCFILE#/$file/g;
   $cmd =~ s/#DESTEP#/$conf->{mqft_dest_endpoint}/g;
-  $cmd =~ s/#DESTFILE#/$destfile/g;
+  $cmd =~ s/#DESTFILE#/$basefile/g;
   print "Executing command '$cmd'";
   if (!$testing) {
     if (system(split(' ', $cmd)) != 0) {
 	  push @errors, "Errors during MQ Transfer";
-	  
-  #   if (!move($file, File::Spec->catfile($dirs->{ob_archive}, $basefile))) {
-  #      die "Couldn't move file '$_' to archive ($!)";
-  #    }
-  #  }
-  #  else {
-  #    push @errors, "Failed sending file '$file'";
-  #    if (!move($file, File::Spec->catfile($dirs->{ob_failed}, $basefile))) {
-  #      die "Couldn't move file '$_' to failed ($!)";
-  #    }
     }
   }
 }
