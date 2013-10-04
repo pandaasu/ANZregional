@@ -13,16 +13,16 @@ use POSIX;
 my $conf = {
   # Load command for each interface, with #FILE# in place of filename
   load_cmd => {
-	'302PROD.txt'     => 'c:\promax\loadme.exe #FILE#',
-	'303PRODHIER.txt' => 'c:\promax\loadme.exe #FILE#', 
-	'300CUST.txt'     => 'c:\promax\loadme.exe #FILE#',
-	'301CUSTHIER.txt' => 'c:\promax\loadme.exe #FILE#',
-	'347VEND.txt'     => 'c:\promax\loadme.exe #FILE#',
-	'330PRICE.txt'    => 'c:\promax\loadme.exe #FILE#',
-	'306SALES.txt'    => 'c:\promax\loadme.exe #FILE#',
-	'336PCACT.txt'    => 'c:\promax\loadme.exe #FILE#',
-	'336COGS.txt'     => 'c:\promax\loadme.exe #FILE#',
-	'361DEDUCT.txt'   => 'c:\promax\loadme.exe #FILE#'
+	'302PROD.txt'     => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I302 -V0 -SPromax_PX_Test',
+	'303PRODHIER.txt' => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I303 -V0 -SPromax_PX_Test', 
+	'300CUST.txt'     => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I300 -V0 -SPromax_PX_Test',
+	'301CUSTHIER.txt' => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I301 -V0 -SPromax_PX_Test',
+	'347VEND.txt'     => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I347 -V0 -SPromax_PX_Test',
+	'330PRICE.txt'    => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I330 -V0 -SPromax_PX_Test',
+	'306SALES.txt'    => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I306 -V0 -SPromax_PX_Test',
+	'336PCACT.txt'    => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I336 -V0 -SPromax_PX_Test',
+	'336COGS.txt'     => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I336 -V1 -SPromax_PX_Test',
+	'361DEDUCT.txt'   => '"C:\\Program Files (x86)\\PromaxPX\\pxInterfaceCMD.exe" -I361 -V0 -SPromax_PX_Test'
   },
   # Send command
   # #SRCEP#, #SRCFILE# for source endpoint and filename
@@ -36,7 +36,7 @@ my $conf = {
 };
 
 my @inbound_file_order = qw(302PROD.txt 303PRODHIER.txt 300CUST.txt 301CUSTHIER.txt 347VEND.txt 330PRICE.txt 306SALES.txt 336PCACT.txt 336COGS.txt 361DEDUCT.txt);
-my @outbound_file_order = qw(359PROM.txt 325ACCRLS.txt 331CLAIMS.txt 337DEMAND.txt);
+my @outbound_file_order = qw(359PROM.txt 325ACCRLS.txt 331CLAIMS.txt 337EST.txt);
 
 # List of errors encountered during processing
 my @errors = ();
@@ -208,9 +208,15 @@ sub send_outbound_files {
 	    push @errors, "Couldn't copy '$pending_file_name' to '$exec_file_name' ($!)";
 		return;
 	  }
-	  
-	  print "Sending '$exec_file_name'...";
-	  send_file($exec_file_name);
+	  	  
+	  if (-s $exec_file_name) {
+		  print "Sending '$exec_file_name'...";
+		  send_file($exec_file_name);
+	  }
+	  else {
+		my $file = basename($exec_file_name);
+		print "WARNING: Empty file: $file detected";
+	  }
 	  
 	  if (@errors == 0) {
 	    # Move from exec -> archive
@@ -256,23 +262,31 @@ sub send_file {
   return if @errors > 0; # If errors have been encountered already, don't do anything
   my $file = shift; return unless -f $file; # Skip non-files
   my $basefile = basename($file);
+  my $destfile = $basefile;
+  
+  if($basefile =~/^(\S{3}\D*)(\d*)(\.txt)$/) {
+	$destfile = "$1$3";
+  }
+  
   my $cmd = $conf->{send_cmd};
   $cmd =~ s/#SRCEP#/$conf->{mqft_src_endpoint}/g;
   $cmd =~ s/#SRCFILE#/$file/g;
   $cmd =~ s/#DESTEP#/$conf->{mqft_dest_endpoint}/g;
-  $cmd =~ s/#DESTFILE#/$basefile/g;
+  $cmd =~ s/#DESTFILE#/$destfile/g;
   print "Executing command '$cmd'";
   if (!$testing) {
-    if (system(split(' ', $cmd)) == 0) {
-      if (!move($file, File::Spec->catfile($dirs->{ob_archive}, $basefile))) {
-        die "Couldn't move file '$_' to archive ($!)";
-      }
-    }
-    else {
-      push @errors, "Failed sending file '$file'";
-      if (!move($file, File::Spec->catfile($dirs->{ob_failed}, $basefile))) {
-        die "Couldn't move file '$_' to failed ($!)";
-      }
+    if (system(split(' ', $cmd)) != 0) {
+	  push @errors, "Errors during MQ Transfer";
+	  
+  #   if (!move($file, File::Spec->catfile($dirs->{ob_archive}, $basefile))) {
+  #      die "Couldn't move file '$_' to archive ($!)";
+  #    }
+  #  }
+  #  else {
+  #    push @errors, "Failed sending file '$file'";
+  #    if (!move($file, File::Spec->catfile($dirs->{ob_failed}, $basefile))) {
+  #      die "Couldn't move file '$_' to failed ($!)";
+  #    }
     }
   }
 }
@@ -305,6 +319,7 @@ sub move_files_older_than {
   for my $file (sort_by_modified_date(@files)) {
     my $new_filename = basename($file); # Get the name of the file (without dir)
     # Call the rename function if supplied to generate the new filename
+    #if ($rename_callback) { $new_filename = $rename_callback->($new_filename); }
     if ($rename_callback) { $new_filename = $rename_callback->($new_filename); }
     # Make new absolute filename
     $new_filename = File::Spec->catfile($dest_dir, $new_filename);
