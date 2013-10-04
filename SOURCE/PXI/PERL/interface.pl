@@ -21,6 +21,7 @@ my $conf = {
 	'330PRICE.txt'    => 'c:\promax\loadme.exe #FILE#',
 	'306SALES.txt'    => 'c:\promax\loadme.exe #FILE#',
 	'336PCACT.txt'    => 'c:\promax\loadme.exe #FILE#',
+	'336COGS.txt'     => 'c:\promax\loadme.exe #FILE#',
 	'361DEDUCT.txt'   => 'c:\promax\loadme.exe #FILE#'
   },
   # Send command
@@ -34,8 +35,8 @@ my $conf = {
   mqft_dest_endpoint => 'QM0218T',
 };
 
-my @inbound_file_order = qw(302PROD.txt 303PRODHIER.txt 300CUST.txt 301CUSTHIER.txt 347VEND.txt 330PRICE.txt 306SALES.txt 336PCACT.txt 361DEDUCT.txt);
-my @outbound_file_order = qw(359PROM.txt 325ACCRL.txt 331CLAIMS.txt 337DEMAND.txt);
+my @inbound_file_order = qw(302PROD.txt 303PRODHIER.txt 300CUST.txt 301CUSTHIER.txt 347VEND.txt 330PRICE.txt 306SALES.txt 336PCACT.txt 336COGS.txt 361DEDUCT.txt);
+my @outbound_file_order = qw(359PROM.txt 325ACCRLS.txt 331CLAIMS.txt 337DEMAND.txt);
 
 # List of errors encountered during processing
 my @errors = ();
@@ -110,7 +111,7 @@ sub load_inbound_files {
 
   # Iterate through inbound file types
   for my $inbound_file_type (@inbound_file_order) {
-	my ($name, $ext) = split(/./, $inbound_file_type); # Split current file type into name and extension
+	my ($name, $ext) = split(/\./, $inbound_file_type); # Split current file type into name and extension
     my @files_to_load = grep { /^$name\d+\.$ext$/ } @pending; # Only get files matching the current file type
 	@files_to_load = map { $_ = File::Spec->catfile($dirs->{ib_pending}, $_) } @files_to_load; # Convert to absolute paths
 
@@ -190,7 +191,7 @@ sub send_outbound_files {
 
   # Iterate through outbound file types
   for my $outbound_file_type (@outbound_file_order) {
-	my ($name, $ext) = split(/./, $outbound_file_type); # Split current file type into name and extension
+	my ($name, $ext) = split(/\./, $outbound_file_type); # Split current file type into name and extension
     my @files_to_send = grep { /^$name\d+\.$ext$/ } @pending; # Only get files matching the current file type
 	@files_to_send = map { $_ = File::Spec->catfile($dirs->{ob_pending}, $_) } @files_to_send; # Convert to absolute paths
 
@@ -237,8 +238,8 @@ sub send_outbound_files {
 
 sub load_file {
   return if @errors > 0; # If errors have been encountered already, don't do anything
-  my $file = $_; return unless -f $file; # Skip non-files
-  my $basefile = basename($_);
+  my $file = shift; return unless -f $file; # Skip non-files
+  my $basefile = basename($file);
   my $cmd = $conf->{load_cmd}->{$basefile};
   if (!defined $cmd) {
     push @errors, "Could not find load command for file '$basefile'";
@@ -253,8 +254,8 @@ sub load_file {
 
 sub send_file {
   return if @errors > 0; # If errors have been encountered already, don't do anything
-  my $file = $_; return unless -f $file; # Skip non-files
-  my $basefile = basename($_);
+  my $file = shift; return unless -f $file; # Skip non-files
+  my $basefile = basename($file);
   my $cmd = $conf->{send_cmd};
   $cmd =~ s/#SRCEP#/$conf->{mqft_src_endpoint}/g;
   $cmd =~ s/#SRCFILE#/$file/g;
@@ -263,13 +264,13 @@ sub send_file {
   print "Executing command '$cmd'";
   if (!$testing) {
     if (system(split(' ', $cmd)) == 0) {
-      if (!move($_, File::Spec->catfile($dirs->{ob_archive}, basename($_)))) {
+      if (!move($file, File::Spec->catfile($dirs->{ob_archive}, $basefile))) {
         die "Couldn't move file '$_' to archive ($!)";
       }
     }
     else {
       push @errors, "Failed sending file '$file'";
-      if (!move($_, File::Spec->catfile($dirs->{ob_failed}, basename($_)))) {
+      if (!move($file, File::Spec->catfile($dirs->{ob_failed}, $basefile))) {
         die "Couldn't move file '$_' to failed ($!)";
       }
     }
