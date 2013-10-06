@@ -19,7 +19,7 @@ namespace FlatFileLoaderUtility.Controllers
             var connection = Connection.GetConnection(this.HttpContext);
             filterContext.Controller.ViewBag.Access = Access.GetAccess(this.HttpContext);
             filterContext.Controller.ViewBag.Connection = connection;
-            filterContext.Controller.ViewBag.Connections = this.GetConnections(false, connection.ConnectionId);
+            filterContext.Controller.ViewBag.Connections = this.GetConnections(true, connection.ConnectionId);
             filterContext.Controller.ViewBag.User = new User();
             filterContext.Controller.ViewBag.IsTest = Properties.Settings.Default.IsTest;
             filterContext.Controller.ViewBag.IsSecure = this.Request.IsSecureConnection;

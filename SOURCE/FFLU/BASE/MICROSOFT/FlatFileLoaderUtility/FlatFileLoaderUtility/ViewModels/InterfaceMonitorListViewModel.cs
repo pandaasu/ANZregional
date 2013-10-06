@@ -17,6 +17,10 @@ namespace FlatFileLoaderUtility.ViewModels
         
         public InterfaceMonitorListViewModel()
         {
+            this.InterfaceGroups = new List<SelectListItem>();
+            this.Interfaces = new List<SelectListItem>();
+            this.IcsStatuses = new List<SelectListItem>();
+            this.InterfaceTypes = new List<SelectListItem>();
         }
     }
 }

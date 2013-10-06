@@ -1,0 +1,26 @@
+﻿.chzn-container-single .chzn-search input {
+  line-height:26px !important;
+}
+.upload #fakefileButton
+{
+    top:-1px;
+}
+input.date 
+{
+    background: #fff;
+    border-right:1px solid #D2E4ED;
+}
+.ui-corner-all 
+{
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    behavior: url(/scripts/PIE.htc);
+}
+.ui-progressbar 
+{
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+    behavior: url(/scripts/PIE.htc);
+}

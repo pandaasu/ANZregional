@@ -27,6 +27,9 @@ namespace FlatFileLoaderUtility.Controllers
         {
             var viewModel = new InterfaceMonitorListViewModel();
 
+            if (this.Container.Connection == null)
+                return this.View(viewModel);
+
             viewModel.InterfaceGroups = this.GetInterfaceGroups(false, "*ALL");
             viewModel.Interfaces = this.GetInterfaces(true, string.Empty, string.Empty, string.Empty, false, true);
             viewModel.IcsStatuses = this.GetIcsStatuses(string.Empty);
@@ -142,8 +145,25 @@ namespace FlatFileLoaderUtility.Controllers
                         }
                     }
                 }
+                else if (monitor.FileType == "tab")
+                {
+                    var splitOn = new char[] { '\t' };
+                    var trimOn = new char[] { (monitor.CsvQualifier.Length > 0) ? monitor.CsvQualifier[0] : ' ' };
+                    foreach (var item in result)
+                    {
+                        // Split into columns
+                        item.ColumnData = item.Data.Split(splitOn).ToList();
 
-                if (monitor.FileType != "csv" && result.Count > 0)
+                        // Remove qualifiers
+                        if (!string.IsNullOrEmpty(monitor.CsvQualifier))
+                        {
+                            for (var i = 0; i < item.ColumnData.Count; i++)
+                                item.ColumnData[i] = item.ColumnData[i].Trim(trimOn).Replace(monitor.CsvQualifier + monitor.CsvQualifier, monitor.CsvQualifier);
+                        }
+                    }
+                }
+
+                if (monitor.FileType != "csv" && monitor.FileType != "tab" && result.Count > 0)
                 {
                     var columnCounterRow = new IcsRowData();
                     var dataRowLength = result.Max(x => x.Data.Length);
@@ -177,6 +197,13 @@ namespace FlatFileLoaderUtility.Controllers
         public ActionResult View(int? id)
         {
             var viewModel = new InterfaceMonitorDetailViewModel();
+
+            if (this.Container.Connection == null)
+            {
+                viewModel.Record = new Models.Monitor();
+                return this.View(viewModel);
+            }
+
             var records = this.Container.MonitorRepository.GetTraceHistory(id ?? 0);
 
             viewModel.Monitors = records;
@@ -192,6 +219,14 @@ namespace FlatFileLoaderUtility.Controllers
                 var data = this.Container.MonitorRepository.RowDataLoad(viewModel.Record.LicsId, viewModel.Record.TraceId, false, 0, 10);
                 if (data.Count > 0)
                     viewModel.ColumnCount = data.Max(x => x.Data.Split(new char[] { ',' }).Length);
+                else
+                    viewModel.ColumnCount = 0;
+            }
+            else if (viewModel.Record.FileType == "tab")
+            {
+                var data = this.Container.MonitorRepository.RowDataLoad(viewModel.Record.LicsId, viewModel.Record.TraceId, false, 0, 10);
+                if (data.Count > 0)
+                    viewModel.ColumnCount = data.Max(x => x.Data.Split(new char[] { '\t' }).Length);
                 else
                     viewModel.ColumnCount = 0;
             }

@@ -1,14 +1,9 @@
 ﻿@model System.Web.Mvc.HandleErrorInfo
 
 @{
-    ViewBag.Title = "404";
+    ViewBag.Title = "404 - Not Found";
 }
 
-<hgroup class="title">
-    <h1 class="error">Not Found</h1>
-    <br />
-    <h2 class="error">The page you have requested cannot be found.</h2>
-    <pre>
-        @ViewBag.Exception
-    </pre>
-</hgroup>
+<div class="main">
+    <p>The page you have requested cannot be found on the server.</p>
+</div>

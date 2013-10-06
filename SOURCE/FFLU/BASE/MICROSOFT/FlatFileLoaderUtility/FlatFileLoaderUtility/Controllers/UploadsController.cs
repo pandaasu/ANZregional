@@ -10,6 +10,7 @@ using FlatFileLoaderUtility.ViewModels;
 using FlatFileLoaderUtility.Models;
 using FlatFileLoaderUtility.Models.Shared;
 using FlatFileLoaderUtility.Upload;
+//using StackExchange.Profiling;
 
 namespace FlatFileLoaderUtility.Controllers
 {
@@ -30,43 +31,51 @@ namespace FlatFileLoaderUtility.Controllers
 
         public ActionResult Index()
         {
-            var viewModel = new FileUploadViewModel();
+            //using (MiniProfiler.Current.Step("Controller"))
+            //{
+                var viewModel = new FileUploadViewModel();
 
-            // Restore seelcted interface cookie, if available
-            var interfaceCookie = this.Request.Cookies["interface"];
-            
-            viewModel.InterfaceGroups = this.GetInterfaceGroups(false, "*ALL");
-            viewModel.Interfaces = this.GetInterfaces(true, string.Empty, "*INBOUND", (interfaceCookie != null) ? interfaceCookie.Value : string.Empty, true, false);
-            viewModel.Status = Status.GetStatus(this.Container.Access.Username, this.Container.Connection);
+                if (this.Container.Connection == null)
+                    return this.View(viewModel);
 
-            if (viewModel.Status != null)
-            {
-                var segmentCount = viewModel.Status.GetSegmentCount();
-                if (!viewModel.Status.IsDone && viewModel.Status.UploadId > 0 && viewModel.Status.Exception == null)
-                {
-                    var interfaces = this.Container.InterfaceRepository.Get(string.Empty);
-                    var iface = (from x in interfaces where x.InterfaceCode == viewModel.Status.InterfaceCode select x).FirstOrDefault();
+                // Restore seelcted interface cookie, if available
+                var interfaceCookie = this.Request.Cookies["interface"];
 
-                    if (iface != null)
+                //using (MiniProfiler.Current.Step("Retrieving interface data"))
+                //{
+                    viewModel.InterfaceGroups = this.GetInterfaceGroups(false, "*ALL");
+                    viewModel.Interfaces = this.GetInterfaces(true, string.Empty, "*INBOUND", (interfaceCookie != null) ? interfaceCookie.Value : string.Empty, true, false);
+                    viewModel.Status = Status.GetStatus(this.Container.Access.Username, this.Container.Connection);
+                    if (viewModel.Status != null)
                     {
-                        viewModel.LastSegment = segmentCount;
-                        viewModel.InterfaceName = iface.InterfaceName;
-                        viewModel.InterfaceCode = iface.InterfaceCode;
-                        viewModel.FileName = viewModel.Status.FileName;
-                        viewModel.FileSize = viewModel.Status.FileSize;
-                    }
-                    else
-                    {
-                        Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
-                    }
-                }
-                else
-                {
-                    Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
-                }
-            }
+                        var segmentCount = viewModel.Status.GetSegmentCount();
+                        if (!viewModel.Status.IsDone && viewModel.Status.UploadId > 0 && viewModel.Status.Exception == null)
+                        {
+                            var interfaces = this.Container.InterfaceRepository.Get(string.Empty);
+                            var iface = (from x in interfaces where x.InterfaceCode == viewModel.Status.InterfaceCode select x).FirstOrDefault();
 
-            return this.View(viewModel);
+                            if (iface != null)
+                            {
+                                viewModel.LastSegment = segmentCount;
+                                viewModel.InterfaceName = iface.InterfaceName;
+                                viewModel.InterfaceCode = iface.InterfaceCode;
+                                viewModel.FileName = viewModel.Status.FileName;
+                                viewModel.FileSize = viewModel.Status.FileSize;
+                            }
+                            else
+                            {
+                                Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
+                            }
+                        }
+                        else
+                        {
+                            Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
+                        }
+                    }
+                //}
+
+                return this.View(viewModel);
+            //}
         }
 
         [HttpPost]
@@ -92,7 +101,10 @@ namespace FlatFileLoaderUtility.Controllers
                 if (iface.FileType == "csv" && Path.GetExtension(filename).ToLower() != ".csv")
                     throw new Exception("Invalid file type. This interface only accepts .csv files.");
 
-                if (iface.FileType != "csv" && Path.GetExtension(filename).ToLower() != ".dat" && Path.GetExtension(filename).ToLower() != ".txt")
+                if (iface.FileType == "tab" && Path.GetExtension(filename).ToLower() != ".tab")
+                    throw new Exception("Invalid file type. This interface only accepts .tab files.");
+
+                if (iface.FileType != "csv" && iface.FileType != "tab" && Path.GetExtension(filename).ToLower() != ".dat" && Path.GetExtension(filename).ToLower() != ".txt")
                     throw new Exception("Invalid file type. This interface only accepts fixed fixed width files (.dat or .txt).");
 
                 if (segmentCount > 0)

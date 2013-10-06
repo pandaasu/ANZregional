@@ -37,14 +37,11 @@
                     }
                 });
             });
-
-            $("button").button();
         });
     </script>
 }
 
-<div class="main">
-    <br />
+<div class="main switch">
     <p>You are currently logged in as <strong>@ViewBag.Access.Username</strong>.</p>
     <p>With that login, you are connected to <strong>@ViewBag.Connection.ConnectionName</strong> as <strong>@ViewBag.User.UserName</strong>.</p>
     <p>To log in as a different user, enter the credentials below.</p>
@@ -52,10 +49,9 @@
     @using (Html.BeginForm("SwitchUser", "User", FormMethod.Post, new { autocomplete = "off" }))
     {
         @Html.ValidationSummary(true, string.Empty)
-        <br />
-        <table cellspacing="4">
+        <table cellspacing="12">
             <tr valign="top">
-                <td style="width:70px;">@Html.LabelFor(x => x.Username)</td>
+                <td style="width:100px;">@Html.LabelFor(x => x.Username)</td>
                 <td>@Html.TextBoxFor(x => x.Username, new { style = "text-transform:uppercase;" })
                     @Html.ValidationMessageFor(x => x.Username)
                 </td>

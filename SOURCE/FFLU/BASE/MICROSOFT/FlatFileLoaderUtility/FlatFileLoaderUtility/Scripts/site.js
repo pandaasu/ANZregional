@@ -1,6 +1,6 @@
 ﻿// Models
 
-var Status = function () {
+var UStatus = function () {
     this.CurrentStep = 1;
     this.TotalSteps = 5;
     this.IsError = false;
@@ -76,7 +76,7 @@ function FillOptionsList(url, postData, $list, value) {
             if (response.Result == "OK") {
                 $list.empty();
                 $list[0].selectedIndex = -1;
-                $list.append($("<option value=''>- select -</option>"));
+                $list.append($("<option value=''>- Select -</option>"));
                 $.each(response.Options, function (index, item) {
                     $list.append($("<option></option>").val(item.Value).html(item.DisplayText));
                 });
@@ -100,7 +100,7 @@ function FillOptionsList(url, postData, $list, value) {
 function CheckIdentifierForOptions(id, $list) {
     if (id == "") {
         $list.empty();
-        $list.append($("<option value=''>- select -</option>"));
+        $list.append($("<option value=''>- Select -</option>"));
         $list.change();
         return false;
     }

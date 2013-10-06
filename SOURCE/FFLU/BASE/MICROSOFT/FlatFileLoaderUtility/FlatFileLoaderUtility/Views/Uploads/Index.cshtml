@@ -10,7 +10,7 @@
         /**************************************************
         /* Page Variables
         /**************************************************/
-        var status = new Status();
+        var ustatus = null;
         var fileData = null;
         var inProgressInterfaceCode = "@Model.InterfaceCode";
         var inProgressInterfaceName = "@Model.InterfaceName";
@@ -29,7 +29,6 @@
             // Plugin instantiation
             $("#ddlInterfaceGroup").chosen({ search_contains: true });
             $("#ddlInterface").chosen({ search_contains: true });
-            $("button").button();
 
             // Event Listeners
             $("#ddlInterfaceGroup").change(function () {
@@ -54,7 +53,7 @@
                             $("#tdFileType").html(response.Message);
                         }
                         else {
-                            $("#tdFileType").html("Expected file type: <strong>" + response.Data.FileType + "</strong>" + ((response.Data.FileType == "csv") ? ", and qualifier: <strong>" + response.Data.CsvQualifier + "</strong>" : ""));
+                            $("#tdFileType").html("Expected file type: <strong>" + response.Data.FileType + "</strong>" + ((response.Data.FileType == "csv" || response.Data.FileType == "tab") ? ", and qualifier: <strong>" + response.Data.CsvQualifier + "</strong>" : ""));
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
@@ -69,7 +68,7 @@
             });
 
             $("#file").change(function () {
-                $("#fakefile").val($("#file").val());
+                $("#fakefile").val($("#file").val().replace(/C:\\fakepath\\/i, ''));
                 if (isModernBrowser) {
                     fileData = this.files[0];
                 }
@@ -92,16 +91,16 @@
                     return false;
 
                 // Instantiate a Status object to hold the upload state
-                status = new Status();
-                status.InterfaceCode = $("#ddlInterface").val();
-                status.FilePath = $("#file").val();
-                status.FileName = status.FilePath.split("\\").pop();
-                status.SegmentBytes = @ViewBag.SegmentBytes;
+                ustatus = new UStatus();
+                ustatus.InterfaceCode = $("#ddlInterface").val();
+                ustatus.FilePath = $("#file").val().replace(/C:\\fakepath\\/i, '');
+                ustatus.FileName = ustatus.FilePath.split("\\").pop();
+                ustatus.SegmentBytes = @ViewBag.SegmentBytes;
 
                 // The filename cannot exceed 64 characters
-                if (status.FileName.length > 64) {
-                    status.Message = "The filename cannot exceed 64 characters.";
-                    status.IsError = true;
+                if (ustatus.FileName.length > 64) {
+                    ustatus.Message = "The filename cannot exceed 64 characters.";
+                    ustatus.IsError = true;
                     ShowResult(true);
                     return false;
                 }
@@ -163,25 +162,25 @@
                     if (doSilentCancel)
                         return;
                     if (response.Result != "OK") {
-                        status.Message = "Error while cancelling the upload.";
-                        status.Exception = response.Message;
-                        status.UploadId = response.UploadId;
-                        status.LicsId = response.LicsId;
-                        status.IsError = true;
+                        ustatus.Message = "Error while cancelling the upload.";
+                        ustatus.Exception = response.Message;
+                        ustatus.UploadId = response.UploadId;
+                        ustatus.LicsId = response.LicsId;
+                        ustatus.IsError = true;
                         ShowResult(true);
                     }
                     else {
-                        status.Message = "Upload successfully cancelled.";
-                        status.Exception = "";
+                        ustatus.Message = "Upload successfully cancelled.";
+                        ustatus.Exception = "";
                         ShowResult(true);
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     if (doSilentCancel)
                         return;
-                    status.Message = "Error communicating with server.";
-                    status.Exception = (isTest) ? thrownError : "";
-                    status.IsError = true;
+                    ustatus.Message = "Error communicating with server.";
+                    ustatus.Exception = (isTest) ? thrownError : "";
+                    ustatus.IsError = true;
                     ShowResult(true);
                 }
             });
@@ -194,27 +193,27 @@
             // First, disable the form so that the user can't click the button again
             $("form :input:not(#cancelUpload)").attr("disabled", "disabled").trigger("liszt:updated");
 
-            if (isResuming && status.FileName != inProgressFileName) {
-                status.Message = "Filename does not match. Cannot resume without the same file.";
-                status.Exception = "";
-                status.IsError = true;
+            if (isResuming && ustatus.FileName != inProgressFileName) {
+                ustatus.Message = "Filename does not match. Cannot resume without the same file.";
+                ustatus.Exception = "";
+                ustatus.IsError = true;
                 ShowResult(true);
                 return;
             }
             if (isResuming && fileData != null && fileData.size != inProgressFileSize) {
-                status.Message = "File size does not match original upload. Cannot resume without the same file.";
-                status.Exception = "";
-                status.IsError = true;
+                ustatus.Message = "File size does not match original upload. Cannot resume without the same file.";
+                ustatus.Exception = "";
+                ustatus.IsError = true;
                 ShowResult(true);
                 return;
             }
 
             // Then, show the progress indicator
             $("#spanInterface").text($("#ddlInterface option:selected").text());
-            $("#spanFilename").text(status.FileName);
+            $("#spanFilename").text(ustatus.FileName);
             if (fileData != null) {
-                status.FileSize = fileData.size;
-                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(status.FileSize)/1024))) + " kB");
+                ustatus.FileSize = fileData.size;
+                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(ustatus.FileSize)/1024))) + " kB");
             }
             $("#uploadOptions").show();
             $("#divResult").hide();
@@ -233,6 +232,7 @@
 
             $("#dialog").dialog({
                 modal: true,
+                height: "auto",
                 close: function (event, ui) {
                     continueMonitoring = false;
                 },
@@ -252,15 +252,15 @@
                     url: "/Uploads/Start",
                     contentType: "application/json",
                     data: JSON.stringify({
-                        interfaceCode: status.InterfaceCode,
-                        filename: status.FileName
+                        interfaceCode: ustatus.InterfaceCode,
+                        filename: ustatus.FileName
                     }),
                     async: true,
                     success: function (response) {
                         if (response.Result != "OK") {
-                            status.IsError = true;
-                            status.Message = "Error starting the upload.";
-                            status.Exception = response.Message;
+                            ustatus.IsError = true;
+                            ustatus.Message = "Error starting the upload.";
+                            ustatus.Exception = response.Message;
                             ShowResult(false);
                         }
                         else {
@@ -268,9 +268,9 @@
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
-                        status.IsError = true;
-                        status.Message = "Error communicating with server.";
-                        status.Exception = (isTest) ? thrownError : "";
+                        ustatus.IsError = true;
+                        ustatus.Message = "Error communicating with server.";
+                        ustatus.Exception = (isTest) ? thrownError : "";
                         ShowResult(false);
                     }
                 });
@@ -286,7 +286,7 @@
 
         // Callback function for initiating an upload
         function UploadInitiateCallback() {
-            status.CurrentStep++;
+            ustatus.CurrentStep++;
             $("#step1tick").show();
             SetProgressDescription("Step 2 - Uploading data");
 
@@ -297,10 +297,10 @@
                 var fr = new FileReader();
 
                 fr.onload = function (e) {
-                    status.Remainder = e.target.result;
-                    status.TotalLength = status.Remainder.length;
+                    ustatus.Remainder = e.target.result;
+                    ustatus.TotalLength = ustatus.Remainder.length;
 
-                    if (status.TotalLength == 0) {
+                    if (ustatus.TotalLength == 0) {
                         SetNoMoreSegments();
                     }
                     else {
@@ -313,25 +313,25 @@
             else if (ActiveXObject) {
                 
                 var fso = new ActiveXObject("Scripting.FileSystemObject");
-                status.TotalLength = fso.getFile(status.FilePath).size;
-                status.FileSize = status.TotalLength;
-                status.File = fso.OpenTextFile(status.FilePath, 1, false, -1); // -1 = Unicode
-                status.NeedsEncodingFix = true;
+                ustatus.TotalLength = fso.getFile(ustatus.FilePath).size;
+                ustatus.FileSize = ustatus.TotalLength;
+                ustatus.File = fso.OpenTextFile(ustatus.FilePath, 1, false, -1); // -1 = Unicode
+                ustatus.NeedsEncodingFix = true;
 
-                if (isResuming && status.FileSize != inProgressFileSize && inProgressFileSize > 0) {
-                    status.File.Close();
-                    status.Message = "File size does not match original upload. Cannot resume without the same file.";
-                    status.Exception = "";
-                    status.IsError = true;
+                if (isResuming && ustatus.FileSize != inProgressFileSize && inProgressFileSize > 0) {
+                    ustatus.File.Close();
+                    ustatus.Message = "File size does not match original upload. Cannot resume without the same file.";
+                    ustatus.Exception = "";
+                    ustatus.IsError = true;
                     ShowResult(true);
                     return;
                 }
 
                 // Now that the file is accessed, the size is available
-                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(status.TotalLength)/1024))) + " kB");
+                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(ustatus.TotalLength)/1024))) + " kB");
                 
-                if (status.TotalLength == 0) {
-                    status.File.Close();
+                if (ustatus.TotalLength == 0) {
+                    ustatus.File.Close();
                     SetNoMoreSegments();
                 }
                 else {
@@ -348,41 +348,41 @@
                 UploadCancel(false);
             }
             else if (isModernBrowser) {
-                if (status.Remainder.length == 0) {
+                if (ustatus.Remainder.length == 0) {
                     // The upload phase is complete, now monitor the progress
                     UploadMonitor();
                 }
                 else {
-                    while (status.Remainder.length > 0) {
-                        if (status.Remainder.length > status.SegmentBytes - status.MaxRowSize - 10) {
-                            var index = status.SegmentBytes - status.MaxRowSize - 10;
-                            while (index < status.Remainder.length && status.Remainder[index] != "\n") {
+                    while (ustatus.Remainder.length > 0) {
+                        if (ustatus.Remainder.length > ustatus.SegmentBytes - ustatus.MaxRowSize - 10) {
+                            var index = ustatus.SegmentBytes - ustatus.MaxRowSize - 10;
+                            while (index < ustatus.Remainder.length && ustatus.Remainder[index] != "\n") {
                                 index++;
-                                if (index > status.SegmentBytes) {
+                                if (index > ustatus.SegmentBytes) {
                                     // The line exceeds the maximum line length. Terminate upload process.
-                                    status.IsError = true;
-                                    status.Message = "End of line not found within maximum line length."
-                                    status.Exception = "Please check line length and end of line encoding in the file."
+                                    ustatus.IsError = true;
+                                    ustatus.Message = "End of line not found within maximum line length."
+                                    ustatus.Exception = "Please check line length and end of line encoding in the file."
                                     UploadCancel(true);
                                     ShowResult(false);
                                     return;
                                 }
                             }
                             index++;
-                            segment = status.Remainder.substring(0, index);
-                            status.Remainder = status.Remainder.substr(index);
+                            segment = ustatus.Remainder.substring(0, index);
+                            ustatus.Remainder = ustatus.Remainder.substr(index);
                         }
                         else {
-                            segment = status.Remainder;
-                            status.Remainder = "";
+                            segment = ustatus.Remainder;
+                            ustatus.Remainder = "";
                         }
-                        status.SegmentCount++;
+                        ustatus.SegmentCount++;
                         
-                        status.ProcessedLength = status.TotalLength - status.Remainder.length;
-                        $("#progressbar").progressbar("value", status.ProcessedLength * 100 / status.TotalLength);
+                        ustatus.ProcessedLength = ustatus.TotalLength - ustatus.Remainder.length;
+                        $("#progressbar").progressbar("value", ustatus.ProcessedLength * 100 / ustatus.TotalLength);
 
-                        if (!isResuming || status.SegmentCount > inProgressLastSegment) {
-                            UploadSegment(segment, status.Remainder.length <= 0);
+                        if (!isResuming || ustatus.SegmentCount > inProgressLastSegment) {
+                            UploadSegment(segment, ustatus.Remainder.length <= 0);
                             return;
                         }
                     }
@@ -391,23 +391,23 @@
                 }
             }
             else {
-                if (status.File.AtEndOfStream) {
-                    status.File.Close();
+                if (ustatus.File.AtEndOfStream) {
+                    ustatus.File.Close();
 
                     // The upload phase is complete, now monitor the progress
                     UploadMonitor();
                 }
                 else {
-                    while (!status.File.AtEndOfStream) {
+                    while (!ustatus.File.AtEndOfStream) {
                         var aryData = new Array();
                         var x = 0;
-                        if (status.DanglingChar != "") {
-                            aryData[x++] = status.DanglingChar;
-                            status.DanglingChar = "";
+                        if (ustatus.DanglingChar != "") {
+                            aryData[x++] = ustatus.DanglingChar;
+                            ustatus.DanglingChar = "";
                         }
-                        aryData[x++] = status.File.Read(status.SegmentBytes - status.MaxRowSize - 10);
-                        while (!status.File.AtEndOfStream) {
-                            var c = status.File.Read(1);
+                        aryData[x++] = ustatus.File.Read(ustatus.SegmentBytes - ustatus.MaxRowSize - 10);
+                        while (!ustatus.File.AtEndOfStream) {
+                            var c = ustatus.File.Read(1);
                             var code = c.charCodeAt(0);
                             // It's read 16 bits, so have to mask all but the lower 8 bits to read read ASCII character (10 == newline)
                             // There's also a possibility that the newline will be in the upper half, so have to shift 8 bits.
@@ -415,7 +415,7 @@
                             //alert("upper: " + String.fromCharCode(code & 0xFF) + "(" + (code & 0xFF) + "), lower: " + String.fromCharCode(code >> 8) + "(" + (code >> 8) + ")")
                             if ((code & 0xFF) == 10) {
                                 aryData[x++] = String.fromCharCode((13 << 8) + 10);
-                                status.DanglingChar = String.fromCharCode((13 << 8) + (code >> 8));
+                                ustatus.DanglingChar = String.fromCharCode((13 << 8) + (code >> 8));
                                 break;
                             }
                             if ((code >> 8) == 10) {
@@ -424,33 +424,33 @@
                             }
                             aryData[x++] = c;
 
-                            if (x > (status.MaxRowSize / 2) + 5) {
+                            if (x > (ustatus.MaxRowSize / 2) + 5) {
                                 // The line exceeds the maximum line length. Terminate upload process.
-                                status.File.Close();
-                                status.IsError = true;
-                                status.Message = "End of line not found within maximum line length."
-                                status.Exception = "Please check line length and end of line encoding in the file."
+                                ustatus.File.Close();
+                                ustatus.IsError = true;
+                                ustatus.Message = "End of line not found within maximum line length."
+                                ustatus.Exception = "Please check line length and end of line encoding in the file."
                                 UploadCancel(true);
                                 ShowResult(false);
                                 return;
                             }
                         }
-                        status.SegmentCount++;
+                        ustatus.SegmentCount++;
 
                         var segment = aryData.join('');
-                        status.ProcessedLength += segment.length;
+                        ustatus.ProcessedLength += segment.length;
 
                         // ProcessedLength * 200 percent because the data is read 2 bytes at a time
-                        $("#progressbar").progressbar("value", status.ProcessedLength * 200 / status.TotalLength);
+                        $("#progressbar").progressbar("value", ustatus.ProcessedLength * 200 / ustatus.TotalLength);
 
-                        if (!isResuming || status.SegmentCount > inProgressLastSegment) {
-                            UploadSegment(segment, status.File.AtEndOfStream);
+                        if (!isResuming || ustatus.SegmentCount > inProgressLastSegment) {
+                            UploadSegment(segment, ustatus.File.AtEndOfStream);
                             return;
                         }
                     }
 
                     // this is for the case where a file is resumed after the last segment is actually uploaded
-                    status.File.Close();
+                    ustatus.File.Close();
 
                     // The upload phase is complete, now monitor the progress
                     UploadMonitor();
@@ -465,21 +465,21 @@
                 url: "/Uploads/Segment",
                 contentType: "application/json",
                 data: JSON.stringify({
-                    interfaceCode: status.InterfaceCode,
-                    filename: status.FileName,
+                    interfaceCode: ustatus.InterfaceCode,
+                    filename: ustatus.FileName,
                     segmentData: segmentData,
                     isFinalSegment: isFinalSegment,
-                    fileSize: status.FileSize,
-                    needsEncodingFix: status.NeedsEncodingFix
+                    fileSize: ustatus.FileSize,
+                    needsEncodingFix: ustatus.NeedsEncodingFix
                 }),
                 async: true,
                 success: function (response) {
                     if (response.Result != "OK") {
-                        status.IsError = true;
-                        status.Message = "Error while uploading file segment."
-                        status.Exception = response.Message;
-                        status.UploadId = response.UploadId;
-                        status.LicsId = response.LicsId;
+                        ustatus.IsError = true;
+                        ustatus.Message = "Error while uploading file segment."
+                        ustatus.Exception = response.Message;
+                        ustatus.UploadId = response.UploadId;
+                        ustatus.LicsId = response.LicsId;
                         ShowResult(false);
                     }
                     else {
@@ -487,9 +487,9 @@
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
-                    status.IsError = true;
-                    status.Message = "Error communicating with server.";
-                    status.Exception = (isTest) ? thrownError : "";
+                    ustatus.IsError = true;
+                    ustatus.Message = "Error communicating with server.";
+                    ustatus.Exception = (isTest) ? thrownError : "";
                     ShowResult(false);
                 }
             });
@@ -503,17 +503,17 @@
                 url: "/Uploads/SetNoMoreSegments",
                 contentType: "application/json",
                 data: JSON.stringify({
-                    interfaceCode: status.InterfaceCode,
-                    filename: status.FileName
+                    interfaceCode: ustatus.InterfaceCode,
+                    filename: ustatus.FileName
                 }),
                 async: true,
                 success: function (response) {
                     if (response.Result != "OK") {
-                        status.IsError = true;
-                        status.Message = "Error while setting file upload complete."
-                        status.Exception = response.Message;
-                        status.UploadId = response.UploadId;
-                        status.LicsId = response.LicsId;
+                        ustatus.IsError = true;
+                        ustatus.Message = "Error while setting file upload complete."
+                        ustatus.Exception = response.Message;
+                        ustatus.UploadId = response.UploadId;
+                        ustatus.LicsId = response.LicsId;
                         ShowResult(false);
                     }
                     else {
@@ -521,9 +521,9 @@
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
-                    status.IsError = true;
-                    status.Message = "Error communicating with server.";
-                    status.Exception = (isTest) ? thrownError : "";
+                    ustatus.IsError = true;
+                    ustatus.Message = "Error communicating with server.";
+                    ustatus.Exception = (isTest) ? thrownError : "";
                     ShowResult(false);
                 }
             });
@@ -532,7 +532,7 @@
         // Called to show the result of an operation
         function ShowResult(useNewDialog) {
             // Re-enable the form underneath the dialog
-            if (!status.IsError) {
+            if (!ustatus.IsError) {
                 $("#ddlInterface").val("").change();
                 $("#fakefile").val("");
                 resetFormElement($("#file"));
@@ -545,9 +545,9 @@
                 $(".ui-dialog-content").dialog("destroy");
 
                 // Set the message an exception text
-                $("#pMessage").text(status.Message);
-                if (status.Exception != "") {
-                    $("#pException").text(status.Exception);
+                $("#pMessage").text(ustatus.Message);
+                if (ustatus.Exception != "") {
+                    $("#pException").text(ustatus.Exception);
                     $("#pException").show();
                 }
                 else {
@@ -557,7 +557,7 @@
                 // Show the dialog
                 $("#dialogMessage").dialog({
                     modal: true,
-                    title: (status.IsError) ? "Error" : "Message",
+                    title: (ustatus.IsError) ? "Error" : "Message",
                     buttons: {
                         Ok: function() {
                             $(this).dialog("close");
@@ -569,9 +569,9 @@
                 $("#divResult").show();
                 $("#uploadOptions").hide();
 
-                $("#result").text(status.Message);
-                if (status.Exception != "") {
-                    $("#pException2").text(status.Exception);
+                $("#result").text(ustatus.Message);
+                if (ustatus.Exception != "") {
+                    $("#pException2").text(ustatus.Exception);
                     $("#pException2").show();
                 }
                 else {
@@ -579,24 +579,24 @@
                 }
 
                 // Show the upload id if available and if in test mode
-                if (isTest && status.UploadId > 0) {
+                if (isTest && ustatus.UploadId > 0) {
                     $("#rowUploadId").show();
-                    $("#uploadId").text(status.UploadId);
+                    $("#uploadId").text(ustatus.UploadId);
                 }
                 else {
                     $("#rowUploadId").hide();
                 }
 
                 // Show the LICS id if it is available
-                if (status.LicsId > 0) {
+                if (ustatus.LicsId > 0) {
                     $("#rowLicsId").show();
-                    $("#licsId").text(status.LicsId);
+                    $("#licsId").text(ustatus.LicsId);
                     $("#rowInterfaceErrors").show();
-                    $("#interfaceErrorCount").text(status.InterfaceErrorCount);
+                    $("#interfaceErrorCount").text(ustatus.InterfaceErrorCount);
                     $("#rowRowErrors").show();
-                    $("#rowErrorCount").text(status.RowErrorCount);
+                    $("#rowErrorCount").text(ustatus.RowErrorCount);
                     $("#rowDetails").show();
-                    $("#detailsLink").attr("href", "/Monitor/View/" + status.LicsId);
+                    $("#detailsLink").attr("href", "/Monitor/View/" + ustatus.LicsId);
                 }
                 else {
                     $("#rowLicsId").hide();
@@ -606,7 +606,7 @@
                 }
 
                 $("#progressbar").progressbar("value", 100);
-                if (status.IsError) {
+                if (ustatus.IsError) {
                     $("#progressbar > div").addClass("failureProgress");
                     $(".failure").show();
                 }
@@ -631,7 +631,7 @@
             
             // Poll the status and update the display until it's finished
             
-            if (status.IsError || !continueMonitoring)
+            if (ustatus.IsError || !continueMonitoring)
                 return;
             
             $("#uploadOptions").hide();
@@ -643,28 +643,28 @@
                 async: true,
                 success: function (response) {
                     if (response.Result != "OK") {
-                        status.IsError = true;
-                        status.Message = "Error while monitoring upload status."
-                        status.Exception = response.Message;
-                        status.UploadId = response.UploadId;
-                        status.LicsId = response.LicsId;
+                        ustatus.IsError = true;
+                        ustatus.Message = "Error while monitoring upload ustatus."
+                        ustatus.Exception = response.Message;
+                        ustatus.UploadId = response.UploadId;
+                        ustatus.LicsId = response.LicsId;
                         ShowResult(false);
                     }
                     else {
 
-                        status.CurrentStep = response.CurrentStep;
+                        ustatus.CurrentStep = response.CurrentStep;
                         if (response.Total > 0 && response.Current > 0)
                             $("#progressbar").progressbar("value", response.Current * 100 / response.Total);
 
                         // It can be a long time on "0" progress...
                         // To let the user know that stuff is still happening, if it's 0 just increment the progressbar
-                        if (response.Current == 0 && status.CurrentStep > 3) {
+                        if (response.Current == 0 && ustatus.CurrentStep > 3) {
                             var currentValue = $("#progressbar").progressbar("value");
                             currentValue = (currentValue == 100 || isNaN(currentValue)) ? 0 : currentValue + 5;
                             $("#progressbar").progressbar("value", currentValue);
                         }
 
-                        switch(status.CurrentStep) {
+                        switch(ustatus.CurrentStep) {
                             case 3:
                                 $("#step2tick").show();
                                 SetProgressDescription("Step 3 - Completing data upload");
@@ -692,20 +692,20 @@
                                 break;
                         }
 
-                        if (status.CurrentStep == 5 && response.IsComplete == true) {
-                            status.InterfaceErrorCount = response.InterfaceErrorCount;
-                            status.RowErrorCount = response.RowErrorCount;
-                            status.LicsId = response.LicsId;
-                            status.Exception = "";
-                            if (status.InterfaceErrorCount == 0 && status.RowErrorCount == 0) {
+                        if (ustatus.CurrentStep == 5 && response.IsComplete == true) {
+                            ustatus.InterfaceErrorCount = response.InterfaceErrorCount;
+                            ustatus.RowErrorCount = response.RowErrorCount;
+                            ustatus.LicsId = response.LicsId;
+                            ustatus.Exception = "";
+                            if (ustatus.InterfaceErrorCount == 0 && ustatus.RowErrorCount == 0) {
                                 SetProgressDescription("File Load Completed Successfully");
-                                status.Message = "Success."
-                                status.IsError = false;
+                                ustatus.Message = "Success."
+                                ustatus.IsError = false;
                             }
                             else {
                                 SetProgressDescription("File Load Complete – with Errors");
-                                status.Message = "Data Errors."
-                                status.IsError = true;
+                                ustatus.Message = "Data Errors."
+                                ustatus.IsError = true;
                             }
                             $("#step5time").hide();
                             $("#step5tick").show();
@@ -719,9 +719,9 @@
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
-                    status.IsError = true;
-                    status.Message = "Error communicating with server.";
-                    status.Exception = (isTest) ? thrownError : "";
+                    ustatus.IsError = true;
+                    ustatus.Message = "Error communicating with server.";
+                    ustatus.Exception = (isTest) ? thrownError : "";
                     ShowResult(false);
                 }
             });
@@ -731,10 +731,10 @@
 }
 
 <form id="validationForm" action="Index">
-    <div class="main">
-        <table cellspacing="4">
+    <div class="main upload">
+        <table cellspacing="12">
             <tr>
-                <td style="width:100px;"><label for="ddlInterfaceGroup">Interface Group</label></td>
+                <td style="width:120px;"><label for="ddlInterfaceGroup">Interface Group</label></td>
                 <td style="width:480px;">@Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style = "width:467px" })</td>
                 <td></td>
             </tr>
@@ -746,7 +746,7 @@
             <tr>
                 <td><label for="fakefile">File</label></td>
                 <td>
-                    <input id="fakefile" style="width:368px;" /> <button id="fakefileButton">Browse...</button>
+                    <input id="fakefile" type="text" /> <button id="fakefileButton">Browse...</button>
                     <div style="display:none;"><input type="file" id="file" class="validate[required]" /></div>
                 </td>
                 <td></td>
@@ -760,14 +760,11 @@
         <br />
         <br />
         <br />
-        <br />
-        <br />
-        <br />
         <div id="dialog" style="display:none;">
             <table cellspacing="6" style="width:100%;">
                 <tr>
                     <td style="width:100px;">Connection</td>
-                    <td><strong>@ViewBag.Connection.ConnectionName</strong></td>
+                    <td><strong>@((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName)</strong></td>
                     <td style="width:50px;"></td>
                 </tr>
                 <tr>
@@ -777,7 +774,7 @@
                 </tr>
                 <tr>
                     <td>ICS User</td>
-                    <td><strong>@ViewBag.User.UserName</strong></td>
+                    <td><strong>@((ViewBag.User == null) ? string.Empty : ViewBag.User.UserName)</strong></td>
                     <td></td>
                 </tr>
                 <tr>
@@ -867,7 +864,7 @@
             <table cellspacing="8">
                 <tr>
                     <td style="width:100px;">Connection</td>
-                    <td><strong>@ViewBag.Connection.ConnectionName</strong></td>
+                    <td><strong>@((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName)</strong></td>
                 </tr>
                 <tr>
                     <td>Interface</td>
@@ -875,7 +872,7 @@
                 </tr>
                 <tr>
                     <td>ICS User</td>
-                    <td><strong>@ViewBag.User.UserName</strong></td>
+                    <td><strong>@((ViewBag.User == null) ? string.Empty : ViewBag.User.UserName)</strong></td>
                 </tr>
                 <tr>
                     <td>Filename</td>

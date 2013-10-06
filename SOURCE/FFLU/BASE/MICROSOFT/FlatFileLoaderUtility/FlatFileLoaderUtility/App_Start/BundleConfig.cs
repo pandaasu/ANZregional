@@ -8,34 +8,31 @@ namespace FlatFileLoaderUtility
         // For more information on Bundling, visit http://go.microsoft.com/fwlink/?LinkId=254725
         public static void RegisterBundles(BundleCollection bundles)
         {
-            bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
+            // BundleTable.EnableOptimizations = false;
+
+            bundles.Add(new ScriptBundle("~/bundles/site").Include(
                         "~/Scripts/jquery-{version}.js",
                         "~/Scripts/jquery-ui-{version}.js",
                         "~/Scripts/jquery.qtip.js",
-                        "~/Scripts/validationEngine/jquery.validationEngine*"));
-
-            bundles.Add(new ScriptBundle("~/bundles/site").Include(
+                        "~/Scripts/validationEngine/jquery.validationEngine*",
                         "~/Scripts/json2.js",
-                        "~/Scripts/jtable/jquery.jtable.js",
-                        "~/Scripts/jtable/extensions/jquery.jtable.aspnetpagemethods.js",
-                        "~/Scripts/menu/menu.js",
+                        "~/Scripts/jquery.hoverintent.js",
+                        "~/Scripts/dropit.js",
+                        "~/Scripts/placeholders.js",
                         "~/Scripts/timepicker/jquery.ui.timepicker.js",
                         "~/Scripts/chosen/chosen.jquery.js",
-                        "~/Scripts/site.js"));
-
-            // Use the development version of Modernizr to develop with and learn from. Then, when you're
-            // ready for production, use the build tool at http://modernizr.com to pick only the tests you need.
-            bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
-                        "~/Scripts/modernizr-*"));
+                        "~/Scripts/site.js",
+                        "~/Scripts/modernizr-{version}.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
+                        "~/Content/jquery-ui-1.9.1.css",
+                        "~/Content/jtable_standard_base.css",
+                        "~/Content/jtable_blue.css",
+                        "~/Content/chosen.css", 
                         "~/Content/site.css",
-                        "~/Content/themes/redmond/css",
-                        "~/Content/themes/redmond/jquery-ui-{version}.css",
                         "~/Content/jquery.qtip.css",
                         "~/Scripts/validationEngine/validationEngine.jquery.css",
-                        "~/Scripts/timepicker/jquery.ui.timepicker.css",
-                        "~/Scripts/chosen/chosen.css"));
+                        "~/Scripts/timepicker/jquery.ui.timepicker.css"));
         }
     }
 }

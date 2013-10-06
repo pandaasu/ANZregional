@@ -47,6 +47,7 @@ THE SOFTWARE.
             dialogShowEffect: 'fade',
             dialogHideEffect: 'fade',
             showCloseButton: false,
+            useReprocessRow: false,
 
             //Events
             closeRequested: function (event, data) { },
@@ -237,10 +238,22 @@ THE SOFTWARE.
         *************************************************************************/
         _createHeaderCellForField: function (fieldName, field) {
             field.width = field.width || '10%';
-            return $('<th class="jtable-column-header" style="width:' + field.width + '">' +
-                '<div class="jtable-column-header-container"><span class="jtable-column-header-text">' + field.title +
-                '</span></div></th>')
-                .data('fieldName', fieldName);
+            if (fieldName == "Reprocess" && this.options.useReprocessRow) {
+                var $cell = $('<th class="jtable-column-header" style="width:' + field.width + '">' +
+                    '<div class="jtable-column-header-container"><span class="jtable-column-header-text"></span></div></th>')
+                    .data('fieldName', fieldName);
+                $("<button>Reprocess</button>")
+                    .attr("id", "btnReprocess")
+                    .click(this.options.actions.reprocess)
+                    .appendTo($cell.find(".jtable-column-header-text"));
+                return $cell;
+            }
+            else {
+                return $('<th class="jtable-column-header" style="width:' + field.width + '">' +
+                    '<div class="jtable-column-header-container"><span class="jtable-column-header-text">' + field.title +
+                    '</span></div></th>')
+                    .data('fieldName', fieldName);
+            }
         },
 
         /* Creates an empty header cell that can be used as command column headers.
@@ -259,8 +272,9 @@ THE SOFTWARE.
         *************************************************************************/
         _createBottomPanel: function () {
             this._$bottomPanel = $('<div class="jtable-bottom-panel"></div>').appendTo(this._$mainContainer);
-            this._$bottomPanel.append('<div class="jtable-left-area"></div>');
-            this._$bottomPanel.append('<div class="jtable-right-area"></div>');
+            this._$pagingLeftArea = $('<div class="jtable-left-area"></div>').appendTo(this._$bottomPanel);
+            this._$bottomPanel.append('<div class="jtable-middle-area"></div>');
+            this._$pagingRightArea = $('<div class="jtable-right-area"></div>').appendTo(this._$bottomPanel);
         },
 
         /* Creates a div to block UI while jTable is busy.
@@ -401,6 +415,23 @@ THE SOFTWARE.
         _addRecordsToTable: function (records) {
             var self = this;
 
+            if (this.options.useReprocessRow) {
+                var $refreshSelectRow = $('<tr class="reprocessRow"></tr>').data('record', null);
+                for (var i = 0; i < this._columnList.length - 1; i++) {
+                    var fieldName = this._columnList[i];
+                    var field = this.options.fields[fieldName];
+                    var $col = $('<td class="' + field.listClass + '"></td>').appendTo($refreshSelectRow);
+                    if (field.visibility == 'hidden') {
+                        $col.hide();
+                    }
+                }
+                var $cell = $("<td id='selectCell'>Select: <span id='selectAll'>All</span> | <span id='selectNone'>None</span></td>");
+                $cell.find("#selectAll").click(this.options.actions.selectAll);
+                $cell.find("#selectNone").click(this.options.actions.selectNone);
+                $cell.appendTo($refreshSelectRow);
+                self._addRowToTable($refreshSelectRow);
+            }
+
             $.each(records, function (index, record) {
                 self._addRowToTable(self._createRowFromRecord(record));
             });
@@ -527,6 +558,7 @@ THE SOFTWARE.
             $('<tr class="jtable-no-data-row"></tr>')
                 .append('<td colspan="' + totalColumnCount + '">' + this.options.messages.noDataAvailable + '</td>')
                 .appendTo(this._$tableBody);
+            $("#jtable-result-count").html("&nbsp;");
         },
 
         /* Removes "no data available" row from the table.
@@ -2352,7 +2384,7 @@ THE SOFTWARE.
             }
 
             var selectedRowCount = 0;
-            for (var i = 0; i < self._$tableRows.length; ++i) {
+            for (var i = (this.options.useReprocessRow) ? 1 : 0; i < self._$tableRows.length; ++i) {
                 if ($.inArray(self._$tableRows[i].data('record')[self._keyField], self._selectedRecordIdsBeforeLoad) > -1) {
                     self._selectRows(self._$tableRows[i]);
                     ++selectedRowCount;
@@ -2542,7 +2574,7 @@ THE SOFTWARE.
             pageSize: 10,
 
             messages: {
-                pagingInfo: 'Showing {0} to {1} of {2} records'
+                pagingInfo: 'Results {0}-{1} of {2}'
             }
         },
 
@@ -2551,6 +2583,8 @@ THE SOFTWARE.
         *************************************************************************/
 
         _$pagingListArea: null, //Reference to the page list area in to bottom panel
+        _$pagingLeftArea: null,
+        _$pagingRightArea: null,
         _totalRecordCount: 0, //Total count of records on all pages
         _currentPageNo: 1, //Current page number
 
@@ -2572,7 +2606,7 @@ THE SOFTWARE.
                 return;
             }
 
-            this._$pagingListArea = $('<span class="jtable-page-list"></span>').prependTo(this._$bottomPanel.find('.jtable-left-area'));
+            this._$pagingListArea = $('<span class="jtable-page-list"></span>').prependTo(this._$bottomPanel.find('.jtable-middle-area'));
         },
 
         /************************************************************************
@@ -2652,6 +2686,8 @@ THE SOFTWARE.
             }
 
             this._$pagingListArea.empty();
+            this._$pagingRightArea.empty();
+            this._$pagingLeftArea.empty();
             var pageCount = this._calculatePageCount();
 
             this._createFirstAndPreviousPageButtons();
@@ -2659,6 +2695,13 @@ THE SOFTWARE.
             this._createLastAndNextPageButtons(pageCount);
             this._createPagingInfo();
             this._bindClickEventsToPageNumberButtons();
+
+            if (pageCount > 1) {
+                this._$bottomPanel.show();
+            }
+            else {
+                this._$bottomPanel.hide();
+            }
         },
 
         /* Creates and shows previous and first page links.
@@ -2668,9 +2711,9 @@ THE SOFTWARE.
                 $('<span class="jtable-page-number-first">|&lt</span>')
                     .data('pageNumber', 1)
                     .appendTo(this._$pagingListArea);
-                $('<span class="jtable-page-number-previous">&lt</span>')
+                $('<span class="jtable-page-number-previous">Previous page</span>')
                     .data('pageNumber', this._currentPageNo - 1)
-                    .appendTo(this._$pagingListArea);
+                    .appendTo(this._$pagingLeftArea);
             }
         },
 
@@ -2678,9 +2721,9 @@ THE SOFTWARE.
         *************************************************************************/
         _createLastAndNextPageButtons: function(pageCount) {
             if (this._currentPageNo < pageCount) {
-                $('<span class="jtable-page-number-next">&gt</span>')
+                $('<span class="jtable-page-number-next">Next page</span>')
                     .data('pageNumber', this._currentPageNo + 1)
-                    .appendTo(this._$pagingListArea);
+                    .appendTo(this._$pagingRightArea);
                 $('<span class="jtable-page-number-last">&gt|</span>')
                     .data('pageNumber', pageCount)
                     .appendTo(this._$pagingListArea);
@@ -2756,7 +2799,7 @@ THE SOFTWARE.
 
             if (endNo >= startNo) {
                 var pagingInfoMessage = this._formatString(this.options.messages.pagingInfo, startNo, endNo, this._totalRecordCount);
-                $('<span class="jtable-page-info">' + pagingInfoMessage + '</span>').appendTo(this._$pagingListArea);
+                $("#jtable-result-count").text(pagingInfoMessage);
             }
         },
 
@@ -2764,7 +2807,7 @@ THE SOFTWARE.
         *************************************************************************/
         _bindClickEventsToPageNumberButtons: function() {
             var self = this;
-            self._$pagingListArea
+            self._$bottomPanel
                 .find('.jtable-page-number,.jtable-page-number-previous,.jtable-page-number-next,.jtable-page-number-first,.jtable-page-number-last')
                 .click(function(e) {
                     e.preventDefault();

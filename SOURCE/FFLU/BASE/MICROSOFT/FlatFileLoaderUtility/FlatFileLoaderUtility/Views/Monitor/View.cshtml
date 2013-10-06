@@ -10,8 +10,7 @@
         /**************************************************
         /* Page Variables
         /**************************************************/
-        var isCsv = ("@Model.Record.FileType" == "csv");
-        var status = null;
+        var ustatus = null;
         var continueMonitoring = true;
         var licsId = @Model.Record.LicsId;
 
@@ -20,7 +19,6 @@
         /**************************************************/
         $(document).ready(function () {
             // Plugin instantiation
-            $("button").button();
             $("#progressbar").progressbar({
                 value: 0
             });
@@ -33,6 +31,9 @@
                 multiselect: false,
                 selectingCheckboxes: false,
                 defaultDateFormat: "dd/mm/yy",
+                messages: {
+                    pagingInfo: "( {0}-{1} of {2} records )"
+                },
                 //jqueryuitheme: true,
                 actions: {
                     listAction: '@Url.Action("RowDataList")'
@@ -79,7 +80,7 @@
                             }
                         }
                     },
-                    @if (Model.Record.FileType != "csv") {
+                    @if (Model.Record.FileType != "csv" && Model.Record.FileType != "tab") {
                         <text>
                         Data: {
                             title: "Data",
@@ -220,7 +221,7 @@
                 $("#divInterfaceErrors").hide();
                 $("#divLoading").show();
 
-                status = new Status();
+                ustatus = new UStatus();
 
                 $.ajax({
                     type: "post",
@@ -235,9 +236,9 @@
                         $("#divLoading").hide();
 
                         if (response.Result != "OK") {
-                            status.Message = "Error while retrieving details.";
-                            status.Exception = response.Message;
-                            status.IsError = true;
+                            ustatus.Message = "Error while retrieving details.";
+                            ustatus.Exception = response.Message;
+                            ustatus.IsError = true;
                             ShowResult(false);
                         }
                         else {
@@ -267,20 +268,25 @@
                     error: function (xhr, ajaxOptions, thrownError) {
                         $("#divInterfaceDetails").show();
                         $("#divLoading").hide();
-                        status.Message = "Error communicating with server.";
-                        status.Exception = (isTest) ? thrownError : "";
-                        status.IsError = true;
+                        ustatus.Message = "Error communicating with server.";
+                        ustatus.Exception = (isTest) ? thrownError : "";
+                        ustatus.IsError = true;
                         ShowResult(false);
                     }
                 });
             });
 
-            $("#chkErrorsOnly").change(function () {
-                loadRowData();
+            $("#errorsOnly li").click(function () {
+                var isOnBefore = $("#errorsOnlyOn").hasClass("option-selected");
+                $("#errorsOnly li").removeClass("option-selected");
+                $(this).addClass("option-selected");
+                var isOnNow = $("#errorsOnlyOn").hasClass("option-selected");
+                if (isOnBefore != isOnNow)
+                    loadRowData();
             });
 
             $("#requestReprocess").click(function () {
-                status = new Status();
+                ustatus = new UStatus();
                 $("#interfaceCode").text("@Model.Record.InterfaceCode");
                 $("#interfaceName").text("@Model.Record.InterfaceName");
                 $("#licsId").text("@Model.Record.LicsId");
@@ -334,9 +340,9 @@
                     async: true,
                     success: function (response) {
                         if (response.Result != "OK") {
-                            status.Message = "Error while resubmitting the interface.";
-                            status.Exception = response.Message;
-                            status.IsError = true;
+                            ustatus.Message = "Error while resubmitting the interface.";
+                            ustatus.Exception = response.Message;
+                            ustatus.IsError = true;
                             ShowResult(false);
                         }
                         else {
@@ -346,16 +352,19 @@
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
-                        status.Message = "Error communicating with server.";
-                        status.Exception = (isTest) ? thrownError : "";
-                        status.IsError = true;
+                        ustatus.Message = "Error communicating with server.";
+                        ustatus.Exception = (isTest) ? thrownError : "";
+                        ustatus.IsError = true;
                         ShowResult(false);
                     }
                 });
             });
             
             // Document ready actions
-            loadRowData();
+            @if (ViewBag.Connection != null)
+            {
+                @:loadRowData();
+            }
         });
 
         /**************************************************
@@ -368,7 +377,7 @@
             $("#RowDataTableContainer").jtable("load", {
                 licsId: licsId,
                 traceId: $(".traceRow.jtable-row-selected .traceId").text(),
-                isErrorRowsOnly: $("#chkErrorsOnly").is(":checked")
+                isErrorRowsOnly: $("#errorsOnlyOn").hasClass("option-selected")
             });
         }
 
@@ -383,9 +392,9 @@
             $(".ui-dialog-content").dialog("destroy");
 
             // Set the message an exception text
-            $("#pMessage").text(status.Message);
-            if (status.Exception != "") {
-                $("#pException").text(status.Exception);
+            $("#pMessage").text(ustatus.Message);
+            if (ustatus.Exception != "") {
+                $("#pException").text(ustatus.Exception);
                 $("#pException").show();
             }
             else {
@@ -393,18 +402,18 @@
             }
 
             // Show the interface error count if it is available
-            if (status.LicsId > 0) {
+            if (ustatus.LicsId > 0) {
                 $("#rowInterfaceErrors").show();
-                $("#interfaceErrorCount").text(status.InterfaceErrorCount);
+                $("#interfaceErrorCount").text(ustatus.InterfaceErrorCount);
             }
             else {
                 $("#rowInterfaceErrors").hide();
             }
 
             // Show the row error count if it is available
-            if (status.LicsId > 0) {
+            if (ustatus.LicsId > 0) {
                 $("#rowRowErrors").show();
-                $("#rowErrorCount").text(status.RowErrorCount);
+                $("#rowErrorCount").text(ustatus.RowErrorCount);
             }
             else {
                 $("#rowRowErrors").hide();
@@ -413,7 +422,7 @@
             // Show the dialog
             $("#dialogMessage").dialog({
                 modal: true,
-                title: (status.IsError) ? "Error" : "Message",
+                title: (ustatus.IsError) ? "Error" : "Message",
                 buttons: {
                     Ok: function () {
                         $(this).dialog("close");
@@ -442,9 +451,9 @@
                 async: true,
                 success: function (response) {
                     if (response.Result != "OK") {
-                        status.IsError = true;
-                        status.Message = "Error while monitoring status."
-                        status.Exception = response.Message;
+                        ustatus.IsError = true;
+                        ustatus.Message = "Error while monitoring status."
+                        ustatus.Exception = response.Message;
                         ShowResult(true);
                     }
                     else {
@@ -463,10 +472,10 @@
                         }
 
                         if (response.CurrentStep == 5 && response.IsComplete == true) {
-                            status.Message = "Reprocess complete.";
-                            status.Exception = "";
-                            status.InterfaceErrorCount = response.InterfaceErrorCount;
-                            status.RowErrorCount = response.RowErrorCount;
+                            ustatus.Message = "Reprocess complete.";
+                            ustatus.Exception = "";
+                            ustatus.InterfaceErrorCount = response.InterfaceErrorCount;
+                            ustatus.RowErrorCount = response.RowErrorCount;
                             ShowResult(true);
                         }
                         else {
@@ -477,9 +486,9 @@
                     }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
-                    status.IsError = true;
-                    status.Message = "Error communicating with server.";
-                    status.Exception = (isTest) ? thrownError : "";
+                    ustatus.IsError = true;
+                    ustatus.Message = "Error communicating with server.";
+                    ustatus.Exception = (isTest) ? thrownError : "";
                     ShowResult(true);
                 }
             });
@@ -488,9 +497,9 @@
 }
 
 <div class="actions">
-    <h3>Actions</h3>
+    <h3>Actions:</h3>&nbsp;&nbsp;&nbsp;&nbsp;
     @if (Model.HasProcessAccess) {
-        <button id="requestReprocess">Reprocess</button>
+        @:<button id="requestReprocess">Reprocess</button>&nbsp;&nbsp;&nbsp;&nbsp;
     }
     <button id="requestRefresh">Refresh</button>
 </div>
@@ -531,21 +540,20 @@
         }
         </tbody>
     </table>
-    <div class="jtable-bottom-panel">
-    </div>
 </div>
 <br />
 
 <div id="divInterfaceDetails">
     <h3>Trace Details</h3>
-    <table>
+    <div class="hr"></div>
+    <table class="trace-details">
         <tr>
-            <td style="width:100px;"><strong>Interface ID</strong></td>
-            <td style="width:20%;">@Model.Record.LicsId</td>
-            <td style="width:100px;"><strong>Interface Code</strong></td>
+            <td style="width:155px;"><strong>Interface ID</strong></td>
+            <td style="width:15%;">@Model.Record.LicsId</td>
+            <td style="width:155px;"><strong>Interface Code</strong></td>
             <td style="width:30%;">@Model.Record.InterfaceCode</td>
-            <td style="width:100px;"><strong>Status</strong></td>
-            <td style="width:20%;" id="tdStatus">@Model.Record.Status</td>
+            <td style="width:135px;"><strong>Status</strong></td>
+            <td style="width:18%;" id="tdStatus">@Model.Record.Status</td>
         </tr>
         <tr>
             <td><strong>Trace</strong></td>
@@ -580,6 +588,7 @@
             <td></td>
         </tr>
     </table>
+    <div class="hr"></div>
     <br />
 
 
@@ -608,16 +617,22 @@
                 }
                 </tbody>
             </table>
-            <div class="jtable-bottom-panel">
-            </div>
         </div>
         <br />
     </div>
 
     <h3>Row Data</h3>
+
+    <div id="jtable-result-count" class="errorcount-panel"></div>
     @if (Model.Record.RowErrorCount > 0)
     {
-        <input type="checkbox" id="chkErrorsOnly" checked="checked" /> <label for="chkErrorsOnly">Error rows only</label><br />
+        <div id="refresh-panel">
+            <h4>Error rows only:</h4>
+            <ul class="option-group" id="errorsOnly">
+                <li id="errorsOnlyOff" class="option-selected">Off</li>
+                <li id="errorsOnlyOn">On</li>
+            </ul>
+        </div>
     }
     <div id="RowDataTableContainer">
     </div>
@@ -646,7 +661,7 @@
     <table cellspacing="8">
         <tr>
             <td style="width:100px;">Connection</td>
-            <td><strong>@ViewBag.Connection.ConnectionName</strong></td>
+            <td><strong>@((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName)</strong></td>
         </tr>
         <tr>
             <td>Interface Code</td>

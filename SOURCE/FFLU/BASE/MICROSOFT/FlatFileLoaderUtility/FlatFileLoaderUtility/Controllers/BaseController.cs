@@ -53,14 +53,15 @@ namespace FlatFileLoaderUtility.Controllers
 
                 // Set it in the ViewBag
                 filterContext.Controller.ViewBag.Connection = connection;
-                filterContext.Controller.ViewBag.Connections = this.GetConnections(false, connection.ConnectionId);
+                filterContext.Controller.ViewBag.Connections = this.GetConnections(true, (connection == null) ? default(int?) : connection.ConnectionId);
 
                 // This step happens last, because if it can't connect to the database it will produce an exception
-                if (this.Container.Connection == null)
+                if (this.Container.Connection == null && connection != null)
                     this.Container.Connection = connection;
 
                 // Get the user connection data
-                filterContext.Controller.ViewBag.User = this.Container.UserRepository.Get();
+                if (this.Container.Connection != null)
+                    filterContext.Controller.ViewBag.User = this.Container.UserRepository.Get();
             }
 
             this.Container.User = filterContext.Controller.ViewBag.User;
@@ -77,7 +78,7 @@ namespace FlatFileLoaderUtility.Controllers
         {
             try
             {
-                var result = this.GetConnections(false, null).Select(c => new { DisplayText = c.Text, Value = c.Value });
+                var result = this.GetConnections(true, null).Select(c => new { DisplayText = c.Text, Value = c.Value });
                 return this.Json(new { Result = "OK", Options = result });
             }
             catch (Exception ex)
@@ -90,13 +91,13 @@ namespace FlatFileLoaderUtility.Controllers
         {
             var connectionsBase = this.Container.ConnectionRepository.Get(string.Empty);
 
-            if (!selectedConnectionId.HasValue || selectedConnectionId.Value == 0)
-            {
-                selectedConnectionId = (
-                                  from x in connectionsBase
-                                  orderby x.ConnectionName
-                                  select x.ConnectionId).FirstOrDefault();
-            }
+            //if (!selectedConnectionId.HasValue || selectedConnectionId.Value == 0)
+            //{
+            //    selectedConnectionId = (
+            //                      from x in connectionsBase
+            //                      orderby x.ConnectionName
+            //                      select x.ConnectionId).FirstOrDefault();
+            //}
 
             var connections = (
                          from x in connectionsBase
@@ -108,8 +109,8 @@ namespace FlatFileLoaderUtility.Controllers
                              Selected = x.ConnectionId == selectedConnectionId
                          }).ToList();
 
-            if (withSelectOption)
-                connections.Insert(0, new SelectListItem { Text = "- select -", Value = string.Empty });
+            if (withSelectOption && (!selectedConnectionId.HasValue || selectedConnectionId.Value == 0))
+                connections.Insert(0, new SelectListItem { Text = "- Select -", Value = string.Empty });
 
             return connections;
         }
@@ -172,7 +173,7 @@ namespace FlatFileLoaderUtility.Controllers
                          }).ToList();
 
             if (withSelectOption)
-                items.Insert(0, new SelectListItem { Text = "- select -", Value = string.Empty, Selected = true });
+                items.Insert(0, new SelectListItem { Text = "- Select -", Value = string.Empty, Selected = true });
 
             return items;
         }
@@ -207,7 +208,7 @@ namespace FlatFileLoaderUtility.Controllers
 
 
             if (withSelectOption)
-                items.Insert(0, new SelectListItem { Text = "- select -", Value = string.Empty });
+                items.Insert(0, new SelectListItem { Text = "- Select -", Value = string.Empty });
 
             return items;
         }

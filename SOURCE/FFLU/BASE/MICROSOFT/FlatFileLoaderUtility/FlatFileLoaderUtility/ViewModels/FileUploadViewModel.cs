@@ -26,6 +26,8 @@ namespace FlatFileLoaderUtility.ViewModels
             this.FileName = string.Empty;
             this.LastSegment = 0;
             this.FileSize = 0;
+            this.InterfaceGroups = new List<SelectListItem>();
+            this.Interfaces = new List<SelectListItem>();
         }
     }
 }

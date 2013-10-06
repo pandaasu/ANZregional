@@ -80,8 +80,8 @@ namespace FlatFileLoaderUtility.Models
 
                 // Retrieve it from session, if available
                 var connection = (Connection)context.Session["Connection"];
-                if (connection != null)
-                    return connection;
+                //if (connection != null)
+                //    return connection;
 
                 // Restore from cookie, if available
                 var connectionCookie = context.Request.Cookies["conn"];
@@ -94,9 +94,11 @@ namespace FlatFileLoaderUtility.Models
                         return connection;
                 }
 
-                connection = (connections.Count > 0) ? connections[0] : default(Connection);
+                //connection = (connections.Count > 0) ? connections[0] : default(Connection);
 
-                context.Session["Connection"] = connection;
+                connection = default(Connection);
+
+                //context.Session["Connection"] = connection;
                 return connection;
             }
             catch (Exception ex)
@@ -114,7 +116,7 @@ namespace FlatFileLoaderUtility.Models
                     return;
 
                 // Save in session
-                context.Session["Connection"] = connection;
+                //context.Session["Connection"] = connection;
 
                 // Save in cookie for longer term remembering
                 var cookie = new HttpCookie("conn", connection.ConnectionId.ToString());

@@ -1,0 +1,204 @@
+﻿/******************************************************************************
+ * Name        : jtable jQuery plug-in 'standard blue' theme
+ * Author      : Halil İbrahim KALKAN
+ * Description : This file defines 'blue' colors for jtable standard theme.
+ *****************************************************************************/
+
+/* MAIN ELEMENTS *************************************************************/
+
+/* Main container of all elements those are created by jtable plugin */
+div.jtable-main-container
+{
+    color: #555555;
+}
+
+/* A div that contains title of the table (if any title supplied in options) */
+div.jtable-title
+{
+    background:url('images/title-bg.png') left;
+    color: #FFFFFF;
+    border-color: #d8d8d8;
+}
+
+/* Main table tag */
+table.jtable
+{
+    background-color: #d8d8d8;
+    border-spacing:0;
+    border-bottom: solid 1px #d8d8d8;
+}
+
+/* A panel below the table that contains some commands */
+div.jtable-bottom-panel
+{
+    background-color: #fff;
+    border-bottom: 1px solid #d8d8d8;
+}
+
+/* HEADER ********************************************************************/
+
+/* All header cells in the table */
+table.jtable th
+{
+    background-color: #e9f5fa;
+    color:#555555;
+    border: solid 1px #d8d8d8;
+    border-left:0px;
+    position:inherit;
+}
+table.jtable th:first-child
+{
+    border-left: solid 1px #d8d8d8;
+}
+
+/* PAGING ********************************************************************/
+
+/* Page numbers */
+.jtable-page-number,
+/* First page link */
+.jtable-page-number-first,
+/* Last page link */
+.jtable-page-number-last
+{
+    border: 0px;
+    padding: 5px 7px 5px 7px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    position:relative;
+    behavior: url(/scripts/PIE.htc);
+}
+
+/* Previous page link */
+.jtable-page-number-previous,
+/* Next page link */
+.jtable-page-number-next
+{
+    background-color: #ffffff;
+    border: 0px;
+}
+.jtable-page-number-previous,
+/* Next page link */
+.jtable-page-number-next
+{
+    line-height:60px;
+}
+/* Previous page link */
+.jtable-page-number-previous:hover,
+/* Next page link */
+.jtable-page-number-next:hover
+{
+    background-color: #f5f5f5;
+}
+
+/* Page numbers */
+.jtable-page-number:hover,
+/* First page link */
+.jtable-page-number-first:hover,
+/* Last page link */
+.jtable-page-number-last:hover
+{
+    text-decoration: underline;
+}
+
+/* Active/current page link */
+.jtable-page-number-active
+{
+    background-color: #cccccc;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    color: #fff;
+    padding: 4px 6px 4px 6px;
+    position:relative;
+    behavior: url(/scripts/PIE.htc);
+}
+
+/* ROWS **********************************************************************/
+
+/* All rows in the table */
+table.jtable tr
+{
+    background-color: #FFFFFF;
+}
+
+/* Even rows */
+table.jtable tr.jtable-row-even
+{
+    color: #555555;
+    background-color: #f8f8f9;
+}
+
+/* Rows when mouse over */
+table.jtable tr:hover
+{
+    background-color: #d3e2ec;
+}
+
+/* Selected row */
+table.jtable tr.jtable-row-selected
+{
+    color: #ffffff;
+    background-color: #0050a0;
+}
+
+/* Style for a child row */
+table.jtable tr.jtable-child-row
+{
+    background-color: #b1f2ff;
+}
+
+/* ROW ANIMATIONS ***********************************************************/
+
+/* A 'new created row' style for animation */
+table.jtable tr.jtable-row-created
+{
+    background-color: #00FF89;
+}
+
+/* An 'updated row style' for animation */
+table.jtable tr.jtable-row-updated
+{
+    background-color: #00FFFF;
+}
+
+/* A 'deleting row style' for animation */
+table.jtable tr.jtable-row-deleting
+{
+    background-color: #FF0000;
+}
+
+/* COMMAND BUTTONS ***********************************************************/
+
+/* 'add new record' link */
+span.jtable-add-record a
+{
+    color: #1E90FF;
+}
+
+/* FORM INPUT ELEMENTS *******************************************************/
+
+/* A div that contains a label (title) and input field */
+div.jtable-input-field-container
+{
+    background-color: #ECF2F6;
+    border-color: #C6D5E1;
+}
+
+/* BUSY MESSAGE AND PANEL ****************************************************/
+
+/* A panel to block table UI while is busy */
+div.jtable-busy-panel-background
+{
+    background-color: #000000;
+}
+
+/* A div that contains a message while table UI is busy */
+div.jtable-busy-message
+{
+    color: #000000;
+    border-color: #aaaaaa;
+    background: url('images/loading.gif') no-repeat;
+    background-position: 5px;
+    background-color: #ffffff;
+}

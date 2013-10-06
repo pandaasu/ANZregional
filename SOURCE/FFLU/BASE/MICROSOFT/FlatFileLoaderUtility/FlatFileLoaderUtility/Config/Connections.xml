@@ -13,4 +13,18 @@
     <Username>FFLU_EXECUTOR</Username>
     <Password>fflu_exeidk</Password>
   </Connection>
+  <Connection>
+    <ConnectionId>4</ConnectionId>
+    <ConnectionName>Small Apps Wod Dev (DB1289D)</ConnectionName>
+    <NetworkAlias>DB1289D.AP.MARS</NetworkAlias>
+    <Username>FFLU_EXECUTOR</Username>
+    <Password>mars2013</Password>
+  </Connection>
+  <Connection>
+    <ConnectionId>5</ConnectionId>
+    <ConnectionName>Small Apps Wod Test (DB1354T)</ConnectionName>
+    <NetworkAlias>DB1354T.AP.MARS</NetworkAlias>
+    <Username>FFLU_EXECUTOR</Username>
+    <Password>mars2013</Password>
+  </Connection>
 </Connections>

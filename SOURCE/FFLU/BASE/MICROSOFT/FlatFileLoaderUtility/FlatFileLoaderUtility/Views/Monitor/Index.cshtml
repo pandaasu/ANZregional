@@ -12,19 +12,17 @@
         /**************************************************/
         var autoCounter = 0; // Used to stop multiple reload attempts when checking auto-reload
         var isLoading = false;
-        var status = null;
+        var ustatus = null;
 
         /**************************************************
         /* Document Ready
         /**************************************************/
         $(document).ready(function () {
             // Plugin instantiation
-            $("button").button();
             $("#ddlInterfaceGroup").chosen({ search_contains: true });
             $("#ddlInterface").chosen({ search_contains: true });
             $("#ddlInterfaceType").chosen({ search_contains: true });
             $("#ddlIcsStatus").chosen({ search_contains: true });
-            $("#ddlPerPage").chosen({ search_contains: true });
             $(".time").attr("placeholder", "HH:mm").timepicker({});
             $(".date").attr("placeholder", "dd/MM/yyyy").datepicker({
                 dateFormat: "dd/mm/yy"
@@ -41,8 +39,30 @@
                 multiselect: false,
                 selectingCheckboxes: false,
                 defaultDateFormat: "dd/mm/yy",
+                useReprocessRow: true,
                 actions: {
-                    listAction: '@Url.Action("MonitorList")'
+                    listAction: '@Url.Action("MonitorList")',
+                    reprocess: function () {
+                        if ($(".reprocess:checked").length == 0) {
+                            ustatus = new UStatus();
+                            ustatus.IsError = true;
+                            ustatus.Message = "You must check the checkboxes of the interfaces you want to reprocess";
+                            ShowResult();
+                            return false;
+                        }
+                        $("#confirmText").text("Are you sure you want to reprocess the selected interfaces?");
+                        $("#reprocesOptions").show();
+                        $("#dialogConfirm").dialog({
+                            modal: true
+                        });
+                        return false;
+                    },
+                    selectAll: function () {
+                        $(".reprocess").attr("checked", "checked");
+                    },
+                    selectNone: function () {
+                        $(".reprocess").removeAttr("checked");
+                    }
                 },
                 fields: {
                     LicsId: {
@@ -114,7 +134,7 @@
                     },
                     Reprocess: {
                         title: "Reprocess",
-                        width: "5%",
+                        width: "1%",
                         visibility: "visible",
                         display: function (data) {
                             if (data.record.HasProcessAccess) {
@@ -139,38 +159,22 @@
                 },
                 recordsLoaded: function (event, data) {
                     isLoading = false;
-                    if ($("#chkAuto").is(":checked")) {
+                    if ($("#autoOn").hasClass("option-selected")) {
                         setTimeout("loadResults(" + autoCounter + ", 1);", 10000);
                     }
                     $("#TableContainer tbody td:last-child").click(function (event) {
                         event.stopPropagation();
                     });
+                    $("#TableContainer tbody tr:not(.reprocessRow) td:nth-child(11), #TableContainer tbody tr:not(.reprocessRow) td:nth-child(12)").each(function () {
+                        var $this = $(this);
+                        if ($this.text() != "0") {
+                            $this.parent().addClass("red");
+                        }
+                    });
                 }
             });
 
             // Event Listeners
-            $("#btnReprocess").click(function () {
-
-                if ($(".reprocess:checked").length == 0) {
-                    status = new Status();
-                    status.IsError = true;
-                    status.Message = "You must check the checkboxes of the interfaces you want to reprocess";
-                    ShowResult();
-                    return false;
-                }
-
-                $("#confirmText").text("Are you sure you want to reprocess the selected interfaces?");
-                $("#reprocesOptions").show();
-                $("#dialogConfirm").dialog({
-                    modal: true
-                });
-                return false;
-            });
-
-            $("#ddlPerPage").change(function () {
-                $("#TableContainer").jtable("option", "pageSize", $(this).val());
-            });
-
             $("#ddlInterfaceGroup").change(function () {
                 GetInterfaceOptions($(this).val(), $("#ddlInterfaceType").val(), $("#ddlInterface"), false, true);
             });
@@ -189,13 +193,6 @@
                 $(".ui-dialog-content").dialog("destroy");
             });
 
-            $("#chkAuto").change(function () {
-                if ($("#chkAuto").is(":checked")) {
-                    autoCounter++;
-                    loadResults(autoCounter, 0);
-                }
-            });
-
             $("#btnFilter").click(function (e) {
                 // Re-load records when user click 'load records' button.
                 e.preventDefault();
@@ -208,7 +205,7 @@
                 $("#reprocesOptions").hide();
                 $("#confirmText").text("Starting reprocess of interface(s)");
 
-                status = new Status();
+                ustatus = new UStatus();
 
                 // Please read comments in controller before passing judgement on this diabolical mess... :(
                 var ids = "";
@@ -229,36 +226,49 @@
                     async: true,
                     success: function (response) {
                         if (response.Result != "OK") {
-                            status.Message = "Error while resubmitting the interface(s).";
-                            status.Exception = response.Message;
-                            status.IsError = true;
+                            ustatus.Message = "Error while resubmitting the interface(s).";
+                            ustatus.Exception = response.Message;
+                            ustatus.IsError = true;
                             ShowResult();
                         }
                         else {
-                            status.Message = "Success";
-                            status.Exception = "The interface(s) have been resubmitted.";
+                            ustatus.Message = "Success";
+                            ustatus.Exception = "The interface(s) have been resubmitted.";
                             ShowResult();
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
-                        status.Message = "Error communicating with server.";
-                        status.Exception = (isTest) ? thrownError : "";
-                        status.IsError = true;
+                        ustatus.Message = "Error communicating with server.";
+                        ustatus.Exception = (isTest) ? thrownError : "";
+                        ustatus.IsError = true;
                         ShowResult();
                     }
                 });
             });
 
-            $("#selectAll").click(function () {
-                if ($(this).is(":checked"))
-                    $(".reprocess").attr("checked", "checked");
-                else
-                    $(".reprocess").removeAttr("checked");
-            });
-
             // Document ready actions
             //Load all records when page is first shown
-            $("#btnFilter").click();
+            @if (ViewBag.Connection != null)
+            {
+                <text>
+                $("#perPage li").click(function () {
+                    $("#perPage li").removeClass("option-selected");
+                    $(this).addClass("option-selected");
+                    $("#TableContainer").jtable("option", "pageSize", $(this).text());
+                });
+                
+                $("#autoRefresh li").click(function () {
+                    $("#autoRefresh li").removeClass("option-selected");
+                    $(this).addClass("option-selected");
+                    if ($("#autoOn").hasClass("option-selected")) {
+                        autoCounter++;
+                        loadResults(autoCounter, 0);
+                    }
+                });
+
+                $("#btnFilter").click(); 
+                </text>
+            }
         });
 
         /**************************************************
@@ -271,7 +281,7 @@
             // There could have been an async request underway when the autorefresh checkbox was checked
             // Which would result in multiple requests. This check will ensure that only the "current" series
             // of auto-requests is processed.
-            if (counter != autoCounter || isLoading || (isAuto == 1 && !$("#chkAuto").is(":checked")))
+            if (counter != autoCounter || isLoading || (isAuto == 1 && !$("#autoOn").hasClass("option-selected")))
                 return;
 
             isLoading = true;
@@ -312,9 +322,9 @@
             $(".ui-dialog-content").dialog("destroy");
 
             // Set the message an exception text
-            $("#pMessage").text(status.Message);
-            if (status.Exception != "") {
-                $("#pException").text(status.Exception);
+            $("#pMessage").text(ustatus.Message);
+            if (ustatus.Exception != "") {
+                $("#pException").text(ustatus.Exception);
                 $("#pException").show();
             }
             else {
@@ -324,11 +334,11 @@
             // Show the dialog
             $("#dialogMessage").dialog({
                 modal: true,
-                title: (status.IsError) ? "Error" : "Message",
+                title: (ustatus.IsError) ? "Error" : "Message",
                 buttons: {
                     Ok: function () {
                         $(this).dialog("close");
-                        if (!status.IsError)
+                        if (!ustatus.IsError)
                             $("#TableContainer").jtable("reload");
                     }
                 }
@@ -342,58 +352,52 @@
     <table cellpadding="0" cellspacing="1">
         <tbody>
             <tr>
-                <td style="width:100px;"><label for="ddlInterfaceType">Interface Type</label></td>
-                <td style="width:200px;">@Html.DropDownList("ddlInterfaceType", Model.InterfaceTypes, new { id = "ddlInterfaceType", style = "width:175px" })</td>
-                <td style="width:50px;"><label for="ddlIcsStatus">Status</label></td>
-                <td style="width:235px;">@Html.DropDownList("ddlIcsStatus", Model.IcsStatuses, new { id = "ddlIcsStatus", style = "width:215px" })</td>
-                <td style="width:100px;"><label for="txtStartDate">Start Date/Time</label></td>
-                <td><input type="text" name="txtStartDate" id="txtStartDate" class="date" />
-                    <input type="text" id="txtStartTime" class="time" />
-                </td>
-                <td style="width:85px;"><label for="txtEndDate">Interface ID</label></td>
-                <td style="width:90px;"><input type="text" name="txtLicsId" id="txtLicsId" /></td>
+                <td><label for="ddlInterfaceType">Interface type</label></td>
+                <td style="width:420px;">@Html.DropDownList("ddlInterfaceType", Model.InterfaceTypes, new { id = "ddlInterfaceType", style = "width:420px" })</td>
+                <td><label for="ddlIcsStatus">Status</label></td>
+                <td colspan="3">@Html.DropDownList("ddlIcsStatus", Model.IcsStatuses, new { id = "ddlIcsStatus", style = "width:341px" })</td>
             </tr>
             <tr>
-                <td><label for="ddlInterfaceGroup">Interface Group</label></td>
-                <td colspan="3">@Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style="width:467px" })</td>
-                <td><label for="txtEndDate">End Date/Time</label></td>
-                <td><input type="text" name="txtEndDate" id="txtEndDate" class="date" />
-                    <input type="text" id="txtEndTime" class="time" />
-                </td>
-                <td><label for="ddlPerPage">Per Page</label></td>
-                <td>
-                    <select id="ddlPerPage">
-                        <option value="10">10</option>
-                        <option value="15" selected="selected">15</option>
-                        <option value="20">20</option>
-                        <option value="30">30</option>
-                        <option value="40">40</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="150">150</option>
-                        <option value="200">200</option>
-                        <option value="250">250</option>
-                    </select>
-                </td>
+                <td><label for="ddlInterfaceGroup">Interface group</label></td>
+                <td>@Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style="width:420px" })</td>
+                <td><label for="txtStartDate">Start/End</label></td>
+                <td style="width:160px;white-space:nowrap;"><input type="text" name="txtStartDate" id="txtStartDate" class="date" /><input type="text" id="txtStartTime" class="time" /><img alt="" src="/content/images/filter-arrow.png" height="18" width="10" /></td>
+                <td style="width:160px;white-space:nowrap;"><input type="text" name="txtEndDate" id="txtEndDate" class="date" /><input type="text" id="txtEndTime" class="time" /></td>
             </tr>
             <tr>
                 <td><label for="ddlInterface">Interface</label></td>
-                <td colspan="3">@Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", style = "width:467px" })</td>
-                <td></td>
-                <td><input type="checkbox" id="chkAuto" /> <label for="chkAuto">Auto refresh</label></td>
-                <td></td>
+                <td>@Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", style = "width:420px" })</td>
+                <td><label for="txtLicsId">Interface ID</label></td>
+                <td><input type="text" name="txtLicsId" id="txtLicsId" /></td>
                 <td><button type="button" id="btnFilter">Filter</button></td>
             </tr>
         </tbody>
     </table>
 </div>
+
+<h3 id="jtable-result-count">&nbsp;</h3>
+
+<div id="perpage-panel">
+    <h4>Results per Page:</h4>
+    <ul class="option-group" id="perPage">
+        <li class="option-selected">15</li>
+        <li>25</li>
+        <li>50</li>
+        <li>100</li>
+        <li>250</li>
+    </ul>
+</div>
+
+<div id="refresh-panel">
+    <h4>Auto refresh:</h4>
+    <ul class="option-group" id="autoRefresh">
+        <li id="autoOff" class="option-selected">Off</li>
+        <li id="autoOn">On</li>
+    </ul>
+</div>
+
 <div id="TableContainer">
 </div>
-<span class="footerOptions">
-    <input type="checkbox" id="selectAll" />
-    <label for="selectAll">Select all</label>&nbsp;&nbsp;&nbsp;
-    <button id="btnReprocess">Reprocess</button>
-</span>
 <br />
 <div id="dialogConfirm" style="display:none;">
     <p id="confirmText">Are you sure you want to reprocess the selected interfaces?</p>
