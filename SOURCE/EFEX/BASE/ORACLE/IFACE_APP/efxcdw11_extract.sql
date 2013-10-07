@@ -1,53 +1,36 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package iface_app.efxcdw11_extract as
+CREATE OR REPLACE package         efxcdw11_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
-    Package : efxcdw11_extract
-    Owner   : iface_app
+    Package : efxcdw11_loader
+    Owner   : ods_app
 
     Description
     -----------
-    Efex Item Item Sub Group Data - EFEX to CDW
-
-    1. PAR_MARKET (MANDATORY)
-
-       ## - Market id for the extract
-
-    2. PAR_TIMESTAMP (MANDATORY)
-
-       ## - Timestamp (YYYYMMDDHH24MISS) for the extract
-
-    3. PAR_HISTORY (OPTIONAL)
-
-       ## - Number of days changes to extract
-       0 - Full extract (default)
-
-    This package extracts the EFEX item item sub groups that have been modified within the last
-    history number of days and sends the extract file to the CDW environment.
+    Operational Data Store - Efex Item Item Sub Group Data - EFEX to CDW
 
     YYYY/MM   Author         Description
     -------   ------         -----------
     2010/05   Steve Gregan   Created
+    2013/10   Upul Dangalle  Segment ID included in the Update Process_record_hdr
+              
 
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number;
+   procedure on_start;
+   procedure on_data(par_record in varchar2);
+   procedure on_end;
 
-end efxcdw11_extract;
+end efxcdw11_loader;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body iface_app.efxcdw11_extract as
+
+CREATE OR REPLACE package body         efxcdw11_loader as
 
    /*-*/
    /* Private exceptions
@@ -56,54 +39,25 @@ create or replace package body iface_app.efxcdw11_extract as
    pragma exception_init(application_exception, -20000);
 
    /*-*/
+   /* Private declarations
+   /*-*/
+   procedure process_record_ctl(par_record in varchar2);
+   procedure process_record_hdr(par_record in varchar2);
+
+   /*-*/
    /* Private definitions
    /*-*/
-   con_group constant number := 500;
+   var_trn_error boolean;
+   var_trn_count number;
+   var_trn_interface varchar2(32);
+   var_trn_market number;
+   var_trn_extract varchar2(14);
+   rcd_efex_matl_matl_subgrp efex_matl_matl_subgrp%rowtype;
 
-   /***********************************************/
-   /* This procedure performs the execute routine */
-   /***********************************************/
-   function execute(par_market in number, par_timestamp in varchar2, par_history in number default 0) return number is
-
-      /*-*/
-      /* Local definitions
-      /*-*/
-      var_exception varchar2(4000);
-      var_history number;
-      var_instance number(15,0);
-      var_count integer;
-      var_return number;
-
-      /*-*/
-      /* Local cursors
-      /*-*/
-      cursor csr_extract is
-         select to_char(t01.item_id) as item_id,
-                to_char(t01.item_subgroup_id) as item_subgroup_id,
-                to_char(t03.segment_id) as segment_id,
-                to_char(t02.item_group_id) as item_group_id,
-                to_char(t04.business_unit_id) as business_unit_id,
-                t01.distribution_flg as distribution_flg,
-                case when (t03.status = 'X') then 'X'
-                     when (t02.status = 'X') then 'X'
-                     else t01.status end as status,
-                case when (t02.modified_date > t01.modified_date and t02.modified_date > t03.modified_date) then to_char(t02.modified_date,'yyyymmddhh24miss')
-                     when (t03.modified_date > t01.modified_date and t03.modified_date > t02.modified_date) then to_char(t03.modified_date,'yyyymmddhh24miss')
-                     else to_char(t01.modified_date,'yyyymmddhh24miss') end as efex_lupdt
-           from item_item_subgroup t01,
-                item_subgroup t02,
-                item_group t03,
-                segment t04,
-                business_unit t05
-          where t01.item_subgroup_id = t02.item_subgroup_id
-            and t02.item_group_id = t03.item_group_id
-            and t03.segment_id = t04.segment_id
-            and t04.business_unit_id = t05.business_unit_id
-            and t05.market_id = par_market
-            and (trunc(t01.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t02.modified_date) >= trunc(sysdate) - var_history or
-                 trunc(t03.modified_date) >= trunc(sysdate) - var_history);
-      rcd_extract csr_extract%rowtype;
+   /************************************************/
+   /* This procedure performs the on start routine */
+   /************************************************/
+   procedure on_start is
 
    /*-------------*/
    /* Begin block */
@@ -111,116 +65,233 @@ create or replace package body iface_app.efxcdw11_extract as
    begin
 
       /*-*/
-      /* Initialise variables
+      /* Initialise the transaction variables
       /*-*/
-      var_instance := -1;
-      var_count := con_group;
-      var_return := 0;
+      var_trn_error := false;
+      var_trn_count := 0;
+      var_trn_interface := null;
+      var_trn_market := 0;
+      var_trn_extract := null;
 
       /*-*/
-      /* Define number of days to extract
+      /* Initialise the inbound definitions
       /*-*/
-      if par_history = 0 then
-         var_history := 99999;
-      else
-         var_history := par_history;
-      end if;
+      lics_inbound_utility.clear_definition;
+      /*-*/
+      lics_inbound_utility.set_definition('CTL','RCD_ID',3);
+      lics_inbound_utility.set_definition('CTL','INT_ID',32);
+      lics_inbound_utility.set_definition('CTL','MKT_ID',10);
+      lics_inbound_utility.set_definition('CTL','EXT_ID',14);
+      /*-*/
+      lics_inbound_utility.set_definition('HDR','RCD_ID',3);
+      lics_inbound_utility.set_definition('HDR','ITM_ID',10);
+      lics_inbound_utility.set_definition('HDR','ISG_ID',10);
+      lics_inbound_utility.set_definition('HDR','SEG_ID',10);
+      lics_inbound_utility.set_definition('HDR','ITG_ID',10);
+      lics_inbound_utility.set_definition('HDR','BUS_ID',10);
+      lics_inbound_utility.set_definition('HDR','DIS_FLAG',1);
+      lics_inbound_utility.set_definition('HDR','STATUS',1);
+      lics_inbound_utility.set_definition('HDR','EFX_DATE',14);
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_start;
+
+   /***********************************************/
+   /* This procedure performs the on data routine */
+   /***********************************************/
+   procedure on_data(par_record in varchar2) is
 
       /*-*/
-      /* Open cursor for output
+      /* Local definitions
       /*-*/
-      open csr_extract;
-      loop
-         fetch csr_extract into rcd_extract;
-         if csr_extract%notfound then
-            exit;
-         end if;
+      var_record_identifier varchar2(3);
 
-         /*-*/
-         /* Create outbound interface when required
-         /*-*/
-         if var_count = con_group then
-            if var_instance != -1 then
-               lics_outbound_loader.finalise_interface;
-            end if;
-            var_instance := lics_outbound_loader.create_interface('EFXCDW11',null,'EFXCDW11.DAT');
-            lics_outbound_loader.append_data('CTL'||'EFXCDW11'||rpad(' ',32-length('EFXCDW11'),' ')||nvl(par_market,'0')||rpad(' ',10-length(nvl(par_market,'0')),' ')||nvl(par_timestamp,' ')||rpad(' ',14-length(nvl(par_timestamp,' ')),' '));
-            var_count := 0;
-         end if;
-
-         /*-*/
-         /* Append data lines
-         /*-*/
-         var_count := var_count + 1;
-         var_return := var_return + 1;
-         lics_outbound_loader.append_data('HDR' ||
-                                          nvl(rcd_extract.item_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_id,'0')),' ') ||
-                                          nvl(rcd_extract.item_subgroup_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_subgroup_id,'0')),' ') ||
-                                          nvl(rcd_extract.segment_id,'0')||rpad(' ',10-length(nvl(rcd_extract.segment_id,'0')),' ') ||
-                                          nvl(rcd_extract.item_group_id,'0')||rpad(' ',10-length(nvl(rcd_extract.item_group_id,'0')),' ') ||
-                                          nvl(rcd_extract.business_unit_id,'0')||rpad(' ',10-length(nvl(rcd_extract.business_unit_id,'0')),' ') ||
-                                          nvl(rcd_extract.distribution_flg,' ')||rpad(' ',1-length(nvl(rcd_extract.distribution_flg,' ')),' ') ||
-                                          nvl(rcd_extract.status,' ')||rpad(' ',1-length(nvl(rcd_extract.status,' ')),' ') ||
-                                          nvl(rcd_extract.efex_lupdt,' ')||rpad(' ',14-length(nvl(rcd_extract.efex_lupdt,' ')),' '));
-
-      end loop;
-      close csr_extract;
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
 
       /*-*/
-      /* Finalise Interface
+      /* Process the data based on record identifier
       /*-*/
-      if var_instance != -1 then
-         lics_outbound_loader.finalise_interface;
-      end if;
-
-      /*-*/
-      /* Return the result
-      /*-*/
-      return var_return;
+      var_record_identifier := substr(par_record,1,3);
+      case var_record_identifier
+         when 'CTL' then process_record_ctl(par_record);
+         when 'HDR' then process_record_hdr(par_record);
+         else raise_application_error(-20000, 'Record identifier (' || var_record_identifier || ') not recognised');
+      end case;
 
    /*-------------------*/
    /* Exception handler */
    /*-------------------*/
    exception
 
-      /**/
+      /*-*/
       /* Exception trap
-      /**/
+      /*-*/
       when others then
-
-         /*-*/
-         /* Rollback the database
-         /*-*/
-         rollback;
-
-         /*-*/
-         /* Save the exception
-         /*-*/
-         var_exception := substr(SQLERRM, 1, 1024);
-
-         /*-*/
-         /* Finalise the outbound loader when required
-         /*-*/
-         if var_instance != -1 then
-            lics_outbound_loader.add_exception(var_exception);
-            lics_outbound_loader.finalise_interface;
-         end if;
-
-         /*-*/
-         /* Raise an exception to the calling application
-         /*-*/
-         raise_application_error(-20000, 'FATAL ERROR - EFXCDW11 EXTRACT - ' || var_exception);
+         var_trn_error := true;
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
 
    /*-------------*/
    /* End routine */
    /*-------------*/
-   end execute;
+   end on_data;
 
-end efxcdw11_extract;
+   /**********************************************/
+   /* This procedure performs the on end routine */
+   /**********************************************/
+   procedure on_end is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Commit/rollback as required
+      /*-*/
+      if var_trn_error = true then
+         rollback;
+      else
+         efxcdw00_loader.update_interface(var_trn_interface, var_trn_market, var_trn_extract, var_trn_count);
+         commit;
+      end if;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end on_end;
+
+   /**************************************************/
+   /* This procedure performs the record CTL routine */
+   /**************************************************/
+   procedure process_record_ctl(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('CTL', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      var_trn_interface := lics_inbound_utility.get_variable('INT_ID');
+      var_trn_market := lics_inbound_utility.get_number('MKT_ID',null);
+      var_trn_extract := lics_inbound_utility.get_variable('EXT_ID');
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_ctl;
+
+   /**************************************************/
+   /* This procedure performs the record HDR routine */
+   /**************************************************/
+   procedure process_record_hdr(par_record in varchar2) is
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-------------------------------*/
+      /* PARSE - Parse the data record */
+      /*-------------------------------*/
+
+      lics_inbound_utility.parse_record('HDR', par_record);
+
+      /*--------------------------------------*/
+      /* RETRIEVE - Retrieve the field values */
+      /*--------------------------------------*/
+
+      rcd_efex_matl_matl_subgrp.efex_matl_id := lics_inbound_utility.get_number('ITM_ID',null);
+      rcd_efex_matl_matl_subgrp.matl_subgrp_id := lics_inbound_utility.get_number('ISG_ID',null);
+      rcd_efex_matl_matl_subgrp.sgmnt_id := lics_inbound_utility.get_number('SEG_ID',null);
+      rcd_efex_matl_matl_subgrp.matl_grp_id := lics_inbound_utility.get_number('ITG_ID',null);
+      rcd_efex_matl_matl_subgrp.bus_unit_id := lics_inbound_utility.get_number('BUS_ID',null);
+      rcd_efex_matl_matl_subgrp.distbn_flg := lics_inbound_utility.get_variable('DIS_FLAG');
+      rcd_efex_matl_matl_subgrp.status := lics_inbound_utility.get_variable('STATUS');
+      rcd_efex_matl_matl_subgrp.efex_lupdt := lics_inbound_utility.get_date('EFX_DATE','yyyymmddhh24miss');
+      rcd_efex_matl_matl_subgrp.valdtn_status := ods_constants.valdtn_unchecked;
+      rcd_efex_matl_matl_subgrp.efex_mkt_id := var_trn_market;
+      var_trn_count := var_trn_count + 1;
+
+      /*-*/
+      /* Exceptions raised
+      /*-*/
+      if lics_inbound_utility.has_errors = true then
+         var_trn_error := true;
+         return;
+      end if;
+
+      /*------------------------------*/
+      /* UPDATE - Update the database */
+      /*------------------------------*/
+
+      begin
+         insert into efex_matl_matl_subgrp values rcd_efex_matl_matl_subgrp;
+      exception
+         when dup_val_on_index then
+            update efex_matl_matl_subgrp
+               set sgmnt_id = rcd_efex_matl_matl_subgrp.sgmnt_id,
+                   matl_grp_id = rcd_efex_matl_matl_subgrp.matl_grp_id,
+                   bus_unit_id = rcd_efex_matl_matl_subgrp.bus_unit_id,
+                   distbn_flg = rcd_efex_matl_matl_subgrp.distbn_flg,
+                   status = rcd_efex_matl_matl_subgrp.status,
+                   efex_lupdt = rcd_efex_matl_matl_subgrp.efex_lupdt,
+                   valdtn_status = rcd_efex_matl_matl_subgrp.valdtn_status,
+                   efex_mkt_id = rcd_efex_matl_matl_subgrp.efex_mkt_id
+             where efex_matl_id = rcd_efex_matl_matl_subgrp.efex_matl_id
+               and matl_subgrp_id = rcd_efex_matl_matl_subgrp.matl_subgrp_id
+               and sgmnt_id = rcd_efex_matl_matl_subgrp.sgmnt_id;
+      end;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /*-*/
+      /* Exception trap
+      /*-*/
+      when others then
+         lics_inbound_utility.add_exception(substr(SQLERRM, 1, 1024));
+         var_trn_error := true;
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end process_record_hdr;
+
+end efxcdw11_loader;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw11_extract for iface_app.efxcdw11_extract;
-grant execute on efxcdw11_extract to public;
