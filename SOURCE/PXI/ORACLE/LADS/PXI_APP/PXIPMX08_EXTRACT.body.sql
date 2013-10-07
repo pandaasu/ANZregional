@@ -6,12 +6,17 @@ PACKAGE body PXIPMX08_EXTRACT AS
 *******************************************************************************/
   pc_package_name constant pxi_common.st_package_name := 'PXIPMX08_EXTRACT';
   pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX08';
+  pc_dup_type_accntng_doc constant pmx_ar_claims_dups.dup_type%type := 'ACCNTNG_DOC';
+  pc_dup_type_claim_ref constant pmx_ar_claims_dups.dup_type%type := 'CLAIM_REF';
 
 /*******************************************************************************
   Package Variables
 *******************************************************************************/
-  pv_inbound_rec rt_inbound;
-  pv_inbound_array tt_inbound_array;
+  pv_claim rt_claim;
+  pv_claims tt_claims_array;
+  pv_duplicate_claims tt_claims_array;
+  pv_user fflu_common.st_user;
+
 /*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/
@@ -74,9 +79,12 @@ PACKAGE body PXIPMX08_EXTRACT AS
     fflu_data.add_char_field_txt(pc_line_item_no,107,3,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_bus_partner_ref,110,12,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_txt(pc_tax_code,122,2,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
+    pv_user := fflu_utils.get_interface_user;
 
     -- Empty Inbound Array
-    pv_inbound_array.delete;
+    pv_claims.delete;
+    pv_duplicate_claims.delete;
 
   exception
     when others then
@@ -96,30 +104,30 @@ PACKAGE body PXIPMX08_EXTRACT AS
         when pc_rec_type_control then
           begin
             if trim(fflu_data.get_char_field(pc_idoc_type)) = 'FIDCCP02' then
-              pv_inbound_rec.idoc_type := fflu_data.get_char_field(pc_idoc_type);
-              pv_inbound_rec.idoc_no := fflu_data.get_number_field(pc_idoc_no);
-              pv_inbound_rec.idoc_date := fflu_data.get_date_field(pc_idoc_date);
+              pv_claim.idoc_type := fflu_data.get_char_field(pc_idoc_type);
+              pv_claim.idoc_no := fflu_data.get_number_field(pc_idoc_no);
+              pv_claim.idoc_date := fflu_data.get_date_field(pc_idoc_date);
             else
               fflu_data.log_field_error(pc_rec_type,'Unexpected iDoc Type Value [' || fflu_data.get_char_field(pc_idoc_type) || '].');
             end if;
           end;
         when pc_rec_type_detail then null;
           begin
-            pv_inbound_rec.company_code := fflu_data.get_char_field(pc_company_code);
-            pv_inbound_rec.div_code := fflu_data.get_char_field(pc_div_code);
-            pv_inbound_rec.cust_code := fflu_data.get_char_field(pc_cust_code);
-            pv_inbound_rec.claim_amount := fflu_data.get_number_field(pc_claim_amount);
-            pv_inbound_rec.claim_ref := fflu_data.get_char_field(pc_claim_ref);
-            pv_inbound_rec.assignment_no := fflu_data.get_char_field(pc_assignment_no);
-            pv_inbound_rec.tax_base := fflu_data.get_number_field(pc_tax_base);
-            pv_inbound_rec.posting_date := fflu_data.get_date_field(pc_posting_date);
-            pv_inbound_rec.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
-            pv_inbound_rec.reason_code := fflu_data.get_char_field(pc_reason_code);
-            pv_inbound_rec.accounting_doc_no := fflu_data.get_number_field(pc_accounting_doc_no);
-            pv_inbound_rec.fiscal_year := fflu_data.get_number_field(pc_fiscal_year);
-            pv_inbound_rec.line_item_no := fflu_data.get_char_field(pc_line_item_no);
-            pv_inbound_rec.bus_partner_ref := fflu_data.get_char_field(pc_bus_partner_ref);
-            pv_inbound_rec.tax_code := fflu_data.get_char_field(pc_tax_code);
+            pv_claim.company_code := fflu_data.get_char_field(pc_company_code);
+            pv_claim.div_code := fflu_data.get_char_field(pc_div_code);
+            pv_claim.cust_code := fflu_data.get_char_field(pc_cust_code);
+            pv_claim.claim_amount := fflu_data.get_number_field(pc_claim_amount);
+            pv_claim.claim_ref := fflu_data.get_char_field(pc_claim_ref);
+            pv_claim.assignment_no := fflu_data.get_char_field(pc_assignment_no);
+            pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
+            pv_claim.posting_date := fflu_data.get_date_field(pc_posting_date);
+            pv_claim.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
+            pv_claim.reason_code := fflu_data.get_char_field(pc_reason_code);
+            pv_claim.accounting_doc_no := fflu_data.get_number_field(pc_accounting_doc_no);
+            pv_claim.fiscal_year := fflu_data.get_number_field(pc_fiscal_year);
+            pv_claim.line_item_no := fflu_data.get_char_field(pc_line_item_no);
+            pv_claim.bus_partner_ref := fflu_data.get_char_field(pc_bus_partner_ref);
+            pv_claim.tax_code := fflu_data.get_char_field(pc_tax_code);
             --
             /******************************************************************/
             /* 31/07/2006 CF: Only load TP Claims into PDS (previously all Accounting Document lines were loaded).
@@ -130,8 +138,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
             /* - Pet =   '44', '45', '55'
             /* Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
             /******************************************************************/
-            if trim(pv_inbound_rec.reason_code) in ('40', '41', '42', '43', '44', '45', '51', '53', '55') then
-              pv_inbound_array(pv_inbound_array.count+1) := pv_inbound_rec;
+            if trim(pv_claim.reason_code) in ('40', '41', '42', '43', '44', '45', '51', '53', '55') then
+              pv_claims(pv_claims.count+1) := pv_claim;
             end if;
           end;
         else
@@ -146,8 +154,256 @@ PACKAGE body PXIPMX08_EXTRACT AS
       fflu_data.log_interface_exception('ON_DATA');
   end on_data;
 
+
 /*******************************************************************************
-  NAME:      EXECUTE (*MUST* be loacated before ON_END, as is Private)   PRIVATE
+  NAME:      VALIDATE_CLAIMS                                             PRIVATE
+  PURPOSE:   Checks for any duplicates in the data.  Inserts new valid records
+             into the tracking table PMX_AR_CLAIMS.
+             
+             If Duplicate is found then the record is deleted from the output
+             and moved to the duplicates array.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-10-07 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure validate_claims is 
+    v_counter pls_integer;
+    v_dup_type pmx_ar_claims_dups.dup_type%type;
+    -- Checks if this claim already exists from an account document perspective.
+    function is_duplicate_accounting_doc return boolean is
+      v_result boolean;
+      cursor csr_is_duplicate(
+        i_company_code in pmx_ar_claims.company_code%type,
+        i_FISCAL_YEAR in pmx_ar_claims.fiscal_year%type, 
+        i_accounting_doc_no in pmx_ar_claims.accounting_doc_no%type, 
+        i_line_item_no in pmx_ar_claims.line_item_no%type) is
+        select *
+        from pmx_ar_claims  
+        where 
+          company_code = i_company_code and
+          fiscal_year = i_fiscal_year and
+          accounting_doc_no = i_accounting_doc_no and
+          line_item_no = i_line_item_no;
+      -- Record Variable
+      rv_duplicate pmx_ar_claims%rowtype;
+    begin
+      v_result := false;
+      -- Perform a duplicate check based accounting document number, update the duplicates detected count as a result.  
+      open csr_is_duplicate(pv_claims(v_counter).company_code, pv_claims(v_counter).fiscal_year, pv_claims(v_counter).accounting_doc_no, pv_claims(v_counter).line_item_no);
+      fetch csr_is_duplicate into rv_duplicate;
+      if csr_is_duplicate%found then 
+        v_result := true;
+        v_dup_type := pc_dup_type_accntng_doc;
+        update pmx_ar_claims 
+        set DPLCTS_DTCTD = DPLCTS_DTCTD + 1
+        where 
+          company_code = pv_claims(v_counter).company_code and
+          fiscal_year = pv_claims(v_counter).fiscal_year and
+          accounting_doc_no = pv_claims(v_counter).accounting_doc_no and
+          line_item_no = pv_claims(v_counter).line_item_no;
+      end if;
+      close csr_is_duplicate;
+      return v_result;
+    exception
+      when others then
+        pxi_common.reraise_promax_exception(pc_package_name,'IS_DUPLICATE_ACCOUNTING_DOC');
+    end is_duplicate_accounting_doc;
+
+    -- Check if this claim exists from an existing claim ref perspective.
+    function is_duplicate_claim_ref return boolean is
+      v_result boolean;
+      cursor csr_is_duplicate(
+        i_company_code in pmx_ar_claims.company_code%type,
+        i_div_code in pmx_ar_claims.div_code%type,
+        i_cust_code in pmx_ar_claims.cust_code%type, 
+        i_claim_ref in pmx_ar_claims.claim_ref%type) is
+        select *
+        from pmx_ar_claims  
+        where 
+          company_code = i_company_code and
+          (div_code = i_div_code or div_code is null and i_div_code is null) and 
+          cust_code = i_cust_code and
+          claim_ref = i_claim_ref;
+      -- Record Variable
+      rv_duplicate pmx_ar_claims%rowtype;
+    begin
+      v_result := false;
+      -- Perform a duplicate check based accounting document number, update the duplicates detected count as a result.  
+      open csr_is_duplicate(pv_claims(v_counter).company_code, pv_claims(v_counter).div_code, pv_claims(v_counter).cust_code, pv_claims(v_counter).claim_ref);
+      fetch csr_is_duplicate into rv_duplicate;
+      if csr_is_duplicate%found then 
+        v_result := true;
+        v_dup_type := pc_dup_type_claim_ref;
+      end if;
+      close csr_is_duplicate;
+      return v_result;
+    exception
+      when others then
+        pxi_common.reraise_promax_exception(pc_package_name,'IS_DUPLICATE_CLAIMREF');
+    end is_duplicate_claim_ref;
+    
+  begin
+    -- Now clear out the check table of any data that was successfully loaded from this batch before.  Ie.  If it is being reprocessed.
+    delete from pmx_ar_claims where xactn_seq = fflu_utils.get_interface_no;
+    delete from pmx_ar_claims_dups where xactn_seq = fflu_utils.get_interface_no;
+    -- Now process each record that we have received.
+    v_counter := 0;
+    loop
+      -- Check if we have finished processing the array. 
+      v_counter := v_counter + 1;
+      exit when v_counter > pv_claims.count;
+      -- Now check if duplicate and if so, move to the duplicate claims array
+      if is_duplicate_accounting_doc or is_duplicate_claim_ref then 
+        pv_duplicate_claims(pv_duplicate_claims.count+1) := pv_claims(v_counter);
+        -- Insert this claim into the claim tracking table.
+        insert into pmx_ar_claims_dups (
+          XACTN_SEQ,
+          BATCH_REC_SEQ,
+          IDOC_TYPE,
+          IDOC_NO,
+          IDOC_DATE,
+          COMPANY_CODE,
+          DIV_CODE,
+          CUST_CODE,
+          CLAIM_AMOUNT,
+          CLAIM_REF,
+          ASSIGNMENT_NO,
+          TAX_BASE,
+          POSTING_DATE,
+          FISCAL_PERIOD,
+          REASON_CODE,
+          ACCOUNTING_DOC_NO,
+          FISCAL_YEAR,
+          LINE_ITEM_NO,
+          BUS_PARTNER_REF,
+          TAX_CODE,
+          DUP_TYPE,
+          LAST_UPDTD_USER,
+          LAST_UPDTD_TIME
+        ) values (
+          -- Batch Fields
+          fflu_utils.get_interface_no,
+          v_counter,
+          -- IDoc Fields
+          pv_claims(v_counter).IDOC_TYPE,
+          pv_claims(v_counter).IDOC_NO,
+          pv_claims(v_counter).IDOC_DATE,
+          pv_claims(v_counter).COMPANY_CODE,
+          pv_claims(v_counter).DIV_CODE,
+          pv_claims(v_counter).CUST_CODE,
+          pv_claims(v_counter).CLAIM_AMOUNT,
+          pv_claims(v_counter).CLAIM_REF,
+          pv_claims(v_counter).ASSIGNMENT_NO,
+          pv_claims(v_counter).TAX_BASE,
+          pv_claims(v_counter).POSTING_DATE,
+          pv_claims(v_counter).FISCAL_PERIOD,
+          pv_claims(v_counter).REASON_CODE,
+          pv_claims(v_counter).ACCOUNTING_DOC_NO,
+          pv_claims(v_counter).FISCAL_YEAR,
+          pv_claims(v_counter).LINE_ITEM_NO,
+          pv_claims(v_counter).BUS_PARTNER_REF,
+          pv_claims(v_counter).TAX_CODE,
+          -- Calculated Fields
+          v_dup_type,
+          pv_user, 
+          sysdate
+        );        
+        pv_claims.delete(v_counter);
+      else 
+        -- Insert this claim into the claim tracking table for the successfully interfaced products.
+        insert into pmx_ar_claims (
+          XACTN_SEQ,
+          BATCH_REC_SEQ,
+          IDOC_TYPE,
+          IDOC_NO,
+          IDOC_DATE,
+          COMPANY_CODE,
+          DIV_CODE,
+          CUST_CODE,
+          CLAIM_AMOUNT,
+          CLAIM_REF,
+          ASSIGNMENT_NO,
+          TAX_BASE,
+          POSTING_DATE,
+          FISCAL_PERIOD,
+          REASON_CODE,
+          ACCOUNTING_DOC_NO,
+          FISCAL_YEAR,
+          LINE_ITEM_NO,
+          BUS_PARTNER_REF,
+          TAX_CODE,
+          DPLCTS_DTCTD,
+          LAST_UPDTD_USER,
+          LAST_UPDTD_TIME
+        ) values (
+          -- Batch Fields
+          fflu_utils.get_interface_no,
+          v_counter,
+          -- IDoc Fields
+          pv_claims(v_counter).IDOC_TYPE,
+          pv_claims(v_counter).IDOC_NO,
+          pv_claims(v_counter).IDOC_DATE,
+          pv_claims(v_counter).COMPANY_CODE,
+          pv_claims(v_counter).DIV_CODE,
+          pv_claims(v_counter).CUST_CODE,
+          pv_claims(v_counter).CLAIM_AMOUNT,
+          pv_claims(v_counter).CLAIM_REF,
+          pv_claims(v_counter).ASSIGNMENT_NO,
+          pv_claims(v_counter).TAX_BASE,
+          pv_claims(v_counter).POSTING_DATE,
+          pv_claims(v_counter).FISCAL_PERIOD,
+          pv_claims(v_counter).REASON_CODE,
+          pv_claims(v_counter).ACCOUNTING_DOC_NO,
+          pv_claims(v_counter).FISCAL_YEAR,
+          pv_claims(v_counter).LINE_ITEM_NO,
+          pv_claims(v_counter).BUS_PARTNER_REF,
+          pv_claims(v_counter).TAX_CODE,
+          -- Calculated Fields
+          0,
+          pv_user, 
+          sysdate
+        );
+      end if;
+    end loop;
+  exception
+    when others then
+      pxi_common.reraise_promax_exception(pc_package_name,'VALIDATE_CLAIMS');
+  end validate_claims; 
+
+/*******************************************************************************
+  NAME:      REPORT_DUPLICATE_CLAIMS                                     PRIVATE
+  PURPOSE:   Looks at the duplicate claims array and send an exception report
+             to the specific destination email addresses by company code.
+             
+             Identical duplicates are reported as warnings, and different 
+             duplicates are reported as errors. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-10-07 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure report_duplicate_claims is 
+  begin
+    null;
+  exception
+    when others then
+      pxi_common.reraise_promax_exception(pc_package_name,'REPORT_DUPLICATE_CLAIMS');
+  end report_duplicate_claims; 
+
+/*******************************************************************************
+  NAME:      EXECUTE                                                     PRIVATE
+  PURPOSE:   This code creates the extract of the current valid AR claims and
+             sends them to Promax. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-06-25 Chris Horn           Created. 
 *******************************************************************************/
    procedure execute is
     -- Variables     
@@ -203,7 +459,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
             t1.tax_base as tax_amount,
             case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
-            table(get_inbound) t1
+            table(get_claims) t1
         ------------------------------------------------------------------------
         );
         --======================================================================
@@ -247,8 +503,10 @@ PACKAGE body PXIPMX08_EXTRACT AS
     if fflu_data.was_errors = true then
       rollback;
     else
-      execute; -- outbound processing
+      validate_claims;  -- Check and validate the claim records. 
+      execute; -- Perform the interface extract.  
       commit;
+      report_duplicate_claims; -- Report Duplicate Claims
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;
@@ -260,16 +518,36 @@ PACKAGE body PXIPMX08_EXTRACT AS
 /*******************************************************************************
   NAME:      GET_INBOUND                                                  PUBLIC
 *******************************************************************************/
-  function get_inbound return tt_inbound pipelined is
+  function get_claims return tt_claims_piped pipelined is
     v_counter pls_integer;
   begin
      v_counter := 0;
      loop
        v_counter := v_counter + 1;
-       exit when v_counter > pv_inbound_array.count;
-       pipe row(pv_inbound_array(v_counter));
+       exit when v_counter > pv_claims.count;
+       -- Only pipe out the records that were not duplicates. 
+       if pv_claims.exists(v_counter) then 
+         pipe row(pv_claims(v_counter));
+       end if; 
      end loop;
-  end get_inbound;
+  end get_claims;
+
+/*******************************************************************************
+  NAME:      GET_INBOUND                                                  PUBLIC
+*******************************************************************************/
+  function get_duplicate_claims return tt_claims_piped pipelined is
+    v_counter pls_integer;
+  begin
+     v_counter := 0;
+     loop
+       v_counter := v_counter + 1;
+       exit when v_counter > pv_duplicate_claims.count;
+       -- Only pipe out the records that were not duplicates. 
+       if pv_duplicate_claims.exists(v_counter) then 
+         pipe row(pv_duplicate_claims(v_counter));
+       end if; 
+     end loop;
+  end get_duplicate_claims;
 
 /*******************************************************************************
   NAME:      ON_GET_FILE_TYPE                                             PUBLIC

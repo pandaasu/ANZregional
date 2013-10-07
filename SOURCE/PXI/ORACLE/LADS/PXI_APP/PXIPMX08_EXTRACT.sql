@@ -29,6 +29,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-07-28  Mal Chambeyron        Updated SQL Formatting
   2013-08-22  Chris Horn            Cleaned Up Code
   2013-08-28  Chris Horn            Made code generic for OZ.
+  2013-10-07  Chris Horn            Updated to handle duplicates.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -42,7 +43,7 @@ PACKAGE PXIPMX08_EXTRACT AS
 /*******************************************************************************
   Record Inbound
 *******************************************************************************/
-  type rt_inbound is record (
+  type rt_claim is record (
     idoc_type varchar2(30 char),
     idoc_no number(16,0),
     idoc_date date,
@@ -63,10 +64,37 @@ PACKAGE PXIPMX08_EXTRACT AS
     tax_code varchar2(2 char)
   );
 
-  type tt_inbound is table of rt_inbound;
+  type tt_claims_piped is table of rt_claim;
 
-  type tt_inbound_array is table of rt_inbound index by binary_integer;
+  type tt_claims_array is table of rt_claim index by binary_integer;
 
-  function get_inbound return tt_inbound pipelined;
+/*******************************************************************************
+  NAME:      GET_INBOUND                                                  PUBLIC
+  PURPOSE:   This function returns the internal collection of data as a pipeline
+             function table so that it can be used in the extract formatting 
+             code within the internal execute function. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-07-30 Chris Horn           Created.
+  1.2   2013-10-07 Chris Horn           Renamed Function.
+
+*******************************************************************************/
+  function get_claims return tt_claims_piped pipelined;
+
+/*******************************************************************************
+  NAME:      GET_DUPLICATE_CLAIMS                                         PUBLIC
+  PURPOSE:   This function returns the internal collection of data as a pipeline
+             function table so that it can be used in the internal exception 
+             reporting function.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-10-07 Chris Horn           Created.
+
+*******************************************************************************/
+  function get_duplicate_claims return tt_claims_piped pipelined;
 
 END PXIPMX08_EXTRACT;
