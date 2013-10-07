@@ -4,11 +4,11 @@
             pxi_common.full_matl_code(t3.rep_item) as zrep_matl_code,
             '10' as xdstrbtn_chain_status,
             '20' as dstrbtn_chain_status,
-            trunc(sysdate) as change_date,
-            trunc(sysdate) as last_extracted
+            trunc(sysdate-1) as change_date,
+            trunc(sysdate-1) as last_extracted
           from
-            dw_sales_base@db1270p_promax_testing t1,  -- 
-            matl_dim@db1270p_promax_testing t3, --
+            dw_sales_base t1,  -- 
+            matl_dim t3, --
             table(pxi_common.promax_config(:i_pmx_company,:i_pmx_division)) t4
           where
             -- Join to promax configuration table.
