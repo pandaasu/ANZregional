@@ -1,5 +1,4 @@
-create or replace 
-package body pmxpxi03_loader as
+CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
 
   -- Package Constants
   pc_package_name constant pxi_common.st_package_name := 'PMXPXI03_LOADER';
@@ -489,21 +488,29 @@ package body pmxpxi03_loader as
             select count(1) into v_clash_count
             from pmx_359_promotions
             where action_code <> 'D'
-            and (vakey, pricing_condition_code, xactn_seq) in (
-              select vakey,
-                pricing_condition_code,
-                max(xactn_seq) as xactn_seq
-              from pmx_359_promotions
-              where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
-              and vakey = vr_current.vakey
-              and pricing_condition_code = vr_current.pricing_condition_code
-              and sales_deal <> vr_current.sales_deal
-              and (
-                buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
-                or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
-              )
-              group by vakey,
-                pricing_condition_code
+            and (vakey, pricing_condition_code, xactn_seq) in 
+              (select vakey,
+                 pricing_condition_code,
+                 xactn_seq
+               from (select * from pmx_359_promotions where (vakey,pricing_condition_code, sales_deal, xactn_seq) in
+                        (select 
+                             vakey,
+                             pricing_condition_code,
+                             sales_deal,
+                             max(xactn_seq) as xactn_seq
+                         from
+                             pmx_359_promotions
+                         where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation   
+                         group by vakey, pricing_condition_code,sales_deal
+                        )
+                     )        
+               where vakey = vr_current.vakey
+               and pricing_condition_code = vr_current.pricing_condition_code
+               and sales_deal <> vr_current.sales_deal
+               and (
+                        buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
+                     or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
+                   )
             );
           exception
             when others then

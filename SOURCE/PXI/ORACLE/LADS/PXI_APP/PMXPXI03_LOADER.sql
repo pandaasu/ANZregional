@@ -1,5 +1,4 @@
-create or replace 
-package pmxpxi03_loader as
+CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -43,6 +42,7 @@ package pmxpxi03_loader as
                                     on pxi_common.gc_max_idoc_rows
   2013-09-03  Mal Chambeyron        Add RAISE in APPEND_DATA
                                     Add Better On NULL Error Messages
+  2013-10-06  Jonathan Girling      Fixed overlapping promotion issue
 
 *******************************************************************************/
   -- LICS Hooks.
