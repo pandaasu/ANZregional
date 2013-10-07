@@ -9,7 +9,7 @@ package pmxpxi01_loader as
   Owner     : PXI_APP
   Package   : PMXPXI01_LOADER
   Author    : Chris Horn
-  Interface : Promax PX Payments to Atlas Interface
+  Interface : Promax PX Accruals to Atlas Interface
 
   Description
   ------------------------------------------------------------------------------
