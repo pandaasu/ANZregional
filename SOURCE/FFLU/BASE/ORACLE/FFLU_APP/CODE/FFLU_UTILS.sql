@@ -22,6 +22,7 @@ package fflu_utils as
     - log_interface_error        Adds a JSON formatted interface error to LICS.
     - log_interface_data_error   Adds a JSON formatted interface error to LICS
     - log_interface_exception    Adds a JSON formatted interface exception to LICS.
+    - get_interface_no           The current interface no. 
     - get_interface_suffix       The interface suffix, everything after .
     - get_interface_filename     The interface filename.
     - get_interface_row          The current interface row number. 
