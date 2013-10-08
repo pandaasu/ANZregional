@@ -1,3 +1,5 @@
+delete from pmx_ar_claims;
+
 -- This function moves data from the tempoary pmx_ar_claims_old table into the new table.  
 insert into pmx_ar_claims 
 select 
@@ -9,7 +11,6 @@ select
   idoc_num as idoc_no,
   idoc_date,
   cmpny_code as company_code,
-  --decode(cmpny_code,'149',null,div_code) as div_code,
   div_code,
   cust_code,
   claim_amt as claim_amount,
