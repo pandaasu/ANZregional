@@ -101,51 +101,75 @@ PACKAGE body PXIPMX08_EXTRACT AS
 
       -- Switch on Record Type ..
       case fflu_data.get_record_type
+
+        -- Process the control record.
         when pc_rec_type_control then
-          begin
-            if trim(fflu_data.get_char_field(pc_idoc_type)) = 'FIDCCP02' then
-              pv_claim.idoc_type := fflu_data.get_char_field(pc_idoc_type);
-              pv_claim.idoc_no := fflu_data.get_number_field(pc_idoc_no);
-              pv_claim.idoc_date := fflu_data.get_date_field(pc_idoc_date);
-            else
-              fflu_data.log_field_error(pc_rec_type,'Unexpected iDoc Type Value [' || fflu_data.get_char_field(pc_idoc_type) || '].');
-            end if;
-          end;
-        when pc_rec_type_detail then null;
-          begin
-            pv_claim.company_code := fflu_data.get_char_field(pc_company_code);
-            pv_claim.div_code := fflu_data.get_char_field(pc_div_code);
-            pv_claim.cust_code := fflu_data.get_char_field(pc_cust_code);
-            pv_claim.claim_amount := fflu_data.get_number_field(pc_claim_amount);
-            pv_claim.claim_ref := fflu_data.get_char_field(pc_claim_ref);
-            pv_claim.assignment_no := fflu_data.get_char_field(pc_assignment_no);
-            pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
-            pv_claim.posting_date := fflu_data.get_date_field(pc_posting_date);
-            pv_claim.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
-            pv_claim.reason_code := fflu_data.get_char_field(pc_reason_code);
-            pv_claim.accounting_doc_no := fflu_data.get_number_field(pc_accounting_doc_no);
-            pv_claim.fiscal_year := fflu_data.get_number_field(pc_fiscal_year);
-            pv_claim.line_item_no := fflu_data.get_char_field(pc_line_item_no);
-            pv_claim.bus_partner_ref := fflu_data.get_char_field(pc_bus_partner_ref);
-            pv_claim.tax_code := fflu_data.get_char_field(pc_tax_code);
-            --
-            /******************************************************************/
-            /* 31/07/2006 CF: Only load TP Claims into PDS (previously all Accounting Document lines were loaded).
-            /* Division (Business Segment) is derived in ICS only for Accounting Document lines which
-            /* have a TP Claim Reason Codes ..
-            /* - Food =  '40', '41', '51'
-            /* - Snack = '42', '43', '53'
-            /* - Pet =   '44', '45', '55'
-            /* Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
-            /******************************************************************/
-            if trim(pv_claim.reason_code) in ('40', '41', '42', '43', '44', '45', '51', '53', '55') then
-              pv_claims(pv_claims.count+1) := pv_claim;
-            end if;
-          end;
+          if trim(fflu_data.get_char_field(pc_idoc_type)) = 'FIDCCP02' then
+            pv_claim.idoc_type := fflu_data.get_char_field(pc_idoc_type);
+            pv_claim.idoc_no := fflu_data.get_number_field(pc_idoc_no);
+            pv_claim.idoc_date := fflu_data.get_date_field(pc_idoc_date);
+          else
+            fflu_data.log_field_error(pc_rec_type,'Unexpected iDoc Type Value [' || fflu_data.get_char_field(pc_idoc_type) || '].');
+          end if;
+         
+        -- Proces the detail record. 
+        when pc_rec_type_detail then 
+          pv_claim.company_code := fflu_data.get_char_field(pc_company_code);
+          pv_claim.cust_code := fflu_data.get_char_field(pc_cust_code);
+          pv_claim.claim_amount := fflu_data.get_number_field(pc_claim_amount);
+          pv_claim.claim_ref := fflu_data.get_char_field(pc_claim_ref);
+          pv_claim.assignment_no := fflu_data.get_char_field(pc_assignment_no);
+          pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
+          pv_claim.posting_date := fflu_data.get_date_field(pc_posting_date);
+          pv_claim.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
+          pv_claim.reason_code := fflu_data.get_char_field(pc_reason_code);
+          pv_claim.accounting_doc_no := fflu_data.get_number_field(pc_accounting_doc_no);
+          pv_claim.fiscal_year := fflu_data.get_number_field(pc_fiscal_year);
+          pv_claim.line_item_no := fflu_data.get_char_field(pc_line_item_no);
+          pv_claim.bus_partner_ref := fflu_data.get_char_field(pc_bus_partner_ref);
+          
+          -- Now set the div code and tax code based on the reason code rules.
+          -- Use the following reason codes to determine division and tax codes.
+          -- Food =  '40', '41', '51'
+          -- Snack = '42', '43', '53'
+          -- Pet =   '44', '45', '55'
+          case pv_claim.reason_code 
+            when '40' then 
+              pv_claim.div_code := '02'; 
+              pv_claim.tax_code := 'S3'; 
+            when '41' then 
+              pv_claim.div_code := '02'; 
+              pv_claim.tax_code := 'S1'; 
+            when '43' then 
+              pv_claim.div_code := '01'; 
+              pv_claim.tax_code := 'S1'; 
+            when '44' then
+              pv_claim.div_code := '05'; 
+              pv_claim.tax_code := 'S3';
+            when '45' then
+              pv_claim.div_code := '05'; 
+              pv_claim.tax_code := 'S1';
+            when '51' then 
+              pv_claim.div_code := '02';
+              pv_claim.tax_code := 'S2';
+            when '53' then 
+              pv_claim.div_code := '01';
+              pv_claim.tax_code := 'S2';
+            when '55' then 
+              pv_claim.div_code := '05';
+              pv_claim.tax_code := 'S2';
+            else 
+              pv_claim.div_code := fflu_data.get_char_field(pc_div_code);
+              pv_claim.tax_code := fflu_data.get_char_field(pc_tax_code);
+          end case; 
+
+          -- Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
+          if pv_claim.div_code is not null then
+            pv_claims(pv_claims.count+1) := pv_claim;
+          end if;
+        
         else
-          begin
-            fflu_data.log_field_error(pc_rec_type,'Unexpected Record Type Value [' || fflu_data.get_record_type || '].');
-          end;
+          fflu_data.log_field_error(pc_rec_type,'Unexpected Record Type Value [' || fflu_data.get_record_type || '].');
       end case;
 
     end if;
@@ -177,7 +201,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
       v_result boolean;
       cursor csr_is_duplicate(
         i_company_code in pmx_ar_claims.company_code%type,
-        i_FISCAL_YEAR in pmx_ar_claims.fiscal_year%type, 
+        i_fiscal_year in pmx_ar_claims.fiscal_year%type, 
         i_accounting_doc_no in pmx_ar_claims.accounting_doc_no%type, 
         i_line_item_no in pmx_ar_claims.line_item_no%type) is
         select *
@@ -447,8 +471,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
             --
           *****************************/
           select
-            t1.company_code as promax_company,
-            case t1.company_code when pxi_common.gc_australia then t1.div_code when pxi_common.gc_new_zealand then pxi_common.gc_new_zealand else null end as promax_division,
+            t2.promax_company,
+            t2.promax_division,
             trim(t1.bus_partner_ref) as bus_partner_ref,
             decode(nvl(trim(t1.reason_code),'99'), '40', 'No Tax', '42', 'No Tax', '44', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Reason Code 40, 42, 44 .. Else Inc Tax
             t1.posting_date,
@@ -459,8 +483,11 @@ PACKAGE body PXIPMX08_EXTRACT AS
             t1.tax_base as tax_amount,
             case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
-            table(get_claims) t1
-        ------------------------------------------------------------------------
+            table(get_claims) t1,
+            table(pxi_common.promax_config(null,null)) t2  -- Promax Configuration table
+         where 
+            t1.company_code = t2.promax_company and 
+            ((t1.company_code = pxi_common.gc_australia and t1.div_code =  t2.promax_division) or (t1.company_code = pxi_common.gc_new_zealand))
         );
         --======================================================================
 

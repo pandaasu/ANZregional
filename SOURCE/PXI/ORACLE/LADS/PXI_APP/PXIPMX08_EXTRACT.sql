@@ -30,6 +30,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-08-22  Chris Horn            Cleaned Up Code
   2013-08-28  Chris Horn            Made code generic for OZ.
   2013-10-07  Chris Horn            Updated to handle duplicates.
+  2013-10-08  Chris Horn            Div Code and Tax Code Logic Added fixed Oz.
 
 *******************************************************************************/
   -- LICS Hooks.
