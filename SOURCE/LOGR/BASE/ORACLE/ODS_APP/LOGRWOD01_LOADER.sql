@@ -33,6 +33,7 @@ PACKAGE LOGRWOD01_LOADER AS
   2013-07-26  Chris Horn            Split Cat and Dog and updated fields.
   2013-08-11  Chris Horn            Added last updated time, user fields.
   2013-08-14  Chris Horn            Updated exception handling.
+  2013-10-09  Chris Horn            Added multi period handling.
 
 *******************************************************************************/
   -- LICS Hooks.

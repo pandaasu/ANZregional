@@ -41,13 +41,20 @@ PACKAGE body LOGRWOD01_LOADER AS
 *******************************************************************************/  
   pc_data_animal_type_dog constant logr_wod_sales_scan.data_animal_type%type := 'Dog';
   pc_data_animal_type_cat constant logr_wod_sales_scan.data_animal_type%type := 'Cat';
+
+/*******************************************************************************
+  Package Types
+*******************************************************************************/  
+  type tt_periods is table of logr_wod_sales_scan.mars_period%type index by pls_integer;
   
 /*******************************************************************************
   Package Variables
 *******************************************************************************/  
-  pv_prev_mars_period logr_wod_sales_scan.mars_period%type;
   pv_data_animal_type logr_wod_sales_scan.data_animal_type%type;
   pv_user fflu_common.st_user;
+  ptv_periods tt_periods;
+  pv_last_mars_period logr_wod_sales_scan.mars_period%type;
+  
   
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -55,9 +62,10 @@ PACKAGE body LOGRWOD01_LOADER AS
   procedure on_start is 
   begin
     -- Initialise any package processing variables.
-    pv_prev_mars_period := null;
+    pv_last_mars_period := null;
     pv_data_animal_type := null;
     pv_user := null;
+    ptv_periods.delete;
     -- Now determine what the interface sufix was and hence the data animal type. 
     case fflu_utils.get_interface_suffix
       when pc_suffix_dog then pv_data_animal_type := pc_data_animal_type_dog;
@@ -98,11 +106,38 @@ end on_start;
 *******************************************************************************/  
   procedure on_data(p_row in varchar2) is 
     v_ok boolean;
-    v_mars_period number(6,0);
+    v_mars_period logr_wod_sales_scan.mars_period%type;
     cursor csr_mars_period(i_calendar_date in date) is 
       select mars_period 
       from mars_date 
       where calendar_date = i_calendar_date;
+    -- Function to check if this period has been seen before.
+    function seen_period return boolean is
+      v_counter pls_integer;
+      v_result boolean;
+    begin
+      v_counter := 0;
+      v_result := false;
+      -- Check if the value last row was the same, in which case we have seen.
+      if pv_last_mars_period = v_mars_period then 
+        v_result := true;
+      else
+        -- Else check the collection of periods previously seen.
+        loop
+          v_counter := v_counter + 1;
+          exit when v_counter > ptv_periods.count or v_result = true;
+          if ptv_periods(v_counter) = v_mars_period then 
+            v_result := true;
+          end if;
+        end loop;
+        -- Update the last period seen.
+        pv_last_mars_period := v_mars_period;
+        if v_result = false then 
+          ptv_periods(ptv_periods.count + 1) := v_mars_period;
+        end if;
+      end if;
+      return v_result;        
+    end seen_period;
   begin
     if fflu_data.parse_data(p_row) = true then
       -- Set an OK Tracking variable.
@@ -115,17 +150,10 @@ end on_start;
         v_ok := false;
       end if;
       close csr_mars_period;
-      -- Check if this is the first data row and if the current mars period is set. 
-      if pv_prev_mars_period is null and v_mars_period is not null then 
-        pv_prev_mars_period := v_mars_period;
+      -- Check if this period has been seen before.
+      if seen_period = false then 
         -- Clear out any previous data for this same mars period.
-        delete from logr_wod_sales_scan where mars_period = pv_prev_mars_period and data_animal_type = pv_data_animal_type;
-      else
-        -- Now check that each supplied mars period is the same as the first one that was supplied in the file. 
-        if pv_prev_mars_period <> v_mars_period then 
-          fflu_data.log_field_error(pc_field_mars_period,'Mars period was different to first period found in data file. [' || pv_prev_mars_period || '].');
-          v_ok := false;
-        end if;
+        delete from logr_wod_sales_scan where mars_period = v_mars_period and data_animal_type = pv_data_animal_type;
       end if;
       -- Now perform a sense check that the category if it contains Dog or Cat that it matches the interface suffix for this file.
       if instr(initcap(fflu_data.get_char_field(pc_field_category)),pc_data_animal_type_dog) > 0 and fflu_utils.get_interface_suffix <> pc_suffix_dog then
@@ -226,7 +254,8 @@ end on_start;
 
 -- Initialise this package.  
 begin
-  pv_prev_mars_period := null;
+  pv_last_mars_period := null;
   pv_data_animal_type := null;
   pv_user := null;
+  ptv_periods.delete;
 END LOGRWOD01_LOADER;
