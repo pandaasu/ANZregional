@@ -195,6 +195,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
 *******************************************************************************/
   procedure validate_claims is 
     v_counter pls_integer;
+    v_no_recs pls_integer;
     v_dup_type pmx_ar_claims_dups.dup_type%type;
     -- Checks if this claim already exists from an account document perspective.
     function is_duplicate_accounting_doc return boolean is
@@ -275,10 +276,11 @@ PACKAGE body PXIPMX08_EXTRACT AS
     delete from pmx_ar_claims_dups where xactn_seq = fflu_utils.get_interface_no;
     -- Now process each record that we have received.
     v_counter := 0;
+    v_no_recs := pv_claims.count;
     loop
       -- Check if we have finished processing the array. 
       v_counter := v_counter + 1;
-      exit when v_counter > pv_claims.count;
+      exit when v_counter > v_no_recs;
       -- Now check if duplicate and if so, move to the duplicate claims array
       if is_duplicate_accounting_doc or is_duplicate_claim_ref then 
         pv_duplicate_claims(pv_duplicate_claims.count+1) := pv_claims(v_counter);
@@ -547,15 +549,19 @@ PACKAGE body PXIPMX08_EXTRACT AS
 *******************************************************************************/
   function get_claims return tt_claims_piped pipelined is
     v_counter pls_integer;
+    v_found pls_integer;
   begin
      v_counter := 0;
+     v_found := 0;
      loop
        v_counter := v_counter + 1;
-       exit when v_counter > pv_claims.count;
        -- Only pipe out the records that were not duplicates. 
        if pv_claims.exists(v_counter) then 
+         v_found := v_found + 1;
          pipe row(pv_claims(v_counter));
        end if; 
+       -- Exit out of this loop when we have found all the items we want to send.
+       exit when v_found = pv_claims.count;
      end loop;
   end get_claims;
 
@@ -569,10 +575,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
      loop
        v_counter := v_counter + 1;
        exit when v_counter > pv_duplicate_claims.count;
-       -- Only pipe out the records that were not duplicates. 
-       if pv_duplicate_claims.exists(v_counter) then 
-         pipe row(pv_duplicate_claims(v_counter));
-       end if; 
+       pipe row(pv_duplicate_claims(v_counter));
      end loop;
   end get_duplicate_claims;
 
