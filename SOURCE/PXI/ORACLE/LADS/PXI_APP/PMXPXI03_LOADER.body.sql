@@ -1,4 +1,5 @@
-CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
+create or replace 
+package body pmxpxi03_loader as
 
   -- Package Constants
   pc_package_name constant pxi_common.st_package_name := 'PMXPXI03_LOADER';
@@ -133,7 +134,7 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
 
     -- Lookup Pricing Conditions
     cursor csr_prom_config(i_company_code in pxi_common.st_company, i_condition_flag in st_condition_flag, i_pricing_condition in st_pricing_condition, i_bus_sgmnt in pxi_common.st_bus_sgmnt) is
-		select
+    select
       t01.cmpny_code as cmpny_code,
       t01.div_code as div_code,
       t01.cndtn_flag as cndtn_flag,
@@ -144,9 +145,9 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
       t01.cndtn_table_ref as cndtn_table_ref,
       t01.cust_div_code as cust_div_code,
       t01.order_type_code as order_type_code
-		from
+    from
       pmx_prom_config t01
-		where
+    where
       t01.cmpny_code = i_company_code
       and t01.cndtn_flag = i_condition_flag
       and t01.pricing_cndtn_code = i_pricing_condition
@@ -332,6 +333,11 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
   
     pv_outbound_record_count := pv_outbound_record_count + 1;
     
+    -- Create outbound interface when required
+    if not lics_outbound_loader.is_created then
+      pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
+    end if;
+          
     -- If greater than max idoc rows, finalise and create new interface
     if pv_outbound_record_count > pxi_common.gc_max_idoc_rows then 
       pv_outbound_record_count := 1;
@@ -367,7 +373,7 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
   end append_record;
 
   ------------------------------------------------------------------------------
-  procedure execute(i_xactn_seq in number) is
+  procedure check_batch(i_batch_seq in number) is
 
     -- Local definitions
     v_key_message varchar2(4000 char);
@@ -378,6 +384,7 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
     v_clash_count number(15,0);
 
     vr_previous_state pmx_359_promotions%rowtype;
+    vr_first_state pmx_359_promotions%rowtype;
 
   begin
 
@@ -387,13 +394,10 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
       from ( -- to get around the fact you can't order a implicit cursor
         select *
         from pmx_359_promotions
-        where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
-          select vakey,
-            pricing_condition_code,
-            sales_deal,
-            max(xactn_seq) as xactn_seq
+        where xactn_seq in (
+          select max(xactn_seq)
           from pmx_359_promotions
-          where xactn_seq > i_xactn_seq
+          where batch_seq = i_batch_seq
           group by vakey,
             pricing_condition_code,
             sales_deal
@@ -408,16 +412,14 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
       -- Check Previous State, before Current Transaction (Batch)
       v_previous_state_found := false;
       v_prev_state_found_in_current := false;
+      vr_previous_state.xactn_seq := null;
       begin
         select * into vr_previous_state
         from pmx_359_promotions
-        where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
-          select vakey,
-            pricing_condition_code,
-            sales_deal,
-            max(xactn_seq) as xactn_seq
+        where xactn_seq in (
+          select max(xactn_seq)
           from pmx_359_promotions
-          where xactn_seq <= i_xactn_seq -- before Current Transaction (Batch)
+          where batch_seq < i_batch_seq -- before Current Transaction (Batch)
           and vakey = vr_current.vakey
           and pricing_condition_code = vr_current.pricing_condition_code
           and sales_deal = vr_current.sales_deal
@@ -432,13 +434,10 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
           begin
             select * into vr_previous_state
             from pmx_359_promotions
-            where (vakey, pricing_condition_code, sales_deal, xactn_seq) in (
-              select vakey,
-                pricing_condition_code,
-                sales_deal,
-                max(xactn_seq) as xactn_seq
+            where xactn_seq in (
+              select max(xactn_seq)
               from pmx_359_promotions
-              where xactn_seq > i_xactn_seq -- *WITHIN* Current Transaction (Batch)
+              where batch_seq = i_batch_seq -- *WITHIN* Current Transaction (Batch)
               and xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
               and vakey = vr_current.vakey
               and pricing_condition_code = vr_current.pricing_condition_code
@@ -485,33 +484,26 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
         if vr_current.action_code <> 'D' then
         
           begin
+          
             select count(1) into v_clash_count
             from pmx_359_promotions
             where action_code <> 'D'
-            and (vakey, pricing_condition_code, xactn_seq) in 
-              (select vakey,
-                 pricing_condition_code,
-                 xactn_seq
-               from (select * from pmx_359_promotions where (vakey,pricing_condition_code, sales_deal, xactn_seq) in
-                        (select 
-                             vakey,
-                             pricing_condition_code,
-                             sales_deal,
-                             max(xactn_seq) as xactn_seq
-                         from
-                             pmx_359_promotions
-                         where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation   
-                         group by vakey, pricing_condition_code,sales_deal
-                        )
-                     )        
-               where vakey = vr_current.vakey
-               and pricing_condition_code = vr_current.pricing_condition_code
-               and sales_deal <> vr_current.sales_deal
-               and (
-                        buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
-                     or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
-                   )
+            and xactn_seq in (
+              select max(xactn_seq)
+              from pmx_359_promotions
+              where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
+              and vakey = vr_current.vakey
+              and pricing_condition_code = vr_current.pricing_condition_code
+              group by vakey,
+                pricing_condition_code,
+                sales_deal
+            )
+            and sales_deal <> vr_current.sales_deal
+            and (
+              buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
+              or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
             );
+            
           exception
             when others then
               raise_outbound_exception('Clash Count SQL Raised Exception : '||SQLERRM);
@@ -523,33 +515,142 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
           
         end if;
 
-        -- Process Transaction ---------------------------------------------------
-        if v_previous_state_found then -- ZERO Previous State IF FOUND
-          if not v_prev_state_found_in_current then -- Ignore ZERO of Previous State IF FOUND in Current Transaction (BATCH)
-            -- Create Outbound Interface When Required
-            if not lics_outbound_loader.is_created then
-              pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
-            end if;
-            -- ZERO Previous State RATE
-            vr_previous_state.new_rate := 0;
-            -- Append Record
-            append_record(vr_previous_state);
-          end if;
-        end if;
-        
-        if vr_current.action_code <> 'D' then -- DELETES taken care of in the last BLOCK
-          -- Create Outbound Interface When Required
-          if not lics_outbound_loader.is_created then
-            pv_outbound_interface_instance := lics_outbound_loader.create_interface(pc_outbound_interface);
-          end if;
-          -- Append Record
-          append_record(vr_current);
-        end if;
-
       end if;
 
     end loop;
 
+  exception
+
+      when others then
+         fflu_data.log_interface_exception('CHECK_BATCH');
+         rollback;
+         raise;
+
+  end check_batch;
+  
+  ------------------------------------------------------------------------------
+  procedure create_batch(i_batch_seq in number) is
+
+    -- Local definitions
+    type rt_xactn_group is record (
+      vakey pmx_359_promotions.vakey%type,
+      pricing_condition_code pmx_359_promotions.pricing_condition_code%type,
+      buy_start_date pmx_359_promotions.buy_start_date%type,
+      buy_stop_date pmx_359_promotions.buy_stop_date%type
+    );
+    vr_current_group rt_xactn_group;
+    vr_previous_group rt_xactn_group;
+
+    vr_previous pmx_359_promotions%rowtype;
+    vr_delete pmx_359_promotions%rowtype;
+    vr_debug pmx_359_promotions%rowtype;
+    
+    v_key_message varchar2(4000 char);
+
+  begin
+
+    -- Loop current state of *ALL* transactions (VAKEY, Pricing Condition) intersecting with current batch
+    for vr_current in (
+    
+      select *
+      from ( -- to get around the fact you can't order a implicit cursor
+        select *
+        from pmx_359_promotions
+        where action_code != 'D'
+        and xactn_seq in (
+          select max(xactn_seq)
+          from pmx_359_promotions
+          where batch_seq <= i_batch_seq
+          and (vakey, pricing_condition_code) in (
+            select vakey,
+              pricing_condition_code
+            from pmx_359_promotions
+            where batch_seq = i_batch_seq
+            group by vakey, 
+              pricing_condition_code
+          )
+          group by vakey, 
+            pricing_condition_code,
+            sales_deal  
+        )
+        order by vakey, 
+          pricing_condition_code,
+          buy_start_date
+      )
+    
+    )
+    loop
+      -- Set key message for use in log messages
+      v_key_message := 'VAKEY ['||vr_current.vakey||'] Pricing Condition ['||vr_current.pricing_condition_code||'] Sales Deal ['||vr_current.sales_deal||'] Action Code ['||vr_current.action_code||']';
+
+      -- On transaction group (vakey, pricing_condition_code) change
+      if vr_current_group.vakey is null 
+        or vr_current_group.vakey != vr_current.vakey
+        or vr_current_group.pricing_condition_code != vr_current.pricing_condition_code then
+
+        -- Create closing date range delete if necessary
+        if vr_previous_group.vakey is not null  
+          and vr_previous_group.buy_stop_date > vr_previous.buy_stop_date then
+          vr_delete := vr_previous;
+          vr_delete.new_rate := 0;
+          vr_delete.buy_start_date := vr_previous_group.buy_start_date;
+          vr_delete.buy_stop_date := vr_previous_group.buy_stop_date;
+          append_record(vr_delete);
+        end if;
+        
+        begin
+          select vakey,
+            pricing_condition_code,
+            min(buy_start_date),
+            max(buy_stop_date)
+          into vr_current_group
+          from pmx_359_promotions
+          where batch_seq <= i_batch_seq
+          and vakey = vr_current.vakey
+          and pricing_condition_code = vr_current.pricing_condition_code
+          group by vakey,
+            pricing_condition_code;        
+        exception
+          when no_data_found then
+            raise;
+              raise_outbound_exception('Date Range NOT FOUND, '||v_key_message); -- should not be possible
+        end;                
+
+      end if;
+            
+      -- Create filler date range delete if necessary
+      if vr_current_group.buy_start_date < vr_current.buy_start_date then
+          vr_delete := vr_current;
+          vr_delete.new_rate := 0;
+          vr_delete.buy_start_date := vr_current_group.buy_start_date;
+          vr_delete.buy_stop_date := vr_current.buy_start_date - 1;
+          append_record(vr_delete);
+          vr_current_group.buy_start_date := vr_current.buy_stop_date + 1; -- reset group date range start to end of current
+      end if;
+      
+      -- Zero rate for delete transaction 
+      if vr_current.action_code = 'D' then
+        vr_current.new_rate := 0;
+      end if;
+      
+      -- Create transaction record
+      append_record(vr_current);
+    
+      -- Take copy of current group/record
+      vr_previous_group := vr_current_group;
+      vr_previous := vr_current;
+
+    end loop;
+
+    -- Create closing date range delete if necessary
+    if vr_previous_group.buy_stop_date > vr_previous.buy_stop_date then
+      vr_delete := vr_previous;
+      vr_delete.new_rate := 0;
+      vr_delete.buy_start_date := vr_previous_group.buy_start_date;
+      vr_delete.buy_stop_date := vr_previous_group.buy_stop_date;
+      append_record(vr_delete);
+    end if;
+    
     -- Finalise the interface when required
     if lics_outbound_loader.is_created then
        lics_outbound_loader.finalise_interface;
@@ -558,24 +659,46 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
    exception
 
       when others then
-         fflu_data.log_interface_exception('EXECUTE');
+         fflu_data.log_interface_exception('CREATE_BATCH');
          rollback;
-         if lics_outbound_loader.is_created = true then
+         if lics_outbound_loader.is_created then
             lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
             lics_outbound_loader.finalise_interface;
          end if;
          raise;
 
-   end execute;
+   end create_batch;
 
+  ------------------------------------------------------------------------------
+  procedure execute(i_batch_seq in number) is
+
+  begin
+  
+    check_batch(i_batch_seq);
+    create_batch(i_batch_seq);
+    
+  exception
+
+    when others then
+       fflu_data.log_interface_exception('EXECUTE');
+       rollback;
+       if lics_outbound_loader.is_created then
+          lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+          lics_outbound_loader.finalise_interface;
+       end if;
+       raise;
+  
+  end execute;
+   
   ------------------------------------------------------------------------------
   procedure on_end is
   begin
     -- Only perform a commit if there were no errors at all.
-    if fflu_data.was_errors = true then
+    if fflu_data.was_errors then
       rollback;
     else
-      execute(pv_previous_xactn_seq); -- outbound processing
+      -- execute(pv_previous_xactn_seq); -- outbound processing
+      execute(prv_inbound.batch_seq);
       commit;
     end if;
     -- Perform a final cleanup and a last progress logging.
@@ -598,4 +721,3 @@ CREATE OR REPLACE package body PXI_APP.pmxpxi03_loader as
   end on_get_csv_qualifier;
 
 end pmxpxi03_loader;
-/

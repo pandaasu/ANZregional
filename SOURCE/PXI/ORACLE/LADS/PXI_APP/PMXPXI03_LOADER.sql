@@ -1,4 +1,5 @@
-CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
+create or replace 
+package pmxpxi03_loader as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -13,14 +14,14 @@ CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
   Description
   ------------------------------------------------------------------------------
   This package is used for processing Promax Promotion information from Promax.
-  It takes the information in the interface and determines if the information 
-  is for AR Claims or for AP Payments.  
-  
-  Below is an example of the flow below. 
+  It takes the information in the interface and determines if the information
+  is for AR Claims or for AP Payments.
+
+  Below is an example of the flow below.
 
   Promax PX Promotions 359 -> LADS (Inbound) -> Atlas PXIATL02 - Pricing Conditions
-  
-  * NOTE This Package should NOT be executed in parallel .. and WILL FAIL on 
+
+  * NOTE This Package should NOT be executed in parallel .. and WILL FAIL on
   * Duplicate XACTN_SEQ should it be executed in parallel.
 
   Functions
@@ -38,11 +39,13 @@ CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
   2013-08-02  Jonathan Girling      Created Interface
   2013-08-15  Mal Chambeyron        Added deletion / synchronization logic.
   2013-08-21  Chris Horn            Basic Clean Up.
-  2013-08-26  Mal Chambeyron        Added Atlas document split logic .. 
+  2013-08-26  Mal Chambeyron        Added Atlas document split logic ..
                                     on pxi_common.gc_max_idoc_rows
   2013-09-03  Mal Chambeyron        Add RAISE in APPEND_DATA
                                     Add Better On NULL Error Messages
-  2013-10-06  Jonathan Girling      Fixed overlapping promotion issue
+  2013-10-09  Mal Chambeyron        Modify Logic to RE-WRITE the entire group
+                                    (vakey, pricing condition) state 
+                                    intersecting with the current batch. 
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -55,7 +58,7 @@ CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
 
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
-  PURPOSE:   Carries out the processing required based on the transaction 
+  PURPOSE:   Carries out the processing required based on the transaction
              sequence number.
 
   REVISIONS:
@@ -65,7 +68,7 @@ CREATE OR REPLACE package PXI_APP.pmxpxi03_loader as
   1.2   2013-08-26 Chris Horn           Cleaned Up.
 
 *******************************************************************************/
-  procedure execute(i_xactn_seq in number);
-  
+
+  procedure execute(i_batch_seq in number);
+
 end pmxpxi03_loader;
-/
