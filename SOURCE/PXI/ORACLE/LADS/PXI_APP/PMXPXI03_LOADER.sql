@@ -46,6 +46,8 @@ package pmxpxi03_loader as
   2013-10-09  Mal Chambeyron        Modify Logic to RE-WRITE the entire group
                                     (vakey, pricing condition) state 
                                     intersecting with the current batch. 
+                                    Likewise, add handling for action code 'C', 
+                                    equivalent to 'D'.
 
 *******************************************************************************/
   -- LICS Hooks.

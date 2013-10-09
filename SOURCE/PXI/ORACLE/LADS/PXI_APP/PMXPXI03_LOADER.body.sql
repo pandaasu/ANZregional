@@ -194,8 +194,8 @@ package body pmxpxi03_loader as
       if trim(fflu_data.get_char_field(pc_customer_hierarchy)) is not null then
 
         -- Check Action Code
-        if nvl(prv_inbound.action_code, 'X') not in ('A', 'M', 'D') then
-          fflu_data.log_field_error(pc_action_code,'Action Code ['||prv_inbound.action_code||'] MUST be one of [''A'',''M'',''D'']');
+        if nvl(prv_inbound.action_code, 'X') not in ('A','C','D','M') then
+          fflu_data.log_field_error(pc_action_code,'Action Code ['||prv_inbound.action_code||'] MUST be one of [''A'',''C'',''D'',''M'']');
         end if;
 
         -- Extract and Check Transaction Id
@@ -384,7 +384,10 @@ package body pmxpxi03_loader as
     v_clash_count number(15,0);
 
     vr_previous_state pmx_359_promotions%rowtype;
-    vr_first_state pmx_359_promotions%rowtype;
+    -- vr_first_state pmx_359_promotions%rowtype;
+    
+    v_current_action_desc varchar2(16 char);
+    v_previous_action_desc varchar2(16 char);
 
   begin
 
@@ -450,71 +453,79 @@ package body pmxpxi03_loader as
             v_prev_state_found_in_current := true;
           exception
             when no_data_found then
-              if vr_current.action_code = 'M' then
-                raise_outbound_exception('Previous Transaction State NOT FOUND for MODIFY, '||v_key_message);
-              elsif vr_current.action_code = 'D' then
-                raise_outbound_exception('Previous Transaction State NOT FOUND for DELETE, '||v_key_message);
-              else
-                null; -- NOT an ERROR for ADDS
-              end if;
+                null; -- Error handled below .. 
           end;
       end;
 
-      if not (vr_current.action_code = 'D' and v_prev_state_found_in_current) then -- Ignores Superfluous DELETES
-
-        -- Error Conditions ------------------------------------------------------
-        if v_previous_state_found then -- Previous State FOUND
-          if vr_current.action_code = 'A' then
-              raise_outbound_exception('Previous Transaction State FOUND for ADD, '||v_key_message);
-          elsif vr_current.action_code = 'D' and vr_previous_state.action_code = 'D' then
-              raise_outbound_exception('Previous Transaction State Already DELETE for DELETE, '||v_key_message);
-          end if;
-        else -- Previous State NOT FOUND
-          if vr_current.action_code = 'M' then
-              raise_outbound_exception('Previous Transaction State NOT FOUND for MODIFY, '||v_key_message);
-          elsif vr_current.action_code = 'D' then
-              raise_outbound_exception('Previous Transaction State NOT FOUND for DELETE, '||v_key_message);
-          end if;
-        end if;
-
-        -- Check If the Promax (3 Key) Will Clash with an Atlas (2 Key) --------
-        --   Promax 3 Key .. VAKEY, Pricing Condition Code, Sales Deal
-        --   Atlas 2 Key .. VAKEY, Pricing Condition Code
-
-        if vr_current.action_code <> 'D' then
+      -- Error Conditions ------------------------------------------------------
+      
+      -- Populate current action code description, to provide meaninful error messages
+      case vr_current.action_code
+        when 'A' then v_current_action_desc := 'ADD';
+        when 'C' then v_current_action_desc := 'CANCEL';
+        when 'D' then v_current_action_desc := 'DELETE';
+        when 'M' then v_current_action_desc := 'MODIFY';
+        else raise_outbound_exception('Invalid Current Action Code ['||vr_current.action_code||'] MUST be one of [''A'',''C'',''D'',''M''], '||v_key_message);
+      end case;
+      
+      if v_previous_state_found then -- Previous State FOUND
+        -- Populate previous action code description, to provide meaninful error messages
+        case vr_previous_state.action_code
+          when 'A' then v_previous_action_desc := 'ADD';
+          when 'C' then v_previous_action_desc := 'CANCEL';
+          when 'D' then v_previous_action_desc := 'DELETE';
+          when 'M' then v_previous_action_desc := 'MODIFY';
+          else raise_outbound_exception('Invalid Previous Action Code ['||vr_previous_state.action_code||'] MUST be one of [''A'',''C'',''D'',''M''], '||v_key_message);
+        end case;
         
-          begin
-          
-            select count(1) into v_clash_count
-            from pmx_359_promotions
-            where action_code <> 'D'
-            and xactn_seq in (
-              select max(xactn_seq)
-              from pmx_359_promotions
-              where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
-              and vakey = vr_current.vakey
-              and pricing_condition_code = vr_current.pricing_condition_code
-              group by vakey,
-                pricing_condition_code,
-                sales_deal
-            )
-            and sales_deal <> vr_current.sales_deal
-            and (
-              buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
-              or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
-            );
-            
-          exception
-            when others then
-              raise_outbound_exception('Clash Count SQL Raised Exception : '||SQLERRM);
-          end;            
-  
-          if v_clash_count > 0 then
-            raise_outbound_exception('Transaction Would Clash with Existing Transaction, '||v_key_message);
-          end if;
-          
+        if vr_current.action_code = 'A' then
+            raise_outbound_exception('Previous Transaction State FOUND for '||v_current_action_desc||', '||v_key_message);
+        elsif vr_current.action_code in ('C','D') and vr_previous_state.action_code in ('C','D') then
+            raise_outbound_exception('Previous Transaction State Already '||v_previous_action_desc||' for '||v_current_action_desc||', '||v_key_message);
         end if;
+        
+      else -- Previous State NOT FOUND
+        if vr_current.action_code in ('C','D','M') then
+            raise_outbound_exception('Previous Transaction State NOT FOUND for '||v_current_action_desc||', '||v_key_message);
+        end if;
+      end if;
 
+      -- Check If the Promax (3 Key) Will Clash with an Atlas (2 Key) --------
+      --   Promax 3 Key .. VAKEY, Pricing Condition Code, Sales Deal
+      --   Atlas 2 Key .. VAKEY, Pricing Condition Code
+
+      if vr_current.action_code not in ('C','D') then
+      
+        begin
+        
+          select count(1) into v_clash_count
+          from pmx_359_promotions
+          where action_code not in ('C','D')
+          and xactn_seq in (
+            select max(xactn_seq)
+            from pmx_359_promotions
+            where xactn_seq < vr_current.xactn_seq -- and Earlier than Current Transcation
+            and vakey = vr_current.vakey
+            and pricing_condition_code = vr_current.pricing_condition_code
+            group by vakey,
+              pricing_condition_code,
+              sales_deal
+          )
+          and sales_deal <> vr_current.sales_deal
+          and (
+            buy_start_date between vr_current.buy_start_date and vr_current.buy_stop_date
+            or buy_stop_date between vr_current.buy_start_date and vr_current.buy_stop_date
+          );
+          
+        exception
+          when others then
+            raise_outbound_exception('Clash Count SQL Raised Exception : '||SQLERRM);
+        end;            
+
+        if v_clash_count > 0 then
+          raise_outbound_exception('Transaction Would Clash with Existing Transaction, '||v_key_message);
+        end if;
+        
       end if;
 
     end loop;
@@ -556,7 +567,7 @@ package body pmxpxi03_loader as
       from ( -- to get around the fact you can't order a implicit cursor
         select *
         from pmx_359_promotions
-        where action_code != 'D'
+        where action_code not in ('C','D')
         and xactn_seq in (
           select max(xactn_seq)
           from pmx_359_promotions
@@ -625,11 +636,11 @@ package body pmxpxi03_loader as
           vr_delete.buy_start_date := vr_current_group.buy_start_date;
           vr_delete.buy_stop_date := vr_current.buy_start_date - 1;
           append_record(vr_delete);
-          vr_current_group.buy_start_date := vr_current.buy_stop_date + 1; -- reset group date range start to end of current
       end if;
+      vr_current_group.buy_start_date := vr_current.buy_stop_date + 1; -- reset group date range start to end of current
       
       -- Zero rate for delete transaction 
-      if vr_current.action_code = 'D' then
+      if vr_current.action_code in ('C','D') then
         vr_current.new_rate := 0;
       end if;
       
