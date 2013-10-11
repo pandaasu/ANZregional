@@ -540,8 +540,6 @@ input[type="checkbox"].input-validation-error {
 /* tables
 ----------------------------------------------------------*/
 table {
-    /*border-collapse: collapse;
-    border-spacing: 0;*/
     margin-top: 0.75em;
     border: 0 none;
 }
@@ -855,6 +853,12 @@ pre.colcount
 {
     padding:0px;
 }
+#RowDataTableContainer td 
+{
+    min-height: 14px !important;
+    height: 14px !important;
+    line-height: 14px !important;
+}
 #RowDataTableContainer td div.spacing
 {
     padding:2px 3px 2px 3px;
@@ -1044,17 +1048,7 @@ pre.colcount
 /* Chosen */
 header .chzn-container .chzn-drop {
     background-color: transparent;
-    background-color: rgba(44, 77, 63, 0.8);
-    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#cc2c4d3f',endColorstr='#cc2c4d3f');
-    -ms-filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#cc2c4d3f',endColorstr='#cc2c4d3f');
-    
-    /*background-color: rgba(29, 63, 179, 0.8);
-    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#cc1d3fb3',endColorstr='#cc1d3fb3');
-    -ms-filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#cc1d3fb3',endColorstr='#cc1d3fb3');*/
-    
-  /*border: solid 1px #778cd1;
-  border: solid 1px rgba(255, 255, 255, 0.4);*/
-  
+    background-color: rgb(44, 77, 63);
   border-top: 0;
   position: absolute;
   top: 100%;
@@ -1073,10 +1067,6 @@ header .chzn-container-single .chzn-single
 {
     background-color: #1d3fb3;
     color: #ffffff;
-    /*border-left: solid 1px #778cd1;
-    border-right: solid 1px #778cd1;
-    border-left: solid 1px rgba(255, 255, 255, 0.4);
-    border-right: solid 1px rgba(255, 255, 255, 0.4);*/
     border: solid 1px #778cd1;
     border: solid 1px rgba(255, 255, 255, 0.4);
     margin-top:29px;
@@ -1114,12 +1104,6 @@ header .chzn-container-single .chzn-single div b {
   background: url('images/head-drop.png') no-repeat;
 }
 header .chzn-container-single .chzn-search input {
-  /*background: #fff url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px;
-  background: url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px, -webkit-gradient(linear, 0 0, 0 100%, color-stop(1%, #eeeeee), color-stop(15%, #ffffff));
-  background: url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px, -webkit-linear-gradient(top, #eeeeee 1%, #ffffff 15%);
-  background: url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px, -moz-linear-gradient(top, #eeeeee 1%, #ffffff 15%);
-  background: url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px, -o-linear-gradient(top, #eeeeee 1%, #ffffff 15%);
-  background: url('/scripts/chosen/chosen-sprite.png') no-repeat 100% -20px, linear-gradient(#eeeeee 1%, #ffffff 15%);*/
     border: 1px solid #aaa;
     background: url(images/head-search.png) no-repeat top right;    
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#33ffffff',endColorstr='#33ffffff');
@@ -1144,8 +1128,6 @@ header .chzn-container .chzn-results li em
 
 table.trace-details
 {
-    /*border-top: 1px solid #d8d8d8;
-    border-bottom: 1px solid #d8d8d8;*/
     border-spacing: 0;
     margin: 12px 0px 12px 0px;
 }

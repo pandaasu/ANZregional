@@ -536,8 +536,7 @@ WriteLiteral("\");\r\n                $(\"#reprocesOptions\").show();\r\n       
 "= \"Error communicating with server.\";\r\n                        ustatus.Exception" +
 " = (isTest) ? thrownError : \"\";\r\n                        ustatus.IsError = true;" +
 "\r\n                        ShowResult(false);\r\n                    }\r\n           " +
-"     });\r\n            });\r\n            \r\n            // Document ready actions\r\n" +
-"");
+"     });\r\n            });\r\n\r\n            // Document ready actions\r\n");
 
             
             #line 364 "..\..\Views\Monitor\View.cshtml"
@@ -555,10 +554,21 @@ WriteLiteral("\");\r\n                $(\"#reprocesOptions\").show();\r\n       
             #line hidden
 WriteLiteral("                ");
 
-WriteLiteral("loadRowData();\r\n");
+WriteLiteral(@"
+                $(""#perPage li"").click(function () {
+                    $(""#perPage li"").removeClass(""option-selected"");
+                    $(this).addClass(""option-selected"");
+                    $(""#RowDataTableContainer"").jtable(""option"", ""pageSize"", $(this).text());
+                    loadRowData();
+                });
+
+                loadRowData();
+                ");
+
+WriteLiteral("\r\n");
 
             
-            #line 367 "..\..\Views\Monitor\View.cshtml"
+            #line 376 "..\..\Views\Monitor\View.cshtml"
             }
 
             
@@ -641,13 +651,13 @@ WriteLiteral(" class=\"actions\"");
 WriteLiteral(">\r\n    <h3>Actions:</h3>&nbsp;&nbsp;&nbsp;&nbsp;\r\n");
 
             
-            #line 501 "..\..\Views\Monitor\View.cshtml"
+            #line 510 "..\..\Views\Monitor\View.cshtml"
     
             
             #line default
             #line hidden
             
-            #line 501 "..\..\Views\Monitor\View.cshtml"
+            #line 510 "..\..\Views\Monitor\View.cshtml"
      if (Model.HasProcessAccess) {
 
             
@@ -658,7 +668,7 @@ WriteLiteral("        ");
 WriteLiteral("<button id=\"requestReprocess\">Reprocess</button>&nbsp;&nbsp;&nbsp;&nbsp;\r\n");
 
             
-            #line 503 "..\..\Views\Monitor\View.cshtml"
+            #line 512 "..\..\Views\Monitor\View.cshtml"
     }
 
             
@@ -709,13 +719,13 @@ WriteLiteral(" class=\"jtable-column-header\"");
 WriteLiteral(">Status</th>\r\n            </tr>\r\n        </thead>\r\n        <tbody>\r\n");
 
             
-            #line 523 "..\..\Views\Monitor\View.cshtml"
+            #line 532 "..\..\Views\Monitor\View.cshtml"
         
             
             #line default
             #line hidden
             
-            #line 523 "..\..\Views\Monitor\View.cshtml"
+            #line 532 "..\..\Views\Monitor\View.cshtml"
            
             var odd = true;
             var counter = 0;
@@ -726,13 +736,13 @@ WriteLiteral(">Status</th>\r\n            </tr>\r\n        </thead>\r\n        <
 WriteLiteral("\r\n");
 
             
-            #line 527 "..\..\Views\Monitor\View.cshtml"
+            #line 536 "..\..\Views\Monitor\View.cshtml"
         
             
             #line default
             #line hidden
             
-            #line 527 "..\..\Views\Monitor\View.cshtml"
+            #line 536 "..\..\Views\Monitor\View.cshtml"
          foreach (var item in Model.Monitors)
         {
 
@@ -741,22 +751,22 @@ WriteLiteral("\r\n");
             #line hidden
 WriteLiteral("            <tr");
 
-WriteAttribute("class", Tuple.Create(" class=\"", 27181), Tuple.Create("\"", 27274)
+WriteAttribute("class", Tuple.Create(" class=\"", 27552), Tuple.Create("\"", 27645)
             
-            #line 529 "..\..\Views\Monitor\View.cshtml"
-, Tuple.Create(Tuple.Create("", 27189), Tuple.Create<System.Object, System.Int32>(odd ? "" : "jtable-row-even"
-            
-            #line default
-            #line hidden
-, 27189), false)
-, Tuple.Create(Tuple.Create(" ", 27220), Tuple.Create("traceRow", 27221), true)
-            
-            #line 529 "..\..\Views\Monitor\View.cshtml"
-, Tuple.Create(Tuple.Create(" ", 27229), Tuple.Create<System.Object, System.Int32>(counter == 0 ? "jtable-row-selected" : ""
+            #line 538 "..\..\Views\Monitor\View.cshtml"
+, Tuple.Create(Tuple.Create("", 27560), Tuple.Create<System.Object, System.Int32>(odd ? "" : "jtable-row-even"
             
             #line default
             #line hidden
-, 27230), false)
+, 27560), false)
+, Tuple.Create(Tuple.Create(" ", 27591), Tuple.Create("traceRow", 27592), true)
+            
+            #line 538 "..\..\Views\Monitor\View.cshtml"
+, Tuple.Create(Tuple.Create(" ", 27600), Tuple.Create<System.Object, System.Int32>(counter == 0 ? "jtable-row-selected" : ""
+            
+            #line default
+            #line hidden
+, 27601), false)
 );
 
 WriteLiteral(">\r\n                <td");
@@ -766,7 +776,7 @@ WriteLiteral(" class=\"traceId\"");
 WriteLiteral(">");
 
             
-            #line 530 "..\..\Views\Monitor\View.cshtml"
+            #line 539 "..\..\Views\Monitor\View.cshtml"
                                Write(item.TraceId);
 
             
@@ -775,7 +785,7 @@ WriteLiteral(">");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 531 "..\..\Views\Monitor\View.cshtml"
+            #line 540 "..\..\Views\Monitor\View.cshtml"
                Write(item.UserCode);
 
             
@@ -784,7 +794,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 532 "..\..\Views\Monitor\View.cshtml"
+            #line 541 "..\..\Views\Monitor\View.cshtml"
                Write(item.InterfaceCode);
 
             
@@ -793,7 +803,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 533 "..\..\Views\Monitor\View.cshtml"
+            #line 542 "..\..\Views\Monitor\View.cshtml"
                Write(item.InterfaceName);
 
             
@@ -802,7 +812,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 534 "..\..\Views\Monitor\View.cshtml"
+            #line 543 "..\..\Views\Monitor\View.cshtml"
                Write(item.StartTimeFormatted);
 
             
@@ -811,7 +821,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 535 "..\..\Views\Monitor\View.cshtml"
+            #line 544 "..\..\Views\Monitor\View.cshtml"
                Write(item.EndTimeFormatted);
 
             
@@ -820,7 +830,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n                <td>");
 
             
-            #line 536 "..\..\Views\Monitor\View.cshtml"
+            #line 545 "..\..\Views\Monitor\View.cshtml"
                Write(item.Status);
 
             
@@ -829,7 +839,7 @@ WriteLiteral("</td>\r\n                <td>");
 WriteLiteral("</td>\r\n            </tr>\r\n");
 
             
-            #line 538 "..\..\Views\Monitor\View.cshtml"
+            #line 547 "..\..\Views\Monitor\View.cshtml"
             odd = !odd;
             counter++;
         }
@@ -860,7 +870,7 @@ WriteLiteral(" style=\"width:15%;\"");
 WriteLiteral(">");
 
             
-            #line 552 "..\..\Views\Monitor\View.cshtml"
+            #line 561 "..\..\Views\Monitor\View.cshtml"
                               Write(Model.Record.LicsId);
 
             
@@ -877,7 +887,7 @@ WriteLiteral(" style=\"width:30%;\"");
 WriteLiteral(">");
 
             
-            #line 554 "..\..\Views\Monitor\View.cshtml"
+            #line 563 "..\..\Views\Monitor\View.cshtml"
                               Write(Model.Record.InterfaceCode);
 
             
@@ -896,7 +906,7 @@ WriteLiteral(" id=\"tdStatus\"");
 WriteLiteral(">");
 
             
-            #line 556 "..\..\Views\Monitor\View.cshtml"
+            #line 565 "..\..\Views\Monitor\View.cshtml"
                                             Write(Model.Record.Status);
 
             
@@ -910,7 +920,7 @@ WriteLiteral(" id=\"tdTraceId\"");
 WriteLiteral(">");
 
             
-            #line 560 "..\..\Views\Monitor\View.cshtml"
+            #line 569 "..\..\Views\Monitor\View.cshtml"
                           Write(Model.Record.TraceId);
 
             
@@ -919,7 +929,7 @@ WriteLiteral(">");
 WriteLiteral("</td>\r\n            <td><strong>Interface Name</strong></td>\r\n            <td>");
 
             
-            #line 562 "..\..\Views\Monitor\View.cshtml"
+            #line 571 "..\..\Views\Monitor\View.cshtml"
            Write(Model.Record.InterfaceName);
 
             
@@ -932,7 +942,7 @@ WriteLiteral(" id=\"tdUserCode\"");
 WriteLiteral(">");
 
             
-            #line 564 "..\..\Views\Monitor\View.cshtml"
+            #line 573 "..\..\Views\Monitor\View.cshtml"
                            Write(Model.Record.UserCode);
 
             
@@ -946,7 +956,7 @@ WriteLiteral(" id=\"tdRecordCount\"");
 WriteLiteral(">");
 
             
-            #line 568 "..\..\Views\Monitor\View.cshtml"
+            #line 577 "..\..\Views\Monitor\View.cshtml"
                               Write(Model.Record.RecordCount);
 
             
@@ -959,7 +969,7 @@ WriteLiteral(" id=\"tdFileName\"");
 WriteLiteral(">");
 
             
-            #line 570 "..\..\Views\Monitor\View.cshtml"
+            #line 579 "..\..\Views\Monitor\View.cshtml"
                            Write(Model.Record.FileName);
 
             
@@ -972,7 +982,7 @@ WriteLiteral(" id=\"tdStartTimeFormatted\"");
 WriteLiteral(">");
 
             
-            #line 572 "..\..\Views\Monitor\View.cshtml"
+            #line 581 "..\..\Views\Monitor\View.cshtml"
                                      Write(Model.Record.StartTimeFormatted);
 
             
@@ -986,7 +996,7 @@ WriteLiteral(" id=\"tdRowCountError\"");
 WriteLiteral(">");
 
             
-            #line 576 "..\..\Views\Monitor\View.cshtml"
+            #line 585 "..\..\Views\Monitor\View.cshtml"
                                 Write(Model.Record.RowErrorCount);
 
             
@@ -995,7 +1005,7 @@ WriteLiteral(">");
 WriteLiteral("</td>\r\n            <td><strong>File Type</strong></td>\r\n            <td>");
 
             
-            #line 578 "..\..\Views\Monitor\View.cshtml"
+            #line 587 "..\..\Views\Monitor\View.cshtml"
            Write(Model.Record.FileType);
 
             
@@ -1008,7 +1018,7 @@ WriteLiteral(" id=\"tdEndTimeFormatted\"");
 WriteLiteral(">");
 
             
-            #line 580 "..\..\Views\Monitor\View.cshtml"
+            #line 589 "..\..\Views\Monitor\View.cshtml"
                                    Write(Model.Record.EndTimeFormatted);
 
             
@@ -1022,7 +1032,7 @@ WriteLiteral(" id=\"tdInterfaceErrorCount\"");
 WriteLiteral(">");
 
             
-            #line 584 "..\..\Views\Monitor\View.cshtml"
+            #line 593 "..\..\Views\Monitor\View.cshtml"
                                       Write(Model.Record.InterfaceErrorCount);
 
             
@@ -1031,7 +1041,7 @@ WriteLiteral(">");
 WriteLiteral("</td>\r\n            <td><strong>CSV Qualifier</strong></td>\r\n            <td>");
 
             
-            #line 586 "..\..\Views\Monitor\View.cshtml"
+            #line 595 "..\..\Views\Monitor\View.cshtml"
            Write(Model.Record.CsvQualifier);
 
             
@@ -1046,14 +1056,14 @@ WriteLiteral("></div>\r\n    <br />\r\n\r\n\r\n    <div");
 
 WriteLiteral(" id=\"divInterfaceErrors\"");
 
-WriteAttribute("style", Tuple.Create(" style=\"", 29820), Tuple.Create("\"", 29903)
+WriteAttribute("style", Tuple.Create(" style=\"", 30191), Tuple.Create("\"", 30274)
             
-            #line 595 "..\..\Views\Monitor\View.cshtml"
-, Tuple.Create(Tuple.Create("", 29828), Tuple.Create<System.Object, System.Int32>((Model.Record.InterfaceErrorCount == 0) ? "display:none;" : string.Empty
+            #line 604 "..\..\Views\Monitor\View.cshtml"
+, Tuple.Create(Tuple.Create("", 30199), Tuple.Create<System.Object, System.Int32>((Model.Record.InterfaceErrorCount == 0) ? "display:none;" : string.Empty
             
             #line default
             #line hidden
-, 29828), false)
+, 30199), false)
 );
 
 WriteLiteral(">\r\n        <h3>Interface Errors</h3>\r\n        <div");
@@ -1093,13 +1103,13 @@ WriteLiteral(">Message</th>\r\n                    </tr>\r\n                </th
 "   <tbody>\r\n");
 
             
-            #line 608 "..\..\Views\Monitor\View.cshtml"
+            #line 617 "..\..\Views\Monitor\View.cshtml"
                 
             
             #line default
             #line hidden
             
-            #line 608 "..\..\Views\Monitor\View.cshtml"
+            #line 617 "..\..\Views\Monitor\View.cshtml"
                  foreach (var item in Model.InterfaceErrors)
                 {
 
@@ -1108,20 +1118,20 @@ WriteLiteral(">Message</th>\r\n                    </tr>\r\n                </th
             #line hidden
 WriteLiteral("                    <tr");
 
-WriteAttribute("class", Tuple.Create(" class=\"", 30616), Tuple.Create("\"", 30655)
+WriteAttribute("class", Tuple.Create(" class=\"", 30987), Tuple.Create("\"", 31026)
             
-            #line 610 "..\..\Views\Monitor\View.cshtml"
-, Tuple.Create(Tuple.Create("", 30624), Tuple.Create<System.Object, System.Int32>(odd ? "" : "jtable-row-even"
+            #line 619 "..\..\Views\Monitor\View.cshtml"
+, Tuple.Create(Tuple.Create("", 30995), Tuple.Create<System.Object, System.Int32>(odd ? "" : "jtable-row-even"
             
             #line default
             #line hidden
-, 30624), false)
+, 30995), false)
 );
 
 WriteLiteral(">\r\n                        <td>");
 
             
-            #line 611 "..\..\Views\Monitor\View.cshtml"
+            #line 620 "..\..\Views\Monitor\View.cshtml"
                        Write(item.Sequence);
 
             
@@ -1130,7 +1140,7 @@ WriteLiteral(">\r\n                        <td>");
 WriteLiteral("</td>\r\n                        <td>");
 
             
-            #line 612 "..\..\Views\Monitor\View.cshtml"
+            #line 621 "..\..\Views\Monitor\View.cshtml"
                        Write(item.Label);
 
             
@@ -1139,7 +1149,7 @@ WriteLiteral("</td>\r\n                        <td>");
 WriteLiteral("</td>\r\n                        <td>");
 
             
-            #line 613 "..\..\Views\Monitor\View.cshtml"
+            #line 622 "..\..\Views\Monitor\View.cshtml"
                        Write(item.Value);
 
             
@@ -1152,7 +1162,7 @@ WriteLiteral(" class=\"exception\"");
 WriteLiteral(">");
 
             
-            #line 614 "..\..\Views\Monitor\View.cshtml"
+            #line 623 "..\..\Views\Monitor\View.cshtml"
                                               Write(item.Message);
 
             
@@ -1161,7 +1171,7 @@ WriteLiteral(">");
 WriteLiteral("</pre></td>\r\n                    </tr>\r\n");
 
             
-            #line 616 "..\..\Views\Monitor\View.cshtml"
+            #line 625 "..\..\Views\Monitor\View.cshtml"
                     odd = !odd;
                 }
 
@@ -1171,6 +1181,21 @@ WriteLiteral("</pre></td>\r\n                    </tr>\r\n");
 WriteLiteral("                </tbody>\r\n            </table>\r\n        </div>\r\n        <br />\r\n " +
 "   </div>\r\n\r\n    <h3>Row Data</h3>\r\n\r\n    <div");
 
+WriteLiteral(" id=\"perpage-panel\"");
+
+WriteLiteral(">\r\n        <h4>Results per Page:</h4>\r\n        <ul");
+
+WriteLiteral(" class=\"option-group\"");
+
+WriteLiteral(" id=\"perPage\"");
+
+WriteLiteral(">\r\n            <li");
+
+WriteLiteral(" class=\"option-selected\"");
+
+WriteLiteral(">15</li>\r\n            <li>25</li>\r\n            <li>50</li>\r\n            <li>100</" +
+"li>\r\n            <li>250</li>\r\n        </ul>\r\n    </div>\r\n\r\n    <div");
+
 WriteLiteral(" id=\"jtable-result-count\"");
 
 WriteLiteral(" class=\"errorcount-panel\"");
@@ -1178,13 +1203,13 @@ WriteLiteral(" class=\"errorcount-panel\"");
 WriteLiteral("></div>\r\n");
 
             
-            #line 627 "..\..\Views\Monitor\View.cshtml"
+            #line 647 "..\..\Views\Monitor\View.cshtml"
     
             
             #line default
             #line hidden
             
-            #line 627 "..\..\Views\Monitor\View.cshtml"
+            #line 647 "..\..\Views\Monitor\View.cshtml"
      if (Model.Record.RowErrorCount > 0)
     {
 
@@ -1214,7 +1239,7 @@ WriteLiteral(" id=\"errorsOnlyOn\"");
 WriteLiteral(">On</li>\r\n            </ul>\r\n        </div>\r\n");
 
             
-            #line 636 "..\..\Views\Monitor\View.cshtml"
+            #line 656 "..\..\Views\Monitor\View.cshtml"
     }
 
             
@@ -1259,7 +1284,7 @@ WriteLiteral(" style=\"width:100px;\"");
 WriteLiteral(">Connection</td>\r\n            <td><strong>");
 
             
-            #line 664 "..\..\Views\Monitor\View.cshtml"
+            #line 684 "..\..\Views\Monitor\View.cshtml"
                     Write((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName);
 
             
@@ -1284,7 +1309,7 @@ WriteLiteral("></strong></td>\r\n        </tr>\r\n        <tr>\r\n            <t
 "        <td><strong>");
 
             
-            #line 680 "..\..\Views\Monitor\View.cshtml"
+            #line 700 "..\..\Views\Monitor\View.cshtml"
                    Write(ViewBag.User.UserName);
 
             
