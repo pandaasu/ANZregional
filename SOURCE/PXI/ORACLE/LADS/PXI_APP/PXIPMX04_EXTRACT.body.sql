@@ -290,16 +290,14 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
               AND A.hdrdat = K.hdrdat (+)
               AND A.hdrseq = K.hdrseq (+)
               AND K.hielv (+) = '10'
-              AND DECODE(B.vkorg, '149', 1,
-                    DECODE(C.vkorg, '149', 1,
-                      DECODE(D.vkorg, '149', 1,
-                        DECODE(E.vkorg, '149', 1,
-                          DECODE(F.vkorg, '149', 1,
-                            DECODE(G.vkorg, '149', 1,
-                              DECODE(H.vkorg, '149', 1,
-                                DECODE(I.vkorg, '149', 1,
-                                  DECODE(J.vkorg, '149', 1,
-                                    DECODE(K.vkorg, '149', 1, 0)))))))))) = 1
+              AND DECODE(B.vkorg, C.vkorg, 1,
+                    DECODE(C.vkorg, E.vkorg, 1,
+                      DECODE(D.vkorg, F.vkorg, 1,
+                        DECODE(E.vkorg, G.vkorg, 1,
+                          DECODE(F.vkorg, H.vkorg, 1,
+                            DECODE(G.vkorg, I.vkorg, 1,
+                              DECODE(H.vkorg, J.vkorg, 1,
+                                DECODE(I.vkorg, K.vkorg, 1,0)))))))) = 1
             ) L,
             lads_adr_det M, -- @ap0064p_promax_testing
             lads_adr_det N, -- @ap0064p_promax_testing
@@ -444,7 +442,7 @@ CREATE OR REPLACE package body PXI_APP.pxipmx04_extract as
         ((t1.order_block_flag is null and t1.deletion_flag is null and t3.order_block_flag is null and t3.deletion_flag is null) or 
          (exists (select * from sale_cdw_gsv t0 where t0.sold_to_cust_code = t1.customer_code))) and  -- @ap0064p_promax_testing
         -- Only include not rasw and packs or affiliate customers
-        t3.distbn_chnl_code not in ('98','99') and 
+        t3.distbn_chnl_code = pxi_common.gc_distrbtn_channel_primary and 
         -- Do not include demand planning nodes.
         t1.demand_plan_group_code is null;
     rv_cust_level csr_cust_level_data%rowtype; 
