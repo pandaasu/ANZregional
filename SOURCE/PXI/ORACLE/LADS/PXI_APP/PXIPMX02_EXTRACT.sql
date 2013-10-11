@@ -18,6 +18,7 @@ PACKAGE          PXIPMX02_EXTRACT as
  28/07/2013    Chris Horn            Created.
  21/08/2013    Chris Horn            Cleaned Up Code.
  28/08/2013    Chris Horn            Made code more generic for OZ and NZ.
+ 11/10/2013    Chris Horn            Implemented the Percare Product Hierarchy.
  
 *******************************************************************************/
 
@@ -35,6 +36,7 @@ PACKAGE          PXIPMX02_EXTRACT as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
+  1.3   2013-10-11 Chris Horn           Implemented the Petcare Hierarchy.
 
 *******************************************************************************/
    procedure execute(
