@@ -17,11 +17,11 @@ CREATE GLOBAL TEMPORARY TABLE "PMX_ZREP_MATERIALS" (
 COMMENT ON TABLE "PXI"."PMX_ZREP_MATERIALS"  IS 'This is a temporary table used to create the matl tdu to rsu lookup information.';
 
 -- Index on the Material Determination Table.
-CREATE UNIQUE INDEX "PXI"."PMX_ZREP_MATERIALS_01" ON "PXI"."PMX_ZREP_MATERIALS" (PROMAX_COMPANY, PROMAX_DIVISION, ZREP_MATL_CODE) ;
+CREATE UNIQUE INDEX "PXI"."PMX_ZREP_MATERIALS_01" ON "PXI"."PMX_ZREP_MATERIALS" (PROMAX_COMPANY, PROMAX_DIVISION, DSTRBTN_CHANNEL,ZREP_MATL_CODE) ;
+
+-- Perform the necessary grants.
+grant select, update, insert, delete on "PXI"."PMX_ZREP_MATERIALS" to pxi_app;
 
 -- Create a public synonym for this material determination table.
 create or replace public synonym "PMX_ZREP_MATERIALS" for "PXI"."PMX_ZREP_MATERIALS";
 
-
--- Perform the necessary grants.
-grant select, update, insert, delete on "PXI"."PMX_ZREP_MATERIALS" to pxi_app;
