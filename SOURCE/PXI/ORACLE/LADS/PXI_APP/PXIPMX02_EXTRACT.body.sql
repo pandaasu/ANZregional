@@ -18,46 +18,167 @@ package body pxipmx02_extract as
     i_pmx_division in pxi_common.st_promax_division 
     ) return tt_hierachy pipelined is
     -- This cursor generates the product level data in a flatterned table structure.
+    c_not_defined constant pxi_common.st_data := 'NOT DEFINED';
     cursor csr_product_level_data is
       select 
        t4.promax_company,
        t4.promax_division,
        t1.sap_material_code as zrep_code,
        t1.bds_material_desc_en as zrep_desc,
-       nvl(t2.sales_organisation,'###') as level1,  -- Sales Organisation
-       nvl(( select t0.sales_organisation_name from ( 
-         -- This Query should be turned into a view.  
-         select t10.vkorg as sales_organisation, t10.vtext as sales_organisation_name 
-           from (
-             select
-               trim(substr(t01.z_data,1,3)) as mandt,
-               trim(substr(t01.z_data,4,1)) as spras,
-               trim(substr(t01.z_data,5,4)) as vkorg,
-               trim(SUBSTR(t01.z_data,9,20)) AS vtext
-             from 
-               lads_ref_dat t01 -- @ap0064p_promax_testing
-             where 
-               t01.z_tabname = 'TVKOT' and 
-               -- Remove any records that have been deleted by a D in the z_chgtyp column
-               substr(t01.z_data,1,28) not in (
-                 select substr(t01.z_data,1,28) from lads_ref_dat /*@ap0064p_promax_testing */  t01 
-                 where t01.z_tabname = 'TVKOT' and z_chgtyp ='D')
-             ) t10 where t10.spras = 'E'
+       -- Level 1 Code
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl(t2.sales_organisation,'###')  -- Sales Organisation
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl(t3.sap_prdct_ctgry_code,'##') -- Product Category Code
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level1,  
+       -- Level 1 Description
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl(( select t0.sales_organisation_name from ( 
+           -- This Query should be turned into a view.  
+           select t10.vkorg as sales_organisation, t10.vtext as sales_organisation_name 
+             from (
+               select
+                 trim(substr(t01.z_data,1,3)) as mandt,
+                 trim(substr(t01.z_data,4,1)) as spras,
+                 trim(substr(t01.z_data,5,4)) as vkorg,
+                 trim(SUBSTR(t01.z_data,9,20)) AS vtext
+               from 
+                 lads_ref_dat@ap0064p_promax_testing t01 -- @ap0064p_promax_testing
+               where 
+                 t01.z_tabname = 'TVKOT' and 
+                 -- Remove any records that have been deleted by a D in the z_chgtyp column
+                 substr(t01.z_data,1,28) not in (
+                   select substr(t01.z_data,1,28) from lads_ref_dat@ap0064p_promax_testing /*@ap0064p_promax_testing */  t01 
+                   where t01.z_tabname = 'TVKOT' and z_chgtyp ='D')
+               ) t10 where t10.spras = 'E'
              -- End of code for view.
-             ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED') as level1_desc,
-       nvl(t3.sap_bus_sgmnt_code,'##') as level2, -- Business Segment aka Division 
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level2_desc, -- @ap0064p_promax_testing
-       nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') as level3, -- Trade Sector, Business Segment
-       nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' || -- @ap0064p_promax_testing
-         (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),'NOT DEFINED') as level3_desc,   -- @ap0064p_promax_testing
-       nvl(t3.sap_nz_launch_ranking_code,'###') as level4, -- NZ Launch Ranking Code
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),'NOT DEFINED') as level4_desc, -- @ap0064p_promax_testing
-       nvl(t3.sap_nz_promotional_grp_code,'###') as level5, -- NZ Promotional Group
-       nvl((select t0.sap_charistic_value_desc from bds_charistic_value t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),'NOT DEFINED') as level5_desc -- @ap0064p_promax_testing
+             ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED')  -- Sales Organisation Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC012' and t0.sap_charistic_value_code = t3.sap_prdct_ctgry_code),c_not_defined) -- Product Category Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level1_desc,
+       -- Level 2 Code 
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl(t3.sap_bus_sgmnt_code,'##')  -- Business Segment aka Division 
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl(t3.sap_brand_flag_code,'###') -- Brand Flag
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level2,  
+       -- Level 2 Description
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),c_not_defined) -- Business Segment
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC003' and t0.sap_charistic_value_code = t3.sap_brand_flag_code),c_not_defined)  -- Brand Flag Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level2_desc,
+       -- Level 3 Code 
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+            nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') -- Trade Sector, Business Segment
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl(t3.sap_planning_src_code,'###') -- Planning Source / Brand Format
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level3,  
+       -- Level 3 Description
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' || -- Trade Sector
+               (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),c_not_defined)   -- Business Segment
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR8' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_planning_src_code),c_not_defined) -- Planning Source / Brand Format
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level3_desc,
+       -- Level 4 Code 
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl(t3.sap_nz_launch_ranking_code,'###') -- NZ Launch Ranking Code
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl(t3.sap_au_snk_activity_name,'###') -- AU Snack Activity Name / Promoted Group
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level4,  
+       -- Level 4 Description
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR22' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_launch_ranking_code),c_not_defined) -- NZ Launch Ranking Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR14' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_au_snk_activity_name),c_not_defined) -- AU SNK AU Activity / Promoted Group
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level4_desc,
+       -- Level 5 Code 
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl(t3.sap_nz_promotional_grp_code,'###') -- NZ Promotional Group
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           null -- No Level 5
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level5,  
+       -- Level 5 Description
+       case 
+         when t4.promax_company = pxi_common.gc_new_zealand then 
+           nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR11' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_nz_promotional_grp_code),c_not_defined) -- -- NZ Promotional Group Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
+           null -- No Level 5 Description
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
+           c_not_defined
+         when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
+           c_not_defined
+         else
+           c_not_defined
+       end as level5_desc
      from 
-       bds_material_hdr t1,  -- TDU Material Header Information  -- @ap0064p_promax_testing 
-       bds_material_dstrbtn_chain t2, -- Material Sales Area Information -- @ap0064p_promax_testing 
-       bds_material_classfctn t3, -- Material Classification Data  --@ap0064p_promax_testing  
+       bds_material_hdr@ap0064p_promax_testing t1,  -- TDU Material Header Information  -- @ap0064p_promax_testing 
+       bds_material_dstrbtn_chain@ap0064p_promax_testing t2, -- Material Sales Area Information -- @ap0064p_promax_testing 
+       bds_material_classfctn@ap0064p_promax_testing t3, -- Material Classification Data  --@ap0064p_promax_testing  
        table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4  -- Promax Configuration table
      where
        -- Table Joins
@@ -68,7 +189,7 @@ package body pxipmx02_extract as
        -- Ensure that this project is allowed to be distributed.
        t1.xdstrbtn_chain_status = '10' and 
        -- Make sure this product is not being sold to affilate markers or as a raws and packs product.
-       t2.dstrbtn_channel not in ('98','99') and
+       t2.dstrbtn_channel = pxi_common.gc_distrbtn_channel_primary and
        -- Make sure the distribution channel status is not inactive
        t2.dstrbtn_chain_status != '99' and
        -- Ensure the data hasn't been deleted and is correct in lads.
@@ -161,8 +282,12 @@ package body pxipmx02_extract as
        add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L2'||rv_product_level.level1||rv_product_level.level2,rv_product_level.level2_desc,'L1'||rv_product_level.level1,2);
        add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,rv_product_level.level3_desc,'L2'||rv_product_level.level1||rv_product_level.level2,3);
        add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,rv_product_level.level4_desc,'L3'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3,4);
-       add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,rv_product_level.level5_desc,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,5);
-       add_material(rv_product_level.promax_company, rv_product_level.promax_division,rv_product_level.zrep_code,rv_product_level.zrep_desc,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,6);
+       if rv_product_level.level5 is not null then 
+         add_path(rv_product_level.promax_company, rv_product_level.promax_division,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,rv_product_level.level5_desc,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,5);
+         add_material(rv_product_level.promax_company, rv_product_level.promax_division,rv_product_level.zrep_code,rv_product_level.zrep_desc,'L5'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4||rv_product_level.level5,6);
+       else
+         add_material(rv_product_level.promax_company, rv_product_level.promax_division,rv_product_level.zrep_code,rv_product_level.zrep_desc,'L4'||rv_product_level.level1||rv_product_level.level2||rv_product_level.level3||rv_product_level.level4,5);
+       end if;
      end loop;
      close csr_product_level_data;
      -- Now output the actual hierarchy rows. 
