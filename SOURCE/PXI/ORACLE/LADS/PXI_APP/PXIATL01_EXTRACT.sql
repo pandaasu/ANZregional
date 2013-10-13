@@ -89,7 +89,7 @@ CREATE OR REPLACE package PXI_APP.pxiatl01_extract as
   Package Constants
 *******************************************************************************/
   -- Search for a general ledger balancing record with x records of full idoc.
-  gc_search_for_balance constant pls_integer := 21; -- changed this from 20 to 21 due to a bug when sending large files
+  gc_search_for_balance constant pls_integer := 20;
   -- Number of rows to allow for the header and footer. 
   gc_rows_for_header_footer constant pls_integer := 3;
 
