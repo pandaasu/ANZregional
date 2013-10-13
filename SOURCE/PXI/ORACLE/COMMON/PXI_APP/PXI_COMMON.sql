@@ -53,6 +53,7 @@ package pxi_common as
   2013-08-20  Chris Horn            Split out to make common between Venus and
                                     LADS, added promax configuration pipe table.
   2013-08-28  Chris Horn            Added customer division codes.
+  2013-10-14  Chris Horn            Added concept of interface suffix.
 
 *******************************************************************************/
 
@@ -104,6 +105,11 @@ package pxi_common as
   gc_cust_division_food         constant st_cust_division := '57';
   gc_cust_division_snack        constant st_cust_division := '55';
   gc_cust_division_petcare      constant st_cust_division := '56';
+  -- Interface Sufix's
+  gc_interface_snack constant fflu_common.st_interface := '1';
+  gc_interface_food  constant fflu_common.st_interface := '2';
+  gc_interface_pet   constant fflu_common.st_interface := '3';
+  gc_interface_nz    constant fflu_common.st_interface := '4';
 
   -- Distribution Channel 
   gc_distrbtn_channel_primary  constant st_dstrbtn_chnnl := '10'; -- Primary Channel
@@ -301,13 +307,15 @@ package pxi_common as
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-08-20 Chris Horn           Created.
+  1.2   2013-10-14 Chris Horn           Added concept of interface suffix.
   
 *******************************************************************************/
   -- Interface Group List Record
   type rt_promax_config is record (
     promax_company st_company,          -- Valid companies
     promax_division st_promax_division, -- Valid division for this company.
-    cust_division st_cust_division    -- Equivalent Customer Division.
+    cust_division st_cust_division,     -- Equivalent Customer Division.
+    interface_suffix fflu_common.st_interface  -- Interface sufix to use.  
   );
 
   -- Interface Group List Table

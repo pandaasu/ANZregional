@@ -305,6 +305,7 @@ package body pxi_common is
     rv_row.promax_company := gc_new_zealand;
     rv_row.promax_division := gc_new_zealand;
     rv_row.cust_division := gc_cust_division_non_specific;
+    rv_row.interface_suffix := gc_interface_nz;
     if add_row(c_live) = true then 
       pipe row(rv_row);
     end if;
@@ -313,6 +314,7 @@ package body pxi_common is
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_petcare;
     rv_row.cust_division := gc_cust_division_petcare;
+    rv_row.interface_suffix := gc_interface_pet;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;
@@ -321,6 +323,7 @@ package body pxi_common is
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_food;  
     rv_row.cust_division := gc_cust_division_food;
+    rv_row.interface_suffix := gc_interface_food;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;
@@ -329,6 +332,7 @@ package body pxi_common is
     rv_row.promax_company := gc_australia;
     rv_row.promax_division := gc_bus_sgmnt_snack;  
     rv_row.cust_division := gc_cust_division_snack;
+    rv_row.interface_suffix := gc_interface_snack;
     if add_row(c_not_live) = true then 
       pipe row(rv_row);
     end if;
