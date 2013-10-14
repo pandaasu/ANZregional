@@ -47,14 +47,14 @@ PACKAGE BODY PXIPMX07_EXTRACT as
             t1.billed_gsv,
             t1.doc_currcy_code
           from
-            dw_sales_base t1,  -- @db1270p_promax_testing
-            dw_order_base t2,  -- @db1270p_promax_testing
-            matl_dim t3, -- @db1270p_promax_testing
+            dw_sales_base@db1270p_promax_testing t1,  --
+            dw_order_base@db1270p_promax_testing t2,  -- @db1270p_promax_testing
+            matl_dim@db1270p_promax_testing t3, -- @db1270p_promax_testing
             table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4
           where
             -- Join to promax configuration table.
             t1.company_code = t4.promax_company 
-            and ((t1.company_code = pxi_common.gc_australia and t1.hdr_division_code = t4.promax_division) or (t1.company_code = pxi_common.gc_new_zealand))
+            and ((t1.company_code = pxi_common.gc_australia and t1.hdr_division_code = t4.cust_division) or (t1.company_code = pxi_common.gc_new_zealand))
             -- Extract yesterdays data by default, otherwise extract a whole range of data. for history since 2012.
             and t1.company_code = t2.company_code (+)
             and t1.creatn_date between nvl(trunc(i_creation_date),to_date('01/01/2012','DD/MM/YYYY')) and nvl(trunc(i_creation_date),trunc(sysdate-1))

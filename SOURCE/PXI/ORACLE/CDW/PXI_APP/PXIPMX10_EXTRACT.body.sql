@@ -51,16 +51,16 @@ PACKAGE BODY PXIPMX10_EXTRACT as
             t1.billed_qty_base_uom as qty,
             t1.doc_currcy_code as currency,
             (select t0.cost from pxi.pmx_cogs t0 where t0.cmpny_code = t4.promax_company and t0.div_code = t4.promax_division and t0.zrep_matl_code = pxi_common.full_matl_code(t3.rep_item) and 
-             t0.mars_period = (select t00.mars_period from mars_date t00 where t00.calendar_date = t1.billing_eff_date)) as cost
+             t0.mars_period = (select t00.mars_period from mars_date@db1270p_promax_testing t00 where t00.calendar_date = t1.billing_eff_date)) as cost
           from
-            dw_sales_base t1,  -- @db1270p_promax_testing
-            dw_order_base t2,  -- @db1270p_promax_testing
-            matl_dim t3, -- @db1270p_promax_testing
+            dw_sales_base@db1270p_promax_testing t1,  -- @db1270p_promax_testing
+            dw_order_base@db1270p_promax_testing t2,  -- @db1270p_promax_testing
+            matl_dim@db1270p_promax_testing t3, -- @db1270p_promax_testing
             table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t4
           where
             -- Join to promax configuration table.
             t1.company_code = t4.promax_company 
-            and ((t1.company_code = pxi_common.gc_australia and t1.hdr_division_code = t4.promax_division) or (t1.company_code = pxi_common.gc_new_zealand))
+            and ((t1.company_code = pxi_common.gc_australia and t1.hdr_division_code = t4.cust_division) or (t1.company_code = pxi_common.gc_new_zealand))
             -- Extract yesterdays data by default, otherwise extract a whole range of data. for history since 2012.
             and t1.company_code = t2.company_code (+)
             and t1.creatn_date between trunc(i_creation_date-7-to_char(sysdate,'D')) and trunc(sysdate-7+ (6-to_char(sysdate,'D')))

@@ -22,6 +22,7 @@ PACKAGE          PXIPMX10_EXTRACT as
  2013-09-16    Chris Horn            Created.
  2013-09-18    Chris Horn            Reduced the column width by of the discount 
                                      given field.
+ 2013-10-14    Chris Horn            Fixed bug with 147 division selection.                                     
 
 *******************************************************************************/
 

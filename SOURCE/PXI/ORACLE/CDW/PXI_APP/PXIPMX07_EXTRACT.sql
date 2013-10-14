@@ -22,6 +22,7 @@ PACKAGE          PXIPMX07_EXTRACT as
  2013-07-25    Mal Chambeyron        Formatted SQL Output
  2013-08-20    Chris Horn            Updated with revision.
  2013-08-29    Chris Horn            Updated the a revised sales query.
+ 2013-10-14    Chris Horn            Fixed bug with 147 division selection.
  
 
 *******************************************************************************/
