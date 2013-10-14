@@ -128,10 +128,7 @@ end on_start;
         rv_gl.cost_center := fflu_data.get_char_field(pc_cost_centre);
         -- Assign the various number fields.
         rv_gl.tax_amount := 0;
-        --rv_gl.tax_amount_base := 0;
-		rv_gl.tax_amount_base := fflu_data.get_number_field(pc_amount);
-        --rv_gl.amount := fflu_data.get_number_field(pc_amount);
-		rv_gl.amount := 0;
+        rv_gl.tax_amount_base := fflu_data.get_number_field(pc_amount);
         -- Update the amount field based on the various posting keys.  
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_dr then 
@@ -145,6 +142,10 @@ end on_start;
           else
             fflu_data.log_field_error(pc_posting_key,'Unknown Posting Key');
         end case;
+        -- Now set amount to the same as tax amount base so that the zero sum
+        -- check works correctly to find a correct break point for large 
+        -- accruals.
+        rv_gl.amount := rv_gl.tax_amount_base;
         -- Create the Item Reference Field.  Product, Customer, Promo, Text.
         rv_gl.item_text := rpad(
           fflu_data.get_char_field(pc_product_number) || ' ' || -- ZREP

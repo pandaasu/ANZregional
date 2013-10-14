@@ -37,6 +37,7 @@ package pmxpxi01_loader as
   2013-07-30  Chris Horn            Created Interface
   2013-08-08  Jonathan Girling	    Updated Interface mapping
   2013-08-20  Chris Horn            Updated formatting and comments.
+  2013-10-14  Chris Horn            Added amount = tax amount base for zero check.
 
 *******************************************************************************/
   -- LICS Hooks.
