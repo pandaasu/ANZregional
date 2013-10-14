@@ -39,6 +39,7 @@ PACKAGE          PXIPMX05_EXTRACT as
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
   1.3   2013-08-28 Chris Horn           Made generic for OZ.
+  1.4   2013-10-14 Chris Horn           Vendor name too long bug fixed.
 
 *******************************************************************************/
    procedure execute(
