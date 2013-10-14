@@ -30,7 +30,7 @@ package body pxipmx02_extract as
          when t4.promax_company = pxi_common.gc_new_zealand then 
            nvl(t2.sales_organisation,'###')  -- Sales Organisation
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
-           nvl(t3.sap_prdct_ctgry_code,'##') -- Product Category Code
+           nvl(t3.sap_fighting_unit_code,'##') -- Fighting Unit
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
            c_not_defined
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
@@ -62,7 +62,7 @@ package body pxipmx02_extract as
              -- End of code for view.
              ) t0 where t0.sales_organisation = t2.sales_organisation),'NOT DEFINED')  -- Sales Organisation Description
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
-           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC012' and t0.sap_charistic_value_code = t3.sap_prdct_ctgry_code),c_not_defined) -- Product Category Description
+          nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR6' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_fighting_unit_code),c_not_defined) -- Fighting Unit Description
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
            c_not_defined
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
@@ -101,7 +101,7 @@ package body pxipmx02_extract as
          when t4.promax_company = pxi_common.gc_new_zealand then 
             nvl(t3.sap_trade_sector_code,'##') || nvl(t3.sap_bus_sgmnt_code,'##') -- Trade Sector, Business Segment
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
-           nvl(t3.sap_planning_src_code,'###') -- Planning Source / Brand Format
+           nvl(t3.sap_cnsmr_pack_frmt_code,'###') -- Consumer Pack Format
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
            c_not_defined
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
@@ -115,7 +115,7 @@ package body pxipmx02_extract as
            nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC008' and t0.sap_charistic_value_code = t3.sap_trade_sector_code) || ' ' || -- Trade Sector
                (select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC001' and t0.sap_charistic_value_code = t3.sap_bus_sgmnt_code),c_not_defined)   -- Business Segment
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_petcare then 
-           nvl((select t0.sap_charistic_value_desc from bds_charistic_value@ap0064p_promax_testing t0 where t0.sap_charistic_code = 'Z_APCHAR8' and t0.sap_charistic_value_lang = 'EN' and t0.sap_charistic_value_code = t3.sap_planning_src_code),c_not_defined) -- Planning Source / Brand Format
+           nvl((select t0.sap_charistic_value_long_desc from bds_refrnc_charistic@ap0064p_promax_testing t0 where t0.sap_charistic_code = '/MARS/MD_CHC025' and t0.sap_charistic_value_code = t3.sap_cnsmr_pack_frmt_code),c_not_defined)  -- Brand Flag Description
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_food then 
            c_not_defined
          when t4.promax_company = pxi_common.gc_australia and t4.promax_division = pxi_common.gc_bus_sgmnt_snack then 
