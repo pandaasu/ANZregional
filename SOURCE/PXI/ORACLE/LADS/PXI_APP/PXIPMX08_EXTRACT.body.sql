@@ -6,6 +6,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
 *******************************************************************************/
   pc_package_name constant pxi_common.st_package_name := 'PXIPMX08_EXTRACT';
   pc_interface_name constant pxi_common.st_interface_name := 'PXIPMX08';
+  pc_schema_name constant pxi_common.st_package_name := 'PXI_APP';
   pc_dup_type_accntng_doc constant pmx_ar_claims_dups.dup_type%type := 'ACCNTNG_DOC';
   pc_dup_type_claim_ref constant pmx_ar_claims_dups.dup_type%type := 'CLAIM_REF';
 
@@ -400,26 +401,81 @@ PACKAGE body PXIPMX08_EXTRACT AS
   end validate_claims; 
 
 /*******************************************************************************
-  NAME:      REPORT_DUPLICATE_CLAIMS                                     PRIVATE
-  PURPOSE:   Looks at the duplicate claims array and send an exception report
-             to the specific destination email addresses by company code.
-             
-             Identical duplicates are reported as warnings, and different 
-             duplicates are reported as errors. 
-
-  REVISIONS:
-  Ver   Date       Author               Description
-  ----- ---------- -------------------- ----------------------------------------
-  1.1   2013-10-07 Chris Horn           Created.
-
+  NAME:      TRIGGER_REPORT                                              PUBLIC
 *******************************************************************************/
-  procedure report_duplicate_claims is 
+  procedure trigger_report(i_xactn_seq in fflu_common.st_sequence) is 
+    c_report_name pxi_common.st_package_name := 'REPORT_DUPLICATES';
+    -- This function is used to check if there were any duplicates detected
+    -- for the specified transaction and interface suffix.  
+    function check_for_duplicates(i_interface_suffix in fflu_common.st_interface) return boolean is
+      cursor csr_check is 
+        select 
+          count(*) as count
+        from 
+          pmx_ar_claims_dups t1,
+          table(pxi_common.promax_config(null,null)) t2
+        where 
+          t1.XACTN_SEQ = i_xactn_seq and
+          t1.company_code = t2.promax_company and 
+          ((t1.div_code = t2.promax_division and t1.company_code = pxi_common.gc_australia) or (t1.company_code = pxi_common.gc_new_zealand)) and
+          t2.interface_suffix = i_interface_suffix;      
+      rv_check csr_check%rowtype;
+      v_result boolean;
+    begin
+      v_result := false;
+      rv_check.count := null;
+      open csr_check;
+      fetch csr_check into rv_check;
+      close csr_check;
+      if rv_check.count is not null then 
+        if rv_check.count > 0 then 
+          v_result := true;
+        end if;
+      end if;
+      return v_result;
+    exception 
+      when others then 
+        pxi_common.reraise_promax_exception(pc_package_name,'CHECK_FOR_DUPLICATES');
+    end check_for_duplicates;  
+  
   begin
-    null;
+    -- Trigger NZ AR Claims Report
+    if check_for_duplicates(pxi_common.gc_interface_nz) then 
+      lics_trigger_loader.execute('NZ Promax AR Claims Report',
+        pc_schema_name||'.'||pc_package_name||'.'||c_report_name||'(' ||i_xactn_seq || ',' || pxi_common.gc_interface_nz || ')',
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT',pc_interface_name),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || pxi_common.gc_interface_nz),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP',pc_interface_name));
+    end if;
+    
+    -- Trigger Petcare AR Claims Report
+    if check_for_duplicates(pxi_common.gc_interface_pet) then 
+      lics_trigger_loader.execute('Petcare Promax AR Claims Report',
+        pc_schema_name||'.'||pc_package_name||'.'||c_report_name||'(' ||i_xactn_seq || ',' || pxi_common.gc_interface_pet || ')',
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT',pc_interface_name),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || pxi_common.gc_interface_pet),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP',pc_interface_name));
+    end if;
+    -- Trigger Snackfood AR Claims Report
+    if check_for_duplicates(pxi_common.gc_interface_snack) then 
+      lics_trigger_loader.execute('Snackfood Promax AR Claims Report',
+        pc_schema_name||'.'||pc_package_name||'.'||c_report_name||'(' ||i_xactn_seq || ',' || pxi_common.gc_interface_snack || ')',
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT',pc_interface_name),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || pxi_common.gc_interface_snack),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP',pc_interface_name));
+    end if;
+    -- Trigger Food AR Claims Report
+    if check_for_duplicates(pxi_common.gc_interface_food) then 
+      lics_trigger_loader.execute('Food Promax AR Claims Report',
+        pc_schema_name||'.'||pc_package_name||'.'||c_report_name||'(' ||i_xactn_seq || ',' || pxi_common.gc_interface_food || ')',
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_ALERT',pc_interface_name),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || pxi_common.gc_interface_food),
+        lics_setting_configuration.retrieve_setting('LICS_TRIGGER_GROUP',pc_interface_name));
+    end if;                            
   exception
     when others then
-      pxi_common.reraise_promax_exception(pc_package_name,'REPORT_DUPLICATE_CLAIMS');
-  end report_duplicate_claims; 
+      pxi_common.reraise_promax_exception(pc_package_name,'TRIGGER_REPORT');
+  end trigger_report; 
 
 /*******************************************************************************
   NAME:      EXECUTE                                                     PRIVATE
@@ -535,7 +591,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
       validate_claims;  -- Check and validate the claim records. 
       execute; -- Perform the interface extract.  
       commit;
-      report_duplicate_claims; -- Report Duplicate Claims
+      trigger_report(fflu_utils.get_interface_no); -- Report Duplicate Claims
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;
@@ -594,5 +650,13 @@ PACKAGE body PXIPMX08_EXTRACT AS
   begin
     return fflu_common.gc_csv_qualifier_null;
   end on_get_csv_qualifier;
+
+/*******************************************************************************
+  NAME:      REPORT_AR_DUPLICATES                                         PUBLIC
+*******************************************************************************/
+  procedure report_duplicates(i_xactn_seq in fflu_common.st_sequence, i_interface_suffix in fflu_common.st_interface) is 
+  begin
+    null;
+  end report_duplicates;
 
 END PXIPMX08_EXTRACT;

@@ -31,6 +31,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-08-28  Chris Horn            Made code generic for OZ.
   2013-10-07  Chris Horn            Updated to handle duplicates.
   2013-10-08  Chris Horn            Div Code and Tax Code Logic Added fixed Oz.
+  2013-10-14  Chris Horn            Built triggered email report of duplicates.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -97,5 +98,35 @@ PACKAGE PXIPMX08_EXTRACT AS
 
 *******************************************************************************/
   function get_duplicate_claims return tt_claims_piped pipelined;
+  
+/*******************************************************************************
+  NAME:      TRIGGER_REPORT                                              PRIVATE
+  PURPOSE:   Creates a lics triggered background job to perform the reporting
+             in a seperate thread.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-10-07 Chris Horn           Created.
+  1.2   2013-10-14 Chris Horn           Implemented.
+
+*******************************************************************************/
+  procedure trigger_report(i_xactn_seq in fflu_common.st_sequence);
+  
+/*******************************************************************************
+  NAME:      REPORT_DUPLICATES                                            PUBLIC
+  PURPOSE:   Looks at the duplicate claims and send an exception report
+             to the specific destination email addresses by company code.
+             
+             Identical duplicates are reported as warnings, and different 
+             duplicates are reported as errors. 
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-10-14 Chris Horn           Created.
+
+*******************************************************************************/
+  procedure report_duplicates(i_xactn_seq in fflu_common.st_sequence, i_interface_suffix in fflu_common.st_interface);
 
 END PXIPMX08_EXTRACT;
