@@ -2,7 +2,7 @@
 -- Run the create table scripts on LOGR and change scripts.
 
 -- Part 2 Script to grant select access on the tables to Logr schema.
--- Run as ORDS
+-- Run as ODS
 grant select on LOGR_WOD_ADVERT_EFFCTVNSS to logr;
 grant select on LOGR_WOD_DSTNCTV_ASSET to logr;
 grant select on LOGR_WOD_PRDCT_PRFRMNC to logr;
