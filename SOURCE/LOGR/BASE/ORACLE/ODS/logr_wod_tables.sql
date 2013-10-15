@@ -29,9 +29,9 @@ create table logr_wod_sales_scan (
 
 create index log_wod_sales_scan_nu01 on logr_wod_sales_scan (mars_period,data_animal_type);
 
-create or replace public synonym logr_wod_sales_scan for ods.logr_wod_sales_scan;
+create or replace public synonym logr_wod_sales_scan for logr.logr_wod_sales_scan;
 
-grant select, insert, update, delete on logr_wod_sales_scan to ods_app;
+grant select, insert, update, delete on logr_wod_sales_scan to logr_app;
 
 -- DISTINCTIVE ASSET
 
@@ -49,9 +49,9 @@ create table logr_wod_dstnctv_asset (
 
 create index logr_wod_dstnctv_asset_nu01 on logr_wod_dstnctv_asset (mars_period);
 
-create or replace public synonym logr_wod_dstnctv_asset for ods.logr_wod_dstnctv_asset;
+create or replace public synonym logr_wod_dstnctv_asset for logr.logr_wod_dstnctv_asset;
 
-grant select, insert, update, delete on logr_wod_dstnctv_asset to ods_app;
+grant select, insert, update, delete on logr_wod_dstnctv_asset to logr_app;
 
 -- SHARE_OF_SHELF
 drop table logr_wod_share_of_shelf;
@@ -77,9 +77,9 @@ create table logr_wod_share_of_shelf (
 
 create index logr_wod_share_of_shelf_nu01 on logr_wod_share_of_shelf (mars_period,account);
 
-create or replace public synonym logr_wod_share_of_shelf for ods.logr_wod_share_of_shelf;
+create or replace public synonym logr_wod_share_of_shelf for logr.logr_wod_share_of_shelf;
 
-grant select, insert, update, delete on logr_wod_share_of_shelf to ods_app;
+grant select, insert, update, delete on logr_wod_share_of_shelf to logr_app;
 
 -- PACKAGING EFFECTIVENESS
 drop table logr_wod_pack_effctvnss;
@@ -104,9 +104,9 @@ create table logr_wod_pack_effctvnss (
 
 create index logr_wod_pack_effctvnss_nu01 on logr_wod_pack_effctvnss (mars_period);
 
-create or replace public synonym logr_wod_pack_effctvnss for ods.logr_wod_pack_effctvnss;
+create or replace public synonym logr_wod_pack_effctvnss for logr.logr_wod_pack_effctvnss;
 
-grant select, insert, update, delete on logr_wod_pack_effctvnss to ods_app;
+grant select, insert, update, delete on logr_wod_pack_effctvnss to logr_app;
 
 
 -- ADVERTISING EFFECTIVENESS
@@ -128,9 +128,9 @@ create table logr_wod_advert_effctvnss (
 
 create index logr_wod_advert_effctvnss_nu01 on logr_wod_advert_effctvnss (mars_period);
 
-create or replace public synonym logr_wod_advert_effctvnss for ods.logr_wod_advert_effctvnss;
+create or replace public synonym logr_wod_advert_effctvnss for logr.logr_wod_advert_effctvnss;
 
-grant select, insert, update, delete on logr_wod_advert_effctvnss to ods_app;
+grant select, insert, update, delete on logr_wod_advert_effctvnss to logr_app;
 
 -- TV ADVERTISING ACTIVITY
 drop table logr_wod_tv_activity;
@@ -149,9 +149,9 @@ create table logr_wod_tv_activity (
 
 create index logr_wod_tv_activity_nu01 on logr_wod_tv_activity (version);
 
-create or replace public synonym logr_wod_tv_activity for ods.logr_wod_tv_activity;
+create or replace public synonym logr_wod_tv_activity for logr.logr_wod_tv_activity;
 
-grant select, insert, update, delete on logr_wod_tv_activity to ods_app;
+grant select, insert, update, delete on logr_wod_tv_activity to logr_app;
 
 
 -- HOUSEHOLD PENETRATION
@@ -176,9 +176,9 @@ create table logr_wod_house_pntrtn (
 
 create index logr_wod_house_pntrtn_nu01 on logr_wod_house_pntrtn (data_animal_type);
 
-create or replace public synonym logr_wod_house_pntrtn for ods.logr_wod_house_pntrtn;
+create or replace public synonym logr_wod_house_pntrtn for logr.logr_wod_house_pntrtn;
 
-grant select, insert, update, delete on logr_wod_house_pntrtn to ods_app;
+grant select, insert, update, delete on logr_wod_house_pntrtn to logr_app;
 
 -- PRODUCT PERFORMANCE
 drop table logr_wod_prdct_prfrmnc;
@@ -196,9 +196,9 @@ create table logr_wod_prdct_prfrmnc (
   last_updtd_time date
 );
 
-create or replace public synonym logr_wod_prdct_prfrmnc for ods.logr_wod_prdct_prfrmnc;
+create or replace public synonym logr_wod_prdct_prfrmnc for logr.logr_wod_prdct_prfrmnc;
 
-grant select, insert, update, delete on logr_wod_prdct_prfrmnc to ods_app;
+grant select, insert, update, delete on logr_wod_prdct_prfrmnc to logr_app;
 
 -- Table Grants for the QV User
 grant select on LOGR_WOD_ADVERT_EFFCTVNSS to qv_user;
