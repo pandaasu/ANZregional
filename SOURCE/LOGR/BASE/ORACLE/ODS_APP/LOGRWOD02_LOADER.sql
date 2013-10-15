@@ -4,8 +4,8 @@ PACKAGE LOGRWOD02_LOADER AS
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
+  System    : LOGR
+  Owner     : LOGR_APP
   Package   : LOGRWOD02_LOADER
   Author    : Chris Horn
   Interface : Laws of Growth - Australia Petcare - Distinctive Asset Target

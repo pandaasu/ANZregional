@@ -4,9 +4,9 @@ PACKAGE LOGRWOD07_LOADER AS
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
-  Package   : LOGRWOD01_LOADER
+  System    : LOGR
+  Owner     : LOGR_APP
+  Package   : LOGRWOD07_LOADER
   Author    : Chris Horn
   Interface : Laws of Growth - Australian Petcare - Household Penetration
 

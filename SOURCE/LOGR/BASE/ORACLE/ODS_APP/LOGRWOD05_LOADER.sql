@@ -4,8 +4,8 @@ PACKAGE LOGRWOD05_LOADER AS
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
+  System    : LOGR
+  Owner     : LOGR_APP
   Package   : LOGRWOD05_LOADER
   Author    : Chris Horn
   Interface : Laws of Growth - Australia Petcare - Advertising Effectiveness.

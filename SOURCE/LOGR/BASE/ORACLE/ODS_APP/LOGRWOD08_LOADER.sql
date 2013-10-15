@@ -4,8 +4,8 @@ PACKAGE LOGRWOD08_LOADER AS
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
+  System    : LOGR
+  Owner     : LOGR_APP
   Package   : LOGRWOD08_LOADER
   Author    : Chris Horn
   Interface : Laws of Growth - Australia Petcare - Product Performance
