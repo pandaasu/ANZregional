@@ -29,6 +29,7 @@ PACKAGE body LOGRWOD01_LOADER AS
   pc_field_sub_brand constant fflu_common.st_name := 'Sub Brand';
   pc_field_multiple constant fflu_common.st_name := 'Multiple';
   pc_field_multi_pack constant fflu_common.st_name := 'Multi Pack';
+  pc_field_occasion constant fflu_common.st_name := 'Occasion';
 
 /*******************************************************************************
   Interface Suffix's
@@ -93,6 +94,10 @@ PACKAGE body LOGRWOD01_LOADER AS
     fflu_data.add_char_field_del(pc_field_sub_brand,14,'Subbrand',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_del(pc_field_multiple,15,'Multiple',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
     fflu_data.add_char_field_del(pc_field_multi_pack,16,'Multi_pack',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    -- Now parse an Occasion field that is only on the dog files.
+    if  pv_data_animal_type = pc_data_animal_type_dog then 
+      fflu_data.add_char_field_del(pc_field_occasion,17,'Occasion',null,100,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    end if;
     -- Now access the user name.  Must be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
   exception 
@@ -107,6 +112,7 @@ end on_start;
   procedure on_data(p_row in varchar2) is 
     v_ok boolean;
     v_mars_period logr_wod_sales_scan.mars_period%type;
+    v_occasion logr_wod_sales_scan.occasion%type;
     cursor csr_mars_period(i_calendar_date in date) is 
       select mars_period 
       from mars_date 
@@ -166,6 +172,13 @@ end on_start;
       end if;
       -- Now insert the logr sales scan data.
       if v_ok = true then 
+        -- If this is a dog file lets set the occasion field first.
+        if  pv_data_animal_type = pc_data_animal_type_dog then 
+          v_occasion := initcap(fflu_data.get_char_field(pc_field_occasion));
+        else 
+          v_occasion := null;
+        end if;
+        -- Now perform the insert
         insert into logr_wod_sales_scan (
           period,
           mars_period, 
@@ -185,6 +198,7 @@ end on_start;
           sub_brand,
           multiple,
           multi_pack,
+          occasion,
           last_updtd_user, 
           last_updtd_time
         ) values (
@@ -206,6 +220,7 @@ end on_start;
           initcap(fflu_data.get_char_field(pc_field_sub_brand)),
           initcap(fflu_data.get_char_field(pc_field_multiple)),
           initcap(fflu_data.get_char_field(pc_field_multi_pack)),
+          v_occasion,
           pv_user,
           sysdate
         );

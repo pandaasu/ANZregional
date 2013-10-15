@@ -4,8 +4,8 @@ PACKAGE LOGRWOD01_LOADER AS
 ** PACKAGE DEFINITION
 ********************************************************************************
 
-  System    : ODS
-  Owner     : ODS_APP
+  System    : LOGR
+  Owner     : LOGR_APP
   Package   : LOGRWOD01_LOADER
   Author    : Chris Horn
   Interface : Laws of Growth - Australia Petcare - Sales Scan Data
@@ -34,6 +34,7 @@ PACKAGE LOGRWOD01_LOADER AS
   2013-08-11  Chris Horn            Added last updated time, user fields.
   2013-08-14  Chris Horn            Updated exception handling.
   2013-10-09  Chris Horn            Added multi period handling.
+  2013-10-15  Chris Horn            Added Occasion handling for dog.
 
 *******************************************************************************/
   -- LICS Hooks.
