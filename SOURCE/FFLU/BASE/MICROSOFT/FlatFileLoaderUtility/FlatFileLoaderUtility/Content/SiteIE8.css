@@ -19,9 +19,6 @@ input.date
 }
 .ui-progressbar 
 {
-    -webkit-border-radius: 0px;
-    -moz-border-radius: 0px;
-    border-radius: 0px;
     behavior: url(/scripts/PIE.htc);
 }
 #TableContainer thead tr th:first-child +th+th+th+th+th+th+th+th+th+th+th+th
