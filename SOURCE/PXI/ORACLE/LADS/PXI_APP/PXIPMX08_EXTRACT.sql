@@ -31,7 +31,9 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-08-28  Chris Horn            Made code generic for OZ.
   2013-10-07  Chris Horn            Updated to handle duplicates.
   2013-10-08  Chris Horn            Div Code and Tax Code Logic Added fixed Oz.
-  2013-10-14  Chris Horn            Built triggered email report of duplicates.
+  2013-10-14  Chris Horn            Triggered email report of duplicates.
+  2013-10-18  Chris Horn            Built html error reporting.
+  2013-10-22  Chris Horn            Completed html error reporting.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -109,7 +111,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-10-07 Chris Horn           Created.
   1.2   2013-10-14 Chris Horn           Implemented.
-
+  
 *******************************************************************************/
   procedure trigger_report(i_xactn_seq in fflu_common.st_sequence);
   
@@ -125,6 +127,7 @@ PACKAGE PXIPMX08_EXTRACT AS
   Ver   Date       Author               Description
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-10-14 Chris Horn           Created.
+  1.2   2013-10-17 Chris Horn           Implemented.
 
 *******************************************************************************/
   procedure report_duplicates(i_xactn_seq in fflu_common.st_sequence, i_interface_suffix in fflu_common.st_interface);

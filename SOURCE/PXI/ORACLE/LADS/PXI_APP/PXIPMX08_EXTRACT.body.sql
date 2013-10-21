@@ -655,8 +655,433 @@ PACKAGE body PXIPMX08_EXTRACT AS
   NAME:      REPORT_AR_DUPLICATES                                         PUBLIC
 *******************************************************************************/
   procedure report_duplicates(i_xactn_seq in fflu_common.st_sequence, i_interface_suffix in fflu_common.st_interface) is 
+
+    procedure report_dup_claim_ref is
+      -- Duplicate Claims Cursor.
+      cursor csr_dup_claims is 
+        select 
+          t1.*,
+          t1.fiscal_year as prev_fiscal_year,
+          t3.accounting_doc_no as prev_accounting_doc_no,
+          t3.line_item_no as prev_line_item_no,
+          t3.claim_amount as prev_claim_amount
+        from 
+          pmx_ar_claims_dups t1,
+          table(pxi_common.promax_config(null,null)) t2,
+          pmx_ar_claims t3
+        where 
+          -- Report for this interface and Accounting Doc type errors.
+          t1.XACTN_SEQ = i_xactn_seq and
+          t1.dup_type = pc_dup_type_claim_ref and 
+          -- Now ensure we are just reporting this company and division
+          t1.company_code = t2.promax_company and 
+          (t2.promax_company = pxi_common.gc_new_zealand or (t2.promax_company = pxi_common.gc_australia and t2.promax_division = t1.div_code)) and
+          -- Now join to the previously sent claim
+          t3.company_code = t1.company_code and 
+          t3.div_code = t1.div_code and
+          t3.cust_code = t1.cust_code and 
+          t3.claim_ref = t1.claim_ref
+        order by 
+          t1.batch_rec_seq;
+      rv_dup_claim csr_dup_claims%rowtype;
+      c_highlight constant pxi_common.st_data := ' class="highlight"';
+  
+      -- This function searches the claim history and trys to find a new claim ref
+      -- that hasn't been used before.
+      function suggest_new_claim_ref return pmx_ar_claims.claim_ref%type is
+        v_base_claim_ref pmx_ar_claims.claim_ref%type;
+        v_new_claim_ref pmx_ar_claims.claim_ref%type;
+        v_found_claim_ref pmx_ar_claims.claim_ref%type;
+        v_counter pls_integer;
+        cursor csr_find_claim is 
+          select claim_ref from pmx_ar_claims t1 
+          where 
+            t1.company_code = rv_dup_claim.company_code and 
+            t1.div_code = rv_dup_claim.div_code and
+            t1.cust_code = rv_dup_claim.cust_code and 
+            t1.claim_ref = v_new_claim_ref;
+        v_slash pls_integer;
+      begin
+        -- Determine if the current claim reference already has a slash, searchs 
+        -- from the end of the string backwards for the first occuarance of a /
+        v_slash := instr(rv_dup_claim.claim_ref,'/',-1);
+        if v_slash is null then 
+          v_slash := 0;
+        end if;
+        -- Now try and extract a count if one exists and set the base claim ref.
+        if v_slash > 0 then 
+          begin
+            v_counter := to_number(substr(rv_dup_claim.claim_ref,v_slash+1));
+            v_base_claim_ref := substr(rv_dup_claim.claim_ref,1,v_slash-1);
+          exception 
+            when others then 
+              -- If there is text after the slash then include the slash
+              v_counter := 1;
+              v_base_claim_ref := rv_dup_claim.claim_ref;
+          end;
+        else 
+          v_counter := 1;
+          v_base_claim_ref := rv_dup_claim.claim_ref;
+        end if;
+        loop
+          v_new_claim_ref := '/' || v_counter;
+          v_new_claim_ref := substr(v_base_claim_ref,1,12-length(v_new_claim_ref)) || v_new_claim_ref;
+          open csr_find_claim;
+          fetch csr_find_claim into v_found_claim_ref;
+          if csr_find_claim%notfound then
+            v_found_claim_ref := null;
+          end if;
+          close csr_find_claim;
+          exit when v_found_claim_ref is null;
+          v_counter := v_counter + 1;
+        end loop;
+        return v_new_claim_ref;
+      exception 
+        when others then 
+          pxi_common.reraise_promax_exception(pc_package_name,'SUGGEST_NEW_CLAIM_REF');
+      end suggest_new_claim_ref;   
+    begin
+      -- Now report all the found duplicate claims. 
+      open csr_dup_claims;
+      fetch csr_dup_claims into rv_dup_claim;
+      if csr_dup_claims%found then 
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+        lics_mailer.append_data('<h3><strong>ERROR:</strong> Duplicate Claim References</h2>');
+        lics_mailer.append_data('<p>Below is the list of duplicate claims that were received that');
+        lics_mailer.append_data('have not been sent to promax because the claim reference has been used');
+        lics_mailer.append_data('before for this customer. To fix, try changing the claim reference to the');
+        lics_mailer.append_data('suggested value and then resend from SAP.</p>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+        lics_mailer.append_data('<table>');
+        lics_mailer.append_data('<tr>');
+        lics_mailer.append_data('<th>Interface ID</th>');
+        lics_mailer.append_data('<th>Company Code</th>');
+        lics_mailer.append_data('<th>Division Code</th>');
+        lics_mailer.append_data('<th>Cust Code</th>');
+        lics_mailer.append_data('<th>Claim Amount</th>');
+        lics_mailer.append_data('<th>Claim Ref</th>');
+        lics_mailer.append_data('<th>Posting Date</th>');
+        lics_mailer.append_data('<th>Fiscal Year</th>');
+        lics_mailer.append_data('<th>Fiscal Period</th>');
+        lics_mailer.append_data('<th>Reason Code</th>');
+        lics_mailer.append_data('<th>Tax Code</th>');
+        lics_mailer.append_data('<th>Accounting Doc No</th>');
+        lics_mailer.append_data('<th>Line Item No</th>');
+        lics_mailer.append_data('<th>Prev Fiscal Year</th>');
+        lics_mailer.append_data('<th>Prev Accounting Doc No</th>');
+        lics_mailer.append_data('<th>Prev Line Item No</th>');
+        lics_mailer.append_data('<th>Prev Claim Amount</th>');
+        lics_mailer.append_data('<th>Suggested New Claim Ref</th>');
+        lics_mailer.append_data('</tr>');
+        loop
+          lics_mailer.append_data('<tr>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.xactn_seq || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.company_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.div_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.cust_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.claim_amount || '</td>');
+          lics_mailer.append_data('<td'||c_highlight||'>'||rv_dup_claim.claim_ref || '</td>');
+          lics_mailer.append_data('<td>'||to_char(rv_dup_claim.posting_date,'DD/MM/YYYY') || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.fiscal_year || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.fiscal_period || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.reason_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.tax_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.accounting_doc_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.line_item_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.prev_fiscal_year || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.prev_accounting_doc_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.prev_line_item_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_claim.prev_claim_amount || '</td>');
+          lics_mailer.append_data('<td'||c_highlight||'>'||suggest_new_claim_ref || '</td>');
+          lics_mailer.append_data('</tr>');
+          -- Now fetch the next record and exit once finished.
+          fetch csr_dup_claims into rv_dup_claim;
+          exit when csr_dup_claims%notfound;
+        end loop;
+        lics_mailer.append_data('</table>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+      end if;
+      close csr_dup_claims;
+    exception 
+      when others then 
+        pxi_common.reraise_promax_exception(pc_package_name,'REPORT_DUP_CLAIM_REF');
+    end report_dup_claim_ref;
+
+    -- This procedure reports any accounting document mismatches that may have
+    -- been detceted. 
+    procedure report_dup_accntng_mismatch is 
+      -- Duplicate Accounting Doc Mismatch.
+      cursor csr_dup_accntng_mismatch is
+        select 
+          t1.*,
+          t3.reason_code as prev_reason_code,
+          t3.claim_ref as prev_claim_ref, 
+          t3.cust_code as prev_cust_code,
+          t3.claim_amount as prev_claim_amount,
+          t3.tax_code as prev_tax_code
+        from 
+          pmx_ar_claims_dups t1,
+          table(pxi_common.promax_config(null,null)) t2,
+          pmx_ar_claims t3
+        where 
+          -- Report for this interface and Accounting Doc type errors.
+          t1.XACTN_SEQ = i_xactn_seq and
+          t1.dup_type = pc_dup_type_accntng_doc and 
+          -- Now ensure we are just reporting this company and division
+          t1.company_code = t2.promax_company and 
+          (t2.promax_company = pxi_common.gc_new_zealand or (t2.promax_company = pxi_common.gc_australia and t2.promax_division = t1.div_code)) and
+          -- Join to the previously sent data.  
+          t3.company_code = t1.company_code and
+          t3.fiscal_year = t1.fiscal_year and
+          t3.accounting_doc_no = t1.accounting_doc_no and
+          t3.line_item_no = t3.line_item_no and
+          -- Ensure that the previously sent data is not the same in some way.
+          ( t3.reason_code <> t1.reason_code or 
+            t3.claim_ref <> t1.claim_ref or 
+            t3.claim_amount <> t1.claim_amount or
+            t3.cust_code <> t1.cust_code or
+            t3.tax_code <> t1.tax_code
+          )
+        order by 
+          t1.batch_rec_seq;
+      rv_dup_accntng_mismatch csr_dup_accntng_mismatch%rowtype;
+      c_mismatch constant pxi_common.st_data := ' class="mismatch"';
+      v_mismatch pxi_common.st_data;
+    begin
+      -- Now report all the mismatches.
+      open csr_dup_accntng_mismatch;
+      fetch csr_dup_accntng_mismatch into rv_dup_accntng_mismatch;
+      if csr_dup_accntng_mismatch%found then 
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+        lics_mailer.append_data('<h3><strong>ERROR:</strong> Duplicates Account Document Mismatch</h2>');
+        lics_mailer.append_data('<p>The below AR claims have been sent before to Promax, however the details');
+        lics_mailer.append_data('are now different to the previously sent values.  To fix, contact the support');
+        lics_mailer.append_data('team to delete incorrect data from Promax and the interfacing table before');
+        lics_mailer.append_data('reprocessing this interface.</p>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+        lics_mailer.append_data('<table>');
+        lics_mailer.append_data('<tr>');
+        lics_mailer.append_data('<th>Interface ID</th>');
+        lics_mailer.append_data('<th>Company Code</th>');
+        lics_mailer.append_data('<th>Division Code</th>');
+        lics_mailer.append_data('<th>Cust Code</th>');
+        lics_mailer.append_data('<th>Prev. Cust Code</th>');
+        lics_mailer.append_data('<th>Claim Amount</th>');
+        lics_mailer.append_data('<th>Prev. Claim Amount</th>');
+        lics_mailer.append_data('<th>Claim Ref</th>');
+        lics_mailer.append_data('<th>Prev. Claim Ref</th>');
+        lics_mailer.append_data('<th>Posting Date</th>');
+        lics_mailer.append_data('<th>Fiscal Year</th>');
+        lics_mailer.append_data('<th>Fiscal Period</th>');
+        lics_mailer.append_data('<th>Reason Code</th>');
+        lics_mailer.append_data('<th>Prev. Reason Code</th>');
+        lics_mailer.append_data('<th>Tax Code</th>');
+        lics_mailer.append_data('<th>Prev. Tax Code</th>');
+        lics_mailer.append_data('<th>Accounting Doc No</th>');
+        lics_mailer.append_data('<th>Line Item No</th>');
+        lics_mailer.append_data('</tr>');
+        loop
+          lics_mailer.append_data('<tr>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.xactn_seq || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.company_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.div_code || '</td>');
+          if rv_dup_accntng_mismatch.cust_code <> rv_dup_accntng_mismatch.prev_cust_code then 
+            v_mismatch := c_mismatch;
+          else 
+            v_mismatch := null;
+          end if;
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.cust_code || '</td>');
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.prev_cust_code || '</td>');
+          if rv_dup_accntng_mismatch.claim_amount <> rv_dup_accntng_mismatch.prev_claim_amount then 
+            v_mismatch := c_mismatch;
+          else 
+            v_mismatch := null;
+          end if;
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.claim_amount || '</td>');
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.prev_claim_amount || '</td>');
+          if rv_dup_accntng_mismatch.claim_ref <> rv_dup_accntng_mismatch.prev_claim_ref then 
+            v_mismatch := c_mismatch;
+          else 
+            v_mismatch := null;
+          end if;
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.claim_ref || '</td>');
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.prev_claim_ref || '</td>');
+          lics_mailer.append_data('<td>'||to_char(rv_dup_accntng_mismatch.posting_date,'DD/MM/YYYY') || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.fiscal_year || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.fiscal_period || '</td>');
+          if rv_dup_accntng_mismatch.reason_code <> rv_dup_accntng_mismatch.prev_reason_code then 
+            v_mismatch := c_mismatch;
+          else 
+            v_mismatch := null;
+          end if;
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.reason_code || '</td>');
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.prev_reason_code || '</td>');
+          if rv_dup_accntng_mismatch.tax_code <> rv_dup_accntng_mismatch.prev_tax_code then 
+            v_mismatch := c_mismatch;
+          else 
+            v_mismatch := null;
+          end if;
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.tax_code || '</td>');
+          lics_mailer.append_data('<td'||v_mismatch||'>'||rv_dup_accntng_mismatch.prev_tax_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.accounting_doc_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_mismatch.line_item_no || '</td>');
+          lics_mailer.append_data('</tr>');
+          -- Now fetch the next record and exit once finished.
+          fetch csr_dup_accntng_mismatch into rv_dup_accntng_mismatch;
+          exit when csr_dup_accntng_mismatch%notfound;
+        end loop;
+        lics_mailer.append_data('</table>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+      end if;
+      close csr_dup_accntng_mismatch;
+    exception 
+      when others then 
+        pxi_common.reraise_promax_exception(pc_package_name,'REPORT_DUP_ACCNTNG_MISMATCH');
+    end report_dup_accntng_mismatch;
+
+    -- This procedure will send out all the received duplicate claims that were
+    -- the same as the previously sent data.
+    procedure report_dup_accntng_same is 
+      -- Duplicate Account Docs 
+      cursor csr_dup_accntng_same is
+        select 
+          t1.*
+        from 
+          pmx_ar_claims_dups t1,
+          table(pxi_common.promax_config(null,null)) t2,
+          pmx_ar_claims t3
+        where 
+          -- Report for this interface and Accounting Doc type errors.
+          t1.XACTN_SEQ = i_xactn_seq and
+          t1.dup_type = pc_dup_type_accntng_doc and 
+          -- Now ensure we are just reporting this company and division
+          t1.company_code = t2.promax_company and 
+          (t2.promax_company = pxi_common.gc_new_zealand or (t2.promax_company = pxi_common.gc_australia and t2.promax_division = t1.div_code)) and
+          -- Join to the previously sent data.  
+          t3.company_code = t1.company_code and
+          t3.fiscal_year = t1.fiscal_year and
+          t3.accounting_doc_no = t1.accounting_doc_no and
+          t3.line_item_no = t3.line_item_no and
+          -- Ensure that the previously sent data is the same.
+          t3.reason_code = t1.reason_code and
+          t3.claim_ref = t1.claim_ref and
+          t3.claim_amount = t1.claim_amount and 
+          t3.cust_code = t1.cust_code and
+          t3.tax_code = t1.tax_code 
+        order by 
+          t1.batch_rec_seq;
+      rv_dup_accntng_same csr_dup_accntng_same%rowtype;
+    begin
+      -- Now report all the sames
+      open csr_dup_accntng_same;
+      fetch csr_dup_accntng_same into rv_dup_accntng_same;
+      if csr_dup_accntng_same%found then 
+        lics_mailer.append_data('');
+        lics_mailer.append_data('<h3><strong>WARNING:</strong> Duplicates Account Document Resend</h2>');
+        lics_mailer.append_data('<p>The below AR claims have been sent before and this entry was identical');
+        lics_mailer.append_data('to the previously sent information.</p>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+        lics_mailer.append_data('<table>');
+        lics_mailer.append_data('<tr>');
+        lics_mailer.append_data('<th>Interface ID</th>');
+        lics_mailer.append_data('<th>Company Code</th>');
+        lics_mailer.append_data('<th>Division Code</th>');
+        lics_mailer.append_data('<th>Cust Code</th>');
+        lics_mailer.append_data('<th>Claim Amount</th>');
+        lics_mailer.append_data('<th>Claim Ref</th>');
+        lics_mailer.append_data('<th>Posting Date</th>');
+        lics_mailer.append_data('<th>Fiscal Year</th>');
+        lics_mailer.append_data('<th>Fiscal Period</th>');
+        lics_mailer.append_data('<th>Reason Code</th>');
+        lics_mailer.append_data('<th>Tax Code</th>');
+        lics_mailer.append_data('<th>Accounting Doc No</th>');
+        lics_mailer.append_data('<th>Line Item No</th>');
+        lics_mailer.append_data('</tr>');
+        loop
+          lics_mailer.append_data('<tr>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.xactn_seq || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.company_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.div_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.cust_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.claim_amount || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.claim_ref || '</td>');
+          lics_mailer.append_data('<td>'||to_char(rv_dup_accntng_same.posting_date,'DD/MM/YYYY') || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.fiscal_year || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.fiscal_period || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.reason_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.tax_code || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.accounting_doc_no || '</td>');
+          lics_mailer.append_data('<td>'||rv_dup_accntng_same.line_item_no || '</td>');
+          lics_mailer.append_data('</tr>');
+          -- Now fetch the next record and exit once finished.
+          fetch csr_dup_accntng_same into rv_dup_accntng_same;
+          exit when csr_dup_accntng_same%notfound;
+        end loop;
+        lics_mailer.append_data('</table>');
+        lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+      end if;
+      close csr_dup_accntng_same;
+    exception 
+      when others then 
+        pxi_common.reraise_promax_exception(pc_package_name,'REPORT_DUP_ACCNTNG_SAME');
+    end report_dup_accntng_same;
+    
   begin
-    null;
-  end report_duplicates;
+     lics_mailer.create_email(null,lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || i_interface_suffix),'AR Claims Interface Duplicates Report',null,null);
+     lics_mailer.create_part(null);
+     lics_mailer.append_data('Please see the attached AR Claims Duplicats Report.');
+     lics_mailer.append_data('');
+     lics_mailer.create_part('ardups_report_'||i_xactn_seq ||'.html');
+     lics_mailer.append_data('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">');
+     lics_mailer.append_data('<html><head><style>');
+     lics_mailer.append_data('table {');
+     lics_mailer.append_data('  border-width:1px;');
+     lics_mailer.append_data('  border-style:solid;');
+     lics_mailer.append_data('  border-color:#aaaaaa;');
+     lics_mailer.append_data('  border-collapse: collapse;');
+     lics_mailer.append_data('}');
+     lics_mailer.append_data('th, td {');
+     lics_mailer.append_data('  border-width:1px;');
+     lics_mailer.append_data('  border-style:solid;');
+     lics_mailer.append_data('  border-color:#aaaaaa;');
+     lics_mailer.append_data('  padding:2px;');
+     lics_mailer.append_data('}');
+     lics_mailer.append_data('td.mismatch {');
+     lics_mailer.append_data('  background-color:#ee2222;');
+     lics_mailer.append_data('}');
+     lics_mailer.append_data('td.highlight {');
+     lics_mailer.append_data('  background-color:#eeee22;');
+     lics_mailer.append_data('}');
+     lics_mailer.append_data('</style></head><body>');
+     lics_mailer.append_data('<h1>Promax AR Claims Interface Duplicates Report</h1>');
+     lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+     lics_mailer.append_data('<table><tr><td><strong>Interface ID</strong></td><td>' || i_xactn_seq || '</td></tr>');
+     lics_mailer.append_data('<tr><td><strong>Segment</strong></td><td>' || 
+       case i_interface_suffix 
+         when pxi_common.gc_interface_nz then 'New Zealand' 
+         when pxi_common.gc_interface_pet then 'Australia Petcare'
+         when pxi_common.gc_interface_snack then 'Australia Snackfood'
+         when pxi_common.gc_interface_food then 'Australia Food'
+         else 'Unknown'
+      end || '</td></tr></table>');
+     lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+     -- Now report the duplciates based on the claim reference.
+     report_dup_claim_ref;
+     -- Report the duplicate accounting document mismatches.
+     report_dup_accntng_mismatch;
+     -- Report the duplciate accounting document resends. 
+     report_dup_accntng_same;
+     -- Now finalise the report.
+     lics_mailer.append_data('<p>' || chr(38) || 'nbsp;</p>');
+     lics_mailer.append_data('</body></html>');
+     lics_mailer.finalise_email;    
+   exception
+     when others then
+       if (lics_mailer.is_created) then
+         lics_mailer.append_data('</pre></body></html>');
+         lics_mailer.append_data('** FATAL ERROR DURING PROCESSING ** : ' || SQLERRM);
+         lics_mailer.finalise_email;
+       end if;
+   end report_duplicates;
 
 END PXIPMX08_EXTRACT;
