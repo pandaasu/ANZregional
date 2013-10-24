@@ -53,7 +53,6 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_datastore_type.sql;
 @^pro_path\lics_security_type.sql;
 @^pro_path\lics_spreadsheet_type.sql;
-@^pro_path\lics_stream_type.sql;
 @^pro_path\lics_constant.sql;
 @^pro_path\lics_documentation.sql;
 @^pro_path\lics_buffer.sql;
@@ -67,7 +66,6 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_routing_configuration.sql;
 @^pro_path\lics_security_configuration.sql;
 @^pro_path\lics_setting_configuration.sql;
-@^pro_path\lics_stream_configuration.sql;
 @^pro_path\lics_notification.sql;
 @^pro_path\lics_pipe.sql;
 @^pro_path\lics_locking.sql;
@@ -86,7 +84,6 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_inbound_loader.sql;
 @^pro_path\lics_passthru_loader.sql;
 @^pro_path\lics_outbound_loader.sql;
-@^pro_path\lics_stream_loader.sql;
 @^pro_path\lics_trigger_loader.sql;
 @^pro_path\lics_trigger_submitter.sql;
 @^pro_path\lics_file_processor.sql;
@@ -95,12 +92,10 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_outbound_processor.sql;
 @^pro_path\lics_daemon_processor.sql;
 @^pro_path\lics_poller_processor.sql;
-@^pro_path\lics_stream_processor.sql;
 @^pro_path\lics_trigger_processor.sql;
 @^pro_path\lics_sap_processor.sql;
 @^pro_path\lics_job_processor.sql;
 @^pro_path\lics_file_poller.sql;
-@^pro_path\lics_stream_poller.sql;
 @^pro_path\lics_inbound_utility.sql;
 @^pro_path\lics_processing.sql;
 @^pro_path\lics_job_control.sql;
@@ -109,6 +104,17 @@ prompt CREATING LICS_APP PROCEDURES ...
 @^pro_path\lics_interface_view.sql;
 @^pro_path\lics_file_monitor.sql;
 @^pro_path\lics_router.sql;
+@^pro_path\lics_alerting.sql;
+@^pro_path\lics_alerting_configuration.sql;
+@^pro_path\lics_stream_configuration.sql;
+@^pro_path\lics_stream_execution.sql;
+@^pro_path\lics_stream_loader.sql;
+@^pro_path\lics_stream_monitor.sql;
+@^pro_path\lics_stream_poller.sql;
+@^pro_path\lics_stream_processor.sql;
+@^pro_path\lics_stream_type.sql;
+@^pro_path\lics_strvew_type.sql
+
 
 /*-*/
 /* Undefine the work variables
