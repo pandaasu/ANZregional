@@ -68,7 +68,7 @@ alter table pxi.pmx_ar_claims add constraint pmx_ar_claims_pk primary key (xactn
 -- Unique Index
 create unique index pmx_ar_claims_uk01 on pxi.pmx_ar_claims (company_code,fiscal_year,accounting_doc_no,line_item_no);
 -- Non Unique Keys 
-create index pmx_ar_claims_nuk02 on pxi.pmx_ar_claims (company_code,div_code,cust_code,claim_ref);
+create index pmx_ar_claims_nuk02 on pxi.pmx_ar_claims (company_code,cust_code,claim_ref,div_code);
 
 -- Synonym
 create or replace public synonym pmx_ar_claims for pxi.pmx_ar_claims;
