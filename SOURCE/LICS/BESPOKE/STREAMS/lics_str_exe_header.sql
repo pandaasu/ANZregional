@@ -61,7 +61,7 @@ alter table lics_str_exe_header
 /* Authority
 /**/
 grant select, insert, update, delete on lics_str_exe_header to lics_app;
-
+grant select on lics_str_exe_header to lics_exec;
 /**/
 /* Synonym
 /**/

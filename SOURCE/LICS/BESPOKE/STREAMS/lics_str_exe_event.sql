@@ -71,7 +71,7 @@ alter table lics_str_exe_event
 /* Authority
 /**/
 grant select, insert, update, delete on lics_str_exe_event to lics_app;
-
+grant select on lics_str_exe_event to lics_exec;
 /**/
 /* Synonym
 /**/

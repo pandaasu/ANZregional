@@ -45,7 +45,7 @@ alter table lics_str_exe_depend
 /* Authority
 /**/
 grant select, insert, update, delete on lics_str_exe_depend to lics_app;
-
+grant select on lics_str_exe_depend to lics_exec;
 /**/
 /* Synonym
 /**/
