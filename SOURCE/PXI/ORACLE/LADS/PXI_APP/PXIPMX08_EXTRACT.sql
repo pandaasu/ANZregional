@@ -34,6 +34,9 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-10-14  Chris Horn            Triggered email report of duplicates.
   2013-10-18  Chris Horn            Built html error reporting.
   2013-10-22  Chris Horn            Completed html error reporting.
+  2013-10-24  Chris Horn            Added missing 42 reason code.  Changed NZ
+                                    duplicate claim checking to not use
+                                    div code.
 
 *******************************************************************************/
   -- LICS Hooks.

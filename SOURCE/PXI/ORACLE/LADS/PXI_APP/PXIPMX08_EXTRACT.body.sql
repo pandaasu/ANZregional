@@ -138,6 +138,9 @@ PACKAGE body PXIPMX08_EXTRACT AS
             when '40' then 
               pv_claim.div_code := '02'; 
               pv_claim.tax_code := 'S3'; 
+            when '42' then 
+              pv_claim.div_code := '01'; 
+              pv_claim.tax_code := 'S3'; 
             when '41' then 
               pv_claim.div_code := '02'; 
               pv_claim.tax_code := 'S1'; 
@@ -250,7 +253,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
         from pmx_ar_claims  
         where 
           company_code = i_company_code and
-          (div_code = i_div_code or div_code is null and i_div_code is null) and 
+          (div_code = i_div_code or i_company_code = pxi_common.gc_new_zealand) and 
           cust_code = i_cust_code and
           claim_ref = i_claim_ref;
       -- Record Variable
@@ -697,7 +700,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           select claim_ref from pmx_ar_claims t1 
           where 
             t1.company_code = rv_dup_claim.company_code and 
-            t1.div_code = rv_dup_claim.div_code and
+            (t1.div_code = rv_dup_claim.div_code or t1.company_code = pxi_common.gc_new_zealand) and
             t1.cust_code = rv_dup_claim.cust_code and 
             t1.claim_ref = v_new_claim_ref;
         v_slash pls_integer;
