@@ -33,7 +33,7 @@
                         withCredentials: true
                     },
                     success: function (response) {
-                        location.reload();
+                        window.location.href = "/";
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
                         alert("Error communicating with server." + ((isTest) ? " Exception: " + thrownError : ""));

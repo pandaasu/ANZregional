@@ -168,6 +168,37 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Lzma\Common\CRC.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Common\InBuffer.cs" />
+    <Compile Include="Lzma\Common\OutBuffer.cs" />
+    <Compile Include="Lzma\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="Lzma\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="Lzma\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="Lzma\Compress\LZ\IMatchFinder.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\LZ\LzBinTree.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\LZ\LzInWindow.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\LZ\LzOutWindow.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\RangeCoder\RangeCoder.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\RangeCoder\RangeCoderBit.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\Compress\RangeCoder\RangeCoderBitTree.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Lzma\ICoder.cs" />
+    <Compile Include="Lzma\LzmaHelper.cs" />
     <Compile Include="Models\Connection.cs" />
     <Compile Include="Models\IcsRowData.cs" />
     <Compile Include="Models\IcsError.cs" />
@@ -462,6 +493,11 @@
     <None Include="Scripts\knockout-2.3.0.debug.js" />
     <None Include="Scripts\knockout-2.3.0.js" />
     <None Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Scripts\lzma.js" />
+    <Content Include="Scripts\lzma_worker.js" />
+    <Content Include="Scripts\lzma_worker.min.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Scripts\PIE.htc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

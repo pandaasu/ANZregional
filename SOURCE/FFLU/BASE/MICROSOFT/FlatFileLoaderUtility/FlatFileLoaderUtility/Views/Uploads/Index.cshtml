@@ -17,10 +17,13 @@
         var inProgressFileName = "@Model.FileName";
         var inProgressFileSize = @Model.FileSize;
         var inProgressLastSegment = @Model.LastSegment;
+        var inProgressReceivedLength = @Model.ReceivedStringLength;
         var isResuming = false;
         var isModernBrowser = (window.File && window.FileReader && window.Blob);
         var doCancel = false;
         var continueMonitoring = true;
+        var compressionMode = 1;
+        var lzma = new LZMA("/scripts/lzma_worker.min.js");
 
         /**************************************************
         /* Document Ready
@@ -95,7 +98,14 @@
                 ustatus.InterfaceCode = $("#ddlInterface").val();
                 ustatus.FilePath = $("#file").val().replace(/C:\\fakepath\\/i, '');
                 ustatus.FileName = ustatus.FilePath.split("\\").pop();
-                ustatus.SegmentBytes = @ViewBag.SegmentBytes;
+                ustatus.SegmentBytes = @Model.SegmentBytes;
+                ustatus.MinCompressionBytes = @Model.MinCompressionBytes;
+                ustatus.MaxCompressionBytes = @Model.MaxCompressionBytes;
+                ustatus.StartCompressionBytes = @Model.StartCompressionBytes;
+                ustatus.MaxCompressedSegmentsPerRequest = @Model.MaxCompressedSegmentsPerRequest;
+                ustatus.CompressionStep = @Model.CompressionStep;
+                ustatus.SegmentBytesCurrent = ustatus.StartCompressionBytes;
+                ustatus.UseCompression = (ustatus.UseCompression && $("#compressYes").hasClass("option-selected"));
 
                 // The filename cannot exceed 64 characters
                 if (ustatus.FileName.length > 64) {
@@ -108,7 +118,7 @@
                 // Initiate the upload.
                 // Browsers supporting HTML5 perform the file reading asynchronously
                 // So this is the last function that can be called from the upload click eventhandler
-                UploadInitiate();
+                UploadInitiatePart1();
 
                 return false;
             });
@@ -117,6 +127,8 @@
                 $(this).attr("disabled", "disabled");
                 $("#uploadOptions").hide();
                 doCancel = true;
+                if (ustatus != null)
+                    ustatus.CompressionTerminate = true;
                 return false;
             });
 
@@ -124,6 +136,8 @@
                 $("form :input").attr("disabled", "disabled").trigger("liszt:updated");
                 $("#resumeOptions").hide();
                 $("#rowDescriptionResume").show();
+                if (ustatus == null)
+                    ustatus = new UStatus();
                 UploadCancel(false);
                 return false;
             });
@@ -138,12 +152,20 @@
                 return false;
             });
 
+            $("#useCompression li").click(function () {
+                $("#useCompression li").removeClass("option-selected");
+                $(this).addClass("option-selected");
+            });
+
             // Document ready actions
             if (inProgressInterfaceCode != "") {
                 $("#dialogResume").dialog({
                     modal: true
                 });
             }
+            if (Modernizr.webworkers && $.QueryString["advanced"]) {
+                $("#rowCompression").show();
+            } 
         });
 
         /**************************************************
@@ -188,8 +210,8 @@
             doCancel = false;
         }
 
-        // Called to initiate an upload
-        function UploadInitiate() {
+        // Called to initiate an upload. Split into 2 parts to support async file read on modern browsers (done here to support async compression).
+        function UploadInitiatePart1() {
             // First, disable the form so that the user can't click the button again
             $("form :input:not(#cancelUpload)").attr("disabled", "disabled").trigger("liszt:updated");
 
@@ -244,6 +266,32 @@
             
             continueMonitoring = true;
 
+            if (isModernBrowser) {
+                var fr = new FileReader();
+                fr.onload = function (e) {
+                    ustatus.Remainder = e.target.result;
+                    ustatus.TotalLength = ustatus.Remainder.length;
+
+                    if (isResuming && inProgressReceivedLength > 0) {
+                        ustatus.Remainder = ustatus.Remainder.substr(inProgressReceivedLength);
+                    }
+                    if (ustatus.Remainder.length <= ustatus.MinCompressionBytes) {
+                        ustatus.UseCompression = false;
+                    }
+                    if (ustatus.UseCompression) {
+                        ProcessCompression();
+                    }
+                    UploadInitiatePart2();
+                };
+                fr.readAsText(fileData, "UTF-8");
+            }
+            else {
+                UploadInitiatePart2();
+            }
+        }
+
+        // Called to initiate an upload. Split into 2 parts to support async file read on modern browsers (done here to support async compression).
+        function UploadInitiatePart2() {
             // Now initiate the upload
             // This will also confirm that the correct filetype has been selected for the given interface
             if (!isResuming) {
@@ -291,24 +339,15 @@
             SetProgressDescription("Step 2 - Uploading data");
 
             // Next, start uploading the segments.
-            // This hs handled differently depending on whether or not the browser supports the necessary HTML5 elements.
+            // This is handled differently depending on whether or not the browser supports the necessary HTML5 elements.
             // If not, then it has to use ActiveX (which means Internet Explorer)
             if (isModernBrowser) {
-                var fr = new FileReader();
-
-                fr.onload = function (e) {
-                    ustatus.Remainder = e.target.result;
-                    ustatus.TotalLength = ustatus.Remainder.length;
-
-                    if (ustatus.TotalLength == 0) {
-                        SetNoMoreSegments();
-                    }
-                    else {
-                        ProcessSegment();
-                    }
-                };
-
-                fr.readAsText(fileData, "UTF-8");
+                if (ustatus.TotalLength == 0) {
+                    SetNoMoreSegments();
+                }
+                else {
+                    ProcessSegment();
+                }
             }
             else if (ActiveXObject) {
                 
@@ -347,6 +386,28 @@
                 SetProgressDescription("Cancelling upload");
                 UploadCancel(false);
             }
+            else if (ustatus.UseCompression || ustatus.Segments.length > 0) {
+                if (ustatus.IsError) {
+                    UploadCancel(true);
+                    ShowResult(false);
+                    return;
+                }
+                if (ustatus.CompressionFinished && ustatus.Segments.length == 0) {
+                    UploadMonitor();
+                }
+                else if (ustatus.Segments.length > 0) {
+                    ustatus.TimeWaiting = 0;
+                    ustatus.SegmentCount++;
+                    $("#progressbar").progressbar("value", ustatus.Segments[Math.min(ustatus.Segments.length, ustatus.MaxCompressedSegmentsPerRequest) - 1].ProcessedLength * 100 / ustatus.TotalLength);
+                    UploadSegment(ustatus.Segments, ustatus.CompressionFinished);
+                }
+                else {
+                    // The first time spent waiting after initialisation or resuming doesn't count.
+                    if (ustatus.SegmentCount > 0)
+                        ustatus.TimeWaiting += 125;
+                    setTimeout("ProcessSegment();", 125);
+                }
+            }
             else if (isModernBrowser) {
                 if (ustatus.Remainder.length == 0) {
                     // The upload phase is complete, now monitor the progress
@@ -361,8 +422,8 @@
                                 if (index > ustatus.SegmentBytes) {
                                     // The line exceeds the maximum line length. Terminate upload process.
                                     ustatus.IsError = true;
-                                    ustatus.Message = "End of line not found within maximum line length."
-                                    ustatus.Exception = "Please check line length and end of line encoding in the file."
+                                    ustatus.Message = "End of line not found within maximum line length.";
+                                    ustatus.Exception = "Please check line length and end of line encoding in the file.";
                                     UploadCancel(true);
                                     ShowResult(false);
                                     return;
@@ -376,15 +437,12 @@
                             segment = ustatus.Remainder;
                             ustatus.Remainder = "";
                         }
-                        ustatus.SegmentCount++;
                         
                         ustatus.ProcessedLength = ustatus.TotalLength - ustatus.Remainder.length;
                         $("#progressbar").progressbar("value", ustatus.ProcessedLength * 100 / ustatus.TotalLength);
 
-                        if (!isResuming || ustatus.SegmentCount > inProgressLastSegment) {
-                            UploadSegment(segment, ustatus.Remainder.length <= 0);
-                            return;
-                        }
+                        UploadSegment(segment, ustatus.Remainder.length <= 0);
+                        return;
                     }
                     // this is for the case where a file is resumed after the last segment is actually uploaded
                     UploadMonitor();
@@ -428,8 +486,8 @@
                                 // The line exceeds the maximum line length. Terminate upload process.
                                 ustatus.File.Close();
                                 ustatus.IsError = true;
-                                ustatus.Message = "End of line not found within maximum line length."
-                                ustatus.Exception = "Please check line length and end of line encoding in the file."
+                                ustatus.Message = "End of line not found within maximum line length.";
+                                ustatus.Exception = "Please check line length and end of line encoding in the file.";
                                 UploadCancel(true);
                                 ShowResult(false);
                                 return;
@@ -458,20 +516,143 @@
             }
         }
 
+        // Compresses all the file, segment by segment
+        function ProcessCompression() {
+
+            if (ustatus.CompressionTerminate)
+                return;
+
+            while (ustatus.Remainder.length > 0) {
+                var doCompress = true;
+                if (ustatus.Segments.length >= 2 && ustatus.SegmentBytesCurrent < ustatus.MaxCompressionBytes) {
+                    ustatus.SegmentBytesCurrent += ustatus.CompressionStep;
+                }
+                else if (ustatus.TimeWaiting > 0 && ustatus.SegmentBytesCurrent > ustatus.StartCompressionBytes) {
+                    ustatus.SegmentBytesCurrent -= ustatus.CompressionStep;
+                }
+                else if (ustatus.TimeWaiting > 0 && !$("#rowCompression").is(":visible")) {
+                    // The uploader is waiting for data even on the minimum compression step, skip compression on a segment
+                    // Test if it is going to be better to turn off compression
+                    if (ustatus.TotalCompressionSegs > 0 && ustatus.TotalUploadSegs > 0) {
+                        var averageCompressionTime = ustatus.TotalCompressionTime / ustatus.TotalCompressionSegs;
+                        var averageUploadTime = ustatus.TotalUploadTime / ustatus.TotalUploadSegs;
+                        if (averageCompressionTime > averageUploadTime) {
+                            ustatus.UseCompression = false;
+                            return;
+                        }
+                    }
+                    doCompress = false;
+                    ustatus.TimeWaiting = 0;
+                }
+                var wantedBytes = (doCompress) ? ustatus.SegmentBytesCurrent : ustatus.SegmentBytes;
+                if (ustatus.Remainder.length > wantedBytes - ustatus.MaxRowSize - 10) {
+                    var index = wantedBytes - ustatus.MaxRowSize - 10;
+                    while (index < ustatus.Remainder.length && ustatus.Remainder[index] != "\n") {
+                        index++;
+                        if (index > wantedBytes) {
+                            // The line exceeds the maximum line length. Terminate upload process.
+                            ustatus.IsError = true;
+                            ustatus.Message = "End of line not found within maximum line length.";
+                            ustatus.Exception = "Please check line length and end of line encoding in the file.";
+                            return;
+                        }
+                    }
+                    index++;
+                    segment = ustatus.Remainder.substring(0, index);
+                    ustatus.Remainder = ustatus.Remainder.substr(index);
+                }
+                else {
+                    segment = ustatus.Remainder;
+                    ustatus.Remainder = "";
+                }
+
+                if (!doCompress) {
+                    // Compression isn't keeping up with the connection's demand for data
+                    // Send through an uncompressed segment
+                    var seg = new Segment();
+                    seg.StringData = segment;
+                    seg.ProcessedLength = ustatus.TotalLength - ustatus.Remainder.length;
+                    seg.IsFinalSegment = ustatus.Remainder.length <= 0;
+                    ustatus.Segments.push(seg);
+                    ProcessCompression();
+                }
+                else {
+                    var startTime = new Date();
+                    lzma.compress(segment, compressionMode, function on_compress_complete(result) {
+                        if (result === false) {
+                            // Something went wrong with the compression
+                            // Add the segment back to the remainder to process, and switch to uncompressed mode
+                            ustatus.Remainder = segment + ustatus.Remainder;
+                            ustatus.UseCompression = false;
+                            return;
+                        }
+                        var seg = new Segment();
+                        seg.ByteArray = result;
+                        seg.ProcessedLength = ustatus.TotalLength - ustatus.Remainder.length;
+                        seg.IsFinalSegment = ustatus.Remainder.length <= 0;
+                        ustatus.Segments.push(seg);
+                        ustatus.TotalCompressionTime += (new Date() - startTime);
+                        ustatus.TotalCompressionSegs += (ustatus.SegmentBytesCurrent / ustatus.SegmentBytes);
+                        ProcessCompression();
+                    });
+                }
+                return;
+            }
+
+            ustatus.CompressionFinished = true;
+        }
+
         // Called to upload segment to server
         function UploadSegment(segmentData, isFinalSegment) {
-            $.ajax({
-                type: "post",
-                url: "/Uploads/Segment",
-                contentType: "application/json",
-                data: JSON.stringify({
+
+            var postData = null;
+            var url = "/Uploads/Segment";
+            var usingCompression = ustatus.UseCompression || (ustatus.Segments.length > 0);
+
+            if (useCompression && ustatus.Segments.length > 0 && ustatus.Segments[0].StringData != "") {
+                // The first segment in the queue is not compressed (happens when compression isn't keeping up with connection throughput)
+                usingCompression = false;
+                segmentData = ustatus.Segments[0].StringData;
+                isFinalSegment = ustatus.Segments[0].IsFinalSegment;
+                ustatus.Segments.splice(0, 1);
+            }
+
+            if (usingCompression) {
+                postData = new FormData();
+                var isFinal = false;
+                var includedInUpload = 0;
+                for (var i = 0; i < Math.min(segmentData.length, ustatus.MaxCompressedSegmentsPerRequest); i++) {
+                    var seg = segmentData[i];
+                    if (seg.StringData != "")
+                        break;
+                    includedInUpload = i + 1;
+                    var arry = new Int8Array(seg.ByteArray);
+                    var oBlob = new Blob([arry.buffer], { type: "application/octet-stream" });
+                    isFinal = seg.IsFinalSegment;
+                    postData.append("data" + i, oBlob, ustatus.FileName);
+                }
+                // Clear the processed segments from the queue
+                ustatus.Segments.splice(0, includedInUpload);
+                url = "/Uploads/SegmentCompressed?interfaceCode=" + ustatus.InterfaceCode + "&isFinalSegment=" + isFinal + "&fileSize=" + ustatus.FileSize;
+            }
+            else {
+                postData = JSON.stringify({
                     interfaceCode: ustatus.InterfaceCode,
                     filename: ustatus.FileName,
                     segmentData: segmentData,
                     isFinalSegment: isFinalSegment,
                     fileSize: ustatus.FileSize,
                     needsEncodingFix: ustatus.NeedsEncodingFix
-                }),
+                });
+            }
+            
+            var startTime = new Date();
+            $.ajax({
+                type: "post",
+                url: url,
+                contentType: usingCompression ? false : "application/json",
+                processData: !usingCompression,
+                data: postData,
                 async: true,
                 success: function (response) {
                     if (response.Result != "OK") {
@@ -483,6 +664,10 @@
                         ShowResult(false);
                     }
                     else {
+                        if (!usingCompression) {
+                            ustatus.TotalUploadTime += (new Date() - startTime);
+                            ustatus.TotalUploadSegs += 1;
+                        }
                         ProcessSegment();
                     }
                 },
@@ -624,6 +809,8 @@
                 });
                 $("#dialog").dialog("option", "position", "center");
             }
+
+            ustatus.CompressionTerminate = true;
         }
 
         // Called to monitor the status of an ongoing upload after all segments have been sent to the server
@@ -748,6 +935,16 @@
                 <td>
                     <input id="fakefile" type="text" /> <button id="fakefileButton">Browse...</button>
                     <div style="display:none;"><input type="file" id="file" class="validate[required]" /></div>
+                </td>
+                <td></td>
+            </tr>
+            <tr id="rowCompression" style="display:none;">
+                <td><label for="useCompression">Compress</label></td>
+                <td>
+                    <ul class="option-group" id="useCompression">
+                        <li id="compressYes" class="option-selected">Yes</li>
+                        <li id="compressNo">No</li>
+                    </ul>
                 </td>
                 <td></td>
             </tr>

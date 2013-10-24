@@ -143,22 +143,22 @@ WriteLiteral(">\r\n        $(document).ready(function () {\r\n            $(\"#d
 "        connectionId: $(this).val()\r\n                    },\r\n                   " +
 " xhrFields: {\r\n                        withCredentials: true\r\n                  " +
 "  },\r\n                    success: function (response) {\r\n                      " +
-"  location.reload();\r\n                    },\r\n                    error: functio" +
-"n (xhr, ajaxOptions, thrownError) {\r\n                        alert(\"Error commun" +
-"icating with server.\" + ((isTest) ? \" Exception: \" + thrownError : \"\"));\r\n      " +
-"              }\r\n                });\r\n            });\r\n            if ($(\"#ddlCo" +
-"nnection\").val() == \"\") {\r\n                $(\"#body :input\").prop(\"disabled\", tr" +
-"ue).trigger(\"liszt:updated\");\r\n                $(\"#body\").off(\"click\");\r\n       " +
-"         $(\"#connectionForm\").validationEngine(\"attach\", {\r\n                    " +
-"prettySelect: true,\r\n                    useSuffix: \"_chzn\",\r\n                  " +
-"  promptPosition: \"bottomLeft\",\r\n                    custom_error_messages: {\r\n " +
-"                       \"#ddlConnection\": {\r\n                            \"require" +
-"d\": {\r\n                                message: \"<strong>Note:</strong> You must" +
-" first select a database to connect to\"\r\n                            }\r\n        " +
-"                }\r\n                    }\r\n                });\r\n                $" +
-"(\"#connectionForm\").validationEngine(\"validate\");\r\n            }\r\n            $(" +
-"\'.menu\').dropit();\r\n        });\r\n    </script>\r\n</head>\r\n<body>\r\n    <header>\r\n " +
-"       <div");
+"  window.location.href = \"/\";\r\n                    },\r\n                    error" +
+": function (xhr, ajaxOptions, thrownError) {\r\n                        alert(\"Err" +
+"or communicating with server.\" + ((isTest) ? \" Exception: \" + thrownError : \"\"))" +
+";\r\n                    }\r\n                });\r\n            });\r\n            if (" +
+"$(\"#ddlConnection\").val() == \"\") {\r\n                $(\"#body :input\").prop(\"disa" +
+"bled\", true).trigger(\"liszt:updated\");\r\n                $(\"#body\").off(\"click\");" +
+"\r\n                $(\"#connectionForm\").validationEngine(\"attach\", {\r\n           " +
+"         prettySelect: true,\r\n                    useSuffix: \"_chzn\",\r\n         " +
+"           promptPosition: \"bottomLeft\",\r\n                    custom_error_messa" +
+"ges: {\r\n                        \"#ddlConnection\": {\r\n                           " +
+" \"required\": {\r\n                                message: \"<strong>Note:</strong>" +
+" You must first select a database to connect to\"\r\n                            }\r" +
+"\n                        }\r\n                    }\r\n                });\r\n        " +
+"        $(\"#connectionForm\").validationEngine(\"validate\");\r\n            }\r\n     " +
+"       $(\'.menu\').dropit();\r\n        });\r\n    </script>\r\n</head>\r\n<body>\r\n    <h" +
+"eader>\r\n        <div");
 
 WriteLiteral(" class=\"content-wrapper\"");
 
@@ -168,14 +168,14 @@ WriteLiteral(" class=\"logo\"");
 
 WriteLiteral(">\r\n                <a");
 
-WriteAttribute("href", Tuple.Create(" href=\"", 2857), Tuple.Create("\"", 2892)
+WriteAttribute("href", Tuple.Create(" href=\"", 2866), Tuple.Create("\"", 2901)
             
             #line 68 "..\..\Views\Shared\_Layout.cshtml"
-, Tuple.Create(Tuple.Create("", 2864), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Home")
+, Tuple.Create(Tuple.Create("", 2873), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Home")
             
             #line default
             #line hidden
-, 2864), false)
+, 2873), false)
 );
 
 WriteLiteral(">\r\n                    ");
@@ -239,14 +239,14 @@ WriteLiteral("class=\"current\" \r\n");
             #line hidden
 WriteLiteral("><a");
 
-WriteAttribute("href", Tuple.Create(" href=\"", 3618), Tuple.Create("\"", 3656)
+WriteAttribute("href", Tuple.Create(" href=\"", 3627), Tuple.Create("\"", 3665)
             
             #line 85 "..\..\Views\Shared\_Layout.cshtml"
-, Tuple.Create(Tuple.Create("", 3625), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Uploads")
+, Tuple.Create(Tuple.Create("", 3634), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Uploads")
             
             #line default
             #line hidden
-, 3625), false)
+, 3634), false)
 );
 
 WriteLiteral(">File Upload</a>\r\n");
@@ -321,14 +321,14 @@ WriteLiteral("class=\"middle\" \r\n");
             #line hidden
 WriteLiteral("><a");
 
-WriteAttribute("href", Tuple.Create(" href=\"", 4286), Tuple.Create("\"", 4324)
+WriteAttribute("href", Tuple.Create(" href=\"", 4295), Tuple.Create("\"", 4333)
             
             #line 98 "..\..\Views\Shared\_Layout.cshtml"
-, Tuple.Create(Tuple.Create("", 4293), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Monitor")
+, Tuple.Create(Tuple.Create("", 4302), Tuple.Create<System.Object, System.Int32>(Url.Action("Index", "Monitor")
             
             #line default
             #line hidden
-, 4293), false)
+, 4302), false)
 );
 
 WriteLiteral(">Interface Monitor</a>\r\n");
@@ -454,14 +454,14 @@ WriteLiteral("                            ");
             #line hidden
 WriteLiteral("                                <ul>\r\n                                    <li><a");
 
-WriteAttribute("href", Tuple.Create(" href=\"", 5314), Tuple.Create("\"", 5354)
+WriteAttribute("href", Tuple.Create(" href=\"", 5323), Tuple.Create("\"", 5363)
             
             #line 115 "..\..\Views\Shared\_Layout.cshtml"
-, Tuple.Create(Tuple.Create("", 5321), Tuple.Create<System.Object, System.Int32>(Url.Action("SwitchUser", "User")
+, Tuple.Create(Tuple.Create("", 5330), Tuple.Create<System.Object, System.Int32>(Url.Action("SwitchUser", "User")
             
             #line default
             #line hidden
-, 5321), false)
+, 5330), false)
 );
 
 WriteLiteral(">Switch User</a></li>\r\n");
@@ -482,14 +482,14 @@ WriteLiteral(">Switch User</a></li>\r\n");
             #line hidden
 WriteLiteral("                                        <li><a");
 
-WriteAttribute("href", Tuple.Create(" href=\"", 5537), Tuple.Create("\"", 5573)
+WriteAttribute("href", Tuple.Create(" href=\"", 5546), Tuple.Create("\"", 5582)
             
             #line 118 "..\..\Views\Shared\_Layout.cshtml"
-, Tuple.Create(Tuple.Create("", 5544), Tuple.Create<System.Object, System.Int32>(Url.Action("Logoff", "User")
+, Tuple.Create(Tuple.Create("", 5553), Tuple.Create<System.Object, System.Int32>(Url.Action("Logoff", "User")
             
             #line default
             #line hidden
-, 5544), false)
+, 5553), false)
 );
 
 WriteLiteral(">Logoff</a></li>\r\n");

@@ -175,5 +175,50 @@ namespace FlatFileLoaderUtility.Properties {
                 return ((bool)(this["UseSsl"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5000")]
+        public int MinCompressionBytes {
+            get {
+                return ((int)(this["MinCompressionBytes"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int MaxCompressedSegmentsPerRequest {
+            get {
+                return ((int)(this["MaxCompressedSegmentsPerRequest"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2048000")]
+        public int MaxCompressionBytes {
+            get {
+                return ((int)(this["MaxCompressionBytes"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("512000")]
+        public int StartCompressionBytes {
+            get {
+                return ((int)(this["StartCompressionBytes"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("256000")]
+        public int CompressionStep {
+            get {
+                return ((int)(this["CompressionStep"]));
+            }
+        }
     }
 }

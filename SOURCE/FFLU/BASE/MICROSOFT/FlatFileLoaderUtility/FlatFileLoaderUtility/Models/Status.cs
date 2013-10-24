@@ -40,6 +40,7 @@ namespace FlatFileLoaderUtility.Models
         public long FileSize { get; set; }
         public string LicsStatus { get; set; }
         public int EstimatedSeconds { get; set; }
+        public int ReceivedStringLength { get; set; }
 
         public string EstimatedTime
         {
@@ -117,6 +118,7 @@ namespace FlatFileLoaderUtility.Models
             {
                 this.Segments.Add(segment);
                 this.IsAllUploaded = isAllUploaded;
+                this.ReceivedStringLength += segment.Data.Length;
             }
         }
 
@@ -179,6 +181,14 @@ namespace FlatFileLoaderUtility.Models
             lock (mLock)
             {
                 return this.Segments.Count();
+            }
+        }
+
+        public int GetReceivedStringLength()
+        {
+            lock (mLock)
+            {
+                return this.ReceivedStringLength;
             }
         }
 

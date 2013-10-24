@@ -17,7 +17,14 @@ namespace FlatFileLoaderUtility.ViewModels
         public string InterfaceCode { get; set; }
         public string FileName { get; set; }
         public int LastSegment { get; set; }
+        public int ReceivedStringLength { get; set; }
         public long FileSize { get; set; }
+        public int SegmentBytes { get; set; }
+        public int MinCompressionBytes { get; set; }
+        public int MaxCompressionBytes { get; set; }
+        public int StartCompressionBytes { get; set; }
+        public int MaxCompressedSegmentsPerRequest { get; set; }
+        public int CompressionStep { get; set; }
         
         public FileUploadViewModel()
         {
@@ -28,6 +35,12 @@ namespace FlatFileLoaderUtility.ViewModels
             this.FileSize = 0;
             this.InterfaceGroups = new List<SelectListItem>();
             this.Interfaces = new List<SelectListItem>();
+            this.SegmentBytes = Properties.Settings.Default.SegmentBytes;
+            this.MinCompressionBytes = Properties.Settings.Default.MinCompressionBytes;
+            this.MaxCompressionBytes = Properties.Settings.Default.MaxCompressionBytes;
+            this.StartCompressionBytes = Properties.Settings.Default.StartCompressionBytes;
+            this.MaxCompressedSegmentsPerRequest = Properties.Settings.Default.MaxCompressedSegmentsPerRequest;
+            this.CompressionStep = Properties.Settings.Default.CompressionStep;
         }
     }
 }

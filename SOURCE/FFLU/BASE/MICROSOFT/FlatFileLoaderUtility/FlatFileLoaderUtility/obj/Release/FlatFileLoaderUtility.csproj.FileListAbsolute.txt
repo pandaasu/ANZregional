@@ -132,3 +132,4 @@ C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderU
 C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\bin\Content\fonts\TitilliumText22L006-webfont.ttf
 C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\bin\Content\fonts\TitilliumText22L006-webfont.woff
 C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\bin\Scripts\jtable\jquery.jtable.min.js
+C:\Documents and Settings\tyleepe2\Desktop\FlatFileLoaderUtility\FlatFileLoaderUtility\bin\Scripts\lzma_worker.min.js

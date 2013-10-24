@@ -10,6 +10,7 @@ using FlatFileLoaderUtility.ViewModels;
 using FlatFileLoaderUtility.Models;
 using FlatFileLoaderUtility.Models.Shared;
 using FlatFileLoaderUtility.Upload;
+using SevenZip;
 //using StackExchange.Profiling;
 
 namespace FlatFileLoaderUtility.Controllers
@@ -21,7 +22,6 @@ namespace FlatFileLoaderUtility.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             filterContext.Controller.ViewBag.IsMenuUpload = true;
-            filterContext.Controller.ViewBag.SegmentBytes = Properties.Settings.Default.SegmentBytes;
             base.OnActionExecuting(filterContext);
         }
 
@@ -48,7 +48,6 @@ namespace FlatFileLoaderUtility.Controllers
                     viewModel.Status = Status.GetStatus(this.Container.Access.Username, this.Container.Connection);
                     if (viewModel.Status != null)
                     {
-                        var segmentCount = viewModel.Status.GetSegmentCount();
                         if (!viewModel.Status.IsDone && viewModel.Status.UploadId > 0 && viewModel.Status.Exception == null)
                         {
                             var interfaces = this.Container.InterfaceRepository.Get(string.Empty);
@@ -56,7 +55,8 @@ namespace FlatFileLoaderUtility.Controllers
 
                             if (iface != null)
                             {
-                                viewModel.LastSegment = segmentCount;
+                                viewModel.LastSegment = viewModel.Status.GetSegmentCount();
+                                viewModel.ReceivedStringLength = viewModel.Status.GetReceivedStringLength();
                                 viewModel.InterfaceName = iface.InterfaceName;
                                 viewModel.InterfaceCode = iface.InterfaceCode;
                                 viewModel.FileName = viewModel.Status.FileName;
@@ -165,6 +165,12 @@ namespace FlatFileLoaderUtility.Controllers
                 if (status.IsDone)
                     throw new Exception("Upload has terminated");
 
+                if (interfaceCode != status.InterfaceCode)
+                    throw new Exception("Expected interface code is " + status.InterfaceCode);
+
+                if (filename != status.FileName)
+                    throw new Exception("Expected filename is " + status.FileName);
+
                 if (!status.IsDone && !status.Thread.IsAlive)
                 {
                     // Thread needs re-starting, apparently.
@@ -179,12 +185,6 @@ namespace FlatFileLoaderUtility.Controllers
 
                     thread.Start();
                 }
-
-                if (interfaceCode != status.InterfaceCode)
-                    throw new Exception("Expected interface code is " + status.InterfaceCode);
-
-                if (filename != status.FileName)
-                    throw new Exception("Expected filename is " + status.FileName);
 
                 // Ok... this may need some explanation...
                 // For uploading the data, the HTML5 FileReader works without any problems, just as expected. 
@@ -214,6 +214,81 @@ namespace FlatFileLoaderUtility.Controllers
                 status.AddSegment(new Segment(segmentData), isFinalSegment);
                 status.FileSize = fileSize;
 
+                return this.Json(new { Result = "OK" });
+            }
+            catch (Exception ex)
+            {
+                Logs.Log(1, ex.ToString());
+
+                Status.ClearStatus(this.Container.Access.Username, this.Container.Connection);
+
+                return this.Json(new
+                {
+                    Result = "ERROR",
+                    Message = ex.ApplicationMessage(),
+                    UploadId = 0,
+                    LicsId = 0
+                });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult SegmentCompressed()
+        {
+            try
+            {
+                var status = default(Status);
+                var interfaceCode = this.Request.QueryString["interfaceCode"];
+                var isFinalSegment = this.Request.QueryString["isFinalSegment"] == "true";
+                var fileSize = Tools.ZeroInvalidLong(this.Request.QueryString["fileSize"]);
+
+                if (this.Request.Files.Count == 0)
+                    throw new Exception("Data cannot be empty");
+
+                var filename = this.Request.Files[0].FileName;
+
+                status = Status.GetOrSetStatus(this.Container.Access.Username, this.Container.Connection, interfaceCode, filename);
+
+                if (status.Exception != null)
+                    throw status.Exception;
+
+                if (status.IsError)
+                    throw new Exception(status.ErrorMessage);
+
+                if (status.IsDone)
+                    throw new Exception("Upload has terminated");
+
+                if (interfaceCode != status.InterfaceCode)
+                    throw new Exception("Expected interface code is " + status.InterfaceCode);
+
+                if (filename != status.FileName)
+                    throw new Exception("Expected filename is " + status.FileName);
+
+                if (!status.IsDone && !status.Thread.IsAlive)
+                {
+                    // Thread needs re-starting, apparently.
+                    // This can happen if there has been more than 5 minutes since the thread last had a data packet to process
+                    var uploader = new Uploader(this.Container.Connection, this.Container.Access, this.Container.User);
+                    uploader.Status = status;
+
+                    var threadStart = new ThreadStart(uploader.Upload);
+                    var thread = new Thread(threadStart);
+                    thread.IsBackground = false;
+                    uploader.Status.Thread = thread;
+
+                    thread.Start();
+                }
+
+                status.FileSize = fileSize;
+
+                for (var i = 0; i < this.Request.Files.Count; i++)
+                {
+                    var file = this.Request.Files[i];
+                    var bytes = LzmaHelper.Decompress(file.InputStream.ToByteArray());
+                    var segmentData = Encoding.UTF8.GetString(bytes);
+                    status.AddSegment(new Segment(segmentData), (isFinalSegment && i == this.Request.Files.Count - 1));
+                }
+                
                 return this.Json(new { Result = "OK" });
             }
             catch (Exception ex)

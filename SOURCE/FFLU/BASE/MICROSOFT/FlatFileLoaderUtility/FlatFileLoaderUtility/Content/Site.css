@@ -1239,6 +1239,11 @@ div.hr
     cursor:default;
 }
 
+div.upload .option-group 
+{
+    margin:0px;
+}
+
 #perpage-panel
 {
     float:right;
@@ -1264,7 +1269,7 @@ div.hr
 
 #divInterfaceDetails #refresh-panel 
 {
-    margin-right: 0px;
+    margin-right: 15px;
 }
 
 

@@ -11,7 +11,13 @@ var UStatus = function () {
     this.FilePath = "";
     this.FileSize = 0;
     this.MaxRowSize = 4000;
+    this.MinCompressionBytes = 0;
+    this.MaxCompressionBytes = 0;
+    this.StartCompressionBytes = 0;
+    this.MaxCompressedSegmentsPerRequest = 0;
+    this.CompressionStep = 0;
     this.SegmentBytes = 0;
+    this.SegmentBytesCurrent = 0;
     this.SegmentCount = 0;
     this.TotalLength = 0;
     this.ProcessedLength = 0;
@@ -23,6 +29,23 @@ var UStatus = function () {
     this.InterfaceErrorCount = 0;
     this.RowErrorCount = 0;
     this.DanglingChar = ""; // Used for utf-16 -> utf-8 fix for IE where lower byte of character may need to be deferred to the following segment
+    this.UseCompression = Modernizr.webworkers;
+    this.CompressedQueue = new Array();
+    this.CompressionFinished = false;
+    this.CompressionTerminate = false;
+    this.TimeWaiting = 0;
+    this.Segments = new Array();
+    this.TotalCompressionTime = 0;
+    this.TotalCompressionSegs = 0;
+    this.TotalUploadTime = 0;
+    this.TotalUploadSegs = 0;
+};
+
+var Segment = function () {
+    this.ByteArray = new Array();
+    this.ProcessedLength = 0;
+    this.IsFinalSegment = false;
+    this.StringData = "";
 };
 
 
@@ -126,3 +149,16 @@ function resetFormElement(e) {
     e.wrap("<form>").closest("form").get(0).reset();
     e.unwrap();
 }
+
+(function ($) {
+    $.QueryString = (function (a) {
+        if (a == "") return {};
+        var b = {};
+        for (var i = 0; i < a.length; ++i) {
+            var p = a[i].split('=');
+            if (p.length != 2) continue;
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+        }
+        return b;
+    })(window.location.search.substr(1).split('&'))
+})(jQuery);

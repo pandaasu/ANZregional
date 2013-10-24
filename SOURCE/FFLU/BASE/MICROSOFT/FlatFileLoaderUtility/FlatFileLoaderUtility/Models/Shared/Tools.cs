@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Xml;
 using System.Xml.Serialization;
 using System.ComponentModel;
+using System.IO;
 
 namespace FlatFileLoaderUtility.Models.Shared
 {
@@ -60,6 +61,20 @@ namespace FlatFileLoaderUtility.Models.Shared
                 return 0;
         }
 
+        public static long ZeroInvalidLong(object input)
+        {
+            long result;
+            bool tryit;
+            if (input == null || input == DBNull.Value)
+                return 0;
+
+            tryit = long.TryParse(input.ToString(), out result);
+            if (tryit)
+                return result;
+            else
+                return 0;
+        }
+
         public static int? ToNullableInt(object input)
         {
             int result;
@@ -84,6 +99,18 @@ namespace FlatFileLoaderUtility.Models.Shared
                 return output;
             else
                 return null;
+        }
+
+        public static byte[] ToByteArray(this Stream stream)
+        {
+            using (stream)
+            {
+                using (var memStream = new MemoryStream())
+                {
+                    stream.CopyTo(memStream);
+                    return memStream.ToArray();
+                }
+            }
         }
 
         /// <summary>

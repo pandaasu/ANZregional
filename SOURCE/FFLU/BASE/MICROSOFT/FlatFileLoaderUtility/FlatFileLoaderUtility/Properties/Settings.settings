@@ -53,5 +53,20 @@
     <Setting Name="UseSsl" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="MinCompressionBytes" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5000</Value>
+    </Setting>
+    <Setting Name="MaxCompressedSegmentsPerRequest" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="MaxCompressionBytes" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">2048000</Value>
+    </Setting>
+    <Setting Name="StartCompressionBytes" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">512000</Value>
+    </Setting>
+    <Setting Name="CompressionStep" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">256000</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

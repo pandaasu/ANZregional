@@ -8,7 +8,7 @@ namespace FlatFileLoaderUtility
         // For more information on Bundling, visit http://go.microsoft.com/fwlink/?LinkId=254725
         public static void RegisterBundles(BundleCollection bundles)
         {
-            // BundleTable.EnableOptimizations = false;
+            //BundleTable.EnableOptimizations = false;
 
             bundles.Add(new ScriptBundle("~/bundles/site").Include(
                         "~/Scripts/jquery-{version}.js",
@@ -21,8 +21,9 @@ namespace FlatFileLoaderUtility
                         "~/Scripts/placeholders.js",
                         "~/Scripts/timepicker/jquery.ui.timepicker.js",
                         "~/Scripts/chosen/chosen.jquery.js",
+                        "~/Scripts/modernizr-{version}.js",
                         "~/Scripts/site.js",
-                        "~/Scripts/modernizr-{version}.js"));
+                        "~/Scripts/lzma.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                         "~/Content/jquery-ui-1.9.1.css",
