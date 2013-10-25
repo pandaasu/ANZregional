@@ -681,7 +681,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           (t2.promax_company = pxi_common.gc_new_zealand or (t2.promax_company = pxi_common.gc_australia and t2.promax_division = t1.div_code)) and
           -- Now join to the previously sent claim
           t3.company_code = t1.company_code and 
-          t3.div_code = t1.div_code and
+          (t3.div_code = t1.div_code or t1.company_code = pxi_common.gc_new_zealand) and 
           t3.cust_code = t1.cust_code and 
           t3.claim_ref = t1.claim_ref
         order by 
@@ -837,7 +837,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           t3.company_code = t1.company_code and
           t3.fiscal_year = t1.fiscal_year and
           t3.accounting_doc_no = t1.accounting_doc_no and
-          t3.line_item_no = t3.line_item_no and
+          t3.line_item_no = t1.line_item_no and
           -- Ensure that the previously sent data is not the same in some way.
           ( t3.reason_code <> t1.reason_code or 
             t3.claim_ref <> t1.claim_ref or 
@@ -964,7 +964,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
           t3.company_code = t1.company_code and
           t3.fiscal_year = t1.fiscal_year and
           t3.accounting_doc_no = t1.accounting_doc_no and
-          t3.line_item_no = t3.line_item_no and
+          t3.line_item_no = t1.line_item_no and
           -- Ensure that the previously sent data is the same.
           t3.reason_code = t1.reason_code and
           t3.claim_ref = t1.claim_ref and
@@ -1032,7 +1032,7 @@ PACKAGE body PXIPMX08_EXTRACT AS
   begin
      lics_mailer.create_email(null,lics_setting_configuration.retrieve_setting('LICS_TRIGGER_EMAIL_GROUP',pc_interface_name || '.' || i_interface_suffix),'AR Claims Interface Duplicates Report',null,null);
      lics_mailer.create_part(null);
-     lics_mailer.append_data('Please see the attached AR Claims Duplicats Report.');
+     lics_mailer.append_data('Please see the attached AR Claims Duplicates Report.');
      lics_mailer.append_data('');
      lics_mailer.create_part('ardups_report_'||i_xactn_seq ||'.html');
      lics_mailer.append_data('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">');

@@ -37,6 +37,9 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-10-24  Chris Horn            Added missing 42 reason code.  Changed NZ
                                     duplicate claim checking to not use
                                     div code.
+  2013-10-25  Chris Horn            Fixed bugs with report not joining on line
+                                    number correctly and joining on NZ duplicate
+                                    claim references.
 
 *******************************************************************************/
   -- LICS Hooks.
