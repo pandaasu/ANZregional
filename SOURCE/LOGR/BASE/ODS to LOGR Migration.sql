@@ -31,16 +31,6 @@ commit;
 insert into LOGR_WOD_SHARE_OF_SHELF select * from ODS.LOGR_WOD_SHARE_OF_SHELF; 
 commit;
 
--- Part 4 Drop the tables in ODS.
-drop table LOGR_WOD_ADVERT_EFFCTVNSS;
-drop table LOGR_WOD_DSTNCTV_ASSET;
-drop table LOGR_WOD_PRDCT_PRFRMNC;
-drop table LOGR_WOD_PACK_EFFCTVNSS;
-drop table LOGR_WOD_HOUSE_PNTRTN;
-drop table LOGR_WOD_SALES_SCAN;
-drop table LOGR_WOD_TV_ACTIVITY;
-drop table LOGR_WOD_SHARE_OF_SHELF;
-
 -- Part 5
 -- This script should be run within FFLU_APP to grant execute access to the 
 -- approperiate packages for other app schemas to create interfaces.
@@ -55,14 +45,13 @@ create or replace synonym fflu_common for fflu_app.fflu_common;
 create or replace synonym fflu_data for fflu_app.fflu_data;
 create or replace synonym fflu_utils for fflu_app.fflu_utils;
 
--- Part 7
+-- Part 7 
 -- Install each of the packages in LOGR_APP and run the grant script.
 
-
--- Part 8
+-- Part 8 - DONE
 -- Reconfigure the pointers in ICS Interface Configration Screens from ODS_APP to LOGR_APP.
 
--- Part 9 
+-- Part 9 - DONE
 -- Drop the packages from test ODS_APP;
 drop package LOGRWOD01_LOADER;
 drop package LOGRWOD02_LOADER;
@@ -73,3 +62,15 @@ drop package LOGRWOD06_LOADER;
 drop package LOGRWOD07_LOADER;
 drop package LOGRWOD08_LOADER;
 
+-- Part 10 Drop the tables in ODS.
+drop table LOGR_WOD_ADVERT_EFFCTVNSS;
+drop table LOGR_WOD_DSTNCTV_ASSET;
+drop table LOGR_WOD_PRDCT_PRFRMNC;
+drop table LOGR_WOD_PACK_EFFCTVNSS;
+drop table LOGR_WOD_HOUSE_PNTRTN;
+drop table LOGR_WOD_SALES_SCAN;
+drop table LOGR_WOD_TV_ACTIVITY;
+drop table LOGR_WOD_SHARE_OF_SHELF;
+
+
+select * from LOGR.LOGR_WOD_SALES_SCAN
