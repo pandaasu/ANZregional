@@ -65,8 +65,14 @@ package body          pmxpxi02_loader as
 /*******************************************************************************
   Package Variables
 *******************************************************************************/  
+   -- AR Data and AP Data
    ptv_gl_ar_data pxiatl01_extract.tt_gl_data;
    ptv_gl_ap_data pxiatl01_extract.tt_gl_data;
+   -- Header Detail Summation Checking Variables.
+   pv_last_header_amount pxi_common.st_amount;
+   pv_cur_detail_amount pxi_common.st_amount;
+   pv_last_header_row_no fflu_common.st_count;
+   
 
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
@@ -76,6 +82,10 @@ package body          pmxpxi02_loader as
     -- Ensure that the general ledger data is empty.
     ptv_gl_ap_data.delete;
     ptv_gl_ar_data.delete;
+    -- Initialise the header detail summation check. 
+    pv_last_header_amount := 0;
+    pv_cur_detail_amount := 0;
+    pv_last_header_row_no := 0;
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
@@ -121,7 +131,35 @@ package body          pmxpxi02_loader as
   exception 
     when others then 
       fflu_data.log_interface_exception('ON_START');
-end on_start;
+  end on_start;
+
+/*******************************************************************************
+  NAME:      PERFORM_HEADER_CHECK                                        PRIVATE
+  PURPOSE:   Checks if the last header record matches the sum of the detail 
+             records received.  If not log the header line number as an 
+             interface exception.
+             
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.0   2013-10-29 Chris Horn           Created
+  
+*******************************************************************************/   
+  procedure perform_header_check is 
+  begin
+    -- Perform the header check.
+    if pv_last_header_amount <> pv_cur_detail_amount then 
+      fflu_data.log_interface_error(
+        'Header Row',pv_last_header_row_no,'Header Amount [' || pv_last_header_amount || '] did not match sum of Detail Amounts [' || pv_cur_detail_amount || ']');
+    end if;
+    -- Reset the summation checking variables for the next header detail set.
+    pv_last_header_amount := 0;
+    pv_cur_detail_amount := 0;
+    pv_last_header_row_no := fflu_utils.get_interface_row;
+  exception 
+    when others then 
+      fflu_data.log_interface_exception('PERFORM_HEADER_CHECK');
+  end perform_header_check;
 
 /*******************************************************************************
   NAME:      ON_DATA                                                      PUBLIC
@@ -134,7 +172,13 @@ end on_start;
     v_bus_sgmnt := null;
     -- Now parse the row. 
     if fflu_data.parse_data(p_row) = true then
-      -- Only look for detail records at this time.  Header records are ignored.
+      -- Now perform a header check.
+      if fflu_data.get_char_field(pc_type) = 'H' then 
+        perform_header_check;
+        -- Now set the new header amount field.
+        pv_last_header_amount := fflu_data.get_number_field(pc_amount);
+      end if;
+      -- Now process the detail records.
       if fflu_data.get_char_field(pc_type) = 'D' then 
         -- Header Reference Fields.
         rv_gl.company := fflu_data.get_char_field(pc_px_company_code);
@@ -147,6 +191,8 @@ end on_start;
         rv_gl.cost_center := null;
         rv_gl.profit_center := null;
         rv_gl.amount := fflu_data.get_number_field(pc_amount);
+        -- Update the details amount checker field 
+        pv_cur_detail_amount := pv_cur_detail_amount + fflu_data.get_number_field(pc_amount);
         rv_gl.tax_amount := fflu_data.get_number_field(pc_tax_amount);
         rv_gl.tax_amount_base := fflu_data.get_number_field(pc_spend_amount);
         if rv_gl.amount <> rv_gl.tax_amount + rv_gl.tax_amount_base then 
@@ -282,6 +328,8 @@ end on_start;
 *******************************************************************************/  
   procedure on_end is 
   begin 
+    -- Perform one last header check for the last block of records
+    perform_header_check;
     -- Only perform a commit / send data if there were no errors at all. 
     if fflu_data.was_errors = false then 
       -- Now lets create the atlas IDOC interfaces with the data we have in 
