@@ -45,6 +45,9 @@
   grant select, insert, update, delete on bi.japan_target_days_cover to bi_app, lics_app with grant option;
   grant select on bi.japan_target_days_cover to qv_user, qv_app, bi_app;
 
+  -- Synonyms
+  create or replace public synonym japan_target_days_cover for bi.japan_target_days_cover;
+
 /*******************************************************************************
   END
 *******************************************************************************/
