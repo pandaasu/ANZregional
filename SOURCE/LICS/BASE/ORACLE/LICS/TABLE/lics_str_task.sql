@@ -19,6 +19,8 @@
 
 *******************************************************************************/
 
+
+drop table lics_str_task cascade constraints;
 /**/
 /* Table creation
 /**/

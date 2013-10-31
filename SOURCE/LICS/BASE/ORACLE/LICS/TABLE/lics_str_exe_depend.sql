@@ -17,6 +17,8 @@
 
 *******************************************************************************/
 
+
+drop table lics_str_exe_depend cascade constraints;
 /**/
 /* Table creation
 /**/

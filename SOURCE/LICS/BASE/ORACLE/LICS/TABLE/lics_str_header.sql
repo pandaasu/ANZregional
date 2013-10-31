@@ -16,7 +16,7 @@
  2007/09   Steve Gregan   Created
 
 *******************************************************************************/
-
+drop table lics_str_header cascade constraints;
 /**/
 /* Table creation
 /**/

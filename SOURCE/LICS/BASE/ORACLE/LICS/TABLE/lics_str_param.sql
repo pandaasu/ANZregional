@@ -17,6 +17,7 @@
 
 *******************************************************************************/
 
+drop table lics_str_param cascade constraints;
 /**/
 /* Table creation
 /**/

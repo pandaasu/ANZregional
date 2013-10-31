@@ -17,6 +17,7 @@
 
 *******************************************************************************/
 
+drop table lics_str_exe_event cascade constraints;
 /**/
 /* Table creation
 /**/
