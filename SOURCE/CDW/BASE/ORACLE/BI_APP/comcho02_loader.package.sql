@@ -69,8 +69,8 @@ create or replace package body comcho02_loader as
     fflu_data.add_number_field_del(pc_mars_period,1,'Period','999990',190001,999913,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_del(pc_supplier,2,'Supplier',1,32,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
     fflu_data.add_number_field_del(pc_difot_value,3,'DIFOT','990.90',0,100,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_del(pc_update_user,4,'Supplier',1,30,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_del(pc_user_comment,5,'Supplier',1,4000,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_update_user,4,'User',1,30,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_user_comment,5,'Comments',1,4000,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
     
     -- Get user name - MUST be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
@@ -121,11 +121,11 @@ create or replace package body comcho02_loader as
 
         -- Assign Update user 
         v_current_field := pc_update_user;
-        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_update_user)));
+        rv_insert_values.update_user := initcap(trim(fflu_data.get_char_field(pc_update_user)));
         
         -- Assign User comment 
         v_current_field := pc_user_comment;
-        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_user_comment)));        
+        rv_insert_values.user_comment := initcap(trim(fflu_data.get_char_field(pc_user_comment)));        
 
         -- Add default value for Chocolate business segment
         rv_insert_values.bus_sgmnt := pc_bus_sgmnt_value;        
