@@ -38,6 +38,8 @@ package pmxpxi01_loader as
   2013-08-08  Jonathan Girling	    Updated Interface mapping
   2013-08-20  Chris Horn            Updated formatting and comments.
   2013-10-14  Chris Horn            Added amount = tax amount base for zero check.
+  2013-11-04  Jonathan Girling      Updated pc_additional_info field in the 
+                                    on_start procedure from 10 to 20.
 
 *******************************************************************************/
   -- LICS Hooks.

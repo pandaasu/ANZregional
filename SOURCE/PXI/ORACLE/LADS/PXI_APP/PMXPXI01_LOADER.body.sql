@@ -96,8 +96,8 @@ package body pmxpxi01_loader as
     fflu_data.add_date_field_txt(pc_start_date,258,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_date_field_txt(pc_stop_date,266,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_txt(pc_quantity,274,15,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_additional_info,289,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_promotion_is_closed,299,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_additional_info,289,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_promotion_is_closed,309,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
   exception 
     when others then 
       fflu_data.log_interface_exception('ON_START');
