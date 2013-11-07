@@ -48,6 +48,13 @@ package pmxpxi03_loader as
                                     intersecting with the current batch. 
                                     Likewise, add handling for action code 'C', 
                                     equivalent to 'D'.
+  2013-11-05 Chris Horn             Rewrote create batch to create an in
+                                    memory timeline of all changes and then 
+                                    write out the aggregated changes.  Storing
+                                    a copy in pmx_price_condtions.
+  2013-11-08 Chris Horn             Added exception handling to create batch
+                                    functions.  Started creating pricing 
+                                    reconcilliation report.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -68,9 +75,23 @@ package pmxpxi03_loader as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-30 Jonathan Girling     Created.
   1.2   2013-08-26 Chris Horn           Cleaned Up.
-
+  
 *******************************************************************************/
-
   procedure execute(i_batch_seq in number);
+
+/*******************************************************************************
+  NAME:      RECONCILE_PRICING_CONDITIONS                                 PUBLIC
+  PURPOSE:   Looks at all the pricing condition records and checks that 
+             a corresponding record has been returned from SAP.  This should be 
+             run in the early hours of the morning after all the interfacing
+             has synchronized.  Approx 2am each day.
+
+  REVISIONS:
+  Ver   Date       Author               Description
+  ----- ---------- -------------------- ----------------------------------------
+  1.1   2013-11-08 Chris Horn           Started Creating.
+  
+*******************************************************************************/
+  procedure reconcile_pricing_conditions;
 
 end pmxpxi03_loader;

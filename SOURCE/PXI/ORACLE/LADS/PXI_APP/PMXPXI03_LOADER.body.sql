@@ -372,7 +372,9 @@ package body pmxpxi03_loader as
       raise;
   end append_record;
 
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      CHECK_BATCH                                                 PRIVATE
+*******************************************************************************/  
   procedure check_batch(i_batch_seq in number) is
 
     -- Local definitions
@@ -388,8 +390,7 @@ package body pmxpxi03_loader as
     
     v_current_action_desc varchar2(16 char);
     v_previous_action_desc varchar2(16 char);
-
-begin
+  begin
     
     -- Loop Over Current Transactions
     for vr_current in (
@@ -537,12 +538,16 @@ begin
          rollback;
          raise;
 
-  end check_batch;
+ end check_batch;
   
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      CREATE_BATCH                                                PRIVATE
+*******************************************************************************/  
   procedure create_batch(i_batch_seq in number) is
 
-    -- This query determins the vakeys and pricing conditions that we will be dealing with for this batch, and the minimum and maximum dates involved in the whole process across all available time.    
+    -- This query determins the vakeys and pricing conditions that we will be 
+    -- dealing with for this batch, and the minimum and maximum dates involved 
+    -- in the whole process across all available time.    
     cursor csr_batch_keys is 
        select 
          t1.vakey,
@@ -560,7 +565,8 @@ begin
    type tt_timeline is table of pmx_359_promotions%rowtype index by pls_integer; 
    tv_timeline tt_timeline;
 
-   -- Define a cursor with the instructions.
+   -- Define a cursor with the instructions to be applied up to and including
+   -- this batch.  
    cursor csr_instructions is
      select * 
      from pmx_359_promotions t1
@@ -572,15 +578,20 @@ begin
       t1.xactn_seq;
    rv_instruction csr_instructions%rowtype;
    
-   -- This procedure applys the current instruction to the timeline. 
+   -- This procedure applys the current instruction to the in memory timeline. 
    procedure apply_instruction is
-     -- Calculate from and to points in the timeline based on the dates.
+     -- Function to calculate the time line position based on a given date.
      function calculate_timeline_position(i_date in date) return pls_integer is
        v_position pls_integer;
      begin
        v_position := i_date - rv_batch_key.min_buy_start_date + 1;
        return v_position;
+     exception
+       when others then
+          fflu_data.log_interface_exception('APPLY_INSTRUCTION');
+           raise;
      end calculate_timeline_position;
+     
      
      -- Function applys the current instruction to the ranage specified.  
      procedure set_range(i_from in pls_integer, i_to in pls_integer) is
@@ -592,6 +603,10 @@ begin
          v_counter := v_counter + 1;
          exit when v_counter > i_to;
        end loop;
+      exception
+        when others then
+           fflu_data.log_interface_exception('SET_RANGE');
+           raise;
      end set_range;
      
      -- Function to brute force zero all records that contain this sales deal.  
@@ -611,6 +626,10 @@ begin
          end if;
          v_counter := v_counter + 1;
        end loop;
+      exception
+        when others then
+           fflu_data.log_interface_exception('ZERO_SALES_DEAL');
+           raise;
      end zero_sales_deal;
      
    begin
@@ -637,6 +656,10 @@ begin
            calculate_timeline_position(rv_instruction.buy_start_date), 
            calculate_timeline_position(rv_instruction.buy_stop_date));
       end case;
+    exception
+      when others then
+         fflu_data.log_interface_exception('APPLY_INSTRUCTION');
+         raise;
    end apply_instruction;
 
     -- Now save out the timeline to the pmx_price_conditions table and to the outbound interface. 
@@ -654,6 +677,10 @@ begin
           append_record(rv_condition);
           v_have_condition := false;
         end if;
+      exception
+        when others then
+           fflu_data.log_interface_exception('WRITE_CONDITION');
+           raise;
       end write_condition;
       -- Checks if there are any differences between the last record and the current record.
       function check_for_change return boolean is
@@ -682,6 +709,10 @@ begin
           is_different(rv_condition.rate_unit, tv_timeline(v_counter).new_rate_unit) or
           is_different(rv_condition.rate_multiplier, tv_timeline(v_counter).new_rate_multiplier) or
           is_different(rv_condition.order_type_code, tv_timeline(v_counter).order_type_code);
+      exception
+        when others then
+           fflu_data.log_interface_exception('CHECK_FOR_CHANGE');
+           raise;
       end check_for_change;
       -- Now take the first pricing condition of this type that we have seen and assign the details to this current record.      
       procedure assign_condition is
@@ -701,6 +732,10 @@ begin
         rv_condition.rate_multiplier := tv_timeline(v_counter).new_rate_multiplier;
         rv_condition.order_type_code := tv_timeline(v_counter).order_type_code;
         rv_condition.buy_start_date := rv_batch_key.min_buy_start_date + v_counter - 1;
+      exception
+        when others then
+           fflu_data.log_interface_exception('ASSIGN_CONDITION');
+           raise;
       end assign_condition;
     begin
       -- Clear any previous records.
@@ -727,6 +762,10 @@ begin
         v_counter := v_counter + 1;
       end loop;
       write_condition;
+    exception
+      when others then
+         fflu_data.log_interface_exception('SAVE_TIMELINE');
+         raise;
     end save_timeline;
 
   begin
@@ -754,46 +793,35 @@ begin
     if lics_outbound_loader.is_created then
        lics_outbound_loader.finalise_interface;
     end if;
-    
+
     -- Commit any changes made at this point.
     commit;
-
    exception
-
       when others then
          fflu_data.log_interface_exception('CREATE_BATCH');
          rollback;
          if lics_outbound_loader.is_created then
-            lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-            lics_outbound_loader.finalise_interface;
+           lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
+           lics_outbound_loader.finalise_interface;
          end if;
          raise;
-
    end create_batch;
 
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      CHECK_BATCH                                                  PUBLIC
+*******************************************************************************/  
   procedure execute(i_batch_seq in number) is
-
   begin
-  
     check_batch(i_batch_seq);
     create_batch(i_batch_seq);
-    
-    
   exception
-
     when others then
-       fflu_data.log_interface_exception('EXECUTE');
-       rollback;
-       if lics_outbound_loader.is_created then
-          lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
-          lics_outbound_loader.finalise_interface;
-       end if;
-       raise;
-  
+     fflu_data.log_interface_exception('EXECUTE');
   end execute;
    
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      ON_END                                                       PUBLIC
+*******************************************************************************/  
   procedure on_end is
   begin
     -- Only perform a commit if there were no errors at all.
@@ -811,16 +839,51 @@ begin
       fflu_data.log_interface_exception('ON_END');
   end on_end;
 
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      ON_GET_FILE_TYPE                                             PUBLIC
+*******************************************************************************/  
   function on_get_file_type return varchar2 is
   begin
     return fflu_common.gc_file_type_fixed_width;
   end on_get_file_type;
 
-  ------------------------------------------------------------------------------
+/*******************************************************************************
+  NAME:      ON_GET_CSV_QUALIFIER                                         PUBLIC
+*******************************************************************************/  
   function on_get_csv_qualifier return varchar2 is
   begin
     return fflu_common.gc_csv_qualifier_null;
   end on_get_csv_qualifier;
+
+/*******************************************************************************
+  NAME:      RECONCILE_PRICING_CONDITIONS                                 PUBLIC
+*******************************************************************************/  
+  procedure reconcile_pricing_conditions is
+    -- TODO : Add a wrapping select around this to select where record missing from 
+    -- t2 and or t3 rate rate multiplier or sales deal do not match email report
+    -- accordinly. 
+    cursor csr_reconcilliation_issues is
+      select 
+        t1.*,
+        t2.*,
+        t3.*
+      from 
+        pmx_price_conditions t1,
+        lads_prc_lst_hdr t2,
+        lads_prc_lst_det t3 
+      where t2.vakey (+) = t1.vakey and
+        t2.vkorg (+) = t1.company_code and
+        t2.kschl (+) = t1.pricing_condition_code and 
+        t2.datab (+) = to_char(t1.buy_start_date,'YYYYMMDD') and 
+        t2.datbi (+) = to_char(t1.buy_stop_date,'YYYYMMDD') and 
+        t2.kotabnr (+) = t1.condition_table and
+        t3.vakey (+) = t2.vakey and
+        t3.kschl (+) = t2.kschl and
+        t3.knumh (+) = t2.knumh and
+        t3.datab (+) = t2.datab and 
+        t3.detseq(+) = 1;
+  begin
+    null;
+  end reconcile_pricing_conditions;
 
 end pmxpxi03_loader;
