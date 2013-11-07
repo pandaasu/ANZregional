@@ -20,6 +20,7 @@ PACKAGE          PXIPMX01_EXTRACT as
  21/08/2013    Chris Horn            Cleaned Up Code.
  27/08/2013    Chris Horn            Updated logic. 
  29/08/2013    Chris Horn            Fixed a bug in the RSU determination logic.
+ 04/11/2013	   Jonathan Girling      Updated logic.
 
 *******************************************************************************/
 
@@ -39,6 +40,10 @@ PACKAGE          PXIPMX01_EXTRACT as
   1.2   2013-08-21 Chris Horn           Cleaned Up.
   1.3   2013-08-27 Chris Horn           Implemented New Product Logic.
   1.4   2013-09-12 Chris Horn           Changed the deleted status to 4.
+  1.5   2013-11-04 Jonathan Girling     Updated pmx_matl_tdu_to_rsu insert statement
+                                        to include bom_status 5 in query.
+                                        Updated xdstrbtn_chain_status check to
+                                        allow status 40.
 
 *******************************************************************************/
   procedure execute(

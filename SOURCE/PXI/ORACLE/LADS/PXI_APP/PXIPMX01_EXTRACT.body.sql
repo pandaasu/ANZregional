@@ -67,7 +67,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
             t1.dstrbtn_channel,
             t1.xdstrbtn_chain_status,
             t1.dstrbtn_chain_status,
-            case when t1.dstrbtn_chain_status != '99' and t1.xdstrbtn_chain_status = '10' then 1 else 4 end as product_status,
+            case when t1.dstrbtn_chain_status != '99' and t1.xdstrbtn_chain_status in ('10', '40') then 1 else 4 end as product_status,
             t1.zrep_matl_code, -- ZREP Material Code
             t1.zrep_matl_desc, -- ZREP Material Description.
             t2.sap_material_code as tdu_matl_code, -- TDU Material Code
@@ -87,7 +87,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
           from 
             -- Create the driving table of zreps that are distributed in the destination site, all records in this query must be in the output.
             pmx_zrep_materials t1,
-            bds_material_hdr t2, -- @ap0064p_promax_testing -- TDU Material Header Information
+            bds_material_hdr@ap0064p_promax_testing t2, -- @ap0064p_promax_testing -- TDU Material Header Information
             pmx_matl_tdu_to_rsu t3 
           where
             -- Get the traded unit ferts for those zreps.
@@ -148,7 +148,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
        fetch csr_matl_hist into rv_matl_hist;
        if csr_matl_hist%found then 
          -- If the current status is not deleted then it must now have been recently deleted.
-         if rv_matl_hist.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status = '10' then
+         if rv_matl_hist.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status in ('10', '40') then
            v_result := true;
          else 
            -- Check if the item's status was changed in the last few days.
@@ -179,8 +179,8 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                 t01.sap_material_code as zrep_matl_code,  -- ZREP Material Code
                 t01.bds_material_desc_en as zrep_matl_desc -- ZREP Material Description.
               from 
-                bds_material_hdr t01, --  -- ZREP Material Header Information -- @ap0064p_promax_testing 
-                bds_material_dstrbtn_chain t02, -- @ap0064p_promax_testing -- Material Sales Area Information
+                bds_material_hdr@ap0064p_promax_testing t01, --  -- ZREP Material Header Information -- @ap0064p_promax_testing 
+                bds_material_dstrbtn_chain@ap0064p_promax_testing t02, -- @ap0064p_promax_testing -- Material Sales Area Information
                 table(pxi_common.promax_config(i_pmx_company,i_pmx_division)) t03  -- Promax Configuration table
               where
                 -- Join to promax configuration table.
@@ -210,8 +210,8 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                   t02.width as rsu_width, -- UnitWidth
                   t02.height as rsu_height -- UnitHeight
                 from 
-                  bds_material_bom_all t01, -- @ap0064p_promax_testing t01, -- @ap0064p_promax_testing -- ZREP to TDU
-                  bds_material_hdr t02 -- @ap0064p_promax_testing t02 -- @ap0064p_promax_testing -- Zrep Material Description.  
+                  bds_material_bom_all@ap0064p_promax_testing t01, -- @ap0064p_promax_testing t01, -- @ap0064p_promax_testing -- ZREP to TDU
+                  bds_material_hdr@ap0064p_promax_testing t02 -- @ap0064p_promax_testing -- Zrep Material Description.  
                 where
                   t02.sap_material_code = t01.child_material_code and 
                   -- Ensure we have the correct TDU to RSU Bom Details 
@@ -219,13 +219,13 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                   -- Units Per Case Usage Case 
                   t01.bom_usage = '5' and 
                   -- Production Bom Status
-                  t01.bom_status in (1, 7) and 
+                  t01.bom_status in (1, 5, 7) and 
                   -- That we are after where the child is the RSU
                   t01.child_rsu_flag = 'X' and 
                   -- Make sure only the current bom is being used for the TDU to RSU information
                   t01.bom_eff_date = (
                     select max(t0.bom_eff_date) 
-                    from bds_material_bom_all t0 -- /*@ap0064p_promax_testing
+                    from bds_material_bom_all@ap0064p_promax_testing t0 -- /*@ap0064p_promax_testing
                     where t0.bom_eff_date <= trunc(sysdate) and t0.parent_material_code = t01.parent_material_code and 
                       t0.bom_status = t01.bom_status and t0.bom_usage = t01.bom_usage and
                       t0.child_rsu_flag = t01.child_rsu_flag
@@ -243,7 +243,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
                   t01.width as rsu_width, -- UnitWidth
                   t01.height as rsu_height -- UnitHeight
                 from 
-                  bds_material_hdr t01 -- @ap0064p_promax_testing -- Zrep Material Description.  
+                  bds_material_hdr@ap0064p_promax_testing t01 -- @ap0064p_promax_testing -- Zrep Material Description.  
                 where
                   t01.mars_traded_unit_flag = 'X' and t01.mars_retail_sales_unit_flag = 'X';
      exception 
@@ -261,7 +261,7 @@ PACKAGE BODY PXIPMX01_EXTRACT as
        exit when csr_input%notfound;
        -- Now determine if we should send this material.
        v_include := false;
-       if rv_product.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status = '10' then 
+       if rv_product.dstrbtn_chain_status != '99' and rv_product.xdstrbtn_chain_status in ('10', '40') then 
          v_include := true;
        else 
          if deleted_recently = true then 

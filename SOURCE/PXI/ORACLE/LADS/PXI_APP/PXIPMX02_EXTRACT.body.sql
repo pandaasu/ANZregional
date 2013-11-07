@@ -187,7 +187,7 @@ package body pxipmx02_extract as
        -- Ensure Material Type is a FERT and that it is a Tradded Unit
        t1.material_type = 'ZREP' and t1.mars_traded_unit_flag = 'X' and 
        -- Ensure that this project is allowed to be distributed.
-       t1.xdstrbtn_chain_status = '10' and 
+       (t1.xdstrbtn_chain_status = '10' or t1.xdstrbtn_chain_status = '40') and 
        -- Make sure this product is not being sold to affilate markers or as a raws and packs product.
        t2.dstrbtn_channel = pxi_common.gc_distrbtn_channel_primary and
        -- Make sure the distribution channel status is not inactive

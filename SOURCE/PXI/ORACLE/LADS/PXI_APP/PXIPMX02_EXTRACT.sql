@@ -19,6 +19,7 @@ PACKAGE          PXIPMX02_EXTRACT as
  21/08/2013    Chris Horn            Cleaned Up Code.
  28/08/2013    Chris Horn            Made code more generic for OZ and NZ.
  11/10/2013    Chris Horn            Implemented the Percare Product Hierarchy.
+ 06/11/2013    Jonathan Girling      Updated logic.
  
 *******************************************************************************/
 
@@ -55,6 +56,8 @@ PACKAGE          PXIPMX02_EXTRACT as
   ----- ---------- -------------------- ----------------------------------------
   1.0   2013-07-28 Chris Horn           Created.
   1.1   2013-08-28 Chris Horn           Added Promax Company and Division Info.
+  1.2   2013-11-06 Jonathan Girling     Updated xdstrbtn_chain_status filter to
+                                        include status 40
   
 *******************************************************************************/
   -- Hierarchy Node Record
