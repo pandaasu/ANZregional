@@ -38,6 +38,8 @@ PACKAGE          PXIPMX09_EXTRACT as
   1.1   2013-07-30 Chris Horn           Created.
   1.2   2013-08-21 Chris Horn           Cleaned Up.
   1.3   2013-08-28 Chris Horn           Made Code Generic for Oz.
+  1.4   2013-11-01 Jonathan Girling     Added additional join on condition type
+                                        Changed discountgiven to allow negatives 
 
 *******************************************************************************/
    procedure execute(
