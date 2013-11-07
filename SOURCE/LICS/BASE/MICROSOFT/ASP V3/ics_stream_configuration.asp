@@ -67,7 +67,7 @@
       '// Get the form data
       '//
       GetForm()
-      strMode = objForm.Fields("Mode").Value
+      strMode = objForm.Fields().Item("Mode")
 
       '//
       '// Process the form data
@@ -89,7 +89,7 @@
             call ProcessCopyAccept
          case else
             strMode = "FATAL"
-            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
+            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields().Item("Mode") & " specified"
       end select
 
    end if
@@ -129,8 +129,8 @@ sub ProcessSelect()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream
@@ -161,13 +161,13 @@ sub ProcessDefineLoad()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream data
    '//
-   if objForm.Fields("DTA_StreamCode").Value <> "*NEW" then
+   if objForm.Fields().Item("DTA_StreamCode") <> "*NEW" then
 
       '//
       '// Retrieve the stream nodes
@@ -183,7 +183,7 @@ sub ProcessDefineLoad()
       strQuery = strQuery & " t01.str_job_group,"
       strQuery = strQuery & " t01.str_opr_alert,"
       strQuery = strQuery & " t01.str_ema_group"
-      strQuery = strQuery & " from table(lics_app.lics_stream_configuration.get_nodes('" & objForm.Fields("DTA_StreamCode").Value & "')) t01"
+      strQuery = strQuery & " from table(lics_app.lics_stream_configuration.get_nodes('" & objForm.Fields().Item("DTA_StreamCode") & "')) t01"
       strReturn = objSelection.Execute("NODES", strQuery, 0)
       if strReturn <> "*OK" then
          strError = FormatError(strReturn)
@@ -224,16 +224,16 @@ sub ProcessDefineAccept()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Load the form data
    '//
    call objProcedure.Execute("lics_form.clear_form")
-   lngCount = clng(objForm.Fields("StreamCount").Value)
+   lngCount = clng(objForm.Fields().Item("StreamCount"))
    for i = 1 to lngCount
-      call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
+      call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields().Item("StreamPart" & i)) & "')")
    next
 
    '//
@@ -267,8 +267,8 @@ sub ProcessDeleteLoad()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream header
@@ -277,7 +277,7 @@ sub ProcessDeleteLoad()
    strQuery = strQuery & " t01.sth_str_text,"
    strQuery = strQuery & " t01.sth_status"
    strQuery = strQuery & " from lics_str_header t01"
-   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields().Item("DTA_StreamCode") & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -308,13 +308,13 @@ sub ProcessDeleteAccept()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Delete the report
    '//
-   strStatement = "lics_stream_configuration.delete_stream('" & objForm.Fields("DTA_StreamCode").Value & "')"
+   strStatement = "lics_stream_configuration.delete_stream('" & objForm.Fields().Item("DTA_StreamCode") & "')"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -341,8 +341,8 @@ sub ProcessCopyLoad()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream header
@@ -351,7 +351,7 @@ sub ProcessCopyLoad()
    strQuery = strQuery & " t01.sth_str_text,"
    strQuery = strQuery & " t01.sth_status"
    strQuery = strQuery & " from lics_str_header t01"
-   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields().Item("DTA_StreamCode") & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -364,7 +364,7 @@ sub ProcessCopyLoad()
    '//
    '// Initialise the data fields
    '//
-   call objForm.AddField("DTA_CopyCode", objForm.Fields("DTA_StreamCode").Value)
+   call objForm.AddField("DTA_CopyCode", objForm.Fields().Item("DTA_StreamCode"))
    call objForm.UpdateField("DTA_StreamCode", "")
    call objForm.AddField("DTA_StreamText", objSelection.ListValue02("STREAM",objSelection.ListLower("LIST")))
    call objForm.AddField("DTA_StreamStatus", objSelection.ListValue03("STREAM",objSelection.ListLower("STREAM")))
@@ -386,17 +386,17 @@ sub ProcessCopyAccept()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Copy the stream
    '//
    strStatement = "lics_stream_configuration.copy_stream("
-   strStatement = strStatement & "'" & objForm.Fields("DTA_CopyCode").Value & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_StreamCode").Value & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_StreamText").Value & "',"
-   strStatement = strStatement & "'" & objForm.Fields("DTA_StreamStatus").Value & "',"
+   strStatement = strStatement & "'" & objForm.Fields().Item("DTA_CopyCode") & "',"
+   strStatement = strStatement & "'" & objForm.Fields().Item("DTA_StreamCode") & "',"
+   strStatement = strStatement & "'" & objForm.Fields().Item("DTA_StreamText") & "',"
+   strStatement = strStatement & "'" & objForm.Fields().Item("DTA_StreamStatus") & "',"
    strStatement = strStatement & "'" & GetUser() & "'"
    strStatement = strStatement & ")"
    strReturn = objProcedure.Execute(strStatement)

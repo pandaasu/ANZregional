@@ -67,7 +67,7 @@
       '// Get the form data
       '//
       GetForm()
-      strMode = objForm.Fields("Mode").Value
+      strMode = objForm.Fields().Item("Mode")
 
       '//
       '// Process the form data
@@ -81,7 +81,7 @@
             call ProcessSubmitAccept
          case else
             strMode = "FATAL"
-            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
+            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields().Item("Mode") & " specified"
       end select
 
    end if
@@ -117,8 +117,8 @@ sub ProcessSelect()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream
@@ -147,8 +147,8 @@ sub ProcessSubmitLoad()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream header
@@ -156,7 +156,7 @@ sub ProcessSubmitLoad()
    strQuery = "select t01.sth_str_code,"
    strQuery = strQuery & " t01.sth_str_text"
    strQuery = strQuery & " from lics_str_header t01"
-   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.sth_str_code = '" & objForm.Fields().Item("DTA_StreamCode") & "'"
    strReturn = objSelection.Execute("STREAM", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -177,7 +177,7 @@ sub ProcessSubmitLoad()
    strQuery = strQuery & " t01.stp_par_text,"
    strQuery = strQuery & " t01.stp_par_value"
    strQuery = strQuery & " from lics_str_param t01"
-   strQuery = strQuery & " where t01.stp_str_code = '" & objForm.Fields("DTA_StreamCode").Value & "'"
+   strQuery = strQuery & " where t01.stp_str_code = '" & objForm.Fields().Item("DTA_StreamCode") & "'"
    strReturn = objSelection.Execute("PARAMS", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -204,16 +204,16 @@ sub ProcessSubmitAccept()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Load the form data
    '//
    call objProcedure.Execute("lics_form.clear_form")
-   lngCount = clng(objForm.Fields("StreamCount").Value)
+   lngCount = clng(objForm.Fields().Item("StreamCount"))
    for i = 1 to lngCount
-     call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields("StreamPart" & i).Value) & "')")
+     call objProcedure.Execute("lics_form.set_value('TRANSACTION_STREAM','" & objSecurity.FixString(objForm.Fields().Item("StreamPart" & i)) & "')")
    next
 
    '//

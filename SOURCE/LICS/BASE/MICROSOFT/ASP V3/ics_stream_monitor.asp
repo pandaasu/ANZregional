@@ -67,7 +67,7 @@
       '// Get the form data
       '//
       GetForm()
-      strMode = objForm.Fields("Mode").Value
+      strMode = objForm.Fields().Item("Mode")
 
       '//
       '// Process the form data
@@ -85,7 +85,7 @@
             call ProcessResume
          case else
             strMode = "FATAL"
-            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields("Mode").Value & " specified"
+            strReturn = "*ERROR: Invalid processing mode " & objForm.Fields().Item("Mode") & " specified"
       end select
 
    end if
@@ -121,8 +121,8 @@ sub ProcessSelect()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream instances
@@ -157,8 +157,8 @@ sub ProcessReview()
    '//
    '// Create the selection object
    '//
-   set objSelection = Server.CreateObject("ICS_SELECTION.Object")
-   set objSelection.Security = objSecurity
+   set objSelection = Server.CreateObject("ics_selection2.ICS_Selection")
+   objSelection.Security(objSecurity)
 
    '//
    '// Retrieve the stream instance nodes
@@ -179,7 +179,7 @@ sub ProcessReview()
    strQuery = strQuery & " t01.str_dt011,"
    strQuery = strQuery & " t01.str_dt012,"
    strQuery = strQuery & " t01.str_dt013"
-   strQuery = strQuery & " from table(lics_app.lics_stream_monitor.get_nodes(" & objForm.Fields("DTA_StreamSeqn").Value & ")) t01"
+   strQuery = strQuery & " from table(lics_app.lics_stream_monitor.get_nodes(" & objForm.Fields().Item("DTA_StreamSeqn") & ")) t01"
    strReturn = objSelection.Execute("NODES", strQuery, 0)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -206,13 +206,13 @@ sub ProcessCancel()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Cancel the stream instance
    '//
-   strStatement = "lics_stream_monitor.cancel_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
+   strStatement = "lics_stream_monitor.cancel_stream(" & objForm.Fields().Item("DTA_StreamSeqn") & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -240,13 +240,13 @@ sub ProcessPause()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Pause the stream instance
    '//
-   strStatement = "lics_stream_monitor.pause_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
+   strStatement = "lics_stream_monitor.pause_stream(" & objForm.Fields().Item("DTA_StreamSeqn") & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
@@ -274,13 +274,13 @@ sub ProcessResume()
    '//
    '// Create the procedure object
    '//
-   set objProcedure = Server.CreateObject("ICS_PROCEDURE.Object")
-   set objProcedure.Security = objSecurity
+   set objProcedure = Server.CreateObject("ics_procedure2.ICS_PROCEDURE")
+   objProcedure.Security(objSecurity)
 
    '//
    '// Resume the stream instance
    '//
-   strStatement = "lics_stream_monitor.resume_stream(" & objForm.Fields("DTA_StreamSeqn").Value & ")"
+   strStatement = "lics_stream_monitor.resume_stream(" & objForm.Fields().Item("DTA_StreamSeqn") & ")"
    strReturn = objProcedure.Execute(strStatement)
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
