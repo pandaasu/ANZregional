@@ -328,7 +328,7 @@ package body pmxpxi03_loader as
   end raise_outbound_exception;
 
   ------------------------------------------------------------------------------
-  procedure append_record(pr_record in pmx_359_promotions%rowtype) is
+  procedure append_record(pr_record in pmx_price_conditions%rowtype) is
   begin
   
     pv_outbound_record_count := pv_outbound_record_count + 1;
@@ -347,22 +347,22 @@ package body pmxpxi03_loader as
 
     lics_outbound_loader.append_data(  
       pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> UsageConditionCode
-      pxi_common.char_format(pr_record.condition_table_ref, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_table_ref -> CondTable
+      pxi_common.char_format(pr_record.condition_table, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_table_ref -> CondTable
       pxi_common.char_format('V', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'V' -> Application
       pxi_common.char_format(pr_record.vakey, 50, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- VAKEY -> VAKEY
-      pxi_common.char_format(pr_record.px_company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- px_company_code -> CompanyCode
+      pxi_common.char_format(pr_record.company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- px_company_code -> CompanyCode
       pxi_common.char_format(pr_record.cust_div_code, 2, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- cust_div_code -> Division
-      pxi_common.char_format(pr_record.new_customer_hierarchy, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- customer_hierarchy -> Customer
-      pxi_common.char_format(pr_record.new_material, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- material -> Material
+      pxi_common.char_format(pr_record.cust_hierarchy_code, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- customer_hierarchy -> Customer
+      pxi_common.char_format(pr_record.matl_code, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- material -> Material
       pxi_common.date_format(pr_record.buy_start_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- buy_start_date -> ValidFrom
       pxi_common.date_format(pr_record.buy_stop_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- buy_stop_date -> ValidTo
       pxi_common.char_format(pr_record.pricing_condition_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- pricing_cndtn_code -> Condition
       pxi_common.char_format(pr_record.condition_type_code, 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- condition_type_code -> ConditionType
-      pxi_common.numb_format(pr_record.new_rate, 'S9999990.00', pxi_common.fc_is_not_nullable) || -- rate -> Rate
-      pxi_common.char_format(pr_record.new_rate_unit, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_unit -> RateUnit
+      pxi_common.numb_format(pr_record.rate, 'S9999990.00', pxi_common.fc_is_not_nullable) || -- rate -> Rate
+      pxi_common.char_format(pr_record.rate_unit, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_unit -> RateUnit
       pxi_common.char_format('EA', 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'EA' -> UOM
       pxi_common.char_format(pr_record.sales_deal, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- sales_deal -> PromoNum
-      pxi_common.char_format(pr_record.new_rate_multiplier, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_multiplier -> PriceUnit
+      pxi_common.char_format(pr_record.rate_multiplier, 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- rate_multiplier -> PriceUnit
       pxi_common.char_format(pr_record.order_type_code, 4, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- order_type_code -> OrderType
     );
       
@@ -389,8 +389,8 @@ package body pmxpxi03_loader as
     v_current_action_desc varchar2(16 char);
     v_previous_action_desc varchar2(16 char);
 
-  begin
-
+begin
+    
     -- Loop Over Current Transactions
     for vr_current in (
       select * 
@@ -542,130 +542,221 @@ package body pmxpxi03_loader as
   ------------------------------------------------------------------------------
   procedure create_batch(i_batch_seq in number) is
 
-    -- Local definitions
-    type rt_xactn_group is record (
-      vakey pmx_359_promotions.vakey%type,
-      pricing_condition_code pmx_359_promotions.pricing_condition_code%type,
-      buy_start_date pmx_359_promotions.buy_start_date%type,
-      buy_stop_date pmx_359_promotions.buy_stop_date%type
-    );
-    vr_current_group rt_xactn_group;
-    vr_previous_group rt_xactn_group;
+    -- This query determins the vakeys and pricing conditions that we will be dealing with for this batch, and the minimum and maximum dates involved in the whole process across all available time.    
+    cursor csr_batch_keys is 
+       select 
+         t1.vakey,
+         t1.pricing_condition_code,
+         (select min(buy_start_date) from pmx_359_promotions t0 where t0.vakey = t1.vakey and t0.pricing_condition_code = t1.pricing_condition_code and t0.batch_seq <= i_batch_seq) as min_buy_start_date,
+         (select max(buy_stop_date) from pmx_359_promotions t0 where t0.vakey = t1.vakey and t0.pricing_condition_code = t1.pricing_condition_code and t0.batch_seq <= i_batch_seq) as max_buy_stop_date
+       from pmx_359_promotions t1
+       where t1.batch_seq = i_batch_seq
+       group by 
+         t1.vakey, 
+         t1.pricing_condition_code;
+    rv_batch_key csr_batch_keys%rowtype;
 
-    vr_previous pmx_359_promotions%rowtype;
-    vr_delete pmx_359_promotions%rowtype;
-    vr_debug pmx_359_promotions%rowtype;
-    
-    v_key_message varchar2(4000 char);
+   -- Define the in memory data structure to store a timeline of all pricing information.
+   type tt_timeline is table of pmx_359_promotions%rowtype index by pls_integer; 
+   tv_timeline tt_timeline;
+
+   -- Define a cursor with the instructions.
+   cursor csr_instructions is
+     select * 
+     from pmx_359_promotions t1
+     where 
+       t1.vakey = rv_batch_key.vakey and 
+       t1.pricing_condition_code = rv_batch_key.pricing_condition_code and
+       t1.batch_seq <= i_batch_seq
+    order by
+      t1.xactn_seq;
+   rv_instruction csr_instructions%rowtype;
+   
+   -- This procedure applys the current instruction to the timeline. 
+   procedure apply_instruction is
+     -- Calculate from and to points in the timeline based on the dates.
+     function calculate_timeline_position(i_date in date) return pls_integer is
+       v_position pls_integer;
+     begin
+       v_position := i_date - rv_batch_key.min_buy_start_date + 1;
+       return v_position;
+     end calculate_timeline_position;
+     
+     -- Function applys the current instruction to the ranage specified.  
+     procedure set_range(i_from in pls_integer, i_to in pls_integer) is
+       v_counter pls_integer;
+     begin
+       v_counter := i_from;
+       loop 
+         tv_timeline(v_counter) := rv_instruction;  
+         v_counter := v_counter + 1;
+         exit when v_counter > i_to;
+       end loop;
+     end set_range;
+     
+     -- Function to brute force zero all records that contain this sales deal.  
+     procedure zero_sales_deal is
+       v_counter pls_integer;
+       v_count pls_integer;
+     begin
+       v_counter := 1;
+       v_count := 0;
+       loop
+         exit when v_count = tv_timeline.count;
+         if tv_timeline.exists(v_counter) = true then 
+           v_count := v_count + 1;
+           if tv_timeline(v_counter).sales_deal = rv_instruction.sales_deal then 
+             tv_timeline(v_counter).new_rate := 0;
+           end if; 
+         end if;
+         v_counter := v_counter + 1;
+       end loop;
+     end zero_sales_deal;
+     
+   begin
+     case rv_instruction.action_code 
+       when 'A' then 
+         set_range(
+           calculate_timeline_position(rv_instruction.buy_start_date), 
+           calculate_timeline_position(rv_instruction.buy_stop_date));
+       when 'D' then 
+         rv_instruction.new_rate := 0;
+         set_range(
+           calculate_timeline_position(rv_instruction.buy_start_date), 
+           calculate_timeline_position(rv_instruction.buy_stop_date));
+       when 'C' then 
+         rv_instruction.new_rate := 0;
+         set_range(
+           calculate_timeline_position(rv_instruction.buy_start_date), 
+           calculate_timeline_position(rv_instruction.buy_stop_date));
+       when 'M' then
+         -- Zero any entries with the same sales deal, brute force search.
+         zero_sales_deal;
+         -- Then set this sales deal.  
+         set_range(
+           calculate_timeline_position(rv_instruction.buy_start_date), 
+           calculate_timeline_position(rv_instruction.buy_stop_date));
+      end case;
+   end apply_instruction;
+
+    -- Now save out the timeline to the pmx_price_conditions table and to the outbound interface. 
+    procedure save_timeline is 
+      rv_condition pmx_price_conditions%rowtype;
+      v_counter pls_integer;
+      v_count pls_integer;
+      v_have_condition boolean;
+      
+      procedure write_condition is
+      begin
+        if v_have_condition = true then 
+          rv_condition.buy_stop_date := rv_batch_key.min_buy_start_date + v_counter - 2;
+          insert into pmx_price_conditions values rv_condition;
+          append_record(rv_condition);
+          v_have_condition := false;
+        end if;
+      end write_condition;
+      -- Checks if there are any differences between the last record and the current record.
+      function check_for_change return boolean is
+        -- Varchar2 Comparator
+        function is_different(i_val1 in varchar2, i_val2 in varchar2) return boolean is
+        begin
+          return not (i_val1 is not null and i_val2 is not null and i_val1 = i_val2 or (i_val1 is null and i_val2 is null));
+        end is_different;
+        -- Number Comparator
+        function is_different(i_val1 in number, i_val2 in number) return boolean is
+        begin
+          return not (i_val1 is not null and i_val2 is not null and i_val1 = i_val2 or (i_val1 is null and i_val2 is null));
+        end is_different;
+      begin
+        return 
+          -- Only things that should / could change between records.
+          is_different(rv_condition.rate, tv_timeline(v_counter).new_rate) or
+          is_different(rv_condition.sales_deal, tv_timeline(v_counter).sales_deal) or
+          -- Other things that we should check for changes on regardless.
+          is_different(rv_condition.condition_table, tv_timeline(v_counter).condition_table_ref) or
+          is_different(rv_condition.company_code, tv_timeline(v_counter).px_company_code) or
+          is_different(rv_condition.cust_div_code, tv_timeline(v_counter).cust_div_code) or
+          is_different(rv_condition.cust_hierarchy_code, tv_timeline(v_counter).new_customer_hierarchy) or
+          is_different(rv_condition.matl_code, tv_timeline(v_counter).new_material) or
+          is_different(rv_condition.condition_type_code, tv_timeline(v_counter).condition_type_code) or
+          is_different(rv_condition.rate_unit, tv_timeline(v_counter).new_rate_unit) or
+          is_different(rv_condition.rate_multiplier, tv_timeline(v_counter).new_rate_multiplier) or
+          is_different(rv_condition.order_type_code, tv_timeline(v_counter).order_type_code);
+      end check_for_change;
+      -- Now take the first pricing condition of this type that we have seen and assign the details to this current record.      
+      procedure assign_condition is
+      begin
+        v_have_condition := true;
+        rv_condition.vakey := rv_batch_key.vakey;
+        rv_condition.pricing_condition_code := rv_batch_key.pricing_condition_code;
+        rv_condition.rate := tv_timeline(v_counter).new_rate;
+        rv_condition.sales_deal := tv_timeline(v_counter).sales_deal;
+        rv_condition.condition_table := tv_timeline(v_counter).condition_table_ref;
+        rv_condition.company_code := tv_timeline(v_counter).px_company_code;
+        rv_condition.cust_div_code := tv_timeline(v_counter).cust_div_code;
+        rv_condition.cust_hierarchy_code := tv_timeline(v_counter).new_customer_hierarchy;
+        rv_condition.matl_code := tv_timeline(v_counter).new_material;
+        rv_condition.condition_type_code := tv_timeline(v_counter).condition_type_code;
+        rv_condition.rate_unit := tv_timeline(v_counter).new_rate_unit;
+        rv_condition.rate_multiplier := tv_timeline(v_counter).new_rate_multiplier;
+        rv_condition.order_type_code := tv_timeline(v_counter).order_type_code;
+        rv_condition.buy_start_date := rv_batch_key.min_buy_start_date + v_counter - 1;
+      end assign_condition;
+    begin
+      -- Clear any previous records.
+      delete from pmx_price_conditions where vakey = rv_batch_key.vakey and pricing_condition_code = rv_batch_key.pricing_condition_code;
+      -- Now generate an insert the rest of the records based on the past history.  
+      v_counter := 1;
+      v_count := 0;
+      v_have_condition := false;
+      loop
+        exit when v_count = tv_timeline.count;
+        if tv_timeline.exists(v_counter) = true then 
+          v_count := v_count + 1;
+          if v_have_condition = false then 
+            assign_condition;
+          else 
+            if check_for_change = true then 
+              write_condition;
+              assign_condition;
+            end if;
+          end if;
+        else 
+          write_condition; 
+        end if; 
+        v_counter := v_counter + 1;
+      end loop;
+      write_condition;
+    end save_timeline;
 
   begin
-
-    -- Loop current state of *ALL* transactions (VAKEY, Pricing Condition) intersecting with current batch
-    for vr_current in (
-    
-      select *
-      from ( -- to get around the fact you can't order a implicit cursor
-        select *
-        from pmx_359_promotions
-        where action_code not in ('C','D')
-        and xactn_seq in (
-          select max(xactn_seq)
-          from pmx_359_promotions
-          where batch_seq <= i_batch_seq
-          and (vakey, pricing_condition_code) in (
-            select vakey,
-              pricing_condition_code
-            from pmx_359_promotions
-            where batch_seq = i_batch_seq
-            group by vakey, 
-              pricing_condition_code
-          )
-          group by vakey, 
-            pricing_condition_code,
-            sales_deal  
-        )
-        order by vakey, 
-          pricing_condition_code,
-          buy_start_date
-      )
-    
-    )
+    -- Now fetch all the unique vakeys pricing condition entries that we need to process for this batch.  
+    open csr_batch_keys;
     loop
-      -- Set key message for use in log messages
-      v_key_message := 'VAKEY ['||vr_current.vakey||'] Pricing Condition ['||vr_current.pricing_condition_code||'] Sales Deal ['||vr_current.sales_deal||'] Action Code ['||vr_current.action_code||']';
-
-      -- On transaction group (vakey, pricing_condition_code) change
-      if vr_current_group.vakey is null 
-        or vr_current_group.vakey != vr_current.vakey
-        or vr_current_group.pricing_condition_code != vr_current.pricing_condition_code then
-
-        -- Create closing date range delete if necessary
-        if vr_previous_group.vakey is not null  
-          and vr_previous_group.buy_stop_date > vr_previous.buy_stop_date then
-          vr_delete := vr_previous;
-          vr_delete.new_rate := 0;
-          vr_delete.buy_start_date := vr_previous_group.buy_start_date;
-          vr_delete.buy_stop_date := vr_previous_group.buy_stop_date;
-          append_record(vr_delete);
-        end if;
-        
-        begin
-          select vakey,
-            pricing_condition_code,
-            min(buy_start_date),
-            max(buy_stop_date)
-          into vr_current_group
-          from pmx_359_promotions
-          where batch_seq <= i_batch_seq
-          and vakey = vr_current.vakey
-          and pricing_condition_code = vr_current.pricing_condition_code
-          group by vakey,
-            pricing_condition_code;        
-        exception
-          when no_data_found then
-            raise;
-              raise_outbound_exception('Date Range NOT FOUND, '||v_key_message); -- should not be possible
-        end;                
-
-      end if;
-            
-      -- Create filler date range delete if necessary
-      if vr_current_group.buy_start_date < vr_current.buy_start_date then
-          vr_delete := vr_current;
-          vr_delete.new_rate := 0;
-          vr_delete.buy_start_date := vr_current_group.buy_start_date;
-          vr_delete.buy_stop_date := vr_current.buy_start_date - 1;
-          append_record(vr_delete);
-      end if;
-      vr_current_group.buy_start_date := vr_current.buy_stop_date + 1; -- reset group date range start to end of current
-      
-      -- Zero rate for delete transaction 
-      if vr_current.action_code in ('C','D') then
-        vr_current.new_rate := 0;
-      end if;
-      
-      -- Create transaction record
-      append_record(vr_current);
-    
-      -- Take copy of current group/record
-      vr_previous_group := vr_current_group;
-      vr_previous := vr_current;
-
+      fetch csr_batch_keys into rv_batch_key;
+      exit when csr_batch_keys%notfound;
+      -- Now process this specific vakey combination. 
+      tv_timeline.delete;
+      -- Now fetch each of the instructions to build the timeline.
+      open csr_instructions;
+      loop
+        fetch csr_instructions into rv_instruction;
+        exit when csr_instructions%notfound;
+        apply_instruction;
+      end loop;
+      close csr_instructions;
+      -- Now save the timeline to the table.
+      save_timeline;
     end loop;
-
-    -- Create closing date range delete if necessary
-    if vr_previous_group.buy_stop_date > vr_previous.buy_stop_date then
-      vr_delete := vr_previous;
-      vr_delete.new_rate := 0;
-      vr_delete.buy_start_date := vr_previous_group.buy_start_date;
-      vr_delete.buy_stop_date := vr_previous_group.buy_stop_date;
-      append_record(vr_delete);
-    end if;
+    close csr_batch_keys;
     
     -- Finalise the interface when required
     if lics_outbound_loader.is_created then
        lics_outbound_loader.finalise_interface;
     end if;
+    
+    -- Commit any changes made at this point.
+    commit;
 
    exception
 
@@ -687,6 +778,7 @@ package body pmxpxi03_loader as
   
     check_batch(i_batch_seq);
     create_batch(i_batch_seq);
+    
     
   exception
 
