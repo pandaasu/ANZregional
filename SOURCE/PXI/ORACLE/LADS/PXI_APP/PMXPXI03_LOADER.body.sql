@@ -871,7 +871,7 @@ package body pmxpxi03_loader as
         pmx_price_conditions t1,
         lads_prc_lst_hdr t2,
         lads_prc_lst_det t3 
-      where t2.vakey (+) = t1.vakey and
+      where t2.vakey (+) = trim(t1.vakey) and
         t2.vkorg (+) = t1.company_code and
         t2.kschl (+) = t1.pricing_condition_code and 
         t2.datab (+) = to_char(t1.buy_start_date,'YYYYMMDD') and 
