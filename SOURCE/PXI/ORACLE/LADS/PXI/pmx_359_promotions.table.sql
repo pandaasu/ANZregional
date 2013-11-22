@@ -123,6 +123,9 @@ create unique index pxi.pmx_359_promotions_batch_seq on pxi.pmx_359_promotions (
 
 create index pxi.pmx_359_promotions_px_xactn_id on pxi.pmx_359_promotions (px_xactn_id);
 
+create index pmx_359_promotions_nuind02 on pxi.pmx_359_promotions (vakey, pricing_condition_code, batch_seq);
+
+
 -- Synonym
 create or replace public synonym pmx_359_promotions for pxi.pmx_359_promotions;
 
