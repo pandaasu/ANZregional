@@ -40,8 +40,6 @@ package pxi_common as
     - char_format                Formats character fields.
     - numb_format                Formats number fields.
     - date_format                Formats date fields.
-  + Promax Configuration
-    - promax_config              Pipelined promax configuration data.
 
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
@@ -54,6 +52,9 @@ package pxi_common as
                                     LADS, added promax configuration pipe table.
   2013-08-28  Chris Horn            Added customer division codes.
   2013-10-14  Chris Horn            Added concept of interface suffix.
+  2013-11-30  Chris Horn            Removed the promax virtual configuration
+                                    table as it has been replaced with a real 
+                                    table.
 
 *******************************************************************************/
 
@@ -283,48 +284,6 @@ package pxi_common as
     i_value in date, 
     i_format in varchar2, 
     i_value_is_nullable in number) return varchar2;
-
-/*******************************************************************************
-  NAME:      PROMAX_CONFIG                                                PUBLIC
-  PURPOSE:   This function produces a piplined table output that can be used
-             by all the various extract packages.  It returns all the 
-             combinations that are live or available for extraction / use.
-             
-             This is a pipelined table function as the only time this data 
-             should change is when new code has been written, also being in 
-             code ensures that this updated package is rolled out to both
-             Venus and Lads correctly.  It also prevents the need for creating 
-             configuration tables in DDS and PXI.  
-             
-             It also provides some special logic around what it returns.  ie.
-             If both filter parameters are supplied, it returns just that data 
-             back as the only record, even if that site is not yet live.
-             
-             If only one or no paramter are supplied then just the matching 
-             live sites are returned.
-
-  REVISIONS:
-  Ver   Date       Author               Description
-  ----- ---------- -------------------- ----------------------------------------
-  1.1   2013-08-20 Chris Horn           Created.
-  1.2   2013-10-14 Chris Horn           Added concept of interface suffix.
-  
-*******************************************************************************/
-  -- Interface Group List Record
-  type rt_promax_config is record (
-    promax_company st_company,          -- Valid companies
-    promax_division st_promax_division, -- Valid division for this company.
-    cust_division st_cust_division,     -- Equivalent Customer Division.
-    interface_suffix fflu_common.st_interface  -- Interface sufix to use.  
-  );
-
-  -- Interface Group List Table
-  type tt_promax_config is table of rt_promax_config;
-
-  -- Pipelined table function to retrieve the interface group list.
-  function promax_config(
-    i_promax_company in st_company default null, 
-    i_promax_division in st_promax_division default null) return tt_promax_config pipelined;
 
 end pxi_common;
 /
