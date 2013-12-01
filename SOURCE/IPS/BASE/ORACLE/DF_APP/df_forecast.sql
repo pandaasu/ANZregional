@@ -1,7 +1,5 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package df_forecast as
+create or replace 
+package df_forecast as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -37,7 +35,8 @@ create or replace package df_forecast as
     2009/01   Steve Gregan       Created
     2009/04   Steve Gregan       Included the demand SKU mapping logic
                                  Included the MOE demand mapping switch
-
+		2011/12		Rob Bishop				 Added extra comments in process_demand_file()
+		
    *******************************************************************************/
 
    /*-*/

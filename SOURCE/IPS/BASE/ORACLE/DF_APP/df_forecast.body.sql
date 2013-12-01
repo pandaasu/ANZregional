@@ -1,9 +1,5 @@
-
-
-/****************/
-/* Package Body */
-/****************/
-create or replace package body df_forecast as
+create or replace 
+package body        df_forecast as
 
    /*-*/
    /* Private exceptions
@@ -402,7 +398,7 @@ create or replace package body df_forecast as
          raise_application_error(-20000, 'Moe settings not found for MOE code (' || rcd_load_file.moe_code || ')');
       end if;
       close csr_moe_setting;
-
+      lics_logging.write_log('Material Determination type: '||v_matl_dtrmntn_type); 
       /*-*/
       /* Update the load data status
       /*-*/
@@ -624,6 +620,10 @@ create or replace package body df_forecast as
                      /* **notes** 1. *SKU uses demand SKU mapping table
                      /*              1.1. Retrieve the TDU from the demand SKU mapping data when no override
                      /*              1.1. Adjust the last TDU to reach the total
+										 /*						2. The *SKU mapping applies a conversion factor (CONV_FACTOR) to the ZREP quantities.
+										 /*								This should be 1, but sometimes for unusual reasons the users will make it 2.
+										 /*								Unfortunately this means the sales quantities for ZREPs with not equal those for TDUs
+										 /*									as they should.
                      /*-*/
                      elsif v_matl_dtrmntn_type = '*SKU' then
 
@@ -640,6 +640,7 @@ create or replace package body df_forecast as
                            end if;
                            tbl_sku(tbl_sku.count+1).tdu := reference_functions.short_matl_code(rcd_sku_mapping.item);
                            tbl_sku(tbl_sku.count).zrep_qty := round(tab_load_data(idx).qty * rcd_sku_mapping.alloc_factor, 10);
+													 -- See Note 2 above on this conversion factor
                            tbl_sku(tbl_sku.count).tdu_qty := tbl_sku(tbl_sku.count).zrep_qty * rcd_sku_mapping.conv_factor;
                            tbl_sku(tbl_sku.count).alloc_factor := rcd_sku_mapping.alloc_factor;
                            tbl_sku(tbl_sku.count).conv_factor := rcd_sku_mapping.conv_factor;
@@ -647,8 +648,12 @@ create or replace package body df_forecast as
                         end loop;
                         close csr_sku_mapping;
                         if tbl_sku.count != 0 then
+													/*-*/
+													/* Check that ZREP total quantity matches Dmnd_Unit total quanity - otherwise adjust the final quantity
+													/*-*/
                            if var_tot_qty != tab_load_data(idx).qty then
                               tbl_sku(tbl_sku.count).zrep_qty := tbl_sku(tbl_sku.count).zrep_qty + (tab_load_data(idx).qty - var_tot_qty);
+	 													  -- See Note 2 above on this conversion factor
                               tbl_sku(tbl_sku.count).tdu_qty := tbl_sku(tbl_sku.count).zrep_qty * tbl_sku(tbl_sku.count).conv_factor;
                            end if;
                         end if;
