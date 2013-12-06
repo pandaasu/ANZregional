@@ -589,6 +589,10 @@ package body        df_forecast as
                            v_dmnd_type := demand_forecast.gc_dmnd_type_8;
                         elsif tab_load_data(idx).type = 9 then
                            v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                        elsif tab_load_data(idx).type = 10 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_b;
+                        elsif tab_load_data(idx).type = 11 then
+                           v_dmnd_type := demand_forecast.gc_dmnd_type_u;
                         end if;
 
                         insert into dmnd_temp
@@ -700,6 +704,10 @@ package body        df_forecast as
                               v_dmnd_type := demand_forecast.gc_dmnd_type_8;
                            elsif tab_load_data(idx).type = 9 then
                               v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                           elsif tab_load_data(idx).type = 10 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_b;
+                           elsif tab_load_data(idx).type = 11 then
+                              v_dmnd_type := demand_forecast.gc_dmnd_type_u;
                            end if;
 
                            insert into dmnd_temp
@@ -771,6 +779,10 @@ package body        df_forecast as
                                  v_dmnd_type := demand_forecast.gc_dmnd_type_8;
                               elsif tab_load_data(idx).type = 9 then
                                  v_dmnd_type := demand_forecast.gc_dmnd_type_9;
+                              elsif tab_load_data(idx).type = 10 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_b;
+                              elsif tab_load_data(idx).type = 11 then
+                                 v_dmnd_type := demand_forecast.gc_dmnd_type_u;
                               end if;
 
                               insert into dmnd_temp

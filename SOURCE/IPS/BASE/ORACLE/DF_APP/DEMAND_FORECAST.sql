@@ -5,27 +5,41 @@ PACKAGE        demand_forecast AS
    PURPOSE:   This package provides all the key processing functionality required
               for taking Apollo demand and supply forecasts and creating a
               combined forecast by GSV.
+
+  Date        Author                Description
+  ----------  --------------------  --------------------------------------------
+  2013-11-26  <Many>                Previous Versions.  No Change History.
+  2013-11-27  Chris Horn            Added promax type codes.
+  2013-12-02  Chris Horn            Added new demand loading number translation
+                                    codes. 
+              
   ********************************************************************************/
+  -- Forecast Type Constants
   gc_ft_fcst                   CONSTANT common.st_code           := 'FCST';   -- Standard forecast
   gc_ft_br                     CONSTANT common.st_code           := 'BR';   -- BR forecast
   gc_ft_rob                    CONSTANT common.st_code           := 'ROB';   -- ROB forecast
   gc_ft_op                     CONSTANT common.st_code           := 'OP';   -- Operating plan forecast
   gc_ft_draft                  CONSTANT common.st_code           := 'DRAFT';   -- Draft forecast
+  -- File Status Constants
   gc_fs_invalid                CONSTANT common.st_code           := 'I';   -- Invalid forecasr supply and demand need to be complete
   gc_fs_valid                  CONSTANT common.st_code           := 'V';   -- forecast valid supply and demand complete
   gc_fs_deleted                CONSTANT common.st_code           := 'D';   -- forecast deleted
   gc_fs_archived               CONSTANT common.st_code           := 'A';   -- forecast archived.
   gc_fs_unarchived             CONSTANT common.st_code           := 'U';   -- forecast unarchived.
+  -- System Constants
   gc_system_code               CONSTANT common.st_code           := 'DEMAND_FINANCIALS';
   gc_system_name               CONSTANT common.st_message_string := 'DEMAND FINANCIALS';
   gc_system_description        CONSTANT common.st_message_string := 'Demand Financials - Forecast Consolidation and GSV Calculation.';
+  -- Demand Alerting Constants
   gc_demand_alerting_group     CONSTANT common.st_message_string := 'DEMAND FINANCIALS ALERTING';
   gc_demand_group_code_demand  CONSTANT common.st_code           := 'DEMAND';
   gc_demand_group_code_supply  CONSTANT common.st_code           := 'SUPPLY';
+  -- File Search Wild Card Constants
   gc_wildcard_demand           CONSTANT common.st_message_string := 'demand_';
   gc_wildcard_supply           CONSTANT common.st_message_string := 'supply_';
   gc_wildcard_sply_draft       CONSTANT common.st_message_string := 'draft_sply_';
   gc_wildcard_dmnd_draft       CONSTANT common.st_message_string := 'draft_dmd_';
+  -- Demand Forecast Types 
   gc_dmnd_type_0               CONSTANT common.st_status           := '0';   -- Demand Financials Adjustment
   gc_dmnd_type_1               CONSTANT common.st_status           := '1';   -- Base
   gc_dmnd_type_2               CONSTANT common.st_status           := '2';   -- Aggregated Market Activities
@@ -36,6 +50,11 @@ PACKAGE        demand_forecast AS
   gc_dmnd_type_7               CONSTANT common.st_status           := '7';   -- Market Activities
   gc_dmnd_type_8               CONSTANT common.st_status           := '8';   -- Data Driven Event
   gc_dmnd_type_9               CONSTANT common.st_status           := '9';   -- Target Impact
+  gc_dmnd_type_b               CONSTANT common.st_status           := 'B';   -- The base as supplied from promax.  - Code 10 in demand file.
+  gc_dmnd_type_p               CONSTANT common.st_status           := 'P';   -- The retained base, for calculation P = B - 1. Delete B where 1 is not null.
+  gc_dmnd_type_u               CONSTANT common.st_status           := 'U';   -- Promax Uplift. - Code 11 in demand file.
+  -- Account Assignment Constants
+  gc_acct_assgnmnt_domestic    CONSTANT common.st_code             := '01';   -- Domestic Account Assignment Group 
 
   /*******************************************************************************
    NAME:      REDO_TDU
@@ -202,7 +221,8 @@ PACKAGE        demand_forecast AS
      Ver   Date       Author               Description
      ----- ---------- -------------------- ----------------------------------------
      1.0   29/05/2006 Chris Horn           Created this function.
-	 1.1   22/10/2006 Steve Gregan         Modified function to accept both FCST and DRAFT.
+	   1.1   22/10/2006 Steve Gregan         Modified function to accept both FCST and DRAFT.
+     1.2   02/12/2013 Chris Horn           Perform the promax base reconcilliation adjustment.
 
      NOTES:
     ********************************************************************************/

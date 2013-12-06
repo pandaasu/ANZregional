@@ -33,7 +33,10 @@ package        PXIDFN01_LOADER as
   2013-07-18  Jonathan Girling      Updated Interface to reference 
                                     px_dmnd_lookup table.
   2013-09-05  Chris Horn            Updated error exeception handling.
-
+  2013-12-02  Chris Horn            Started using PXI Common Interface suffix 
+                                    and updated to new petcare format of 
+                                    base and uplift.  
+                                    
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
