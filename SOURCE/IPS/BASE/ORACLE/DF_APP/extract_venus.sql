@@ -29,6 +29,7 @@ PACKAGE        extract_venus AS
      ----- ---------- -------------------- ----------------------------------------
      1.0   5/04/2006 Nick Bates            Added this header
      2.0   3/12/2009 Steve Gregan          Modified to process draft forecast
+     2.1   6/12/2013 Chris Horn            Modified extract to merge promax demand types together.
 
      NOTES:
     ********************************************************************************/

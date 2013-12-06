@@ -244,7 +244,13 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
                NVL (a.acct_assign_code, ' ') AS acct_assign_code,
                NVL (dd.zrep, ' ') AS zrep,
                NVL (dd.tdu, ' ') AS tdu,
-               NVL (dd.TYPE, ' ') AS TYPE,
+               case 
+                 when dd.TYPE is null then ' '
+                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4 
+                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
+                else 
+                   dd.TYPE
+               end AS TYPE,
                SUM(NVL (dd.gsv, 0)) AS gsv,
                SUM(NVL (dd.qty_in_base_uom, 0)) AS cases,
                NVL (dgo.currcy_code, ' ') AS currcy_code
@@ -285,7 +291,13 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
                NVL (a.acct_assign_code, ' '),
                NVL (dd.zrep, ' '),
                NVL (dd.tdu, ' '),
-               NVL (dd.TYPE, ' '),
+               case 
+                 when dd.TYPE is null then ' '
+                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4
+                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
+                else 
+                  dd.TYPE
+               end,
                NVL (dgo.currcy_code, ' ');
 
     rv_demand_data          csr_demand_data%ROWTYPE;   -- sales forecast cursor
@@ -515,7 +527,13 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
                NVL (a.acct_assign_code, ' ') AS acct_assign_code,
                NVL (dd.zrep, ' ') AS zrep,
                NVL (dd.tdu, ' ') AS tdu,
-               NVL (dd.TYPE, ' ') AS TYPE,
+              case 
+                 when dd.TYPE is null then ' '
+                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4 
+                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
+                else 
+                   dd.TYPE
+               end AS TYPE,
                SUM(NVL (dd.gsv, 0)) AS gsv,
                SUM(NVL (dd.qty_in_base_uom, 0)) AS cases,
                NVL (dgo.currcy_code, ' ') AS currcy_code
@@ -556,7 +574,13 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
                NVL (a.acct_assign_code, ' '),
                NVL (dd.zrep, ' '),
                NVL (dd.tdu, ' '),
-               NVL (dd.TYPE, ' '),
+               case 
+                 when dd.TYPE is null then ' '
+                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4 
+                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
+                else 
+                   dd.TYPE
+               end,
                NVL (dgo.currcy_code, ' ');
 
     rv_demand_data          csr_demand_data%ROWTYPE;   -- sales forecast cursor
