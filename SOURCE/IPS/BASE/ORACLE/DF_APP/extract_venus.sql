@@ -1,4 +1,5 @@
-CREATE OR REPLACE PACKAGE        extract_venus AS
+create or replace 
+PACKAGE        extract_venus AS
   /*******************************************************************************
    NAME:      EXTRACT_VENUS
    PURPOSE:   This package provides all the key processing functionality required
@@ -27,11 +28,15 @@ CREATE OR REPLACE PACKAGE        extract_venus AS
      Ver   Date       Author               Description
      ----- ---------- -------------------- ----------------------------------------
      1.0   5/04/2006 Nick Bates            Added this header
+     2.0   3/12/2009 Steve Gregan          Modified to process draft forecast
 
      NOTES:
     ********************************************************************************/
   FUNCTION extract_demand_forecast (i_fcst_id in common.st_id, o_result_msg OUT common.st_message_string)
     RETURN common.st_result;
+
+ FUNCTION extract_demand_forecast_new (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
+     RETURN common.st_result;
 
   /*******************************************************************************
      NAME:      EXTRACT_PRODUCTION_PLAN
@@ -109,3 +114,4 @@ CREATE OR REPLACE PACKAGE        extract_venus AS
   FUNCTION send_inventory_forecast (i_fcst_id in common.st_id, o_result_msg OUT common.st_message_string)
     RETURN common.st_result;
 END extract_venus;
+ 
