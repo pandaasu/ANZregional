@@ -1,10 +1,7 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package dw_app.dw_alignment as
+CREATE OR REPLACE package        dw_alignment as
 
    /******************************************************************************/
-   /* Package Definition                                                         */
+   /* Package Definition                                                        */
    /******************************************************************************/
    /**
     Package : dw_alignment
@@ -23,8 +20,9 @@ create or replace package dw_app.dw_alignment as
     -------   ------         -----------
     2008/06   Steve Gregan   Created
     2011/03   Steve Gregan   Added invoice trace lookup for closed documents
-
-   *******************************************************************************/
+    2013/04   Trevor Keon    Fixed issue which caused orders to show as outstanding 
+    2013/12   Upul Dangalle  Fixed issue which caused orders to show as outstanding
+    *******************************************************************************/
 
    /*-*/
    /* Public declarations
@@ -37,10 +35,8 @@ create or replace package dw_app.dw_alignment as
 end dw_alignment;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body dw_app.dw_alignment as
+
+CREATE OR REPLACE package body        dw_alignment as
 
    /*-*/
    /* Private exceptions
@@ -387,7 +383,25 @@ create or replace package body dw_app.dw_alignment as
                                          from dw_sales_base
                                         where company_code = par_company_code
                                           and order_doc_num = rcd_order_base.order_doc_num
-                                          and order_doc_line_num = rcd_order_base.order_doc_line_num);
+                                          and order_doc_line_num = rcd_order_base.order_doc_line_num)
+               UNION
+          select t01.trace_status
+           from sap_inv_trace t01
+          where t01.company_code = par_company_code
+            and t01.order_doc_num = rcd_order_base.order_doc_num
+            and t01.order_doc_line_num = rcd_order_base.order_doc_line_num
+            and t01.trace_status = '*ACTIVE'           
+            and EXISTS (SELECT 1
+                          from sap_inv_trace t01
+                          where company_code = t01.company_code
+                            and order_doc_num = t01.order_doc_num
+                            and order_doc_line_num = t01.order_doc_line_num
+                            and trace_status =  '*ACTIVE' )
+            and NOT EXISTS (select 1
+                            from dw_sales_base
+                           where company_code = t01.company_code
+                             and order_doc_num = t01.order_doc_num
+                             and order_doc_line_num = t01.order_doc_line_num);  
       rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
 
    /*-------------*/
@@ -650,16 +664,7 @@ create or replace package body dw_app.dw_alignment as
             and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
 
-      cursor csr_sap_inv_trace is
-         select t01.trace_status
-           from sap_inv_trace t01
-          where t01.company_code = par_company_code
-            and t01.dlvry_doc_num = rcd_dlvry_base.dlvry_doc_num
-            and t01.dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num
-            and t01.trace_status = '*ACTIVE';
-      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
-
-   /*-------------*/
+     /*-------------*/
    /* Begin block */
    /*-------------*/
    begin
@@ -698,6 +703,7 @@ create or replace package body dw_app.dw_alignment as
          /*-*/
          /* Reset the related indicators
          /*-*/
+   
          var_invoiced := false;
 
          /*----------------------*/
@@ -733,35 +739,29 @@ create or replace package body dw_app.dw_alignment as
 
          end if;
          close csr_sales_base;
-
+ 
          /*------------------------*/
          /* DLVRY_BASE Outstanding */
          /*------------------------*/
-
-         /*-*/
-         /* Set the delivery line status
-         /*-*/
+       
          if var_invoiced = true then
             rcd_dlvry_base.dlvry_line_status := '*CLOSED';
          else
             open csr_sap_doc_status;
             fetch csr_sap_doc_status into rcd_sap_doc_status;
             if csr_sap_doc_status%found then
+            
                if rcd_sap_doc_status.doc_status = '*CLOSED' then                  
-                  var_trace := false;
-                  open csr_sap_inv_trace;
-                  fetch csr_sap_inv_trace into rcd_sap_inv_trace;
-                  if csr_sap_inv_trace%found then
-                     var_trace := true;
-                  end if;
-                  close csr_sap_inv_trace;
-                  if var_trace = false then
-                     rcd_dlvry_base.dlvry_line_status := '*CLOSED';
-                  end if;
-               end if;
+                  rcd_dlvry_base.dlvry_line_status := '*CLOSED';
+               end if; 
+            
             end if;
+            
             close csr_sap_doc_status;
          end if;
+         
+         
+         -------------
          
          /*-------------------*/
          /* DLVRY_BASE Update */
@@ -770,6 +770,7 @@ create or replace package body dw_app.dw_alignment as
          /*-*/
          /* Update the delivery base row
          /*-*/
+         
          update dw_dlvry_base
             set dlvry_line_status = rcd_dlvry_base.dlvry_line_status,
                 inv_qty = rcd_dlvry_base.inv_qty,
@@ -885,9 +886,3 @@ create or replace package body dw_app.dw_alignment as
 
 end dw_alignment;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym dw_alignment for dw_app.dw_alignment;
-grant execute on dw_alignment to public;
