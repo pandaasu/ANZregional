@@ -9,7 +9,7 @@ create or replace package comfod01_loader as
   
     Description
     ----------------------------------------------------------------------------
-    [comfod01] Commercial - Chocolate - Supplier Settings
+    [comfod01] Commercial - Food - Supplier Settings
     [replace_all] Template
     
     Functions

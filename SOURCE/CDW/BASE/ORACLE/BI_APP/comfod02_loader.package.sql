@@ -9,7 +9,7 @@ create or replace package comfod02_loader as
   
     Description
     ----------------------------------------------------------------------------
-    [comfod02] Commercial - Chocolate - DIFOT Overwrite
+    [comfod02] Commercial - Food - DIFOT Overwrite
     [replace_on_key] Template
     
     Functions
