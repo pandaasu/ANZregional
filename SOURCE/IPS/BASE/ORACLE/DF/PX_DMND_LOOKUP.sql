@@ -1,22 +1,22 @@
   -- Run the following script as DF.  
 
   -- Promax Demand Lookup Table
-  CREATE TABLE "DF"."PX_DMND_LOOKUP" (
-    "DMND_GRP_CODE" NVARCHAR2(20) NOT NULL ENABLE, 
-  	"BUS_SGMNT_CODE" NVARCHAR2(20) NOT NULL ENABLE, 
-	  "DMND_PLNG_NODE" NVARCHAR2(20) NOT NULL ENABLE, 
-	  "DMND_GRP_DESC" NVARCHAR2(200),
-	  "DMND_PLNG_DESC" NVARCHAR2(200), 
-    CONSTRAINT "PX_DMND_LOOKUP_PK" PRIMARY KEY ("DMND_GRP_CODE", "BUS_SGMNT_CODE", "DMND_PLNG_NODE")
+  CREATE TABLE DF.PX_DMND_LOOKUP (
+    DMND_GRP_CODE NVARCHAR2(20) NOT NULL ENABLE, 
+  	BUS_SGMNT_CODE NVARCHAR2(20) NOT NULL ENABLE, 
+	  DMND_PLNG_NODE NVARCHAR2(20) NOT NULL ENABLE, 
+	  DMND_GRP_DESC NVARCHAR2(200),
+	  DMND_PLNG_DESC NVARCHAR2(200), 
+    CONSTRAINT PX_DMND_LOOKUP_PK PRIMARY KEY (DMND_GRP_CODE, BUS_SGMNT_CODE, DMND_PLNG_NODE)
    );
 
    -- Promax Demand Lookup Table Comments  
-   COMMENT ON COLUMN "DF"."PX_DMND_LOOKUP"."DMND_GRP_CODE" IS 'Demand Group Code - SAP';
-   COMMENT ON COLUMN "DF"."PX_DMND_LOOKUP"."BUS_SGMNT_CODE" IS 'Business Segment Code';
-   COMMENT ON COLUMN "DF"."PX_DMND_LOOKUP"."DMND_PLNG_NODE" IS 'Demand Planning Node - Apollo Code';
-   COMMENT ON COLUMN "DF"."PX_DMND_LOOKUP"."DMND_GRP_DESC" IS 'Demand Group Description';
-   COMMENT ON COLUMN "DF"."PX_DMND_LOOKUP"."DMND_PLNG_DESC" IS 'Demand Planning Node Description';
-   COMMENT ON TABLE "DF"."PX_DMND_LOOKUP"  IS 'PMX Demand Group Lookup';
+   COMMENT ON COLUMN DF.PX_DMND_LOOKUP.DMND_GRP_CODE IS 'Demand Group Code - SAP';
+   COMMENT ON COLUMN DF.PX_DMND_LOOKUP.BUS_SGMNT_CODE IS 'Business Segment Code';
+   COMMENT ON COLUMN DF.PX_DMND_LOOKUP.DMND_PLNG_NODE IS 'Demand Planning Node - Apollo Code';
+   COMMENT ON COLUMN DF.PX_DMND_LOOKUP.DMND_GRP_DESC IS 'Demand Group Description';
+   COMMENT ON COLUMN DF.PX_DMND_LOOKUP.DMND_PLNG_DESC IS 'Demand Planning Node Description';
+   COMMENT ON TABLE DF.PX_DMND_LOOKUP  IS 'PMX Demand Group Lookup';
    
    -- Promax Demand Lookup Table Comments
    grant select, update, insert, delete on px_dmnd_lookup to df_app;
@@ -26,3 +26,11 @@
    -- Setup a public synonym for the table.
    create or replace public synonym px_dmnd_lookup for df.px_dmnd_lookup;
    
+   
+   -- Subsequent Table Enhancements
+   alter table DF.PX_DMND_LOOKUP add (SPLIT_PERCENT number(30,10));
+   
+   comment on column DF.PX_DMND_LOOKUP.SPLIT_PERCENT is 'Percentage Split allocation for Apollo Base extracts to promax. NULL = 100%';
+   
+   -- Index to lookup the demand planning code on the way back.
+   create index PX_DMND_LOOKUP_NU02 on DF.PX_DMND_LOOKUP (DMND_PLNG_NODE,BUS_SGMNT_CODE);
