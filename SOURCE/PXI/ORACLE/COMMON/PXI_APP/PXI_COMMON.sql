@@ -90,6 +90,7 @@ package pxi_common as
   subtype st_currency is varchar2(3 char);        -- Currency Information
   subtype st_reason_code is varchar2(2 char);     -- Reason Code
   subtype st_tax_code is varchar2(2);             -- Tax Code
+  subtype st_moe_code is varchar2(4);             -- Moe Code
 
 /*******************************************************************************
   Common Constants
@@ -107,10 +108,15 @@ package pxi_common as
   gc_cust_division_snack        constant st_cust_division := '55';
   gc_cust_division_petcare      constant st_cust_division := '56';
   -- Interface Sufix's
-  gc_interface_snack constant fflu_common.st_interface := '1';
-  gc_interface_food  constant fflu_common.st_interface := '2';
-  gc_interface_pet   constant fflu_common.st_interface := '3';
-  gc_interface_nz    constant fflu_common.st_interface := '4';
+  gc_interface_pet    constant fflu_common.st_interface := '1';
+  gc_interface_snack  constant fflu_common.st_interface := '2';
+  gc_interface_food   constant fflu_common.st_interface := '3';
+  gc_interface_nz     constant fflu_common.st_interface := '4';
+  -- Segment Moe Cods
+  gc_moe_nz           constant st_moe_code := '0086';
+  gc_moe_pet          constant st_moe_code := '0196';
+  gc_moe_food         constant st_moe_code := '0021';
+  gc_moe_snack        constant st_moe_code := '0009';
 
   -- Distribution Channel 
   gc_distrbtn_channel_primary  constant st_dstrbtn_chnnl := '10'; -- Primary Channel
