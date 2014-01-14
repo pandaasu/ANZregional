@@ -55,6 +55,8 @@ package pxi_common as
   2013-11-30  Chris Horn            Removed the promax virtual configuration
                                     table as it has been replaced with a real 
                                     table.
+  2014-01-14  Mal Chambeyron        Substitute "?" for non-single-btye-characters
+                                    in char_format
 
 *******************************************************************************/
 

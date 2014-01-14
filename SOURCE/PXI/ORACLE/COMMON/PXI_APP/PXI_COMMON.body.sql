@@ -151,6 +151,16 @@ package body pxi_common is
       else
         raise_promax_error(pc_package_name,c_method_name,'Invalid Format Type ['||i_format_type||']');
     end case;
+    
+    -- Substitute "?" for non-single-btye-characters
+    if length(v_value) != lengthb(v_value) then 
+      for v_position in 1..length(v_value)
+      loop
+        if length(substr(v_value, v_position, 1)) != lengthb(substr(v_value, v_position, 1)) then
+          v_value := replace(v_value, substr(v_value, v_position, 1), '?');  
+        end if;
+      end loop;
+    end if;
   
     if length(v_value) > i_length then
       raise_promax_error(pc_package_name,c_method_name,'Value ['||v_value||'] Length ['||length(v_value)||'] Greater Than Length Provided ['||i_length||']');
