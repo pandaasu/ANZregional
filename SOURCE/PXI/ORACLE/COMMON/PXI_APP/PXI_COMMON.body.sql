@@ -390,6 +390,9 @@ package body pxi_common is
     end if;
 
   exception
+    -- Where the calling function has found all the rows it needs this exception may be raised.  Ignore at this point.
+    when no_data_needed then 
+      null;
     when ge_promax_exception then
       raise;
     when others then

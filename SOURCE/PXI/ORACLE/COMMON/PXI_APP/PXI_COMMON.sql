@@ -92,6 +92,7 @@ package pxi_common as
   2014-01-20  Mal Chambeyron        Added back [promax_config] till all interfaces
                                     migrated to [pxi.pmx_extract_criteria]
                                     *** TO BE REMOVED AGAIN on COMPLETION of MIGRATION ***
+  2014-01-21  Chris Horn            Added a exception no-data-needed exception.
 
 *******************************************************************************/
 
