@@ -6,6 +6,7 @@ package body pxi_common is
 *******************************************************************************/
   pc_package_name constant st_package_name := 'PXI_COMMON';
   pc_promax_exception pls_integer := -20000;
+  pc_undefined_field_name constant varchar2(64 char) := 'UNDEFINED';
 
 /*******************************************************************************
   NAME:  HELPER FUNCTIONS - Functions to Return Package Constants         PUBLIC
@@ -155,27 +156,40 @@ package body pxi_common is
     i_value in varchar2,
     i_length in number,
     i_format_type in number,
-    i_value_is_nullable in number) return varchar2 is
+    i_value_is_nullable in number
+  ) return varchar2 is
+  begin
+      return char_format(pc_undefined_field_name, i_value, i_length, i_format_type, i_value_is_nullable);
+  end char_format;
+
+  function char_format(
+    i_field_name in varchar2,
+    i_value in varchar2,
+    i_length in number,
+    i_format_type in number,
+    i_value_is_nullable in number
+  ) return varchar2 is
+
     c_method_name constant st_method_name := 'CHAR_FORMAT';
     v_value st_data;
   begin
     if i_length is null then
-      raise_promax_error(pc_package_name,c_method_name,'Length CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Length CANNOT be NULL');
     end if;
 
     if i_format_type is null then
-      raise_promax_error(pc_package_name,c_method_name,'Format Type CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Format Type CANNOT be NULL');
     end if;
 
     if i_value_is_nullable is null then
-      raise_promax_error(pc_package_name,c_method_name,'Value Is Nullable CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value Is Nullable CANNOT be NULL');
     end if;
 
     if i_value is null then
       if i_value_is_nullable = fc_is_nullable then
         return rpad(' ', i_length,' '); -- return empty string of correct length
       else
-        raise_promax_error(pc_package_name,c_method_name,'Value CANNOT be NULL');
+        raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value CANNOT be NULL');
       end if;
     end if;
 
@@ -191,7 +205,7 @@ package body pxi_common is
       when fc_format_type_ltrim_zeros then
         v_value := ltrim(i_value, '0');
       else
-        raise_promax_error(pc_package_name,c_method_name,'Invalid Format Type ['||i_format_type||']');
+        raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Invalid Format Type ['||i_format_type||']');
     end case;
 
     -- Substitute "?" for non-single-btye-characters
@@ -205,7 +219,7 @@ package body pxi_common is
     end if;
 
     if length(v_value) > i_length then
-      raise_promax_error(pc_package_name,c_method_name,'Value ['||v_value||'] Length ['||length(v_value)||'] Greater Than Length Provided ['||i_length||']');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value ['||v_value||'] Length ['||length(v_value)||'] Greater Than Length Provided ['||i_length||']');
     else
       return rpad(v_value, i_length, ' ');
     end if;
@@ -223,37 +237,49 @@ package body pxi_common is
   function numb_format(
     i_value in number,
     i_format in varchar2,
-    i_value_is_nullable in number) return varchar2 is
+    i_value_is_nullable in number
+  ) return varchar2 is
+  begin
+      return numb_format(pc_undefined_field_name, i_value, i_format, i_value_is_nullable);
+  end;
+
+  function numb_format(
+    i_field_name in varchar2,
+    i_value in number,
+    i_format in varchar2,
+    i_value_is_nullable in number
+  ) return varchar2 is
+
     c_method_name constant st_method_name := 'NUMB_FORMAT';
     v_value varchar2(128 char);
   begin
     if i_format is null then
-      raise_promax_error(pc_package_name,c_method_name,'Format CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Format CANNOT be NULL');
     end if;
 
     if i_value_is_nullable is null then
-      raise_promax_error(pc_package_name,c_method_name,'Value Is Nullable CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value Is Nullable CANNOT be NULL');
     end if;
 
     if i_value is null then
       if i_value_is_nullable = fc_is_nullable then
         return rpad(' ', length(i_format)); -- return empty string of correct length
       else
-        raise_promax_error(pc_package_name,c_method_name,'Value CANNOT be NULL');
+        raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value CANNOT be NULL');
       end if;
     elsif i_value < 0 and upper(substr(i_format,1,1)) != 'S' then
-      raise_promax_error(pc_package_name,c_method_name,'Value ['||i_value||'] CANNOT be Negative, without Format ['||i_format||'] Including S Prefix');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value ['||i_value||'] CANNOT be Negative, without Format ['||i_format||'] Including S Prefix');
     end if;
 
     begin
       v_value := trim(to_char(i_value, i_format));
     exception
       when others then
-        raise_promax_error(pc_package_name,c_method_name,substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
+        raise_promax_error(pc_package_name,c_method_name,substrb('Field Name ['||i_field_name||'] Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
     end;
 
     if instr(v_value, '#') > 0 then
-      raise_promax_error(pc_package_name,c_method_name,'Format ['||i_format||'] on Value ['||i_value||']');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Format ['||i_format||'] on Value ['||i_value||']');
     end if;
 
     if upper(substr(i_format,1,1)) = 'S' then
@@ -261,7 +287,7 @@ package body pxi_common is
     end if;
 
     if length(v_value) > length(i_format) then
-      raise_promax_error(pc_package_name,c_method_name,'Format Length ['||i_format||']['||length(i_format)||'] < Value Length ['||i_value||']['||length(v_value)||']');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Format Length ['||i_format||']['||length(i_format)||'] < Value Length ['||i_value||']['||length(v_value)||']');
     end if;
 
     return lpad(v_value, length(i_format));
@@ -279,23 +305,35 @@ package body pxi_common is
   function date_format(
     i_value in date,
     i_format in varchar2,
-    i_value_is_nullable in number) return varchar2 is
+    i_value_is_nullable in number
+  ) return varchar2 is
+  begin
+      return date_format(pc_undefined_field_name, i_value, i_format, i_value_is_nullable);
+  end;
+
+  function date_format(
+    i_field_name in varchar2,
+    i_value in date,
+    i_format in varchar2,
+    i_value_is_nullable in number
+  ) return varchar2 is
+
     c_method_name constant st_method_name := 'DATE_FORMAT';
   begin
 
     if i_format is null then
-      raise_promax_error(pc_package_name,c_method_name,'Format CANNOT be NULL');
+      raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Format CANNOT be NULL');
     end if;
 
     if i_value_is_nullable is null then
-        raise_promax_error(pc_package_name,c_method_name,'Value Is Nullable CANNOT be NULL');
+        raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value Is Nullable CANNOT be NULL');
     end if;
 
     if i_value is null then
       if i_value_is_nullable = fc_is_nullable then
         return rpad(' ',length(i_format)); -- return empty string of correct length
       else
-        raise_promax_error(pc_package_name,c_method_name,'Value CANNOT be NULL');
+        raise_promax_error(pc_package_name,c_method_name,'Field Name ['||i_field_name||'] Value CANNOT be NULL');
       end if;
     end if;
 
@@ -303,7 +341,7 @@ package body pxi_common is
       return to_char(i_value, i_format);
     exception
       when others then
-        raise_promax_error(pc_package_name,c_method_name,substr('Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
+        raise_promax_error(pc_package_name,c_method_name,substrb('Field Name ['||i_field_name||'] Format ['||i_format||'] on Value ['||i_value||'] Failed : '||SQLERRM, 1, 4000));
     end;
 
   exception
@@ -391,7 +429,7 @@ package body pxi_common is
 
   exception
     -- Where the calling function has found all the rows it needs this exception may be raised.  Ignore at this point.
-    when no_data_needed then 
+    when no_data_needed then
       null;
     when ge_promax_exception then
       raise;

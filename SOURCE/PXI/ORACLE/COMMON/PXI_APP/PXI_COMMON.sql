@@ -93,6 +93,10 @@ package pxi_common as
                                     migrated to [pxi.pmx_extract_criteria]
                                     *** TO BE REMOVED AGAIN on COMPLETION of MIGRATION ***
   2014-01-21  Chris Horn            Added a exception no-data-needed exception.
+  2014-01-21  Mal Chambeyron        Added "Field Name" (and Backward Compatible
+                                    Wrapper Function) to Extract Formatting
+                                    Function Error Messages
+                                    [char_format], [numb_format], [date_format]
 
 *******************************************************************************/
 
@@ -318,13 +322,25 @@ package pxi_common as
   1.3   2014-01-14 Mal Chambeyron       Modified [char_format] to substitute "safe"
                                         character "?" in place of non-single-byte
                                         characters
+  1.4   2014-01-21 Mal Chambeyron       Added "Field Name" (and Backward Compatible
+                                        Wrapper Function) to Extract Formatting
+                                        Function Error Messages
 
 *******************************************************************************/
   function char_format(
+    i_field_name in varchar2,
     i_value in varchar2,
     i_length in number,
     i_format_type in number,
-    i_value_is_nullable in number) return varchar2;
+    i_value_is_nullable in number
+  ) return varchar2;
+
+  function char_format( -- helper function for backward compatibility
+    i_value in varchar2,
+    i_length in number,
+    i_format_type in number,
+    i_value_is_nullable in number
+  ) return varchar2;
 
 /*******************************************************************************
   NAME:      NUMB_FORMAT                                                  PUBLIC
@@ -336,12 +352,23 @@ package pxi_common as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-27 Mal Chameyron        Created.
   1.2   2013-08-20 Chris Horn           Updated exception handling and format.
+  1.3   2014-01-21 Mal Chambeyron       Added "Field Name" (and Backward Compatible
+                                        Wrapper Function) to Extract Formatting
+                                        Function Error Messages
 
 *******************************************************************************/
   function numb_format(
+    i_field_name in varchar2,
     i_value in number,
     i_format in varchar2,
-    i_value_is_nullable in number) return varchar2;
+    i_value_is_nullable in number
+  ) return varchar2;
+
+  function numb_format( -- helper function for backward compatibility
+    i_value in number,
+    i_format in varchar2,
+    i_value_is_nullable in number
+  ) return varchar2;
 
 /*******************************************************************************
   NAME:      DATE_FORMAT                                                  PUBLIC
@@ -353,12 +380,23 @@ package pxi_common as
   ----- ---------- -------------------- ----------------------------------------
   1.1   2013-07-27 Mal Chameyron        Created.
   1.2   2013-08-20 Chris Horn           Updated exception handling and format.
+  1.3   2014-01-21 Mal Chambeyron       Added "Field Name" (and Backward Compatible
+                                        Wrapper Function) to Extract Formatting
+                                        Function Error Messages
 
 *******************************************************************************/
   function date_format(
+    i_field_name in varchar2,
     i_value in date,
     i_format in varchar2,
-    i_value_is_nullable in number) return varchar2;
+    i_value_is_nullable in number
+  ) return varchar2;
+
+  function date_format( -- helper function for backward compatibility
+    i_value in date,
+    i_format in varchar2,
+    i_value_is_nullable in number
+  ) return varchar2;
 
 /*******************************************************************************
   NAME:      PROMAX_CONFIG                                                PUBLIC
