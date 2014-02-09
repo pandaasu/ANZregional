@@ -204,17 +204,20 @@ WriteLiteral("\' + record.LicsId;\r\n                        });\r\n            
 "ing with server.\";\r\n                        ustatus.Exception = (isTest) ? throw" +
 "nError : \"\";\r\n                        ustatus.IsError = true;\r\n                 " +
 "       ShowResult();\r\n                    }\r\n                });\r\n            })" +
-";\r\n\r\n            // Document ready actions\r\n            //Load all records when " +
-"page is first shown\r\n");
+";\r\n\r\n            $(\".chzn-search input\").on(\"keypress\", function (e) {\r\n        " +
+"        if (e.keyCode == 13) {\r\n                    alert(\"enter pressed\");\r\n   " +
+"                 e.preventDefault();\r\n                    return false;\r\n       " +
+"         }\r\n            });\r\n\r\n            // Document ready actions\r\n          " +
+"  //Load all records when page is first shown\r\n");
 
             
-            #line 251 "..\..\Views\Monitor\Index.cshtml"
+            #line 259 "..\..\Views\Monitor\Index.cshtml"
             
             
             #line default
             #line hidden
             
-            #line 251 "..\..\Views\Monitor\Index.cshtml"
+            #line 259 "..\..\Views\Monitor\Index.cshtml"
              if (ViewBag.Connection != null)
             {
 
@@ -245,7 +248,7 @@ WriteLiteral(@"
 WriteLiteral("\r\n");
 
             
-            #line 271 "..\..\Views\Monitor\Index.cshtml"
+            #line 279 "..\..\Views\Monitor\Index.cshtml"
             }
 
             
@@ -314,7 +317,7 @@ WriteLiteral(" style=\"width:420px;\"");
 WriteLiteral(">");
 
             
-            #line 356 "..\..\Views\Monitor\Index.cshtml"
+            #line 364 "..\..\Views\Monitor\Index.cshtml"
                                     Write(Html.DropDownList("ddlInterfaceType", Model.InterfaceTypes, new { id = "ddlInterfaceType", style = "width:420px" }));
 
             
@@ -331,7 +334,7 @@ WriteLiteral(" colspan=\"3\"");
 WriteLiteral(">");
 
             
-            #line 358 "..\..\Views\Monitor\Index.cshtml"
+            #line 366 "..\..\Views\Monitor\Index.cshtml"
                            Write(Html.DropDownList("ddlIcsStatus", Model.IcsStatuses, new { id = "ddlIcsStatus", style = "width:341px" }));
 
             
@@ -344,7 +347,7 @@ WriteLiteral(" for=\"ddlInterfaceGroup\"");
 WriteLiteral(">Interface group</label></td>\r\n                <td>");
 
             
-            #line 362 "..\..\Views\Monitor\Index.cshtml"
+            #line 370 "..\..\Views\Monitor\Index.cshtml"
                Write(Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style="width:420px" }));
 
             
@@ -415,7 +418,7 @@ WriteLiteral(" for=\"ddlInterface\"");
 WriteLiteral(">Interface</label></td>\r\n                <td>");
 
             
-            #line 369 "..\..\Views\Monitor\Index.cshtml"
+            #line 377 "..\..\Views\Monitor\Index.cshtml"
                Write(Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", style = "width:420px" }));
 
             

@@ -510,184 +510,191 @@ WriteLiteral(";\r\n                ustatus.SegmentBytesCurrent = ustatus.StartCo
 "\r\n        }\r\n\r\n        // Called to upload segment to server\r\n        function U" +
 "ploadSegment(segmentData, isFinalSegment) {\r\n\r\n            var postData = null;\r" +
 "\n            var url = \"/Uploads/Segment\";\r\n            var usingCompression = u" +
-"status.UseCompression || (ustatus.Segments.length > 0);\r\n\r\n            if (useCo" +
-"mpression && ustatus.Segments.length > 0 && ustatus.Segments[0].StringData != \"\"" +
-") {\r\n                // The first segment in the queue is not compressed (happen" +
-"s when compression isn\'t keeping up with connection throughput)\r\n               " +
-" usingCompression = false;\r\n                segmentData = ustatus.Segments[0].St" +
-"ringData;\r\n                isFinalSegment = ustatus.Segments[0].IsFinalSegment;\r" +
-"\n                ustatus.Segments.splice(0, 1);\r\n            }\r\n\r\n            if" +
-" (usingCompression) {\r\n                postData = new FormData();\r\n             " +
-"   var isFinal = false;\r\n                var includedInUpload = 0;\r\n            " +
-"    for (var i = 0; i < Math.min(segmentData.length, ustatus.MaxCompressedSegmen" +
-"tsPerRequest); i++) {\r\n                    var seg = segmentData[i];\r\n          " +
-"          if (seg.StringData != \"\")\r\n                        break;\r\n           " +
-"         includedInUpload = i + 1;\r\n                    var arry = new Int8Array" +
-"(seg.ByteArray);\r\n                    var oBlob = new Blob([arry.buffer], { type" +
-": \"application/octet-stream\" });\r\n                    isFinal = seg.IsFinalSegme" +
-"nt;\r\n                    postData.append(\"data\" + i, oBlob, ustatus.FileName);\r\n" +
-"                }\r\n                // Clear the processed segments from the queu" +
-"e\r\n                ustatus.Segments.splice(0, includedInUpload);\r\n              " +
-"  url = \"/Uploads/SegmentCompressed?interfaceCode=\" + ustatus.InterfaceCode + \"&" +
-"isFinalSegment=\" + isFinal + \"&fileSize=\" + ustatus.FileSize;\r\n            }\r\n  " +
-"          else {\r\n                postData = JSON.stringify({\r\n                 " +
-"   interfaceCode: ustatus.InterfaceCode,\r\n                    filename: ustatus." +
-"FileName,\r\n                    segmentData: segmentData,\r\n                    is" +
-"FinalSegment: isFinalSegment,\r\n                    fileSize: ustatus.FileSize,\r\n" +
-"                    needsEncodingFix: ustatus.NeedsEncodingFix\r\n                " +
-"});\r\n            }\r\n            \r\n            var startTime = new Date();\r\n     " +
-"       $.ajax({\r\n                type: \"post\",\r\n                url: url,\r\n     " +
-"           contentType: usingCompression ? false : \"application/json\",\r\n        " +
-"        processData: !usingCompression,\r\n                data: postData,\r\n      " +
-"          async: true,\r\n                success: function (response) {\r\n        " +
-"            if (response.Result != \"OK\") {\r\n                        ustatus.IsEr" +
-"ror = true;\r\n                        ustatus.Message = \"Error while uploading fi" +
-"le segment.\"\r\n                        ustatus.Exception = response.Message;\r\n   " +
-"                     ustatus.UploadId = response.UploadId;\r\n                    " +
-"    ustatus.LicsId = response.LicsId;\r\n                        ShowResult(false)" +
-";\r\n                    }\r\n                    else {\r\n                        if" +
-" (!usingCompression) {\r\n                            ustatus.TotalUploadTime += (" +
-"new Date() - startTime);\r\n                            ustatus.TotalUploadSegs +=" +
-" 1;\r\n                        }\r\n                        ProcessSegment();\r\n     " +
-"               }\r\n                },\r\n                error: function (xhr, ajax" +
-"Options, thrownError) {\r\n                    ustatus.IsError = true;\r\n          " +
-"          ustatus.Message = \"Error communicating with server.\";\r\n               " +
-"     ustatus.Exception = (isTest) ? thrownError : \"\";\r\n                    ShowR" +
-"esult(false);\r\n                }\r\n            });\r\n        }\r\n\r\n        // Calle" +
-"d to indicate that there will be no more segments uploaded\r\n        // Used only" +
-" when the uploaded file has a size of 0 bytes\r\n        function SetNoMoreSegment" +
-"s() {\r\n            $.ajax({\r\n                type: \"post\",\r\n                url:" +
-" \"/Uploads/SetNoMoreSegments\",\r\n                contentType: \"application/json\"," +
-"\r\n                data: JSON.stringify({\r\n                    interfaceCode: ust" +
-"atus.InterfaceCode,\r\n                    filename: ustatus.FileName\r\n           " +
-"     }),\r\n                async: true,\r\n                success: function (respo" +
-"nse) {\r\n                    if (response.Result != \"OK\") {\r\n                    " +
-"    ustatus.IsError = true;\r\n                        ustatus.Message = \"Error wh" +
-"ile setting file upload complete.\"\r\n                        ustatus.Exception = " +
-"response.Message;\r\n                        ustatus.UploadId = response.UploadId;" +
-"\r\n                        ustatus.LicsId = response.LicsId;\r\n                   " +
-"     ShowResult(false);\r\n                    }\r\n                    else {\r\n    " +
-"                    UploadMonitor();\r\n                    }\r\n                },\r" +
-"\n                error: function (xhr, ajaxOptions, thrownError) {\r\n            " +
-"        ustatus.IsError = true;\r\n                    ustatus.Message = \"Error co" +
-"mmunicating with server.\";\r\n                    ustatus.Exception = (isTest) ? t" +
-"hrownError : \"\";\r\n                    ShowResult(false);\r\n                }\r\n   " +
-"         });\r\n        }\r\n\r\n        // Called to show the result of an operation\r" +
-"\n        function ShowResult(useNewDialog) {\r\n            // Re-enable the form " +
-"underneath the dialog\r\n            if (!ustatus.IsError) {\r\n                $(\"#" +
-"ddlInterface\").val(\"\").change();\r\n                $(\"#fakefile\").val(\"\");\r\n     " +
-"           resetFormElement($(\"#file\"));\r\n            }\r\n            $(\"form :in" +
-"put\").removeAttr(\"disabled\").trigger(\"liszt:updated\");\r\n            \r\n          " +
-"  if (useNewDialog) {\r\n                // Remove any existing progress bars or d" +
-"ialog windows\r\n                $(\".ui-progressbar\").progressbar(\"destroy\");\r\n   " +
-"             $(\".ui-dialog-content\").dialog(\"destroy\");\r\n\r\n                // Se" +
-"t the message an exception text\r\n                $(\"#pMessage\").text(ustatus.Mes" +
-"sage);\r\n                if (ustatus.Exception != \"\") {\r\n                    $(\"#" +
-"pException\").text(ustatus.Exception);\r\n                    $(\"#pException\").show" +
-"();\r\n                }\r\n                else {\r\n                    $(\"#pExcepti" +
-"on\").hide();\r\n                }\r\n\r\n                // Show the dialog\r\n         " +
-"       $(\"#dialogMessage\").dialog({\r\n                    modal: true,\r\n         " +
-"           title: (ustatus.IsError) ? \"Error\" : \"Message\",\r\n                    " +
-"buttons: {\r\n                        Ok: function() {\r\n                          " +
-"  $(this).dialog(\"close\");\r\n                        }\r\n                    }\r\n  " +
-"              });\r\n            }\r\n            else {\r\n                $(\"#divRes" +
-"ult\").show();\r\n                $(\"#uploadOptions\").hide();\r\n\r\n                $(" +
-"\"#result\").text(ustatus.Message);\r\n                if (ustatus.Exception != \"\") " +
-"{\r\n                    $(\"#pException2\").text(ustatus.Exception);\r\n             " +
-"       $(\"#pException2\").show();\r\n                }\r\n                else {\r\n   " +
-"                 $(\"#pException2\").hide();\r\n                }\r\n\r\n               " +
-" // Show the upload id if available and if in test mode\r\n                if (isT" +
-"est && ustatus.UploadId > 0) {\r\n                    $(\"#rowUploadId\").show();\r\n " +
-"                   $(\"#uploadId\").text(ustatus.UploadId);\r\n                }\r\n  " +
-"              else {\r\n                    $(\"#rowUploadId\").hide();\r\n           " +
-"     }\r\n\r\n                // Show the LICS id if it is available\r\n              " +
-"  if (ustatus.LicsId > 0) {\r\n                    $(\"#rowLicsId\").show();\r\n      " +
-"              $(\"#licsId\").text(ustatus.LicsId);\r\n                    $(\"#rowInt" +
-"erfaceErrors\").show();\r\n                    $(\"#interfaceErrorCount\").text(ustat" +
-"us.InterfaceErrorCount);\r\n                    $(\"#rowRowErrors\").show();\r\n      " +
-"              $(\"#rowErrorCount\").text(ustatus.RowErrorCount);\r\n                " +
-"    $(\"#rowDetails\").show();\r\n                    $(\"#detailsLink\").attr(\"href\"," +
-" \"/Monitor/View/\" + ustatus.LicsId);\r\n                }\r\n                else {\r" +
-"\n                    $(\"#rowLicsId\").hide();\r\n                    $(\"#rowInterfa" +
-"ceErrors\").hide();\r\n                    $(\"#rowRowErrors\").hide();\r\n            " +
-"        $(\"#rowDetails\").hide();\r\n                }\r\n\r\n                $(\"#progr" +
-"essbar\").progressbar(\"value\", 100);\r\n                if (ustatus.IsError) {\r\n   " +
-"                 $(\"#progressbar > div\").addClass(\"failureProgress\");\r\n         " +
-"           $(\".failure\").show();\r\n                }\r\n                else {\r\n   " +
-"                 $(\"#progressbar > div\").addClass(\"successProgress\");\r\n         " +
-"           $(\".success\").show();\r\n                }\r\n\r\n                $(\"#dialo" +
-"g\").dialog({\r\n                    buttons: {\r\n                        Ok: functi" +
-"on() {\r\n                            $(this).dialog(\"close\");\r\n                  " +
-"      }\r\n                    }\r\n                });\r\n                $(\"#dialog\"" +
-").dialog(\"option\", \"position\", \"center\");\r\n            }\r\n\r\n            ustatus." +
-"CompressionTerminate = true;\r\n        }\r\n\r\n        // Called to monitor the stat" +
-"us of an ongoing upload after all segments have been sent to the server\r\n       " +
-" function UploadMonitor() {\r\n            \r\n            // Poll the status and up" +
-"date the display until it\'s finished\r\n            \r\n            if (ustatus.IsEr" +
-"ror || !continueMonitoring)\r\n                return;\r\n            \r\n            " +
-"$(\"#uploadOptions\").hide();\r\n\r\n            $.ajax({\r\n                type: \"post" +
-"\",\r\n                url: \"/Uploads/GetStatus\",\r\n                contentType: \"ap" +
-"plication/json\",\r\n                async: true,\r\n                success: functio" +
-"n (response) {\r\n                    if (response.Result != \"OK\") {\r\n            " +
-"            ustatus.IsError = true;\r\n                        ustatus.Message = \"" +
-"Error while monitoring upload ustatus.\"\r\n                        ustatus.Excepti" +
-"on = response.Message;\r\n                        ustatus.UploadId = response.Uplo" +
-"adId;\r\n                        ustatus.LicsId = response.LicsId;\r\n              " +
-"          ShowResult(false);\r\n                    }\r\n                    else {\r" +
-"\n\r\n                        ustatus.CurrentStep = response.CurrentStep;\r\n        " +
-"                if (response.Total > 0 && response.Current > 0)\r\n               " +
-"             $(\"#progressbar\").progressbar(\"value\", response.Current * 100 / res" +
-"ponse.Total);\r\n\r\n                        // It can be a long time on \"0\" progres" +
-"s...\r\n                        // To let the user know that stuff is still happen" +
-"ing, if it\'s 0 just increment the progressbar\r\n                        if (respo" +
-"nse.Current == 0 && ustatus.CurrentStep > 3) {\r\n                            var " +
-"currentValue = $(\"#progressbar\").progressbar(\"value\");\r\n                        " +
-"    currentValue = (currentValue == 100 || isNaN(currentValue)) ? 0 : currentVal" +
-"ue + 5;\r\n                            $(\"#progressbar\").progressbar(\"value\", curr" +
-"entValue);\r\n                        }\r\n\r\n                        switch(ustatus." +
-"CurrentStep) {\r\n                            case 3:\r\n                           " +
-"     $(\"#step2tick\").show();\r\n                                SetProgressDescrip" +
-"tion(\"Step 3 - Completing data upload\");\r\n                                break;" +
-"\r\n                            case 4:\r\n                                $(\"#step2" +
-"tick\").show();\r\n                                $(\"#step3tick\").show();\r\n       " +
-"                         $(\"#step4time\").show();\r\n                              " +
-"  $(\"#step4time\").text(response.EstimatedTime);\r\n                               " +
-" // From here, the user is free to upload another file, so re-enable the form\r\n " +
-"                               $(\"form :input\").removeAttr(\"disabled\").trigger(\"" +
-"liszt:updated\");\r\n                                SetProgressDescription(\"Step 4" +
-" - Uploading to ICS\");\r\n                                break;\r\n                " +
-"            case 5:\r\n                                $(\"#step2tick\").show();\r\n  " +
-"                              $(\"#step3tick\").show();\r\n                         " +
-"       $(\"#step4tick\").show();\r\n                                $(\"#step4time\")." +
-"hide();\r\n                                $(\"#step5time\").show();\r\n              " +
-"                  $(\"#step5time\").text(response.EstimatedTime);\r\n               " +
-"                 SetProgressDescription(\"Step 5 - Processing in ICS\");\r\n        " +
-"                        break;\r\n                            default:\r\n          " +
-"                      $(\"#spanDescription\").text(\"Unknown\");\r\n                  " +
-"              break;\r\n                        }\r\n\r\n                        if (u" +
-"status.CurrentStep == 5 && response.IsComplete == true) {\r\n                     " +
-"       ustatus.InterfaceErrorCount = response.InterfaceErrorCount;\r\n            " +
-"                ustatus.RowErrorCount = response.RowErrorCount;\r\n               " +
-"             ustatus.LicsId = response.LicsId;\r\n                            usta" +
-"tus.Exception = \"\";\r\n                            if (ustatus.InterfaceErrorCount" +
-" == 0 && ustatus.RowErrorCount == 0) {\r\n                                SetProgr" +
-"essDescription(\"File Load Completed Successfully\");\r\n                           " +
-"     ustatus.Message = \"Success.\"\r\n                                ustatus.IsErr" +
-"or = false;\r\n                            }\r\n                            else {\r\n" +
-"                                SetProgressDescription(\"File Load Complete – wit" +
-"h Errors\");\r\n                                ustatus.Message = \"Data Errors.\"\r\n " +
-"                               ustatus.IsError = true;\r\n                        " +
-"    }\r\n                            $(\"#step5time\").hide();\r\n                    " +
-"        $(\"#step5tick\").show();\r\n                            ShowResult(false);\r" +
-"\n                        }\r\n                        else {\r\n                    " +
-"        // Wait a second before polling again\r\n                            if (c" +
-"ontinueMonitoring)\r\n                                setTimeout(\"UploadMonitor();" +
-"\", 1000);\r\n                        }\r\n                    }\r\n                },\r" +
-"\n                error: function (xhr, ajaxOptions, thrownError) {\r\n            " +
-"        ustatus.IsError = true;\r\n                    ustatus.Message = \"Error co" +
-"mmunicating with server.\";\r\n                    ustatus.Exception = (isTest) ? t" +
-"hrownError : \"\";\r\n                    ShowResult(false);\r\n                }\r\n   " +
-"         });\r\n        }\r\n\r\n    </script>\r\n");
+"status.UseCompression || (ustatus.Segments.length > 0);\r\n\r\n            if (using" +
+"Compression && ustatus.Segments.length > 0 && ustatus.Segments[0].StringData != " +
+"\"\") {\r\n                // The first segment in the queue is not compressed (happ" +
+"ens when compression isn\'t keeping up with connection throughput)\r\n             " +
+"   usingCompression = false;\r\n                segmentData = ustatus.Segments[0]." +
+"StringData;\r\n                isFinalSegment = ustatus.Segments[0].IsFinalSegment" +
+";\r\n                ustatus.Segments.splice(0, 1);\r\n            }\r\n\r\n            " +
+"if (usingCompression) {\r\n                postData = new FormData();\r\n           " +
+"     var isFinal = false;\r\n                var includedInUpload = 0;\r\n          " +
+"      for (var i = 0; i < Math.min(segmentData.length, ustatus.MaxCompressedSegm" +
+"entsPerRequest); i++) {\r\n                    var seg = segmentData[i];\r\n        " +
+"            if (seg.StringData != \"\")\r\n                        break;\r\n         " +
+"           includedInUpload = i + 1;\r\n                    var arry = new Int8Arr" +
+"ay(seg.ByteArray);\r\n                    var oBlob = null;\r\n                    t" +
+"ry {\r\n                        oBlob = new Blob([arry.buffer], { type: \"applicati" +
+"on/octet-stream\" });\r\n                    } catch (e) {\r\n                       " +
+" // The BlobBuilder API has been deprecated in favour of Blob, but older\r\n      " +
+"                  // browsers don\'t know about the Blob constructor\r\n           " +
+"             var bb = new (window.WebKitBlobBuilder || window.MozBlobBuilder);\r\n" +
+"                        bb.append(arry.buffer);\r\n                        oBlob =" +
+" bb.getBlob(\"application/octet-stream\");\r\n                    }\r\n               " +
+"     isFinal = seg.IsFinalSegment;\r\n                    postData.append(\"data\" +" +
+" i, oBlob);\r\n                }\r\n                // Clear the processed segments " +
+"from the queue\r\n                ustatus.Segments.splice(0, includedInUpload);\r\n " +
+"               url = \"/Uploads/SegmentCompressed?interfaceCode=\" + ustatus.Inter" +
+"faceCode + \"&isFinalSegment=\" + isFinal + \"&fileSize=\" + ustatus.FileSize + \"&fi" +
+"leName=\" + encodeURIComponent(ustatus.FileName);\r\n            }\r\n            els" +
+"e {\r\n                postData = JSON.stringify({\r\n                    interfaceC" +
+"ode: ustatus.InterfaceCode,\r\n                    filename: ustatus.FileName,\r\n  " +
+"                  segmentData: segmentData,\r\n                    isFinalSegment:" +
+" isFinalSegment,\r\n                    fileSize: ustatus.FileSize,\r\n             " +
+"       needsEncodingFix: ustatus.NeedsEncodingFix\r\n                });\r\n        " +
+"    }\r\n            \r\n            var startTime = new Date();\r\n            $.ajax" +
+"({\r\n                type: \"post\",\r\n                url: url,\r\n                co" +
+"ntentType: usingCompression ? false : \"application/json\",\r\n                proce" +
+"ssData: !usingCompression,\r\n                data: postData,\r\n                asy" +
+"nc: true,\r\n                success: function (response) {\r\n                    i" +
+"f (response.Result != \"OK\") {\r\n                        ustatus.IsError = true;\r\n" +
+"                        ustatus.Message = \"Error while uploading file segment.\"\r" +
+"\n                        ustatus.Exception = response.Message;\r\n                " +
+"        ustatus.UploadId = response.UploadId;\r\n                        ustatus.L" +
+"icsId = response.LicsId;\r\n                        ShowResult(false);\r\n          " +
+"          }\r\n                    else {\r\n                        if (!usingCompr" +
+"ession) {\r\n                            ustatus.TotalUploadTime += (new Date() - " +
+"startTime);\r\n                            ustatus.TotalUploadSegs += 1;\r\n        " +
+"                }\r\n                        ProcessSegment();\r\n                  " +
+"  }\r\n                },\r\n                error: function (xhr, ajaxOptions, thro" +
+"wnError) {\r\n                    ustatus.IsError = true;\r\n                    ust" +
+"atus.Message = \"Error communicating with server.\";\r\n                    ustatus." +
+"Exception = (isTest) ? thrownError : \"\";\r\n                    ShowResult(false);" +
+"\r\n                }\r\n            });\r\n        }\r\n\r\n        // Called to indicate" +
+" that there will be no more segments uploaded\r\n        // Used only when the upl" +
+"oaded file has a size of 0 bytes\r\n        function SetNoMoreSegments() {\r\n      " +
+"      $.ajax({\r\n                type: \"post\",\r\n                url: \"/Uploads/Se" +
+"tNoMoreSegments\",\r\n                contentType: \"application/json\",\r\n           " +
+"     data: JSON.stringify({\r\n                    interfaceCode: ustatus.Interfac" +
+"eCode,\r\n                    filename: ustatus.FileName\r\n                }),\r\n   " +
+"             async: true,\r\n                success: function (response) {\r\n     " +
+"               if (response.Result != \"OK\") {\r\n                        ustatus.I" +
+"sError = true;\r\n                        ustatus.Message = \"Error while setting f" +
+"ile upload complete.\"\r\n                        ustatus.Exception = response.Mess" +
+"age;\r\n                        ustatus.UploadId = response.UploadId;\r\n           " +
+"             ustatus.LicsId = response.LicsId;\r\n                        ShowResu" +
+"lt(false);\r\n                    }\r\n                    else {\r\n                 " +
+"       UploadMonitor();\r\n                    }\r\n                },\r\n            " +
+"    error: function (xhr, ajaxOptions, thrownError) {\r\n                    ustat" +
+"us.IsError = true;\r\n                    ustatus.Message = \"Error communicating w" +
+"ith server.\";\r\n                    ustatus.Exception = (isTest) ? thrownError : " +
+"\"\";\r\n                    ShowResult(false);\r\n                }\r\n            });\r" +
+"\n        }\r\n\r\n        // Called to show the result of an operation\r\n        func" +
+"tion ShowResult(useNewDialog) {\r\n            // Re-enable the form underneath th" +
+"e dialog\r\n            if (!ustatus.IsError) {\r\n                $(\"#ddlInterface\"" +
+").val(\"\").change();\r\n                $(\"#fakefile\").val(\"\");\r\n                re" +
+"setFormElement($(\"#file\"));\r\n            }\r\n            $(\"form :input\").removeA" +
+"ttr(\"disabled\").trigger(\"liszt:updated\");\r\n            \r\n            if (useNewD" +
+"ialog) {\r\n                // Remove any existing progress bars or dialog windows" +
+"\r\n                $(\".ui-progressbar\").progressbar(\"destroy\");\r\n                " +
+"$(\".ui-dialog-content\").dialog(\"destroy\");\r\n\r\n                // Set the message" +
+" an exception text\r\n                $(\"#pMessage\").text(ustatus.Message);\r\n     " +
+"           if (ustatus.Exception != \"\") {\r\n                    $(\"#pException\")." +
+"text(ustatus.Exception);\r\n                    $(\"#pException\").show();\r\n        " +
+"        }\r\n                else {\r\n                    $(\"#pException\").hide();\r" +
+"\n                }\r\n\r\n                // Show the dialog\r\n                $(\"#di" +
+"alogMessage\").dialog({\r\n                    modal: true,\r\n                    ti" +
+"tle: (ustatus.IsError) ? \"Error\" : \"Message\",\r\n                    buttons: {\r\n " +
+"                       Ok: function() {\r\n                            $(this).dia" +
+"log(\"close\");\r\n                        }\r\n                    }\r\n               " +
+" });\r\n            }\r\n            else {\r\n                $(\"#divResult\").show();" +
+"\r\n                $(\"#uploadOptions\").hide();\r\n\r\n                $(\"#result\").te" +
+"xt(ustatus.Message);\r\n                if (ustatus.Exception != \"\") {\r\n          " +
+"          $(\"#pException2\").text(ustatus.Exception);\r\n                    $(\"#pE" +
+"xception2\").show();\r\n                }\r\n                else {\r\n                " +
+"    $(\"#pException2\").hide();\r\n                }\r\n\r\n                // Show the " +
+"upload id if available and if in test mode\r\n                if (isTest && ustatu" +
+"s.UploadId > 0) {\r\n                    $(\"#rowUploadId\").show();\r\n              " +
+"      $(\"#uploadId\").text(ustatus.UploadId);\r\n                }\r\n               " +
+" else {\r\n                    $(\"#rowUploadId\").hide();\r\n                }\r\n\r\n   " +
+"             // Show the LICS id if it is available\r\n                if (ustatus" +
+".LicsId > 0) {\r\n                    $(\"#rowLicsId\").show();\r\n                   " +
+" $(\"#licsId\").text(ustatus.LicsId);\r\n                    $(\"#rowInterfaceErrors\"" +
+").show();\r\n                    $(\"#interfaceErrorCount\").text(ustatus.InterfaceE" +
+"rrorCount);\r\n                    $(\"#rowRowErrors\").show();\r\n                   " +
+" $(\"#rowErrorCount\").text(ustatus.RowErrorCount);\r\n                    $(\"#rowDe" +
+"tails\").show();\r\n                    $(\"#detailsLink\").attr(\"href\", \"/Monitor/Vi" +
+"ew/\" + ustatus.LicsId);\r\n                }\r\n                else {\r\n            " +
+"        $(\"#rowLicsId\").hide();\r\n                    $(\"#rowInterfaceErrors\").hi" +
+"de();\r\n                    $(\"#rowRowErrors\").hide();\r\n                    $(\"#r" +
+"owDetails\").hide();\r\n                }\r\n\r\n                $(\"#progressbar\").prog" +
+"ressbar(\"value\", 100);\r\n                if (ustatus.IsError) {\r\n                " +
+"    $(\"#progressbar > div\").addClass(\"failureProgress\");\r\n                    $(" +
+"\".failure\").show();\r\n                }\r\n                else {\r\n                " +
+"    $(\"#progressbar > div\").addClass(\"successProgress\");\r\n                    $(" +
+"\".success\").show();\r\n                }\r\n\r\n                $(\"#dialog\").dialog({\r" +
+"\n                    buttons: {\r\n                        Ok: function() {\r\n     " +
+"                       $(this).dialog(\"close\");\r\n                        }\r\n    " +
+"                }\r\n                });\r\n                $(\"#dialog\").dialog(\"opt" +
+"ion\", \"position\", \"center\");\r\n            }\r\n\r\n            ustatus.CompressionTe" +
+"rminate = true;\r\n        }\r\n\r\n        // Called to monitor the status of an ongo" +
+"ing upload after all segments have been sent to the server\r\n        function Upl" +
+"oadMonitor() {\r\n            \r\n            // Poll the status and update the disp" +
+"lay until it\'s finished\r\n            \r\n            if (ustatus.IsError || !conti" +
+"nueMonitoring)\r\n                return;\r\n            \r\n            $(\"#uploadOpt" +
+"ions\").hide();\r\n\r\n            $.ajax({\r\n                type: \"post\",\r\n         " +
+"       url: \"/Uploads/GetStatus\",\r\n                contentType: \"application/jso" +
+"n\",\r\n                async: true,\r\n                success: function (response) " +
+"{\r\n                    if (response.Result != \"OK\") {\r\n                        u" +
+"status.IsError = true;\r\n                        ustatus.Message = \"Error while m" +
+"onitoring upload ustatus.\"\r\n                        ustatus.Exception = response" +
+".Message;\r\n                        ustatus.UploadId = response.UploadId;\r\n      " +
+"                  ustatus.LicsId = response.LicsId;\r\n                        Sho" +
+"wResult(false);\r\n                    }\r\n                    else {\r\n\r\n          " +
+"              ustatus.CurrentStep = response.CurrentStep;\r\n                     " +
+"   if (response.Total > 0 && response.Current > 0)\r\n                            " +
+"$(\"#progressbar\").progressbar(\"value\", response.Current * 100 / response.Total);" +
+"\r\n\r\n                        // It can be a long time on \"0\" progress...\r\n       " +
+"                 // To let the user know that stuff is still happening, if it\'s " +
+"0 just increment the progressbar\r\n                        if (response.Current =" +
+"= 0 && ustatus.CurrentStep > 3) {\r\n                            var currentValue " +
+"= $(\"#progressbar\").progressbar(\"value\");\r\n                            currentVa" +
+"lue = (currentValue == 100 || isNaN(currentValue)) ? 0 : currentValue + 5;\r\n    " +
+"                        $(\"#progressbar\").progressbar(\"value\", currentValue);\r\n " +
+"                       }\r\n\r\n                        switch(ustatus.CurrentStep) " +
+"{\r\n                            case 3:\r\n                                $(\"#step" +
+"2tick\").show();\r\n                                SetProgressDescription(\"Step 3 " +
+"- Completing data upload\");\r\n                                break;\r\n           " +
+"                 case 4:\r\n                                $(\"#step2tick\").show()" +
+";\r\n                                $(\"#step3tick\").show();\r\n                    " +
+"            $(\"#step4time\").show();\r\n                                $(\"#step4ti" +
+"me\").text(response.EstimatedTime);\r\n                                // From here" +
+", the user is free to upload another file, so re-enable the form\r\n              " +
+"                  $(\"form :input\").removeAttr(\"disabled\").trigger(\"liszt:updated" +
+"\");\r\n                                SetProgressDescription(\"Step 4 - Uploading " +
+"to ICS\");\r\n                                break;\r\n                            c" +
+"ase 5:\r\n                                $(\"#step2tick\").show();\r\n               " +
+"                 $(\"#step3tick\").show();\r\n                                $(\"#st" +
+"ep4tick\").show();\r\n                                $(\"#step4time\").hide();\r\n    " +
+"                            $(\"#step5time\").show();\r\n                           " +
+"     $(\"#step5time\").text(response.EstimatedTime);\r\n                            " +
+"    SetProgressDescription(\"Step 5 - Processing in ICS\");\r\n                     " +
+"           break;\r\n                            default:\r\n                       " +
+"         $(\"#spanDescription\").text(\"Unknown\");\r\n                               " +
+" break;\r\n                        }\r\n\r\n                        if (ustatus.Curren" +
+"tStep == 5 && response.IsComplete == true) {\r\n                            ustatu" +
+"s.InterfaceErrorCount = response.InterfaceErrorCount;\r\n                         " +
+"   ustatus.RowErrorCount = response.RowErrorCount;\r\n                            " +
+"ustatus.LicsId = response.LicsId;\r\n                            ustatus.Exception" +
+" = \"\";\r\n                            if (ustatus.InterfaceErrorCount == 0 && usta" +
+"tus.RowErrorCount == 0) {\r\n                                SetProgressDescriptio" +
+"n(\"File Load Completed Successfully\");\r\n                                ustatus." +
+"Message = \"Success.\"\r\n                                ustatus.IsError = false;\r\n" +
+"                            }\r\n                            else {\r\n             " +
+"                   SetProgressDescription(\"File Load Complete – with Errors\");\r\n" +
+"                                ustatus.Message = \"Data Errors.\"\r\n              " +
+"                  ustatus.IsError = true;\r\n                            }\r\n      " +
+"                      $(\"#step5time\").hide();\r\n                            $(\"#s" +
+"tep5tick\").show();\r\n                            ShowResult(false);\r\n            " +
+"            }\r\n                        else {\r\n                            // Wa" +
+"it a second before polling again\r\n                            if (continueMonito" +
+"ring)\r\n                                setTimeout(\"UploadMonitor();\", 1000);\r\n  " +
+"                      }\r\n                    }\r\n                },\r\n            " +
+"    error: function (xhr, ajaxOptions, thrownError) {\r\n                    ustat" +
+"us.IsError = true;\r\n                    ustatus.Message = \"Error communicating w" +
+"ith server.\";\r\n                    ustatus.Exception = (isTest) ? thrownError : " +
+"\"\";\r\n                    ShowResult(false);\r\n                }\r\n            });\r" +
+"\n        }\r\n\r\n    </script>\r\n");
 
 });
 
@@ -720,7 +727,7 @@ WriteLiteral(" style=\"width:480px;\"");
 WriteLiteral(">");
 
             
-            #line 925 "..\..\Views\Uploads\Index.cshtml"
+            #line 934 "..\..\Views\Uploads\Index.cshtml"
                                     Write(Html.DropDownList("ddlInterfaceGroup", Model.InterfaceGroups, new { id = "ddlInterfaceGroup", style = "width:467px" }));
 
             
@@ -734,7 +741,7 @@ WriteLiteral(" for=\"ddlInterface\"");
 WriteLiteral(">Interface</label></td>\r\n                <td>");
 
             
-            #line 930 "..\..\Views\Uploads\Index.cshtml"
+            #line 939 "..\..\Views\Uploads\Index.cshtml"
                Write(Html.DropDownList("ddlInterface", Model.Interfaces, new { id = "ddlInterface", @class = "validate[required]", style = "width:467px" }));
 
             
@@ -823,7 +830,7 @@ WriteLiteral(" style=\"width:100px;\"");
 WriteLiteral(">Connection</td>\r\n                    <td><strong>");
 
             
-            #line 964 "..\..\Views\Uploads\Index.cshtml"
+            #line 973 "..\..\Views\Uploads\Index.cshtml"
                             Write((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName);
 
             
@@ -843,7 +850,7 @@ WriteLiteral("></span></strong></td>\r\n                    <td></td>\r\n       
 "d><strong>");
 
             
-            #line 974 "..\..\Views\Uploads\Index.cshtml"
+            #line 983 "..\..\Views\Uploads\Index.cshtml"
                             Write((ViewBag.User == null) ? string.Empty : ViewBag.User.UserName);
 
             
@@ -1034,7 +1041,7 @@ WriteLiteral(" style=\"width:100px;\"");
 WriteLiteral(">Connection</td>\r\n                    <td><strong>");
 
             
-            #line 1064 "..\..\Views\Uploads\Index.cshtml"
+            #line 1073 "..\..\Views\Uploads\Index.cshtml"
                             Write((ViewBag.Connection == null) ? string.Empty : ViewBag.Connection.ConnectionName);
 
             
@@ -1044,7 +1051,7 @@ WriteLiteral("</strong></td>\r\n                </tr>\r\n                <tr>\r\
 "<td>Interface</td>\r\n                    <td><strong>");
 
             
-            #line 1068 "..\..\Views\Uploads\Index.cshtml"
+            #line 1077 "..\..\Views\Uploads\Index.cshtml"
                            Write(Model.InterfaceName);
 
             
@@ -1054,7 +1061,7 @@ WriteLiteral("</strong></td>\r\n                </tr>\r\n                <tr>\r\
 "<td>ICS User</td>\r\n                    <td><strong>");
 
             
-            #line 1072 "..\..\Views\Uploads\Index.cshtml"
+            #line 1081 "..\..\Views\Uploads\Index.cshtml"
                             Write((ViewBag.User == null) ? string.Empty : ViewBag.User.UserName);
 
             
@@ -1064,7 +1071,7 @@ WriteLiteral("</strong></td>\r\n                </tr>\r\n                <tr>\r\
 "<td>Filename</td>\r\n                    <td><strong>");
 
             
-            #line 1076 "..\..\Views\Uploads\Index.cshtml"
+            #line 1085 "..\..\Views\Uploads\Index.cshtml"
                            Write(Model.FileName);
 
             

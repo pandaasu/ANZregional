@@ -1,0 +1,603 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Net.Code.Csv</name>
+    </assembly>
+    <members>
+        <member name="T:Net.Code.Csv.CsvBehaviour">
+            <summary>
+            Describes the way the CSV parser should behave
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.CsvBehaviour.#ctor(Net.Code.Csv.ValueTrimmingOptions,Net.Code.Csv.MissingFieldAction,System.Boolean,Net.Code.Csv.QuotesInsideQuotedFieldAction)">
+            <summary>
+            Constructs a CsvBehaviour instance that can be used to drive the csv parser
+            </summary>
+            <param name="trimmingOptions">How should fields be trimmed?</param>
+            <param name="missingFieldAction">What should happen when a field is missing from a line?</param>
+            <param name="skipEmptyLines">Should empty lines be skipped?</param>
+            <param name="quotesInsideQuotedFieldAction">What should happen when a quote is found inside a quoted field?</param>
+        </member>
+        <member name="P:Net.Code.Csv.CsvBehaviour.Default">
+            <summary>
+            The default behaviour of the Csv parser: trim unquoted fields,
+            throw exception when a line contains too little fields, 
+            skip empty lines and ignore quotes inside quoted fields.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvBehaviour.TrimmingOptions">
+            <summary>
+            How should fields be trimmed?
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvBehaviour.MissingFieldAction">
+            <summary>
+            What should happen when a field is missing from a line?
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvBehaviour.SkipEmptyLines">
+            <summary>
+            Should empty lines be skipped?
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvBehaviour.QuotesInsideQuotedFieldAction">
+            <summary>
+            What should happen when a quote is found inside a quoted field? (e.g. "123","x y "z" u","345")
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.Converter">
+            <summary>
+            String to primitive conversion class. By default, uses the Convert.ToXXX methods or,
+            if not available, the [Primitive].Parse method.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToBoolean">
+            <summary>
+            Conversion function from string to bool. Default = <see cref="M:System.Convert.ToBoolean(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToInt16">
+            <summary>
+            Conversion function from string to short. Default = <see cref="M:System.Convert.ToInt16(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToInt32">
+            <summary>
+            Conversion function from string to int. Default = <see cref="M:System.Convert.ToInt32(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToInt64">
+            <summary>
+            Conversion function from string to long. Default = <see cref="M:System.Convert.ToInt64(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToUInt16">
+            <summary>
+            Conversion function from string to unsigned short. Default = <see cref="M:System.Convert.ToUInt16(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToUInt32">
+            <summary>
+            Conversion function from string to unsigned int. Default = <see cref="M:System.Convert.ToUInt32(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToUInt64">
+            <summary>
+            Conversion function from string to unsigned long. Default = <see cref="M:System.Convert.ToUInt64(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToDecimal">
+            <summary>
+            Conversion function from string to decimal. Default = <see cref="M:System.Convert.ToDecimal(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToSingle">
+            <summary>
+            Conversion function from string to float. Default = <see cref="M:System.Convert.ToSingle(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToDouble">
+            <summary>
+            Conversion function from string to double. Default = <see cref="M:System.Convert.ToDouble(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToByte">
+            <summary>
+            Conversion function from string to byte. Default = <see cref="M:System.Convert.ToByte(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToSByte">
+            <summary>
+            Conversion function from string to sbyte. Default = <see cref="M:System.Convert.ToByte(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToChar">
+            <summary>
+            Conversion function from string to char. Default = <see cref="M:System.Convert.ToChar(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToDateTime">
+            <summary>
+            Conversion function from string to DateTime. Default = <see cref="M:System.Convert.ToDateTime(System.Object)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.ToGuid">
+            <summary>
+            Conversion function from string to Guid. Default = <see cref="M:System.Guid.Parse(System.String)"/>
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Converter.Default">
+            <summary>
+            The default converter (uses the Convert.To[Primitive] methods when available or the [Primitive].Parse
+            method otherwise.
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.CsvExtensions">
+            <summary>
+            Contains entry points (extension methods) for reading a string, file or stream as CSV
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadFileAsCsv(System.String,System.Text.Encoding)">
+            <summary>
+            Read a file as CSV, using default behaviour, layout and conversion options 
+            (<see cref="P:Net.Code.Csv.CsvLayout.Default"/>, <see cref="P:Net.Code.Csv.CsvBehaviour.Default"/> and 
+            <see cref="P:Net.Code.Csv.Converter.Default"/>)
+            </summary>
+            <param name="path">The full or relative path name</param>
+            <param name="encoding">The encoding</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadFileAsCsv(System.String,System.Text.Encoding,Net.Code.Csv.CsvLayout,Net.Code.Csv.CsvBehaviour,Net.Code.Csv.Converter,System.Int32)">
+            <summary>
+            Read a file as CSV, using specific behaviour, layout and conversion options 
+            </summary>
+            <param name="path">The full or relative path name</param>
+            <param name="encoding">The encoding</param>
+            <param name="csvLayout">Csv layout info (quote, delimiter, ...)</param>
+            <param name="csvBehaviour">Csv behaviour info (e.g. what to do when fields are missing)</param>
+            <param name="converter">Converter class for converting strings to primitive types (used by the data reader</param>
+            <param name="bufferSize">The number of characters to buffer while parsing the CSV.</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadStringAsCsv(System.String)">
+            <summary>
+            Read a string as CSV, using default behaviour, layout and conversion options 
+            (<see cref="P:Net.Code.Csv.CsvLayout.Default"/>, <see cref="P:Net.Code.Csv.CsvBehaviour.Default"/> and 
+            <see cref="P:Net.Code.Csv.Converter.Default"/>)
+            </summary>
+            <param name="input">The input string</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadStringAsCsv(System.String,Net.Code.Csv.CsvLayout,Net.Code.Csv.CsvBehaviour,Net.Code.Csv.Converter,System.Int32)">
+            <summary>
+            Read a string as CSV, using specific behaviour, layout and conversion options 
+            </summary>
+            <param name="input">The CSV input</param>
+            <param name="csvLayout">Csv layout info (quote, delimiter, ...)</param>
+            <param name="csvBehaviour">Csv behaviour info (e.g. what to do when fields are missing)</param>
+            <param name="converter">Converter class for converting strings to primitive types (used by the data reader</param>
+            <param name="bufferSize">The number of characters to buffer while parsing the CSV.</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadStreamAsCsv(System.IO.TextReader)">
+            <summary>
+            Read a stream as CSV, using specific behaviour, layout and conversion options 
+            </summary>
+            <param name="reader">A <see cref="T:System.IO.TextReader"/> instance</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="M:Net.Code.Csv.CsvExtensions.ReadStreamAsCsv(System.IO.TextReader,Net.Code.Csv.CsvLayout,Net.Code.Csv.CsvBehaviour,Net.Code.Csv.Converter,System.Int32)">
+            <summary>
+            Read a stream as CSV, using specific behaviour, layout and conversion options 
+            </summary>
+            <param name="reader">A <see cref="T:System.IO.TextReader"/> instance</param>
+            <param name="csvLayout">Csv layout info (quote, delimiter, ...)</param>
+            <param name="csvBehaviour">Csv behaviour info (e.g. what to do when fields are missing)</param>
+            <param name="converter">Converter class for converting strings to primitive types (used by the data reader</param>
+            <param name="bufferSize">The number of characters to buffer while parsing the CSV.</param>
+            <returns>a datareader instance to read the contents of the CSV file</returns>
+        </member>
+        <member name="T:Net.Code.Csv.MalformedCsvException">
+            <summary>
+            Represents the exception that is thrown when a CSV file is malformed.
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MalformedCsvException._message">
+            <summary>
+            Contains the message that describes the error.
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MalformedCsvException._rawData">
+            <summary>
+            Contains the raw data when the error occured.
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MalformedCsvException._fieldNumber">
+            <summary>
+            Contains the current field index.
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MalformedCsvException._lineNumber">
+            <summary>
+            Contains the current record index.
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MalformedCsvException._columnNumber">
+            <summary>
+            Contains the current position in the raw data.
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class.
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor(System.String,System.Int32,System.Int64,System.Int32)">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class.
+            </summary>
+            <param name="rawData">The raw data when the error occured.</param>
+            <param name="columnNumber">The current position in the raw data.</param>
+            <param name="lineNumber">The current record index.</param>
+            <param name="fieldNumber">The current field index.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor(System.String,System.Int32,System.Int64,System.Int32,System.Exception)">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class.
+            </summary>
+            <param name="rawData">The raw data when the error occured.</param>
+            <param name="columnNumber">The current position in the raw data.</param>
+            <param name="lineNumber">The current record index.</param>
+            <param name="fieldNumber">The current field index.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the MalformedCsvException class with serialized data.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MalformedCsvException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            When overridden in a derived class, sets the <see cref="T:System.Runtime.Serialization.SerializationInfo"/> with information about the exception.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="P:Net.Code.Csv.MalformedCsvException.RawData">
+            <summary>
+            Gets the raw data when the error occured.
+            </summary>
+            <value>The raw data when the error occured.</value>
+        </member>
+        <member name="P:Net.Code.Csv.MalformedCsvException.ColumnNumber">
+            <summary>
+            Gets the current position in the raw data.
+            </summary>
+            <value>The current position in the raw data.</value>
+        </member>
+        <member name="P:Net.Code.Csv.MalformedCsvException.LineNumber">
+            <summary>
+            Gets the current record index.
+            </summary>
+            <value>The current record index.</value>
+        </member>
+        <member name="P:Net.Code.Csv.MalformedCsvException.FieldNumber">
+            <summary>
+            Gets the current field index.
+            </summary>
+            <value>The current record index.</value>
+        </member>
+        <member name="P:Net.Code.Csv.MalformedCsvException.Message">
+            <summary>
+            Gets a message that describes the current exception.
+            </summary>
+            <value>A message that describes the current exception.</value>
+        </member>
+        <member name="T:Net.Code.Csv.MissingFieldCsvException">
+            <summary>
+            Represents the exception that is thrown when a there is a missing field in a record of the CSV file.
+            </summary>
+            <remarks>
+            MissingFieldException would have been a better name, but there is already a <see cref="T:System.MissingFieldException"/>.
+            </remarks>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class.
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor(System.String,System.Int32,System.Int64,System.Int32)">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class.
+            </summary>
+            <param name="rawData">The raw data when the error occured.</param>
+            <param name="columnNumber">The current position in the raw data.</param>
+            <param name="lineNumber">The current record index.</param>
+            <param name="fieldNumber">The current field index.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor(System.String,System.Int32,System.Int64,System.Int32,System.Exception)">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class.
+            </summary>
+            <param name="rawData">The raw data when the error occured.</param>
+            <param name="columnNumber">The current position in the raw data.</param>
+            <param name="lineNumber">The current record index.</param>
+            <param name="fieldNumber">The current field index.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:Net.Code.Csv.MissingFieldCsvException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the MissingFieldCsvException class with serialized data.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="T:Net.Code.Csv.Impl.CsvHeader">
+            <summary>
+            A CSV header line
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.Impl.CsvLine">
+            <summary>
+            A CSV line
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.Impl.CsvLine.#ctor(System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
+            <summary>
+            Constructs a line from a collection of fields
+            </summary>
+            <param name="fields">The fields of the line</param>
+            <param name="isEmpty">indicates whether this is an empty line</param>
+        </member>
+        <member name="F:Net.Code.Csv.Impl.CsvLine.Empty">
+            <summary>
+            An empty CSV line
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Impl.CsvLine.IsEmpty">
+            <summary>
+            Is this an empty line?
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Impl.CsvLine.Fields">
+            <summary>
+            The fields for a line
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.MissingFieldAction">
+            <summary>
+            Drives the behaviour of the CSV parser when a missing field is encountered
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MissingFieldAction.ParseError">
+            <summary>
+            Consider a missing field as a parse error and throw a <see cref="T:Net.Code.Csv.MissingFieldCsvException"/>
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MissingFieldAction.ReplaceByEmpty">
+            <summary>
+            Replace the missing field by an empty string
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.MissingFieldAction.ReplaceByNull">
+            <summary>
+            Replace the missing field by a null value
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.QuotesInsideQuotedFieldAction">
+            <summary>
+            Specifies the action to take when a quote is found inside a quoted field
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.QuotesInsideQuotedFieldAction.Ignore">
+            <summary>
+            Ignore the quote
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.QuotesInsideQuotedFieldAction.AdvanceToNextLine">
+            <summary>
+            Skip the line
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.QuotesInsideQuotedFieldAction.ThrowException">
+            <summary>
+            Throw an exception
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.CsvLayout">
+            <summary>
+            Describes a CSV file layout (quote character, delimiter, escape character, comment marker, does the CSV have headers or not)
+            </summary>
+        </member>
+        <member name="M:Net.Code.Csv.CsvLayout.#ctor(System.Char,System.Char,System.Char,System.Char,System.Boolean)">
+            <summary>
+            Describes a CSV file layout
+            </summary>
+            <param name="quote">The quote character. Default '"'</param>
+            <param name="delimiter">Field delimiter. Default ','</param>
+            <param name="escape">Quote escape character (for quotes inside fields). Default '\'</param>
+            <param name="comment">Comment marker. Default '#'</param>
+            <param name="hasHeaders">Is the first line a header line (default false)?</param>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.Default">
+            <summary>
+            The default CSV layout. Uses double quote, comma as separator,
+            backslash as escape character, hash (#) as a comment marker and assumes no header.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.Quote">
+            <summary>
+            The character used as a field quote
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.Delimiter">
+            <summary>
+            The character that delimits the fields
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.Escape">
+            <summary>
+            The character to be used for escaping quotes inside a field
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.Comment">
+            <summary>
+            The character that marks a line as a comment
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.CsvLayout.HasHeaders">
+            <summary>
+            Indicates whether or not the input file has a header
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.Resources.ExceptionMessage">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.BufferSizeTooSmall">
+            <summary>
+              Looks up a localized string similar to Buffer size must be 1 or more..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.CannotMovePreviousRecordInForwardOnly">
+            <summary>
+              Looks up a localized string similar to Cannot move to a previous record in forward-only mode..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.CannotReadRecordAtIndex">
+            <summary>
+              Looks up a localized string similar to Cannot read record at index &apos;{0}&apos;..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.EnumerationFinishedOrNotStarted">
+            <summary>
+              Looks up a localized string similar to Enumeration has either not started or has already finished..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.EnumerationVersionCheckFailed">
+            <summary>
+              Looks up a localized string similar to Collection was modified; enumeration operation may not execute..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.FieldHeaderNotFound">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; field header not found..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.FieldIndexOutOfRange">
+            <summary>
+              Looks up a localized string similar to Field index must be included in [0, FieldCount[. Specified field index was : &apos;{0}&apos;..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.MalformedCsvException">
+            <summary>
+              Looks up a localized string similar to The CSV appears to be corrupt on line &apos;{0}&apos;, field &apos;{1}&apos; at position &apos;{2}&apos;. Current raw data : &apos;{3}&apos;..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.MissingFieldActionNotSupported">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is not a supported missing field action..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.NoCurrentRecord">
+            <summary>
+              Looks up a localized string similar to No current record..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.NoHeaders">
+            <summary>
+              Looks up a localized string similar to The CSV does not have headers (CsvReader.HasHeaders property is false)..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.NotEnoughSpaceInArray">
+            <summary>
+              Looks up a localized string similar to The number of fields in the record is greater than the available space from index to the end of the destination array..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.ParseErrorActionInvalidInsideParseErrorEvent">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is not a valid QuotesInsideQuotedFieldAction while inside a ParseError event..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.ParseErrorActionNotSupported">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is not a supported QuotesInsideQuotedFieldAction..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.ReaderClosed">
+            <summary>
+              Looks up a localized string similar to This operation is invalid when the reader is closed..
+            </summary>
+        </member>
+        <member name="P:Net.Code.Csv.Resources.ExceptionMessage.RecordIndexLessThanZero">
+            <summary>
+              Looks up a localized string similar to Record index must be 0 or more..
+            </summary>
+        </member>
+        <member name="T:Net.Code.Csv.ValueTrimmingOptions">
+            <summary>
+            Defines the different possibilities for trimming field values
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.ValueTrimmingOptions.None">
+            <summary>
+            Do nothing when a field starts or ends with white space
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.ValueTrimmingOptions.UnquotedOnly">
+            <summary>
+            Only unquoted fields are trimmed
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.ValueTrimmingOptions.QuotedOnly">
+            <summary>
+            Only quoted fields are trimmed
+            </summary>
+        </member>
+        <member name="F:Net.Code.Csv.ValueTrimmingOptions.All">
+            <summary>
+            Both quoted and unquoted fields are trimmed
+            </summary>
+        </member>
+    </members>
+</doc>

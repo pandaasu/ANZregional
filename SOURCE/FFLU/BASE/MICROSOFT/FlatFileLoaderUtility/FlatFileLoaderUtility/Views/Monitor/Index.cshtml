@@ -246,6 +246,14 @@
                 });
             });
 
+            $(".chzn-search input").on("keypress", function (e) {
+                if (e.keyCode == 13) {
+                    alert("enter pressed");
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
             // Document ready actions
             //Load all records when page is first shown
             @if (ViewBag.Connection != null)

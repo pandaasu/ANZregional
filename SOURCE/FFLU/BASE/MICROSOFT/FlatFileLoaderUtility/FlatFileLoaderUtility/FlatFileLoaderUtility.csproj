@@ -48,6 +48,9 @@
     <Reference Include="MiniProfiler">
       <HintPath>..\packages\MiniProfiler.2.1.0\lib\net40\MiniProfiler.dll</HintPath>
     </Reference>
+    <Reference Include="Net.Code.Csv">
+      <HintPath>..\packages\Net.Code.Csv.1.0.3\lib\net40\Net.Code.Csv.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.5.0.6\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>

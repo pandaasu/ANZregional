@@ -241,11 +241,10 @@ namespace FlatFileLoaderUtility.Controllers
                 var interfaceCode = this.Request.QueryString["interfaceCode"];
                 var isFinalSegment = this.Request.QueryString["isFinalSegment"] == "true";
                 var fileSize = Tools.ZeroInvalidLong(this.Request.QueryString["fileSize"]);
+                var filename = HttpUtility.UrlDecode(this.Request.QueryString["fileName"]);
 
                 if (this.Request.Files.Count == 0)
                     throw new Exception("Data cannot be empty");
-
-                var filename = this.Request.Files[0].FileName;
 
                 status = Status.GetOrSetStatus(this.Container.Access.Username, this.Container.Connection, interfaceCode, filename);
 

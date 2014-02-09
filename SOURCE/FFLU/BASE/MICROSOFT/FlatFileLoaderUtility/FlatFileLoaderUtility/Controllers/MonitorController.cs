@@ -6,6 +6,7 @@ using System.Threading;
 using FlatFileLoaderUtility.ViewModels;
 using FlatFileLoaderUtility.Models;
 using FlatFileLoaderUtility.Models.Shared;
+using Net.Code.Csv;
 
 namespace FlatFileLoaderUtility.Controllers
 {
@@ -127,42 +128,31 @@ namespace FlatFileLoaderUtility.Controllers
                     pageSize
                 );
 
-                // Could this use the CSV qualifier?
-                if (monitor.FileType == "csv")
+                // Delimited fields
+                if (monitor.FileType == "csv" || monitor.FileType == "tab")
                 {
-                    var splitOn = new char[] { ',' };
-                    var trimOn = new char[] { (monitor.CsvQualifier.Length > 0) ? monitor.CsvQualifier[0] : ' ' };
+                    var qualifier = (monitor.CsvQualifier.Length > 0) ? monitor.CsvQualifier[0] : ' ';
+                    var layout = new CsvLayout(qualifier, ((monitor.FileType == "csv") ? ',' : '\t'), qualifier);
+                    var behaviour = new CsvBehaviour(ValueTrimmingOptions.All, MissingFieldAction.ReplaceByEmpty, true, QuotesInsideQuotedFieldAction.Ignore);
+                    var converter = new Converter();
+                    
                     foreach (var item in result)
                     {
-                        // Split into columns
-                        item.ColumnData = item.Data.Split(splitOn).ToList();
-
-                        // Remove qualifiers
-                        if (!string.IsNullOrEmpty(monitor.CsvQualifier))
+                        using (var reader = item.Data.ReadStringAsCsv(layout, behaviour, converter))
                         {
-                            for (var i = 0; i < item.ColumnData.Count; i++)
-                                item.ColumnData[i] = item.ColumnData[i].Trim(trimOn).Replace(monitor.CsvQualifier + monitor.CsvQualifier, monitor.CsvQualifier);
-                        }
-                    }
-                }
-                else if (monitor.FileType == "tab")
-                {
-                    var splitOn = new char[] { '\t' };
-                    var trimOn = new char[] { (monitor.CsvQualifier.Length > 0) ? monitor.CsvQualifier[0] : ' ' };
-                    foreach (var item in result)
-                    {
-                        // Split into columns
-                        item.ColumnData = item.Data.Split(splitOn).ToList();
-
-                        // Remove qualifiers
-                        if (!string.IsNullOrEmpty(monitor.CsvQualifier))
-                        {
-                            for (var i = 0; i < item.ColumnData.Count; i++)
-                                item.ColumnData[i] = item.ColumnData[i].Trim(trimOn).Replace(monitor.CsvQualifier + monitor.CsvQualifier, monitor.CsvQualifier);
+                            if (reader.Read())
+                            {
+                                item.ColumnData = new List<string>();
+                                for (var i = 0; i < reader.FieldCount; i++)
+                                {
+                                    item.ColumnData.Add(reader.GetString(i));
+                                }
+                            }
                         }
                     }
                 }
 
+                // Fixed fields
                 if (monitor.FileType != "csv" && monitor.FileType != "tab" && result.Count > 0)
                 {
                     var columnCounterRow = new IcsRowData();
@@ -214,21 +204,31 @@ namespace FlatFileLoaderUtility.Controllers
                     && x.OptionCode == Option.Process
                 select 1).Count() > 0;
 
-            if (viewModel.Record.FileType == "csv")
+            // Delimited fields: must know how many columns there are in the data.
+            // The only way to know that is to sample the data...
+            if (viewModel.Record.FileType == "csv" || viewModel.Record.FileType == "tab")
             {
+                viewModel.ColumnCount = 0;
+
                 var data = this.Container.MonitorRepository.RowDataLoad(viewModel.Record.LicsId, viewModel.Record.TraceId, false, 0, 10);
                 if (data.Count > 0)
-                    viewModel.ColumnCount = data.Max(x => x.Data.Split(new char[] { ',' }).Length);
-                else
-                    viewModel.ColumnCount = 0;
-            }
-            else if (viewModel.Record.FileType == "tab")
-            {
-                var data = this.Container.MonitorRepository.RowDataLoad(viewModel.Record.LicsId, viewModel.Record.TraceId, false, 0, 10);
-                if (data.Count > 0)
-                    viewModel.ColumnCount = data.Max(x => x.Data.Split(new char[] { '\t' }).Length);
-                else
-                    viewModel.ColumnCount = 0;
+                {
+                    var qualifier = (viewModel.Record.CsvQualifier.Length > 0) ? viewModel.Record.CsvQualifier[0] : ' ';
+                    var layout = new CsvLayout(qualifier, ((viewModel.Record.FileType == "csv") ? ',' : '\t'), qualifier);
+                    var behaviour = new CsvBehaviour(ValueTrimmingOptions.All, MissingFieldAction.ReplaceByEmpty, true, QuotesInsideQuotedFieldAction.Ignore);
+                    var converter = new Converter();
+
+                    foreach (var item in data)
+                    {
+                        using (var reader = item.Data.ReadStringAsCsv(layout, behaviour, converter))
+                        {
+                            while (reader.Read())
+                            {
+                                viewModel.ColumnCount = Math.Max(viewModel.ColumnCount, reader.FieldCount);
+                            }
+                        }
+                    }
+                }
             }
 
             if (viewModel.Record.InterfaceErrorCount > 0)

@@ -609,7 +609,7 @@
             var url = "/Uploads/Segment";
             var usingCompression = ustatus.UseCompression || (ustatus.Segments.length > 0);
 
-            if (useCompression && ustatus.Segments.length > 0 && ustatus.Segments[0].StringData != "") {
+            if (usingCompression && ustatus.Segments.length > 0 && ustatus.Segments[0].StringData != "") {
                 // The first segment in the queue is not compressed (happens when compression isn't keeping up with connection throughput)
                 usingCompression = false;
                 segmentData = ustatus.Segments[0].StringData;
@@ -627,13 +627,22 @@
                         break;
                     includedInUpload = i + 1;
                     var arry = new Int8Array(seg.ByteArray);
-                    var oBlob = new Blob([arry.buffer], { type: "application/octet-stream" });
+                    var oBlob = null;
+                    try {
+                        oBlob = new Blob([arry.buffer], { type: "application/octet-stream" });
+                    } catch (e) {
+                        // The BlobBuilder API has been deprecated in favour of Blob, but older
+                        // browsers don't know about the Blob constructor
+                        var bb = new (window.WebKitBlobBuilder || window.MozBlobBuilder);
+                        bb.append(arry.buffer);
+                        oBlob = bb.getBlob("application/octet-stream");
+                    }
                     isFinal = seg.IsFinalSegment;
-                    postData.append("data" + i, oBlob, ustatus.FileName);
+                    postData.append("data" + i, oBlob);
                 }
                 // Clear the processed segments from the queue
                 ustatus.Segments.splice(0, includedInUpload);
-                url = "/Uploads/SegmentCompressed?interfaceCode=" + ustatus.InterfaceCode + "&isFinalSegment=" + isFinal + "&fileSize=" + ustatus.FileSize;
+                url = "/Uploads/SegmentCompressed?interfaceCode=" + ustatus.InterfaceCode + "&isFinalSegment=" + isFinal + "&fileSize=" + ustatus.FileSize + "&fileName=" + encodeURIComponent(ustatus.FileName);
             }
             else {
                 postData = JSON.stringify({
