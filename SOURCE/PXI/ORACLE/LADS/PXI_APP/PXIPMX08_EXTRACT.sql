@@ -40,6 +40,8 @@ PACKAGE PXIPMX08_EXTRACT AS
   2013-10-25  Chris Horn            Fixed bugs with report not joining on line
                                     number correctly and joining on NZ duplicate
                                     claim references.
+  2014-02-26  Chris Horn            Added Tax amount base calculations, as SAP 
+                                    is never sending a tax amount. 
 
 *******************************************************************************/
   -- LICS Hooks.

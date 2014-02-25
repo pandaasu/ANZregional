@@ -1,5 +1,4 @@
-create or replace 
-PACKAGE body PXIPMX08_EXTRACT AS
+create or replace PACKAGE body PXIPMX08_EXTRACT AS
 
 /*******************************************************************************
   Package Cosntants
@@ -120,7 +119,6 @@ PACKAGE body PXIPMX08_EXTRACT AS
           pv_claim.claim_amount := fflu_data.get_number_field(pc_claim_amount);
           pv_claim.claim_ref := fflu_data.get_char_field(pc_claim_ref);
           pv_claim.assignment_no := fflu_data.get_char_field(pc_assignment_no);
-          pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
           pv_claim.posting_date := fflu_data.get_date_field(pc_posting_date);
           pv_claim.fiscal_period := fflu_data.get_number_field(pc_fiscal_period);
           pv_claim.reason_code := fflu_data.get_char_field(pc_reason_code);
@@ -137,35 +135,49 @@ PACKAGE body PXIPMX08_EXTRACT AS
           case pv_claim.reason_code 
             when '40' then 
               pv_claim.div_code := '02'; 
-              pv_claim.tax_code := 'S3'; 
+              pv_claim.tax_code := pxi_common.gc_tax_code_s3; 
             when '42' then 
               pv_claim.div_code := '01'; 
-              pv_claim.tax_code := 'S3'; 
+              pv_claim.tax_code := pxi_common.gc_tax_code_s3; 
             when '41' then 
               pv_claim.div_code := '02'; 
-              pv_claim.tax_code := 'S1'; 
+              pv_claim.tax_code := pxi_common.gc_tax_code_s1; 
             when '43' then 
               pv_claim.div_code := '01'; 
-              pv_claim.tax_code := 'S1'; 
+              pv_claim.tax_code := pxi_common.gc_tax_code_s1; 
             when '44' then
               pv_claim.div_code := '05'; 
-              pv_claim.tax_code := 'S3';
+              pv_claim.tax_code := pxi_common.gc_tax_code_se;
             when '45' then
               pv_claim.div_code := '05'; 
-              pv_claim.tax_code := 'S1';
+              pv_claim.tax_code := pxi_common.gc_tax_code_s1;
             when '51' then 
               pv_claim.div_code := '02';
-              pv_claim.tax_code := 'S2';
+              pv_claim.tax_code := pxi_common.gc_tax_code_s2;
             when '53' then 
               pv_claim.div_code := '01';
-              pv_claim.tax_code := 'S2';
+              pv_claim.tax_code := pxi_common.gc_tax_code_s2;
             when '55' then 
               pv_claim.div_code := '05';
-              pv_claim.tax_code := 'S2';
+              pv_claim.tax_code := pxi_common.gc_tax_code_s2;
             else 
               pv_claim.div_code := fflu_data.get_char_field(pc_div_code);
               pv_claim.tax_code := fflu_data.get_char_field(pc_tax_code);
           end case; 
+          
+          -- Now set the tax base amount based on the tax code.
+          case pv_claim.tax_code 
+            when pxi_common.gc_tax_code_s1 then 
+              pv_claim.tax_base := pv_claim.claim_amount / 1.1; -- 10% Australian GST
+            when pxi_common.gc_tax_code_s2 then 
+              pv_claim.tax_base := pv_claim.claim_amount / 1.15; -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination. 
+            when pxi_common.gc_tax_code_s3 then 
+              pv_claim.tax_base := 0;  -- Australia 0% No Tax
+            when pxi_common.gc_tax_code_se then 
+              pv_claim.tax_base := 0;  -- New Zealand 0% No Tax.
+            else 
+              pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
+          end case;
 
           -- Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
           if pv_claim.div_code is not null then
@@ -494,6 +506,8 @@ PACKAGE body PXIPMX08_EXTRACT AS
     -- Variables     
      v_instance number(15,0);
      v_data pxi_common.st_data;
+     v_promax_division pxi_common.st_promax_division;
+     v_promax_company pxi_common.st_company;
  
      -- The extract query.
      cursor csr_input is
@@ -518,7 +532,9 @@ PACKAGE body PXIPMX08_EXTRACT AS
           pxi_common.numb_format(amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- amount -> Amount
           pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
           pxi_common.char_format('', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
-          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- currency -> Currency
+          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable), -- currency -> Currency
+          promax_company,
+          promax_division
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -535,13 +551,14 @@ PACKAGE body PXIPMX08_EXTRACT AS
             t2.promax_company,
             t2.promax_division,
             trim(t1.bus_partner_ref) as bus_partner_ref,
-            decode(nvl(trim(t1.reason_code),'99'), '40', 'No Tax', '42', 'No Tax', '44', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Reason Code 40, 42, 44 .. Else Inc Tax
+            decode(nvl(trim(t1.tax_code),'-'), 'S3', 'No Tax', 'SE', 'No Tax', 'Inc Tax') || ' ' || ltrim(t1.cust_code, 0) tax_cust_ref, -- No Tax for Tax Codes S3 and SE .. Else Inc Tax
             t1.posting_date,
             t1.claim_ref,
             t1.assignment_no,
             t1.reason_code,
-            t1.claim_amount + t1.tax_base as amount,
-            t1.tax_base as tax_amount,
+            t1.claim_amount as amount,
+            -- Chris Horn : 26/02/2014 : NOTE : Once NZ Business Process has been updated to correcly bring across the tax amount, rather than them calculating automatically.  Remove the Decode below and just send the actual tax.
+            decode(t1.company_code, pxi_common.gc_new_zealand, 0, t1.tax_base) as tax_amount,
             case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
             table(get_claims) t1,
@@ -556,11 +573,12 @@ PACKAGE body PXIPMX08_EXTRACT AS
      -- Open cursor with the extract data.
      open csr_input;
      loop
-       fetch csr_input into v_data;
+       fetch csr_input into v_data, v_promax_company, v_promax_division;
        exit when csr_input%notfound;
       -- Create the new interface when required
       if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface(pc_interface_name);
+        -- v_instance := lics_outbound_loader.create_interface(pc_interface_name);
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name||'.'||pxi_common.promax_interface_suffix( v_promax_company, v_promax_division ) );
       end if;
       -- Append the interface data
       lics_outbound_loader.append_data(v_data);
