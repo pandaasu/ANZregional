@@ -1,5 +1,4 @@
-create or replace 
-package body        df_forecast as
+create or replace  package body        df_forecast as
 
    /*-*/
    /* Private exceptions
@@ -10,13 +9,13 @@ package body        df_forecast as
    /*-*/
    /* Private declarations
    /*-*/
-   procedure process_demand_file(par_action in varchar2, par_file_id in number);
+   procedure process_demand_file(par_action in varchar2, par_file_id in number,par_append in varchar2);
    procedure process_supply_file(par_action in varchar2, par_file_id in number);
 
    /***********************************************/
    /* This procedure performs the process routine */
    /***********************************************/
-   procedure process(par_action in varchar2, par_file_id in number) is
+   procedure process(par_action in varchar2, par_file_id in number, par_append in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -76,6 +75,9 @@ package body        df_forecast as
       if par_file_id is null then
          raise_application_error(-20000, 'File identifier must be supplied');
       end if;
+      if par_append is not null and par_append != 'TRUE' and par_append != 'FALSE' then 
+        raise_application_error(-20000, 'Append instruction must be null, TRUE or FALSE.');
+      end if;
       /*-*/
       open csr_load_file;
       fetch csr_load_file into rcd_load_file;
@@ -101,7 +103,7 @@ package body        df_forecast as
       /*-*/
       /* Begin procedure
       /*-*/
-      lics_logging.write_log('Begin - Demand Financials Forecast Process - Parameters(' || upper(par_action) || ' + ' || to_char(par_file_id) || ' + ' || rcd_load_file.moe_code || ')');
+      lics_logging.write_log('Begin - Demand Financials Forecast Process - Parameters(' || upper(par_action) || ' + ' || to_char(par_file_id) || ' + ' || rcd_load_file.moe_code || ' + ' || par_append || ')');
 
       /*-*/
       /* Request the lock on the processing
@@ -125,9 +127,9 @@ package body        df_forecast as
          /*-*/
          begin
             if upper(par_action) = '*DEMAND_FINAL' then
-               process_demand_file(par_action,par_file_id);
+               process_demand_file(par_action,par_file_id,par_append);
             elsif upper(par_action) = '*DEMAND_DRAFT' then
-               process_demand_file(par_action,par_file_id);
+               process_demand_file(par_action,par_file_id,par_append);
             elsif upper(par_action) = '*SUPPLY_FINAL' then
                process_supply_file(par_action,par_file_id);
             elsif upper(par_action) = '*SUPPLY_DRAFT' then
@@ -244,7 +246,7 @@ package body        df_forecast as
    /***********************************************************/
    /* This procedure performs the process demand file routine */
    /***********************************************************/
-   procedure process_demand_file(par_action in varchar2, par_file_id in number) is
+   procedure process_demand_file(par_action in varchar2, par_file_id in number, par_append in varchar2) is
 
       /*-*/
       /* Local definitions
@@ -860,21 +862,31 @@ package body        df_forecast as
          /* 1. Delete the existing forecast demand data - complete replacement
          /* 2. Insert the new forecast data from the temporary table
          /*-*/
-         lics_logging.write_log('--> Removing existing demand DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
-         delete from dmnd_data
-          where fcst_id = var_fcst_id
-            and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
-                                      from dmnd_grp dg,
-                                           dmnd_grp_org dgo,
-                                           dmnd_grp_type dt
-                                     where dg.dmnd_grp_type_id = dt.dmnd_grp_type_id
-                                       and dg.dmnd_grp_id = dgo.dmnd_grp_id
-                                       and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_demand);
-         commit;
+         if par_append = 'FALSE' or par_append is null then 
+           lics_logging.write_log('--> Removing existing demand DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
+           delete from dmnd_data
+            where fcst_id = var_fcst_id
+              and dmnd_grp_org_id in (select distinct dgo.dmnd_grp_org_id
+                                        from dmnd_grp dg,
+                                             dmnd_grp_org dgo,
+                                             dmnd_grp_type dt
+                                       where dg.dmnd_grp_type_id = dt.dmnd_grp_type_id
+                                         and dg.dmnd_grp_id = dgo.dmnd_grp_id
+                                         and dt.dmnd_grp_type_code = demand_forecast.gc_demand_group_code_demand);
+           commit;
+         else 
+           lics_logging.write_log('--> Retaining existing demand DMND_DATA for forecast ('|| to_char(var_fcst_id) || '), going to append new data.');
+         end if;
 
          lics_logging.write_log('--> Inserting new demand DMND_DATA for forecast ('||to_char(var_fcst_id)||')');
          insert into dmnd_data select * from dmnd_temp;
          commit;
+
+         /** Perform the promax demand adjustment on any appended promax data. */         
+         if par_append = 'TRUE' then 
+           lics_logging.write_log('--> Perform Promax Type Adjustment fore forecast ('||to_char(var_fcst_id)||')');
+           demand_forecast.perform_promax_adjustment(var_fcst_id);
+         end if;
 
          /*-*/
          /* Clear the temporary forecast table

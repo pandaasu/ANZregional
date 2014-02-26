@@ -1,5 +1,4 @@
-create or replace 
-package df_forecast as
+create or replace package df_forecast as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -36,12 +35,17 @@ package df_forecast as
     2009/04   Steve Gregan       Included the demand SKU mapping logic
                                  Included the MOE demand mapping switch
 		2011/12		Rob Bishop				 Added extra comments in process_demand_file()
+    2013/12   Chris Horn         Added processing for demand types, 10, 11.  
+                                 Promax Base and Promax Uplift
+    2014/02   Chris Horn         Added Append Functionality as a paramter and 
+                                 added call on on completion of an append to 
+                                 perform a promax type adjustment. 
 		
    *******************************************************************************/
 
    /*-*/
    /* Public declarations
    /*-*/
-   procedure process(par_action in varchar2, par_file_id in number);
+   procedure process(par_action in varchar2, par_file_id in number, par_append in varchar2);
 
 end df_forecast;

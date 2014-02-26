@@ -1454,24 +1454,8 @@ PACKAGE BODY        demand_forecast AS
       RETURN common.gc_error;
   END drft_compl_check;
 
-  FUNCTION mark_forecast_valid (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
-    RETURN common.st_result IS
-    -- cursor to check that forecast exists before marking if valid
-    CURSOR csr_forecast (i_fcst_id IN common.st_id) IS
-      SELECT *
-      FROM fcst
-      WHERE fcst_id = i_fcst_id AND (fcst.forecast_type = demand_forecast.gc_ft_fcst OR fcst.forecast_type = demand_forecast.gc_ft_draft);
-
-    rv_forecast      csr_forecast%ROWTYPE;
-    e_fcst_id        EXCEPTION;
-    v_mars_week      common.st_code;
-    v_found          BOOLEAN;
-    v_result         common.st_result;
+  procedure perform_promax_adjustment(i_fcst_id IN common.st_id) is
     v_result_msg     common.st_message_string;
-    v_forecast_type  common.st_code;
-    v_moe_code       common.st_code;
-    
-    procedure perform_promax_adjustment is
       cursor csr_dmnd_data is
         select 
           t10.dmnd_grp_org_id,
@@ -1495,10 +1479,10 @@ PACKAGE BODY        demand_forecast AS
           from 
             dmnd_data t1
           where 
-            t1.fcst_id = 4161 and 
+            t1.fcst_id = i_fcst_id and 
             t1.type in (
                 demand_forecast.gc_dmnd_type_1,demand_forecast.gc_dmnd_type_2,demand_forecast.gc_dmnd_type_3,demand_forecast.gc_dmnd_type_4,
-                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,demand_forecast.gc_dmnd_type_7,demand_forecast.gc_dmnd_type_8,
+                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,/* TESTING demand_forecast.gc_dmnd_type_7,*/demand_forecast.gc_dmnd_type_8,
                 demand_forecast.gc_dmnd_type_9)
           group by
             t1.dmnd_grp_org_id, 
@@ -1518,9 +1502,8 @@ PACKAGE BODY        demand_forecast AS
           from 
             dmnd_data t1
           where 
-            t1.fcst_id = 4161 and
-            t1.type = '4'
-            --t1.type = demand_forecast.gc_dmnd_type_b
+            t1.fcst_id = i_fcst_id and
+            t1.type = demand_forecast.gc_dmnd_type_b
           group by
             t1.dmnd_grp_org_id, 
             t1.mars_week, 
@@ -1534,7 +1517,7 @@ PACKAGE BODY        demand_forecast AS
           t10.tdu;
       rv_dmnd_data csr_dmnd_data%rowtype;
     begin
-      logit.enter_method (pc_package_name, 'MARK_FORECAST_VALID','PERFORM_PROMAX_ADJUSTMENT');
+      logit.enter_method (pc_package_name, 'PERFORM_PROMAX_ADJUSTMENT');
       logit.LOG ('Adjusting Promax Base Entries.');
       -- Perform a Promax P = B - Sum(1..9), and then delete B adjustment.
       open csr_dmnd_data;
@@ -1544,7 +1527,7 @@ PACKAGE BODY        demand_forecast AS
         -- Check if there is any promax base data.
         if rv_dmnd_data.promax_qty is not null and rv_dmnd_data.apollo_qty is not null then 
           -- Perform the insertion of the P record for if there is a non zero difference in qty and gsv.
-          if rv_dmnd_data.promax_qty - rv_dmnd_data.apollo_qty != 0 then 
+          if rv_dmnd_data.promax_qty <> rv_dmnd_data.apollo_qty then 
             insert into dmnd_data (
               FCST_ID,
               DMND_GRP_ORG_ID,
@@ -1565,14 +1548,15 @@ PACKAGE BODY        demand_forecast AS
               rv_dmnd_data.tdu, 
               rv_dmnd_data.promax_qty - rv_dmnd_data.apollo_qty, 
               rv_dmnd_data.promax_gsv - rv_dmnd_data.apollo_gsv, 
-              rv_dmnd_data.promax_gsv - rv_dmnd_data.apollo_gsv / rv_dmnd_data.promax_qty - rv_dmnd_data.apollo_qty, 
+              (rv_dmnd_data.promax_gsv - rv_dmnd_data.apollo_gsv) / (rv_dmnd_data.promax_qty - rv_dmnd_data.apollo_qty), 
               'Calc',
               gc_dmnd_type_p,
               null
             );
           end if;
           -- Now delete the previous promax base record.
-          delete from dmnd_data where 
+          delete from dmnd_data 
+          where 
             fcst_id = i_fcst_id and
             dmnd_grp_org_id = rv_dmnd_data.dmnd_grp_org_id and
             mars_week = rv_dmnd_data.mars_week and 
@@ -1587,9 +1571,28 @@ PACKAGE BODY        demand_forecast AS
     exception 
       when others then 
         v_result_msg := common.create_error_msg ('Unable to perform promax adjustment.') || common.create_sql_error_msg ();
+        rollback;
         logit.log_error (v_result_msg);
         logit.leave_method;
     end perform_promax_adjustment;
+
+
+  FUNCTION mark_forecast_valid (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
+    RETURN common.st_result IS
+    -- cursor to check that forecast exists before marking if valid
+    CURSOR csr_forecast (i_fcst_id IN common.st_id) IS
+      SELECT *
+      FROM fcst
+      WHERE fcst_id = i_fcst_id AND (fcst.forecast_type = demand_forecast.gc_ft_fcst OR fcst.forecast_type = demand_forecast.gc_ft_draft);
+
+    rv_forecast      csr_forecast%ROWTYPE;
+    e_fcst_id        EXCEPTION;
+    v_mars_week      common.st_code;
+    v_found          BOOLEAN;
+    v_result         common.st_result;
+    v_result_msg     common.st_message_string;
+    v_forecast_type  common.st_code;
+    v_moe_code       common.st_code;
     
   BEGIN
     logit.enter_method (pc_package_name, 'MARK_FORECAST_VALID');
@@ -1606,8 +1609,6 @@ PACKAGE BODY        demand_forecast AS
     IF csr_forecast%FOUND THEN   -- if forecast is found then mark it at valid.
       v_forecast_type := rv_forecast.forecast_type;
       v_moe_code := rv_forecast.moe_code;
-
-      perform_promax_adjustment;
 
       UPDATE fcst
          SET status = demand_forecast.gc_fs_valid

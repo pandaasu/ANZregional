@@ -1,7 +1,6 @@
-create or replace 
-PACKAGE BODY        demand_processing AS
-  pc_package_name         CONSTANT common.st_package_name := 'RUN_BATCH';
-  pc_lock_name            CONSTANT lockit.st_lock_name    := 'DEMAND_PROCESSING.RUN_BATCH';
+create or replace PACKAGE BODY        demand_processing AS
+  pc_package_name         CONSTANT common.st_package_name := 'DEMAND_PROCESSING';
+  pc_lock_name            CONSTANT lockit.st_lock_name    := pc_package_name || '.RUN_BATCH';
   pc_reference_wait_time  CONSTANT common.st_counter      := 3600;
 
 
@@ -41,7 +40,8 @@ PACKAGE BODY        demand_processing AS
     v_search_offset common.st_count;
     v_now date;
   BEGIN
-    logit.enter_method (pc_package_name, 'PUBLISH_FORECAST');
+    logit.new_log;
+	logit.enter_method (pc_package_name, 'PUBLISH_FORECAST');
     -- Initialise the forecast id
     v_forecast_id := null;
     v_now := sysdate-3;  -- To allow the job to be rerun till tuesday using the current casting week. 
@@ -867,4 +867,4 @@ PACKAGE BODY        demand_processing AS
       logit.log_error (v_error_msg);
       logit.leave_method;
   END perform_housekeeping;
-END demand_processing; 
+END demand_processing;

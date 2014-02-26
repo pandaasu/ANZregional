@@ -1,5 +1,4 @@
-create or replace 
-PACKAGE        demand_processing AS
+create or replace PACKAGE        demand_processing AS
   /*******************************************************************************
    NAME:      DEMAND_PROCESSING
    PURPOSE:   This package calls the key Demand Forecast procedures, to carry out

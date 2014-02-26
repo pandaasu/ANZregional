@@ -599,6 +599,22 @@ PACKAGE        demand_forecast AS
 
   FUNCTION get_ovrd_tdu (i_material_code IN common.st_code, i_distribution_channel IN common.st_code, i_sales_org IN common.st_code, i_fcst_text IN common.st_name, o_tdu OUT common.st_code, o_ovrd_tdu_flag IN OUT common.st_status, o_invalid_reason IN OUT  common.st_message_string, o_message_out OUT common.st_message_string)
     RETURN common.st_result;
+    
+    
+    
+ /*******************************************************************************
+    NAME:      PERFORM_PROMAX_ADJUSTMENT
+    PURPOSE:   This procedure reconciles the apollo forecast types with the 
+               supplied promax types and manipulats the data until it 
+               matches.  
+
+    REVISIONS:
+    Ver   Date       Author               Description
+    ----- ---------- -------------------- ----------------------------------------
+    1.0   26/02/2014 Chris Horn           Created this procedure.
+
+   ********************************************************************************/
+  procedure perform_promax_adjustment(i_fcst_id IN common.st_id);
 
 END demand_forecast; 
  

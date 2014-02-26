@@ -1,5 +1,4 @@
-create or replace 
-package body        PXIDFN01_LOADER as
+create or replace package body        PXIDFN01_LOADER as
 
 /*******************************************************************************
   Interface Field Definitions
@@ -350,6 +349,7 @@ package body        PXIDFN01_LOADER as
    -- Demand Constants. 
    c_parameter_moe constant common.st_name := 'MOE';
    c_parameter_file_id constant common.st_name := 'FILE_ID';
+   c_parameter_append constant common.st_name := 'APPEND';
    c_stream_draft constant common.st_name := 'DF_DEMAND_DRAFT';
    c_stream_publish constant common.st_name := 'DF_DEMAND_FINAL';
    v_stream_package common.st_name;
@@ -368,8 +368,9 @@ package body        PXIDFN01_LOADER as
       end if;
       -- Now trigger the necessary lics stream processing jobs.
       lics_stream_loader.clear_parameters;
-      lics_stream_loader.set_parameter(c_parameter_moe,prv_load_file.file_id);
+      lics_stream_loader.set_parameter(c_parameter_moe,prv_load_file.moe_code);
       lics_stream_loader.set_parameter(c_parameter_file_id,to_char(prv_load_file.file_id));
+      lics_stream_loader.set_parameter(c_parameter_append,'TRUE');
       lics_stream_loader.execute(v_stream_package,null);
     end if;
     -- Perform a final cleanup and a last progress logging.

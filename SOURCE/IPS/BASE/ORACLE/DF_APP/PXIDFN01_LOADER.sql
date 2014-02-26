@@ -38,6 +38,9 @@ create or replace package PXIDFN01_LOADER as
   2014-01-16  Chris Horn            Updated to handle the additional columns 
                                     from Promax so that the total would 
                                     balance correctly.
+  2014-02-26  Chris Horn            Added additional parameter to the LICS
+                                    stream to make sure Promax forecasts 
+                                    will append.
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
