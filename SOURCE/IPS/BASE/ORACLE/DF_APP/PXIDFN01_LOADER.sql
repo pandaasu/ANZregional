@@ -1,5 +1,4 @@
-create or replace 
-package        PXIDFN01_LOADER as
+create or replace package PXIDFN01_LOADER as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -36,7 +35,9 @@ package        PXIDFN01_LOADER as
   2013-12-02  Chris Horn            Started using PXI Common Interface suffix 
                                     and updated to new petcare format of 
                                     base and uplift.  
-                                    
+  2014-01-16  Chris Horn            Updated to handle the additional columns 
+                                    from Promax so that the total would 
+                                    balance correctly.
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;

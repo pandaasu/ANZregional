@@ -4,12 +4,21 @@ package body        PXIDFN01_LOADER as
 /*******************************************************************************
   Interface Field Definitions
 *******************************************************************************/  
-  pc_field_week_date        constant fflu_common.st_name := 'WeekDate';
-  pc_field_account_code     constant fflu_common.st_name := 'AccountCode';
-  pc_field_stock_code       constant fflu_common.st_name := 'StockCode';
-  pc_field_base_sales_volume constant fflu_common.st_name := 'BaseSalesVolume';
-  pc_field_incr_sales_volume constant fflu_common.st_name := 'IncrSalesVolume';
-  pc_field_total_sales_volume constant fflu_common.st_name := 'TotalSalesVolume';
+  pc_field_week_date             constant fflu_common.st_name := 'WeekDate';
+  pc_field_account_code          constant fflu_common.st_name := 'AccountCode';
+  pc_field_stock_code            constant fflu_common.st_name := 'StockCode';
+  pc_field_estimated_volume      constant fflu_common.st_name := 'EstEstimatedVolume';
+  pc_field_normal_volume         constant fflu_common.st_name := 'EstNormalVolume';
+  pc_field_incremental_volume    constant fflu_common.st_name := 'EstIncrementalVolume';
+  pc_field_marketing_volume      constant fflu_common.st_name := 'EstMarketingAdjVolume';
+  pc_field_state_phasing_volume  constant fflu_common.st_name := 'EstStatePhasingVolume';
+  
+  -- This is the formual for verification of volume information
+  -- EstEstimatedVolume = EstNormalVolume + EstIncrementalVolume + 
+  --                      EstMarketingAdjVolume + EstStatePhasingVolume
+  --
+  -- EstNormalVolume = Base
+  -- EstIncrementalVolume + EstMarketingAdjVolume + EstStatePhasingVolume = Uplift
 
 /*******************************************************************************
   Interface Type Constants
@@ -51,10 +60,12 @@ package body        PXIDFN01_LOADER as
     fflu_data.add_date_field_txt(pc_field_week_date,1,8,'YYYYMMDD');
     fflu_data.add_char_field_txt(pc_field_account_code,9,10);
     fflu_data.add_char_field_txt(pc_field_stock_code,19,18);
-    fflu_data.add_number_field_txt(pc_field_base_sales_volume,37,10,'9999999999');
-    fflu_data.add_number_field_txt(pc_field_incr_sales_volume,47,10,'9999999999');
-    fflu_data.add_number_field_txt(pc_field_total_sales_volume,57,10,'9999999999');
-    
+    fflu_data.add_number_field_txt(pc_field_estimated_volume,37,10,'9999999999');
+    fflu_data.add_number_field_txt(pc_field_normal_volume,47,10,'9999999999');
+    fflu_data.add_number_field_txt(pc_field_incremental_volume,57,10,'9999999999');
+    fflu_data.add_number_field_txt(pc_field_marketing_volume,67,10,'9999999999');
+    fflu_data.add_number_field_txt(pc_field_state_phasing_volume,77,10,'9999999999');
+
     -- Assign the inferface file name to the loading table record.
     prv_load_file.file_name := fflu_utils.get_interface_filename;
 
@@ -162,11 +173,22 @@ package body        PXIDFN01_LOADER as
   begin
     if fflu_data.parse_data(p_row) = true then
     
+/*    
       -- Now check that the data 
-      if fflu_data.get_number_field(pc_field_base_sales_volume) + fflu_data.get_number_field(pc_field_incr_sales_volume) <> fflu_data.get_number_field(pc_field_total_sales_volume) then 
-        fflu_data.log_field_error(pc_field_total_sales_volume,'Total sales volume did not equal the sum of the base and incremental sales uplift of [' || (fflu_data.get_number_field(pc_field_base_sales_volume) + fflu_data.get_number_field(pc_field_incr_sales_volume)) || '].');
+      if (fflu_data.get_number_field(pc_field_normal_volume) + 
+          fflu_data.get_number_field(pc_field_incremental_volume) + 
+          fflu_data.get_number_field(pc_field_marketing_volume) + 
+          fflu_data.get_number_field(pc_field_state_phasing_volume)) <> 
+          fflu_data.get_number_field(pc_field_estimated_volume) then 
+        fflu_data.log_field_error(pc_field_estimated_volume,
+          'Total estimated sales volume did not equal the sum of the normal, incremental, markerting adjustment, and state phasing sales uplift of [' || 
+          (fflu_data.get_number_field(pc_field_normal_volume) + 
+          fflu_data.get_number_field(pc_field_incremental_volume) + 
+          fflu_data.get_number_field(pc_field_marketing_volume) + 
+          fflu_data.get_number_field(pc_field_state_phasing_volume)) || '].');
       end if;
-      
+*/
+
       -- Now lookup and supply key data. 
       rv_load_dmnd.dmdunit             := null;
       rv_load_dmnd.loc                 := null;
@@ -217,7 +239,7 @@ package body        PXIDFN01_LOADER as
       if fflu_data.was_errors = false then 
         -- Now perform the insert into load demand data table for the base sales forecast volume
         rv_load_dmnd.type                := pc_load_dmnd_type_base; -- This is = to demand_forecast.gc_dmnd_type_b, Promax Base forecast.
-        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_base_sales_volume);
+        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_normal_volume);
         pv_line_counter := pv_line_counter + 1;
         rv_load_dmnd.file_line           := pv_line_counter;
         INSERT INTO load_dmnd
@@ -263,7 +285,13 @@ package body        PXIDFN01_LOADER as
         );
         -- Now perform the insert into load demand data table for the incremental sales forecast volume
         rv_load_dmnd.type                := pc_load_dmnd_type_uplift; -- This is = to demand_forecast.gc_dmnd_type_u, Promax Uplift forecast. 
-        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_incr_sales_volume);
+/*        
+        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_incremental_volume) + 
+          fflu_data.get_number_field(pc_field_marketing_volume) + 
+          fflu_data.get_number_field(pc_field_state_phasing_volume);
+*/
+        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_estimated_volume) - 
+          fflu_data.get_number_field(pc_field_normal_volume);
         pv_line_counter := pv_line_counter + 1;
         rv_load_dmnd.file_line           := pv_line_counter;
         
