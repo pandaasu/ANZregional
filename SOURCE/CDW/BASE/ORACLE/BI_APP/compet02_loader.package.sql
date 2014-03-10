@@ -24,7 +24,8 @@ create or replace package compet02_loader as
   
     Date        Author                Description
     ----------  --------------------  ------------------------------------------
-    2013-09-10  Trevor Keon           [Auto Generated]
+    2013-09-10  Trevor Keon           [Auto Generated] 
+    2014-02-18  Trevor Keon           Added Plant Code to loader 
   
   *****************************************************************************/
 
@@ -44,6 +45,7 @@ create or replace package body compet02_loader as
   -- Interface column constants
   pc_mars_period constant fflu_common.st_name := 'Mars Period';
   pc_supplier constant fflu_common.st_name := 'Supplier';
+  pc_plant constant fflu_common.st_name := 'Plant';  
   pc_difot_value constant fflu_common.st_name := 'DIFOT overwrite value';
   pc_update_user constant fflu_common.st_name := 'Update user'; 
   pc_user_comment constant fflu_common.st_name := 'User comment';      
@@ -68,9 +70,10 @@ create or replace package body compet02_loader as
     -- Add column structure
     fflu_data.add_number_field_del(pc_mars_period,1,'Period','999990',190001,999913,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_del(pc_supplier,2,'Supplier',1,32,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_del(pc_difot_value,3,'DIFOT','990.90',0,100,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_del(pc_update_user,4,'User',1,30,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_del(pc_user_comment,5,'Comments',1,4000,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_plant,3,'Plant',0,4,fflu_data.gc_allow_null,fflu_data.gc_not_trim);    
+    fflu_data.add_number_field_del(pc_difot_value,4,'DIFOT','990.90',0,100,fflu_data.gc_not_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_del(pc_update_user,5,'User',1,30,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_user_comment,6,'Comments',1,4000,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
     
     -- Get user name - MUST be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
@@ -106,14 +109,11 @@ create or replace package body compet02_loader as
         
         -- Assign Supplier
         v_current_field := pc_supplier;
-        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));
-        
---        if ods_master_data_validation.check_vendor(initcap(fflu_data.get_char_field(pc_supplier))) = false then      
---           fflu_data.log_field_error(pc_supplier, 'The provided value [' || initcap(fflu_data.get_char_field(pc_supplier)) || '] is not a valid supplier.');
---           v_row_status_ok := false;
---        else
---           rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));
---        end if;        
+        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));     
+
+        -- Assign Plant 
+        v_current_field := pc_plant;
+        rv_insert_values.plant_code := trim(fflu_data.get_char_field(pc_plant));
 
         -- Assign DIFOT overwrite value
         v_current_field := pc_difot_value;
@@ -144,26 +144,11 @@ create or replace package body compet02_loader as
           fflu_data.log_field_exception(v_current_field, 'Field Assignment Error');
       end;
       
-      -- "Replace Key" processing
-      if pv_first_row_flag = true then
-        pv_first_row_flag := false;
-        
-        -- Take initial copy of "Replace Key"
-        rpv_initial_values.mars_period := rv_insert_values.mars_period;
-
-        -- Delete on "Replace Key"
-        delete from bi.com_supplier_difot_update
-        where mars_period = rpv_initial_values.mars_period
-          and bus_sgmnt = pc_bus_sgmnt_value;
-
-      else -- Check that "Replace Key" remains consistient
-      
-        if rpv_initial_values.mars_period != rv_insert_values.mars_period then
-          v_row_status_ok := false;
-          fflu_data.log_field_error(pc_mars_period, 'Replace Key Value Inconsistient');
-        end if;       
-
-      end if;
+      delete from bi.com_supplier_difot_update
+      where mars_period = rv_insert_values.mars_period
+         and supplier = rv_insert_values.supplier
+         and bus_sgmnt = pc_bus_sgmnt_value
+         and (plant_code = rv_insert_values.plant_code or plant_code is null); 
       
       -- Insert row, if row status is ok 
       if v_row_status_ok = true then 

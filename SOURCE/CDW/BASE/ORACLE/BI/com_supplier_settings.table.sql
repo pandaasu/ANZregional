@@ -43,6 +43,9 @@
   grant select, insert, update, delete on bi.com_supplier_settings to bi_app, lics_app with grant option;
   grant select on bi.com_supplier_settings to qv_user, bo_user, ods_app, lics_app;
 
+  -- Synonyms
+  create or replace public synonym com_supplier_settings for bi.com_supplier_settings;
+
 /*******************************************************************************
   END
 *******************************************************************************/

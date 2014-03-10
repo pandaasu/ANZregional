@@ -51,7 +51,6 @@ create or replace package body comfod02_loader as
   -- Package variables
   pv_first_row_flag boolean;
   pv_user fflu_common.st_user;
-  rpv_initial_values bi.com_supplier_difot_update%rowtype;
 
   -- Package constants
   pc_bus_sgmnt_value constant bi.com_supplier_difot_update.bus_sgmnt%type := '02'; 
@@ -106,14 +105,7 @@ create or replace package body comfod02_loader as
         
         -- Assign Supplier
         v_current_field := pc_supplier;
-        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));
-        
---        if ods_master_data_validation.check_vendor(initcap(fflu_data.get_char_field(pc_supplier))) = false then      
---           fflu_data.log_field_error(pc_supplier, 'The provided value [' || initcap(fflu_data.get_char_field(pc_supplier)) || '] is not a valid supplier.');
---           v_row_status_ok := false;
---        else
---           rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));
---        end if;        
+        rv_insert_values.supplier := initcap(trim(fflu_data.get_char_field(pc_supplier)));     
 
         -- Assign DIFOT overwrite value
         v_current_field := pc_difot_value;
@@ -144,26 +136,10 @@ create or replace package body comfod02_loader as
           fflu_data.log_field_exception(v_current_field, 'Field Assignment Error');
       end;
       
-      -- "Replace Key" processing
-      if pv_first_row_flag = true then
-        pv_first_row_flag := false;
-        
-        -- Take initial copy of "Replace Key"
-        rpv_initial_values.mars_period := rv_insert_values.mars_period;
-
-        -- Delete on "Replace Key"
-        delete from bi.com_supplier_difot_update
-        where mars_period = rpv_initial_values.mars_period
-          and bus_sgmnt = pc_bus_sgmnt_value;
-
-      else -- Check that "Replace Key" remains consistient
-      
-        if rpv_initial_values.mars_period != rv_insert_values.mars_period then
-          v_row_status_ok := false;
-          fflu_data.log_field_error(pc_mars_period, 'Replace Key Value Inconsistient');
-        end if;       
-
-      end if;
+      delete from bi.com_supplier_difot_update
+      where mars_period = rv_insert_values.mars_period
+         and supplier = rv_insert_values.supplier
+         and bus_sgmnt = pc_bus_sgmnt_value;      
       
       -- Insert row, if row status is ok 
       if v_row_status_ok = true then 

@@ -25,15 +25,16 @@
     supplier varchar2(32 char) not null,
     difot_value number(5,2) not null,
     bus_sgmnt varchar2(4 char) not null,
+    plant_code varchar2(4 char) null,
     update_user varchar2(30 char) not null,
     user_comment varchar2(4000 char) not null,
     last_update_date date not null,
     last_update_user varchar2(30 char) not null
   );
   
-  -- Indexes
-  alter table bi.com_supplier_difot_update add constraint com_supplier_difot_update_pk primary key (mars_period,supplier,bus_sgmnt)
-    using index (create unique index bi.com_supplier_difot_update_pk on bi.com_supplier_difot_update (mars_period,supplier,bus_sgmnt));
+--  -- Indexes
+--  alter table bi.com_supplier_difot_update add constraint com_supplier_difot_update_pk primary key (mars_period,supplier,bus_sgmnt)
+--    using index (create unique index bi.com_supplier_difot_update_pk on bi.com_supplier_difot_update (mars_period,supplier,bus_sgmnt));
 
   create index bi.com_supplier_difot_update_i0 on bi.com_supplier_difot_update (mars_period);  
 
@@ -43,6 +44,7 @@
   comment on column com_supplier_difot_update.supplier is 'Supplier';
   comment on column com_supplier_difot_update.difot_value is 'DIFOT overwrite value';
   comment on column com_supplier_difot_update.bus_sgmnt is 'Business Segment';
+  comment on column com_supplier_difot_update.plant_code is 'Plant Code';  
   comment on column com_supplier_difot_update.update_user is 'User who entered the overwrite';
   comment on column com_supplier_difot_update.user_comment is 'Comments on why the overwrite was entered';
   comment on column com_supplier_difot_update.last_update_date is 'Last Update Date/Time';
@@ -51,6 +53,9 @@
   -- Grants
   grant select, insert, update, delete on bi.com_supplier_difot_update to bi_app, lics_app with grant option;
   grant select on bi.com_supplier_difot_update to qv_user, bo_user, ods_app, lics_app;
+  
+  -- Synonyms
+  create or replace public synonym com_supplier_difot_update for bi.com_supplier_difot_update;
 
 /*******************************************************************************
   END
