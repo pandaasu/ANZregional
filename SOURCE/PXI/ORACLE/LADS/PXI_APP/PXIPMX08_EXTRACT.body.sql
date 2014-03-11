@@ -168,9 +168,9 @@ create or replace PACKAGE body PXIPMX08_EXTRACT AS
           -- Now set the tax base amount based on the tax code.
           case pv_claim.tax_code 
             when pxi_common.gc_tax_code_s1 then 
-              pv_claim.tax_base := pv_claim.claim_amount / 1.1; -- 10% Australian GST
+              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.1,2); -- 10% Australian GST
             when pxi_common.gc_tax_code_s2 then 
-              pv_claim.tax_base := pv_claim.claim_amount / 1.15; -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination. 
+              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.15,2); -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination. 
             when pxi_common.gc_tax_code_s3 then 
               pv_claim.tax_base := 0;  -- Australia 0% No Tax
             when pxi_common.gc_tax_code_se then 
