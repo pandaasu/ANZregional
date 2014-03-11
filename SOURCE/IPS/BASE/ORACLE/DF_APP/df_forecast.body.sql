@@ -75,8 +75,8 @@ create or replace  package body        df_forecast as
       if par_file_id is null then
          raise_application_error(-20000, 'File identifier must be supplied');
       end if;
-      if par_append is not null and par_append != 'TRUE' and par_append != 'FALSE' then 
-        raise_application_error(-20000, 'Append instruction must be null, TRUE or FALSE.');
+      if par_append not in ('TRUE','FALSE') then 
+        raise_application_error(-20000, 'Append instruction must be TRUE or FALSE, was [' || par_append || '].');
       end if;
       /*-*/
       open csr_load_file;
