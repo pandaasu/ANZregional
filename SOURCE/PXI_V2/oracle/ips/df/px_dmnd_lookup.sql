@@ -51,7 +51,7 @@ COMMENT ON COLUMN DF.PX_DMND_LOOKUP.SPLIT_PERCENT IS 'Percentage Split allocatio
 
 -- Synonyms
 
-create or replace public synonym px_dmnd_lookup for px.px_dmnd_lookup;
+create or replace public synonym px_dmnd_lookup for df.px_dmnd_lookup;
 
 -- grants
 
