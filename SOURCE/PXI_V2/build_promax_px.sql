@@ -59,7 +59,6 @@ prompt
 
 -- Insert Config Entries into JDBC Connect Config Table
 
-/*
 -- Production
 insert into df.jdbc_connect_config (connection_name, driver_class, connection_string, username, password) values (
   'PX_AU_PETCARE',
@@ -68,8 +67,8 @@ insert into df.jdbc_connect_config (connection_name, driver_class, connection_st
   'PromaxPX_Reader',
   'readonly'
 );
-*/
 
+/*
 -- Test
 insert into df.jdbc_connect_config (connection_name, driver_class, connection_string, username, password) values (
   'PX_AU_PETCARE',
@@ -78,6 +77,7 @@ insert into df.jdbc_connect_config (connection_name, driver_class, connection_st
   'PromaxPX_Reader',
   'readonly'
 );
+*/
 
 commit;
 
