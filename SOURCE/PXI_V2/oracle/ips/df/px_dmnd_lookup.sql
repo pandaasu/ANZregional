@@ -55,7 +55,8 @@ create or replace public synonym px_dmnd_lookup for df.px_dmnd_lookup;
 
 -- grants
 
-grant select, insert, update, delete on df.px_dmnd_lookup to df_app;
+grant select, insert, update, delete on df.px_dmnd_lookup to df_app, pf_app;
+grant select on df.px_dmnd_lookup to pf_reader;
 
 /*******************************************************************************
 ** END-OF-FILE
