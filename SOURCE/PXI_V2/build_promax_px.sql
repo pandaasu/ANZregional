@@ -104,6 +104,7 @@ connect pxi/xipch521@ap0052t.ap.mars
 prompt
 
 @^BASE_PATH\oracle\common\pxi\pmx_extract_criteria.sql
+@^BASE_PATH\oracle\lads\pxi\pmx_361spendv_history.sql;
 @^BASE_PATH\oracle\lads\pxi\pmx_prom_config_REFRESH_DATA.sql;
 
 
