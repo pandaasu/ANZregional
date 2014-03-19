@@ -36,9 +36,6 @@ PACKAGE        extract_venus AS
   FUNCTION extract_demand_forecast (i_fcst_id in common.st_id, o_result_msg OUT common.st_message_string)
     RETURN common.st_result;
 
- FUNCTION extract_demand_forecast_new (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
-     RETURN common.st_result;
-
   /*******************************************************************************
      NAME:      EXTRACT_PRODUCTION_PLAN
      PURPOSE:   This file create an extract file to send to venus for a given forecast id.

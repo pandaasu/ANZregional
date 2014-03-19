@@ -1,22 +1,21 @@
-create or replace 
-PACKAGE BODY        "EXTRACT_VENUS" AS
+create or replace PACKAGE BODY        "EXTRACT_VENUS" AS
   pc_package_name                  CONSTANT common.st_package_name   := 'EXTRACT_VENUS';
-  pc_venus_df_source_mq_code   CONSTANT common.st_code           := 'VENUS_DF_SOURCE_QMGR';
-  pc_venus_df_target_mq_code   CONSTANT common.st_code           := 'VENUS_DF_TARGET_QMGR';
-  pc_venus_df_target_filename  CONSTANT    common.st_code             := 'VENUS_DF_TARGET_FILE';
-  pc_venus_df_mq_default         CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
+  pc_venus_df_source_mq_code       CONSTANT common.st_code           := 'VENUS_DF_SOURCE_QMGR';
+  pc_venus_df_target_mq_code       CONSTANT common.st_code           := 'VENUS_DF_TARGET_QMGR';
+  pc_venus_df_target_filename      CONSTANT common.st_code           := 'VENUS_DF_TARGET_FILE';
+  pc_venus_df_mq_default           CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
   -- Source test=WODU03T1
   -- Target test=WODU03T1
-  pc_venus_if_source_mq_code   CONSTANT common.st_code           := 'VENUS_IF_SOURCE_QMGR';
-  pc_venus_if_target_mq_code   CONSTANT common.st_code           := 'VENUS_IF_TARGET_QMGR';
-  pc_venus_if_target_filename  CONSTANT    common.st_code             := 'VENUS_IF_TARGET_FILE';
-  pc_venus_if_mq_default         CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
+  pc_venus_if_source_mq_code       CONSTANT common.st_code           := 'VENUS_IF_SOURCE_QMGR';
+  pc_venus_if_target_mq_code       CONSTANT common.st_code           := 'VENUS_IF_TARGET_QMGR';
+  pc_venus_if_target_filename      CONSTANT common.st_code           := 'VENUS_IF_TARGET_FILE';
+  pc_venus_if_mq_default           CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
   -- Source test=
   -- Target test=
-  pc_venus_pp_source_mq_code   CONSTANT common.st_code           := 'VENUS_PP_SOURCE_QMGR';
-  pc_venus_pp_target_mq_code   CONSTANT common.st_code           := 'VENUS_PP_TARGET_QMGR';
-  pc_venus_pp_target_filename  CONSTANT    common.st_code             := 'VENUS_PP_TARGET_FILE';
-  pc_venus_pp_mq_default         CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
+  pc_venus_pp_source_mq_code       CONSTANT common.st_code           := 'VENUS_PP_SOURCE_QMGR';
+  pc_venus_pp_target_mq_code       CONSTANT common.st_code           := 'VENUS_PP_TARGET_QMGR';
+  pc_venus_pp_target_filename      CONSTANT common.st_code           := 'VENUS_PP_TARGET_FILE';
+  pc_venus_pp_mq_default           CONSTANT common.st_message_string := '<set>';   -- After initialisation please change in the system params table.
   -- Source test=WODU03T1
   -- Target test=WODU03T1
 
@@ -168,290 +167,6 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
       logit.log_error ('Failed to initialise parameters : ' || v_processing_msg);
   END;
 
-
- FUNCTION extract_demand_forecast_new (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
-    RETURN common.st_result AS
-    v_record_type           common.st_code;   -- always 'DET'
-    v_forecast_type         common.st_code;   -- read from FCST table.
-    v_version               common.st_code;   -- always '1''
-    v_casting_period        common.st_code;   -- read from FCST table
-    v_sales_org             common.st_code;   -- read from DMND_GRP table, 147
-    v_moe_code              common.st_code;   -- read from FCST table
-    v_dc                    common.st_code;   -- read from DMND_GRP table, 10,11,99
-    v_division              common.st_code;   -- read from DMND_GRP table,
-    v_customer_no           common.st_code;   -- SHIP_TO from DMDND_GRP, if not then BILL_TO
-    v_region                common.st_code;   --  Always Blank.
-    v_country               common.st_code;   -- Country from DMDND_GRP table.
-    v_multi_market          VARCHAR (50);     -- Always Blank.
-    v_banner                common.st_code;   -- Always Blank.
-    v_buying_group          VARCHAR (50);     -- Always Blank.
-    v_pos_format            VARCHAR (50);     -- Always Blank.
-    v_dist_route            common.st_code;   -- Always Blank.
-    v_account_assign        common.st_code;   -- GRD account assign, 01 Domestic, 02 Affilate , 03 Foriegn
-    v_demand_planning_node  VARCHAR (10);     -- Demand planning node from the DMND_GRP table.
-    v_material_number       common.st_code;   -- ZREP
-    v_forecast_period       common.st_code;   -- Marsweek if standard FCST otherwise PERIOD for BR,OP
-    v_gsv                   common.st_code;   -- Gross Sales Value
-    v_qty                   common.st_code;   -- Total Qty sold, Base unit of measure.
-    v_currency              common.st_code;   -- done
-    v_head_rec_type         common.st_code;   -- 'CTL' , , header record
-    v_idoc_name             VARCHAR (50);     -- 'Z_FORECAST' , header record
-    v_idoc_number           common.st_code;   -- Always '0'' , header record
-    v_idoc_date             common.st_code;   -- sysdate, header record.
-    v_idoc_time             common.st_code;   -- systime, header record.
-    v_material_code         common.st_code;   -- TDU
-    v_forecast_dmnd_type    common.st_code;   -- forecast demand type, 1,2,3 etc
-
-
-    -- Main cursor to retreive sales forecast information for a given forecast.
---    CURSOR csr_demand_data (i_fcst_id IN common.st_id) IS
---      SELECT dd.mars_week, f.forecast_type, f.casting_year, f.casting_period, f.casting_week, NVL (dmnd_plng_node, ' ') dmnd_plng_node,
---        NVL (dgo.sales_org, ' ') AS sales_org, NVL (dgo.distbn_chnl, ' ') AS distbn_chnl, NVL (dgo.cust_div, ' ') AS cust_div, dgo.mltplr_code,
---        NVL(F.MOE_CODE, ' ') AS MOE_CODE, NVL (dgo.bill_to_code, ' ') AS bill_to_code, dgo.ship_to_code, NVL (dgo.region_code, ' ') as region_code,
---        NVL (c.cntry_code, ' ') AS cntry_code, NVL (dgo.multi_mrkt_accnt_code, ' ') as multi_mrket_accnt_code, NVL (dgo.banner_code, ' ') as banner_code,
---        NVL (dgo.cust_buying_group_code, ' ') as cust_buying_group_code, NVL (dgo.pos_frmt_grpng_code, ' ') AS pos_frmt_grpng_code, NVL (dgo.dstrbtn_route_code, ' ') as dstrbtn_route_code,
---        NVL (a.acct_assign_code, ' ') AS acct_assign_code, NVL (dd.zrep, ' ') AS zrep, NVL (dd.tdu, ' ') AS tdu, NVL (dd.TYPE, ' ') AS type,
---        NVL (dd.gsv, 0) AS gsv, NVL (dd.qty_in_base_uom, 0) AS cases, NVL (dgo.currcy_code, ' ') AS currcy_code
---      FROM dmnd_data dd, dmnd_grp dg, dmnd_grp_org dgo, fcst f, dmnd_cntry c, dmnd_acct_assign a
---      WHERE dg.dmnd_grp_id = dgo.dmnd_grp_id AND
---       dd.dmnd_grp_org_id = dgo.dmnd_grp_org_id AND
---       f.fcst_id = dd.fcst_id AND
---       dg.cntry_id = c.cntry_id AND
---       dgo.acct_assign_id = a.acct_assign_id AND
---       f.fcst_id = i_fcst_id AND
---       dd.mars_week > f.casting_year || f.casting_period || f.casting_week;
-    CURSOR csr_demand_data (i_fcst_id IN common.st_id) IS
-        SELECT dd.mars_week,
-               f.forecast_type,
-               f.casting_year,
-               f.casting_period,
-               f.casting_week,
-               NVL (dmnd_plng_node, ' ') dmnd_plng_node,
-               NVL (dgo.sales_org, ' ') AS sales_org,
-               NVL (dgo.distbn_chnl, ' ') AS distbn_chnl,
-               NVL (dgo.cust_div, ' ') AS cust_div,
-               dgo.mltplr_code,
-               NVL (F.MOE_CODE, ' ') AS MOE_CODE,
-               NVL (dgo.bill_to_code, ' ') AS bill_to_code,
-               dgo.ship_to_code,
-               NVL (dgo.region_code, ' ') AS region_code,
-               NVL (c.cntry_code, ' ') AS cntry_code,
-               NVL (dgo.multi_mrkt_accnt_code, ' ') AS multi_mrket_accnt_code,
-               NVL (dgo.banner_code, ' ') AS banner_code,
-               NVL (dgo.cust_buying_group_code, ' ') AS cust_buying_group_code,
-               NVL (dgo.pos_frmt_grpng_code, ' ') AS pos_frmt_grpng_code,
-               NVL (dgo.dstrbtn_route_code, ' ') AS dstrbtn_route_code,
-               NVL (a.acct_assign_code, ' ') AS acct_assign_code,
-               NVL (dd.zrep, ' ') AS zrep,
-               NVL (dd.tdu, ' ') AS tdu,
-               case 
-                 when dd.TYPE is null then ' '
-                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4 
-                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
-                else 
-                   dd.TYPE
-               end AS TYPE,
-               SUM(NVL (dd.gsv, 0)) AS gsv,
-               SUM(NVL (dd.qty_in_base_uom, 0)) AS cases,
-               NVL (dgo.currcy_code, ' ') AS currcy_code
-          FROM dmnd_data dd,
-               dmnd_grp dg,
-               dmnd_grp_org dgo,
-               fcst f,
-               dmnd_cntry c,
-               dmnd_acct_assign a
-         WHERE     dg.dmnd_grp_id = dgo.dmnd_grp_id
-               AND dd.dmnd_grp_org_id = dgo.dmnd_grp_org_id
-               AND f.fcst_id = dd.fcst_id
-               AND dg.cntry_id = c.cntry_id
-               AND dgo.acct_assign_id = a.acct_assign_id
-               AND f.fcst_id = i_fcst_id
-               AND dd.mars_week >
-                      f.casting_year || f.casting_period || f.casting_week
-         GROUP BY dd.mars_week,
-               f.forecast_type,
-               f.casting_year,
-               f.casting_period,
-               f.casting_week,
-               NVL (dmnd_plng_node, ' '),
-               NVL (dgo.sales_org, ' '),
-               NVL (dgo.distbn_chnl, ' '),
-               NVL (dgo.cust_div, ' '),
-               dgo.mltplr_code,
-               NVL (F.MOE_CODE, ' '),
-               NVL (dgo.bill_to_code, ' '),
-               dgo.ship_to_code,
-               NVL (dgo.region_code, ' '),
-               NVL (c.cntry_code, ' '),
-               NVL (dgo.multi_mrkt_accnt_code, ' '),
-               NVL (dgo.banner_code, ' '),
-               NVL (dgo.cust_buying_group_code, ' '),
-               NVL (dgo.pos_frmt_grpng_code, ' '),
-               NVL (dgo.dstrbtn_route_code, ' '),
-               NVL (a.acct_assign_code, ' '),
-               NVL (dd.zrep, ' '),
-               NVL (dd.tdu, ' '),
-               case 
-                 when dd.TYPE is null then ' '
-                 when dd.type = demand_forecast.gc_dmnd_type_u then demand_forecast.gc_dmnd_type_4
-                 when dd.type = demand_forecast.gc_dmnd_type_b or dd.type = demand_forecast.gc_dmnd_type_p then demand_forecast.gc_dmnd_type_1
-                else 
-                  dd.TYPE
-               end,
-               NVL (dgo.currcy_code, ' ');
-
-    rv_demand_data          csr_demand_data%ROWTYPE;   -- sales forecast cursor
-    v_line                  common.st_message_string;   -- A line of data to be written to the output file
-    v_message               common.st_message_string;   -- standard procedure call support
-    v_result                common.st_result;   -- standard procedure call supprt
-    e_file_error            EXCEPTION;   -- exception to deal with file I/O errors.
-  BEGIN
-    logit.enter_method (pc_package_name, 'EXTRACT_DEMAND_FORECAST');
-    -- First close the file to make sure, that it's not open.
-    v_result := fileit.close_file (v_message);
-
-    IF fileit.open_file (plan_common.gc_planning_directory, 'send_venus_df_' || TRIM (TO_CHAR (i_fcst_id) ), fileit.gc_file_mode_write, v_message) !=
-                                                                                                                                              common.gc_success THEN
-      RAISE e_file_error;
-    END IF;
-
-    -- setup variables ready to write record head to file.
-    v_line := '';
-    v_head_rec_type := 'CTL';
-    v_idoc_name := RPAD ('Z_FORECAST', 30, ' ');
-    v_idoc_number := LPAD ('0', 16, '0');
-    v_idoc_date := TO_CHAR (SYSDATE, 'YYYYMMDD');
-    v_idoc_time := TO_CHAR (SYSDATE, 'HHMISS');
-    -- now build record header
-    v_line := v_line || v_head_rec_type;
-    v_line := v_line || v_idoc_name;
-    v_line := v_line || v_idoc_number;
-    v_line := v_line || v_idoc_date;
-    v_line := v_line || v_idoc_time;
-
-    -- write record header.
-    IF fileit.write_file (v_line, v_message) != common.gc_success THEN
-      RAISE e_file_error;
-    END IF;
-
-    FOR rv_demand_data IN csr_demand_data (i_fcst_id)   -- loop sales forecast data to write to file.
-    LOOP
-      -- build up a line of dat
-      v_record_type := 'DET';
-      v_forecast_type := RPAD (SUBSTR (rv_demand_data.forecast_type, 1, 4), 4, ' ');
-      v_version := '1';
-
-      -- Truncate MARS_WEEK to a period for, BR/OP forecasts.
-      IF rv_demand_data.forecast_type = demand_forecast.gc_ft_fcst  THEN   -- If forecast is FCST include week, othewise remove.
-            v_casting_period :=
-                    RPAD (TRIM (SUBSTR (TO_CHAR (rv_demand_data.casting_year || rv_demand_data.casting_period || rv_demand_data.casting_week), 1, 7) ), 7, ' ');
-      ELSE
-        v_casting_period := RPAD (TRIM (SUBSTR (TO_CHAR (rv_demand_data.casting_year || rv_demand_data.casting_period), 1, 6) ), 7, ' ');
-      END IF;
-
-      IF rv_demand_data.mltplr_code = 'ELIMINATION' THEN
-        v_demand_planning_node := RPAD (' ', 10, ' ');
-      ELSE
-        v_demand_planning_node := RPAD (TRIM (SUBSTR(rv_demand_data.dmnd_plng_node,1,10)), 10, ' ');
-      END IF;
-
-      v_sales_org := RPAD (SUBSTR (rv_demand_data.sales_org, 1, 4), 4, ' ');
-      v_dc := RPAD (SUBSTR (rv_demand_data.distbn_chnl, 1, 2), 2, ' ');
-      v_division := SUBSTR (rv_demand_data.cust_div, 1, 2);
-      v_currency := RPAD (SUBSTR (rv_demand_data.currcy_code, 1, 3), 3, ' ');
-
-      -- Ship to overwrites Bill to, if present on DMND_GRP record.
-      IF rv_demand_data.ship_to_code IS NULL THEN
-        v_customer_no := RPAD (rv_demand_data.bill_to_code, 10, ' ');
-      ELSE
-        v_customer_no := RPAD (rv_demand_data.ship_to_code, 10, ' ');
-      END IF;
-
-      --v_customer_no := RPAD (rv_demand_data.bill_to_code, 10, ' ');
-      v_region := RPAD (NVL(TRIM (rv_demand_data.region_code),' '), 3, ' ');
-      v_country := RPAD (TRIM (rv_demand_data.cntry_code), 3, ' ');
-      v_multi_market := RPAD (NVL(TRIM (rv_demand_data.multi_mrket_accnt_code),' '), 30, ' ');
-      v_banner := RPAD (NVL(TRIM (rv_demand_data.banner_code),' '), 5, ' ');
-      v_buying_group := RPAD (NVL(TRIM (rv_demand_data.cust_buying_group_code), ' '), 30, ' ');
-      --      v_pos_format := RPAD (' ', 30, ' ');
-      v_pos_format := RPAD (rv_demand_data.pos_frmt_grpng_code, 30, ' ');
-      v_dist_route := RPAD (NVL(TRIM (rv_demand_data.dstrbtn_route_code), ' '),3,' ');
-      v_account_assign := RPAD (SUBSTR (rv_demand_data.acct_assign_code, 1, 2), 2, ' ');
-      v_material_number := RPAD (TRIM (rv_demand_data.zrep), 18, ' ');
-
-      IF rv_demand_data.forecast_type = demand_forecast.gc_ft_fcst THEN   -- If forecast is FCST include week, othewise remove.
-        v_forecast_period := RPAD (TRIM (SUBSTR (TO_CHAR (rv_demand_data.mars_week), 1, 7) ), 7, ' ');
-      ELSE
-        v_forecast_period := RPAD (TRIM (SUBSTR (TO_CHAR (rv_demand_data.mars_week), 1, 6) ), 7, ' ');
-      END IF;
-
-      v_gsv := RPAD (SUBSTR (TRIM (TO_CHAR (rv_demand_data.gsv) ), 1, 13), 13, ' ');
-      v_qty := RPAD (SUBSTR (TRIM (TO_CHAR (rv_demand_data.cases) ), 1, 13), 13, ' ');
-
-      --v_qty := RPAD (SUBSTR (TRIM (TO_CHAR (rv_demand_data.cases, '9999999999.99') ), 1, 13), 13, ' ');
-
-      v_moe_code := RPAD (SUBSTR (rv_demand_data.moe_code, 1, 4), 4, ' ');
-
-      v_material_code := RPAD(NVL(TRIM(rv_demand_data.tdu),' '),18, ' ');
-
-      v_forecast_dmnd_type := RPAD (NVL(TRIM (rv_demand_data.type),' '), 1, ' ');
-
-      -- Now build the line to be written to file.
-      v_line := '';
-      v_line := v_record_type;
-      v_line := v_line || v_forecast_type;
-      v_line := v_line || v_version;
-      v_line := v_line || v_casting_period;
-      v_line := v_line || v_demand_planning_node;
-      v_line := v_line || v_sales_org;
-      v_line := v_line || v_moe_code;
-      v_line := v_line || v_dc;
-      v_line := v_line || v_division;
-      v_line := v_line || v_customer_no;
-      v_line := v_line || v_region;
-      v_line := v_line || v_country;
-      v_line := v_line || v_multi_market;
-      v_line := v_line || v_banner;
-      v_line := v_line || v_buying_group;
-      v_line := v_line || v_pos_format;
-      v_line := v_line || v_dist_route;
-      v_line := v_line || v_account_assign;
-      v_line := v_line || v_material_number;
-      v_line := v_line || v_material_code;
-      v_line := v_line || v_forecast_period;
-      v_line := v_line || v_forecast_dmnd_type;
-      v_line := v_line || v_gsv;
-      v_line := v_line || v_qty;
-      v_line := v_line || v_currency;
-
-      -- write line to file.
-      IF fileit.write_file (v_line, v_message) != common.gc_success THEN
-        RAISE e_file_error;
-      END IF;
-    END LOOP;
-
-    -- now close the file.
-    IF fileit.close_file (v_message) != common.gc_success THEN
-      RAISE e_file_error;
-    END IF;
-
-    logit.leave_method;
-    RETURN common.gc_success;
-  EXCEPTION
-    WHEN e_file_error THEN
-      -- File IO error exception.
-      o_result_msg := common.create_failure_msg ('File IO Error:' || v_message);
-      logit.LOG (o_result_msg);
-      logit.leave_method;
-      RETURN common.gc_failure;
-    WHEN OTHERS THEN
-      o_result_msg := common.create_error_msg ('Unhandled exception.') || common.create_sql_error_msg ();
-      logit.LOG (o_result_msg);
-      logit.leave_method;
-      RETURN common.gc_error;
-  END extract_demand_forecast_new;
-
-
   FUNCTION extract_demand_forecast (i_fcst_id IN common.st_id, o_result_msg OUT common.st_message_string)
     RETURN common.st_result AS
     v_record_type           common.st_code;   -- always 'DET'
@@ -487,22 +202,6 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
 
 
     -- Main cursor to retreive sales forecast information for a given forecast.
---    CURSOR csr_demand_data (i_fcst_id IN common.st_id) IS
---      SELECT dd.mars_week, f.forecast_type, f.casting_year, f.casting_period, f.casting_week, NVL (dmnd_plng_node, ' ') dmnd_plng_node,
---        NVL (dgo.sales_org, ' ') AS sales_org, NVL (dgo.distbn_chnl, ' ') AS distbn_chnl, NVL (dgo.cust_div, ' ') AS cust_div, dgo.mltplr_code,
---        NVL(F.MOE_CODE, ' ') AS MOE_CODE, NVL (dgo.bill_to_code, ' ') AS bill_to_code, dgo.ship_to_code, NVL (dgo.region_code, ' ') as region_code,
---        NVL (c.cntry_code, ' ') AS cntry_code, NVL (dgo.multi_mrkt_accnt_code, ' ') as multi_mrket_accnt_code, NVL (dgo.banner_code, ' ') as banner_code,
---        NVL (dgo.cust_buying_group_code, ' ') as cust_buying_group_code, NVL (dgo.pos_frmt_grpng_code, ' ') AS pos_frmt_grpng_code, NVL (dgo.dstrbtn_route_code, ' ') as dstrbtn_route_code,
---        NVL (a.acct_assign_code, ' ') AS acct_assign_code, NVL (dd.zrep, ' ') AS zrep, NVL (dd.tdu, ' ') AS tdu, NVL (dd.TYPE, ' ') AS type,
---        NVL (dd.gsv, 0) AS gsv, NVL (dd.qty_in_base_uom, 0) AS cases, NVL (dgo.currcy_code, ' ') AS currcy_code
---      FROM dmnd_data dd, dmnd_grp dg, dmnd_grp_org dgo, fcst f, dmnd_cntry c, dmnd_acct_assign a
---      WHERE dg.dmnd_grp_id = dgo.dmnd_grp_id AND
---       dd.dmnd_grp_org_id = dgo.dmnd_grp_org_id AND
---       f.fcst_id = dd.fcst_id AND
---       dg.cntry_id = c.cntry_id AND
---       dgo.acct_assign_id = a.acct_assign_id AND
---       f.fcst_id = i_fcst_id AND
---       dd.mars_week > f.casting_year || f.casting_period || f.casting_week;
     CURSOR csr_demand_data (i_fcst_id IN common.st_id) IS
         SELECT dd.mars_week,
                f.forecast_type,
@@ -1067,6 +766,9 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
     END IF;
 
     v_filename := v_unix_path || 'oracle/send_venus_df_' || TRIM (TO_CHAR (i_fcst_id) );
+    
+    /**** JG 16/12/2011 Added to resolve ICS v2 unique filename requirement ****/
+    v_mq_target_file := v_mq_target_file || '.' || i_fcst_id || '_' || LOGIT.GET_LOG_ID;
 
     -- execute unix command to send file to fpps demand forecast.
     IF fileit.execute_command (v_unix_path || 'bin/send_mqft_file.sh ' || v_filename || ' ' || v_mq_source_qmgr || ' ' || v_mq_target_qmgr || ' ' || v_mq_target_file, v_message) != common.gc_success THEN
@@ -1208,4 +910,5 @@ PACKAGE BODY        "EXTRACT_VENUS" AS
       logit.leave_method;
       RETURN common.gc_error;
   END send_inventory_forecast;
+
 END extract_venus;
