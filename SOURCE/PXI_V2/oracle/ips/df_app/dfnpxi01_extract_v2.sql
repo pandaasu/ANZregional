@@ -56,6 +56,11 @@ create or replace package df_app.dfnpxi01_extract_v2 as
   2014-03-17  Mal Chambeyron        Remove the filter on Market Activities
                                     (pxi_common_df.fc_dmnd_type_7)
                                     was in place for testing phase.
+  2014-03-19  Mal Chambeyron        Order output .. Discovered as REQUIRED by Promax PX  
+                                      order by
+                                        px_dmnd_plng_node,
+                                        zrep_matl_code,
+                                        start_date
 
 *******************************************************************************/
 
@@ -710,6 +715,10 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         has_px_account,
         has_px_sku
       from table(dfnpxi01_extract_v2.pt_forecast_and_history(i_fcst_id))
+      order by
+        px_dmnd_plng_node,
+        zrep_matl_code,
+        start_date
 
     )
     loop
