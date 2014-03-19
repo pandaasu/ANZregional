@@ -828,6 +828,9 @@ create or replace PACKAGE BODY        "EXTRACT_VENUS" AS
 
     v_filename := v_unix_path || 'oracle/send_venus_pp_' || TRIM (TO_CHAR (i_fcst_id) );
 
+    /**** JG 16/12/2011 Added to resolve ICS v2 unique filename requirement ****/
+    v_mq_target_file := v_mq_target_file || '.' || i_fcst_id || '_' || LOGIT.GET_LOG_ID;
+
     -- execute unix command to send file to fpps demand forecast.
     IF fileit.execute_command (v_unix_path || 'bin/send_mqft_file.sh ' || v_filename || ' ' || v_mq_source_qmgr || ' ' || v_mq_target_qmgr || ' ' || v_mq_target_file, v_message) != common.gc_success THEN
       RAISE e_execute_failure;
