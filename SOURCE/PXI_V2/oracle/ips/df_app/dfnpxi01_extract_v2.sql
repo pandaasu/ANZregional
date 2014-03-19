@@ -1064,6 +1064,10 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         has_px_account,
         has_px_sku
       from table(dfnpxi01_extract_v2.pt_output(i_fcst_id))
+      order by
+        px_dmnd_plng_node,
+        zrep_matl_code,
+        start_date
 
     )
     loop
