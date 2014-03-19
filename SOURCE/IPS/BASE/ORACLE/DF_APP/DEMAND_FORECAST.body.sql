@@ -1482,7 +1482,7 @@ PACKAGE BODY        demand_forecast AS
             t1.fcst_id = i_fcst_id and 
             t1.type in (
                 demand_forecast.gc_dmnd_type_1,demand_forecast.gc_dmnd_type_2,demand_forecast.gc_dmnd_type_3,demand_forecast.gc_dmnd_type_4,
-                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,demand_forecast.gc_dmnd_type_7,demand_forecast.gc_dmnd_type_8,
+                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,/* demand_forecast.gc_dmnd_type_7, TESTING*/ demand_forecast.gc_dmnd_type_8,
                 demand_forecast.gc_dmnd_type_9)
           group by
             t1.dmnd_grp_org_id, 

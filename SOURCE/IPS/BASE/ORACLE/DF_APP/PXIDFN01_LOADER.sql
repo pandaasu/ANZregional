@@ -1,4 +1,5 @@
-create or replace package PXIDFN01_LOADER as
+create or replace 
+package        PXIDFN01_LOADER as
 
 /*******************************************************************************
 ** PACKAGE DEFINITION
@@ -32,15 +33,9 @@ create or replace package PXIDFN01_LOADER as
   2013-07-18  Jonathan Girling      Updated Interface to reference 
                                     px_dmnd_lookup table.
   2013-09-05  Chris Horn            Updated error exeception handling.
-  2013-12-02  Chris Horn            Started using PXI Common Interface suffix 
-                                    and updated to new petcare format of 
-                                    base and uplift.  
-  2014-01-16  Chris Horn            Updated to handle the additional columns 
-                                    from Promax so that the total would 
-                                    balance correctly.
-  2014-02-26  Chris Horn            Added additional parameter to the LICS
-                                    stream to make sure Promax forecasts 
-                                    will append.
+  2014-03-19  Chris Horn            Restored previous version from production
+                                    and applied the append stream parameter.
+
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
