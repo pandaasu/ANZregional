@@ -43,7 +43,10 @@ create or replace package pxi_app.pmxpxi02_loader_v2 as
   2013-08-06  Jonathan Girling      Updated No Tax Code from S3 to SE.
   2013-08-16  Jonathan Girling      Updated posting_key_reversal_debit logic
   2013-10-29  Chris Horn            Added header detail summation check.
-  2013-11-27  Jonathan Girling		Added Australia Tax code logic
+  2013-11-27  Jonathan Girling		  Added Australia Tax code logic
+  2014-03-19  Mal Chambeyron        Allow 20 characters for [pc_allocation] on 
+                                    read, however trim to original 12 characters
+                                    on use.
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -162,29 +165,31 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
     fflu_data.add_number_field_txt(pc_spend_amount,109,14,'99999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_number_field_txt(pc_tax_amount,123,14,'99999999999.99',fflu_data.gc_null_min_number,fflu_data.gc_null_max_number,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_txt(pc_payment_method,137,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_allocation,138,12,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_pc_reference,150,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_px_reference,168,60,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_ext_reference,228,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_product_number,293,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_transaction_code,311,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_deduction_ac_code,351,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_payee_code,371,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_debit_code,381,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_credit_code,401,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_customer_is_a_vendor,421,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_currency,422,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_promo_claim_detail_row_id,425,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_promo_claim_group_row_id,435,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_promo_claim_group_pub_id,445,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_reason_code,475,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_pc_message,480,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_pc_comment,545,200,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_text_1,745,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_char_field_txt(pc_text_2,785,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    fflu_data.add_date_field_txt(pc_buy_start_date,825,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_date_field_txt(pc_buy_stop_date,833,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_char_field_txt(pc_bom_header_sku_stock_code,841,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_allocation,138,20,fflu_data.gc_null_min_length,fflu_data.gc_not_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_pc_reference,158,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_px_reference,176,60,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_ext_reference,236,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_product_number,301,18,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_transaction_code,319,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_deduction_ac_code,359,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_payee_code,379,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_debit_code,389,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_credit_code,409,20,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_customer_is_a_vendor,429,1,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_currency,430,3,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_detail_row_id,433,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_group_row_id,443,10,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_promo_claim_group_pub_id,453,30,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_reason_code,483,5,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_pc_message,488,65,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_pc_comment,553,200,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_text_1,753,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_char_field_txt(pc_text_2,793,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    fflu_data.add_date_field_txt(pc_buy_start_date,833,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_date_field_txt(pc_buy_stop_date,841,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_txt(pc_bom_header_sku_stock_code,849,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
+    
+    
   exception
     when others then
       fflu_data.log_interface_exception('ON_START');
@@ -299,17 +304,17 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
           rv_gl.item_text := rpad(
             'AP ' ||
             'Ref#' ||
-            fflu_data.get_char_field(pc_allocation) ||
+            substr(fflu_data.get_char_field(pc_allocation),1,12) ||
             ' Pm#' ||
             fflu_data.get_char_field(pc_reference) || ' Vn#' ||
             fflu_data.get_char_field(pc_payee_code)
             ,50);
           -- Set the allocation reference field to be allocation field from promax as well.
-          rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
+          rv_gl.alloc_ref := substr(fflu_data.get_char_field(pc_allocation),1,12);
           rv_gl.claim_text := rpad(
             'Pm# ' || fflu_data.get_char_field(pc_reference) ||
             ' ICS# ' || fflu_utils.get_interface_no ||
-            ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
+            ' Ref# ' || substr(fflu_data.get_char_field(pc_allocation),1,12), 50);
         else
           -- Specific AR Claims Processing / Setup
 		      -- Set the account code to be the same as the promax debit code field.
@@ -322,7 +327,7 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
           rv_gl.item_text := rpad(
             'AR ' ||
             'Ref#' ||
-            fflu_data.get_char_field(pc_allocation) ||
+            substr(fflu_data.get_char_field(pc_allocation),1,12) ||
             ' Pm#' ||
             fflu_data.get_char_field(pc_reference) ||
             ' Mt#' ||
@@ -330,12 +335,12 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
             ' Cs#' ||
             fflu_data.get_char_field(pc_payee_code),50);
           -- Set the allocation reference field to be the external supplied promax reference.
-          rv_gl.alloc_ref := fflu_data.get_char_field(pc_allocation);
+          rv_gl.alloc_ref := substr(fflu_data.get_char_field(pc_allocation),1,12);
           -- Set the Claim Text to be (Promo, ICS ID, Ref)
           rv_gl.claim_text := rpad(
             'Pm# ' || fflu_data.get_char_field(pc_reference) ||
             ' ICS# ' || fflu_utils.get_interface_no ||
-            ' Ref# ' || fflu_data.get_char_field(pc_allocation), 50);
+            ' Ref# ' || substr(fflu_data.get_char_field(pc_allocation),1,12), 50);
         end if;
         -- COPA Related Fields
         -- Set the sales organsiation
