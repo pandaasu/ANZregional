@@ -51,6 +51,7 @@ create or replace package pxi_app.pxipmx08_extract_v2 as
                                     combinations for a given interface suffix
   2014-03-14  Mal Chambeyron        Cascade Interface Suffix Awareness across
                                     Package in Support of EXECUTE_FANOUT Change
+  2014-03-19  Mal Chambeyron        Add back lost Chris Horn logic for tax base amount
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -342,6 +343,20 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
               pv_claim.tax_code := fflu_data.get_char_field(pc_tax_code);
           end case;
 
+          -- Now set the tax base amount based on the tax code.
+          case pv_claim.tax_code 
+            when pxi_common.gc_tax_code_s1 then 
+              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.1,2); -- 10% Australian GST
+            when pxi_common.gc_tax_code_s2 then 
+              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.15,2); -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination. 
+            when pxi_common.gc_tax_code_s3 then 
+              pv_claim.tax_base := 0;  -- Australia 0% No Tax
+            when pxi_common.gc_tax_code_se then 
+              pv_claim.tax_base := 0;  -- New Zealand 0% No Tax.
+            else 
+              pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
+          end case;
+          
           -- Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
           if pv_claim.div_code is not null then
             pv_claims(pv_claims.count+1) := pv_claim;
@@ -721,8 +736,9 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
             t1.claim_ref,
             t1.assignment_no,
             t1.reason_code,
-            t1.claim_amount + t1.tax_base as amount,
-            t1.tax_base as tax_amount,
+            t1.claim_amount as amount,
+            -- Chris Horn : 26/02/2014 : NOTE : Once NZ Business Process has been updated to correcly bring across the tax amount, rather than them calculating automatically.  Remove the Decode below and just send the actual tax.
+            decode(t1.company_code, pxi_common.gc_new_zealand, 0, t1.tax_base) as tax_amount,
             case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
             table(get_claims) t1,
