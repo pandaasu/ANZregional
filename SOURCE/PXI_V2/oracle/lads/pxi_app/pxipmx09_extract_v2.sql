@@ -12,7 +12,7 @@ create or replace package pxi_app.pxipmx09_extract_v2 as
 
  Description
  -----------
- LADS (Outbound) -> Promax PX - Pricing Conditions Actuals - PX Interface 336 (New Zealand)
+ LADS (Outbound) -> Promax PX - Pricing Conditions Actuals - PX Interface 336 
 
  Date          Author                Description
  ------------  --------------------  -----------
@@ -23,6 +23,8 @@ create or replace package pxi_app.pxipmx09_extract_v2 as
  2013-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
+ 2014-03-20    Mal Chambeyron        Include Pricing Condition Effectivity date 
+                                     filter on invoice_date
 
 *******************************************************************************/
 
@@ -109,7 +111,7 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
               t01.discount as discountGiven,
               rpad(t01.pricing_condition,6) as conditionType,       -- TBC with the business. In issues log.
               t01.pmnum as promotion_number,
-              case t01.sales_org when  pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
+              case t01.sales_org when pxi_common.fc_australia then 'AUD' when pxi_common.fc_new_zealand then 'NZD' else null end as currency
           from
               promax_prom_inv_ext_view t01,
               lads_prc_lst_hdr t02,
@@ -129,10 +131,11 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
               t01.cust_division = t02.spart and
               t01.zrep_matl_code = t02.matnr and
               t01.pricing_condition = t02.kschl and
+              t01.invoice_date between t02.datab and t02.datbi and -- Include Pricing Condition Effectivity date filter on invoice_date
               t01.lads_date > trunc(i_creation_date) and
               -- Now make sure the correct data is being extracted.
               t01.sales_org = t03.promax_company and
-              ((t01.sales_org = pxi_common.gc_australia and t01.cust_division = t03.customer_division) or (t01.sales_org = pxi_common.gc_new_zealand))
+              ((t01.sales_org = pxi_common.fc_australia and t01.cust_division = t03.customer_division) or (t01.sales_org = pxi_common.fc_new_zealand))
         ------------------------------------------------------------------------
         );
         --======================================================================
