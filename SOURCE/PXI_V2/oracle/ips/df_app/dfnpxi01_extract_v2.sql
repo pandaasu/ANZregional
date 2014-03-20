@@ -385,7 +385,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         pxi_common_df.fc_dmnd_type_4, -- Reconcile
         pxi_common_df.fc_dmnd_type_5, -- Auto Adjustment
         pxi_common_df.fc_dmnd_type_6, -- Override
-        pxi_common_df.fc_dmnd_type_7, -- Market Activities
+        -- pxi_common_df.fc_dmnd_type_7, -- Market Activities
         pxi_common_df.fc_dmnd_type_8, -- Data Driven Event
         pxi_common_df.fc_dmnd_type_9  -- Target Impact
       )
