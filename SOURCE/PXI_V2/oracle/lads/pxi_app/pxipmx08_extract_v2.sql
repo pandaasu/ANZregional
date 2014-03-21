@@ -52,6 +52,7 @@ create or replace package pxi_app.pxipmx08_extract_v2 as
   2014-03-14  Mal Chambeyron        Cascade Interface Suffix Awareness across
                                     Package in Support of EXECUTE_FANOUT Change
   2014-03-19  Mal Chambeyron        Add back lost Chris Horn logic for tax base amount
+  2014-03-21  Mal Chambeyron        Remove(Comment) NON NZ / AU Petcare from EXECUTE_FANOUT  
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -805,6 +806,7 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
 
   begin
 
+    /*
     select count(1) into v_snack_count from table(get_claims) where company_code = pxi_common.fc_australia and div_code = pxi_common.fc_bus_sgmnt_snack;
     if v_snack_count > 0 then
       execute(pxi_common.fc_interface_snack);
@@ -814,7 +816,8 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
     if v_food_count > 0 then
       execute(pxi_common.fc_interface_food);
     end if;
-
+    */
+    
     select count(1) into v_petcare_count from table(get_claims) where company_code = pxi_common.fc_australia and div_code = pxi_common.fc_bus_sgmnt_petcare;
     if v_petcare_count > 0 then
       execute(pxi_common.fc_interface_pet);
