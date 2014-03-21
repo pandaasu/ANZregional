@@ -26,7 +26,10 @@ create or replace package pxi_app.pxipmx07_extract_v2 as
  2013-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
-
+ 2013-03-21    Mal Chambeyron        Modify Sales Data Filter ..
+                                     - [creatn_date] >= trunc([i_creation_date]-28) 
+                                     - [billing_eff_date] <= end of [i_creation_date] Mars Week 
+            
 *******************************************************************************/
 
 /*******************************************************************************
@@ -127,15 +130,15 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
             and t1.order_doc_line_num = t2.order_doc_line_num (+)
            -- Now join to the material zrep detail
             and t1.matl_code = t3.matl_code
---            and ((t1.company_code = &gc_australia and t1.hdr_division_code = t4.cust_division) or (t1.company_code = &gc_new_zealand))
-            -- Extract yesterdays data by default, otherwise extract a whole range of data. for history since 2012.
-            and t1.creatn_date between nvl(trunc(i_creation_date),to_date('01/01/2012','DD/MM/YYYY')) and nvl(trunc(i_creation_date),trunc(sysdate-1))
+            and t1.creatn_date >= trunc(i_creation_date-28) -- Include creation date > 28 days previous
             -- Not null check added to accommodate new restrictions on output format
             and t1.matl_entd is not null
-
-        );
-
+            -- Limit [billing_eff_date] <= end of [i_creation_date] Mars Week
+            and t1.billing_eff_date <= trunc(i_creation_date) + 7 - to_number(to_char(i_creation_date + 1, 'd', 'NLS_DATE_LANGUAGE = AMERICAN'))
+          );
+        
    begin
+   
      -- Open cursor with the extract data.
      open csr_input;
      loop
