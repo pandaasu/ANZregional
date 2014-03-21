@@ -17,8 +17,9 @@ create or replace package pxi_app.pxipmx12_extract_v2 as
  Date        Author                Description
  ----------  --------------------  -----------
  2014-02-07  Jonathan Girling      Created.
- 2013-03-12  Mal Chambeyron        Remove DEFAULTS,
+ 2014-03-12  Mal Chambeyron        Remove DEFAULTS,
                                    Replace [pxi_common.promax_config]
+ 2014-03-21  Mal Chambeyron        Ensure VARCHAR2 representation of date is in fact a DATE
 
 *******************************************************************************/
 
@@ -71,21 +72,20 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('336002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336002' -> RecordType
-          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
-          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
-          pxi_common.char_format(invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
-          pxi_common.char_format(invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
-          pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
-          pxi_common.char_format(material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
-          pxi_common.date_format(invoicedate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- invoicedate -> InvoiceDate
+          pxi_common.char_format('record_type','336002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336002' -> RecordType
+          pxi_common.char_format('promax_company',promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format('promax_division',promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+          pxi_common.char_format('invoice_number',invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
+          pxi_common.char_format('invoice_line_number',invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
+          pxi_common.char_format('customer_hierarchy',customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
+          pxi_common.char_format('material',material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
+          pxi_common.date_format('invoice_date',invoicedate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- invoicedate -> InvoiceDate
           --pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
-          pxi_common.numb_format(discountgiven, 's999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
-          pxi_common.char_format(conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
-          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
-          pxi_common.char_format(' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT ' ' -> PromotionNumber
-
-        ------------------------------------------------------------------------
+          pxi_common.numb_format('discount_given',discountgiven, 's999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
+          pxi_common.char_format('condition_type',conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
+          pxi_common.char_format('currency',currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
+          pxi_common.char_format('intentionally_blank',' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT ' ' -> PromotionNumber
+        -------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
@@ -97,7 +97,7 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
             t01.line_no as invoicelinenumber,
             t01.sold_to_cust_code as customerhierarchy,
             t01.zrep_matl_code as material,
-            t01.billing_date as invoicedate,
+            to_date(t01.billing_date, 'yyyymmdd') as invoicedate, -- Ensure VARCHAR2 representation of date is in fact a DATE
             round(case when t01.pricing_condition = 'SKTO' then t01.discount / 1.1 else t01.discount * 1 end, 2) as discountgiven,
             t01.pricing_condition as conditiontype,
             t01.currency as currency
