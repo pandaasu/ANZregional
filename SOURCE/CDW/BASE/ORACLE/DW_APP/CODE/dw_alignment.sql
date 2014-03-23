@@ -22,6 +22,7 @@ CREATE OR REPLACE package        dw_alignment as
     2011/03   Steve Gregan   Added invoice trace lookup for closed documents
     2013/04   Trevor Keon    Fixed issue which caused orders to show as outstanding 
     2013/12   Upul Dangalle  Fixed issue which caused orders to show as outstanding
+    2014/03   Upul Dangalle  Additional logic changes made to fix the outstanding orders
     *******************************************************************************/
 
    /*-*/
@@ -82,23 +83,24 @@ CREATE OR REPLACE package body        dw_alignment as
             and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
+      cursor csr_invoice_trace is
+          select  distinct t01.order_doc_num,t01.order_doc_line_num,t01.billed_gsv
+           from sap_inv_trace t01
+          where t01.trace_status = '*ACTIVE'
+            and t01.order_doc_num      = rcd_purch_base.purch_order_doc_num
+            and t01.order_doc_line_num = rcd_purch_base.purch_order_doc_line_num
+            and t01.billed_gsv = 0;
+      rcd_invoice_trace csr_invoice_trace%rowtype;
+      
       cursor csr_sap_doc_status is
          select t01.doc_status
            from sap_doc_status t01
           where t01.doc_type = 'PURCHASE_ORDER_LINE'
             and t01.doc_number = rcd_purch_base.purch_order_doc_num
-            and t01.doc_line = rcd_purch_base.purch_order_doc_line_num;
+            and t01.doc_line   = rcd_purch_base.purch_order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
-
-      cursor csr_sap_inv_trace is
-         select t01.trace_status
-           from sap_inv_trace t01
-          where t01.company_code = par_company_code
-            and t01.purch_order_doc_num = rcd_purch_base.purch_order_doc_num
-            and t01.purch_order_doc_line_num = rcd_purch_base.purch_order_doc_line_num
-            and t01.trace_status = '*ACTIVE';
-      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
-
+      
+     
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -238,26 +240,22 @@ CREATE OR REPLACE package body        dw_alignment as
          /*-*/
          /* Set the purchase order line status
          /*-*/
-         if var_invoiced = true then
+         if var_invoiced  or var_delivered then
             rcd_purch_base.purch_order_line_status := '*CLOSED';
          else
-            open csr_sap_doc_status;
-            fetch csr_sap_doc_status into rcd_sap_doc_status;
-            if csr_sap_doc_status%found then
-               if rcd_sap_doc_status.doc_status = '*CLOSED' then
-                  var_trace := false;
-                  open csr_sap_inv_trace;
-                  fetch csr_sap_inv_trace into rcd_sap_inv_trace;
-                  if csr_sap_inv_trace%found then
-                     var_trace := true;
-                  end if;
-                  close csr_sap_inv_trace;
-                  if var_trace = false then
-                     rcd_purch_base.purch_order_line_status := '*CLOSED';
-                  end if;
-               end if;
+            open csr_invoice_trace; 
+            fetch csr_invoice_trace  into rcd_invoice_trace;
+            if  csr_invoice_trace%found then   ---- Checking for zero qty 
+                open csr_sap_doc_status;
+                fetch csr_sap_doc_status into rcd_sap_doc_status;
+                if  csr_sap_doc_status%found then
+                    rcd_purch_base.purch_order_line_status := rcd_sap_doc_status.doc_status;
+                end if;
+                close csr_sap_doc_status;
+         
             end if;
-            close csr_sap_doc_status;
+            close csr_invoice_trace; 
+         
          end if;
 
          /*-*/
@@ -371,39 +369,24 @@ CREATE OR REPLACE package body        dw_alignment as
             and t01.doc_number = rcd_order_base.order_doc_num
             and t01.doc_line = rcd_order_base.order_doc_line_num;
       rcd_sap_doc_status csr_sap_doc_status%rowtype;
-
-      cursor csr_sap_inv_trace is
-         select t01.trace_status
+      
+      
+      cursor csr_order_usage is
+         select t01.order_usage_gsv_flag
+           from order_usage t01
+          where t01.order_usage_code = rcd_order_base.order_usage_code
+            and order_usage_gsv_flag = 'NON-GSV';
+      rcd_order_usage_gsv_falg csr_order_usage%rowtype;
+              
+     cursor csr_invoice_trace is
+          select  distinct t01.order_doc_num,t01.order_doc_line_num,t01.billed_gsv
            from sap_inv_trace t01
-          where t01.company_code = par_company_code
-            and t01.order_doc_num = rcd_order_base.order_doc_num
+          where t01.trace_status = '*ACTIVE'
+            and t01.order_doc_num      = rcd_order_base.order_doc_num
             and t01.order_doc_line_num = rcd_order_base.order_doc_line_num
-            and t01.trace_status = '*ACTIVE'
-            and t01.trace_seqn > (select max(billing_trace_seqn)
-                                         from dw_sales_base
-                                        where company_code = par_company_code
-                                          and order_doc_num = rcd_order_base.order_doc_num
-                                          and order_doc_line_num = rcd_order_base.order_doc_line_num)
-               UNION
-          select t01.trace_status
-           from sap_inv_trace t01
-          where t01.company_code = par_company_code
-            and t01.order_doc_num = rcd_order_base.order_doc_num
-            and t01.order_doc_line_num = rcd_order_base.order_doc_line_num
-            and t01.trace_status = '*ACTIVE'           
-            and EXISTS (SELECT 1
-                          from sap_inv_trace t01
-                          where company_code = t01.company_code
-                            and order_doc_num = t01.order_doc_num
-                            and order_doc_line_num = t01.order_doc_line_num
-                            and trace_status =  '*ACTIVE' )
-            and NOT EXISTS (select 1
-                            from dw_sales_base
-                           where company_code = t01.company_code
-                             and order_doc_num = t01.order_doc_num
-                             and order_doc_line_num = t01.order_doc_line_num);  
-      rcd_sap_inv_trace csr_sap_inv_trace%rowtype;
-
+            and t01.billed_gsv = 0;
+      rcd_invoice_trace csr_invoice_trace%rowtype;
+    
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -543,24 +526,41 @@ CREATE OR REPLACE package body        dw_alignment as
          /*-*/
          /* Set the order line status
          /*-*/
-         open csr_sap_doc_status;
-         fetch csr_sap_doc_status into rcd_sap_doc_status;
-         if csr_sap_doc_status%found then
-            if rcd_sap_doc_status.doc_status = '*CLOSED' then
-               var_trace := false;
-               open csr_sap_inv_trace;
-               fetch csr_sap_inv_trace into rcd_sap_inv_trace;
-               if csr_sap_inv_trace%found then
-                  var_trace := true;
-               end if;
-               close csr_sap_inv_trace;
-               if var_trace = false then
-                  rcd_order_base.order_line_status := '*CLOSED';
-               end if;
-            end if;
-         end if;
-         close csr_sap_doc_status;
-
+         
+       open csr_order_usage;
+      
+       fetch csr_order_usage into rcd_order_usage_gsv_falg;  
+       if  csr_order_usage%found then  --- NON GSV record found
+           rcd_order_base.order_line_status := '*CLOSED'; --- setting the order as CLOSED for NON GSV
+       
+       elsif (var_delivered or var_invoiced ) and rcd_order_base.order_line_rejectn_code is null  then
+             rcd_order_base.order_line_status := '*CLOSED';
+      
+       elsif rcd_order_base.order_line_rejectn_code is not null then 
+            open csr_sap_doc_status;
+            fetch csr_sap_doc_status into rcd_sap_doc_status;
+            if  csr_sap_doc_status%found then
+                rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
+            end if;  
+            close csr_sap_doc_status;
+       else
+       open csr_invoice_trace; 
+       fetch csr_invoice_trace  into rcd_invoice_trace;
+       if  csr_invoice_trace%found then   ---- Checking for zero qty 
+           open csr_sap_doc_status;
+           fetch csr_sap_doc_status into rcd_sap_doc_status;
+           if  csr_sap_doc_status%found then
+                rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
+           end if;  
+           close csr_sap_doc_status;
+       end if;
+       
+       close csr_invoice_trace; 
+       
+       end if;
+       
+              
+       close csr_order_usage;
          /*-*/
          /* Calculate the outstanding values when required
          /* 1. Closed order lines have no outstanding values
@@ -656,14 +656,7 @@ CREATE OR REPLACE package body        dw_alignment as
             and t01.dlvry_doc_line_num = rcd_dlvry_base.dlvry_doc_line_num;
       rcd_sales_base csr_sales_base%rowtype;
 
-      cursor csr_sap_doc_status is
-         select t01.doc_status
-           from sap_doc_status t01
-          where t01.doc_type = 'DELIVERY_LINE'
-            and t01.doc_number = rcd_dlvry_base.dlvry_doc_num
-            and t01.doc_line = rcd_dlvry_base.dlvry_doc_line_num;
-      rcd_sap_doc_status csr_sap_doc_status%rowtype;
-
+  
      /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -722,7 +715,7 @@ CREATE OR REPLACE package body        dw_alignment as
             /* Any one related invoice line invoices the purchase order line
             /* 1. Purchase orders do not use the large order line split functionality
             /*-*/
-            var_invoiced := true;
+    --        var_invoiced := true;
             
             /*-*/
             /* Invoice billed values
@@ -736,33 +729,17 @@ CREATE OR REPLACE package body        dw_alignment as
             rcd_dlvry_base.inv_gsv_aud := rcd_sales_base.billed_gsv_aud;
             rcd_dlvry_base.inv_gsv_usd := rcd_sales_base.billed_gsv_usd;
             rcd_dlvry_base.inv_gsv_eur := rcd_sales_base.billed_gsv_eur;
+           
+           
+         /*------------------------*/
+         /* DLVRY_BASE Outstanding */
+         /*------------------------*/ 
+            rcd_dlvry_base.dlvry_line_status := '*CLOSED';
 
          end if;
          close csr_sales_base;
- 
-         /*------------------------*/
-         /* DLVRY_BASE Outstanding */
-         /*------------------------*/
-       
-         if var_invoiced = true then
-            rcd_dlvry_base.dlvry_line_status := '*CLOSED';
-         else
-            open csr_sap_doc_status;
-            fetch csr_sap_doc_status into rcd_sap_doc_status;
-            if csr_sap_doc_status%found then
-            
-               if rcd_sap_doc_status.doc_status = '*CLOSED' then                  
-                  rcd_dlvry_base.dlvry_line_status := '*CLOSED';
-               end if; 
-            
-            end if;
-            
-            close csr_sap_doc_status;
-         end if;
-         
-         
-         -------------
-         
+
+
          /*-------------------*/
          /* DLVRY_BASE Update */
          /*-------------------*/
