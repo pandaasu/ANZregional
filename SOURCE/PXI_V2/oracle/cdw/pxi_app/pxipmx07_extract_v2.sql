@@ -23,14 +23,14 @@ create or replace package pxi_app.pxipmx07_extract_v2 as
  2013-07-25    Mal Chambeyron        Formatted SQL Output
  2013-08-20    Chris Horn            Updated with revision.
  2013-08-29    Chris Horn            Updated the a revised sales query.
- 2013-03-12    Mal Chambeyron        Remove DEFAULTS,
+ 2014-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
  2013-03-21    Mal Chambeyron        Modify Sales Data Filter ..
                                      - [creatn_date] >= trunc([i_creation_date]-28) 
                                      - [billing_eff_date] <= end of [i_creation_date] Mars Week 
  2013-03-24    Mal Chambeyron        Updated [billing_eff_date] <= end of [i_creation_date] Mars Week
-                                     to correct inconsistient behavour dependant on client (NLS)
+                                     to correct inconsistent behaviour dependant on client (NLS)
             
 *******************************************************************************/
 
