@@ -29,6 +29,8 @@ create or replace package pxi_app.pxipmx07_extract_v2 as
  2013-03-21    Mal Chambeyron        Modify Sales Data Filter ..
                                      - [creatn_date] >= trunc([i_creation_date]-28) 
                                      - [billing_eff_date] <= end of [i_creation_date] Mars Week 
+ 2013-03-24    Mal Chambeyron        Updated [billing_eff_date] <= end of [i_creation_date] Mars Week
+                                     to correct inconsistient behavour dependant on client (NLS)
             
 *******************************************************************************/
 
@@ -134,7 +136,16 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
             -- Not null check added to accommodate new restrictions on output format
             and t1.matl_entd is not null
             -- Limit [billing_eff_date] <= end of [i_creation_date] Mars Week
-            and t1.billing_eff_date <= trunc(i_creation_date) + 7 - to_number(to_char(i_creation_date + 1, 'd', 'NLS_DATE_LANGUAGE = AMERICAN'))
+            and t1.billing_eff_date <= trunc(i_creation_date) + 
+              case to_char(i_creation_date, 'DY')
+                when 'SUN' then 6
+                when 'MON' then 5
+                when 'TUE' then 4
+                when 'WED' then 3
+                when 'THU' then 2
+                when 'FRI' then 1
+                when 'SAT' then 0
+              end
           );
         
    begin
