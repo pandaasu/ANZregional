@@ -21,9 +21,11 @@ create or replace package pxi_app.pxipmx04_extract_v2 as
  2013-08-28    Chris Horn            Made generic for OZ.
  2014-02-25    Mal Chambeyron        Pipeline, Simplify, Tune
  2014-03-06    Mal Chambeyron        Filter Out Demand Planning Nodes for New Zealand
- 2013-03-12    Mal Chambeyron        Remove DEFAULTS,
+ 2014-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
+ 2014-03-24    Mal Chambeyron        Set Hierarchy Division Code to Leaf Division Code for Level 06 Customers Only
+ 2014-03-25    Mal Chambeyron        Modify to facilitate reference by [pxipmx03_extract_v2], add [division_code] to [rt_output]
 
 *******************************************************************************/
 
@@ -145,6 +147,7 @@ create or replace package pxi_app.pxipmx04_extract_v2 as
     cust_level                      number(2,0),
     cust_code                       varchar2(10 char),
     cust_name                       varchar2(40 char),
+    division_code                   varchar2(2 char),
     parent_cust_code                varchar2(10 char)
   );
 
@@ -396,6 +399,22 @@ create or replace package body pxi_app.pxipmx04_extract_v2 as
     )
     loop
 
+      -- Set Hierarchy Division Code to Leaf Division Code for Level 06 Customers Only
+      if rv_row.division_code_06 is not null then 
+        rv_row.division_code_05 := rv_row.division_code_06; 
+        rv_row.division_code_04 := rv_row.division_code_06; 
+        rv_row.division_code_03 := rv_row.division_code_06; 
+        rv_row.division_code_02 := rv_row.division_code_06; 
+        rv_row.division_code_01 := rv_row.division_code_06;
+      else
+        rv_row.division_code_06 := '00'; 
+        rv_row.division_code_05 := '00'; 
+        rv_row.division_code_04 := '00'; 
+        rv_row.division_code_03 := '00'; 
+        rv_row.division_code_02 := '00'; 
+        rv_row.division_code_01 := '00';
+      end if;
+    
       -- Find lowest level, WHERE hier_level and detail_seq are out of sync ..
       if rv_row.cust_code is null then
         rv_row.cust_code := nvl(rv_row.cust_code_06,nvl(rv_row.cust_code_05,nvl(rv_row.cust_code_04,nvl(rv_row.cust_code_03,nvl(rv_row.cust_code_02,rv_row.cust_code_01)))));
@@ -518,55 +537,217 @@ create or replace package body pxi_app.pxipmx04_extract_v2 as
     for rv_row in (
 
       select
-        pxi_common.char_format('301001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '301001' -> ICRecordType
-        pxi_common.char_format(i_promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
-        pxi_common.char_format(i_promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
-        pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- cust_code -> CustomerNumber
-        pxi_common.char_format(cust_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- cust_name -> CustomerDescription
-        pxi_common.char_format(i_promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- sales_org_code -> CustomerSalesOrg
-        pxi_common.char_format(parent_cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- parent_cust_code -> ParentCustomerNumber
+        pxi_common.char_format('record_type', '301001', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '301001' -> ICRecordType
+        pxi_common.char_format('promax_company', i_promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+        pxi_common.char_format('promax_division', i_promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+        pxi_common.char_format('cust_code', cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- cust_code -> CustomerNumber
+        pxi_common.char_format('cust_name', cust_name, 40, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- cust_name -> CustomerDescription
+        pxi_common.char_format('division_code', division_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- division_code -> CustomerSalesOrg
+        pxi_common.char_format('parent_cust_code', parent_cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) -- parent_cust_code -> ParentCustomerNumber
         as output_record,
         cust_level,
         cust_code,
         cust_name,
+        division_code,
         parent_cust_code
       from (
 
-        select distinct 1 as cust_level, cust_code_01 as cust_code, cust_name_01 as cust_name, null as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_01 is not null
+        select 
+          cust_level,
+          cust_code,
+          max(cust_name) as cust_name,
+          case max(division_code) when '00' then '56' else max(division_code) end as division_code,
+          max(parent_cust_code) as parent_cust_code
+        from (  
+          
+          -- Customer Nodes (Level 06)
+          
+          select distinct 
+            6 as cust_level, 
+            cust_code_06 as cust_code, 
+            cust_name_06 as cust_name, 
+            division_code_06 as division_code, 
+            cust_code_05 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_06 is not null
+          
+          -- Hierarchy Nodes (Levels 01-05) .. Without Children
+          
+          union all
+          
+          select distinct 1 as cust_level, 
+            cust_code_01 as cust_code, 
+            cust_name_01 as cust_name, 
+            '00' as division_code,
+            -- division_code_01 as division_code, 
+            null as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_01 in (
+            select cust_code_01 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_01 is not null
+            having max(case when cust_code_02 is not null then 1 else 0 end) = 0 -- Without Children
+            group by cust_code_01
+          )
+          
+          union all
+          
+          select distinct 2 as cust_level, 
+            cust_code_02 as cust_code, 
+            cust_name_02 as cust_name, 
+            '00' as division_code,
+            -- division_code_02 as division_code, 
+            cust_code_01 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_02 in (
+            select cust_code_02 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_02 is not null
+            having max(case when cust_code_03 is not null then 1 else 0 end) = 0 -- Without Children
+            group by cust_code_02
+          )
+          
+          union all
+          
+          select distinct 3 as cust_level, 
+            cust_code_03 as cust_code, 
+            cust_name_03 as cust_name, 
+            '00' as division_code,
+            -- division_code_03 as division_code, 
+            cust_code_02 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_03 in (
+            select cust_code_03 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_03 is not null
+            having max(case when cust_code_04 is not null then 1 else 0 end) = 0 -- Without Children
+            group by cust_code_03
+          )
+          
+          union all
+          
+          select distinct 4 as cust_level, 
+            cust_code_04 as cust_code, 
+            cust_name_04 as cust_name, 
+            '00' as division_code,
+            -- division_code_04 as division_code, 
+            cust_code_03 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_04 in (
+            select cust_code_04 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_04 is not null
+            having max(case when cust_code_05 is not null then 1 else 0 end) = 0 -- Without Children
+            group by cust_code_04
+          )
+          
+          union all
+          
+          select distinct 5 as cust_level, 
+            cust_code_05 as cust_code, 
+            cust_name_05 as cust_name, 
+            '00' as division_code,
+            -- division_code_05 as division_code, 
+            cust_code_04 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_05 in (
+            select cust_code_05 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_05 is not null
+            having max(case when cust_code_06 is not null then 1 else 0 end) = 0 -- Without Children
+            group by cust_code_05
+          )
+          
+          -- Hierarchy Nodes (Levels 01-05) .. With Children
+          
+          union all
+          
+          select distinct 1 as cust_level, 
+            cust_code_01 as cust_code, 
+            cust_name_01 as cust_name, 
+            division_code_01 as division_code, 
+            null as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_01 in (
+            select cust_code_01 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_01 is not null
+            having max(case when cust_code_02 is not null then 1 else 0 end) = 1 -- With Children
+            group by cust_code_01
+          )
+          
+          union all
+          
+          select distinct 2 as cust_level, 
+            cust_code_02 as cust_code, 
+            cust_name_02 as cust_name, 
+            division_code_02 as division_code, 
+            cust_code_01 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_02 in (
+            select cust_code_02 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_02 is not null
+            having max(case when cust_code_03 is not null then 1 else 0 end) = 1 -- With Children
+            group by cust_code_02
+          )
+          
+          union all
+          
+          select distinct 3 as cust_level, 
+            cust_code_03 as cust_code, 
+            cust_name_03 as cust_name, 
+            division_code_03 as division_code, 
+            cust_code_02 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_03 in (
+            select cust_code_03 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_03 is not null
+            having max(case when cust_code_04 is not null then 1 else 0 end) = 1 -- With Children
+            group by cust_code_03
+          )
+          
+          union all
+          
+          select distinct 4 as cust_level, 
+            cust_code_04 as cust_code, 
+            cust_name_04 as cust_name, 
+            division_code_04 as division_code, 
+            cust_code_03 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_04 in (
+            select cust_code_04 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_04 is not null
+            having max(case when cust_code_05 is not null then 1 else 0 end) = 1 -- With Children
+            group by cust_code_04
+          )
+          
+          union all
+          
+          select distinct 5 as cust_level, 
+            cust_code_05 as cust_code, 
+            cust_name_05 as cust_name, 
+            division_code_05 as division_code, 
+            cust_code_04 as parent_cust_code
+          from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
+          where cust_code_05 in (
+            select cust_code_05 
+            from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date)) 
+            where cust_code_05 is not null
+            having max(case when cust_code_06 is not null then 1 else 0 end) = 1 -- With Children
+            group by cust_code_05
+          )
+        
+        )
+        group by 
+          cust_level,
+          cust_code
+        order by
+          cust_level,
+          cust_code
 
-        union
-
-        select distinct 2 as cust_level, cust_code_02 as cust_code, cust_name_02 as cust_name, cust_code_01 as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_02 is not null
-
-        union
-
-        select distinct 3 as cust_level, cust_code_03 as cust_code, cust_name_03 as cust_name, cust_code_02 as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_03 is not null
-
-        union
-
-        select distinct 4 as cust_level, cust_code_04 as cust_code, cust_name_04 as cust_name, cust_code_03 as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_04 is not null
-
-        union
-
-        select distinct 5 as cust_level, cust_code_05 as cust_code, cust_name_05 as cust_name, cust_code_04 as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_05 is not null
-
-        union
-
-        select distinct 6 as cust_level, cust_code_06 as cust_code, cust_name_06 as cust_name, cust_code_05 as parent_cust_code
-        from table(pxipmx04_extract_v2.pt_cust_hier_flat_no_refresh(i_promax_company,i_promax_division,i_eff_date))
-        where cust_code_06 is not null
-
-        order by 1,4,2
       )
 
     )
