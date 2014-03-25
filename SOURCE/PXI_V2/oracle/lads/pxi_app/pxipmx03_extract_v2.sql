@@ -22,10 +22,14 @@ create or replace package pxi_app.pxipmx03_extract_v2 as
  2013-08-21    Chris Horn            Cleaned Up Code.
  2014-02-26    Mal Chambeyron        Pipeline, Simplify, Tune and
                                      REMOVE Customers NOT in Customer Hierarchy
- 2013-03-12    Mal Chambeyron        Remove DEFAULTS,
+ 2014-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
-
+ 2014-03-25    Mal Chambeyron        Add Hierarchy Nodes to Extract, reference [pxipmx04_extract_v2]
+                                     Change Sales Org to [division_code] 
+ 2014-03-25    Mal Chambeyron        Added Division [promax_division] and Shipping Type [1] to Record   
+                                     to address "Shipping type cannot be modified on an existing account." condition
+                                     
 *******************************************************************************/
 
   procedure execute(
@@ -294,7 +298,10 @@ create or replace package body pxi_app.pxipmx03_extract_v2 as
         pxi_common.char_format(payer_cust_code, 10, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_nullable) || -- payer_customer_code -> PayerCode
         pxi_common.char_format(case tax_classification_code when '0' then 'Y' else 'N' end, 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- tax_exempt -> TaxExempt
         pxi_common.char_format(case sales_org_code when pxi_common.fc_australia then 'AUD' when pxi_common.fc_new_zealand then 'NZD' else null end, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> DefaultCurrenty
-        pxi_common.char_format(sales_org_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- sales_org_code -> SalesOrg
+        -- pxi_common.char_format(sales_org_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- sales_org_code -> SalesOrg
+        pxi_common.char_format(division_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- division_code -> SalesOrg
+        pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- promax_division -> Division
+        pxi_common.char_format('1', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) -- CONSTANT '1' -> ShippingType
         as output_record,
         promax_company,
         promax_division,
@@ -312,8 +319,52 @@ create or replace package body pxi_app.pxipmx03_extract_v2 as
         last_billing_yyyypp,
         in_cust_hier,
         priority
-      from table(pxipmx03_extract_v2.pt_cust_list(i_promax_company,i_promax_division,i_eff_date))
-      where in_cust_hier = 1
+      from (
+      
+        select        
+          promax_company,
+          promax_division,
+          sales_org_code,
+          division_code,
+          distbn_chnl_code,
+          cust_code,
+          cust_name,
+          payer_cust_code,
+          tax_classification_code,
+          cust_header_order_block_flag,
+          cust_header_deletion_flag,
+          sales_area_order_block_flag,
+          sales_area_deletion_flag,
+          last_billing_yyyypp,
+          in_cust_hier,
+          priority
+        from table(pxipmx03_extract_v2.pt_cust_list(i_promax_company,i_promax_division,i_eff_date))
+        where in_cust_hier = 1
+        
+        union all
+        
+        select        
+          i_promax_company as promax_company,
+          i_promax_division as promax_division,
+          i_promax_company as sales_org_code,
+          division_code,
+          null as distbn_chnl_code,
+          cust_code,
+          cust_name,
+          null as payer_cust_code,
+          null as tax_classification_code,
+          null as cust_header_order_block_flag,
+          null as cust_header_deletion_flag,
+          null as sales_area_order_block_flag,
+          null as sales_area_deletion_flag,
+          null as last_billing_yyyypp,
+          1 as in_cust_hier,
+          null as priority
+        from table(pxipmx04_extract_v2.pt_output(i_promax_company,i_promax_division,i_eff_date))
+        where cust_code like '004%'
+      )
+      order by 
+        cust_code
 
     )
     loop
