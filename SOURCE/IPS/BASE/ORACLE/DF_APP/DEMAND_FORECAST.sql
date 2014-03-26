@@ -12,6 +12,7 @@ PACKAGE        demand_forecast AS
   2013-11-27  Chris Horn            Added promax type codes.
   2013-12-02  Chris Horn            Added new demand loading number translation
                                     codes. 
+  2014-03-27  Mal Chambeyron        Include demand_forecast.gc_dmnd_type_7, Excluded for TESTING
               
   ********************************************************************************/
   -- Forecast Type Constants
