@@ -3,8 +3,8 @@ PACKAGE BODY        demand_forecast AS
   -- Package Constants
   pc_package_name           CONSTANT common.st_package_name := 'DEMAND_FORECAST';
   -- House Keeping Files
-  pc_keep_old_files         CONSTANT common.st_counter      := 200;
-  pc_keep_old_draft_files   CONSTANT common.st_counter      := 200;
+  pc_keep_old_files         CONSTANT common.st_counter      := 14;
+  pc_keep_old_draft_files   CONSTANT common.st_counter      := 14;
   -- Archiving Constants
   pc_archive_days_123_fcst  CONSTANT common.st_counter      := 60;
   pc_archive_days_45_fcst   CONSTANT common.st_counter      := 400;
@@ -1482,7 +1482,7 @@ PACKAGE BODY        demand_forecast AS
             t1.fcst_id = i_fcst_id and 
             t1.type in (
                 demand_forecast.gc_dmnd_type_1,demand_forecast.gc_dmnd_type_2,demand_forecast.gc_dmnd_type_3,demand_forecast.gc_dmnd_type_4,
-                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,/* demand_forecast.gc_dmnd_type_7, TESTING*/ demand_forecast.gc_dmnd_type_8,
+                demand_forecast.gc_dmnd_type_5,demand_forecast.gc_dmnd_type_6,demand_forecast.gc_dmnd_type_7,demand_forecast.gc_dmnd_type_8,
                 demand_forecast.gc_dmnd_type_9)
           group by
             t1.dmnd_grp_org_id, 
@@ -4741,4 +4741,4 @@ PACKAGE BODY        demand_forecast AS
       logit.leave_method;
       RETURN common.gc_error;
   END get_ovrd_tdu;
-END demand_forecast; 
+END demand_forecast;
