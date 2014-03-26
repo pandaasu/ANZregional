@@ -20,7 +20,7 @@ create or replace package pxi_app.pxipmx09_extract_v2 as
  27/07/2013    Mal Chambeyron        Formatted SQL Output
  21/08/2013    Chris Horn            Cleaned Up Code
  28/08/2013    Chris Horn            Made code generic for OZ.
- 2013-03-12    Mal Chambeyron        Remove DEFAULTS,
+ 2014-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
  2014-03-25    Mal Chambeyron        Updated filter criteria  
