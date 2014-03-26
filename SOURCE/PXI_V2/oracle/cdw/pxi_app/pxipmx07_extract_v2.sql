@@ -26,12 +26,10 @@ create or replace package pxi_app.pxipmx07_extract_v2 as
  2014-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
- 2013-03-21    Mal Chambeyron        Modify Sales Data Filter ..
-                                     - [creatn_date] >= trunc([i_creation_date]-28) 
-                                     - [billing_eff_date] <= end of [i_creation_date] Mars Week 
- 2013-03-24    Mal Chambeyron        Updated [billing_eff_date] <= end of [i_creation_date] Mars Week
-                                     to correct inconsistent behaviour dependant on client (NLS)
-            
+ 2014-03-25    Mal Chambeyron        Updated filter criteria  
+                                     - Creation Date > 28 days prior to [i_creation_date]
+                                     - Billing Effective Date within the Mars Week for [i_creation_date] 
+
 *******************************************************************************/
 
 /*******************************************************************************
@@ -132,11 +130,23 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
             and t1.order_doc_line_num = t2.order_doc_line_num (+)
            -- Now join to the material zrep detail
             and t1.matl_code = t3.matl_code
-            and t1.creatn_date >= trunc(i_creation_date-28) -- Include creation date > 28 days previous
             -- Not null check added to accommodate new restrictions on output format
             and t1.matl_entd is not null
-            -- Limit [billing_eff_date] <= end of [i_creation_date] Mars Week
-            and t1.billing_eff_date <= trunc(i_creation_date) + 
+            --------------------------------------------------------------------
+            and t1.creatn_date >= trunc(i_creation_date-28) -- Creation Date > 28 days prior to [i_creation_date]
+            and t1.billing_eff_date -- Billing Effective Date within the Mars Week for [i_creation_date] 
+              between
+              trunc(i_creation_date) +
+              case to_char(i_creation_date, 'DY')
+                when 'SUN' then 0
+                when 'MON' then -1
+                when 'TUE' then -2
+                when 'WED' then -3
+                when 'THU' then -4
+                when 'FRI' then -5
+                when 'SAT' then -6
+              end -- Mars Week Start Date
+              and trunc(i_creation_date) +
               case to_char(i_creation_date, 'DY')
                 when 'SUN' then 6
                 when 'MON' then 5
@@ -145,11 +155,11 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
                 when 'THU' then 2
                 when 'FRI' then 1
                 when 'SAT' then 0
-              end
+              end -- Mars Week End Date
+            --------------------------------------------------------------------                            
           );
-        
+
    begin
-   
      -- Open cursor with the extract data.
      open csr_input;
      loop
