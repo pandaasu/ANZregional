@@ -23,8 +23,12 @@ create or replace package pxi_app.pxipmx09_extract_v2 as
  2013-03-12    Mal Chambeyron        Remove DEFAULTS,
                                      Replace [pxi_common.promax_config]
                                      Use Suffix
- 2014-03-20    Mal Chambeyron        Include Pricing Condition Effectivity date 
-                                     filter on invoice_date
+ 2014-03-25    Mal Chambeyron        Updated filter criteria  
+                                     - Creation Date > 28 days prior to [i_creation_date]
+                                     - Billing Effective Date within the Mars Week for [i_creation_date] 
+ 2014-03-25    Mal Chambeyron        Changes to support PC Actual Extract Criteria ..
+                                     [required_for_price] > [required_for_pcact]
+                                     t01.division = t03.promax_division
 
 *******************************************************************************/
 
@@ -89,12 +93,10 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
           pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
           pxi_common.char_format(material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
           pxi_common.date_format(invoicedate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- invoicedate -> InvoiceDate
-          --pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
           pxi_common.numb_format(discountgiven, 's999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
           pxi_common.char_format(conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
           pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
           pxi_common.char_format(promotion_number, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- promotion_number -> PromotionNumber
-
         ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
@@ -123,7 +125,7 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
                 from pxi.pmx_extract_criteria
                 where promax_company = i_promax_company
                 and promax_division = i_promax_division
-                and required_for_price = 'YES'
+                and required_for_pcact = 'YES'
               ) t03
           where
               t01.pmnum = t02.kosrt and
@@ -132,10 +134,34 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
               t01.zrep_matl_code = t02.matnr and
               t01.pricing_condition = t02.kschl and
               t01.invoice_date between t02.datab and t02.datbi and -- Include Pricing Condition Effectivity date filter on invoice_date
-              t01.lads_date > trunc(i_creation_date) and
               -- Now make sure the correct data is being extracted.
               t01.sales_org = t03.promax_company and
-              ((t01.sales_org = pxi_common.fc_australia and t01.cust_division = t03.customer_division) or (t01.sales_org = pxi_common.fc_new_zealand))
+              ((t01.sales_org = pxi_common.fc_australia and t01.division = t03.promax_division) or (t01.sales_org = pxi_common.fc_new_zealand))
+              --------------------------------------------------------------------
+              and t01.lads_date >= trunc(i_creation_date-28) -- Creation Date > 28 days prior to [i_creation_date]
+              and to_date(t01.invoice_date, 'YYYYMMDD') -- Billing Effective Date within the Mars Week for [i_creation_date] 
+                between
+                trunc(i_creation_date) +
+                case to_char(i_creation_date, 'DY')
+                  when 'SUN' then 0
+                  when 'MON' then -1
+                  when 'TUE' then -2
+                  when 'WED' then -3
+                  when 'THU' then -4
+                  when 'FRI' then -5
+                  when 'SAT' then -6
+                end -- Mars Week Start Date
+                and trunc(i_creation_date) +
+                case to_char(i_creation_date, 'DY')
+                  when 'SUN' then 6
+                  when 'MON' then 5
+                  when 'TUE' then 4
+                  when 'WED' then 3
+                  when 'THU' then 2
+                  when 'FRI' then 1
+                  when 'SAT' then 0
+                end -- Mars Week End Date
+              --------------------------------------------------------------------
         ------------------------------------------------------------------------
         );
         --======================================================================
@@ -148,7 +174,7 @@ create or replace package body pxi_app.pxipmx09_extract_v2 as
        exit when csr_input%notfound;
       -- Create the new interface when required
       if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface(pc_interface_name||'.'||pxi_common.promax_interface_suffix(trim(substr(v_data,7,3)),trim(substr(v_data,10,3))));
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name||'.'||pxi_common.promax_interface_suffix(i_promax_company,i_promax_division));
       end if;
       -- Append the interface data
       lics_outbound_loader.append_data(v_data);
