@@ -19,8 +19,10 @@ create or replace package pxi_app.pxipmx12_extract_v2 as
  2014-02-07  Jonathan Girling      Created.
  2014-03-12  Mal Chambeyron        Remove DEFAULTS,
                                    Replace [pxi_common.promax_config]
- 2014-03-21  Mal Chambeyron        Ensure VARCHAR2 representation of date is in fact a DATE
-
+ 2014-03-25  Mal Chambeyron        Updated filter criteria  
+                                   - Creation Date > 28 days prior to [i_creation_date]
+                                   - Billing Effective Date within the Mars Week for [i_creation_date] 
+                                                                      
 *******************************************************************************/
 
 /*******************************************************************************
@@ -72,20 +74,19 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
         ------------------------------------------------------------------------
         -- FORMAT OUTPUT
         ------------------------------------------------------------------------
-          pxi_common.char_format('record_type','336002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336002' -> RecordType
-          pxi_common.char_format('promax_company',promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
-          pxi_common.char_format('promax_division',promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
-          pxi_common.char_format('invoice_number',invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
-          pxi_common.char_format('invoice_line_number',invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
-          pxi_common.char_format('customer_hierarchy',customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
-          pxi_common.char_format('material',material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
-          pxi_common.date_format('invoice_date',invoicedate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- invoicedate -> InvoiceDate
-          --pxi_common.numb_format(discountgiven, '9999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
-          pxi_common.numb_format('discount_given',discountgiven, 's999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
-          pxi_common.char_format('condition_type',conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
-          pxi_common.char_format('currency',currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
-          pxi_common.char_format('intentionally_blank',' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT ' ' -> PromotionNumber
-        -------------------------------------------------------------------------
+          pxi_common.char_format('336002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '336002' -> RecordType
+          pxi_common.char_format(promax_company, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+          pxi_common.char_format(promax_division, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+          pxi_common.char_format(invoicenumber, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicenumber -> InvoiceNumber
+          pxi_common.char_format(invoicelinenumber, 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- invoicelinenumber -> InvoiceLineNumber
+          pxi_common.char_format(customerhierarchy, 8, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- customerhierarchy -> CustomerHierarchy
+          pxi_common.char_format(material, 18, pxi_common.fc_format_type_ltrim_zeros, pxi_common.fc_is_not_nullable) || -- material -> Material
+          pxi_common.date_format(invoicedate, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- invoicedate -> InvoiceDate
+          pxi_common.numb_format(discountgiven, 's999990.00', pxi_common.fc_is_not_nullable) || -- discountgiven -> DiscountGiven
+          pxi_common.char_format(conditiontype, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- conditiontype -> ConditionType
+          pxi_common.char_format(currency, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- currency -> Currency
+          pxi_common.char_format(' ', 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- CONSTANT ' ' -> PromotionNumber
+        ------------------------------------------------------------------------
         from (
         ------------------------------------------------------------------------
         -- SQL
@@ -97,7 +98,12 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
             t01.line_no as invoicelinenumber,
             t01.sold_to_cust_code as customerhierarchy,
             t01.zrep_matl_code as material,
-            to_date(t01.billing_date, 'yyyymmdd') as invoicedate, -- Ensure VARCHAR2 representation of date is in fact a DATE
+            case 
+              when nvl(t01.billing_date, '00000000') = '00000000' then
+                to_date('19010101', 'YYYYMMDD')
+              else    
+                to_date(t01.billing_date, 'YYYYMMDD')
+            end as invoicedate,
             round(case when t01.pricing_condition = 'SKTO' then t01.discount / 1.1 else t01.discount * 1 end, 2) as discountgiven,
             t01.pricing_condition as conditiontype,
             t01.currency as currency
@@ -252,7 +258,37 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
               b.orgid = t03.promax_company and
               --  ((b.orgid = '147' and k.orgid = t03.cust_division) or (b.orgid = '149'))
               ((b.orgid = '147' and c.prod_spart = t03.promax_division) or (b.orgid = '149'))
-              and a.lads_date > trunc(i_creation_date)
+              ------------------------------------------------------------------
+              and a.lads_date >= trunc(i_creation_date-28) -- Creation Date > 28 days prior to [i_creation_date]
+              and -- Billing Effective Date within the Mars Week for [i_creation_date] 
+                case 
+                  when nvl(l.datum, '00000000') = '00000000' then
+                    to_date('19010101', 'YYYYMMDD')
+                  else    
+                    to_date(l.datum, 'YYYYMMDD')
+                end -- billing_date
+                between
+                trunc(i_creation_date) +
+                case to_char(i_creation_date, 'DY')
+                  when 'SUN' then 0
+                  when 'MON' then -1
+                  when 'TUE' then -2
+                  when 'WED' then -3
+                  when 'THU' then -4
+                  when 'FRI' then -5
+                  when 'SAT' then -6
+                end -- Mars Week Start Date
+                and trunc(i_creation_date) +
+                case to_char(i_creation_date, 'DY')
+                  when 'SUN' then 6
+                  when 'MON' then 5
+                  when 'TUE' then 4
+                  when 'WED' then 3
+                  when 'THU' then 2
+                  when 'FRI' then 1
+                  when 'SAT' then 0
+                end -- Mars Week End Date
+              ------------------------------------------------------------------              
               -- remaining joins
               and
                a.lads_status = 1
@@ -300,7 +336,7 @@ create or replace package body pxi_app.pxipmx12_extract_v2 as
        exit when csr_input%notfound;
       -- Create the new interface when required
       if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface(pc_interface_name||'.'||pxi_common.promax_interface_suffix(trim(substr(v_data,7,3)),trim(substr(v_data,10,3))));
+        v_instance := lics_outbound_loader.create_interface(pc_interface_name||'.'||pxi_common.promax_interface_suffix(i_pmx_company,i_pmx_division));
       end if;
       -- Append the interface data
       lics_outbound_loader.append_data(v_data);
