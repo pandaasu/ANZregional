@@ -53,14 +53,14 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     Variance Due to Representing Decimals as
                                     Integers.
                                     NOTE : CEIL Still Used on Splits
-  2014-03-17  Mal Chambeyron        Remove the filter on Market Activities
-                                    (pxi_common_df.fc_dmnd_type_7)
-                                    was in place for testing phase.
   2014-03-19  Mal Chambeyron        Order output .. Discovered as REQUIRED by Promax PX  
                                       order by
                                         px_dmnd_plng_node,
                                         zrep_matl_code,
                                         start_date
+  2014-03-27  Mal Chambeyron        Remove the filter on Market Activities
+                                    (pxi_common_df.fc_dmnd_type_7)
+                                    was in place for testing phase.
 
 *******************************************************************************/
 
@@ -385,7 +385,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         pxi_common_df.fc_dmnd_type_4, -- Reconcile
         pxi_common_df.fc_dmnd_type_5, -- Auto Adjustment
         pxi_common_df.fc_dmnd_type_6, -- Override
-        -- pxi_common_df.fc_dmnd_type_7, -- Market Activities
+        pxi_common_df.fc_dmnd_type_7, -- Market Activities
         pxi_common_df.fc_dmnd_type_8, -- Data Driven Event
         pxi_common_df.fc_dmnd_type_9  -- Target Impact
       )
