@@ -1456,12 +1456,23 @@ PACKAGE BODY        demand_forecast AS
 
   procedure perform_promax_adjustment(i_fcst_id IN common.st_id) is
     v_result_msg     common.st_message_string;
+     -- Cursor to lookup the material determination offset.
       cursor csr_dmnd_data is
+        select 
+          t100.dmnd_grp_org_id,
+          t100.mars_week, 
+          t100.zrep, 
+          t100.apollo_qty,
+          t100.apollo_gsv,
+          t100.promax_qty,
+          t100.promax_gsv,
+          -- This query pulls out the first tdu found aginst the supplied promax data and uses it.  This is to save having to try and rematerial determinate,
+          (select tdu from dmnd_data t0 where t0.fcst_id = i_fcst_id and t0.dmnd_grp_org_id = t100.dmnd_grp_org_id and t0.type = demand_forecast.gc_dmnd_type_b and t0.mars_week = t100.mars_week and t0.zrep = t100.zrep and rownum = 1) as tdu
+        from (
         select 
           t10.dmnd_grp_org_id,
           t10.mars_week, 
           t10.zrep, 
-          t10.tdu,
           sum(apollo_qty) as apollo_qty,
           sum(apollo_gsv) as apollo_gsv,
           sum(promax_qty) as promax_qty,
@@ -1471,7 +1482,6 @@ PACKAGE BODY        demand_forecast AS
             t1.dmnd_grp_org_id, 
             t1.mars_week, 
             t1.zrep, 
-            t1.tdu,
             sum(qty_in_base_uom) as apollo_qty,
             sum(gsv) as apollo_gsv,
             null as promax_qty,
@@ -1487,14 +1497,12 @@ PACKAGE BODY        demand_forecast AS
           group by
             t1.dmnd_grp_org_id, 
             t1.mars_week, 
-            t1.zrep,
-            t1.tdu
+            t1.zrep
           union all
           select 
             t1.dmnd_grp_org_id, 
             t1.mars_week, 
             t1.zrep, 
-            t1.tdu,
             null as apollo_qty,
             null as apollo_gsv,
             sum(qty_in_base_uom) as promax_qty,
@@ -1507,14 +1515,12 @@ PACKAGE BODY        demand_forecast AS
           group by
             t1.dmnd_grp_org_id, 
             t1.mars_week, 
-            t1.zrep,
-            t1.tdu
+            t1.zrep
         ) t10
         group by 
           t10.dmnd_grp_org_id,
           t10.mars_week, 
-          t10.zrep,
-          t10.tdu;
+          t10.zrep) t100;
       rv_dmnd_data csr_dmnd_data%rowtype;
     begin
       logit.enter_method (pc_package_name, 'PERFORM_PROMAX_ADJUSTMENT');
@@ -1561,7 +1567,6 @@ PACKAGE BODY        demand_forecast AS
             dmnd_grp_org_id = rv_dmnd_data.dmnd_grp_org_id and
             mars_week = rv_dmnd_data.mars_week and 
             zrep = rv_dmnd_data.zrep and
-            tdu = rv_dmnd_data.tdu and 
             type = gc_dmnd_type_b;
         end if;
       end loop;
