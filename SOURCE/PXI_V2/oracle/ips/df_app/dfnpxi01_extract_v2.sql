@@ -61,6 +61,7 @@ create or replace package df_app.dfnpxi01_extract_v2 as
   2014-03-27  Mal Chambeyron        Remove the filter on Market Activities
                                     (pxi_common_df.fc_dmnd_type_7)
                                     was in place for testing phase.
+  2014-03-31  Mal Chambeyron        Do NOTHING for MOE's Other than Petcare [0196], for Execute
 
 *******************************************************************************/
 
@@ -1014,6 +1015,12 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     v_instance number(15,0);
 
   begin
+  
+    -- Do NOTHING for MOE's Other than Petcare [0196], for Execute
+    v_moe_code := forecast_moe(i_fcst_id); -- assign so we don't need to lookup twice
+    if v_moe_code != pxi_common.fc_moe_pet then 
+      return;
+    end if;
 
     -- request lock (on interface)
     begin
@@ -1024,7 +1031,6 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     end;
 
     -- Now determine the interface name to use for this file.
-    v_moe_code := forecast_moe(i_fcst_id); -- assign so we don't need to lookup twice
     v_interface_name_with_suffix := null;
     case v_moe_code
       when pxi_common.fc_moe_nz then
@@ -1038,7 +1044,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       else
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown moe code [' || v_moe_code || '] for forecast id [' || i_fcst_id || '].');
     end case;
-
+    
     -- Ensure 335DMND temporary table is empty
     delete from px_355dmnd_history_temp;
 
