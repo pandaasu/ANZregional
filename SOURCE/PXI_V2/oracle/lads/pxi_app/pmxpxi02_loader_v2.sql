@@ -44,9 +44,13 @@ create or replace package pxi_app.pmxpxi02_loader_v2 as
   2013-08-16  Jonathan Girling      Updated posting_key_reversal_debit logic
   2013-10-29  Chris Horn            Added header detail summation check.
   2013-11-27  Jonathan Girling		  Added Australia Tax code logic
-  2014-03-19  Mal Chambeyron        Allow 20 characters for [pc_allocation] on 
+  2014-03-19  Mal Chambeyron        Allow 20 characters for [pc_allocation] on
                                     read, however trim to original 12 characters
                                     on use.
+  2014-04-03  Chris Horn            Enhanced algorithm to reallocate tax amounts
+                                    below saps ability to recalculate and verify
+                                    each document is sorted so as to minimise
+                                    the number of resulting idocs created. 
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -70,6 +74,21 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
   Package Constants
 *******************************************************************************/
   pc_package_name constant pxi_common.st_package_name := 'PMXPXI02_LOADER_V2';
+
+  -- Minimum taxable gross amounts.
+  pc_aust_min_taxable_gross pxi_common.st_amount := 0.06;
+  pc_nz_min_taxable_gross pxi_common.st_amount := 0.04;
+
+  -- Posting Key
+  subtype st_posting_key is varchar2(2);
+  pc_posting_key_payment_credit constant st_posting_key := '11';   -- Payment Credit
+  pc_posting_key_payment_debit  constant st_posting_key := '40';   -- Payment Debit
+  pc_posting_key_reversal_credit constant st_posting_key := '1';    -- Reversal Credit
+  pc_posting_key_reversal_debit  constant st_posting_key := '50';   -- Reversal Debit
+  subtype st_flag is varchar2(2 char);
+  pc_cust_is_vendor constant st_flag := 'V';   -- This is a vendor payment.
+  
+
 
 /*******************************************************************************
   Interface Field Definitions
@@ -114,26 +133,21 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
   pc_buy_stop_date constant fflu_common.st_name := 'Buy Stop Date';
   pc_bom_header_sku_stock_code constant fflu_common.st_name := 'BOM Header Sku Stock Code';
 
-  -- Posting Key
-  subtype st_posting_key is varchar2(2);
-  pc_posting_key_payment_credit constant st_posting_key := '11';   -- Payment Credit
-  pc_posting_key_payment_debit  constant st_posting_key := '40';   -- Payment Debit
-  pc_posting_key_reversal_credit constant st_posting_key := '1';    -- Reversal Credit
-  pc_posting_key_reversal_debit  constant st_posting_key := '50';   -- Reversal Debit
-  subtype st_flag is varchar2(2 char);
-  pc_cust_is_vendor constant st_flag := 'V';   -- This is a vendor payment.
-
 /*******************************************************************************
   Package Variables
 *******************************************************************************/
    -- AR Data and AP Data
-   ptv_gl_ar_data pxiatl01_extract.tt_gl_data;
-   ptv_gl_ap_data pxiatl01_extract.tt_gl_data;
+   ptv_gl_ar_data pxiatl01_extract_v2.tt_gl_data;
+   ptv_gl_ap_data pxiatl01_extract_v2.tt_gl_data;
    -- Header Detail Summation Checking Variables.
    pv_last_header_amount pxi_common.st_amount;
    pv_cur_detail_amount pxi_common.st_amount;
    pv_last_header_row_no fflu_common.st_count;
-
+   pv_last_header_type st_flag;
+   pv_tax_reallocate pxi_common.st_amount;
+   pv_last_header_ar_count pls_integer;
+   pv_last_header_ap_count pls_integer;
+   
 /*******************************************************************************
   NAME:      ON_START                                                     PUBLIC
 *******************************************************************************/
@@ -145,7 +159,11 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
     -- Initialise the header detail summation check.
     pv_last_header_amount := 0;
     pv_cur_detail_amount := 0;
+    pv_tax_reallocate := 0;
     pv_last_header_row_no := 0;
+    pv_last_header_ar_count := 0;
+    pv_last_header_ap_count := 0;
+    pv_last_header_type := null;
     -- Now initialise the data parsing wrapper.
     fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,true,true);
     -- Now define the column structure
@@ -188,8 +206,6 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
     fflu_data.add_date_field_txt(pc_buy_start_date,833,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_date_field_txt(pc_buy_stop_date,841,8,'yyyymmdd',fflu_data.gc_null_min_date,fflu_data.gc_null_max_date,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_char_field_txt(pc_bom_header_sku_stock_code,849,40,fflu_data.gc_null_min_length,fflu_data.gc_allow_null,fflu_data.gc_trim);
-    
-    
   exception
     when others then
       fflu_data.log_interface_exception('ON_START');
@@ -208,15 +224,98 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
 
 *******************************************************************************/
   procedure perform_header_check is
+    procedure sort_claims(it_claims in out pxiatl01_extract_v2.tt_gl_data, i_sort_from in pls_integer) is
+      tv_temp pxiatl01_extract_v2.tt_gl_data;
+      v_search pls_integer;
+      v_lowest pls_integer; 
+      v_count pls_integer;
+      v_max pls_integer;
+    begin
+      -- Copy all the claims to a tempoary collection.
+      v_max := it_claims.count;
+      tv_temp.delete; -- Ensure temp collection is empty.
+      v_count := i_sort_from; 
+      loop
+        v_count := v_count + 1;
+        if it_claims.exists(v_count) = true then 
+          tv_temp(tv_temp.count+1) := it_claims(v_count);
+          it_claims.delete(v_count);
+        end if;
+        exit when v_count >= v_max;
+      end loop;
+      -- Keep track of the maximum number of records that we are sorting.  
+      v_max := tv_temp.count;
+      -- Commence a loop to start the search for the lowest. 
+      if v_max > 0 then 
+        loop    
+          v_lowest := null;
+          v_search := 0;
+          loop
+            v_search := v_search + 1;
+            if tv_temp.exists(v_search) = true then 
+              if v_lowest is null then 
+                v_lowest := v_search;
+              else 
+                -- Sort first by abs(tax_amount), then by abs(amount) so there this is always likely to be a taxable line at the end of the sort.
+                if abs(tv_temp(v_search).tax_amount) < abs(tv_temp(v_lowest).tax_amount) then 
+                  v_lowest := v_search; 
+                elsif abs(tv_temp(v_search).tax_amount) = abs(tv_temp(v_lowest).tax_amount) then 
+                  if abs(tv_temp(v_search).amount) < abs(tv_temp(v_lowest).amount) then 
+                    v_lowest := v_search;
+                  end if;
+                end if;
+              end if;
+            end if;
+            -- Exit search loop when we have looked for as many records as we orginally had.
+            exit when v_search >= v_max;
+          end loop;
+          -- Copy the next lowest amount back into the collection.  
+          it_claims(it_claims.count+1) := tv_temp(v_lowest);
+          -- Now delete the copied record out of the temp collection.
+          tv_temp.delete(v_lowest);
+          -- Exit when we have no more records to copy back into the orginal collection.
+          exit when tv_temp.count = 0;
+        end loop; 
+      end if;
+    exception 
+      when others then
+        fflu_data.log_interface_exception('SORT_CLAIMS');
+    end sort_claims;
+  
   begin
     -- Perform the header check.
     if pv_last_header_amount <> pv_cur_detail_amount then
       fflu_data.log_interface_error(
         'Header Row',pv_last_header_row_no,'Header Amount [' || pv_last_header_amount || '] did not match sum of Detail Amounts [' || pv_cur_detail_amount || ']');
     end if;
+    --- Now sort all the records since the last header, this is to try and reduce the number of idocs generated by grouping the no tax lines together.  
+    if pv_last_header_type = pc_cust_is_vendor then
+      sort_claims(ptv_gl_ap_data, pv_last_header_ap_count);
+    else
+      sort_claims(ptv_gl_ar_data, pv_last_header_ar_count);
+    end if;
+    -- Now check if any reallocated tax needs to be applied to this current document being processed, then add to the last line of the document.
+    if abs(pv_tax_reallocate) > 0 then
+      if pv_last_header_type = pc_cust_is_vendor then
+        if ptv_gl_ap_data(ptv_gl_ap_data.count).tax_amount != 0 then
+          ptv_gl_ap_data(ptv_gl_ap_data.count).amount := ptv_gl_ap_data(ptv_gl_ap_data.count).amount + pv_tax_reallocate;
+          ptv_gl_ap_data(ptv_gl_ap_data.count).tax_amount := ptv_gl_ap_data(ptv_gl_ap_data.count).tax_amount + pv_tax_reallocate;
+        else 
+          fflu_data.log_interface_error('Tax Reallocation',pv_tax_reallocate,'Unable to reallocate tax amount as no taxable line could be found within [' || ptv_gl_ap_data(ptv_gl_ap_data.count).item_text || '].  This refers to the detail and header above this line or the last document if error was reported at the interface level.');
+        end if;
+      else 
+        if ptv_gl_ar_data(ptv_gl_ar_data.count).tax_amount != 0 then
+          ptv_gl_ar_data(ptv_gl_ar_data.count).amount := ptv_gl_ar_data(ptv_gl_ar_data.count).amount + pv_tax_reallocate;
+          ptv_gl_ar_data(ptv_gl_ar_data.count).tax_amount := ptv_gl_ar_data(ptv_gl_ar_data.count).tax_amount + pv_tax_reallocate;
+        else 
+          fflu_data.log_interface_error('Tax Reallocation',pv_tax_reallocate,'Unable to reallocate tax amount as no taxable line could be found within [' || ptv_gl_ar_data(ptv_gl_ar_data.count).item_text || '].  This refers to the detail and header above this line or the last document if error was reported at the interface level.');
+        end if;
+      end if;
+    end if;
     -- Reset the summation checking variables for the next header detail set.
     pv_last_header_amount := 0;
     pv_cur_detail_amount := 0;
+    pv_tax_reallocate := 0; 
     pv_last_header_row_no := fflu_utils.get_interface_row;
   exception
     when others then
@@ -227,8 +326,9 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
   NAME:      ON_DATA                                                      PUBLIC
 *******************************************************************************/
   procedure on_data(p_row in varchar2) is
-    rv_gl pxiatl01_extract.rt_gl_record;
+    rv_gl pxiatl01_extract_v2.rt_gl_record;
     v_bus_sgmnt pxi_common.st_bus_sgmnt;
+    v_reallocate_tax boolean; 
   begin
     -- Initialse Variable
     v_bus_sgmnt := null;
@@ -239,6 +339,10 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
         perform_header_check;
         -- Now set the new header amount field.
         pv_last_header_amount := fflu_data.get_number_field(pc_amount);
+        pv_last_header_type := fflu_data.get_char_field(pc_customer_is_a_vendor);
+        -- Record where in the collection we were up to for the later sorting.
+        pv_last_header_ar_count := ptv_gl_ar_data.count;
+        pv_last_header_ap_count := ptv_gl_ap_data.count;
       end if;
       -- Now process the detail records.
       if fflu_data.get_char_field(pc_type) = 'D' then
@@ -262,22 +366,35 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
         end if;
         -- Now lookup the tax reason code to use for the processing.
         -- Note : This will have to be updated for Australia.
+        v_reallocate_tax := false;
         if rv_gl.company = pxi_common.gc_new_zealand then
           if rv_gl.tax_amount > 0 then
-            rv_gl.tax_code := pxi_common.gc_tax_code_s2;
+            -- Perform a minimum tax check and accumulate this tax amount for later reallocation. 
+            if rv_gl.amount < pc_nz_min_taxable_gross then 
+              rv_gl.tax_code := pxi_common.gc_tax_code_se;
+              v_reallocate_tax := true;
+            else
+              rv_gl.tax_code := pxi_common.gc_tax_code_s2;
+            end if;
           else
             rv_gl.tax_code := pxi_common.gc_tax_code_se;
           end if;
         elsif rv_gl.company = pxi_common.gc_australia then
           if rv_gl.tax_amount > 0 then
-            rv_gl.tax_code := pxi_common.gc_tax_code_s1;
+            -- Perform a minimum tax check and accumulate this tax amount for later reallocation. 
+            if rv_gl.amount < pc_aust_min_taxable_gross then 
+              rv_gl.tax_code := pxi_common.gc_tax_code_s3;
+              v_reallocate_tax := true;
+            else
+              rv_gl.tax_code := pxi_common.gc_tax_code_s1;
+            end if;
           else
             rv_gl.tax_code := pxi_common.gc_tax_code_s3;
           end if;
         else
           fflu_data.log_field_error(pc_px_company_code,'Could not set tax amount, unknown Company Code.');
         end if;
-        -- Perform any speicifc posting key functionality.
+        -- Perform any specific posting key functionality.
         -- NOTE : Of which there is no special processing at this stage. Left as a template for future if required.
         case fflu_data.get_char_field(pc_posting_key)
           when pc_posting_key_payment_debit then
@@ -293,6 +410,12 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
           else
             fflu_data.log_field_error(pc_posting_key,'Unknown Posting Key');
         end case;
+        -- Now adjust if there is tax reallocation going on.
+        if v_reallocate_tax then 
+          pv_tax_reallocate := pv_tax_reallocate + rv_gl.tax_amount;
+          rv_gl.amount := rv_gl.amount - rv_gl.tax_amount;
+          rv_gl.tax_amount := 0;
+        end if;
         -- Specific AP Claims processing / Setup
         if fflu_data.get_char_field(pc_customer_is_a_vendor) = pc_cust_is_vendor then
           -- Set the account code to be the same as the promax debit code field.
@@ -407,9 +530,9 @@ create or replace package body pxi_app.pmxpxi02_loader_v2 as
       -- Now lets create the atlas IDOC interfaces with the data we have in
       -- memory.
       -- Send Accounts Payable Data
-      pxiatl01_extract.send_data(ptv_gl_ap_data,pxiatl01_extract.gc_doc_type_ap_claim,null);
+      pxiatl01_extract_v2.send_data(ptv_gl_ap_data,pxiatl01_extract_v2.gc_doc_type_ap_claim,null);
       -- Send Accounts Receivable Claims
-      pxiatl01_extract.send_data(ptv_gl_ar_data,pxiatl01_extract.gc_doc_type_ar_claim,null);
+      pxiatl01_extract_v2.send_data(ptv_gl_ar_data,pxiatl01_extract_v2.gc_doc_type_ar_claim,null);
     end if;
     -- Perform a final cleanup and a last progress logging.
     fflu_data.cleanup;
