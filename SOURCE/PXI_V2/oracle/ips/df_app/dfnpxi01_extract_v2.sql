@@ -62,6 +62,10 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     (pxi_common_df.fc_dmnd_type_7)
                                     was in place for testing phase.
   2014-03-31  Mal Chambeyron        Do NOTHING for MOE's Other than Petcare [0196], for Execute
+  2014-04-07  Mal Chambeyron        Modify [pt_forecast_and_history] to 
+                                    "CAP" Demand Weeks with ZERO Records .. 
+                                    To Stop Promax PX "Spreading" Demand Out till
+                                    the Next Populated Demand Week.
 
 *******************************************************************************/
 
@@ -569,6 +573,9 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     v_moe_code pxi_common.st_moe_code;
     v_jdbc_connection_name varchar2(32 char);
 
+    rv_previous rt_forecast_and_history;
+    v_first_row boolean;
+    
   begin
 
     -- Lookup MOE code for Forecast Id
@@ -589,6 +596,12 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown moe code [' || v_moe_code || '] for forecast id [' || i_fcst_id || '].');
     end case;
 
+    -- Initialise Loops 
+    rv_previous.px_dmnd_plng_node := ' ';
+    rv_previous.zrep_matl_code := ' ';
+    rv_previous.start_date := null;
+    v_first_row := true;
+    
     for rv_row in (
 
         select
@@ -660,13 +673,70 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       and forecast.end_date <= account_sku_details_x.asd_stop_date(+)
       and forecast.px_dmnd_plng_node = ac.ac_code(+) -- forecast > account
       and forecast.zrep_matl_code = sku.sku_stock_code(+) -- forecast > sku
+      -- 
+      order by
+        forecast.px_dmnd_plng_node,
+        forecast.zrep_matl_code,
+        forecast.start_date
 
     )
     loop
 
-      pipe row(rv_row);
+      -- Except First Row .. 
+      -- On change of Account [px_dmnd_plng_node], Sku [zrep_matl_code] or Start Date [start_date]
+      -- Check for need to ADD a Zero Record ..
+      if (v_first_row = false
+        and (rv_previous.px_dmnd_plng_node != rv_row.px_dmnd_plng_node
+          or rv_previous.zrep_matl_code != rv_row.zrep_matl_code 
+          or rv_row.start_date - rv_previous.start_date > 7 
+        )
+      ) then
+        rv_previous.mars_week := 0;
+        rv_previous.start_date := rv_previous.start_date + 7;
+        rv_previous.end_date := rv_previous.end_date + 7;
+        rv_previous.created_date := sysdate;
+        rv_previous.modified_date := sysdate;
+        if rv_previous.split_qty != 0 then -- Only Need to Write if Previous Row was NOT Zero (History)
+          rv_previous.split_qty := 0;
+          pipe row(rv_previous);
+        end if;
+      else 
+        v_first_row := false;
+      end if;
 
+      pipe row(rv_row); -- Write existing rows
+
+      -- Copy Current Row into Previous Row
+      rv_previous.fcst_id := rv_row.fcst_id;
+      rv_previous.moe_code := rv_row.moe_code;
+      rv_previous.sales_org := rv_row.sales_org;
+      rv_previous.bus_sgmnt_code := rv_row.bus_sgmnt_code;
+      rv_previous.dmnd_grp_code := rv_row.dmnd_grp_code;
+      rv_previous.zrep_matl_code := rv_row.zrep_matl_code;
+      rv_previous.mars_week := rv_row.mars_week;
+      rv_previous.start_date := rv_row.start_date;
+      rv_previous.end_date := rv_row.end_date;
+      rv_previous.dmnd_plng_node := rv_row.dmnd_plng_node;
+      rv_previous.px_dmnd_plng_node := rv_row.px_dmnd_plng_node;
+      rv_previous.split_qty := rv_row.split_qty;
+      rv_previous.created_date := rv_row.created_date;
+      rv_previous.modified_date := rv_row.modified_date;
+      rv_previous.has_px_account_sku := rv_row.has_px_account_sku;
+      rv_previous.has_px_account := rv_row.has_px_account;
+      rv_previous.has_px_sku := rv_row.has_px_sku;
+      
     end loop;
+    
+    -- Write out Zero of Previous Row, with Start Date + 7 .. for Last Row 
+    rv_previous.mars_week := 0;
+    rv_previous.start_date := rv_previous.start_date + 7;
+    rv_previous.end_date := rv_previous.end_date + 7;
+    rv_previous.created_date := sysdate;
+    rv_previous.modified_date := sysdate;
+    if rv_previous.split_qty != 0 then -- Only Need to Write if Previous Row was NOT Zero
+      rv_previous.split_qty := 0;
+      pipe row(rv_previous);
+    end if;
 
   exception
     when others then
