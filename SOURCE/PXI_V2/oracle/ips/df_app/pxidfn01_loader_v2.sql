@@ -43,6 +43,8 @@ create or replace package df_app.pxidfn01_loader_v2 as
   2014-02-26  Chris Horn            Added additional parameter to the LICS
                                     stream to make sure Promax forecasts
                                     will append.
+  2014-04-08  Mal Chambeyron        Assign Casting Week, of the Latest Valid Draft 
+                                    / Forecast for the MOE
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
@@ -96,7 +98,7 @@ create or replace package body df_app.pxidfn01_loader_v2 as
 *******************************************************************************/
   -- Record for loading a file.
   prv_load_file load_file%rowtype;
-  pv_casting_week date;
+  pv_casting_week number(7, 0);
   pv_line_counter common.st_count;
   pv_draft boolean;
   pv_publish boolean;
@@ -105,9 +107,8 @@ create or replace package body df_app.pxidfn01_loader_v2 as
 *******************************************************************************/
   procedure on_start is
     v_result_msg common.st_message_string;
+    v_draft_publish_switch varchar2(5);
   begin
-    -- Assign the casting week to be the currnet system date.
-    pv_casting_week := trunc(sysdate);
     -- Intialise the Line counter.
     pv_line_counter := 0;
     -- Initialise the type.
@@ -165,12 +166,30 @@ create or replace package body df_app.pxidfn01_loader_v2 as
    case substr(fflu_utils.get_interface_suffix,2,1)
      when pc_file_type_draft then
        pv_draft := true;
+       v_draft_publish_switch := 'DRAFT';
      when pc_file_type_publish then
        pv_publish := true;
+       v_draft_publish_switch := 'FCST';
      else
        pv_draft := true;
+       v_draft_publish_switch := 'DRAFT';
    end case;
 
+   -- Assign Casting Week, of the Latest Valid Draft / Forecast for the MOE
+   select nvl(max(to_number(casting_year||casting_period||casting_week)),-1) into pv_casting_week
+   from df.fcst
+   where fcst_id in (
+     select max(fcst_id)
+     from df.fcst
+     where moe_code = prv_load_file.moe_code
+     and forecast_type = v_draft_publish_switch
+     and status = 'V'
+   );   
+   -- Raise Error If Unable to Locate Valid Draft / Forecast 
+   if pv_casting_week is null then
+     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Locate Matching ['||v_draft_publish_switch||'].');
+   end if;
+   
     -- Populate other values.
     prv_load_file.status := common.gc_loaded;
     prv_load_file.loaded_date := sysdate;
@@ -254,7 +273,8 @@ create or replace package body df_app.pxidfn01_loader_v2 as
       rv_load_dmnd.fcst_text           := null;
       rv_load_dmnd.promo_type          := null;
       rv_load_dmnd.mars_week           := demand_forecast.sql_get_mars_week (rv_load_dmnd.startdate);
-      rv_load_dmnd.casting_mars_week   := demand_forecast.sql_get_mars_week(pv_casting_week - 3);
+      -- rv_load_dmnd.casting_mars_week   := demand_forecast.sql_get_mars_week(pv_casting_week - 3);
+      rv_load_dmnd.casting_mars_week   := pv_casting_week;
       rv_load_dmnd.file_id             := prv_load_file.file_id;
       rv_load_dmnd.zrep_code           := fflu_data.get_char_field(pc_field_stock_code);
       rv_load_dmnd.source_code         := demand_forecast.get_source_code (rv_load_dmnd.zrep_code);
