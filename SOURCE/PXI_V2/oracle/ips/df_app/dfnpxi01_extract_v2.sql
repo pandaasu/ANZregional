@@ -66,6 +66,10 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     "CAP" Demand Weeks with ZERO Records .. 
                                     To Stop Promax PX "Spreading" Demand Out till
                                     the Next Populated Demand Week.
+  2014-04-09  Mal Chambeyron        Add Logic to Skip [Return] If Forecast 
+                                    Already has Promax PX Estimates Loaded.
+  2014-04-09  Mal Chambeyron        Add LICS_LOGGING so that Doesn't Silently 
+                                    "Fail" to Send.
 
 *******************************************************************************/
 
@@ -307,7 +311,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       select moe_code into v_moe_code from fcst where fcst_id = i_fcst_id;
     exception
       when no_data_found then
-        pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unable to find the forecast for the supplied id [' || i_fcst_id || '].');
+        null; -- Ignore
     end;
 
     return v_moe_code;
@@ -1083,20 +1087,54 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     v_moe_code pxi_common.st_moe_code;
     v_interface_name_with_suffix pxi_common.st_interface_name;
     v_instance number(15,0);
+    v_promax_rows_loaded number(20,0);
+    v_valid_forecast_count number(1,0);
 
   begin
   
+    -- Start Logging ..
+    lics_logging.start_log('DF to Promax PX - 355DMND.txt','DF_TO_PROMAX_PX_355DMND_'||i_fcst_id);
+  
+    -- Check for Valid Forecast 
+    select count(1) into v_valid_forecast_count
+    from df.fcst
+    where fcst_id = i_fcst_id
+    and forecast_type in ('DRAFT','FCST')
+    and status ='V';
+    if v_valid_forecast_count = 0 then 
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND, or INVALID : Forecast Type [DRAFT|FCST] and Status [V].');
+      lics_logging.end_log;
+      return;
+    end if;
+    
     -- Do NOTHING for MOE's Other than Petcare [0196], for Execute
     v_moe_code := forecast_moe(i_fcst_id); -- assign so we don't need to lookup twice
     if v_moe_code != pxi_common.fc_moe_pet then 
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Processing Limited to MOE ['||pxi_common.fc_moe_pet||'].');
+      lics_logging.end_log;
+      return;
+    end if;
+    
+    -- Check If Forecase Already has Promax PX Estimates Loaded 
+    select count(1) into v_promax_rows_loaded
+    from df.dmnd_data 
+    where fcst_id = i_fcst_id 
+    and type in ('B','U','P');
+    -- No Need to Continue If Forecast Already has Promax PX Estimates Loaded 
+    if v_promax_rows_loaded > 0 then
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Already has Promax PX Estimates Loaded, Types [B|U|P].');
+      lics_logging.end_log;
       return;
     end if;
 
     -- request lock (on interface)
+    lics_logging.write_log('INFO : Request Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     begin
       lics_locking.request(pc_interface_name);
     exception
       when others then
+        lics_logging.write_log('ERROR : Unable to Obtain Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+        lics_logging.end_log;
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE',substr('Unable to obtain interface lock ['||pc_interface_name||'] - '||sqlerrm, 1, 4000));
     end;
 
@@ -1112,12 +1150,16 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       when pxi_common.fc_moe_snack then
         v_interface_name_with_suffix := pc_interface_name || '.' || pxi_common.fc_interface_snack;
       else
-        pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown moe code [' || v_moe_code || '] for forecast id [' || i_fcst_id || '].');
+        lics_logging.write_log('ERROR : Unknown MOE [' || v_moe_code || '] for Forecast [' || i_fcst_id || '].');
+        lics_logging.end_log;
+        pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown MOE [' || v_moe_code || '] for Forecast [' || i_fcst_id || '].');
     end case;
     
     -- Ensure 335DMND temporary table is empty
+    lics_logging.write_log('INFO : Ensure 355DMND Temporary Table [px_355dmnd_history_temp] is Empty.');
     delete from px_355dmnd_history_temp;
 
+    lics_logging.write_log('INFO : Create 355DMND Records for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     for rv_row in (
 
       select
@@ -1150,6 +1192,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
 
       -- Create interface when required
       if lics_outbound_loader.is_created = false then
+        lics_logging.write_log('INFO : Create Outbound Interface ['||v_interface_name_with_suffix||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
         v_instance := lics_outbound_loader.create_interface(v_interface_name_with_suffix);
       end if;
 
@@ -1200,22 +1243,32 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     end loop;
 
     -- Replace 355DMND history for the current MOE (based on Forecast Id)
+    lics_logging.write_log('INFO : Replace 355DMND History [px_355dmnd_history] for MOE ['||v_moe_code||'].');
+    lics_logging.write_log('INFO : DELETE From [px_355dmnd_history] Where MOE ['||v_moe_code||'].');
     delete from px_355dmnd_history where moe_code = v_moe_code;
+    lics_logging.write_log('INFO : INSERT Into [px_355dmnd_history], From [px_355dmnd_history_temp] Where MOE ['||v_moe_code||'].');
     insert into px_355dmnd_history select * from px_355dmnd_history_temp where moe_code = v_moe_code; -- px_355dmnd_history and px_355dmnd_history_temp have identical structures
 
     -- Finalise interface when required
     if lics_outbound_loader.is_created = true then
+      lics_logging.write_log('INFO : Finalise Outbound Interface ['||v_interface_name_with_suffix||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
       lics_outbound_loader.finalise_interface;
     end if;
 
     -- Commit changes to product history extract table
+    lics_logging.write_log('INFO : COMMIT 355DMND History [px_355dmnd_history] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     commit;
 
     -- Release lock (on interface)
+    lics_logging.write_log('INFO : Release Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     lics_locking.release(pc_interface_name);
 
     -- Email error report (if necessary)
+    lics_logging.write_log('INFO : EMail Error Report for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     dfnpxi01_extract_v2.email_error_report(v_moe_code);
+    
+    -- End Logging
+    lics_logging.end_log;
 
   exception
      when others then
@@ -1224,6 +1277,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
          lics_outbound_loader.add_exception(substr(sqlerrm, 1, 512));
          lics_outbound_loader.finalise_interface;
        end if;
+       lics_logging.end_log;
        pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
