@@ -44,7 +44,10 @@ create or replace package df_app.pxidfn01_loader_v2 as
                                     stream to make sure Promax forecasts
                                     will append.
   2014-04-08  Mal Chambeyron        Assign Casting Week, of the Latest Valid Draft 
-                                    / Forecast for the MOE
+                                    / Forecast for the MOE.
+  2014-04-09  Mal Chambeyron        Raise Error If Forecast Already has 
+                                    Promax PX Estimates Loaded.
+                                    
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
@@ -108,6 +111,8 @@ create or replace package body df_app.pxidfn01_loader_v2 as
   procedure on_start is
     v_result_msg common.st_message_string;
     v_draft_publish_switch varchar2(5);
+    v_fcst_id number(20,0);
+    v_promax_rows_loaded number(20,0);
   begin
     -- Intialise the Line counter.
     pv_line_counter := 0;
@@ -174,20 +179,35 @@ create or replace package body df_app.pxidfn01_loader_v2 as
        pv_draft := true;
        v_draft_publish_switch := 'DRAFT';
    end case;
-
-   -- Assign Casting Week, of the Latest Valid Draft / Forecast for the MOE
-   select nvl(max(to_number(casting_year||casting_period||casting_week)),-1) into pv_casting_week
+   
+   -- Obtain Latest Valid Forecast Id
+   select max(fcst_id) into v_fcst_id
    from df.fcst
-   where fcst_id in (
-     select max(fcst_id)
-     from df.fcst
-     where moe_code = prv_load_file.moe_code
-     and forecast_type = v_draft_publish_switch
-     and status = 'V'
-   );   
-   -- Raise Error If Unable to Locate Valid Draft / Forecast 
+   where moe_code = prv_load_file.moe_code
+   and forecast_type = v_draft_publish_switch
+   and status = 'V';
+   -- Raise Error If Unable to Locate Valid Forecast Id 
+   if v_fcst_id is null then
+     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Locate Valid Forecast Id for ['||v_draft_publish_switch||':'||prv_load_file.moe_code||'].');
+   end if;
+   
+   -- Check If Forecase Already has Promax PX Estimates Loaded 
+   select count(1) into v_promax_rows_loaded
+   from df.dmnd_data 
+   where fcst_id = v_fcst_id 
+   and type in ('B','U','P');
+   -- Raise Error If Already has Promax PX Estimates Loaded 
+   if v_promax_rows_loaded > 0 then
+     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Forecast ['||v_fcst_id||'] Already has Promax PX Estimates Loaded - Please Confirm Way Forward with Demand Planners - CANNOT Reprocess, Without First Clearing Types [B|U|P].');
+   end if;
+   
+   -- Determine Casting Week for the Forecast
+   select max(to_number(casting_year||casting_period||casting_week)) into pv_casting_week
+   from df.fcst
+   where fcst_id = v_fcst_id;
+   -- Raise Error If Unable to Determine Casting Week 
    if pv_casting_week is null then
-     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Locate Matching ['||v_draft_publish_switch||'].');
+     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Determine Casting Week for Forecast ['||v_fcst_id||'].');
    end if;
    
     -- Populate other values.
@@ -248,22 +268,6 @@ create or replace package body df_app.pxidfn01_loader_v2 as
     rv_load_dmnd load_dmnd%rowtype;
   begin
     if fflu_data.parse_data(p_row) = true then
-
-/*
-      -- Now check that the data
-      if (fflu_data.get_number_field(pc_field_normal_volume) +
-          fflu_data.get_number_field(pc_field_incremental_volume) +
-          fflu_data.get_number_field(pc_field_marketing_volume) +
-          fflu_data.get_number_field(pc_field_state_phasing_volume)) <>
-          fflu_data.get_number_field(pc_field_estimated_volume) then
-        fflu_data.log_field_error(pc_field_estimated_volume,
-          'Total estimated sales volume did not equal the sum of the normal, incremental, markerting adjustment, and state phasing sales uplift of [' ||
-          (fflu_data.get_number_field(pc_field_normal_volume) +
-          fflu_data.get_number_field(pc_field_incremental_volume) +
-          fflu_data.get_number_field(pc_field_marketing_volume) +
-          fflu_data.get_number_field(pc_field_state_phasing_volume)) || '].');
-      end if;
-*/
 
       -- Now lookup and supply key data.
       rv_load_dmnd.dmdunit             := null;
@@ -362,11 +366,6 @@ create or replace package body df_app.pxidfn01_loader_v2 as
         );
         -- Now perform the insert into load demand data table for the incremental sales forecast volume
         rv_load_dmnd.type                := pc_load_dmnd_type_uplift; -- This is = to demand_forecast.gc_dmnd_type_u, Promax Uplift forecast.
-/*
-        rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_incremental_volume) +
-          fflu_data.get_number_field(pc_field_marketing_volume) +
-          fflu_data.get_number_field(pc_field_state_phasing_volume);
-*/
         rv_load_dmnd.qty                 := fflu_data.get_number_field(pc_field_estimated_volume) -
           fflu_data.get_number_field(pc_field_normal_volume);
         pv_line_counter := pv_line_counter + 1;
