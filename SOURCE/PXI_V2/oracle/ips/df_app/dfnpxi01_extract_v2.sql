@@ -70,6 +70,7 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     Already has Promax PX Estimates Loaded.
   2014-04-09  Mal Chambeyron        Add LICS_LOGGING so that Doesn't Silently 
                                     "Fail" to Send.
+  2014-04-15  Mal Chambeyron        Remove Check for Valid Forecast 
 
 *******************************************************************************/
 
@@ -1088,21 +1089,20 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     v_interface_name_with_suffix pxi_common.st_interface_name;
     v_instance number(15,0);
     v_promax_rows_loaded number(20,0);
-    v_valid_forecast_count number(1,0);
+    v_forecast_count number(1,0);
 
   begin
   
     -- Start Logging ..
     lics_logging.start_log('DF to Promax PX - 355DMND.txt','DF_TO_PROMAX_PX_355DMND_'||i_fcst_id);
   
-    -- Check for Valid Forecast 
-    select count(1) into v_valid_forecast_count
+    -- Check for Forecast 
+    select count(1) into v_forecast_count
     from df.fcst
     where fcst_id = i_fcst_id
-    and forecast_type in ('DRAFT','FCST')
-    and status ='V';
-    if v_valid_forecast_count = 0 then 
-      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND, or INVALID : Forecast Type [DRAFT|FCST] and Status [V].');
+    and forecast_type in ('DRAFT','FCST');
+    if v_forecast_count = 0 then 
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND : Forecast Type [DRAFT|FCST].');
       lics_logging.end_log;
       return;
     end if;

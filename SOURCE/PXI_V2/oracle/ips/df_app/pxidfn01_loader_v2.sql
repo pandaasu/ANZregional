@@ -47,6 +47,7 @@ create or replace package df_app.pxidfn01_loader_v2 as
                                     / Forecast for the MOE.
   2014-04-09  Mal Chambeyron        Raise Error If Forecast Already has 
                                     Promax PX Estimates Loaded.
+  2014-04-15  Mal Chambeyron        Remove Check for Valid Forecast 
                                     
 *******************************************************************************/
   -- LICS Hooks.
@@ -180,15 +181,14 @@ create or replace package body df_app.pxidfn01_loader_v2 as
        v_draft_publish_switch := 'DRAFT';
    end case;
    
-   -- Obtain Latest Valid Forecast Id
+   -- Obtain Latest Forecast Id
    select max(fcst_id) into v_fcst_id
    from df.fcst
    where moe_code = prv_load_file.moe_code
-   and forecast_type = v_draft_publish_switch
-   and status = 'V';
-   -- Raise Error If Unable to Locate Valid Forecast Id 
+   and forecast_type = v_draft_publish_switch;
+   -- Raise Error If Unable to Locate Forecast Id 
    if v_fcst_id is null then
-     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Locate Valid Forecast Id for ['||v_draft_publish_switch||':'||prv_load_file.moe_code||'].');
+     fflu_data.log_interface_error('Interface Suffix', fflu_utils.get_interface_suffix ,'Unable to Locate Forecast Id for ['||v_draft_publish_switch||':'||prv_load_file.moe_code||'].');
    end if;
    
    -- Check If Forecase Already has Promax PX Estimates Loaded 
