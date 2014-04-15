@@ -354,6 +354,8 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_passthru_processor as
       rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
       rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
       rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
+      rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
+      rcd_lics_interface.int_lod_group := rcd_lics_interface_01.int_lod_group;
 
       /**/
       /* Retrieve the operating system directory name from the oracle directory
@@ -551,7 +553,9 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_passthru_processor as
                 t01.int_fil_extension,
                 t01.int_opr_alert,
                 t01.int_ema_group,
-                t01.int_procedure
+                t01.int_procedure,
+                T01.INT_LOD_TYPE,
+                T01.INT_LOD_GROUP -- added by derek for *POLL mode
            from lics_interface t01
           where t01.int_type = lics_constant.type_passthru
             and t01.int_group = var_search
@@ -616,6 +620,8 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_passthru_processor as
          rcd_lics_interface.int_opr_alert := rcd_lics_interface_01.int_opr_alert;
          rcd_lics_interface.int_ema_group := rcd_lics_interface_01.int_ema_group;
          rcd_lics_interface.int_procedure := rcd_lics_interface_01.int_procedure;
+         rcd_lics_interface.int_lod_type := rcd_lics_interface_01.int_lod_type;
+         rcd_lics_interface.int_lod_group := rcd_lics_interface_01.int_lod_group;
 
          /**/
          /* Retrieve the operating system directory name from the oracle directory
@@ -914,6 +920,9 @@ CREATE OR REPLACE PACKAGE BODY LICS_APP.lics_passthru_processor as
       /* Set the passthru path/file/message information
       /**/
       var_fil_path := rcd_lics_interface.int_fil_path;
+      if rcd_lics_interface.int_lod_type = '*POLL' then   
+               var_fil_path := SUBSTR(var_fil_path, 1, instr(var_fil_path, '/', -1)-1);
+      end if;
       var_fil_name := rcd_lics_header.hea_fil_name;
       var_msg_name := rcd_lics_header.hea_msg_name;
       if substr(var_fil_path, -1, 1) <> lics_parameter.folder_delimiter then

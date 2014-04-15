@@ -255,8 +255,14 @@ create or replace package body lics_mailer as
       /*-*/
       /* Set the recipient variable
       /*-*/
-      var_recipient := par_recipient;
-
+      -- var_recipient := par_recipient;
+	  -- for smtp change. by derek
+      if instr(par_recipient, '@') = 0 then
+        var_recipient := trim(par_recipient) || LICS_PARAMETER.EMAIL_SUFFIX;
+      else
+         var_recipient := par_recipient;
+      end if;
+	  
       /*-*/
       /* Set the subject variable
       /*-*/
@@ -270,7 +276,12 @@ create or replace package body lics_mailer as
       else
          var_smtp_host := par_smtp_host;
       end if;
-
+	  
+      -- for smtp change. by derek
+      if instr(par_sender, '@') = 0 then
+        var_sender := trim(par_sender) || LICS_PARAMETER.EMAIL_SUFFIX;
+      end if;
+	  
       /*-*/
       /* Default and set the SMTP port variable
       /*-*/

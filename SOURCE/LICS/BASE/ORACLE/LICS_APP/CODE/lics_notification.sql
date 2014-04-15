@@ -497,8 +497,8 @@ create or replace package body lics_notification as
       /*-*/
       /* Initialise the email
       /*-*/
-      utl_smtp.mail(var_connection, lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment);
-
+      -- utl_smtp.mail(var_connection, lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment);
+	  utl_smtp.mail(var_connection, lics_parameter.system_code || '_' || lics_parameter.system_unit || '_' || lics_parameter.system_environment ||  LICS_PARAMETER.EMAIL_SUFFIX );
       /*-*/
       /* Set the recipient
       /*-*/
