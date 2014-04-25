@@ -96,6 +96,7 @@ package fflu_data as
   1.0   2013-06-03 Chris Horn           Defined.
   1.1   2013-06-25 Chris Horn           Added if csv file contains a header.
   1.2   2013-09-05 Chris Horn           Changed csv header to file header.
+  1.3   2014-04-25 Chris Horn           Cleared the field definitions. 
   
 *******************************************************************************/  
   procedure initialise(

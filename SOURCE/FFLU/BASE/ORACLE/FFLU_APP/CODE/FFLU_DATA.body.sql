@@ -484,6 +484,7 @@ package body fflu_data as
       pv_file_header := false;
     end if;
     pv_allow_missing := i_allow_missing;
+    ptv_fields.delete;
     pv_have_parsed := false;
     -- Make sure interface progress has been called at least once.
     fflu_utils.log_interface_progress;
