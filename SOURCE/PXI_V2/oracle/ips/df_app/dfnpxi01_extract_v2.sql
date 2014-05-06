@@ -71,6 +71,11 @@ create or replace package df_app.dfnpxi01_extract_v2 as
   2014-04-09  Mal Chambeyron        Add LICS_LOGGING so that Doesn't Silently 
                                     "Fail" to Send.
   2014-04-15  Mal Chambeyron        Remove Check for Valid Forecast 
+  2014-05-05  Mal Chambeyron        Relax Filter on [pt_mars_week], to allow 
+                                    Mars Weeks from 2 Year Prior
+  2014-05-05  Mal Chambeyron        Change Logic to Base Cutoff Date on [casting_week]+1
+                                    Instead of [sysdate] to Allow Repopulation 
+                                    of History as Necessary
 
 *******************************************************************************/
 
@@ -81,6 +86,13 @@ create or replace package df_app.dfnpxi01_extract_v2 as
    function forecast_moe(
     i_fcst_id in common.st_id
    ) return varchar2;
+
+/*******************************************************************************
+  NAME:  FIRST_DATE_FCST_CASTING_WEEK                                     PUBLIC
+*******************************************************************************/
+   function first_date_fcst_casting_week(
+    i_fcst_id in common.st_id
+   ) return date;
 
 /*******************************************************************************
   NAME: PT_MARS_WEEK                                                      PUBLIC
@@ -323,6 +335,40 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
   end forecast_moe;
 
 /*******************************************************************************
+  NAME:  FIRST_DATE_FCST_CASTING_WEEK                                     PUBLIC
+*******************************************************************************/
+   function first_date_fcst_casting_week(
+    i_fcst_id in common.st_id
+   ) return date is
+
+    v_date date;
+
+   begin
+
+    -- Get first date of casting week for forecast provided
+    begin
+
+      select min(calendar_date) into v_date
+      from mars_date
+      where mars_week = (
+        select casting_year||casting_period||casting_week 
+        from fcst
+        where fcst_id = i_fcst_id
+      );
+
+    exception
+      when no_data_found then
+        null; -- Ignore
+    end;
+
+    return v_date;
+
+  exception
+    when others then
+      pxi_common.reraise_promax_exception(pc_package_name,'first_date_fcst_casting_week');
+  end first_date_fcst_casting_week;
+  
+/*******************************************************************************
   NAME: PT_MARS_WEEK                                                      PUBLIC
 *******************************************************************************/
   function pt_mars_week return tt_mars_week pipelined is
@@ -337,9 +383,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           max(calendar_date)+1 as end_date
         from mars_date
         group by mars_week
-        having mars_week between
-          (select mars_week from mars_date where calendar_date = trunc(sysdate)) -- Today
-          and (select mars_week from mars_date where calendar_date = trunc(sysdate) + (365 * 2)) -- 2 Years from Today
+        having mars_week > (select mars_week from mars_date where calendar_date = trunc(sysdate) - (365 * 2)) -- 2 Years Prior Today
         order by mars_week
 
       )
@@ -581,6 +625,8 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     rv_previous rt_forecast_and_history;
     v_first_row boolean;
     
+    v_cutoff_date date;
+    
   begin
 
     -- Lookup MOE code for Forecast Id
@@ -600,6 +646,9 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       else
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown moe code [' || v_moe_code || '] for forecast id [' || i_fcst_id || '].');
     end case;
+    
+    -- Set Cutoff Date to First Date of Casting Week for Forecast Id + 10 (ie the Following Wednesday) 
+    v_cutoff_date := first_date_fcst_casting_week(i_fcst_id) + 10;    
 
     -- Initialise Loops 
     rv_previous.px_dmnd_plng_node := ' ';
@@ -644,7 +693,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           split_qty,
           sysdate as created_date
         from table(dfnpxi01_extract_v2.pt_forecast_split(i_fcst_id))
-        where end_date > sysdate
+        where end_date > v_cutoff_date
 
         union
 
@@ -664,7 +713,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           created_date
         from px_355dmnd_history
         where moe_code = v_moe_code
-        and end_date <= sysdate
+        and end_date <= v_cutoff_date
         and end_date >= sysdate - (365 * 2) -- Remove history greater than two years old
 
       ) forecast,
@@ -701,7 +750,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         rv_previous.end_date := rv_previous.end_date + 7;
         rv_previous.created_date := sysdate;
         rv_previous.modified_date := sysdate;
-        if rv_previous.split_qty != 0 then -- Only Need to Write if Previous Row was NOT Zero (History)
+        if rv_previous.split_qty != 0 then -- Only Need to Write If Previous Row was NOT Zero (History)
           rv_previous.split_qty := 0;
           pipe row(rv_previous);
         end if;
