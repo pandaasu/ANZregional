@@ -1148,7 +1148,7 @@ package body fflu_data as
           if v_char = c_delimiter then 
             tv_columns(tv_columns.count+1) := v_column;
             v_column := null;
-          elsif v_char = pv_csv_qualifier and v_prev_char = c_delimiter then 
+          elsif v_char = pv_csv_qualifier and (v_prev_char = c_delimiter or v_prev_char is null) then 
             v_in_text := true;
             v_char := null;
           else 

@@ -49,6 +49,8 @@ package fflu_data as
   2013-07-30  Chris Horn            Added constant values for mins and maxes.
   2013-08-14  Chris Horn            Added interface error and exception methods.
   2013-09-05  Chris Horn            Added tab delimted file formatting.
+  2014-05-07  Chris Horn            Fixed bug with lines starting with CSV
+                                    quote qualifier.
 
 *******************************************************************************/
 
