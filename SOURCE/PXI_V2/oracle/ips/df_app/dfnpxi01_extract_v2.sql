@@ -53,7 +53,7 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     Variance Due to Representing Decimals as
                                     Integers.
                                     NOTE : CEIL Still Used on Splits
-  2014-03-19  Mal Chambeyron        Order output .. Discovered as REQUIRED by Promax PX  
+  2014-03-19  Mal Chambeyron        Order output .. Discovered as REQUIRED by Promax PX
                                       order by
                                         px_dmnd_plng_node,
                                         zrep_matl_code,
@@ -62,20 +62,22 @@ create or replace package df_app.dfnpxi01_extract_v2 as
                                     (pxi_common_df.fc_dmnd_type_7)
                                     was in place for testing phase.
   2014-03-31  Mal Chambeyron        Do NOTHING for MOE's Other than Petcare [0196], for Execute
-  2014-04-07  Mal Chambeyron        Modify [pt_forecast_and_history] to 
-                                    "CAP" Demand Weeks with ZERO Records .. 
+  2014-04-07  Mal Chambeyron        Modify [pt_forecast_and_history] to
+                                    "CAP" Demand Weeks with ZERO Records ..
                                     To Stop Promax PX "Spreading" Demand Out till
                                     the Next Populated Demand Week.
-  2014-04-09  Mal Chambeyron        Add Logic to Skip [Return] If Forecast 
+  2014-04-09  Mal Chambeyron        Add Logic to Skip [Return] If Forecast
                                     Already has Promax PX Estimates Loaded.
-  2014-04-09  Mal Chambeyron        Add LICS_LOGGING so that Doesn't Silently 
+  2014-04-09  Mal Chambeyron        Add LICS_LOGGING so that Doesn't Silently
                                     "Fail" to Send.
-  2014-04-15  Mal Chambeyron        Remove Check for Valid Forecast 
-  2014-05-05  Mal Chambeyron        Relax Filter on [pt_mars_week], to allow 
+  2014-04-15  Mal Chambeyron        Remove Check for Valid Forecast
+  2014-05-05  Mal Chambeyron        Relax Filter on [pt_mars_week], to allow
                                     Mars Weeks from 2 Year Prior
   2014-05-05  Mal Chambeyron        Change Logic to Base Cutoff Date on [casting_week]+1
-                                    Instead of [sysdate] to Allow Repopulation 
+                                    Instead of [sysdate] to Allow Repopulation
                                     of History as Necessary
+  2014-06-05  Mal Chambeyron        Remove from error [pt_error_report] all entries
+                                    that have no future demand, request Paul Thorpe
 
 *******************************************************************************/
 
@@ -351,7 +353,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       select min(calendar_date) into v_date
       from mars_date
       where mars_week = (
-        select casting_year||casting_period||casting_week 
+        select casting_year||casting_period||casting_week
         from fcst
         where fcst_id = i_fcst_id
       );
@@ -367,7 +369,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     when others then
       pxi_common.reraise_promax_exception(pc_package_name,'first_date_fcst_casting_week');
   end first_date_fcst_casting_week;
-  
+
 /*******************************************************************************
   NAME: PT_MARS_WEEK                                                      PUBLIC
 *******************************************************************************/
@@ -624,9 +626,9 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
 
     rv_previous rt_forecast_and_history;
     v_first_row boolean;
-    
+
     v_cutoff_date date;
-    
+
   begin
 
     -- Lookup MOE code for Forecast Id
@@ -646,16 +648,16 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       else
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown moe code [' || v_moe_code || '] for forecast id [' || i_fcst_id || '].');
     end case;
-    
-    -- Set Cutoff Date to First Date of Casting Week for Forecast Id + 10 (ie the Following Wednesday) 
-    v_cutoff_date := first_date_fcst_casting_week(i_fcst_id) + 10;    
 
-    -- Initialise Loops 
+    -- Set Cutoff Date to First Date of Casting Week for Forecast Id + 10 (ie the Following Wednesday)
+    v_cutoff_date := first_date_fcst_casting_week(i_fcst_id) + 10;
+
+    -- Initialise Loops
     rv_previous.px_dmnd_plng_node := ' ';
     rv_previous.zrep_matl_code := ' ';
     rv_previous.start_date := null;
     v_first_row := true;
-    
+
     for rv_row in (
 
         select
@@ -727,7 +729,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       and forecast.end_date <= account_sku_details_x.asd_stop_date(+)
       and forecast.px_dmnd_plng_node = ac.ac_code(+) -- forecast > account
       and forecast.zrep_matl_code = sku.sku_stock_code(+) -- forecast > sku
-      -- 
+      --
       order by
         forecast.px_dmnd_plng_node,
         forecast.zrep_matl_code,
@@ -736,13 +738,13 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     )
     loop
 
-      -- Except First Row .. 
+      -- Except First Row ..
       -- On change of Account [px_dmnd_plng_node], Sku [zrep_matl_code] or Start Date [start_date]
       -- Check for need to ADD a Zero Record ..
       if (v_first_row = false
         and (rv_previous.px_dmnd_plng_node != rv_row.px_dmnd_plng_node
-          or rv_previous.zrep_matl_code != rv_row.zrep_matl_code 
-          or rv_row.start_date - rv_previous.start_date > 7 
+          or rv_previous.zrep_matl_code != rv_row.zrep_matl_code
+          or rv_row.start_date - rv_previous.start_date > 7
         )
       ) then
         rv_previous.mars_week := 0;
@@ -754,7 +756,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           rv_previous.split_qty := 0;
           pipe row(rv_previous);
         end if;
-      else 
+      else
         v_first_row := false;
       end if;
 
@@ -778,10 +780,10 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
       rv_previous.has_px_account_sku := rv_row.has_px_account_sku;
       rv_previous.has_px_account := rv_row.has_px_account;
       rv_previous.has_px_sku := rv_row.has_px_sku;
-      
+
     end loop;
-    
-    -- Write out Zero of Previous Row, with Start Date + 7 .. for Last Row 
+
+    -- Write out Zero of Previous Row, with Start Date + 7 .. for Last Row
     rv_previous.mars_week := 0;
     rv_previous.start_date := rv_previous.start_date + 7;
     rv_previous.end_date := rv_previous.end_date + 7;
@@ -974,6 +976,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           group by
             dmnd_plng_node,
             px_dmnd_plng_node
+          having max(end_date) > trunc(sysdate)
 
           union all
 
@@ -994,6 +997,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
           and hist.has_px_sku = 0
           group by
             zrep_matl_code
+          having max(end_date) > trunc(sysdate)
 
           union all
 
@@ -1016,6 +1020,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
             dmnd_plng_node,
             px_dmnd_plng_node,
             zrep_matl_code
+          having max(end_date) > trunc(sysdate)
         ) error_report
       order by
         error_report.sort_seq,
@@ -1141,35 +1146,35 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     v_forecast_count number(1,0);
 
   begin
-  
+
     -- Start Logging ..
     lics_logging.start_log('DF to Promax PX - 355DMND.txt','DF_TO_PROMAX_PX_355DMND_'||i_fcst_id);
-  
-    -- Check for Forecast 
+
+    -- Check for Forecast
     select count(1) into v_forecast_count
     from df.fcst
     where fcst_id = i_fcst_id
     and forecast_type in ('DRAFT','FCST');
-    if v_forecast_count = 0 then 
+    if v_forecast_count = 0 then
       lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND : Forecast Type [DRAFT|FCST].');
       lics_logging.end_log;
       return;
     end if;
-    
+
     -- Do NOTHING for MOE's Other than Petcare [0196], for Execute
     v_moe_code := forecast_moe(i_fcst_id); -- assign so we don't need to lookup twice
-    if v_moe_code != pxi_common.fc_moe_pet then 
+    if v_moe_code != pxi_common.fc_moe_pet then
       lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Processing Limited to MOE ['||pxi_common.fc_moe_pet||'].');
       lics_logging.end_log;
       return;
     end if;
-    
-    -- Check If Forecase Already has Promax PX Estimates Loaded 
+
+    -- Check If Forecase Already has Promax PX Estimates Loaded
     select count(1) into v_promax_rows_loaded
-    from df.dmnd_data 
-    where fcst_id = i_fcst_id 
+    from df.dmnd_data
+    where fcst_id = i_fcst_id
     and type in ('B','U','P');
-    -- No Need to Continue If Forecast Already has Promax PX Estimates Loaded 
+    -- No Need to Continue If Forecast Already has Promax PX Estimates Loaded
     if v_promax_rows_loaded > 0 then
       lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Already has Promax PX Estimates Loaded, Types [B|U|P].');
       lics_logging.end_log;
@@ -1203,7 +1208,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
         lics_logging.end_log;
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown MOE [' || v_moe_code || '] for Forecast [' || i_fcst_id || '].');
     end case;
-    
+
     -- Ensure 335DMND temporary table is empty
     lics_logging.write_log('INFO : Ensure 355DMND Temporary Table [px_355dmnd_history_temp] is Empty.');
     delete from px_355dmnd_history_temp;
@@ -1315,7 +1320,7 @@ create or replace package body df_app.dfnpxi01_extract_v2 as
     -- Email error report (if necessary)
     lics_logging.write_log('INFO : EMail Error Report for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     dfnpxi01_extract_v2.email_error_report(v_moe_code);
-    
+
     -- End Logging
     lics_logging.end_log;
 
