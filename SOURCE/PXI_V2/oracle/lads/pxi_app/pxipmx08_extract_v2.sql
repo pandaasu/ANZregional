@@ -176,7 +176,7 @@ create or replace package pxi_app.pxipmx08_extract_v2 as
 end pxipmx08_extract_v2;
 /
 
-create or replace package body pxi_app.pxipmx08_extract_v2 as
+CREATE OR REPLACE package body PXI_APP.pxipmx08_extract_v2 as
 
 /*******************************************************************************
   Package Cosntants
@@ -345,19 +345,19 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
           end case;
 
           -- Now set the tax base amount based on the tax code.
-          case pv_claim.tax_code 
-            when pxi_common.gc_tax_code_s1 then 
+          case pv_claim.tax_code
+            when pxi_common.gc_tax_code_s1 then
               pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.1,2); -- 10% Australian GST
-            when pxi_common.gc_tax_code_s2 then 
-              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.15,2); -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination. 
-            when pxi_common.gc_tax_code_s3 then 
+            when pxi_common.gc_tax_code_s2 then
+              pv_claim.tax_base := pv_claim.claim_amount - round(pv_claim.claim_amount / 1.15,2); -- 15% New Zealand GST,  Note, In SAP S2 for 147 is 0% for export.  However we have no reason code map for that combination.
+            when pxi_common.gc_tax_code_s3 then
               pv_claim.tax_base := 0;  -- Australia 0% No Tax
-            when pxi_common.gc_tax_code_se then 
+            when pxi_common.gc_tax_code_se then
               pv_claim.tax_base := 0;  -- New Zealand 0% No Tax.
-            else 
+            else
               pv_claim.tax_base := fflu_data.get_number_field(pc_tax_base);
           end case;
-          
+
           -- Ignore any Accounting Document line which does not have a Division (as it will be non-TP)
           if pv_claim.div_code is not null then
             pv_claims(pv_claims.count+1) := pv_claim;
@@ -739,7 +739,8 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
             t1.reason_code,
             t1.claim_amount as amount,
             -- Chris Horn : 26/02/2014 : NOTE : Once NZ Business Process has been updated to correcly bring across the tax amount, rather than them calculating automatically.  Remove the Decode below and just send the actual tax.
-            decode(t1.company_code, pxi_common.gc_new_zealand, 0, t1.tax_base) as tax_amount,
+       --     decode(t1.company_code, pxi_common.gc_new_zealand, 0, t1.tax_base) as tax_amount,
+            t1.tax_base as tax_amount,
             case t1.company_code when pxi_common.gc_australia then 'AUD' when pxi_common.gc_new_zealand then 'NZD' else null end as currency
          from
             table(get_claims) t1,
@@ -817,7 +818,7 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
       execute(pxi_common.fc_interface_food);
     end if;
     */
-    
+
     select count(1) into v_petcare_count from table(get_claims) where company_code = pxi_common.fc_australia and div_code = pxi_common.fc_bus_sgmnt_petcare;
     if v_petcare_count > 0 then
       execute(pxi_common.fc_interface_pet);
@@ -1395,5 +1396,4 @@ create or replace package body pxi_app.pxipmx08_extract_v2 as
 
 end pxipmx08_extract_v2;
 /
-
 grant execute on pxi_app.pxipmx08_extract_v2 to lics_app, fflu_app, site_app;
