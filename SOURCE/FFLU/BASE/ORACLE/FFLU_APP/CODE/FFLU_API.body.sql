@@ -1187,7 +1187,7 @@ begin
         t3.int_procedure as interface_package,
         t2.het_str_time as xaction_start_datetime,
         t2.het_end_time as xaction_end_datetime,
-        t1.hea_status as status_code,
+        t2.het_status as status_code,
         (select count(*) from lics_data t0 where t0.dat_header = t1.hea_header) as xaction_row_count,
         (select count(distinct t0.DAM_DTA_SEQ) from lics_dta_message t0 where t0.dam_header = t1.hea_header and t0.DAM_HDR_TRACE = t2.het_hdr_trace) as xaction_rows_in_error,
         (select count(*) from lics_dta_message t0 where t0.dam_header = t1.hea_header and t0.DAM_HDR_TRACE = t2.het_hdr_trace) as xaction_row_errors,

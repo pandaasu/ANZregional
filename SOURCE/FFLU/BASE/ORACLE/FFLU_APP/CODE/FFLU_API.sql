@@ -59,6 +59,7 @@ package fflu_api as
   2013-06-05  Chris Horn            Implemented Interface Monitoring Functions.
   2013-06-11  Chris Horn            Fixed bug with line feed at 7999 char.
   2013-06-13  Chris Horn            Added user code reprocess writeback.
+  2014-07-16  Chris Horn            Now shows the correct trace status.
 
 *******************************************************************************/
 
@@ -564,6 +565,7 @@ package fflu_api as
   1.2   2013-06-05 Chris Horn           Implemented.
   1.3   2013-06-05 Chris Horn           Add User Code Check.
   1.4   2013-06-11 Chris Horn           Included the current trace as well.
+  1.5   2014-07-16 Chris Horn           Displays the correct trace status.
 
 *******************************************************************************/  
   -- Pipelined table function for returning the list of interfaces.
