@@ -1,16 +1,16 @@
-create or replace package comfod03_loader as
+create or replace package comcho03_loader as
   /*****************************************************************************
   ** PACKAGE DEFINITION
   ******************************************************************************
   
-    Schema    : bi_app
-    Package   : comfod03_loader
+    Schema    : bi_app 
+    Package   : comcho03_loader 
     Author    : Trevor Keon         
   
     Description
     ----------------------------------------------------------------------------
-    [comfod03_loader] Commercial - Food - Subjective Scores
-    [replace_on_key] Template
+    [comcho03_loader] Commercial - Chocolate - Subjective Scores 
+    [replace_on_key] Template 
     
     Functions
     ----------------------------------------------------------------------------
@@ -38,10 +38,10 @@ create or replace package comfod03_loader as
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
 
-end comfod03_loader;
+end comcho03_loader;
 /
 
-create or replace package body comfod03_loader as 
+create or replace package body comcho03_loader as 
 
   -- Interface column constants 
   pc_segment constant fflu_common.st_name := 'Segment';
@@ -193,10 +193,10 @@ create or replace package body comfod03_loader as
     return fflu_common.gc_csv_qualifier_double_quote;
   end on_get_csv_qualifier;
 
-end comfod03_loader;
+end comcho03_loader;
 /
 
-grant execute on comfod03_loader to lics_app, fflu_app;
+grant execute on comcho03_loader to lics_app, fflu_app;
 
 /*******************************************************************************
   END
