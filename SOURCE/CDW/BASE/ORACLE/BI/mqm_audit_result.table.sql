@@ -22,6 +22,7 @@
   -- Create Table
   create table bi.mqm_audit_result (
     supplier varchar2(500 char) not null,
+    supplier_type number(2) not null,
     audit_score varchar2(10 char),
     audit_date date not null,
     activity_status varchar2(100 char),
@@ -43,6 +44,7 @@
   -- Comments
   comment on table mqm_audit_result is 'MQM Scorecard - Food - Audit Results';
   comment on column mqm_audit_result.supplier is 'Supplier Code';
+  comment on column mqm_audit_result.supplier_type is 'Supplier Type';
   comment on column mqm_audit_result.audit_score is 'Audit Score';
   comment on column mqm_audit_result.audit_date is 'Audit Date';
   comment on column mqm_audit_result.activity_status is 'Activity Status';

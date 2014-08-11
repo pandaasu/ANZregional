@@ -1,16 +1,16 @@
 create or replace package mqmfod02_loader as
-  /*****************************************************************************
-  ** PACKAGE DEFINITION
-  ******************************************************************************
+  /***************************************************************************** 
+  ** PACKAGE DEFINITION 
+  ****************************************************************************** 
   
-    Schema    : bi_app
-    Package   : mqmfod02_loader
+    Schema    : bi_app 
+    Package   : mqmfod02_loader 
     Author    : Trevor Keon         
   
     Description
     ----------------------------------------------------------------------------
-    [mqmfod02] MQM Scorecard - Food - Audit Results
-    [replace_on_key] Template
+    [mqmfod02] MQM Scorecard - Food - Audit Results 
+    [replace_on_key] Template 
     
     Functions
     ----------------------------------------------------------------------------
@@ -26,8 +26,9 @@ create or replace package mqmfod02_loader as
     ----------  --------------------  ------------------------------------------
     2014-02-05  Trevor Keon           [Auto Generated] 
     2014-02-18  Trevor Keon           Added additional fields 
+    2014-08-11  Trevor Keon           Added Type column (1 = Raw, 2 = Pack, 3 = Premia, 4 = EM) 
   
-  *****************************************************************************/
+  *****************************************************************************/ 
 
   -- LICS Hooks.
   procedure on_start;
@@ -43,6 +44,7 @@ end mqmfod02_loader;
 create or replace package body mqmfod02_loader as 
 
   -- Interface column constants
+  pc_supplier_type constant fflu_common.st_name := 'Supplier Type';
   pc_supplier constant fflu_common.st_name := 'Supplier Code';
   pc_audit_score constant fflu_common.st_name := 'Audit Score';
   pc_audit_date constant fflu_common.st_name := 'Audit Date';
@@ -66,19 +68,20 @@ create or replace package body mqmfod02_loader as
   
   begin
     -- Initialise data parsing wrapper.
-    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_file_header,fflu_data.gc_not_allow_missing);
+    fflu_data.initialise(on_get_file_type,on_get_csv_qualifier,fflu_data.gc_file_header,fflu_data.gc_allow_missing);
     
     -- Add column structure
-    fflu_data.add_char_field_del(pc_supplier,1,'Supplier',1,500,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_del(pc_audit_score,2,'Audit Score',1,10,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_date_field_del(pc_audit_date, 3, 'Audit Date', 'dd/mm/yyyy', fflu_data.gc_null_offset, fflu_data.gc_null_offset_len, fflu_data.gc_null_min_date, fflu_data.gc_null_max_date, fflu_data.gc_not_allow_null);
-    fflu_data.add_char_field_del(pc_activity_status, 4, 'Activity Status',0,100,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_del(pc_status, 5, 'Status',0,4,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_date_field_del(pc_last_status_change, 6, 'Last Status Change', 'dd/mm/yyyy', fflu_data.gc_null_offset, fflu_data.gc_null_offset_len, fflu_data.gc_null_min_date, fflu_data.gc_null_max_date, fflu_data.gc_allow_null);
-    fflu_data.add_char_field_del(pc_auditor, 7, 'Auditor',0,50,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_number_field_del(pc_critical,8,'Critical NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_number_field_del(pc_major,9,'Major NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
-    fflu_data.add_number_field_del(pc_minor,10,'Minor NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_del(pc_supplier_type,1,'Type','90',1,4,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_char_field_del(pc_supplier,2,'Supplier',1,500,fflu_data.gc_not_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_audit_score,3,'Audit Score',1,10,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_date_field_del(pc_audit_date, 4, 'Audit Date', 'dd/mm/yyyy', fflu_data.gc_null_offset, fflu_data.gc_null_offset_len, fflu_data.gc_null_min_date, fflu_data.gc_null_max_date, fflu_data.gc_not_allow_null);
+    fflu_data.add_char_field_del(pc_activity_status, 5, 'Activity Status',0,100,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_status, 6, 'Status',0,4,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_date_field_del(pc_last_status_change, 7, 'Last Status Change', 'dd/mm/yyyy', fflu_data.gc_null_offset, fflu_data.gc_null_offset_len, fflu_data.gc_null_min_date, fflu_data.gc_null_max_date, fflu_data.gc_allow_null);
+    fflu_data.add_char_field_del(pc_auditor, 8, 'Auditor',0,50,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_number_field_del(pc_critical,9,'Critical NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_del(pc_major,10,'Major NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
+    fflu_data.add_number_field_del(pc_minor,11,'Minor NC','99999990',0,99999999,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     
     -- Get user name - MUST be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
@@ -108,19 +111,22 @@ create or replace package body mqmfod02_loader as
             
       -- Set insert row columns
       begin
-        -- Assign Supplier Description
+        -- Assign Supplier Type 
+        v_current_field := pc_supplier_type;
+        rv_insert_values.supplier_type := fflu_data.get_number_field(pc_supplier_type);
+        -- Assign Supplier Description 
         v_current_field := pc_supplier;
         rv_insert_values.supplier := trim(fflu_data.get_char_field(pc_supplier));
-        -- Assign Audit Score
+        -- Assign Audit Score 
         v_current_field := pc_audit_score;
         rv_insert_values.audit_score := trim(fflu_data.get_char_field(pc_audit_score));
-        -- Assign Audit date
+        -- Assign Audit date 
         v_current_field := pc_audit_date;
         rv_insert_values.audit_date := fflu_data.get_date_field(pc_audit_date);
-        -- Assign Activity Status
+        -- Assign Activity Status 
         v_current_field := pc_activity_status;
         rv_insert_values.activity_status := trim(fflu_data.get_char_field(pc_activity_status));
-        -- Assign Status
+        -- Assign Status 
         v_current_field := pc_status;
         rv_insert_values.status := trim(fflu_data.get_char_field(pc_status));        
         -- Assign Last Status change 
@@ -129,13 +135,13 @@ create or replace package body mqmfod02_loader as
         -- Assign Auditor 
         v_current_field := pc_auditor;
         rv_insert_values.auditor := trim(fflu_data.get_char_field(pc_auditor));        
-        -- Assign # of critical non-conformance
+        -- Assign # of critical non-conformance 
         v_current_field := pc_critical;
         rv_insert_values.critical := fflu_data.get_number_field(pc_critical);
-        -- Assign # of major non-conformance
+        -- Assign # of major non-conformance 
         v_current_field := pc_major;
         rv_insert_values.major := fflu_data.get_number_field(pc_major);
-        -- Assign # of minor non-conformance
+        -- Assign # of minor non-conformance 
         v_current_field := pc_minor;
         rv_insert_values.minor := fflu_data.get_number_field(pc_minor);
 
