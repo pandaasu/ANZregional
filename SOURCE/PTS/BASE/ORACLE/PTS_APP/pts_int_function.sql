@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_int_function as
+create or replace
+package         pts_int_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -35,7 +36,8 @@ end pts_int_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_int_function as
+create or replace
+package body         pts_int_function as
 
    /*-*/
    /* Private exceptions
@@ -402,7 +404,7 @@ create or replace package body pts_app.pts_int_function as
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
-     
+
       /*-*/
       /* Retrieve and process the interviewer definition
       /*-*/

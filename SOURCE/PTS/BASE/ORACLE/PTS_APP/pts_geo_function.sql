@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_geo_function as
+create or replace
+package         pts_geo_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -44,7 +45,8 @@ end pts_geo_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_geo_function as
+create or replace
+package body         pts_geo_function as
 
    /*-*/
    /* Private exceptions

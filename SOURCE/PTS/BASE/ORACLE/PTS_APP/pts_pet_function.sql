@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_pet_function as
+create or replace
+package         pts_pet_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -19,6 +20,7 @@ create or replace package pts_app.pts_pet_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2011/11   Peter Tylee    Updated to support validation tests
 
    *******************************************************************************/
 
@@ -26,6 +28,7 @@ create or replace package pts_app.pts_pet_function as
    /* Public declarations
    /*-*/
    function retrieve_list return pts_xml_type pipelined;
+   function retrieve_list_validation return pts_xml_type pipelined;
    function retrieve_prompt return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
@@ -33,12 +36,15 @@ create or replace package pts_app.pts_pet_function as
    procedure update_restore(par_user in varchar2);
 
 end pts_pet_function;
+ 
+
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_pet_function as
+create or replace
+package body         pts_pet_function as
 
    /*-*/
    /* Private exceptions
@@ -140,6 +146,108 @@ create or replace package body pts_app.pts_pet_function as
    /* End routine */
    /*-------------*/
    end retrieve_list;
+   
+   /*****************************************************/
+   /* This procedure performs the retrieve list routine */
+   /*****************************************************/
+   function retrieve_list_validation return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_pag_size number;
+      var_row_count number;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_list is
+         select t01.pde_pet_code,
+                t01.pde_pet_name,
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*PET_DEF' and sva_fld_code = 4 and sva_val_code = t01.pde_pet_status),'*UNKNOWN') as pde_pet_status
+           from pts_pet_definition t01
+          where t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',null)))
+            and t01.pde_pet_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+            and exists (
+                  select  1
+                  from    pts_val_pet p
+                          inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                  where   p.vpe_pet_code = t01.pde_pet_code
+                          and s.vst_val_flg = 1
+                )
+          order by t01.pde_pet_code asc;
+      rcd_list csr_list%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2"/>'));
+
+      /*-*/
+      /* Retrieve the pet list and pipe the results
+      /*-*/
+      var_pag_size := 20;
+      var_row_count := 0;
+      open csr_list;
+      loop
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
+            exit;
+         end if;
+         var_row_count := var_row_count + 1;
+         if var_row_count <= var_pag_size then
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.pde_pet_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.pde_pet_code)||') '||rcd_list.pde_pet_name)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.pde_pet_code)||') '||rcd_list.pde_pet_name)||'" COL2="'||pts_to_xml(rcd_list.pde_pet_status)||'"/>'));
+         else
+            exit;
+         end if;
+      end loop;
+      close csr_list;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_LIST_VALIDATION - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_list_validation;
 
    /*******************************************************/
    /* This procedure performs the retrieve prompt routine */
@@ -443,7 +551,8 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"';
+         var_output := var_output||' CRTDATE="'||to_char(rcd_retrieve.pde_crt_date,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYPET' then
          var_output := '<PET PETCODE="*NEW"';
@@ -456,7 +565,8 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' BTHYEAR="'||to_char(rcd_retrieve.pde_birth_year)||'"';
          var_output := var_output||' DELNOTE="'||to_char(rcd_retrieve.pde_del_notifier)||'"';
          var_output := var_output||' FEDCMNT="'||pts_to_xml(rcd_retrieve.pde_feed_comment)||'"';
-         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"/>';
+         var_output := var_output||' HTHCMNT="'||pts_to_xml(rcd_retrieve.pde_health_comment)||'"';
+         var_output := var_output||' CRTDATE="'||to_char(sysdate,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTPET' then
          var_output := '<PET PETCODE="*NEW"';
@@ -469,7 +579,8 @@ create or replace package body pts_app.pts_pet_function as
          var_output := var_output||' BTHYEAR=""';
          var_output := var_output||' DELNOTE=""';
          var_output := var_output||' FEDCMNT=""';
-         var_output := var_output||' HTHCMNT=""/>';
+         var_output := var_output||' HTHCMNT=""';
+         var_output := var_output||' CRTDATE="'||to_char(sysdate,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -515,6 +626,95 @@ create or replace package body pts_app.pts_pet_function as
       close csr_table;
 
       /*-*/
+      /* Pipe the validation status
+      /*-*/
+      for val_status in (
+        select    vst_sta_code,
+                  vst_sta_text
+        from      pts_val_status
+        order by  vst_sta_seq asc      
+      ) loop
+        pipe row(pts_xml_object('<VAL_STATUS VALCDE="'||pts_to_xml(val_status.vst_sta_code)||'" VALTXT="'||pts_to_xml(val_status.vst_sta_text)||'"/>'));
+      end loop;
+
+      /*-*/
+      /* Pipe the validation type data
+      /*-*/
+      for val_type in (
+          select    t.vty_val_type,
+                    t.vty_typ_text,
+                    nvl(s.vst_sta_seq-1,0) as status_index,
+                    case
+                      when not exists ( --No validation allocated
+                        select  1
+                        from    pts_pet_definition pde
+                                inner join pts_val_allocation val on pde.pde_val_code = val.val_val_code
+                                inner join pts_tes_definition tde on tde.tde_tes_code = val.val_tes_code
+                        where   pde.pde_pet_code = pts_to_number(var_pet_code)
+                                and tde.tde_val_type = t.vty_val_type
+                      ) and exists ( --And status requires validation
+                        select  1
+                        from    pts_val_pet p
+                                inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                        where   p.vpe_pet_code = pts_to_number(var_pet_code)
+                                and p.vpe_val_type = t.vty_val_type
+                                and s.vst_val_flg = 1
+                      ) then '*NOT ALLOCATED'
+                      when not exists ( --No validation required
+                        select  1
+                        from    pts_val_pet p
+                                inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                        where   p.vpe_pet_code = pts_to_number(var_pet_code)
+                                and p.vpe_val_type = t.vty_val_type
+                                and s.vst_val_flg = 1
+                      ) then ''
+                      else to_char(( -- Responses recorded
+                        select  count(1)
+                        from    pts_pet_definition p
+                                inner join pts_val_test vt on p.pde_val_code = vt.vte_val_code
+                                inner join pts_tes_definition td on td.tde_tes_code = vt.vte_tes_code
+                                inner join pts_tes_response r on r.tre_tes_code = td.tde_tes_code
+                        where   p.pde_pet_code = pts_to_number(var_pet_code)
+                                and td.tde_val_type = t.vty_val_type
+                      )) ||'/'|| to_char(( -- Responses total
+                        select  count(1)
+                        from    pts_pet_definition p
+                                inner join pts_val_test vt on p.pde_val_code = vt.vte_val_code
+                                inner join pts_tes_definition td on td.tde_tes_code = vt.vte_tes_code
+                                inner join pts_tes_question q on q.tqu_tes_code = td.tde_tes_code
+                        where   p.pde_pet_code = pts_to_number(var_pet_code)
+                                and td.tde_val_type = t.vty_val_type
+                      ))
+                    end as progress
+          from      pts_val_type t
+                    left outer join pts_val_pet p on (
+                      t.vty_val_type = p.vpe_val_type
+                      and p.vpe_pet_code = pts_to_number(var_pet_code)
+                    )
+                    left outer join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+          order by  t.vty_typ_seq asc
+      ) loop
+        pipe row(pts_xml_object('<VAL_TYPE VALCDE="'||pts_to_xml(val_type.vty_val_type)||'" VALTXT="'||pts_to_xml(val_type.vty_typ_text)||'" VALSEL="'||pts_to_xml(val_type.status_index)||'" VALPROG="'||pts_to_xml(val_type.progress)||'"/>'));
+      end loop;
+      
+      /*-*/
+      /* Pipe the history data
+      /*-*/
+      for val_history in (
+          select    to_char(h.vhi_date,'DD/MM/YYYY') as vhi_date,
+                    t.vty_typ_text,
+                    r.vre_vre_text
+          from      pts_val_history h
+                    inner join pts_val_reason r on h.vhi_vre_code = r.vre_vre_code
+                    inner join pts_val_type t on h.vhi_val_type = t.vty_val_type
+          where     h.vhi_pet_code = pts_to_number(var_pet_code)
+          order by  h.vhi_date desc,
+                    t.vty_typ_text asc
+      ) loop
+        pipe row(pts_xml_object('<VAL_HIS VALDAT="'||pts_to_xml(val_history.vhi_date)||'" VALTYP="'||pts_to_xml(val_history.vty_typ_text)||'" VALREA="'||pts_to_xml(val_history.vre_vre_text)||'"/>'));
+      end loop;
+      
+      /*-*/
       /* Pipe the XML end
       /*-*/
       pipe row(pts_xml_object('</PTS_RESPONSE>'));
@@ -559,11 +759,16 @@ create or replace package body pts_app.pts_pet_function as
       obj_cla_node xmlDom.domNode;
       obj_val_list xmlDom.domNodeList;
       obj_val_node xmlDom.domNode;
+      obj_v_list xmlDom.domNodeList;
+      obj_v_node xmlDom.domNode;
       var_action varchar2(32);
       var_confirm varchar2(32);
       var_locked boolean;
       rcd_pts_pet_definition pts_pet_definition%rowtype;
       rcd_pts_pet_classification pts_pet_classification%rowtype;
+      rcd_pts_val_pet pts_val_pet%rowtype;
+      var_count_pet number;
+      var_count_hou number;
 
       /*-*/
       /* Local cursors
@@ -574,6 +779,13 @@ create or replace package body pts_app.pts_pet_function as
           where t01.pde_pet_code = rcd_pts_pet_definition.pde_pet_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
+      
+      cursor csr_retrieve_hou is
+         select t01.*
+           from pts_hou_definition t01
+          where t01.hde_hou_code = rcd_pts_pet_definition.pde_hou_code
+            for update nowait;
+      rcd_retrieve_hou csr_retrieve_hou%rowtype;
 
       cursor csr_sta_code is
          select t01.*
@@ -598,7 +810,52 @@ create or replace package body pts_app.pts_pet_function as
            from table(pts_app.pts_gen_function.list_class('*PET_DEF',5)) t01
           where t01.val_code = rcd_pts_pet_definition.pde_del_notifier;
       rcd_del_note csr_del_note%rowtype;
-
+      
+      cursor csr_pet_val is
+        select    count(1) as total
+        from      pts_pet_definition p
+                  inner join pts_val_test vt on p.pde_val_code = vt.vte_val_code
+                  inner join pts_tes_definition t on vt.vte_tes_code = t.tde_tes_code
+                  inner join pts_val_pet vp on (
+                    p.pde_pet_code = vp.vpe_pet_code
+                    and t.tde_val_type = vp.vpe_val_type
+                  )
+                  inner join pts_val_status s on vp.vpe_sta_code = s.vst_sta_code 
+        where     p.pde_pet_code = rcd_pts_pet_definition.pde_pet_code
+                  and s.vst_val_flg = 1 --Still requires validation for this type
+                  and exists ( --Is allocated to that test
+                    select  1
+                    from    pts_val_allocation a
+                    where   a.val_val_code = p.pde_val_code
+                            and a.val_pet_code = p.pde_pet_code
+                  );
+      rcd_pet_val csr_pet_val%rowtype;
+      
+      cursor csr_hou_val is
+        select    count(1) as total
+        from      pts_pet_definition p
+                  inner join pts_val_test vt on p.pde_val_code = vt.vte_val_code
+                  inner join pts_tes_definition t on vt.vte_tes_code = t.tde_tes_code
+                  inner join pts_val_pet vp on (
+                    p.pde_pet_code = vp.vpe_pet_code
+                    and t.tde_val_type = vp.vpe_val_type
+                  )
+                  inner join pts_val_status s on vp.vpe_sta_code = s.vst_sta_code 
+        where     p.pde_hou_code in (
+                    select  pde_hou_code
+                    from    pts_pet_definition
+                    where   pde_pet_code = rcd_pts_pet_definition.pde_pet_code
+                  )
+                  and p.pde_pet_code <> rcd_pts_pet_definition.pde_pet_code
+                  and s.vst_val_flg = 1 --Still requires validation for this type
+                  and exists ( --Is allocated to that test
+                    select  1
+                    from    pts_val_allocation a
+                    where   a.val_val_code = p.pde_val_code
+                            and a.val_pet_code = p.pde_pet_code
+                  );
+      rcd_hou_val csr_hou_val%rowtype;
+      
    /*-------------*/
    /* Begin block */
    /*-------------*/
@@ -633,6 +890,7 @@ create or replace package body pts_app.pts_pet_function as
       rcd_pts_pet_definition.pde_del_notifier := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@DELNOTE'));
       rcd_pts_pet_definition.pde_feed_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@FEDCMNT'));
       rcd_pts_pet_definition.pde_health_comment := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@HTHCMNT'));
+      rcd_pts_pet_definition.pde_crt_date := sysdate;
       if rcd_pts_pet_definition.pde_pet_code is null and not(xslProcessor.valueOf(obj_pts_request,'@PETCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Pet code ('||xslProcessor.valueOf(obj_pts_request,'@PETCODE')||') must be a number');
       end if;
@@ -669,6 +927,19 @@ create or replace package body pts_app.pts_pet_function as
       exception
          when others then
             pts_gen_function.add_mesg_data('Pet ('||to_char(rcd_pts_pet_definition.pde_pet_code)||') is currently locked');
+      end;
+      if pts_gen_function.get_mesg_count != 0 then
+         rollback;
+         return;
+      end if;
+      
+      begin
+         open csr_retrieve_hou;
+         fetch csr_retrieve_hou into rcd_retrieve_hou;
+         close csr_retrieve_hou;
+      exception
+         when others then
+            pts_gen_function.add_mesg_data('Household ('||to_char(rcd_pts_pet_definition.pde_hou_code)||') is currently locked');
       end;
       if pts_gen_function.get_mesg_count != 0 then
          rollback;
@@ -805,6 +1076,88 @@ create or replace package body pts_app.pts_pet_function as
             insert into pts_pet_classification values rcd_pts_pet_classification;
          end loop;
       end loop;
+      
+      /*-*/
+      /* Preserve the pet and houshold validation status
+      /*-*/
+      open csr_pet_val;
+      fetch csr_pet_val into rcd_pet_val;
+      close csr_pet_val;
+      var_count_pet := rcd_pet_val.total;
+      
+      open csr_hou_val;
+      fetch csr_hou_val into rcd_hou_val;
+      close csr_hou_val;
+      var_count_hou := rcd_hou_val.total;
+
+      /*-*/
+      /* Retrieve and insert the validation status data
+      /*-*/
+      rcd_pts_val_pet.vpe_pet_code := rcd_pts_pet_definition.pde_pet_code;
+      obj_v_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/V_DATA');
+      for idx in 0..xmlDom.getLength(obj_v_list)-1 loop
+         obj_v_node := xmlDom.item(obj_v_list,idx);
+         rcd_pts_val_pet.vpe_val_type := pts_to_number(xslProcessor.valueOf(obj_v_node,'@VALCDE'));
+         rcd_pts_val_pet.vpe_sta_code := pts_to_number(xslProcessor.valueOf(obj_v_node,'@VALSEL'));
+         merge into pts_val_pet p
+         using (
+            select  rcd_pts_val_pet.vpe_pet_code vpe_pet_code,
+                    rcd_pts_val_pet.vpe_val_type vpe_val_type,
+                    rcd_pts_val_pet.vpe_sta_code vpe_sta_code
+            from    dual
+         ) x on (
+            p.vpe_pet_code = x.vpe_pet_code
+            and p.vpe_val_type = x.vpe_val_type
+         )
+         when matched then
+            update
+            set     p.vpe_sta_code = x.vpe_sta_code
+            where   p.vpe_sta_code <> x.vpe_sta_code
+         when not matched then
+            insert
+            (
+              vpe_pet_code,
+              vpe_val_type,
+              vpe_sta_code
+            )
+            values
+            (
+              x.vpe_pet_code,
+              x.vpe_val_type,
+              x.vpe_sta_code
+            );
+      end loop;
+      
+      /*-*/
+      /* Check the number of allocated tests that still require validation
+      /*-*/
+      open csr_pet_val;
+      fetch csr_pet_val into rcd_pet_val;
+      close csr_pet_val;
+      
+      open csr_hou_val;
+      fetch csr_hou_val into rcd_hou_val;
+      close csr_hou_val;
+
+      /*-*/
+      /* Release from validation test if all validation requirements for the current validation are complete
+      /*-*/
+      if var_count_pet > 0 and rcd_pet_val.total = 0 then
+        update  pts_pet_definition
+        set     pde_val_code = null,
+                pde_pet_status = decode(pde_pet_status,2,1,5,3,1)
+        where   pde_pet_code = rcd_pts_pet_definition.pde_pet_code;
+      end if;
+      if var_count_hou > 0 and rcd_hou_val.total = 0 then
+        update  pts_hou_definition
+        set     hde_hou_status = decode(hde_hou_status,2,1,5,3,1),
+                hde_val_code = null
+        where   hde_hou_code in (
+                  select  pde_hou_code
+                  from    pts_pet_definition
+                  where   pde_pet_code = rcd_pts_pet_definition.pde_pet_code
+                );
+      end if;
 
       /*-*/
       /* Free the XML document
@@ -1103,6 +1456,7 @@ create or replace package body pts_app.pts_pet_function as
    end update_restore;
 
 end pts_pet_function;
+
 /
 
 /**************************/

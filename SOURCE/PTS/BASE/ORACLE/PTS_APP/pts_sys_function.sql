@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_sys_function as
+create or replace
+package         pts_sys_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -33,12 +34,14 @@ create or replace package pts_app.pts_sys_function as
    procedure update_value;
 
 end pts_sys_function;
+ 
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_sys_function as
+create or replace
+package body         pts_sys_function as
 
    /*-*/
    /* Private exceptions

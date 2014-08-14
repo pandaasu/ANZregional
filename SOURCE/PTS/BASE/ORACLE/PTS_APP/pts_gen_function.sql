@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_gen_function as
+create or replace
+package         pts_gen_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -51,7 +52,8 @@ end pts_gen_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_gen_function as
+create or replace
+package body         pts_gen_function as
 
    /*-*/
    /* Private exceptions

@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_pty_function as
+create or replace
+package         pts_pty_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -34,12 +35,14 @@ create or replace package pts_app.pts_pty_function as
    procedure update_value;
 
 end pts_pty_function;
+ 
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_pty_function as
+create or replace
+package body         pts_pty_function as
 
    /*-*/
    /* Private exceptions
@@ -602,7 +605,7 @@ create or replace package body pts_app.pts_pty_function as
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
-     
+
       /*-*/
       /* Retrieve and process the pet type definition
       /*-*/

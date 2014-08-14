@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_sam_function as
+create or replace
+package         pts_sam_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -31,12 +32,14 @@ create or replace package pts_app.pts_sam_function as
    procedure update_data(par_user in varchar2);
 
 end pts_sam_function;
+ 
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_sam_function as
+create or replace
+package body         pts_sam_function as
 
    /*-*/
    /* Private exceptions
@@ -566,7 +569,7 @@ create or replace package body pts_app.pts_sam_function as
       if pts_gen_function.get_mesg_count != 0 then
          return;
       end if;
-     
+
       /*-*/
       /* Retrieve and process the sample definition
       /*-*/

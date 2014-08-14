@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_tes_function as
+create or replace
+package         pts_tes_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -21,6 +22,7 @@ create or replace package pts_app.pts_tes_function as
     2009/04   Steve Gregan   Created
     2010/10   Steve Gregan   Modified to allow more allocation days than samples
                              Modified to enter response data by market and alias codes
+    2011/11   Peter Tylee    Modified to allow validation tests
 
    *******************************************************************************/
 
@@ -28,6 +30,7 @@ create or replace package pts_app.pts_tes_function as
    /* Public declarations
    /*-*/
    function retrieve_list return pts_xml_type pipelined;
+   function retrieve_list_validation return pts_xml_type pipelined;
    function retrieve_data return pts_xml_type pipelined;
    procedure update_data(par_user in varchar2);
    function retrieve_preview return pts_xml_type pipelined;
@@ -56,12 +59,15 @@ create or replace package pts_app.pts_tes_function as
    procedure update_response;
 
 end pts_tes_function;
+ 
+
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_tes_function as
+create or replace
+package body         pts_tes_function as
 
    /*-*/
    /* Private exceptions
@@ -134,6 +140,7 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_definition t01
           where t01.tde_tes_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*TEST',null)))
             and t01.tde_tes_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+            and t01.tde_val_type is null
           order by t01.tde_tes_code desc;
       rcd_list csr_list%rowtype;
 
@@ -206,6 +213,101 @@ create or replace package body pts_app.pts_tes_function as
    /* End routine */
    /*-------------*/
    end retrieve_list;
+   
+   /****************************************************************/
+   /* This procedure performs the retrieve list validation routine */
+   /****************************************************************/
+   function retrieve_list_validation return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_pag_size number;
+      var_row_count number;
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_list is
+         select t01.tde_tes_code,
+                t01.tde_tes_title,
+                nvl((select sva_val_text from pts_sys_value where sva_tab_code = '*TES_DEF' and sva_fld_code = 9 and sva_val_code = t01.tde_tes_status),'*UNKNOWN') as tde_tes_status
+           from pts_tes_definition t01
+          where t01.tde_tes_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*TEST',null)))
+            and t01.tde_tes_code > (select sel_code from table(pts_app.pts_gen_function.get_list_from))
+            and t01.tde_val_type is not null
+          order by t01.tde_tes_code desc;
+      rcd_list csr_list%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+      pipe row(pts_xml_object('<LSTCTL COLCNT="2" HED1="'||pts_to_xml('Test')||'" HED2="'||pts_to_xml('Status')||'"/>'));
+
+      /*-*/
+      /* Retrieve the pet list and pipe the results
+      /*-*/
+      var_pag_size := 20;
+      var_row_count := 0;
+      open csr_list;
+      loop
+         fetch csr_list into rcd_list;
+         if csr_list%notfound then
+            exit;
+         end if;
+         var_row_count := var_row_count + 1;
+         if var_row_count <= var_pag_size then
+            pipe row(pts_xml_object('<LSTROW SELCDE="'||to_char(rcd_list.tde_tes_code)||'" SELTXT="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL1="'||pts_to_xml('('||to_char(rcd_list.tde_tes_code)||') '||rcd_list.tde_tes_title)||'" COL2="'||pts_to_xml(rcd_list.tde_tes_status)||'"/>'));
+         else
+            exit;
+         end if;
+      end loop;
+      close csr_list;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_TES_FUNCTION - RETRIEVE_LIST_VALIDATION - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_list_validation;
 
    /*****************************************************/
    /* This procedure performs the retrieve data routine */
@@ -379,6 +481,18 @@ create or replace package body pts_app.pts_tes_function as
       close csr_tes_type;
 
       /*-*/
+      /* Pipe the validation types XML
+      /*-*/
+      for val_type in (
+        select    vty_val_type,
+                  '('||to_char(vty_val_type)||') '||vty_typ_text as vty_typ_text
+        from      pts_val_type
+        order by  vty_typ_seq asc      
+      ) loop
+        pipe row(pts_xml_object('<VAL_LIST VALCDE="'||pts_to_xml(val_type.vty_val_type)||'" VALTXT="'||pts_to_xml(val_type.vty_typ_text)||'"/>'));
+      end loop;
+
+      /*-*/
       /* Pipe the test XML
       /*-*/
       if var_action = '*UPDTES' then
@@ -388,6 +502,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'"'));
          pipe row(pts_xml_object(' TESGLO="'||to_char(rcd_retrieve.tde_glo_status)||'"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
+         pipe row(pts_xml_object(' VALTYP="'||to_char(rcd_retrieve.tde_val_type)||'"'));
          pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
          pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
          pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
@@ -406,6 +521,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="1"'));
          pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="'||to_char(rcd_retrieve.tde_tes_type)||'"'));
+         pipe row(pts_xml_object(' VALTYP="'||to_char(rcd_retrieve.tde_val_type)||'"'));
          pipe row(pts_xml_object(' REQNAM="'||pts_to_xml(rcd_retrieve.tde_tes_req_name)||'"'));
          pipe row(pts_xml_object(' REQMID="'||pts_to_xml(rcd_retrieve.tde_tes_req_miden)||'"'));
          pipe row(pts_xml_object(' AIMTXT="'||pts_to_xml(rcd_retrieve.tde_tes_aim)||'"'));
@@ -424,6 +540,7 @@ create or replace package body pts_app.pts_tes_function as
          pipe row(pts_xml_object(' TESSTA="1"'));
          pipe row(pts_xml_object(' TESGLO="2"'));
          pipe row(pts_xml_object(' TESTYP="1"'));
+         pipe row(pts_xml_object(' VALTYP=""'));
          pipe row(pts_xml_object(' REQNAM=""'));
          pipe row(pts_xml_object(' REQMID=""'));
          pipe row(pts_xml_object(' AIMTXT=""'));
@@ -503,6 +620,7 @@ create or replace package body pts_app.pts_tes_function as
       var_panel boolean;
       var_allocation boolean;
       var_cpy_code number;
+      var_is_val number;
       rcd_pts_tes_definition pts_tes_definition%rowtype;
       rcd_pts_tes_keyword pts_tes_keyword%rowtype;
 
@@ -545,6 +663,12 @@ create or replace package body pts_app.pts_tes_function as
            from pts_tes_type t01
           where t01.tty_tes_type = rcd_pts_tes_definition.tde_tes_type;
       rcd_tes_type csr_tes_type%rowtype;
+      
+      cursor csr_val_type is
+         select t01.*
+           from pts_val_type t01
+          where t01.vty_val_type = rcd_pts_tes_definition.tde_val_type;
+      rcd_val_type csr_val_type%rowtype;
 
       cursor csr_question is
          select t01.*
@@ -593,6 +717,7 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Invalid request action');
          return;
       end if;
+      var_is_val := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@ISVAL'));
       var_cpy_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@CPYCDE'));
       rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
       rcd_pts_tes_definition.tde_tes_title := upper(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@TESTIT')));
@@ -600,6 +725,7 @@ create or replace package body pts_app.pts_tes_function as
       rcd_pts_tes_definition.tde_tes_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESSTA'));
       rcd_pts_tes_definition.tde_glo_status := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESGLO'));
       rcd_pts_tes_definition.tde_tes_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESTYP'));
+      rcd_pts_tes_definition.tde_val_type := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@VALTYP'));
       rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
       rcd_pts_tes_definition.tde_tes_req_name := upper(pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@REQNAM')));
@@ -630,26 +756,43 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_pts_tes_definition.tde_tes_status is null and not(xslProcessor.valueOf(obj_pts_request,'@TESSTA') is null) then
          pts_gen_function.add_mesg_data('Test status ('||xslProcessor.valueOf(obj_pts_request,'@TESSTA')||') must be a number');
       end if;
-      if rcd_pts_tes_definition.tde_glo_status is null and not(xslProcessor.valueOf(obj_pts_request,'@TESGLO') is null) then
-         pts_gen_function.add_mesg_data('Test GloPal status ('||xslProcessor.valueOf(obj_pts_request,'@TESGLO')||') must be a number');
-      end if;
-      if rcd_pts_tes_definition.tde_tes_type is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTYP') is null) then
-         pts_gen_function.add_mesg_data('Test type ('||xslProcessor.valueOf(obj_pts_request,'@TESTYP')||') must be a number');
-      end if;
-      if rcd_pts_tes_definition.tde_tes_str_date is null and not(xslProcessor.valueOf(obj_pts_request,'@STRDAT') is null) then
-         pts_gen_function.add_mesg_data('Test start date ('||xslProcessor.valueOf(obj_pts_request,'@STRDAT')||') must be a date in format DD/MM/YYYY');
-      end if;
-      if rcd_pts_tes_definition.tde_tes_fld_week is null and not(xslProcessor.valueOf(obj_pts_request,'@FLDWEK') is null) then
-         pts_gen_function.add_mesg_data('Test field week ('||xslProcessor.valueOf(obj_pts_request,'@FLDWEK')||') must be a number in format YYYYWW');
-      end if;
       if rcd_pts_tes_definition.tde_tes_len_meal is null and not(xslProcessor.valueOf(obj_pts_request,'@MEALEN') is null) then
          pts_gen_function.add_mesg_data('Test meal length ('||xslProcessor.valueOf(obj_pts_request,'@MEALEN')||') must be a number');
       end if;
-      if rcd_pts_tes_definition.tde_tes_max_temp is null and not(xslProcessor.valueOf(obj_pts_request,'@MAXTEM') is null) then
-         pts_gen_function.add_mesg_data('Test maximum temperature ('||xslProcessor.valueOf(obj_pts_request,'@MAXTEM')||') must be a number');
-      end if;
       if rcd_pts_tes_definition.tde_tes_day_count is null and not(xslProcessor.valueOf(obj_pts_request,'@DAYCNT') is null) then
          pts_gen_function.add_mesg_data('Test day count ('||xslProcessor.valueOf(obj_pts_request,'@DAYCNT')||') must be a number');
+      end if;
+      if var_is_val = 1 then
+        --Rules used for validation tests
+        if rcd_pts_tes_definition.tde_val_type is null and not(xslProcessor.valueOf(obj_pts_request,'@VALTYP') is null) then
+           pts_gen_function.add_mesg_data('Validation type ('||xslProcessor.valueOf(obj_pts_request,'@VALTYP')||') must be a number');
+        else
+          --Test type comes from validation type
+          select  vty_tes_type
+          into    rcd_pts_tes_definition.tde_tes_type
+          from    pts_val_type
+          where   vty_val_type = rcd_pts_tes_definition.tde_val_type;
+          
+          --Glopal status is not required
+          rcd_pts_tes_definition.tde_glo_status := 1;
+        end if;
+      else
+        --Rules used for non-validation tests
+        if rcd_pts_tes_definition.tde_tes_type is null and not(xslProcessor.valueOf(obj_pts_request,'@TESTYP') is null) then
+           pts_gen_function.add_mesg_data('Test type ('||xslProcessor.valueOf(obj_pts_request,'@TESTYP')||') must be a number');
+        end if;
+        if rcd_pts_tes_definition.tde_glo_status is null and not(xslProcessor.valueOf(obj_pts_request,'@TESGLO') is null) then
+           pts_gen_function.add_mesg_data('Test GloPal status ('||xslProcessor.valueOf(obj_pts_request,'@TESGLO')||') must be a number');
+        end if;
+        if rcd_pts_tes_definition.tde_tes_max_temp is null and not(xslProcessor.valueOf(obj_pts_request,'@MAXTEM') is null) then
+           pts_gen_function.add_mesg_data('Test maximum temperature ('||xslProcessor.valueOf(obj_pts_request,'@MAXTEM')||') must be a number');
+        end if;
+        if rcd_pts_tes_definition.tde_tes_str_date is null and not(xslProcessor.valueOf(obj_pts_request,'@STRDAT') is null) then
+           pts_gen_function.add_mesg_data('Test start date ('||xslProcessor.valueOf(obj_pts_request,'@STRDAT')||') must be a date in format DD/MM/YYYY');
+        end if;
+        if rcd_pts_tes_definition.tde_tes_fld_week is null and not(xslProcessor.valueOf(obj_pts_request,'@FLDWEK') is null) then
+           pts_gen_function.add_mesg_data('Test field week ('||xslProcessor.valueOf(obj_pts_request,'@FLDWEK')||') must be a number in format YYYYWW');
+        end if;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -731,14 +874,22 @@ create or replace package body pts_app.pts_tes_function as
       if rcd_pts_tes_definition.tde_tes_status is null then
          pts_gen_function.add_mesg_data('Test status must be supplied');
       end if;
-      if rcd_pts_tes_definition.tde_glo_status is null then
-         pts_gen_function.add_mesg_data('Test GloPal status must be supplied');
+      if var_is_val = 1 then
+        --Rules used for validation tests
+        if rcd_pts_tes_definition.tde_val_type is null then
+           pts_gen_function.add_mesg_data('Validation type must be supplied');
+        end if;
+      else
+        --Rules for non-validation tests
+        if rcd_pts_tes_definition.tde_glo_status is null then
+           pts_gen_function.add_mesg_data('Test GloPal status must be supplied');
+        end if;
+        if rcd_pts_tes_definition.tde_upd_user is null then
+           pts_gen_function.add_mesg_data('Update user must be supplied');
+        end if;
       end if;
       if rcd_pts_tes_definition.tde_tes_type is null then
          pts_gen_function.add_mesg_data('Test type must be supplied');
-      end if;
-      if rcd_pts_tes_definition.tde_upd_user is null then
-         pts_gen_function.add_mesg_data('Update user must be supplied');
       end if;
       if rcd_pts_tes_definition.tde_tes_day_count is null or rcd_pts_tes_definition.tde_tes_day_count <= 0 then
          pts_gen_function.add_mesg_data('Day count must be supplied and greater than zero');
@@ -755,12 +906,23 @@ create or replace package body pts_app.pts_tes_function as
          pts_gen_function.add_mesg_data('Test status ('||to_char(rcd_pts_tes_definition.tde_tes_status)||') does not exist');
       end if;
       close csr_sta_code;
-      open csr_glo_code;
-      fetch csr_glo_code into rcd_glo_code;
-      if csr_glo_code%notfound then
-         pts_gen_function.add_mesg_data('Test GloPal status ('||to_char(rcd_pts_tes_definition.tde_glo_status)||') does not exist');
+      
+      if var_is_val = 1 then
+        open csr_val_type;
+        fetch csr_val_type into rcd_val_type;
+        if csr_val_type%notfound then
+           pts_gen_function.add_mesg_data('Validation type ('||to_char(rcd_pts_tes_definition.tde_val_type)||') does not exist');
+        end if;
+        close csr_val_type;
+      else
+        open csr_glo_code;
+        fetch csr_glo_code into rcd_glo_code;
+        if csr_glo_code%notfound then
+           pts_gen_function.add_mesg_data('Test GloPal status ('||to_char(rcd_pts_tes_definition.tde_glo_status)||') does not exist');
+        end if;
+        close csr_glo_code;
       end if;
-      close csr_glo_code;
+      
       open csr_tes_type;
       fetch csr_tes_type into rcd_tes_type;
       if csr_tes_type%notfound then
@@ -798,11 +960,13 @@ create or replace package body pts_app.pts_tes_function as
             if var_sample = false then
                 pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no samples defined - update not allowed');
             end if;
-            if var_panel = false then
-                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no panel selected - update not allowed');
-            end if;
-            if var_allocation = false then
-                pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no allocation - update not allowed');
+            if var_is_val <> 1 then
+              if var_panel = false then
+                  pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no panel selected - update not allowed');
+              end if;
+              if var_allocation = false then
+                  pts_gen_function.add_mesg_data('Test status is Allocation Completed, Results Entered or Closed and no allocation - update not allowed');
+              end if;
             end if;
          end if;
          if rcd_pts_tes_definition.tde_tes_status = 2 or rcd_pts_tes_definition.tde_tes_status = 3 or rcd_pts_tes_definition.tde_tes_status = 4 then
@@ -849,6 +1013,7 @@ create or replace package body pts_app.pts_tes_function as
                 tde_tes_status = rcd_pts_tes_definition.tde_tes_status,
                 tde_glo_status = rcd_pts_tes_definition.tde_glo_status,
                 tde_tes_type = rcd_pts_tes_definition.tde_tes_type,
+                tde_val_type = rcd_pts_tes_definition.tde_val_type,
                 tde_upd_user = rcd_pts_tes_definition.tde_upd_user,
                 tde_upd_date = rcd_pts_tes_definition.tde_upd_date,
                 tde_tes_req_name = rcd_pts_tes_definition.tde_tes_req_name,
@@ -5674,7 +5839,14 @@ create or replace package body pts_app.pts_tes_function as
       rcd_question csr_question%rowtype;
 
       cursor csr_panel is
-         select t01.*,
+         select t01.tpa_pan_code,
+                t01.tpa_pan_status,
+                t01.tpa_pet_name,
+                t01.tpa_hou_code,
+                t01.tpa_con_fullname,
+                t01.tpa_loc_street,
+                t01.tpa_loc_town,
+                t01.tpa_geo_zone,
                 decode(t02.tre_pan_code,null,'0','1') as res_status
            from pts_tes_panel t01,
                 (select distinct(t01.tre_pan_code) as tre_pan_code
@@ -5682,9 +5854,29 @@ create or replace package body pts_app.pts_tes_function as
                        where t01.tre_tes_code = var_tes_code) t02
           where t01.tpa_pan_code = t02.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
-          order by t01.tpa_geo_zone asc,
-                   t01.tpa_pan_status asc,
-                   t01.tpa_pan_code asc;
+            union
+         select t02.pde_pet_code,
+                '*RECRUITED',
+                t02.pde_pet_name,
+                t03.hde_hou_code,
+                t03.hde_con_fullname,
+                t03.hde_loc_street,
+                t03.hde_loc_town,
+                t03.hde_geo_zone,
+                '1'
+           from pts_tes_response t01
+                inner join pts_pet_definition t02 on t01.tre_pan_code = t02.pde_pet_code
+                inner join pts_hou_definition t03 on t02.pde_hou_code = t03.hde_hou_code
+          where t01.tre_tes_code = var_tes_code
+                and not exists (
+                  select  1
+                  from    pts_tes_panel t
+                  where   t.tpa_pan_code = t01.tre_pan_code
+                          and t.tpa_tes_code = t01.tre_tes_code
+                )
+          order by tpa_geo_zone asc,
+                   tpa_pan_status asc,
+                   tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
    /*-------------*/
@@ -5846,7 +6038,14 @@ create or replace package body pts_app.pts_tes_function as
       rcd_retrieve csr_retrieve%rowtype;
 
       cursor csr_panel is
-         select t01.*,
+         select t01.tpa_pan_code,
+                t01.tpa_pan_status,
+                t01.tpa_pet_name,
+                t01.tpa_hou_code,
+                t01.tpa_con_fullname,
+                t01.tpa_loc_street,
+                t01.tpa_loc_town,
+                t01.tpa_geo_zone,
                 decode(t02.tre_pan_code,null,'0','1') as res_status
            from pts_tes_panel t01,
                 (select distinct(t01.tre_pan_code) as tre_pan_code
@@ -5854,9 +6053,29 @@ create or replace package body pts_app.pts_tes_function as
                        where t01.tre_tes_code = var_tes_code) t02
           where t01.tpa_pan_code = t02.tre_pan_code
             and t01.tpa_tes_code = var_tes_code
-          order by t01.tpa_geo_zone asc,
-                   t01.tpa_pan_status asc,
-                   t01.tpa_pan_code asc;
+            union
+         select t02.pde_pet_code,
+                '*RECRUITED',
+                t02.pde_pet_name,
+                t03.hde_hou_code,
+                t03.hde_con_fullname,
+                t03.hde_loc_street,
+                t03.hde_loc_town,
+                t03.hde_geo_zone,
+                '1'
+           from pts_tes_response t01
+                inner join pts_pet_definition t02 on t01.tre_pan_code = t02.pde_pet_code
+                inner join pts_hou_definition t03 on t02.pde_hou_code = t03.hde_hou_code
+          where t01.tre_tes_code = var_tes_code
+                and not exists (
+                  select  1
+                  from    pts_tes_panel t
+                  where   t.tpa_pan_code = t01.tre_pan_code
+                          and t.tpa_tes_code = t01.tre_tes_code
+                )
+          order by tpa_geo_zone asc,
+                   tpa_pan_status asc,
+                   tpa_pan_code asc;
       rcd_panel csr_panel%rowtype;
 
    /*-------------*/
@@ -7208,6 +7427,8 @@ create or replace package body pts_app.pts_tes_function as
             and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
             and t01.pde_pet_status = 1
             and (t02.hde_hou_status = 1 or t02.hde_tes_code = par_tes_code)
+            and t01.pde_val_code is null --Pet not on validation
+            and t02.hde_val_code is null --Household not on validation
           order by dbms_random.value;
       rcd_panel csr_panel%rowtype;
 
@@ -7231,12 +7452,22 @@ create or replace package body pts_app.pts_tes_function as
                   where t01.pcl_tab_code = t02.sfi_tab_code
                     and t01.pcl_fld_code = t02.sfi_fld_code
                     and t01.pcl_pet_code = rcd_panel.pde_pet_code
-                    and t02.sfi_fld_rul_type = '*LIST') t01
+                    and t02.sfi_fld_rul_type = '*LIST'
+                  union all
+                 select t01.sfi_tab_code as tab_code,
+                        t01.sfi_fld_code as fld_code,
+                        nvl(t02.vpe_sta_code,1) as val_code
+                  from  pts_sys_field t01
+                        left outer join pts_val_pet t02 on (
+                          t01.sfi_fld_code = t02.vpe_val_type
+                          and t02.vpe_pet_code = rcd_panel.pde_pet_code
+                        )
+                  where t01.sfi_tab_code = '*PET_VAL') t01
           order by t01.tab_code asc,
                    t01.fld_code asc,
                    t01.val_code asc;
       rcd_classification csr_classification%rowtype;
-
+      
       cursor csr_hou_update is
          select t01.*
            from pts_hou_definition t01
@@ -7363,7 +7594,7 @@ create or replace package body pts_app.pts_tes_function as
                tbl_sel_data(tbl_sel_data.count).val_code := rcd_classification.val_code;
             end loop;
             close csr_classification;
-
+            
             /*-*/
             /* Process the selection group rules
             /* **note** 1. Rules are logically ANDed
@@ -7758,6 +7989,7 @@ create or replace package body pts_app.pts_tes_function as
    end select_panel;
 
 end pts_tes_function;
+
 /
 
 /**************************/

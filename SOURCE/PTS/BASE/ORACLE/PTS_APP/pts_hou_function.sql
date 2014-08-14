@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_hou_function as
+create or replace
+package         pts_hou_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -19,6 +20,7 @@ create or replace package pts_app.pts_hou_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2011/11   Peter Tylee    Updated to support validation tests
 
    *******************************************************************************/
 
@@ -38,7 +40,8 @@ end pts_hou_function;
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_hou_function as
+create or replace
+package body         pts_hou_function as
 
    /*-*/
    /* Private exceptions
@@ -190,7 +193,39 @@ create or replace package body pts_app.pts_hou_function as
          select t01.*,
                 decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test',9,'Deleted','*UNKNOWN') as status_text,
                 decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
-                decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text
+                decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text,
+                nvl((
+                  select  s.vst_sta_text
+                  from    pts_val_pet p
+                          inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                  where   p.vpe_pet_code = t01.pde_pet_code
+                          and p.vpe_val_type = 1
+                          and rownum = 1
+                ),'*UNKNOWN') as val_dd,
+                nvl((
+                  select  s.vst_sta_text
+                  from    pts_val_pet p
+                          inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                  where   p.vpe_pet_code = t01.pde_pet_code
+                          and p.vpe_val_type = 2
+                          and rownum = 1
+                ),'*UNKNOWN') as val_dr,
+                nvl((
+                  select  s.vst_sta_text
+                  from    pts_val_pet p
+                          inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                  where   p.vpe_pet_code = t01.pde_pet_code
+                          and p.vpe_val_type = 3
+                          and rownum = 1
+                ),'*UNKNOWN') as val_wd,
+                nvl((
+                  select  s.vst_sta_text
+                  from    pts_val_pet p
+                          inner join pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                  where   p.vpe_pet_code = t01.pde_pet_code
+                          and p.vpe_val_type = 4
+                          and rownum = 1
+                ),'*UNKNOWN') as val_wr
            from pts_pet_definition t01,
                 pts_pet_type t02,
                 (select t01.pcl_pet_code,
@@ -406,7 +441,7 @@ create or replace package body pts_app.pts_hou_function as
             if csr_pet%notfound then
                exit;
              end if;
-            pipe row(pts_xml_object('<PET PETCODE="'||to_char(rcd_pet.pde_pet_code)||'" PETNAME="'||pts_to_xml('('||to_char(rcd_pet.pde_pet_code)||') '||rcd_pet.pde_pet_name)||'" PETTYPE="'||pts_to_xml(rcd_pet.type_text)||'" PETSIZE="'||pts_to_xml(rcd_pet.size_text)||'" PETSTAT="'||pts_to_xml(rcd_pet.status_text)||'"/>'));
+            pipe row(pts_xml_object('<PET PETCODE="'||to_char(rcd_pet.pde_pet_code)||'" PETNAME="'||pts_to_xml('('||to_char(rcd_pet.pde_pet_code)||') '||rcd_pet.pde_pet_name)||'" PETTYPE="'||pts_to_xml(rcd_pet.type_text)||'" PETSIZE="'||pts_to_xml(rcd_pet.size_text)||'" PETSTAT="'||pts_to_xml(rcd_pet.status_text)||'" VALDD="'||pts_to_xml(rcd_pet.val_dd)||'" VALDR="'||pts_to_xml(rcd_pet.val_dr)||'" VALWD="'||pts_to_xml(rcd_pet.val_wd)||'" VALWR="'||pts_to_xml(rcd_pet.val_wr)||'"/>'));
          end loop;
          close csr_pet;
       end if;
@@ -451,7 +486,7 @@ create or replace package body pts_app.pts_hou_function as
          close csr_field;
       end loop;
       close csr_table;
-
+      
       /*-*/
       /* Pipe the XML end
       /*-*/

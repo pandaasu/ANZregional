@@ -1,7 +1,8 @@
 /******************/
 /* Package Header */
 /******************/
-create or replace package pts_app.pts_stm_function as
+create or replace
+package         pts_stm_function as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -32,12 +33,14 @@ create or replace package pts_app.pts_stm_function as
    function report_panel(par_stm_code in number) return pts_xls_type pipelined;
 
 end pts_stm_function;
+ 
 /
 
 /****************/
 /* Package Body */
 /****************/
-create or replace package body pts_app.pts_stm_function as
+create or replace
+package body         pts_stm_function as
 
    /*-*/
    /* Private exceptions
