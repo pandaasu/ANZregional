@@ -3,10 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_pet_search.asp                                 //
-'// Author  : Steve Gregan                                       //
-'// Date    : May 2009                                           //
-'// Text    : This script implements the pet search              //
+'// Script  : pts_val_search.asp                                 //
+'// Author  : Peter Tylee                                        //
+'// Date    : October 2011                                       //
+'// Text    : This script implements the product validation      //
+'//           search                                             //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -24,12 +25,7 @@
    '// ** allow for network performance issues **
    '//
    server.scriptTimeout = 600
-   
-   '//
-   '// Check the querystring for variables
-   '//
-   strValidation = Request.QueryString("VAL")
-   
+
    '//
    '// Retrieve the security information
    '//
@@ -116,13 +112,9 @@ sub ProcessRequest()
    end if
 
    '//
-   '// Retrieve the pet list
+   '// Retrieve the validation list
    '//
-   if strValidation = "1" then
-      strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_list_validation)"
-   else
-      strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_list)"
-   end if
+   strStatement = "select xml_text from table(pts_app.pts_val_function.retrieve_list)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

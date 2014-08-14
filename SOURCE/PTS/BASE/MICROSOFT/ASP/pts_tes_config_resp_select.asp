@@ -3,10 +3,11 @@
 <%
 '//////////////////////////////////////////////////////////////////
 '// System  : PTS (Product Testing System)                       //
-'// Script  : pts_pet_search.asp                                 //
+'// Script  : pts_tes_config_resp_retrieve.asp                   //
 '// Author  : Steve Gregan                                       //
 '// Date    : May 2009                                           //
-'// Text    : This script implements the pet search              //
+'// Text    : This script implements the test response select    //
+'//           functionality                                      //
 '//////////////////////////////////////////////////////////////////
 
    '//
@@ -17,23 +18,17 @@
    dim objSecurity
    dim objProcedure
    dim objSelection
-   dim strValidation
 
    '//
    '// Set the server script timeout to (10 minutes)
    '// ** allow for network performance issues **
    '//
    server.scriptTimeout = 600
-   
-   '//
-   '// Check the querystring for variables
-   '//
-   strValidation = Request.QueryString("VAL")
-   
+
    '//
    '// Retrieve the security information
    '//
-   strReturn = GetSecurity()
+   strReturn = GetSecurityCheck("PTS_TES_CONFIG")
    if strReturn = "*OK" then
       GetForm()
       call ProcessRequest
@@ -83,46 +78,15 @@ sub ProcessRequest()
    next
 
    '//
-   '// Set the search data
-   '//
-   call objProcedure.Execute("pts_app.pts_gen_function.set_list_data")
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-
-   '//
    '// Create the selection object
    '//
    set objSelection = Server.CreateObject("ICS_SELECTION.Object")
    set objSelection.Security = objSecurity
 
    '//
-   '// Retrieve any messages
+   '// Retrieve the test response select
    '//
-   strStatement = "select xml_text from table(pts_app.pts_gen_function.get_mesg_data)"
-   strReturn = objSelection.Execute("SETDATA", strStatement, 0)
-   if strReturn <> "*OK" then
-      exit sub
-   end if
-   if objSelection.ListCount("SETDATA") <> 0 then
-      Response.Buffer = true
-      Response.ContentType = "text/xml"
-      Response.AddHeader "Cache-Control", "no-cache"
-      Response.Write(strReturn)
-      for intIndex = 0 to objSelection.ListCount("SETDATA") - 1
-         call Response.Write(objSelection.ListValue01("SETDATA",intIndex))
-      next
-      exit sub
-   end if
-
-   '//
-   '// Retrieve the pet list
-   '//
-   if strValidation = "1" then
-      strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_list_validation)"
-   else
-      strStatement = "select xml_text from table(pts_app.pts_pet_function.retrieve_list)"
-   end if
+   strStatement = "select xml_text from table(pts_app.pts_tes_function.select_response)"
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

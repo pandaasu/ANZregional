@@ -81,8 +81,9 @@ sub PaintFunction()%>
    ///////////////////////
    // Generic Functions //
    ///////////////////////
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButton') {
          objElement.className = 'clsButtonX';
       }
@@ -93,8 +94,9 @@ sub PaintFunction()%>
          objElement.className = 'clsSelectX';
       }
    }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButtonX') {
          objElement.className = 'clsButton';
       }

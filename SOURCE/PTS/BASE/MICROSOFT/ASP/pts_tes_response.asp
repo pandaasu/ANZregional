@@ -81,8 +81,9 @@ sub PaintFunction()%>
    ///////////////////////
    // Generic Functions //
    ///////////////////////
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButton') {
          objElement.className = 'clsButtonX';
          return '';
@@ -94,8 +95,9 @@ sub PaintFunction()%>
          objElement.className = 'clsSelectX';
       }
    }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButtonX') {
          objElement.className = 'clsButton';
       }
@@ -492,7 +494,7 @@ sub PaintFunction()%>
             objCell.colSpan = 2;
          }
          objCell.align = 'center';
-         objCell.innerHTML = '<a class="clsButton" onfocus="doAcceptFocus();" onblur="doAcceptBlur();" href="javascript:doResponseAccept();">Accept</a>';
+         objCell.innerHTML = '<a class="clsButton" onfocus="doAcceptFocus(event);" onblur="doAcceptBlur(event);" href="javascript:doResponseAccept();">Accept</a>';
          objCell.className = 'clsTable01';
          objCell.style.whiteSpace = 'nowrap';
          document.getElementById('SCR_ResData').scrollTop = 0;
@@ -501,13 +503,15 @@ sub PaintFunction()%>
          document.getElementById('RES_ResCode').focus();
       }
    }
-   function doAcceptFocus() {
-      var objElement = window.event.srcElement;
+   function doAcceptFocus(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       objElement.className = 'clsButtonX';
       window.status = '';
    }
-   function doAcceptBlur() {
-      var objElement = window.event.srcElement;
+   function doAcceptBlur(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       objElement.className = 'clsButton';
    }
    function clearResponseData() {

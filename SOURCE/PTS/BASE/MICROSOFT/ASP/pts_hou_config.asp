@@ -20,6 +20,7 @@
    dim strReturn
    dim strHeading
    dim objSecurity
+   dim strCode
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -47,6 +48,11 @@
    '// Get the character set
    '//
    strCharset = GetCharSet()
+   
+   '//
+   '// Get the code from the querystring
+   '//
+   strCode = Request.QueryString("code")
 
    '//
    '// Retrieve the security information
@@ -57,7 +63,7 @@
    else
       call PaintFunction
    end if
-
+   
    '//
    '// Destroy references
    '//
@@ -77,12 +83,12 @@ sub PaintFunction()%>
 <html>
 <script language="javascript">
 <!--
-
    ///////////////////////
    // Generic Functions //
    ///////////////////////
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButton') {
          objElement.className = 'clsButtonX';
       }
@@ -93,8 +99,9 @@ sub PaintFunction()%>
          objElement.className = 'clsSelectX';
       }
    }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButtonX') {
          objElement.className = 'clsButton';
       }
@@ -119,7 +126,20 @@ sub PaintFunction()%>
    function setSelect(objInput) {
       objInput.select();
    }
-
+    function parseCode(text,page) {
+        var parts = text.split(/[\(\)]/);
+        var code = "";
+        var remainder = "";
+        
+        if (parts.length >= 2) {
+            code = parts[0];
+            for(var i = 1; i < parts.length; i++) {
+                remainder += parts[i];
+            }
+        }
+        return "(<a href='javascript:parent.setContent(\"\\" + page + "?code=" + code + "\");' onclick='parent.setContent(\"\\" + page + "?code=" + code + "\");return false;'>" + code + "</a>)" + remainder;
+    }
+    
    ////////////////////
    // Load Functions //
    ////////////////////
@@ -132,6 +152,11 @@ sub PaintFunction()%>
       initClass('Household',function() {doDefineClaCancel();},function(intRowIndex,objValues) {doDefineClaAccept(intRowIndex,objValues);});
       displayScreen('dspPrompt');
       document.getElementById('PRO_HouCode').focus();
+      
+      <%if strCode <> "" then%>
+         document.getElementById('PRO_HouCode').value = "<%=strCode%>";
+         doPromptUpdate();
+      <%end if%>
    }
 
    ///////////////////////
@@ -329,7 +354,7 @@ sub PaintFunction()%>
                objRow.setAttribute('petcde','PETCODE');
                objCell = objRow.insertCell(0);
                objCell.colSpan = 1;
-               objCell.innerText = objElements[i].getAttribute('PETNAME');
+               objCell.innerHTML = parseCode(objElements[i].getAttribute('PETNAME'),'pts_pet_config.asp');
                objCell.className = 'clsLabelFB';
                objCell.style.whiteSpace = 'nowrap';
                objCell = objRow.insertCell(1);
@@ -345,6 +370,28 @@ sub PaintFunction()%>
                objCell = objRow.insertCell(3);
                objCell.colSpan = 1;
                objCell.innerText = objElements[i].getAttribute('PETSTAT');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               
+               // Validation status for the 4x validation types (Dry Difference, Dry Rank, Wet Difference, Wet Rank)
+               objCell = objRow.insertCell(4);
+               objCell.colSpan = 1;
+               objCell.innerText = "DD:" + objElements[i].getAttribute('VALDD');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(5);
+               objCell.colSpan = 1;
+               objCell.innerText = "DR:" + objElements[i].getAttribute('VALDR');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(6);
+               objCell.colSpan = 1;
+               objCell.innerText = "WD:" + objElements[i].getAttribute('VALWD');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(7);
+               objCell.colSpan = 1;
+               objCell.innerText = "WR:" + objElements[i].getAttribute('VALWR');
                objCell.className = 'clsLabelFN';
                objCell.style.whiteSpace = 'nowrap';
             } else if (objElements[i].nodeName == 'TABLE') {
@@ -612,7 +659,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Household Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PRO_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PRO_HouCode" id="PRO_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>

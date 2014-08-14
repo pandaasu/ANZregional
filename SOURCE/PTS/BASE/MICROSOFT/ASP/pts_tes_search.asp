@@ -18,6 +18,7 @@
    dim objSecurity
    dim objProcedure
    dim objSelection
+   dim strValidation
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -25,6 +26,11 @@
    '//
    server.scriptTimeout = 600
 
+   '//
+   '// Check the querystring for variables
+   '//
+   strValidation = Request.QueryString("VAL")
+   
    '//
    '// Retrieve the security information
    '//
@@ -113,7 +119,11 @@ sub ProcessRequest()
    '//
    '// Retrieve the test list
    '//
-   strStatement = "select xml_text from table(pts_app.pts_tes_function.retrieve_list)"
+   if strValidation = "1" then
+      strStatement = "select xml_text from table(pts_app.pts_tes_function.retrieve_list_validation)"
+   else
+      strStatement = "select xml_text from table(pts_app.pts_tes_function.retrieve_list)"
+   end if
    strReturn = objSelection.Execute("RESPONSE", strStatement, 0)
    if strReturn <> "*OK" then
       exit sub

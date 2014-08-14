@@ -20,6 +20,7 @@
    dim strReturn
    dim strHeading
    dim objSecurity
+   dim strCode
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -49,6 +50,11 @@
    strCharset = GetCharSet()
 
    '//
+   '// Get the code from the querystring
+   '//
+   strCode = Request.QueryString("code")
+
+   '//
    '// Retrieve the security information
    '//
    strReturn = GetSecurityCheck("PTS_PET_CONFIG")
@@ -57,7 +63,7 @@
    else
       call PaintFunction
    end if
-
+   
    '//
    '// Destroy references
    '//
@@ -81,8 +87,9 @@ sub PaintFunction()%>
    ///////////////////////
    // Generic Functions //
    ///////////////////////
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButton') {
          objElement.className = 'clsButtonX';
       }
@@ -93,8 +100,9 @@ sub PaintFunction()%>
          objElement.className = 'clsSelectX';
       }
    }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButtonX') {
          objElement.className = 'clsButton';
       }
@@ -119,7 +127,21 @@ sub PaintFunction()%>
    function setSelect(objInput) {
       objInput.select();
    }
-
+   function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+                return unescape(pair[1]);
+            }
+        }
+        return null;
+    }
+    function makeLink(text,code,page) {
+        return "<a href='javascript:parent.setContent(\"\\" + page + "?code=" + code + "\");' onclick='parent.setContent(\"\\" + page + "?code=" + code + "\");return false;'>" + text + "</a>";
+    }
+    
    ////////////////////
    // Load Functions //
    ////////////////////
@@ -134,6 +156,11 @@ sub PaintFunction()%>
       initClass('Pet',function() {doDefineClaCancel();},function(intRowIndex,objValues) {doDefineClaAccept(intRowIndex,objValues);});
       displayScreen('dspLoad');
       requestPromptLoad();
+      
+      <%if strCode <> "" then%>
+         document.getElementById('PRO_PetCode').value = "<%=strCode%>";
+         doPromptUpdate();
+      <%end if%>
    }
 
    ///////////////////////
@@ -329,22 +356,29 @@ sub PaintFunction()%>
          displayScreen('dspDefine');
          document.getElementById('DEF_PetCode').value = '';
          document.getElementById('DEF_PetType').value = '';
-         document.getElementById('DEF_TypText').innerHTML = '';
+         document.getElementById('DEF_CrtDate').innerHTML = '';
          document.getElementById('DEF_PetName').value = '';
          document.getElementById('DEF_HouCode').value = '';
          document.getElementById('DEF_HouText').innerHTML = '';
          document.getElementById('DEF_BthYear').value = '';
          document.getElementById('DEF_FedCmnt').value = '';
          document.getElementById('DEF_HthCmnt').value = '';
+         document.getElementById('DEF_TypText').innerHTML = '';
          var strPetStat;
          var strDelNote;
          var objPetStat = document.getElementById('DEF_PetStat');
          var objDelNote = document.getElementById('DEF_DelNote');
+         var objValStat = document.getElementById('DEF_ValStat');
          objPetStat.options.length = 0;
          objDelNote.options.length = 0;
+         objValStat.options.length = 0;
          document.getElementById('DEF_PetName').focus();
          var objClaData = document.getElementById('DEF_ClaData');
          var objClaFont = document.getElementById('DEF_ClaFont');
+         var objValData = document.getElementById('DEF_ValData');
+         var objValFont = document.getElementById('DEF_ValFont');
+         var objHisData = document.getElementById('DEF_HisData');
+         var objHisFont = document.getElementById('DEF_HisFont');
          var objRow;
          var objCell;
          var strTabCode;
@@ -353,6 +387,12 @@ sub PaintFunction()%>
          for (var i=objClaData.rows.length-1;i>=0;i--) {
             objClaData.deleteRow(i);
          }
+         for (var i=objValData.rows.length-1;i>=0;i--) {
+            objValData.deleteRow(i);
+         }
+         for (var i=objHisData.rows.length-1;i>0;i--) {
+            objHisData.deleteRow(i);
+         }
          for (var i=0;i<objElements.length;i++) {
             if (objElements[i].nodeName == 'STA_LIST') {
                objPetStat.options[objPetStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
@@ -360,16 +400,22 @@ sub PaintFunction()%>
                objPetType.options[objPetType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'DEL_NOTE') {
                objDelNote.options[objDelNote.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'VAL_STATUS') {
+               objValStat.options[objValStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'PET') {
+                var houText = objElements[i].getAttribute('HOUTEXT')
+                if (houText != "** DATA ENTRY **")
+                    houText = "(" + makeLink(objElements[i].getAttribute('HOUCODE'),objElements[i].getAttribute('HOUCODE'),"pts_hou_config.asp") + ") " + houText;
                document.getElementById('DEF_PetCode').value = objElements[i].getAttribute('PETCODE');
                document.getElementById('DEF_PetType').value = objElements[i].getAttribute('PETTYPE');
                document.getElementById('DEF_TypText').innerHTML = objElements[i].getAttribute('TYPTEXT');
                document.getElementById('DEF_PetName').value = objElements[i].getAttribute('PETNAME');
                document.getElementById('DEF_HouCode').value = objElements[i].getAttribute('HOUCODE');
-               document.getElementById('DEF_HouText').innerHTML = objElements[i].getAttribute('HOUTEXT');
+               document.getElementById('DEF_HouText').innerHTML = houText;
                document.getElementById('DEF_BthYear').value = objElements[i].getAttribute('BTHYEAR');
                document.getElementById('DEF_FedCmnt').value = objElements[i].getAttribute('FEDCMNT');
                document.getElementById('DEF_HthCmnt').value = objElements[i].getAttribute('HTHCMNT');
+               document.getElementById('DEF_CrtDate').innerHTML = objElements[i].getAttribute('CRTDATE');
                strPetStat = objElements[i].getAttribute('PETSTAT');
                strDelNote = objElements[i].getAttribute('DELNOTE');
                cstrHouCode = objElements[i].getAttribute('HOUCODE');
@@ -424,6 +470,44 @@ sub PaintFunction()%>
                      objCell.innerText = objCell.innerText+', '+objElements[i].getAttribute('VALTXT');
                   }
                }
+            } else if (objElements[i].nodeName == 'VAL_TYPE') {
+               var objNewSelect = objValStat.cloneNode(true);
+               objNewSelect.id = "s_"+objElements[i].getAttribute('VALCDE');
+               objNewSelect.selectedIndex = objElements[i].getAttribute('VALSEL');
+               objRow = objValData.insertRow(-1);
+               objRow.setAttribute('valcde',objElements[i].getAttribute('VALCDE'));
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerHTML = "<b>" + objElements[i].getAttribute('VALTXT') + "</b>";
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(1);
+               objCell.colSpan = 1;
+               objCell.appendChild(objNewSelect);
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(2);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('VALPROG');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+            } else if (objElements[i].nodeName == 'VAL_HIS') {
+               objRow = objHisData.insertRow(-1);
+               objCell = objRow.insertCell(0);
+               objCell.colSpan = 1;
+               objCell.innerHTML = objElements[i].getAttribute('VALTYP');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(1);
+               objCell.colSpan = 1;
+               objCell.innerHTML = objElements[i].getAttribute('VALREA');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               objCell = objRow.insertCell(2);
+               objCell.colSpan = 1;
+               objCell.innerText = objElements[i].getAttribute('VALDAT');
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
             }
          }
          objPetStat.selectedIndex = -1;
@@ -446,6 +530,24 @@ sub PaintFunction()%>
             objClaData.style.display = 'none';
             objClaFont.style.display = 'block';
          }
+         objValData.style.display = 'block';
+         objValFont.style.display = 'none';
+         if (objValData.rows.length == 0) {
+            objValData.style.display = 'none';
+            objValFont.style.display = 'block';
+         }
+         objHisData.style.display = 'block';
+         objHisFont.style.display = 'none';
+         if (objHisData.rows.length == 1) {
+            objHisData.style.display = 'none';
+            objHisFont.style.display = 'block';
+         }
+         
+         // Height adjustments
+         var targetHeight = document.getElementById("divCla").offsetHeight;
+         var valHeight = document.getElementById("divVal").offsetHeight;
+         var valHisHeadHeight = document.getElementById("divValHisHead").offsetHeight;
+         document.getElementById("divValHisData").style.height = targetHeight - valHeight - valHisHeadHeight - 5;
       }
    }
    function doDefineAccept() {
@@ -453,6 +555,7 @@ sub PaintFunction()%>
       var objPetStat = document.getElementById('DEF_PetStat');
       var objDelNote = document.getElementById('DEF_DelNote');
       var objClaData = document.getElementById('DEF_ClaData');
+      var objValData = document.getElementById('DEF_ValData');
       var objRow;
       var objValAry;
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -483,6 +586,11 @@ sub PaintFunction()%>
                strXML = strXML+'</CLA_DATA>';
             }
          }
+      }
+      for (var i=0;i<objValData.rows.length;i++) {
+        objRow = objValData.rows[i];
+        objSel = document.getElementById("s_" + objRow.getAttribute('valcde'));
+        strXML = strXML+'<V_DATA VALCDE="'+objRow.getAttribute('valcde')+'" VALSEL="'+objSel.value+'"/>';
       }
       strXML = strXML+'</PTS_REQUEST>';
       doActivityStart(document.body);
@@ -534,11 +642,45 @@ sub PaintFunction()%>
    }
    function doBlurHousehold() {
       var objHouCode = document.getElementById('DEF_HouCode');
+      if (cstrHouCode != objHouCode.value) {
+          var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*UPDHOU" HOUCODE="'+fixXML(objHouCode.value)+'"/>';
+          doPostRequest('<%=strBase%>pts_hou_config_retrieve.asp',function(strResponse) {doHouseholdText(strResponse);},false,streamXML(strXML));
+          cstrHouCode = objHouCode.value;
+      }
+   }
+   function doFocusHousehold(strCode) {
+      cstrHouCode = strCode;
+   }
+   function doHouseholdText(strResponse) {
       var objHouText = document.getElementById('DEF_HouText');
-      if (objHouCode.value != cstrHouCode) {
+      var objHouCode = document.getElementById('DEF_HouCode');
+      if (strResponse.substring(0,3) == '*OK') {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            objHouCode.focus();
+            alert(strMessage);
+            return;
+         }
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'HOUSEHOLD') {
+               cstrHouCode = objElements[i].getAttribute('HOUCODE');
+               objHouText.innerHTML = "(" + makeLink(cstrHouCode,cstrHouCode,"pts_hou_config.asp") + ") " + objElements[i].getAttribute('CONFNAM') + ", " + objElements[i].getAttribute('LOCSTRT') + ", " + objElements[i].getAttribute('LOCTOWN');
+               break;
+            } 
+         }
+      }
+      else {
          objHouText.innerText = '** DATA ENTRY **';
       }
-      cstrHouCode = objHouCode.value;
    }
    function doDefineHouseholdCancel() {
       displayScreen('dspDefine');
@@ -650,7 +792,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PRO_PetCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PRO_PetCode" id="PRO_PetCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
@@ -683,7 +825,7 @@ sub PaintFunction()%>
       <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
       <tr>
          <td id="hedDefine" class="clsFunction" align=center valign=center colspan=2 nowrap><nobr>Pet Maintenance</nobr></td>
-         <input type="hidden" name="DEF_PetCode" value="">
+         <input type="hidden" name="DEF_PetCode" id="DEF_PetCode" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -691,12 +833,12 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Type:&nbsp;</nobr></td>
          <td id="DEF_TypText" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
-         <input type="hidden" name="DEF_PetType" value="">
+         <input type="hidden" name="DEF_PetType" id="DEF_PetType" value="">
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Pet Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PetName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_PetName" id="DEF_PetName" size="80" maxlength="120" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
@@ -710,7 +852,7 @@ sub PaintFunction()%>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <table class="clsPanel" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
                <tr>
-                  <td align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="DEF_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);doBlurHousehold();"></nobr></td>
+                  <td align=left valign=center colspan=1 nowrap><nobr><input class="clsInputNN" type="text" name="DEF_HouCode" size="10" maxlength="10" value="" onFocus="setSelect(this);doFocusHousehold(this.value);" onBlur="validateNumber(this,0,false);doBlurHousehold();"></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=left colspan=1 nowrap><nobr>
                      <table class="clsGrid02" align=left valign=top cols=3 cellpadding="0" cellspacing="0">
@@ -738,32 +880,56 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Birth Year:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="DEF_BthYear" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="DEF_BthYear" id="DEF_BthYear" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Feeding Comments:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FedCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_FedCmnt" id="DEF_FedCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Health Comments:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_HthCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_HthCmnt" id="DEF_HthCmnt" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Create Date:&nbsp;</nobr></td>
+         <td id="DEF_CrtDate" class="clsLabelBB" align=left valign=center colspan=1 nowrap></td>
       </tr>
       </table></nobr></td></tr>
       <tr>
-         <td class="clsLabelBB" align=center valign=center colspan=2 nowrap><nobr>&nbsp;Pet Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Pet Classification Data&nbsp;</nobr></td>
+         <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Pet Validation Data&nbsp;</nobr></td>
       </tr>
       <tr height=100%>
-         <td align=center colspan=2 nowrap><nobr>
-            <div class="clsScroll01" style="display:block;visibility:visible">
+         <td align=center colspan=1 nowrap style="width:50%;"><nobr>
+            <div class="clsScroll01" style="display:block;visibility:visible" id="divCla">
                <table id="DEF_ClaData" class="clsTableBody" style="display:block;visibility:visible" cols=1 align=left cellpadding="2" cellspacing="1"></table>
                <font id="DEF_ClaFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO CLASSIFICATIONS</font>
             </div>
          </nobr></td>
+         <td align=center valign="top" colspan=1 nowrap style="width:50%;">
+            <div id="divVal">
+                <nobr>
+                    <table id="DEF_ValData" class="clsTableBody" style="display:block;visibility:visible;width:100%;border:solid 1px #40414c;border-bottom:none;" cols="1" align="left" cellpadding="1" cellspacing="0"></table>
+            	    <font id="DEF_ValFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO VALIDATION</font>
+                </nobr>
+            </div>
+            <div id="divValHisHead" class="clsLabelBB" style="clear:both;margin-top:5px;text-align:center;white-space:nowrap;"><nobr>&nbsp;Pet Validation History&nbsp;</nobr></div>
+           	<div id="divValHisData" class="clsScroll01" style="clear:both;display:block;visibility:visible;border:solid 1px #40414c;overflow:scroll;">
+                <table id="DEF_HisData" class="clsTableBody" style="display:block;visibility:visible;width:100%;text-align:left;" cellpadding="2" cellspacing="1">
+                    <tr>
+                        <td class="clsLabelFN"><b>Validation Type</b></td>
+                        <td class="clsLabelFN"><b>Reason</b></td>
+                        <td class="clsLabelFN"><b>Allocation Date</b></td>
+                    </tr>
+                </table>
+                <font id="DEF_HisFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt;text-align:center;">NO HISTORY</font>
+            </div>
+         </td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
@@ -782,6 +948,9 @@ sub PaintFunction()%>
    </table>
 <!--#include file="pts_search_html.inc"-->
 <!--#include file="pts_class_html.inc"-->
+<div style="display:none;visibility:hidden;">
+    <select class="clsInputBN" id="DEF_ValStat"></select>
+</div>
 </body>
 </html>
 <%end sub%>

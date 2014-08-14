@@ -20,6 +20,7 @@
    dim strReturn
    dim strHeading
    dim objSecurity
+   dim strValidation
 
    '//
    '// Set the server script timeout to (10 minutes)
@@ -28,10 +29,19 @@
    server.scriptTimeout = 600
 
    '//
+   '// Check the querystring for variables
+   '//
+   strValidation = Request.QueryString("VAL")
+   
+   '//
    '// Initialise the script
    '//
    strTarget = "pts_tes_config.asp"
    strHeading = "Pet Test Maintenance"
+   
+   if strValidation = "1" then
+    strHeading = "Pet Validation Test Maintenance"
+   end if
 
    '//
    '// Get the base string
@@ -47,7 +57,7 @@
    '// Get the character set
    '//
    strCharset = GetCharSet()
-
+   
    '//
    '// Retrieve the security information
    '//
@@ -79,10 +89,16 @@ sub PaintFunction()%>
 <!--
 
    ///////////////////////
+   // Page Variables    //
+   ///////////////////////
+   var isValidation = <%if strValidation = "1" then%> true <%else%> false <%end if%>;
+
+   ///////////////////////
    // Generic Functions //
    ///////////////////////
-   function document.onmouseover() {
-      var objElement = window.event.srcElement;
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButton') {
          objElement.className = 'clsButtonX';
          return '';
@@ -94,8 +110,9 @@ sub PaintFunction()%>
          objElement.className = 'clsSelectX';
       }
    }
-   function document.onmouseout() {
-      var objElement = window.event.srcElement;
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
       if (objElement.className == 'clsButtonX') {
          objElement.className = 'clsButton';
       }
@@ -138,15 +155,15 @@ sub PaintFunction()%>
       cobjScreens[10] = new clsScreen('dspAllocation','hedAllocation');
       cobjScreens[11] = new clsScreen('dspRelease','hedRelease');
       cobjScreens[12] = new clsScreen('dspResReport','hedResReport');
-      cobjScreens[0].hedtxt = 'Pet Test Prompt';
-      cobjScreens[1].hedtxt = 'Pet Test Maintenance';
-      cobjScreens[2].hedtxt = 'Pet Test Keyword Maintenance';
-      cobjScreens[3].hedtxt = 'Pet Test Preview';
-      cobjScreens[4].hedtxt = 'Pet Test Question Review';
-      cobjScreens[5].hedtxt = 'Pet Test Question Maintenance';
-      cobjScreens[6].hedtxt = 'Pet Test Sample Review';
-      cobjScreens[7].hedtxt = 'Pet Test Sample Maintenance';
-      cobjScreens[8].hedtxt = 'Pet Test Sample Size';
+      cobjScreens[0].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Prompt';
+      cobjScreens[1].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Maintenance';
+      cobjScreens[2].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Keyword Maintenance';
+      cobjScreens[3].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Preview';
+      cobjScreens[4].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Question Review';
+      cobjScreens[5].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Question Maintenance';
+      cobjScreens[6].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Sample Review';
+      cobjScreens[7].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Sample Maintenance';
+      cobjScreens[8].hedtxt = 'Pet ' + ((isValidation) ? ' Validation' : '') + 'Test Sample Size';
       cobjScreens[9].hedtxt = 'Pet Test Panel Selection';
       cobjScreens[10].hedtxt = 'Pet Test Allocation';
       cobjScreens[11].hedtxt = 'Pet Test Release';
@@ -155,6 +172,30 @@ sub PaintFunction()%>
       initSelect('dspPanel','Test');
       displayScreen('dspPrompt');
       document.getElementById('PRO_TesCode').focus();
+      
+      // Check if this is a validation
+      if (isValidation) {
+        document.getElementById("notVal1").style.display = "none";
+        document.getElementById("notVal2").style.display = "none";
+        document.getElementById("notVal3").style.display = "none";
+        document.getElementById("notVal4").style.display = "none";
+        document.getElementById("notVal5").style.display = "none";
+        document.getElementById("notVal6").style.display = "none";
+        document.getElementById("notVal7").style.display = "none";
+        document.getElementById("notVal8").style.display = "none";
+        document.getElementById("notVal9").style.display = "none";
+        document.getElementById("notVal10").style.display = "none";
+        document.getElementById("notVal11").style.display = "none";
+        document.getElementById("notVal12").style.display = "none";
+        document.getElementById("notVal13").style.display = "none";
+        document.getElementById("notVal14").style.display = "none";
+        document.getElementById("notVal15").style.display = "none";
+        document.getElementById("notVal16").style.display = "none";
+        document.getElementById("notVal17").style.display = "none";
+        document.getElementById("notVal18").style.display = "none";
+        document.getElementById("notVal19").style.display = "none";
+        document.getElementById("Val1").style.display = "block";
+      }
    }
 
    ///////////////////////
@@ -221,7 +262,7 @@ sub PaintFunction()%>
    }
    function doPromptSearch() {
       if (!processForm()) {return;}
-      startSchInstance('*TEST','Test','pts_tes_search.asp',function() {doPromptTesCancel();},function(strCode,strText) {doPromptTesSelect(strCode,strText);});
+      startSchInstance('*TEST','Test' + ((isValidation) ? ' Validation' : ''),'pts_tes_search.asp' + ((isValidation) ? '?VAL=1' : ''),function() {doPromptTesCancel();},function(strCode,strText) {doPromptTesSelect(strCode,strText);});
    }
    function doPromptTesCancel() {
       displayScreen('dspPrompt');
@@ -390,6 +431,7 @@ sub PaintFunction()%>
    var cstrDefineCode;
    var cstrDefineStatus;
    var cstrDefineType;
+   var cstrDefineVal;
    function requestDefineUpdate(strCode) {
       cstrDefineMode = '*UPD';
       cstrDefineCode = strCode;
@@ -450,15 +492,19 @@ sub PaintFunction()%>
          var strTesStat;
          var strTesGlop;
          var strTesType;
+         var strValType;
          var objTesComp = document.getElementById('DEF_TesComp');
          var objTesStat = document.getElementById('DEF_TesStat');
          var objTesGlop = document.getElementById('DEF_TesGlop');
          var objTesType = document.getElementById('DEF_TesType');
+         var objValType = document.getElementById('DEF_ValType');
          var objTesKwrd = document.getElementById('DEF_TesKwrd');
          objTesComp.options.length = 0;
          objTesStat.options.length = 0;
          objTesGlop.options.length = 0;
          objTesType.options.length = 0;
+         objValType.options.length = 0;
+         objValType.options[objValType.options.length] = new Option('** Select **','');
          objTesKwrd.options.length = 0;
          document.getElementById('DEF_TesText').focus();
          for (var i=0;i<objElements.length;i++) {
@@ -468,6 +514,8 @@ sub PaintFunction()%>
                objTesStat.options[objTesStat.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'TYP_LIST') {
                objTesType.options[objTesType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
+            } else if (objElements[i].nodeName == 'VAL_LIST') {
+               objValType.options[objValType.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'GLO_LIST') {
                objTesGlop.options[objTesGlop.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             } else if (objElements[i].nodeName == 'KEYWORD') {
@@ -490,6 +538,7 @@ sub PaintFunction()%>
                strTesStat = objElements[i].getAttribute('TESSTA');
                strTesGlop = objElements[i].getAttribute('TESGLO');
                strTesType = objElements[i].getAttribute('TESTYP');
+               strValType = objElements[i].getAttribute('VALTYP');
             }
          }
          objTesComp.selectedIndex = -1;
@@ -522,6 +571,14 @@ sub PaintFunction()%>
                break;
             }
          }
+         cstrDefineVal = strValType;
+         objValType.selectedIndex = -1;
+         for (var i=0;i<objValType.length;i++) {
+            if (objValType.options[i].value == strValType) {
+               objValType.options[i].selected = true;
+               break;
+            }
+         }
       }
    }
    function doDefineAccept() {
@@ -530,10 +587,21 @@ sub PaintFunction()%>
       var objTesStat = document.getElementById('DEF_TesStat');
       var objTesGlop = document.getElementById('DEF_TesGlop');
       var objTesType = document.getElementById('DEF_TesType');
+      var objValType = document.getElementById('DEF_ValType');
       var objTesKwrd = document.getElementById('DEF_TesKwrd');
-      if (cstrDefineMode == '*UPD') {
-         if (objTesType.options[objTesType.selectedIndex].value != cstrDefineType) {
+      var strMessage = '';
+      if (isValidation && (objValType.selectedIndex == -1 || objValType.options[objValType.selectedIndex].value == '')) {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Validation type must be selected';
+      }
+      else if (cstrDefineMode == '*UPD') {
+         if (!isValidation && objTesType.options[objTesType.selectedIndex].value != cstrDefineType) {
             if (confirm('The test type has been changed - Please confirm\r\npress OK continue (any existing allocation and response data will be deleted)\r\npress Cancel to cancel update and return') == false) {
+               return;
+            }
+         }
+         if (isValidation && objValType.options[objValType.selectedIndex].value != cstrDefineVal) {
+            if (confirm('The validation type has been changed - Please confirm\r\npress OK continue (any existing response data will be deleted)\r\npress Cancel to cancel update and return') == false) {
                return;
             }
          }
@@ -543,7 +611,6 @@ sub PaintFunction()%>
             }
          }
       }
-      var strMessage = '';
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -553,12 +620,14 @@ sub PaintFunction()%>
       if (cstrDefineMode == '*CPY') {
          strXML = strXML+' CPYCDE="'+fixXML(cstrDefineCode)+'"';
       }
+      strXML = strXML+' ISVAL="'+((isValidation)?'1':'0')+'"';
       strXML = strXML+' TESCDE="'+fixXML(document.getElementById('DEF_TesCode').value)+'"';
       strXML = strXML+' TESTIT="'+fixXML(document.getElementById('DEF_TesText').value.toUpperCase())+'"';
       strXML = strXML+' TESCOM="'+fixXML(objTesComp.options[objTesComp.selectedIndex].value)+'"';
       strXML = strXML+' TESSTA="'+fixXML(objTesStat.options[objTesStat.selectedIndex].value)+'"';
       strXML = strXML+' TESGLO="'+fixXML(objTesGlop.options[objTesGlop.selectedIndex].value)+'"';
       strXML = strXML+' TESTYP="'+fixXML(objTesType.options[objTesType.selectedIndex].value)+'"';
+      strXML = strXML+' VALTYP="'+((isValidation)?fixXML(objValType.options[objValType.selectedIndex].value):"")+'"';
       strXML = strXML+' REQNAM="'+fixXML(document.getElementById('DEF_TesRnam').value.toUpperCase())+'"';
       strXML = strXML+' REQMID="'+fixXML(document.getElementById('DEF_TesRmid').value.toUpperCase())+'"';
       strXML = strXML+' AIMTXT="'+fixXML(document.getElementById('DEF_TesAtxt').value.toUpperCase())+'"';
@@ -2222,7 +2291,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Test Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PRO_TesCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PRO_TesCode" id="PRO_TesCode" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -2238,8 +2307,8 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptUpdate();">&nbsp;Update&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptCopy();">&nbsp;Copy&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPreview();">&nbsp;Preview&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal18"><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal19"><nobr><a class="clsButton" onClick="doPromptPreview();">&nbsp;Preview&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSearch();">&nbsp;Search&nbsp;</a></nobr></td>
                </tr>
@@ -2258,12 +2327,12 @@ sub PaintFunction()%>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptQuestion();">&nbsp;Questions&nbsp;</a></nobr></td>
                   <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
                   <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptSample();">&nbsp;Samples&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
-                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
-                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptRelease();">&nbsp;Release&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal1"><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal2"><nobr><a class="clsButton" onClick="doPromptPanel();">&nbsp;Panel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal3"><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal4"><nobr><a class="clsButton" onClick="doPromptAllocation();">&nbsp;Allocation&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal5"><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap id="notVal6"><nobr><a class="clsButton" onClick="doPromptRelease();">&nbsp;Release&nbsp;</a></nobr></td>
                </tr>
             </table>
          </nobr></td>
@@ -2271,7 +2340,7 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal7">
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=11 cellpadding="0" cellspacing="0">
                <tr>
@@ -2318,43 +2387,49 @@ sub PaintFunction()%>
             <select class="clsInputBN" id="DEF_TesStat"></select>
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal8">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;GloPal:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="DEF_TesGlop"></select>
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal15">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" id="DEF_TesType"></select>
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="Val1" style="display:none;">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Type:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <select class="clsInputBN" id="DEF_ValType"></select>
+         </nobr></td>
+      </tr>
+      <tr id="notVal9">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Name:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRnam" size="60" maxlength="60" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal10">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Requestor Mars Id:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRmid" size="30" maxlength="30" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal11">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Aim:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesAtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal12">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reason:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesRtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal13">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Prediction:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesPtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
@@ -2366,13 +2441,13 @@ sub PaintFunction()%>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_TesCtxt" size="80" maxlength="2000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal16">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Start Date (DD/MM/YYYY):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_TesSdat" size="10" maxlength="10" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal17">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Field Work Week (YYYYWW):&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_TesFwek" size="6" maxlength="6" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
@@ -2384,7 +2459,7 @@ sub PaintFunction()%>
             <input class="clsInputNN" type="text" name="DEF_TesMlen" size="4" maxlength="4" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr id="notVal14">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Average Temperature:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <input class="clsInputNN" type="text" name="DEF_TesMtem" size="3" maxlength="3" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
