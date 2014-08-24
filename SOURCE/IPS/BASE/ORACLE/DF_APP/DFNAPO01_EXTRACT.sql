@@ -1,8 +1,8 @@
 create or replace package dfnapo01_extract as
-/******************************************************************************/
-/* Package Definition                                                         */
-/******************************************************************************/
-/**
+/*******************************************************************************
+* Package Definition                                                           *
+********************************************************************************
+
   System  : IPS
   Package : DFNPXI01_EXTRACT
   Owner   : DF_APP
@@ -21,6 +21,7 @@ create or replace package dfnapo01_extract as
   Date        Author                Description
   ----------  --------------------  ---------------------------------------------
   2014-08-22  Chris Horn            Created.
+  2014-08-25  Chris Horn            Completed first implmenetation version.
 
 *******************************************************************************/
 
@@ -43,6 +44,7 @@ create or replace package dfnapo01_extract as
   NAME: GET_FORECAST                                                      PUBLIC
   PURPOSE : Pipeline to return the calculated forcast for interfacing.
 *******************************************************************************/
+  -- Record ype.
   type rt_forecast is record (
     -- Information Fields.
     fcst_id                         fcst.fcst_id%type,
@@ -51,17 +53,18 @@ create or replace package dfnapo01_extract as
     mars_week                       dmnd_data.mars_week%type,
     -- Actual Output Fields.
     tdu_matl_code                   dmnd_data.tdu%type,  -- Material Determined TDU code that needs to be shipped.
-    plant_code                      common.st_code, -- The plant code that we expect to ship this product from.
-    start_date                      date, -- This is the starting date in DD/MM/YYYY Sunday of this week. 
-    qty                             common.st_value -- This is the quantity that we expect to ship.  
+    plant_code                      common.st_code,      -- The plant code that we expect to ship this product from.
+    start_date                      date,                -- This is the starting date in DD/MM/YYYY Sunday of this week. 
+    qty                             common.st_value      -- This is the quantity that we expect to ship.  
   );
 
+  -- Table for the extract.
   type tt_forecast is table of rt_forecast;
-
+  
+  -- Function to create the forecast extract.
   function get_forecast (
     i_fcst_id in common.st_id
   ) return tt_forecast pipelined;
-
 
 /*******************************************************************************
   NAME: EXECUTE                                                           PUBLIC

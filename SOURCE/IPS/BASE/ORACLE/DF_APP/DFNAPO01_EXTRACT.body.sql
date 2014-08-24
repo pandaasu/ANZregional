@@ -3,8 +3,8 @@ create or replace package body dfnapo01_extract as
 /*******************************************************************************
   Package Cosntants
 *******************************************************************************/
-  pc_package_name constant pxi_common.st_package_name := 'DFNAPO01_EXTRACT';
-  pc_interface_name constant pxi_common.st_interface_name := 'DFNAPO01';
+  pc_package_name   constant common.st_package_name := 'DFNAPO01_EXTRACT';
+  pc_interface_name constant common.st_oracle_name := 'DFNAPO01';
 
 /*******************************************************************************
   NAME:  FORECAST_MOE                                                     PUBLIC
@@ -25,7 +25,7 @@ create or replace package body dfnapo01_extract as
     return v_moe_code;
   exception
     when others then
-      raise;
+      pxi_common.reraise_promax_exception(pc_package_name,'FORECAST_MOE');
   end forecast_moe;
 
 /*******************************************************************************
@@ -48,7 +48,7 @@ create or replace package body dfnapo01_extract as
     return v_date;
   exception
     when others then
-      raise;
+      pxi_common.reraise_promax_exception(pc_package_name,'FIRST_DATE_MARS_WEEK');
   end first_date_mars_week;
 
 /*******************************************************************************
@@ -124,7 +124,7 @@ create or replace package body dfnapo01_extract as
     end loop;
   exception
     when others then
-      raise;
+      pxi_common.reraise_promax_exception(pc_package_name,'GET_FORECAST');
   end get_forecast;
 
 /*******************************************************************************
@@ -145,13 +145,13 @@ create or replace package body dfnapo01_extract as
     select count(1) into v_forecast_count
     from df.fcst
     where fcst_id = i_fcst_id
-    and forecast_type in ('DRAFT','FCST');
+    and forecast_type in ('FCST');
     if v_forecast_count = 0 then
-      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND : Forecast Type [DRAFT|FCST].');
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND : Forecast Type [FCST].');
       lics_logging.end_log;
       return;
     end if;
-
+    
     -- Do NOTHING for MOE's Other than Petcare [0196], for Execute
     v_moe_code := forecast_moe(i_fcst_id); -- assign so we don't need to lookup twice
     if v_moe_code != pxi_common.fc_moe_pet then
@@ -166,8 +166,8 @@ create or replace package body dfnapo01_extract as
     where fcst_id = i_fcst_id
     and type in ('B','U','P');
     -- No Need to Continue If Forecast Already has Promax PX Estimates Loaded
-    if v_promax_rows_loaded > 0 then
-      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Already has Promax PX Estimates Loaded, Types [B|U|P].');
+    if v_promax_rows_loaded = 0 then
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'] : Does not yet have any Promax PX Estimates Loaded, Types [B|U|P].');
       lics_logging.end_log;
       return;
     end if;
@@ -200,37 +200,21 @@ create or replace package body dfnapo01_extract as
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown MOE [' || v_moe_code || '] for Forecast [' || i_fcst_id || '].');
     end case;
 
-    -- Ensure 335DMND temporary table is empty
-    lics_logging.write_log('INFO : Ensure 355DMND Temporary Table [px_355dmnd_history_temp] is Empty.');
-    delete from px_355dmnd_history_temp;
-
-    lics_logging.write_log('INFO : Create 355DMND Records for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+    -- Now commence extracting the data.
+    lics_logging.write_log('INFO : Now extracting forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
 
     for rv_row in (
       select
-        output_record,
-        fcst_id,
-        moe_code,
-        sales_org,
-        bus_sgmnt_code,
-        dmnd_grp_code,
-        zrep_matl_code,
-        mars_week,
-        start_date,
-        end_date,
-        dmnd_plng_node,
-        px_dmnd_plng_node,
-        split_qty,
-        created_date,
-        modified_date,
-        has_px_account_sku,
-        has_px_account,
-        has_px_sku
-      from table(dfnpxi01_extract_v2.pt_output(i_fcst_id))
+        tdu_matl_code || ',' ||
+        plant_code || ',' ||
+        ',' ||
+        to_char(start_date,'DD/MM/YYYY') || ',' ||
+        '7D' || ',' ||
+        qty as output_record
+      from table(dfnapo01_extract.get_forecast(i_fcst_id))
       order by
-        px_dmnd_plng_node,
-        zrep_matl_code,
-        start_date
+        tdu_matl_code,
+        mars_week
     )
     loop
       -- Create interface when required
@@ -238,8 +222,10 @@ create or replace package body dfnapo01_extract as
         lics_logging.write_log('INFO : Create Outbound Interface ['||v_interface_name_with_suffix||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
         v_instance := lics_outbound_loader.create_interface(v_interface_name_with_suffix);
       end if;
-
+      -- Now put this record onto the forecast extract.
+      lics_outbound_loader.append_data(rv_row.output_record);
     end loop;
+
     -- Finalise interface when required
     if lics_outbound_loader.is_created = true then
       lics_logging.write_log('INFO : Finalise Outbound Interface ['||v_interface_name_with_suffix||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
@@ -247,7 +233,7 @@ create or replace package body dfnapo01_extract as
     end if;
 
     -- Commit changes to product history extract table
-    lics_logging.write_log('INFO : COMMIT 355DMND History [px_355dmnd_history] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+    lics_logging.write_log('INFO : Extract completed for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     commit;
 
     -- End Logging
@@ -261,7 +247,7 @@ create or replace package body dfnapo01_extract as
          lics_outbound_loader.finalise_interface;
        end if;
        lics_logging.end_log;
-       raise;
+       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 
 end dfnapo01_extract; 
