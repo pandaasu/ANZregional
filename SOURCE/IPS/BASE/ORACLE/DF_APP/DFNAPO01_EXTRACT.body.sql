@@ -91,7 +91,7 @@ create or replace package body dfnapo01_extract as
           t2.mars_week,
           -- Output Fields
           t2.tdu as tdu_matl_code,
-          round(sum(t2.qty_in_base_uom)) as qty
+          sum(t2.qty_in_base_uom) as qty
         from
           fcst t1,
           dmnd_data t2,
@@ -115,8 +115,6 @@ create or replace package body dfnapo01_extract as
           t4.dmnd_grp_code,
           t2.mars_week,
           t2.tdu
-        having
-          sum(t2.qty_in_base_uom) > 0 -- Filter unnecessary rows
       ) t10
     )
     loop

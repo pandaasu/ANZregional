@@ -21,7 +21,7 @@ create or replace package dfnapo01_extract as
   Date        Author                Description
   ----------  --------------------  ---------------------------------------------
   2014-08-22  Chris Horn            Created.
-  2014-08-25  Chris Horn            Completed first implmenetation version.
+  2014-08-25  Chris Horn            Completed first version.
 
 *******************************************************************************/
 
