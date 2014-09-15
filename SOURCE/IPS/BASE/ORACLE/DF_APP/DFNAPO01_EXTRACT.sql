@@ -15,13 +15,21 @@ create or replace package dfnapo01_extract as
   This interface creates and outbound domestic forecast extract to be 
   sent to Apollo Supply. 
 
-  As the extract cannot handle negatives or decimals all quantites
-  are brought to zero and then rounded.
-
+  Test
+  ----
+  Source  Source Directory        Destination   Dest Directory
+  XICST02 /ics/ips/test/outbound  XCAHT01       C:\ApolloTest\DemandForecast\
+  
+  Production
+  ----------
+  Source  Source Directory        Destination   Destination Directory
+  XICSP02 /ics/ips/prod/outbound  XCAHP01       C:\ApolloProd\DemandForecast\
+  
   Date        Author                Description
   ----------  --------------------  ---------------------------------------------
   2014-08-22  Chris Horn            Created.
   2014-08-25  Chris Horn            Completed first version.
+  2014-09-15  Chris Horn            Filtered any records with no TDU.
 
 *******************************************************************************/
 

@@ -109,6 +109,7 @@ create or replace package body dfnapo01_extract as
             from dmnd_acct_assign
             where acct_assign_code = demand_forecast.gc_acct_assgnmnt_domestic
           )
+          and t2.tdu is not null 
         group by
           t1.fcst_id,
           t1.moe_code,
@@ -138,7 +139,7 @@ create or replace package body dfnapo01_extract as
     v_forecast_count number(1,0);
   begin
     -- Start Logging ..
-    lics_logging.start_log('DF to Apolllo Supply','DF_TO_APOLLO_SUPPLY_'||i_fcst_id);
+    lics_logging.start_log('DF to Apollo Supply','DF_TO_APOLLO_SUPPLY_'||i_fcst_id);
     -- Check for Forecast
     select count(1) into v_forecast_count
     from df.fcst
