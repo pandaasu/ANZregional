@@ -60,64 +60,83 @@ create or replace package body dfnapo01_extract as
   begin
     -- Fetch each row of the defined query back out as a pipelined table function.
     for rv_row in (
-      select
-        t10.fcst_id,
-        t10.moe_code,
-        t10.dmnd_grp_code,
-        t10.mars_week,
-        -- Output Fields
-        t10.tdu_matl_code,
-        ( select 
-            t0.plant_code 
-          from 
-            plng_srce_plant_xref t0
-          where 
-            t0.plng_srce_code = 
-              ( select 
-                  t00.plng_srce_code 
-                from 
-                  matl_fg_clssfctn t00 
-                where 
-                  t00.matl_code = reference_functions.full_matl_code(t10.tdu_matl_code)
-              )
-        ) as plant_code,
-        first_date_mars_week(t10.mars_week) as start_date,
-        t10.qty
+      select 
+        t20.fcst_id,
+        t20.moe_code,
+        t20.mars_week,
+        t20.tdu_matl_code,
+        t20.plant_code,
+        t20.start_date,
+        sum(t20.qty) as qty
       from
-        (select
-          t1.fcst_id,
-          t1.moe_code,
-          t4.dmnd_grp_code,
-          t2.mars_week,
+        (
+        select
+          t10.fcst_id,
+          t10.moe_code,
+          t10.dmnd_grp_code,
+          t10.mars_week,
           -- Output Fields
-          t2.tdu as tdu_matl_code,
-          sum(t2.qty_in_base_uom) as qty
+          t10.tdu_matl_code,
+          ( select 
+              t0.plant_code 
+            from 
+              plng_srce_plant_xref t0
+            where 
+              t0.plng_srce_code = 
+                ( select 
+                    t00.plng_srce_code 
+                  from 
+                    matl_fg_clssfctn t00 
+                  where 
+                    t00.matl_code = reference_functions.full_matl_code(t10.tdu_matl_code)
+                )
+          ) as plant_code,
+          first_date_mars_week(t10.mars_week) as start_date,
+          t10.qty
         from
-          fcst t1,
-          dmnd_data t2,
-          dmnd_grp_org t3,
-          dmnd_grp t4
-        where 
-          -- Base Joines
-          t1.fcst_id = t2.fcst_id 
-          and t2.dmnd_grp_org_id = t3.dmnd_grp_org_id
-          and t3.dmnd_grp_id = t4.dmnd_grp_id 
-          -- Filter Predicates
-          and t1.fcst_id = i_fcst_id -- Limit to fcst_id
-          and t3.acct_assign_id in (
-            select acct_assign_id
-            from dmnd_acct_assign
-            where acct_assign_code = demand_forecast.gc_acct_assgnmnt_domestic
-          )
-          and t2.tdu is not null 
-        group by
-          t1.fcst_id,
-          t1.moe_code,
-          t4.dmnd_grp_code,
-          t2.mars_week,
-          t2.tdu
-        having sum(t2.qty_in_base_uom) != 0
-      ) t10
+          (select
+            t1.fcst_id,
+            t1.moe_code,
+            t4.dmnd_grp_code,
+            t2.mars_week,
+            -- Output Fields
+            t2.tdu as tdu_matl_code,
+            sum(t2.qty_in_base_uom) as qty
+          from
+            fcst t1,
+            dmnd_data t2,
+            dmnd_grp_org t3,
+            dmnd_grp t4
+          where 
+            -- Base Joines
+            t1.fcst_id = t2.fcst_id 
+            and t2.dmnd_grp_org_id = t3.dmnd_grp_org_id
+            and t3.dmnd_grp_id = t4.dmnd_grp_id 
+            -- Filter Predicates
+            and t1.fcst_id = i_fcst_id -- Limit to fcst_id
+            and t3.acct_assign_id in (
+              select acct_assign_id
+              from dmnd_acct_assign
+              where acct_assign_code = demand_forecast.gc_acct_assgnmnt_domestic
+            )
+            and t2.tdu is not null 
+            and t2.mars_week > t1.casting_year || t1.casting_period || t1.casting_week
+          group by
+            t1.fcst_id,
+            t1.moe_code,
+            t4.dmnd_grp_code,
+            t2.mars_week,
+            t2.tdu
+          having sum(t2.qty_in_base_uom) != 0
+        ) t10
+      ) t20
+      group by
+        t20.fcst_id,
+        t20.moe_code,
+        t20.mars_week,
+        t20.tdu_matl_code,
+        t20.plant_code,
+        t20.start_date
     )
     loop
       pipe row(rv_row);

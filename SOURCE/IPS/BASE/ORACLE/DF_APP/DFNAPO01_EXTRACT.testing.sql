@@ -7,6 +7,16 @@
         '7D' as date_range,
         qty
       from (
+      select 
+        t20.fcst_id,
+        t20.moe_code,
+        t20.mars_week,
+        t20.tdu_matl_code,
+        t20.plant_code,
+        t20.start_date,
+        sum(t20.qty) as qty
+      from
+        (
         select
             t10.fcst_id,
             t10.moe_code,
@@ -75,6 +85,7 @@ select '17' as plng_srce_code ,'AU46' as plant_code from dual) t0
                 where acct_assign_code = '01' -- Domestic
               ) 
               and t2.tdu is not null
+              and t2.mars_week > t1.casting_year || t1.casting_period || t1.casting_week
             group by
               t1.fcst_id,
               t1.moe_code,
@@ -83,6 +94,14 @@ select '17' as plng_srce_code ,'AU46' as plant_code from dual) t0
               t2.tdu
             having sum(t2.qty_in_base_uom) != 0
           ) t10
+        ) t20
+        group by
+          t20.fcst_id,
+          t20.moe_code,
+          t20.mars_week,
+          t20.tdu_matl_code,
+          t20.plant_code,
+          t20.start_date
       )
       order by
         tdu_matl_code,

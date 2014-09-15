@@ -30,6 +30,8 @@ create or replace package dfnapo01_extract as
   2014-08-22  Chris Horn            Created.
   2014-08-25  Chris Horn            Completed first version.
   2014-09-15  Chris Horn            Filtered any records with no TDU and zeros.
+  2014-09-16  Chris Horn            Removed historical information and fixed 
+                                    grouping. 
 
 *******************************************************************************/
 
@@ -57,7 +59,6 @@ create or replace package dfnapo01_extract as
     -- Information Fields.
     fcst_id                         fcst.fcst_id%type,
     moe_code                        fcst.moe_code%type,
-    dmnd_grp_code                   dmnd_grp.dmnd_grp_code%type,
     mars_week                       dmnd_data.mars_week%type,
     -- Actual Output Fields.
     tdu_matl_code                   dmnd_data.tdu%type,  -- Material Determined TDU code that needs to be shipped.
