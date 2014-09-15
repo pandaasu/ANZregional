@@ -29,7 +29,7 @@ create or replace package dfnapo01_extract as
   ----------  --------------------  ---------------------------------------------
   2014-08-22  Chris Horn            Created.
   2014-08-25  Chris Horn            Completed first version.
-  2014-09-15  Chris Horn            Filtered any records with no TDU.
+  2014-09-15  Chris Horn            Filtered any records with no TDU and zeros.
 
 *******************************************************************************/
 

@@ -116,6 +116,7 @@ create or replace package body dfnapo01_extract as
           t4.dmnd_grp_code,
           t2.mars_week,
           t2.tdu
+        having sum(t2.qty_in_base_uom) != 0
       ) t10
     )
     loop
@@ -140,6 +141,7 @@ create or replace package body dfnapo01_extract as
   begin
     -- Start Logging ..
     lics_logging.start_log('DF to Apollo Supply','DF_TO_APOLLO_SUPPLY_'||i_fcst_id);
+    
     -- Check for Forecast
     select count(1) into v_forecast_count
     from df.fcst
@@ -171,17 +173,6 @@ create or replace package body dfnapo01_extract as
       return;
     end if;
 
-    -- request lock (on interface)
-    lics_logging.write_log('INFO : Request Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
-    begin
-      lics_locking.request(pc_interface_name);
-    exception
-      when others then
-        lics_logging.write_log('ERROR : Unable to Obtain Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
-        lics_logging.end_log;
-        pxi_common.raise_promax_error(pc_package_name,'EXECUTE',substr('Unable to obtain interface lock ['||pc_interface_name||'] - '||sqlerrm, 1, 4000));
-    end;
-
     -- Now determine the interface name to use for this file.
     v_interface_name_with_suffix := null;
     case v_moe_code
@@ -199,9 +190,19 @@ create or replace package body dfnapo01_extract as
         pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Unknown MOE [' || v_moe_code || '] for Forecast [' || i_fcst_id || '].');
     end case;
 
+    -- request lock (on interface)
+    lics_logging.write_log('INFO : Request Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+    begin
+      lics_locking.request(pc_interface_name || '_' || v_moe_code);
+    exception
+      when others then
+        lics_logging.write_log('ERROR : Unable to Obtain Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+        lics_logging.end_log;
+        pxi_common.raise_promax_error(pc_package_name,'EXECUTE',substr('Unable to obtain interface lock ['||pc_interface_name||'] - '||sqlerrm, 1, 4000));
+    end;
+
     -- Now commence extracting the data.
     lics_logging.write_log('INFO : Now extracting forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
-
     for rv_row in (
       select
         tdu_matl_code || ',' ||
@@ -231,6 +232,10 @@ create or replace package body dfnapo01_extract as
       lics_outbound_loader.finalise_interface;
     end if;
 
+    -- Release the lock.
+    lics_logging.write_log('INFO : Releasing Interface Lock ['||pc_interface_name||'] for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
+    lics_locking.release(pc_interface_name || '_' || v_moe_code);
+
     -- Commit changes to product history extract table
     lics_logging.write_log('INFO : Extract completed for Forecast ['||i_fcst_id||'] MOE ['||v_moe_code||'].');
     commit;
@@ -245,7 +250,9 @@ create or replace package body dfnapo01_extract as
          lics_outbound_loader.add_exception(substr(sqlerrm, 1, 512));
          lics_outbound_loader.finalise_interface;
        end if;
-       lics_logging.end_log;
+       if lics_logging.is_created = true then 
+         lics_logging.end_log;
+       end if;
        pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
    end execute;
 

@@ -81,6 +81,7 @@ select '17' as plng_srce_code ,'AU46' as plant_code from dual) t0
               t4.dmnd_grp_code,
               t2.mars_week,
               t2.tdu
+            having sum(t2.qty_in_base_uom) != 0
           ) t10
       )
       order by
