@@ -146,7 +146,7 @@ create or replace package body dfnapo01_extract as
     where fcst_id = i_fcst_id
     and forecast_type in ('FCST');
     if v_forecast_count = 0 then
-      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND : Forecast Type [FCST].');
+      lics_logging.write_log('NOTHING TO DO : Forecast ['||i_fcst_id||'] Either NOT FOUND or Forecast Type not [FCST].');
       lics_logging.end_log;
       return;
     end if;
