@@ -134,28 +134,16 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
             and t1.matl_entd is not null
             --------------------------------------------------------------------
             and t1.creatn_date >= trunc(i_creation_date-28) -- Creation Date > 28 days prior to [i_creation_date]
-            and t1.billing_eff_date -- Billing Effective Date within the Mars Week for [i_creation_date] 
-              between
-              trunc(i_creation_date) +
-              case to_char(i_creation_date, 'DY')
-                when 'SUN' then 0
-                when 'MON' then -1
-                when 'TUE' then -2
-                when 'WED' then -3
-                when 'THU' then -4
-                when 'FRI' then -5
-                when 'SAT' then -6
-              end -- Mars Week Start Date
-              and trunc(i_creation_date) +
-              case to_char(i_creation_date, 'DY')
-                when 'SUN' then 6
-                when 'MON' then 5
-                when 'TUE' then 4
-                when 'WED' then 3
-                when 'THU' then 2
-                when 'FRI' then 1
-                when 'SAT' then 0
-              end -- Mars Week End Date
+            
+            -- Take sunday prior to the extract run date
+            -- and compare it to the prior sunday of
+            -- the greater of creation date and billing date.
+            -- This is a quick way of comparing weeks.
+            and next_day(i_creation_date-7,'SUN')
+                = case when t1.creatn_date > t1.billing_eff_date
+                       then next_day(t1.creatn_date-7,'SUN')
+                       else next_day(t1.billing_eff_date-7,'SUN')
+                  end
             --------------------------------------------------------------------                            
           );
 
