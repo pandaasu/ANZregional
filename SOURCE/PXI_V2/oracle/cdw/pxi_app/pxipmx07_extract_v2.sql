@@ -28,7 +28,13 @@ create or replace package pxi_app.pxipmx07_extract_v2 as
                                      Use Suffix
  2014-03-25    Mal Chambeyron        Updated filter criteria  
                                      - Creation Date > 28 days prior to [i_creation_date]
-                                     - Billing Effective Date within the Mars Week for [i_creation_date] 
+                                     - Billing Effective Date within the Mars Week for [i_creation_date]
+ 2014-09-17    Nathan Younger        Updated filter criteria
+                                     - Changed the logic to determine if it is in the same week so that
+                                       it compares the previous Sunday.  If two dates have the same
+                                       previous Sunday then they are in the same week.
+                                     - Compare the greater of Billing Effective Date and Creation Date
+                                       with Mars Week [i_creation_date].                                      
 
 *******************************************************************************/
 
