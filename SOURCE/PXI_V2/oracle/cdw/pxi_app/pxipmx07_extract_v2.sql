@@ -145,7 +145,7 @@ create or replace package body pxi_app.pxipmx07_extract_v2 as
             -- and compare it to the prior sunday of
             -- the greater of creation date and billing date.
             -- This is a quick way of comparing weeks.
-            and next_day(i_creation_date-7,'SUN')
+            and next_day(trunc(i_creation_date)-7,'SUN')
                 = case when t1.creatn_date > t1.billing_eff_date
                        then next_day(t1.creatn_date-7,'SUN')
                        else next_day(t1.billing_eff_date-7,'SUN')
