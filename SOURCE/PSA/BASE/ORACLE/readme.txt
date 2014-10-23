@@ -1,0 +1,1 @@
+Refer to svn://svn.ap.mars/apappsup/ddl/PlantDB/AP0065P for latest Oracle scripts.

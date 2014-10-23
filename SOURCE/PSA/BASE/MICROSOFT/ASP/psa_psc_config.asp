@@ -30,7 +30,7 @@
    '//
    '// Initialise the script
    '//
-   strTarget = "psa_psc_config.asp"
+   strTarget = "test_psa_psc_config.asp"
    strHeading = "Production Schedule Maintenance"
 
    '//
@@ -1511,7 +1511,7 @@ sub PaintFunction()%>
    }
    function checkTypeLoad(strResponse) {
       doActivityStop();
-      if (strResponse.substring(0,3) != '*OK') {
+	  if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
          var objDocument = loadXML(strResponse.substring(3,strResponse.length));
@@ -1602,6 +1602,7 @@ sub PaintFunction()%>
                objActAry[objActAry.length-1].actent = objElements[i].getAttribute('ACTENT');
                objActAry[objActAry.length-1].matcde = objElements[i].getAttribute('MATCDE');
                objActAry[objActAry.length-1].matnam = objElements[i].getAttribute('MATNAM');
+			   objActAry[objActAry.length-1].msapln = objElements[i].getAttribute('MSAPLN');
                objActAry[objActAry.length-1].schplt = objElements[i].getAttribute('SCHPLT');
                objActAry[objActAry.length-1].schcas = objElements[i].getAttribute('SCHCAS');
                objActAry[objActAry.length-1].schpch = objElements[i].getAttribute('SCHPCH');
@@ -1754,20 +1755,22 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestStckUpdate();',10);
    }
+   // Handle click on a line
    function doTypeLineSelect(objSelect) {
       if (cobjTypeSchdCell != null) {
          if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
             cobjTypeSchdCell.style.backgroundColor = '#ffd9ff';
          } else if (cobjTypeSchdCell.getAttribute('acttyp') == 'T') {
-            cobjTypeSchdCell.style.backgroundColor = '#dddfff';
+            cobjTypeSchdCell.style.backgroundColor = '#dfdf00';
          } else {
-            cobjTypeSchdCell.style.backgroundColor = '#ffffe0';
+			// GORDOSTE 20140225 - use material's SAP line to determine background colour of scheduled run
+            cobjTypeSchdCell.style.backgroundColor = '#' + getBgColorForLine(cobjTypeSchdCell.getAttribute('msapln'));
          }
          cobjTypeSchdCell = null;
       }
       if (cobjTypeUactCell != null) {
          if (cobjTypeUactCell.getAttribute('acttyp') == 'T') {
-            cobjTypeUactCell.style.backgroundColor = '#dddfff';
+            cobjTypeUactCell.style.backgroundColor = '#dfdf00';
          } else {
             cobjTypeUactCell.style.backgroundColor = '#ffffe0';
          }
@@ -1884,6 +1887,7 @@ sub PaintFunction()%>
       doActivityStart(document.body);
       window.setTimeout('requestLineDelete();',10);
    }
+   // Handle click on a schedule item
    function doTypeSchdSelect(objSelect) {
       if (cobjTypeLineCell != null) {
          cobjTypeLineCell.style.backgroundColor = '#40414c';
@@ -1893,9 +1897,10 @@ sub PaintFunction()%>
          if (cobjTypeSchdCell.getAttribute('acttyp') == '+') {
             cobjTypeSchdCell.style.backgroundColor = '#ffd9ff';
          } else if (cobjTypeSchdCell.getAttribute('acttyp') == 'T') {
-            cobjTypeSchdCell.style.backgroundColor = '#dddfff';
+            cobjTypeSchdCell.style.backgroundColor = '#dfdf00';
          } else {
-            cobjTypeSchdCell.style.backgroundColor = '#ffffe0';
+		 	// GORDOSTE 20140225 - use material's SAP line to determine background colour of scheduled run
+            cobjTypeSchdCell.style.backgroundColor = '#' + getBgColorForLine(cobjTypeSchdCell.getAttribute('msapln'));
          }
       }
       cobjTypeSchdCell = objSelect;
@@ -2180,6 +2185,7 @@ sub PaintFunction()%>
       var intEndBar;
       var intChgBar;
       var strStyle;
+	  var strBgColor;
       for (var i=1;i<=768;i++) {
          objTable = document.getElementById('TABBAR_'+intLinIdx+'_'+i);
          for (var j=objTable.rows.length-1;j>=0;j--) {
@@ -2231,11 +2237,11 @@ sub PaintFunction()%>
                objDiv.vAlign = 'top';
                strStyle = 'font-size:8pt;font-weight:normal;';
                if (objWork.acttyp == 'T') {
-                  strStyle = strStyle + 'background-color:#dddfff;';
+                  strBgColor = 'dfdf00';
                } else {
-                  strStyle = strStyle + 'background-color:#ffffe0;';
+			      strBgColor = getBgColorForLine(objWork.msapln);
                }
-               strStyle = strStyle + 'color:#000000;';
+               strStyle = strStyle + 'background-color:#' + strBgColor + ';color:#000000;';
                if (objWork.winflw == '0') {
                   if (objWork.wekflw == '1') {
                      strStyle = strStyle + 'border:#c00000 2px solid;';
@@ -2262,6 +2268,7 @@ sub PaintFunction()%>
                objDiv.setAttribute('actcde',objWork.actcde);
                objDiv.setAttribute('acttyp',objWork.acttyp);
                objDiv.setAttribute('actent',objWork.actent);
+			   objDiv.setAttribute('msapln',objWork.msapln);
                if (objWork.acttyp == 'T') {
                   objDiv.appendChild(document.createTextNode('Activity ('+objWork.matcde+') '+objWork.matnam));
                   objDiv.appendChild(document.createElement('br'));
@@ -2336,6 +2343,7 @@ sub PaintFunction()%>
                      } else {
                         objFont = document.createElement('font');
                         objFont.style.backgroundColor = '#ffc0c0';
+						objFont.style.fontWeight = 'bold';
                         objFont.appendChild(document.createTextNode('Component ('+objInvAry[k].matcde+') '+objInvAry[k].matnam+' Required ('+objInvAry[k].invqty+') Available ('+objInvAry[k].invavl+')'));
                         objDiv.appendChild(objFont);
                      }
@@ -2409,7 +2417,7 @@ sub PaintFunction()%>
                objDiv.vAlign = 'top';
                strStyle = 'display:inline;font-size:8pt;font-weight:normal;';
                if (objWork.acttyp == 'T') {
-                  strStyle = strStyle + 'background-color:#dddfff;';
+                  strStyle = strStyle + 'background-color:#dfdf00;';
                } else {
                   strStyle = strStyle + 'background-color:#ffffe0;';
                }
@@ -2542,7 +2550,7 @@ sub PaintFunction()%>
       }
       if (cobjTypeUactCell != null) {
          if (cobjTypeUactCell.getAttribute('acttyp') == 'T') {
-            cobjTypeUactCell.style.backgroundColor = '#dddfff';
+            cobjTypeUactCell.style.backgroundColor = '#dfdf00';
          } else {
             cobjTypeUactCell.style.backgroundColor = '#ffffe0';
          }
@@ -2645,7 +2653,7 @@ sub PaintFunction()%>
          objCell.align = 'left';
          objCell.vAlign = 'center';
          if (objWork.acttyp == 'T') {
-            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#dddfff;color:#000000;border:#c7c7c7 1px solid;padding:2px;white-space:nowrap;cursor:pointer;';
+            objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#dfdf00;color:#000000;border:#c7c7c7 1px solid;padding:2px;white-space:nowrap;cursor:pointer;';
          } else {
             objCell.style.cssText = 'font-size:8pt;font-weight:bold;background-color:#ffffe0;color:#000000;border:#c7c7c7 1px solid;padding:2px;white-space:nowrap;cursor:pointer;';
          }
@@ -3799,6 +3807,19 @@ sub PaintFunction()%>
          requestActvLoad();
       }
    }
+   function getBgColorForLine(strLine) {
+		if (strLine == '16') { return 'ffffe0'; } // MVMS - light yellow
+        if (strLine == '19') { return 'ffffff'; } // Roll - light yellow - no longer used as of 2014P4W2
+        if (strLine == '20') { return 'ffffff'; } // Volumetric - light yellow - no longer used as of 2014P4W2
+		if (strLine == '40') { return 'ffffff'; } // Gravometric - light yellow - no longer used as of 2014P4W2
+        if (strLine == '41') { return 'ffffff'; } // OhSo - light yellow - no longer used as of 2014P4W2
+        if (strLine == '44') { return 'ffac62'; } // Diced - orange
+        if (strLine == '45') { return 'cacaff'; } // Emulsified - light blue
+        if (strLine == '46') { return 'ffffe0'; } // Oven - light yellow
+        if (strLine == '47') { return '8bfea8'; } // Diced/Oven - green
+		if (strLine == '48') { return 'f5caff'; } // Singles 48-pack - pink
+		return 'ffffff';
+	}
 
 // -->
 </script>
