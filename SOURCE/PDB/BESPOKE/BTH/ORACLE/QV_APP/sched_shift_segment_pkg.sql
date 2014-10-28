@@ -22,6 +22,7 @@ create or replace package qv_app.sched_shift_segment_pkg as
   2014-06-03  Trevor Keon           Created 
   2014-07-16  Trevor Keon           Added loading for locked in version 
   2014-09-02  Trevor Keon           Added logic to identify the line for SBL, etc 
+  2014-10-28  Trevor Keon           Fixed issue when schedule matches shift start or end times 
 
 *******************************************************************************/
 
@@ -49,6 +50,8 @@ create or replace package qv_app.sched_shift_segment_pkg as
      sched_shift_type number,
      start_outflow date,
      end_outflow date,
+     schedule_start date,
+     schedule_end date,
      prodn_shift_code char(10)
   );
 
@@ -84,11 +87,11 @@ create or replace package body qv_app.sched_shift_segment_pkg as
            t01.as_code as batch_code,
            t01.as_quantity as total_quantity,
            case
-              when t02.start_datime > t01.as_start_outflow and t02.end_datime < t01.as_end_outflow
+              when t02.start_datime >= t01.as_start_outflow and t02.end_datime <= t01.as_end_outflow
                  then t01.as_outflow_rate * ((t02.end_datime - t02.start_datime) * 24)
-              when t02.start_datime < t01.as_start_outflow and t02.end_datime < t01.as_end_outflow
+              when t02.start_datime <= t01.as_start_outflow and t02.end_datime <= t01.as_end_outflow
                  then t01.as_outflow_rate * ((t02.end_datime - t01.as_start_outflow) * 24)
-              when t02.start_datime > t01.as_start_outflow and t02.end_datime > t01.as_end_outflow
+              when t02.start_datime >= t01.as_start_outflow and t02.end_datime >= t01.as_end_outflow
                  then t01.as_outflow_rate * ((t01.as_end_outflow - t02.start_datime) * 24)
               else t01.as_quantity
            end as shift_quantity,        
@@ -123,25 +126,37 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             t02.resource_group_code as base_resource_group_code,
             t02.quantity as total_quantity,
             case
-              when t03.start_datime > t02.start_outflow and t03.end_datime < t02.end_outflow
+              when t03.start_datime >= t02.start_outflow and t03.end_datime <= t02.end_outflow
                  then t02.outflow_rate * ((t03.end_datime - t03.start_datime) * 24)
-              when t03.start_datime < t02.start_outflow and t03.end_datime < t02.end_outflow
+              when t03.start_datime <= t02.start_outflow and t03.end_datime <= t02.end_outflow
                  then t02.outflow_rate * ((t03.end_datime - t02.start_outflow) * 24)
-              when t03.start_datime > t02.start_outflow and t03.end_datime > t02.end_outflow
+              when t03.start_datime >= t02.start_outflow and t03.end_datime >= t02.end_outflow
                  then t02.outflow_rate * ((t02.end_outflow - t03.start_datime) * 24)
               else t02.quantity
             end as shift_quantity,
             case
-              when t03.start_datime > t02.start_outflow and t03.end_datime < t02.end_outflow
+              when t03.start_datime >= t02.start_outflow and t03.end_datime <= t02.end_outflow
                  then 1    -- Schedule runs throughout the shift 
-              when t03.start_datime < t02.start_outflow and t03.end_datime < t02.end_outflow
+              when t03.start_datime <= t02.start_outflow and t03.end_datime <= t02.end_outflow
                  then 2    -- Schedule starts during the shift, and ends after the shift 
-              when t03.start_datime > t02.start_outflow and t03.end_datime > t02.end_outflow
+              when t03.start_datime >= t02.start_outflow and t03.end_datime >= t02.end_outflow
                  then 3    -- Schedule starts before the shift, and ends during the shift 
               else 4       -- Schedule starts and ends during the shift 
-            end as sched_shift_type,            
-            t02.start_outflow,
-            t02.end_outflow,
+            end as sched_shift_type,
+            case
+              when t03.start_datime >= t02.start_outflow
+                 then t03.start_datime
+              when t03.start_datime <= t02.start_outflow
+                 then t02.start_outflow
+            end as start_outflow, 
+            case
+              when t03.end_datime >= t02.end_outflow
+                 then t02.end_outflow
+              when t03.end_datime <= t02.end_outflow
+                 then t03.end_datime
+            end as end_outflow,                                 
+            t02.start_outflow as schedule_start,
+            t02.end_outflow as schedule_end,
             t03.prodn_shift_code
         from infor.ash_schedule_versions t01,
            infor.ash_schedules t02,

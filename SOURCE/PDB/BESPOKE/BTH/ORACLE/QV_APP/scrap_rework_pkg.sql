@@ -22,6 +22,7 @@ create or replace package qv_app.scrap_rework_pkg as
   ----------  --------------------  --------------------------------------------
   2014-07-18  Trevor Keon           Created 
   2014-08-26  Trevor Keon           Added Waivers 
+  2014-10-28  Trevor Keon           Fixed Scrap link to ref_line table 
 
 *******************************************************************************/
 
@@ -159,7 +160,7 @@ create or replace package body qv_app.scrap_rework_pkg as
             t03.matl_code,
             t03.run_id,
             t02.line_desc as dryer_line,
-            'Line ' || substr(t02.line_desc, 7, 1) as prodn_line_code,
+            t02.line_desc as prodn_line_code,
             t03.cereal, 
             t03.water, 
             t03.dye, 
@@ -396,7 +397,7 @@ create or replace package body qv_app.scrap_rework_pkg as
             mars_date t04
         where t01.line_code = t02.line_code
             and t03.run_id = t01.proc_order
-            and upper(t02.line_desc) like 'DR%'
+--            and upper(t02.line_desc) like 'DR%'
             and trunc(t03.start_datime) = t04.calendar_date
             and t04.mars_period = p_period
     )
