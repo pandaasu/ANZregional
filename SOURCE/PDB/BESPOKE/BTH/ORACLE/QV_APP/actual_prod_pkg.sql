@@ -21,6 +21,7 @@ create or replace package qv_app.actual_prod_pkg as
   ----------  --------------------  --------------------------------------------
   2014-06-04  Trevor Keon           Created 
   2014-06-25  Trevor Keon           Fixed issue with duplicates at shift changeover 
+  2014-10-28  Trevor Keon           Updated ref_line table code to match new structure 
 
 *******************************************************************************/
 
@@ -95,35 +96,40 @@ create or replace package body qv_app.actual_prod_pkg as
            cntl_rec_lcl t03,
            prodn_shift t04,
            (
-               select line_code,
-                  line_desc,
-                  case
-                     when substr(line_desc, 1, 4) = 'Line'
-                        then substr(line_desc, 1, 6)
-                     when substr(line_desc, 4, 5) = 'Blend'
-                        then 'Line ' || substr(line_desc, 2, 1)
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then 'Line ' || substr(line_desc, 7, 1)
-                     when substr(line_desc, 1, 7) = 'Repack '
-                        then 'SBL'
-                  end as prodn_line_code,
-                  case
-                     when substr(line_desc, 4, 5) = 'Blend'
-                        then line_desc
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then 'L' || substr(line_desc, 7, 1) || ' Blending' 
-                  end as nake_line_code,
-                  case
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then line_desc
-                  end as dryer_line_code,
-                  case
-                     when substr(line_desc, 1, 4) = 'Line' or substr(line_desc, 1, 6) = 'Repack'
-                        then 1
-                  end as fg_line_flag,
-                  decode(substr(line_desc, 4, 5), 'Blend', 1) as nake_line_flag,
-                  decode(substr(line_desc, 1, 5), 'Dryer', 1) as dryer_line_flag
-               from ref_line 
+              select line_code,
+                 line_desc,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then substr(line_desc, 1, 6)
+                    when substr(sched_xref, 1, 4) = 'Line'
+                       then 'Line ' || substr(sched_xref, 5, 1)
+                    when substr(sched_xref, 1, 6) = 'Repack'
+                       then 'SBL'
+                    when substr(line_desc, 4, 7) = 'Outfeed'
+                       then 'Line ' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6)
+                    when line_desc = 'L9 Ext'
+                       then 'Line 9'
+                    when line_desc = 'L7 Repack'
+                       then 'Repack L1'
+                 end as prodn_line_code,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then 'L' || substr(line_desc, 6, 1) || ' Blending'
+                    when substr(line_desc, 4, 7) = 'Outfeed'
+                       then 'L' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6) || ' Blending' 
+                 end as nake_line_code,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then 'Dryer ' || substr(line_desc, 6, 1)
+                 end as dryer_line_code,
+                 case
+                    when sched_xref is not null or line_desc = 'L9 Ext'
+                       then 1
+                 end as fg_line_flag,
+                 decode(substr(line_desc, 4, 7), 'Outfeed', 1) as nake_line_flag,
+                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag     
+              from manu.ref_line
+              where line_desc <> '------'
            ) t05
         where t01.plt_code = t02.plt_code
            and t01.proc_order = t03.proc_order
@@ -172,35 +178,40 @@ create or replace package body qv_app.actual_prod_pkg as
            cntl_rec_lcl t04,
            prodn_shift t05,
            (
-               select line_code,
-                  line_desc,
-                  case
-                     when substr(line_desc, 1, 4) = 'Line'
-                        then substr(line_desc, 1, 6)
-                     when substr(line_desc, 4, 5) = 'Blend'
-                        then 'Line ' || substr(line_desc, 2, 1)
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then 'Line ' || substr(line_desc, 7, 1)
-                     when substr(line_desc, 1, 7) = 'Repack '
-                        then 'SBL'
-                  end as prodn_line_code,
-                  case
-                     when substr(line_desc, 4, 5) = 'Blend'
-                        then line_desc
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then 'L' || substr(line_desc, 7, 1) || ' Blending' 
-                  end as nake_line_code,
-                  case
-                     when substr(line_desc, 1, 5) = 'Dryer'
-                        then line_desc
-                  end as dryer_line_code,
-                  case
-                     when substr(line_desc, 1, 4) = 'Line' or substr(line_desc, 1, 6) = 'Repack'
-                        then 1
-                  end as fg_line_flag,
-                  decode(substr(line_desc, 4, 5), 'Blend', 1) as nake_line_flag,
-                  decode(substr(line_desc, 1, 5), 'Dryer', 1) as dryer_line_flag
-               from ref_line  
+              select line_code,
+                 line_desc,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then substr(line_desc, 1, 6)
+                    when substr(sched_xref, 1, 4) = 'Line'
+                       then 'Line ' || substr(sched_xref, 5, 1)
+                    when substr(sched_xref, 1, 6) = 'Repack'
+                       then 'SBL'
+                    when substr(line_desc, 4, 7) = 'Outfeed'
+                       then 'Line ' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6)
+                    when line_desc = 'L9 Ext'
+                       then 'Line 9'
+                    when line_desc = 'L7 Repack'
+                       then 'Repack L1'
+                 end as prodn_line_code,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then 'L' || substr(line_desc, 6, 1) || ' Blending'
+                    when substr(line_desc, 4, 7) = 'Outfeed'
+                       then 'L' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6) || ' Blending' 
+                 end as nake_line_code,
+                 case
+                    when substr(line_desc, 1, 4) = 'Line'
+                       then 'Dryer ' || substr(line_desc, 6, 1)
+                 end as dryer_line_code,
+                 case
+                    when sched_xref is not null or line_desc = 'L9 Ext'
+                       then 1
+                 end as fg_line_flag,
+                 decode(substr(line_desc, 4, 7), 'Outfeed', 1) as nake_line_flag,
+                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag     
+              from manu.ref_line
+              where line_desc <> '------'
            ) t06
         where t01.plt_code = t02.plt_code
            and trunc(t01.start_prodn_datime) = t03.calendar_date
