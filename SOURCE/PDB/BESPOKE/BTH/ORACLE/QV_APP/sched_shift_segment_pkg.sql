@@ -26,18 +26,18 @@ create or replace package qv_app.sched_shift_segment_pkg as
 
 *******************************************************************************/
 
-  -- Public : Type (Record)  
-  type sched_shift_segment_rcd is record
-  (
-     model_name nvarchar2(80),
-     batch_code nvarchar2(80),
-     total_quantity float(126),
-     shift_quantity float(126),
-     prodn_shift_code char(10)
-  );
+--  -- Public : Type (Record)  
+--  type sched_shift_segment_rcd is record
+--  (
+--     model_name nvarchar2(80),
+--     batch_code nvarchar2(80),
+--     total_quantity float(126),
+--     shift_quantity float(126),
+--     prodn_shift_code char(10)
+--  );
 
  -- Public : Type (Record)  
-  type sched_locked_rcd is record
+  type sched_shift_segment_rcd is record
   (
      batch_code varchar2(20),
      matl_code varchar2(20),
@@ -57,11 +57,11 @@ create or replace package qv_app.sched_shift_segment_pkg as
 
   -- Public : Type (Table) 
   type sched_shift_segment_type is table of sched_shift_segment_rcd;
-  type sched_locked_type is table of sched_locked_rcd;
+--  type sched_locked_type is table of sched_locked_rcd;
 
   -- Public : Functions 
-  function view_current(p_model in nvarchar2) return sched_shift_segment_type pipelined;
-  function view_locked(p_sched_week in number, p_cast_week in number) return sched_locked_type pipelined;
+  function view_current return sched_shift_segment_type pipelined;
+  function view_locked(p_sched_week in number, p_cast_week in number) return sched_shift_segment_type pipelined;
 --  function view_at_date(p_model in nvarchar2(80), p_date date) return sched_shift_segment_type pipelined;
 --  function view_history(p_model in nvarchar2(80), p_period integer) return sched_shift_segment_type pipelined;
 
@@ -77,30 +77,86 @@ create or replace package body qv_app.sched_shift_segment_pkg as
   g_package_name constant varchar2(64 char) := 'sched_shift_segment_pkg';  
   
   -- Function : View Current for Model 
-  function view_current(p_model in nvarchar2) return sched_shift_segment_type pipelined is
+  function view_current return sched_shift_segment_type pipelined is
 
   begin
 
     for l_entity in 
     (
-        select t01.as_model_name as model_name,
-           t01.as_code as batch_code,
-           t01.as_quantity as total_quantity,
-           case
-              when t02.start_datime >= t01.as_start_outflow and t02.end_datime <= t01.as_end_outflow
-                 then t01.as_outflow_rate * ((t02.end_datime - t02.start_datime) * 24)
-              when t02.start_datime <= t01.as_start_outflow and t02.end_datime <= t01.as_end_outflow
-                 then t01.as_outflow_rate * ((t02.end_datime - t01.as_start_outflow) * 24)
-              when t02.start_datime >= t01.as_start_outflow and t02.end_datime >= t01.as_end_outflow
-                 then t01.as_outflow_rate * ((t01.as_end_outflow - t02.start_datime) * 24)
-              else t01.as_quantity
-           end as shift_quantity,        
-           t02.prodn_shift_code
-        from infor.as_processbatch t01,
-           pr.prodn_shift t02
-        where t01.as_end_outflow > t02.start_datime
-           and t01.as_start_outflow < t02.end_datime
-           and t01.as_model_name = p_model
+        select t01.batch_code,
+            t01.matl_code,
+            decode(t03.resource_code, null, t01.resource_code, t03.resource_code) as resource_code,
+            decode(t03.resource_group_code, null, t01.resource_group_code, t03.resource_group_code) as resource_group_code,
+            t01.resource_code as base_resource_code,
+            t01.resource_group_code as base_resource_group_code,    
+            t01.quantity as total_quantity,
+            case
+              when t02.start_datime >= t01.start_outflow and t02.end_datime <= t01.end_outflow
+                 then t01.outflow_rate * ((t02.end_datime - t02.start_datime) * 24)
+              when t02.start_datime <= t01.start_outflow and t02.end_datime <= t01.end_outflow
+                 then t01.outflow_rate * ((t02.end_datime - t01.start_outflow) * 24)
+              when t02.start_datime >= t01.start_outflow and t02.end_datime >= t01.end_outflow
+                 then t01.outflow_rate * ((t01.end_outflow - t02.start_datime) * 24)
+              else t01.quantity
+            end as shift_quantity,
+            case
+              when t02.start_datime >= t01.start_outflow and t02.end_datime <= t01.end_outflow
+                 then 1    -- Schedule runs throughout the shift 
+              when t02.start_datime <= t01.start_outflow and t02.end_datime <= t01.end_outflow
+                 then 2    -- Schedule starts during the shift, and ends after the shift 
+              when t02.start_datime >= t01.start_outflow and t02.end_datime >= t01.end_outflow
+                 then 3    -- Schedule starts before the shift, and ends during the shift 
+              else 4       -- Schedule starts and ends during the shift 
+            end as sched_shift_type,            
+            case
+             when t02.start_datime >= t01.start_outflow
+                then t02.start_datime
+             when t02.start_datime <= t01.start_outflow
+                then t01.start_outflow
+            end as start_outflow, 
+            case
+             when t02.end_datime >= t01.end_outflow
+                then t01.end_outflow
+             when t02.end_datime <= t01.end_outflow
+                then t02.end_datime
+            end as end_outflow,
+            t01.start_outflow as schedule_start,
+            t01.end_outflow as schedule_end,                                
+            t02.prodn_shift_code
+        from infor.ash_schedules t01,
+           pr.prodn_shift t02,
+           (
+                select distinct t01.schedule_id,
+                   t01.batch_code,
+                   t06.resource_code,
+                   t06.resource_group_code
+                from infor.ash_schedules t01, 
+                   infor.ash_schedule_relationships t02,
+                   infor.ash_schedule_relationships t03,
+                   infor.ash_schedule_relationships t04,
+                   infor.ash_schedule_relationships t05,
+                   infor.ash_schedules t06 
+                where t01.schedule_id = t02.schedule_id
+                   and t01.batch_code = t02.process_batch_code
+                   and t01.schedule_id = t03.schedule_id
+                   and t02.tank_batch_code = t03.tank_batch_code
+                   and t01.schedule_id = t04.schedule_id
+                   and t03.process_batch_code = t04.process_batch_code
+                   and t01.schedule_id = t05.schedule_id
+                   and t04.tank_batch_code = t05.tank_batch_code
+                   and t01.schedule_id = t06.schedule_id
+                   and t05.process_batch_code = t06.batch_code
+                   and t01.batch_type = 'PROCESS'
+                   and t03.flow_direction = 'PROCESS_TO_TANK'
+                   and t04.flow_direction = 'TANK_TO_PROCESS'
+                   and t05.flow_direction = 'PROCESS_TO_TANK'           
+           ) t03   
+        where t01.end_outflow > t02.start_datime
+           and t01.start_outflow < t02.end_datime
+           and t01.schedule_id = t03.schedule_id (+)
+           and t01.batch_code = t03.batch_code (+)    
+           and t01.schedule_id = (select max(schedule_id) from infor.ash_schedules)
+           and t01.batch_type = 'PROCESS'
     )
     loop
       pipe row(l_entity);
@@ -112,7 +168,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
 
   end view_current; 
   
-  function view_locked(p_sched_week in number, p_cast_week in number) return sched_locked_type pipelined is
+  function view_locked(p_sched_week in number, p_cast_week in number) return sched_shift_segment_type pipelined is
   
   begin
 
