@@ -176,6 +176,8 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             resource_group_code as base_resource_group_code,
             quantity as total_quantity,
             case
+              when start_inflow >= end_outflow or start_datime >= end_datime
+                 then 0
               when start_datime >= start_inflow and end_datime <= end_outflow
                  then outflow_rate * ((end_datime - start_datime) * 24)
               when start_datime <= start_inflow and end_datime <= end_outflow
@@ -185,6 +187,8 @@ create or replace package body qv_app.sched_shift_segment_pkg as
               else quantity
             end as shift_quantity,
             case
+              when start_inflow >= end_outflow or start_datime >= end_datime
+                 then 0 
               when start_datime >= start_inflow and end_datime <= end_outflow
                  then 1    -- Schedule runs throughout the shift 
               when start_datime <= start_inflow and end_datime <= end_outflow
@@ -271,7 +275,6 @@ create or replace package body qv_app.sched_shift_segment_pkg as
                and t02.batch_type = 'PROCESS'
                and t01.casting_week = p_cast_week
                and t04.mars_week = p_sched_week
-               and (p_week_finish is null or (t02.start_inflow <= p_week_finish and t03.start_datime <= p_week_finish))
         )
     )
     loop
@@ -368,7 +371,8 @@ create or replace package body qv_app.sched_shift_segment_pkg as
            and t02.batch_code = t05.batch_code (+)           
            and t01.schedule_id = (select max(schedule_id) from infor.ash_schedule_versions)
            and t02.batch_type = 'PROCESS'
-           and t04.mars_week > (select distinct mars_week from mm.mars_date where calendar_date = trunc(sysdate))
+           and t04.mars_week > (select distinct mars_week from mm.mars_date where calendar_date = trunc(sysdate))                
+           and (t05.resource_code is not null or t02.matl_code = '1034716' or t02.resource_code = 'L7 Re Pack Pack')
     )
     loop
       pipe row(l_entity);
