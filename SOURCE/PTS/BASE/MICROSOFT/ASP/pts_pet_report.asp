@@ -1,0 +1,606 @@
+<%@ language = VBScript%>
+<% option explicit %>
+<%
+'//////////////////////////////////////////////////////////////////
+'// System  : PTS (Product Testing System)                       //
+'// Script  : pts_pet_report.asp                                 //
+'// Author  : Peter Tylee                                        //
+'// Date    : August 2014                                        //
+'// Text    : This script implements the pet report              //
+'//           functionality. Modified from pts_hou_report        //
+'//////////////////////////////////////////////////////////////////
+
+   '//
+   '// Declare the variables
+   '//
+   dim strBase
+   dim strTarget
+   dim strStatus
+   dim strCharset
+   dim strReturn
+   dim strHeading
+   dim objSecurity
+
+   '//
+   '// Set the server script timeout to (10 minutes)
+   '// ** potentially long running process **
+   '//
+   server.scriptTimeout = 600
+
+   '//
+   '// Initialise the script
+   '//
+   strTarget = "pts_pet_report.asp"
+   strHeading = "Pet Report"
+
+   '//
+   '// Get the base string
+   '//
+   strBase = GetBase()
+
+   '//
+   '// Get the status
+   '//
+   strStatus = GetStatus()
+
+   '//
+   '// Get the character set
+   '//
+   strCharset = GetCharSet()
+
+   '//
+   '// Retrieve the security information
+   '//
+   strReturn = GetSecurityCheck("PTS_PET_REPORT")
+   if strReturn <> "*OK" then
+      call PaintFatal
+   else
+      call PaintFunction
+   end if
+
+   '//
+   '// Destroy references
+   '//
+   set objSecurity = nothing
+
+'///////////////////
+'// Fatal routine //
+'///////////////////
+sub PaintFatal()%>
+<!--#include file="ics_fatal.inc"-->
+<%end sub
+
+'////////////////////////////
+'// Paint function routine //
+'////////////////////////////
+sub PaintFunction()%>
+<html>
+<script language="javascript">
+<!--
+
+   ///////////////////////
+   // Generic Functions //
+   ///////////////////////
+   document.onmouseover = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
+      if (objElement.className == 'clsButton') {
+         objElement.className = 'clsButtonX';
+      }
+      if (objElement.className == 'clsButtonN') {
+         objElement.className = 'clsButtonNX';
+      }
+      if (objElement.className == 'clsSelect') {
+         objElement.className = 'clsSelectX';
+      }
+   }
+   document.onmouseout = function(evt) {
+      var evt = evt || window.event;
+      var objElement = evt.target || evt.srcElement;
+      if (objElement.className == 'clsButtonX') {
+         objElement.className = 'clsButton';
+      }
+      if (objElement.className == 'clsButtonNX') {
+         objElement.className = 'clsButtonN';
+      }
+      if (objElement.className == 'clsSelectX') {
+         objElement.className = 'clsSelect';
+      }
+   }
+   function checkChange() {
+      bolReturn = confirm('Please confirm the cancel\r\npress OK continue (any changes will be lost)\r\npress Cancel to return to the function');
+      return bolReturn;
+   }
+   function processForm() {
+      if (checkInput() == true) {
+         alert('Input data errors exist');
+         return false;
+      }
+      return true;
+   }
+   function setSelect(objInput) {
+      objInput.select();
+   }
+
+   //////////////////////
+   // Report Functions //
+   //////////////////////
+   var cstrPetReportAreaCode;
+   function requestPetReport(strCode) {
+       cstrPetReportAreaCode = strCode;
+       var strXML = '<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*GETFLD" GEOCDE="' + strCode + '"/>';
+       doPostRequest('<%=strBase%>pts_pet_report_field_retrieve.asp', function (strResponse) { checkPetReport(strResponse); }, false, streamXML(strXML));
+   }
+   function checkPetReport(strResponse) {
+       doActivityStop();
+       if (strResponse.substring(0, 3) != '*OK') {
+           alert(strResponse);
+       } else {
+           var objDocument = loadXML(strResponse.substring(3, strResponse.length));
+           if (objDocument == null) { return; }
+           var strMessage = '';
+           var objElements = objDocument.documentElement.childNodes;
+           for (var i = 0; i < objElements.length; i++) {
+               if (objElements[i].nodeName == 'ERROR') {
+                   if (strMessage != '') { strMessage = strMessage + '\r\n'; }
+                   strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+               }
+           }
+           if (strMessage != '') {
+               alert(strMessage);
+               return;
+           }
+           var objPetValue = document.getElementById('RRP_PetValue');
+           var objSelValue = document.getElementById('RRP_SelValue');
+           objPetValue.options.length = 0;
+           objSelValue.options.length = 0;
+           for (var i = 0; i < objElements.length; i++) {
+               if (objElements[i].nodeName == 'AREA') {
+                   document.getElementById('subPetReport').innerText = objElements[i].getAttribute('TEXT');
+               } else if (objElements[i].nodeName == 'FIELD') {
+                   objPetValue.options[objPetValue.options.length] = new Option(objElements[i].getAttribute('FLDTXT'), objElements[i].getAttribute('FLDCDE'));
+                   objPetValue.options[objPetValue.options.length - 1].setAttribute('tabcde', objElements[i].getAttribute('TABCDE'));
+                   objPetValue.options[objPetValue.options.length - 1].setAttribute('fldcde', objElements[i].getAttribute('FLDCDE'));
+               }
+           }
+           displayScreen('dspPetReport');
+           objPetValue.focus();
+       }
+   }
+   function doPetReportAccept() {
+       if (!processForm()) { return; }
+       var strMessage = '';
+       if (strMessage != '') {
+           alert(strMessage);
+           return;
+       }
+       var objSelValue = document.getElementById('RRP_SelValue');
+       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
+       strXML = strXML + '<PTS_REQUEST ACTION="*SETFLD">';
+       for (var i = 0; i < objSelValue.options.length; i++) {
+           strXML = strXML + '<FIELD TABCDE="' + fixXML(objSelValue[i].getAttribute('tabcde')) + '"';
+           strXML = strXML + ' FLDCDE="' + fixXML(objSelValue[i].getAttribute('fldcde')) + '"/>';
+       }
+       strXML = strXML + '</PTS_REQUEST>';
+       doActivityStart(document.body);
+       window.setTimeout('requestPetReportAccept(\'' + strXML + '\');', 10);
+   }
+   function requestPetReportAccept(strXML) {
+       doPostRequest('<%=strBase%>pts_pet_report_field_update.asp', function (strResponse) { checkPetReportAccept(strResponse); }, false, streamXML(strXML));
+   }
+   function checkPetReportAccept(strResponse) {
+       doActivityStop();
+       if (strResponse.substring(0, 3) != '*OK') {
+           alert(strResponse);
+       } else {
+           if (strResponse.length > 3) {
+               var objDocument = loadXML(strResponse.substring(3, strResponse.length));
+               if (objDocument == null) { return; }
+               var strMessage = '';
+               var objElements = objDocument.documentElement.childNodes;
+               for (var i = 0; i < objElements.length; i++) {
+                   if (objElements[i].nodeName == 'ERROR') {
+                       if (strMessage != '') { strMessage = strMessage + '\r\n'; }
+                       strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+                   }
+               }
+               if (strMessage != '') {
+                   alert(strMessage);
+                   return;
+               }
+           }
+           doReportOutput(eval('document.body'), 'Pet Report', '*CSV', 'select * from table(pts_app.pts_pet_function.report_pet(' + cstrPetReportAreaCode + '))');
+           displayScreen('dspPrompt');
+           document.getElementById('PRO_GeoZone').focus();
+       }
+   }
+   function doPetReportCancel() {
+       if (checkChange() == false) { return; }
+       displayScreen('dspPrompt');
+       document.getElementById('PRO_GeoZone').focus();
+   }
+   function selectPetReportValues() {
+       var objPetValue = document.getElementById('RRP_PetValue');
+       var objSelValue = document.getElementById('RRP_SelValue');
+       var bolFound;
+       for (var i = 0; i < objPetValue.options.length; i++) {
+           if (objPetValue.options[i].selected == true) {
+               bolFound = false;
+               for (var j = 0; j < objSelValue.options.length; j++) {
+                   if (objPetValue[i].value == objSelValue[j].value) {
+                       bolFound = true;
+                       break;
+                   }
+               }
+               if (!bolFound) {
+                   objSelValue.options[objSelValue.options.length] = new Option(objPetValue[i].text, objPetValue[i].value);
+                   objSelValue.options[objSelValue.options.length - 1].setAttribute('tabcde', objPetValue[i].getAttribute('tabcde'));
+                   objSelValue.options[objSelValue.options.length - 1].setAttribute('fldcde', objPetValue[i].getAttribute('fldcde'));
+               }
+           }
+       }
+       var objWork = new Array();
+       var intIndex = 0
+       for (var i = 0; i < objSelValue.options.length; i++) {
+           objWork[intIndex] = objSelValue[i];
+           intIndex++;
+       }
+       objWork.sort(sortPetReportValues);
+       objSelValue.options.length = 0;
+       objSelValue.selectedIndex = -1;
+       for (var i = 0; i < objWork.length; i++) {
+           objSelValue.options[i] = objWork[i];
+       }
+   }
+   function removePetReportValues() {
+       var objSelValue = document.getElementById('RRP_SelValue');
+       var objWork = new Array();
+       var intIndex = 0;
+       for (var i = 0; i < objSelValue.options.length; i++) {
+           if (objSelValue.options[i].selected == false) {
+               objWork[intIndex] = objSelValue[i];
+               intIndex++;
+           }
+       }
+       objSelValue.options.length = 0;
+       objSelValue.selectedIndex = -1;
+       for (var i = 0; i < objWork.length; i++) {
+           objSelValue.options[i] = objWork[i];
+       }
+   }
+   function sortPetReportValues(obj01, obj02) {
+       if (obj01.text < obj02.text) {
+           return -1;
+       } else if (obj01.text > obj02.text) {
+           return 1;
+       }
+       return 0;
+   }
+
+   ////////////////////
+   // Load Functions //
+   ////////////////////
+   function loadFunction() {
+      cobjScreens[0] = new clsScreen('dspPrompt','hedPrompt');
+      cobjScreens[1] = new clsScreen('dspList', 'hedList');
+      cobjScreens[2] = new clsScreen('dspPetReport', 'hedPetReport');
+      cobjScreens[0].hedtxt = 'Area Prompt';
+      cobjScreens[1].hedtxt = 'Area List';
+      cobjScreens[2].hedtxt = 'Pet Report';
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_GeoZone').focus();
+   }
+
+   ///////////////////////
+   // Control Functions //
+   ///////////////////////
+   var cobjScreens = new Array();
+   function clsScreen(strScrName,strHedName) {
+      this.scrnam = strScrName;
+      this.hednam= strHedName;
+      this.hedtxt= '';
+   }
+   function displayScreen(strScreen) {
+      var objScreen;
+      var objHeading;
+      for (var i=0;i<cobjScreens.length;i++) {
+         objScreen = document.getElementById(cobjScreens[i].scrnam);
+         objHeading = document.getElementById(cobjScreens[i].hednam);
+         if (cobjScreens[i].scrnam == strScreen) {
+            objScreen.style.display = 'block';
+            objHeading.innerText = cobjScreens[i].hedtxt;
+            objScreen.focus();
+         } else {
+            objScreen.style.display = 'none';
+            objHeading.innerText = cobjScreens[i].hedtxt;
+         }
+      }
+   }
+
+   //////////////////////
+   // Prompt Functions //
+   //////////////////////
+   function doPromptReport() {
+      if (!processForm()) {return;}
+      var strMessage = '';
+      if (document.getElementById('PRO_GeoZone').value == '') {
+         if (strMessage != '') {strMessage = strMessage + '\r\n';}
+         strMessage = strMessage + 'Area code must be entered for report';
+      }
+      if (strMessage != '') {
+         alert(strMessage);
+         return;
+      }
+      requestPetReport(document.getElementById('PRO_GeoZone').value);
+   }
+   function doPromptList() {
+      if (!processForm()) {return;}
+      doActivityStart(document.body);
+      window.setTimeout('requestList();',10);
+   }
+
+   ////////////////////
+   // List Functions //
+   ////////////////////
+   function requestList() {
+      doPostRequest('<%=strBase%>pts_geo_area_list.asp',function(strResponse) {checkList(strResponse);},false,'<?xml version="1.0" encoding="UTF-8"?><PTS_REQUEST ACTION="*LSTGEO"/>');
+   }
+   function checkList(strResponse) {
+      doActivityStop();
+      if (strResponse.substring(0,3) != '*OK') {
+         alert(strResponse);
+      } else {
+         var objDocument = loadXML(strResponse.substring(3,strResponse.length));
+         if (objDocument == null) {return;}
+         var strMessage = '';
+         var objElements = objDocument.documentElement.childNodes;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'ERROR') {
+               if (strMessage != '') {strMessage = strMessage + '\r\n';}
+               strMessage = strMessage + objElements[i].getAttribute('ERRTXT');
+            }
+         }
+         if (strMessage != '') {
+            alert(strMessage);
+            return;
+         }
+         displayScreen('dspList');
+         var objTabHead = document.getElementById('tabHeadList');
+         var objTabBody = document.getElementById('tabBodyList');
+         objTabHead.style.tableLayout = 'auto';
+         objTabBody.style.tableLayout = 'auto';
+         var objRow;
+         var objCell;
+         var objNobr;
+         for (var i=objTabHead.rows.length-1;i>=0;i--) {
+            objTabHead.deleteRow(i);
+         }
+         for (var i=objTabBody.rows.length-1;i>=0;i--) {
+            objTabBody.deleteRow(i);
+         }
+         var intColCount = 0;
+         for (var i=0;i<objElements.length;i++) {
+            if (objElements[i].nodeName == 'LSTCTL') {
+               intColCount = objElements[i].getAttribute('COLCNT');
+               objRow = objTabHead.insertRow(-1);
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;Action&nbsp;';
+               objCell.className = 'clsLabelHB';
+               objCell.style.whiteSpace = 'nowrap';
+               for (var j=1;j<=intColCount;j++) {
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('HED'+j)+'&nbsp;';
+                  objCell.className = 'clsLabelHB';
+                  objCell.style.whiteSpace = 'nowrap';
+               }
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '&nbsp;';
+               objCell.className = 'clsLabelHB';
+               objCell.style.whiteSpace = 'nowrap';
+            } else if (objElements[i].nodeName == 'LSTROW') {
+               objRow = objTabBody.insertRow(-1);
+               objRow.setAttribute('selcde',objElements[i].getAttribute('SELCDE'));
+               objRow.setAttribute('seltxt',objElements[i].getAttribute('SELTXT'));
+               objCell = objRow.insertCell(-1);
+               objCell.colSpan = 1;
+               objCell.align = 'center';
+               objCell.innerHTML = '<a class="clsSelect" onClick="doListAccept(\''+objRow.rowIndex+'\');">Select</a>';
+               objCell.className = 'clsLabelFN';
+               objCell.style.whiteSpace = 'nowrap';
+               for (var j=1;j<=intColCount;j++) {
+                  objCell = objRow.insertCell(-1);
+                  objCell.colSpan = 1;
+                  objCell.align = 'left';
+                  objCell.innerHTML = '&nbsp;'+objElements[i].getAttribute('COL'+j)+'&nbsp;';
+                  objCell.className = 'clsLabelFN';
+                  objCell.style.whiteSpace = 'nowrap';
+               }
+            }
+         }
+         if (objTabBody.rows.length == 0) {
+            objRow = objTabBody.insertRow(-1);
+            objCell = objRow.insertCell(-1);
+            objCell.colSpan = objTabHead.rows(0).cells.length-1;
+            objCell.innerHTML = '&nbsp;NO DATA FOUND&nbsp;';
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
+            objTabHead.style.tableLayout = 'auto';
+            objTabBody.style.tableLayout = 'auto';
+         } else {
+            setScrollable('HeadList','BodyList','horizontal');
+            objTabHead.rows(0).cells[objTabHead.rows(0).cells.length-1].style.width = 16;
+            objTabHead.style.tableLayout = 'fixed';
+            objTabBody.style.tableLayout = 'fixed';
+         }
+      }
+   }
+   function doListAccept(intRow) {
+      document.getElementById('PRO_GeoZone').value = document.getElementById('tabBodyList').rows[intRow].getAttribute('selcde');
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_GeoZone').focus();
+   }
+   function doListCancel() {
+      displayScreen('dspPrompt');
+      document.getElementById('PRO_GeoZone').focus();
+   }
+// -->
+</script>
+<!--#include file="ics_std_input.inc"-->
+<!--#include file="ics_std_number.inc"-->
+<!--#include file="ics_std_request.inc"-->
+<!--#include file="ics_std_activity.inc"-->
+<!--#include file="ics_std_scrollable.inc"-->
+<!--#include file="ics_std_xml.inc"-->
+<!--#include file="ics_std_report.inc"-->
+<!--#include file="ics_std_export.inc"-->
+<!--#include file="pts_search_code.inc"-->
+<!--#include file="pts_select_code.inc"-->
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
+   <link rel="stylesheet" type="text/css" href="ics_style.css">
+</head>
+<body class="clsBody02" scroll="auto" onLoad="parent.setStatus('<%=strStatus%>');parent.setHelp('pts_hou_report_help.htm');parent.setHeading('<%=strHeading%>');parent.showContent();loadFunction();">
+   <table id="dspPrompt" class="clsGrid02" style="display:block;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedPrompt" class="clsFunction" align=center colspan=2 nowrap><nobr>Area Prompt</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Area Code:&nbsp;</nobr></td>
+         <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
+            <input class="clsInputNN" type="text" name="PRO_GeoZone" id="PRO_GeoZone" size="10" maxlength="10" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+       <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptReport();">&nbsp;Report&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPromptList();">&nbsp;List&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+   <table id="dspList" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0>
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedList" class="clsFunction" align=center colspan=2 nowrap><nobr>Area List</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr height=100%>
+         <td align=center colspan=2 nowrap><nobr>
+            <table class="clsTableContainer" align=center cols=1 height=100% cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsFixed" id="conHeadList">
+                     <table class="clsTableHead" id="tabHeadList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+               <tr height=100%>
+                  <td align=center colspan=1 nowrap><nobr>
+                     <div class="clsScroll" id="conBodyList">
+                     <table class="clsTableBody" id="tabBodyList" align=left cols=1 cellpadding="0" cellspacing="1"></table>
+                     </div>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=1 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doListCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+    <table id="dspPetReport" class="clsGrid02" style="display:none;visibility:visible" width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doSchListAccept();}">
+      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=2 cellpadding="0" cellspacing="0">
+      <tr>
+         <td id="hedPetReport" class="clsFunction" align=center colspan=2 nowrap><nobr>Pet Report</nobr></td>
+      </tr>
+      <tr>
+         <td id="subPetReport" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Area Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsGrid02" align=center valign=top cols=2 width=100% cellpadding=0 cellspacing=0>
+               <tr>
+                  <td class="clsLabelBN" align=center colspan=2 nowrap><nobr>
+                     <table align=center border=0 cellpadding=0 cellspacing=2 cols=3>
+                        <tr>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Available Reporting Fields&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Selected Reporting Fields&nbsp;</nobr></td>
+                        </tr>
+                        <tr>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="RRP_PetValue" name="RRP_PetValue" style="width:300px" multiple size=20></select>
+                           </nobr></td>
+                           <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>
+                              <table class="clsTable01" width=100% align=center cols=2 cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td align=right colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_loff.gif" align=absmiddle onClick="removePetReportValues();"></nobr></td>
+                                    <td align=left colspan=1 nowrap><nobr><img class="clsImagePush" src="nav_roff.gif" align=absmiddle onClick="selectPetReportValues();"></nobr></td>
+                                 </tr>
+                              </table>
+                           </nobr></td>
+                           <td class="clsLabelBN" align=center colspan=1 nowrap><nobr>
+                              <select class="clsInputBN" id="RRP_SelValue" name="RRP_SelValue" style="width:300px" multiple size=20></select>
+                           </nobr></td>
+                        </tr>
+                     </table>
+                  </nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+      </table></nobr></td></tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
+            <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
+               <tr>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPetReportCancel();">&nbsp;Cancel&nbsp;</a></nobr></td>
+                  <td align=center colspan=1 nowrap><nobr>&nbsp;</nobr></td>
+                  <td align=center colspan=1 nowrap><nobr><a class="clsButton" onClick="doPetReportAccept();">&nbsp;Accept&nbsp;</a></nobr></td>
+               </tr>
+            </table>
+         </nobr></td>
+      </tr>
+   </table>
+</body>
+</html>
+<%end sub%>
+<!--#include file="ics_std_code.inc"-->

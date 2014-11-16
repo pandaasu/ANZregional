@@ -302,6 +302,7 @@ sub PaintFunction()%>
          document.getElementById('DEF_ConFnam').value = '';
          document.getElementById('DEF_ConByer').value = '';
          document.getElementById('DEF_HouNote').value = '';
+         document.getElementById('DEF_CrtDate').innerHTML = '';
          var strHouStat;
          var strGeoZone;
          var strDelNote;
@@ -346,6 +347,7 @@ sub PaintFunction()%>
                document.getElementById('DEF_ConFnam').value = objElements[i].getAttribute('CONFNAM');
                document.getElementById('DEF_ConByer').value = objElements[i].getAttribute('CONBYER');
                document.getElementById('DEF_HouNote').value = objElements[i].getAttribute('HOUNOTE');
+               document.getElementById('DEF_CrtDate').innerHTML = objElements[i].getAttribute('CRTDATE');
                strHouStat = objElements[i].getAttribute('HOUSTAT');
                strGeoZone = objElements[i].getAttribute('GEOZONE');
                strDelNote = objElements[i].getAttribute('DELNOTE');
@@ -769,6 +771,10 @@ sub PaintFunction()%>
             <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="DEF_HouNote" size="80" maxlength="1000" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
+      <tr>
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Create Date:&nbsp;</nobr></td>
+         <td id="DEF_CrtDate" class="clsLabelBN" align=left valign=center colspan=1 nowrap></td>
+      </tr>
       </table></nobr></td></tr>
       <tr>
          <td class="clsLabelBB" align=center valign=center colspan=1 nowrap><nobr>&nbsp;Household Classification Data&nbsp;</nobr></td>
@@ -787,9 +793,6 @@ sub PaintFunction()%>
                <font id="DEF_PetFont" class="clsLabelWB" style="display:none;visibility:visible;font-size:12pt" align=center>NO PETS</font>
             </div>
          </nobr></td>
-      </tr>
-      <tr>
-         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>

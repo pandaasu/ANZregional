@@ -20,6 +20,7 @@ package         pts_stm_function as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2009/04   Steve Gregan   Created
+    2014/09   Peter Tylee    Added support for logical OR groups
 
    *******************************************************************************/
 
@@ -358,7 +359,7 @@ package body         pts_stm_function as
             if csr_rule%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
+            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" LNKCDE="'||to_char(rcd_rule.str_or_link_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
             open csr_value;
             loop
                fetch csr_value into rcd_value;
@@ -580,6 +581,7 @@ package body         pts_stm_function as
                rcd_pts_stm_rule.str_tab_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
                rcd_pts_stm_rule.str_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
                rcd_pts_stm_rule.str_rul_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
+               rcd_pts_stm_rule.str_or_link_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@LNKCDE'));
                insert into pts_stm_rule values rcd_pts_stm_rule;
                obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
                for idz in 0..xmlDom.getLength(obj_val_list)-1 loop
@@ -1252,7 +1254,8 @@ package body         pts_stm_function as
                values(rcd_rule.str_sel_group,
                       rcd_rule.str_tab_code,
                       rcd_rule.str_fld_code,
-                      rcd_rule.str_rul_code);
+                      rcd_rule.str_rul_code,
+                      rcd_rule.str_or_link_code);
 
             /*-*/
             /* Load the rule array

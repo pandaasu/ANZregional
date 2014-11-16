@@ -47,7 +47,7 @@
    '// Get the base string
    '//
    strBase = GetBase()
-
+    
    '//
    '// Get the status
    '//
@@ -85,7 +85,7 @@ sub PaintFatal()%>
 '////////////////////////////
 sub PaintFunction()%>
 <html>
-<script language="javascript">
+<script type="text/javascript">
 <!--
 
    ///////////////////////
@@ -1703,7 +1703,7 @@ sub PaintFunction()%>
       doPostRequest('<%=strBase%>pts_tes_config_panel_retrieve.asp',function(strResponse) {checkPanelUpdate(strResponse);},false,streamXML(strXML));
    }
    function checkPanelUpdate(strResponse) {
-      doActivityStop();
+       doActivityStop();
       if (strResponse.substring(0,3) != '*OK') {
          alert(strResponse);
       } else {
@@ -1724,6 +1724,7 @@ sub PaintFunction()%>
          var strPetMult;
          var strSelType;
          var strSelTemp;
+         var duplicatePanelCode;
          var objPetMult = document.getElementById('PAN_PetMult');
          var objSelType = document.getElementById('PAN_SelType');
          var objSelTemp = document.getElementById('PAN_SelTemp');
@@ -1739,6 +1740,19 @@ sub PaintFunction()%>
                strPetMult = objElements[i].getAttribute('PETMLT');
                strSelType = objElements[i].getAttribute('SELTYP');
                cstrPanelDone = objElements[i].getAttribute('PANDON');
+               duplicatePanelCode = objElements[i].getAttribute('PANELCODE');
+               $(".panelDuplicate").removeAttr("checked");
+               if (duplicatePanelCode === null || duplicatePanelCode === "") {
+                   $("#panelDuplicateNo").attr("checked", "checked");
+                   $(".panelItemNormal").show();
+                   $(".panelItemDuplicate").hide();
+               }
+               else {
+                   $("#panelDuplicateYes").attr("checked", "checked");
+                   $(".panelItemNormal").hide();
+                   $(".panelItemDuplicate").show();
+               }
+               $("#panelDuplicateCode").val(duplicatePanelCode);
             } else if (objElements[i].nodeName == 'TEM_LIST') {
                objSelTemp.options[objSelTemp.options.length] = new Option(objElements[i].getAttribute('VALTXT'),objElements[i].getAttribute('VALCDE'));
             }
@@ -1760,7 +1774,13 @@ sub PaintFunction()%>
             }
          }
          displayScreen('dspPanel');
-         document.getElementById('PAN_MemCount').focus();
+         
+         if (duplicatePanelCode === null || duplicatePanelCode === "") {
+             document.getElementById('PAN_MemCount').focus();
+         }
+         else {
+             document.getElementById('panelDuplicateCode').focus();
+         }
       }
    }
    function doPanelAccept() {
@@ -1770,11 +1790,19 @@ sub PaintFunction()%>
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Test must be status Raised for panel update';
       }
-      if (document.getElementById('PAN_MemCount').value < 1) {
-         if (strMessage != '') {strMessage = strMessage + '\r\n';}
-         strMessage = strMessage + 'Member count must be entered';
+      if ($("#panelDuplicateYes").is(":checked")) {
+          if ($("#panelDuplicateCode").val() == "" || isNaN($("#panelDuplicateCode").val())) {
+              if (strMessage != '') {strMessage = strMessage + '\r\n';}
+              strMessage = strMessage + 'A valid test number is required to duplicate the panel selection.';
+          }
       }
-      strMessage = checkSltData();
+      else {
+          if (document.getElementById('PAN_MemCount').value < 1) {
+              if (strMessage != '') {strMessage = strMessage + '\r\n';}
+              strMessage = strMessage + 'Member count must be entered';
+          }
+          strMessage = checkSltData();
+      }
       if (strMessage != '') {
          alert(strMessage);
          return;
@@ -1787,6 +1815,7 @@ sub PaintFunction()%>
       var strXML = '<?xml version="1.0" encoding="UTF-8"?>';
       strXML = strXML+'<PTS_REQUEST ACTION="*UPDPAN"';
       strXML = strXML+' TESCDE="'+fixXML(cstrPanelTestCode)+'"';
+      strXML = strXML+' PANELCODE="'+fixXML($("#panelDuplicateCode").val())+'"';
       strXML = strXML+' MEMCNT="'+fixXML(document.getElementById('PAN_MemCount').value)+'"';
       strXML = strXML+' RESCNT="'+fixXML(document.getElementById('PAN_RESCount').value)+'"';
       strXML = strXML+' PETMLT="'+fixXML(document.getElementById('PAN_PetMult').options[document.getElementById('PAN_PetMult').selectedIndex].value)+'"';
@@ -2276,6 +2305,22 @@ sub PaintFunction()%>
 <!--#include file="pts_search_code.inc"-->
 <!--#include file="pts_select_code.inc"-->
 <head>
+   <script src="/scripts/jquery-1.11.1.min.js" type="text/javascript"></script>
+   <script type="text/javascript">
+       $(document).ready(function () {
+           $(".panelDuplicate").change(function () {
+               if ($("#panelDuplicateYes").is(":checked")) {
+                   $(".panelItemNormal").hide();
+                   $(".panelItemDuplicate").show();
+               }
+               else {
+                   $(".panelItemNormal").show();
+                   $(".panelItemDuplicate").hide();
+                   $("#panelDuplicateCode").val("");
+               }
+           });
+       });
+   </script>
    <meta http-equiv="content-type" content="text/html; charset=<%=strCharset%>">
    <link rel="stylesheet" type="text/css" href="ics_style.css">
 </head>
@@ -2831,13 +2876,13 @@ sub PaintFunction()%>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Market Research Code:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_MktCode" size="1" maxlength="1" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_MktCode" size="3" maxlength="3" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Market Research Alias:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_AlsCode" size="1" maxlength="1" value="" onFocus="setSelect(this);">
+            <input class="clsInputNN" style="text-transform:uppercase;" type="text" name="SAM_AlsCode" size="3" maxlength="3" value="" onFocus="setSelect(this);">
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
@@ -2896,59 +2941,76 @@ sub PaintFunction()%>
       </tr>
    </table>
    <table id="dspPanel" class="clsGrid02" style="display:none;visibility:visible" height=100% width=100% align=center valign=top cols=2 cellpadding=1 cellspacing=0 onKeyPress="if (event.keyCode == 13) {doPanelAccept();}">
-      <tr><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=4 cellpadding="0" cellspacing="0">
-      <tr>
+      <tr valign="top"><td align=center colspan=2 nowrap><nobr><table class="clsPanel" align=center cols=4 cellpadding="0" cellspacing="0">
+      <tr valign="top">
          <td id="hedPanel" class="clsFunction" align=center valign=center colspan=4 nowrap><nobr>Test Panel Selection</nobr></td>
       </tr>
-      <tr>
+      <tr valign="top">
          <td id="subPanel" class="clsLabelBB" align=center colspan=4 nowrap><nobr>Test Name</nobr></td>
       </tr>
-      <tr>
+      <tr valign="top">
          <td class="clsLabelBB" align=center colspan=4 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      <tr>
-         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;MemberCount:&nbsp;</nobr></td>
+          <tr valign="top">
+              <td class="clsLabelBB" align=right valign=center >
+                  Duplicate Panel:
+              </td>
+              <td>
+                  <input type="radio" name="panelDuplicate" id="panelDuplicateNo" value="0" class="panelDuplicate" />
+                  <label for="panelDuplicateNo" class="clsLabelBB">No</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+              <td align="right">
+                  &nbsp;&nbsp;&nbsp;&nbsp;
+                  <input type="radio" name="panelDuplicate" id="panelDuplicateYes" value="1" class="panelDuplicate" />
+                  <label for="panelDuplicateYes" class="clsLabelBB">Yes</label>&nbsp;&nbsp;
+              </td>
+              <td class="panelItemDuplicate">
+                  <input type="text" id="panelDuplicateCode" maxlength="10" size="4" class="clsInputNN" />
+              </td>
+          </tr>
+      <tr class="panelItemNormal" valign="top">
+         <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Member Count:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PAN_MemCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PAN_MemCount" id="PAN_MemCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Reserve Count:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <input class="clsInputNN" type="text" name="PAN_ResCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
+            <input class="clsInputNN" type="text" name="PAN_ResCount" id="PAN_ResCount" size="4" maxlength="5" value="" onFocus="setSelect(this);" onBlur="validateNumber(this,0,false);">
          </nobr></td>
       </tr>
-      <tr>
+      <tr class="panelItemNormal" valign="top">
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Allow Multiple Household Pets:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="PAN_PetMult">
+            <select class="clsInputBN" name="PAN_PetMult" id="PAN_PetMult">
                <option value="0" selected>No
                <option value="1">Yes
             </select>
          </nobr></td>
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Selection Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
-            <select class="clsInputBN" name="PAN_SelType">
+            <select class="clsInputBN" name="PAN_SelType" id="PAN_SelType">
                <option value="*PERCENT" selected>Percentage selection
                <option value="*TOTAL">Total selection
             </select>
          </nobr></td>
       </tr>
-      <tr>
+      <tr class="panelItemNormal" valign="top">
          <td class="clsLabelBB" align=center colspan=4 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
-      <tr>
+      <tr class="panelItemNormal" valign="top">
          <td class="clsLabelBB" align=center valign=center colspan=4 nowrap><nobr>
             <table class="clsTable01" align=right cols=2 cellpadding="0" cellspacing="0">
-               <tr><td align=right colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp"></select></nobr></td><td align=left colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Retrieve Selection Template&nbsp;</a></nobr></td></tr>
+               <tr><td align=right colspan=1 nowrap><nobr><select class="clsInputBN" id="PAN_SelTemp" id="PAN_SelTemp"></select></nobr></td><td align=left colspan=1 nowrap><nobr><a class="clsButton" onClick="doPanelTemplate();">&nbsp;Retrieve Selection Template&nbsp;</a></nobr></td></tr>
             </table>
          </nobr></td>
       </tr>
       </table></nobr></td></tr>
-      <tr height=100%>
+      <tr height=100%  class="panelItemNormal" valign="top">
          <td align=center colspan=2 nowrap><nobr>
 <!--#include file="pts_select_disp.inc"-->
          </nobr></td>
       </tr>
-      <tr>
+      <tr valign="top">
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>
             <table class="clsTable01" align=center cols=3 cellpadding="0" cellspacing="0">
                <tr>

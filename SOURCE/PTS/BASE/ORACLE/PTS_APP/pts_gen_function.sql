@@ -21,7 +21,7 @@ package         pts_gen_function as
     -------   ------         -----------
     2009/04   Steve Gregan   Created
     2010/10   Steve Gregan   Modified to allow more allocation days than samples
-
+    2014/09   Peter Tylee    Added support for logical OR groups
    *******************************************************************************/
 
    /*-*/
@@ -364,6 +364,7 @@ package body         pts_gen_function as
             rcd_pts_wor_sel_rule.wsr_tab_code := upper(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
             rcd_pts_wor_sel_rule.wsr_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
             rcd_pts_wor_sel_rule.wsr_rul_code := upper(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
+            rcd_pts_wor_sel_rule.wsr_or_link_code := upper(xslProcessor.valueOf(obj_rul_node,'@LNKCDE'));
             insert into pts_wor_sel_rule values rcd_pts_wor_sel_rule;
             obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
             for idv in 0..xmlDom.getLength(obj_val_list)-1 loop
@@ -451,6 +452,7 @@ package body         pts_gen_function as
       var_value_found boolean;
       var_sel_code number;
       var_str_test varchar2(32);
+      var_or_group varchar2(32);
       var_query varchar2(32767);
       type typ_dynamic_cursor is ref cursor;
       var_dynamic_cursor typ_dynamic_cursor;
@@ -475,6 +477,7 @@ package body         pts_gen_function as
          select t01.wsr_sel_group,
                 t01.wsr_tab_code,
                 t01.wsr_fld_code,
+                t01.wsr_or_link_code,
                 t02.sfi_fld_rul_type,
                 t02.sfi_fld_rul_sql,
                 t03.sru_rul_cond,
@@ -487,7 +490,8 @@ package body         pts_gen_function as
             and t01.wsr_fld_code = t02.sfi_fld_code
             and t01.wsr_rul_code = t03.sru_rul_code
             and t01.wsr_sel_group = rcd_group.wsg_sel_group
-          order by t01.wsr_tab_code asc,
+          order by t01.wsr_or_link_code asc,
+                   t01.wsr_tab_code asc,
                    t01.wsr_fld_code asc;
       rcd_rule csr_rule%rowtype;
 
@@ -545,6 +549,7 @@ package body         pts_gen_function as
             var_query := var_query||' or (';
          end if;
          var_group_found := true;
+         var_or_group := '*NONE';
 
          /*-*/
          /* Process the selection group rules
@@ -558,14 +563,31 @@ package body         pts_gen_function as
             end if;
 
             /*-*/
+            /* End the previous OR group, if required
+            /*-*/
+            if var_rule_found = true and nvl(rcd_rule.wsr_or_link_code,'*NONE') <> var_or_group then
+              var_query := var_query||')';
+            end if;
+
+            /*-*/
+            /* Start an OR group, if required
+            /*-*/
+            if nvl(rcd_rule.wsr_or_link_code,'*NONE') <> '*NONE' and nvl(rcd_rule.wsr_or_link_code,'*NONE') <> var_or_group then
+              var_query := var_query||'(';
+            end if;
+
+            /*-*/
             /* Start the rule
             /*-*/
             if var_rule_found = false then
                var_query := var_query||'(';
+            elsif nvl(rcd_rule.wsr_or_link_code,'*NONE') = var_or_group and var_or_group <> '*NONE' then
+              var_query := var_query||' or (';
             else
                var_query := var_query||' and (';
             end if;
             var_rule_found := true;
+            var_or_group := nvl(rcd_rule.wsr_or_link_code,'*NONE');
 
             /*-*/
             /* Build the rule logical not test
@@ -612,6 +634,13 @@ package body         pts_gen_function as
 
          end loop;
          close csr_rule;
+         
+         /*-*/
+         /* Add an extra closing bracket to close the last OR group, if required
+         /*-*/
+         if var_or_group <> '*NONE' then
+            var_query := var_query||')';
+         end if;
 
          /*-*/
          /* End the group

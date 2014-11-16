@@ -10,6 +10,7 @@
    var cstrSelectGrpCde;
    var cstrSelectTabCde;
    var cstrSelectFldCde;
+   var cstrSelectLnkCde = "";
    var cstrSelectFldTxt;
    var cstrSelectInpLen;
    var cstrSelectRulTyp;
@@ -26,6 +27,7 @@
       this.inplen = '';
       this.rultyp = '';
       this.rulcde = '';
+      this.lnkcde = '';
       this.valary = new Array();
    }
    function clsSltValue(strValCde,strValTxt,strValPct) {
@@ -82,7 +84,7 @@
             objRow.setAttribute('grppct',cobjSelectData[i].grppct);
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objCell = objRow.insertCell(0);
-            objCell.colSpan = 4;
+            objCell.colSpan = 5;
             objCell.innerHTML = '<a class="clsSelect" onClick="doSltRuleAddRule(\''+objRow.rowIndex+'\');">Add Rule</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleUpdGroup(\''+objRow.rowIndex+'\');">Update</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleCpyGroup(\''+objRow.rowIndex+'\');">Copy</a>&nbsp;/&nbsp;<a class="clsSelect" onClick="doSltRuleDelGroup(\''+objRow.rowIndex+'\');">Delete</a>&nbsp;-&nbsp;SELECTION GROUP - '+cobjSelectData[i].grptxt+' ('+cobjSelectData[i].grppct+'%)';
             objCell.className = 'clsLabelFB';
             objCell.style.whiteSpace = 'nowrap';
@@ -91,6 +93,7 @@
             objRow.setAttribute('grpcde',cobjSelectData[i].grpcde);
             objRow.setAttribute('tabcde',cobjSelectData[i].tabcde);
             objRow.setAttribute('fldcde',cobjSelectData[i].fldcde);
+            objRow.setAttribute('lnkcde',cobjSelectData[i].lnkcde);
             objRow.setAttribute('fldtxt',cobjSelectData[i].fldtxt);
             objRow.setAttribute('inplen',cobjSelectData[i].inplen);
             objRow.setAttribute('rultyp',cobjSelectData[i].rultyp);
@@ -135,10 +138,18 @@
             objCell.style.whiteSpace = 'nowrap';
             objCell = objRow.insertCell(2);
             objCell.colSpan = 1;
+            if (cobjSelectData[i].lnkcde != null && cobjSelectData[i].lnkcde != "")
+              objCell.innerText = "OR Group (" + cobjSelectData[i].lnkcde + ")";
+            else
+              objCell.innerText = "OR Group (*NONE)";
+            objCell.className = 'clsLabelFB';
+            objCell.style.whiteSpace = 'nowrap';
+            objCell = objRow.insertCell(3);
+            objCell.colSpan = 1;
             objCell.innerText = cobjSelectData[i].rulcde;
             objCell.className = 'clsLabelFN';
             objCell.style.whiteSpace = 'nowrap';
-            objCell = objRow.insertCell(3);
+            objCell = objRow.insertCell(4);
             objCell.colSpan = 1;
             objCell.innerText = strText;
             objCell.className = 'clsLabelFN';
@@ -172,6 +183,7 @@
             cobjSelectData[i].grpcde = objRow.getAttribute('grpcde');
             cobjSelectData[i].tabcde = objRow.getAttribute('tabcde');
             cobjSelectData[i].fldcde = objRow.getAttribute('fldcde');
+            cobjSelectData[i].lnkcde = objRow.getAttribute('lnkcde');
             cobjSelectData[i].fldtxt = objRow.getAttribute('fldtxt');
             cobjSelectData[i].inplen = objRow.getAttribute('inplen');
             cobjSelectData[i].rultyp = objRow.getAttribute('rultyp');
@@ -269,6 +281,7 @@
                cobjSelectData[intIndex].grpcde = strNext;
                cobjSelectData[intIndex].tabcde = cobjSelectData[i].tabcde;
                cobjSelectData[intIndex].fldcde = cobjSelectData[i].fldcde;
+               cobjSelectData[intIndex].lnkcde = cobjSelectData[i].lnkcde;
                cobjSelectData[intIndex].fldtxt = cobjSelectData[i].fldtxt;
                cobjSelectData[intIndex].inplen = cobjSelectData[i].inplen;
                cobjSelectData[intIndex].rultyp = cobjSelectData[i].rultyp;
@@ -294,6 +307,7 @@
       cstrSelectGrpCde = cobjSelectData[cintSelectRow].grpcde;
       cstrSelectTabCde = cobjSelectData[cintSelectRow].tabcde;
       cstrSelectFldCde = cobjSelectData[cintSelectRow].fldcde;
+      cstrSelectLnkCde = cobjSelectData[cintSelectRow].lnkcde;
       cstrSelectFldTxt = cobjSelectData[cintSelectRow].fldtxt;
       cstrSelectInpLen = cobjSelectData[cintSelectRow].inplen;
       cstrSelectRulTyp = cobjSelectData[cintSelectRow].rultyp;
@@ -376,6 +390,7 @@
       cintSelectRow = -1;
       cstrSelectTabCde = objFieldRow.getAttribute('tabcde');
       cstrSelectFldCde = objFieldRow.getAttribute('fldcde');
+      cstrSelectLnkCde = objFieldRow.getAttribute('lnkcde');
       cstrSelectFldTxt = objFieldRow.getAttribute('fldtxt');
       cstrSelectInpLen = objFieldRow.getAttribute('inplen');
       cstrSelectRulTyp = objFieldRow.getAttribute('rultyp');
@@ -427,6 +442,8 @@
                objRow = objTable.insertRow(-1);
                objRow.setAttribute('tabcde',strTabCode);
                objRow.setAttribute('fldcde',objElements[i].getAttribute('FLDCDE'));
+               var lnkCde = objElements[i].getAttribute('LNKCDE');
+               objRow.setAttribute('lnkcde',lnkCde == null ? "" : lnkCde);
                objRow.setAttribute('fldtxt',objElements[i].getAttribute('FLDTXT'));
                objRow.setAttribute('inplen',objElements[i].getAttribute('INPLEN'));
                objRow.setAttribute('rultyp',objElements[i].getAttribute('RULTYP'));
@@ -467,7 +484,10 @@
             alert(strMessage);
             return;
          }
+                     
          if (cstrSelectRulTyp != '*NUMBER' && cstrSelectRulTyp != '*TEXT') {
+            var objSllOrGroup = document.getElementById('SLL_OrGroup');
+            objSllOrGroup.value = cstrSelectLnkCde;
             document.getElementById('subSltList').innerText = cstrSelectFldTxt;
             var objSllRulCode = document.getElementById('SLL_RulCode');
             var objSllRulValue = document.getElementById('SLL_RulValue');
@@ -505,6 +525,8 @@
             displayScreen('dspSltList');
             objSllRulCode.focus();
          } else if (cstrSelectRulTyp == '*NUMBER') {
+            var objSllOrGroup = document.getElementById('SLN_OrGroup');
+            objSllOrGroup.value = cstrSelectLnkCde;
             document.getElementById('subSltNumb').innerText = cstrSelectFldTxt;
             var objSlnRulCode = document.getElementById('SLN_RulCode');
             var objSlnSelValue = document.getElementById('SLN_SelValue');
@@ -530,6 +552,8 @@
             displayScreen('dspSltNumb');
             objSlnRulCode.focus();
          } else if (cstrSelectRulTyp == '*TEXT') {
+            var objSllOrGroup = document.getElementById('SLT_OrGroup');
+            objSllOrGroup.value = cstrSelectLnkCde;
             document.getElementById('subSltText').innerText = cstrSelectFldTxt;
             var objSltRulCode = document.getElementById('SLT_RulCode');
             var objSltSelValue = document.getElementById('SLT_SelValue');
@@ -595,6 +619,7 @@
       }
       if (cintSelectRow != -1) {
          cobjSelectData[cintSelectRow].rulcde = objSllRulCode[objSllRulCode.selectedIndex].value;
+         cobjSelectData[cintSelectRow].lnkcde = document.getElementById('SLL_OrGroup').value;
          var objValues = cobjSelectData[cintSelectRow].valary;
          objValues.length = 0;
          for (var i=0;i<objSllSelValue.options.length;i++) {
@@ -605,6 +630,7 @@
          objRule.grpcde = cstrSelectGrpCde;
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
+         objRule.lnkcde = document.getElementById('SLL_OrGroup').value;
          objRule.fldtxt = cstrSelectFldTxt;
          objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
@@ -782,6 +808,7 @@
          objRule.grpcde = cstrSelectGrpCde;
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
+         objRule.lnkcde = document.getElementById('SLN_OrGroup').value;
          objRule.fldtxt = cstrSelectFldTxt;
          objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
@@ -827,6 +854,7 @@
          objRule.grpcde = cstrSelectGrpCde;
          objRule.tabcde = cstrSelectTabCde;
          objRule.fldcde = cstrSelectFldCde;
+         objRule.lnkcde = document.getElementById('SLT_OrGroup').value;
          objRule.fldtxt = cstrSelectFldTxt;
          objRule.inplen = cstrSelectInpLen;
          objRule.rultyp = cstrSelectRulTyp;
@@ -859,6 +887,8 @@
             cobjSelectData[intIndex].grpcde = objElements[i].getAttribute('GRPCDE');
             cobjSelectData[intIndex].tabcde = objElements[i].getAttribute('TABCDE');
             cobjSelectData[intIndex].fldcde = objElements[i].getAttribute('FLDCDE');
+            if (objElements[i].getAttribute('LNKCDE') != null)
+              cobjSelectData[intIndex].lnkcde = objElements[i].getAttribute('LNKCDE');
             cobjSelectData[intIndex].fldtxt = objElements[i].getAttribute('FLDTXT');
             cobjSelectData[intIndex].inplen = objElements[i].getAttribute('INPLEN');
             cobjSelectData[intIndex].rultyp = objElements[i].getAttribute('RULTYP');
@@ -884,7 +914,7 @@
             strXML = strXML+'<GROUP GRPCDE="*GROUP'+intGroup+'" GRPTXT="'+cobjSelectData[i].grptxt+'" GRPPCT="'+cobjSelectData[i].grppct+'">';
          } else {
             if (cobjSelectData[i].rulcde != '' && cobjSelectData[i].valary.length != 0) {
-               strXML = strXML+'<RULE TABCDE="'+cobjSelectData[i].tabcde+'" FLDCDE="'+cobjSelectData[i].fldcde+'" RULCDE="'+cobjSelectData[i].rulcde+'">';
+               strXML = strXML+'<RULE TABCDE="'+cobjSelectData[i].tabcde+'" FLDCDE="'+cobjSelectData[i].fldcde+'" RULCDE="'+cobjSelectData[i].rulcde+'" LNKCDE="'+cobjSelectData[i].lnkcde+'">';
                objValues = cobjSelectData[i].valary;
                for (var j=0;j<objValues.length;j++) {
                   strXML = strXML+'<VALUE VALCDE="'+objValues[j].valcde+'" VALTXT="'+objValues[j].valtxt+'" VALPCT="'+objValues[j].valpct+'"/>';

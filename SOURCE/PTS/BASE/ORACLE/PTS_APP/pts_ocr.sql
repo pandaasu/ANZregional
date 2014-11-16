@@ -26,6 +26,7 @@ package PTS_OCR as
   procedure error_report;
  
 end PTS_OCR;
+ 
 /
 
 /****************/
@@ -282,7 +283,8 @@ begin
                             and q.tqu_day_code = 1
                             and q.tqu_dsp_seqn = question.seq
                           )
-                  where   t.tra_valid = 1
+                  where   t.tra_tes_code = test_code.code
+                          and t.tra_valid = 1
                           and case
                             when question.seq = 1 then t.tra_q1 
                             when question.seq = 2 then t.tra_q2 

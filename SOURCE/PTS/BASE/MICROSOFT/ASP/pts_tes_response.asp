@@ -372,7 +372,7 @@ sub PaintFunction()%>
                   objInput.onfocus = function() {setSelect(this);};
                   objInput.onkeydown = function() {if (event.keyCode == 13) {event.keyCode = 9;}};
                   objInput.size = 2;
-                  objInput.maxLength = 1;
+                  objInput.maxLength = 3;
                   objInput.value = '';
                   objCell.appendChild(objInput);
                }

@@ -74,6 +74,12 @@
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
+	  <tr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><b>OR Group:</b> <input size="1" maxlength="1" id="SLL_OrGroup" /></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><select class="clsInputBN" id="SLL_RulCode" onChange="selectSltListRule(this);"></select></nobr></td>
       </tr>
@@ -172,6 +178,12 @@
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
       </tr>
+	  <tr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><b>OR Group:</b> <input size="1" maxlength="1" id="SLN_OrGroup" /></nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
       <tr>
          <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><select class="clsInputBN" id="SLN_RulCode"></select></nobr></td>
       </tr>
@@ -206,6 +218,12 @@
       </tr>
       <tr>
          <td id="subSltText" class="clsLabelBB" align=center colspan=2 nowrap><nobr>Text Name</nobr></td>
+      </tr>
+      <tr>
+         <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>
+      </tr>
+	  <tr>
+         <td class="clsLabelBN" align=center valign=center colspan=2 nowrap><nobr><b>OR Group:</b> <input size="1" maxlength="1" id="SLT_OrGroup" /></nobr></td>
       </tr>
       <tr>
          <td class="clsLabelBB" align=center colspan=2 nowrap><nobr>&nbsp;</nobr></td>

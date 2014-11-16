@@ -23,7 +23,12 @@ package         pts_tes_function as
     2010/10   Steve Gregan   Modified to allow more allocation days than samples
                              Modified to enter response data by market and alias codes
     2011/11   Peter Tylee    Modified to allow validation tests
-
+    2014/08   Peter Tylee    Modified to allow duplicate panel selection
+    2014/08   Peter Tylee    Modified to preferentially select pets suitable for wet or dry tests
+                              before selecting pets suitable for both wet and dry in panel selection.
+    2014/08   Peter Tylee    Modified to allow pet age in report.
+    2014/08   Peter Tylee    Modified to allow market research code of 3 characters.
+    2014/09   Peter Tylee    Added support for logical OR groups
    *******************************************************************************/
 
    /*-*/
@@ -79,7 +84,7 @@ package body         pts_tes_function as
    /* Private declarations
    /*-*/
    procedure clear_panel(par_tes_code in number, par_sel_type in varchar2, par_req_mem_count in number, par_req_res_count in number);
-   procedure select_panel(par_tes_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number);
+   procedure select_panel(par_tes_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number, par_tes_code_duplicate in number);
 
    /*-*/
    /* Private definitions
@@ -1135,7 +1140,8 @@ package body         pts_tes_function as
                    tru_sel_group,
                    tru_tab_code,
                    tru_fld_code,
-                   tru_rul_code
+                   tru_rul_code,
+                   tru_or_link_code
               from pts_tes_rule
              where tru_tes_code = var_cpy_code;
          insert into pts_tes_value
@@ -2806,7 +2812,7 @@ package body         pts_tes_function as
       /*-*/
       /* Pipe the test xml
       /*-*/
-      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" SELTYP="'||pts_to_xml(rcd_retrieve.tde_pan_sel_type)||'" PANDON="'||pts_to_xml(rcd_retrieve.pan_done)||'" MEMCNT="'||to_char(rcd_retrieve.tde_req_mem_count)||'" RESCNT="'||to_char(rcd_retrieve.tde_req_res_count)||'" PETMLT="'||pts_to_xml(rcd_retrieve.tde_hou_pet_multi)||'"/>'));
+      pipe row(pts_xml_object('<TEST TESTXT="('||to_char(rcd_retrieve.tde_tes_code)||') '||pts_to_xml(rcd_retrieve.tde_tes_title)||pts_to_xml(var_status)||'" TESSTA="'||to_char(rcd_retrieve.tde_tes_status)||'" SELTYP="'||pts_to_xml(rcd_retrieve.tde_pan_sel_type)||'" PANDON="'||pts_to_xml(rcd_retrieve.pan_done)||'" MEMCNT="'||to_char(rcd_retrieve.tde_req_mem_count)||'" RESCNT="'||to_char(rcd_retrieve.tde_req_res_count)||'" PETMLT="'||pts_to_xml(rcd_retrieve.tde_hou_pet_multi)||'" PANELCODE="'||to_char(rcd_retrieve.tde_tes_code_panel)||'"/>'));
 
       /*-*/
       /* Pipe the selection template XML
@@ -2838,7 +2844,7 @@ package body         pts_tes_function as
             if csr_rule%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.tru_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.tru_tab_code)||'" FLDCDE="'||to_char(rcd_rule.tru_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.tru_rul_code||'"/>'));
+            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.tru_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.tru_tab_code)||'" FLDCDE="'||to_char(rcd_rule.tru_fld_code)||'" LNKCDE="'||to_char(rcd_rule.tru_or_link_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.tru_rul_code||'"/>'));
             open csr_value;
             loop
                fetch csr_value into rcd_value;
@@ -3021,7 +3027,7 @@ package body         pts_tes_function as
             if csr_rule%notfound then
                exit;
             end if;
-            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
+            pipe row(pts_xml_object('<RULE GRPCDE="'||pts_to_xml(rcd_rule.str_sel_group)||'" TABCDE="'||pts_to_xml(rcd_rule.str_tab_code)||'" FLDCDE="'||to_char(rcd_rule.str_fld_code)||'" LNKCDE="'||to_char(rcd_rule.str_or_link_code)||'" FLDTXT="'||pts_to_xml(rcd_rule.sfi_fld_text)||'" INPLEN="'||to_char(rcd_rule.sfi_fld_inp_leng)||'" RULTYP="'||rcd_rule.sfi_fld_rul_type||'" RULCDE="'||rcd_rule.str_rul_code||'"/>'));
             open csr_value;
             loop
                fetch csr_value into rcd_value;
@@ -3099,6 +3105,13 @@ package body         pts_tes_function as
           where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code
             for update nowait;
       rcd_retrieve csr_retrieve%rowtype;
+          
+      cursor csr_retrieve_panel is
+         select t01.*
+           from pts_tes_definition t01
+          where t01.tde_tes_code = rcd_pts_tes_definition.tde_tes_code_panel
+            for update nowait;
+      rcd_retrieve_panel csr_retrieve_panel%rowtype;
 
       cursor csr_target is
          select t01.*
@@ -3130,26 +3143,53 @@ package body         pts_tes_function as
          return;
       end if;
       rcd_pts_tes_definition.tde_tes_code := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@TESCDE'));
-      rcd_pts_tes_definition.tde_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
-      rcd_pts_tes_definition.tde_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
-      rcd_pts_tes_definition.tde_hou_pet_multi := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PETMLT'));
-      rcd_pts_tes_definition.tde_pan_sel_type := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@SELTYP'));
+      rcd_pts_tes_definition.tde_tes_code_panel := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@PANELCODE'));
       rcd_pts_tes_definition.tde_upd_user := upper(par_user);
       rcd_pts_tes_definition.tde_upd_date := sysdate;
       if rcd_pts_tes_definition.tde_tes_code is null then
          pts_gen_function.add_mesg_data('Test code ('||xslProcessor.valueOf(obj_pts_request,'@TESCDE')||') must be a number');
       end if;
-      if rcd_pts_tes_definition.tde_req_mem_count is null or rcd_pts_tes_definition.tde_req_mem_count < 1 then
-         pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
-      end if;
-      if rcd_pts_tes_definition.tde_req_res_count is null or rcd_pts_tes_definition.tde_req_res_count < 1 then
-         rcd_pts_tes_definition.tde_req_res_count := 0;
-      end if;
-      if rcd_pts_tes_definition.tde_hou_pet_multi is null or (rcd_pts_tes_definition.tde_hou_pet_multi != '0' and rcd_pts_tes_definition.tde_hou_pet_multi != '1') then
-         pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
-      end if;
-      if rcd_pts_tes_definition.tde_pan_sel_type is null then
-         pts_gen_function.add_mesg_data('Selection type must be supplied');
+      if rcd_pts_tes_definition.tde_tes_code_panel is not null then
+        var_found := false;
+        begin
+           open csr_retrieve_panel;
+           fetch csr_retrieve_panel into rcd_retrieve_panel;
+           if csr_retrieve_panel%found then
+              var_found := true;
+           end if;
+           close csr_retrieve_panel;
+        exception
+           when others then
+              pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code_panel)||') is currently locked');
+              return;
+        end;
+        if var_found = false then
+           pts_gen_function.add_mesg_data('Test ('||to_char(rcd_pts_tes_definition.tde_tes_code_panel)||') does not exist');
+        end if;
+        if rcd_retrieve_panel.tde_tes_status != 4 then
+           pts_gen_function.add_mesg_data('Test code (' || to_char(rcd_pts_tes_definition.tde_tes_code_panel) || ') must be status Closed - panel duplication not allowed');
+        end if;
+        rcd_pts_tes_definition.tde_req_mem_count := rcd_retrieve_panel.tde_req_mem_count;
+        rcd_pts_tes_definition.tde_req_res_count := rcd_retrieve_panel.tde_req_res_count;
+        rcd_pts_tes_definition.tde_hou_pet_multi := rcd_retrieve_panel.tde_hou_pet_multi;
+        rcd_pts_tes_definition.tde_pan_sel_type := rcd_retrieve_panel.tde_pan_sel_type; 
+      else
+        rcd_pts_tes_definition.tde_req_mem_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@MEMCNT'));
+        rcd_pts_tes_definition.tde_req_res_count := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@RESCNT'));
+        rcd_pts_tes_definition.tde_hou_pet_multi := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@PETMLT'));
+        rcd_pts_tes_definition.tde_pan_sel_type := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@SELTYP'));      
+        if rcd_pts_tes_definition.tde_req_mem_count is null or rcd_pts_tes_definition.tde_req_mem_count < 1 then
+           pts_gen_function.add_mesg_data('Member count ('||xslProcessor.valueOf(obj_pts_request,'@MEMCNT')||') must be a number greater than zero');
+        end if;
+        if rcd_pts_tes_definition.tde_req_res_count is null or rcd_pts_tes_definition.tde_req_res_count < 1 then
+           rcd_pts_tes_definition.tde_req_res_count := 0;
+        end if;
+        if rcd_pts_tes_definition.tde_hou_pet_multi is null or (rcd_pts_tes_definition.tde_hou_pet_multi != '0' and rcd_pts_tes_definition.tde_hou_pet_multi != '1') then
+           pts_gen_function.add_mesg_data('Allow multiple household pets ('||xslProcessor.valueOf(obj_pts_request,'@PETMLT')||') must be ''0'' or ''1''');
+        end if;
+        if rcd_pts_tes_definition.tde_pan_sel_type is null then
+           pts_gen_function.add_mesg_data('Selection type must be supplied');
+        end if;
       end if;
       if pts_gen_function.get_mesg_count != 0 then
          return;
@@ -3230,50 +3270,117 @@ package body         pts_tes_function as
       /*-*/
       /* Retrieve and insert the test rule data
       /*-*/
-      obj_grp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/GROUP');
-      for idx in 0..xmlDom.getLength(obj_grp_list)-1 loop
-         obj_grp_node := xmlDom.item(obj_grp_list,idx);
-         obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULE');
-         if xmlDom.getLength(obj_rul_list) != 0 then
-            rcd_pts_tes_group.tgr_tes_code := rcd_pts_tes_definition.tde_tes_code;
-            rcd_pts_tes_group.tgr_sel_group := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPCDE'));
-            rcd_pts_tes_group.tgr_sel_text := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPTXT'));
-            rcd_pts_tes_group.tgr_sel_pcnt := pts_to_number(xslProcessor.valueOf(obj_grp_node,'@GRPPCT'));
-            rcd_pts_tes_group.tgr_req_mem_count := 0;
-            rcd_pts_tes_group.tgr_req_res_count := 0;
-            rcd_pts_tes_group.tgr_sel_mem_count := 0;
-            rcd_pts_tes_group.tgr_sel_res_count := 0;
-            insert into pts_tes_group values rcd_pts_tes_group;
-            for idy in 0..xmlDom.getLength(obj_rul_list)-1 loop
-               obj_rul_node := xmlDom.item(obj_rul_list,idy);
-               rcd_pts_tes_rule.tru_tes_code := rcd_pts_tes_group.tgr_tes_code;
-               rcd_pts_tes_rule.tru_sel_group := rcd_pts_tes_group.tgr_sel_group;
-               rcd_pts_tes_rule.tru_tab_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
-               rcd_pts_tes_rule.tru_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
-               rcd_pts_tes_rule.tru_rul_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
-               insert into pts_tes_rule values rcd_pts_tes_rule;
-               obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
-               for idz in 0..xmlDom.getLength(obj_val_list)-1 loop
-                  obj_val_node := xmlDom.item(obj_val_list,idz);
-                  rcd_pts_tes_value.tva_tes_code := rcd_pts_tes_rule.tru_tes_code;
-                  rcd_pts_tes_value.tva_sel_group := rcd_pts_tes_rule.tru_sel_group;
-                  rcd_pts_tes_value.tva_tab_code := rcd_pts_tes_rule.tru_tab_code;
-                  rcd_pts_tes_value.tva_fld_code := rcd_pts_tes_rule.tru_fld_code;
-                  rcd_pts_tes_value.tva_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
-                  rcd_pts_tes_value.tva_val_text := pts_from_xml(xslProcessor.valueOf(obj_val_node,'@VALTXT'));
-                  rcd_pts_tes_value.tva_val_pcnt := null;
-                  if rcd_pts_tes_rule.tru_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
-                     rcd_pts_tes_value.tva_val_pcnt := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALPCT'));
-                  end if;
-                  rcd_pts_tes_value.tva_req_mem_count := 0;
-                  rcd_pts_tes_value.tva_req_res_count := 0;
-                  rcd_pts_tes_value.tva_sel_mem_count := 0;
-                  rcd_pts_tes_value.tva_sel_res_count := 0;
-                  insert into pts_tes_value values rcd_pts_tes_value;
-               end loop;
-            end loop;
-         end if;
-      end loop;
+      if rcd_pts_tes_definition.tde_tes_code_panel is not null then
+        insert into pts.pts_tes_group (
+          tgr_tes_code,
+          tgr_sel_group,
+          tgr_sel_text,
+          tgr_sel_pcnt,
+          tgr_req_mem_count,
+          tgr_req_res_count,
+          tgr_sel_mem_count,
+          tgr_sel_res_count
+        )
+        select  rcd_pts_tes_definition.tde_tes_code,
+                tgr_sel_group,
+                tgr_sel_text,
+                tgr_sel_pcnt,
+                tgr_req_mem_count,
+                tgr_req_res_count,
+                tgr_sel_mem_count,
+                tgr_sel_res_count
+        from    pts.pts_tes_group
+        where   tgr_tes_code = rcd_pts_tes_definition.tde_tes_code_panel;
+        
+        insert into pts.pts_tes_rule (
+          tru_tes_code,
+          tru_sel_group,
+          tru_tab_code,
+          tru_fld_code,
+          tru_rul_code
+        )
+        select  rcd_pts_tes_definition.tde_tes_code,
+                tru_sel_group,
+                tru_tab_code,
+                tru_fld_code,
+                tru_rul_code
+        from    pts.pts_tes_rule
+        where   tru_tes_code = rcd_pts_tes_definition.tde_tes_code_panel;
+      
+        insert into pts.pts_tes_value (
+          tva_tes_code,
+          tva_sel_group,
+          tva_tab_code,
+          tva_fld_code,
+          tva_val_code,
+          tva_val_text,
+          tva_val_pcnt,
+          tva_req_mem_count,
+          tva_req_res_count,
+          tva_sel_mem_count,
+          tva_sel_res_count
+        )
+        select  rcd_pts_tes_definition.tde_tes_code,
+                tva_sel_group,
+                tva_tab_code,
+                tva_fld_code,
+                tva_val_code,
+                tva_val_text,
+                tva_val_pcnt,
+                tva_req_mem_count,
+                tva_req_res_count,
+                tva_sel_mem_count,
+                tva_sel_res_count
+        from    pts.pts_tes_value
+        where   tva_tes_code = rcd_pts_tes_definition.tde_tes_code_panel;
+      
+      else
+        obj_grp_list := xslProcessor.selectNodes(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST/GROUP');
+        for idx in 0..xmlDom.getLength(obj_grp_list)-1 loop
+           obj_grp_node := xmlDom.item(obj_grp_list,idx);
+           obj_rul_list := xslProcessor.selectNodes(obj_grp_node,'RULE');
+           if xmlDom.getLength(obj_rul_list) != 0 then
+              rcd_pts_tes_group.tgr_tes_code := rcd_pts_tes_definition.tde_tes_code;
+              rcd_pts_tes_group.tgr_sel_group := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPCDE'));
+              rcd_pts_tes_group.tgr_sel_text := pts_from_xml(xslProcessor.valueOf(obj_grp_node,'@GRPTXT'));
+              rcd_pts_tes_group.tgr_sel_pcnt := pts_to_number(xslProcessor.valueOf(obj_grp_node,'@GRPPCT'));
+              rcd_pts_tes_group.tgr_req_mem_count := 0;
+              rcd_pts_tes_group.tgr_req_res_count := 0;
+              rcd_pts_tes_group.tgr_sel_mem_count := 0;
+              rcd_pts_tes_group.tgr_sel_res_count := 0;
+              insert into pts_tes_group values rcd_pts_tes_group;
+              for idy in 0..xmlDom.getLength(obj_rul_list)-1 loop
+                 obj_rul_node := xmlDom.item(obj_rul_list,idy);
+                 rcd_pts_tes_rule.tru_tes_code := rcd_pts_tes_group.tgr_tes_code;
+                 rcd_pts_tes_rule.tru_sel_group := rcd_pts_tes_group.tgr_sel_group;
+                 rcd_pts_tes_rule.tru_tab_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@TABCDE'));
+                 rcd_pts_tes_rule.tru_fld_code := pts_to_number(xslProcessor.valueOf(obj_rul_node,'@FLDCDE'));
+                 rcd_pts_tes_rule.tru_rul_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@RULCDE'));
+                 rcd_pts_tes_rule.tru_or_link_code := pts_from_xml(xslProcessor.valueOf(obj_rul_node,'@LNKCDE'));
+                 insert into pts_tes_rule values rcd_pts_tes_rule;
+                 obj_val_list := xslProcessor.selectNodes(obj_rul_node,'VALUE');
+                 for idz in 0..xmlDom.getLength(obj_val_list)-1 loop
+                    obj_val_node := xmlDom.item(obj_val_list,idz);
+                    rcd_pts_tes_value.tva_tes_code := rcd_pts_tes_rule.tru_tes_code;
+                    rcd_pts_tes_value.tva_sel_group := rcd_pts_tes_rule.tru_sel_group;
+                    rcd_pts_tes_value.tva_tab_code := rcd_pts_tes_rule.tru_tab_code;
+                    rcd_pts_tes_value.tva_fld_code := rcd_pts_tes_rule.tru_fld_code;
+                    rcd_pts_tes_value.tva_val_code := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALCDE'));
+                    rcd_pts_tes_value.tva_val_text := pts_from_xml(xslProcessor.valueOf(obj_val_node,'@VALTXT'));
+                    rcd_pts_tes_value.tva_val_pcnt := null;
+                    if rcd_pts_tes_rule.tru_rul_code = '*SELECT_WHEN_EQUAL_MIX' then
+                       rcd_pts_tes_value.tva_val_pcnt := pts_to_number(xslProcessor.valueOf(obj_val_node,'@VALPCT'));
+                    end if;
+                    rcd_pts_tes_value.tva_req_mem_count := 0;
+                    rcd_pts_tes_value.tva_req_res_count := 0;
+                    rcd_pts_tes_value.tva_sel_mem_count := 0;
+                    rcd_pts_tes_value.tva_sel_res_count := 0;
+                    insert into pts_tes_value values rcd_pts_tes_value;
+                 end loop;
+              end loop;
+           end if;
+        end loop;
+      end if;
 
       /*-*/
       /* Free the XML document
@@ -3294,7 +3401,8 @@ package body         pts_tes_function as
              tde_pan_sel_type = rcd_pts_tes_definition.tde_pan_sel_type,
              tde_req_mem_count = rcd_pts_tes_definition.tde_req_mem_count,
              tde_req_res_count = rcd_pts_tes_definition.tde_req_res_count,
-             tde_hou_pet_multi = rcd_pts_tes_definition.tde_hou_pet_multi
+             tde_hou_pet_multi = rcd_pts_tes_definition.tde_hou_pet_multi,
+             tde_tes_code_panel = rcd_pts_tes_definition.tde_tes_code_panel
        where tde_tes_code = rcd_pts_tes_definition.tde_tes_code;
 
       /*-*/
@@ -3331,13 +3439,13 @@ package body         pts_tes_function as
 
       /*-*/
       /* Select the test panel
-      /* **note** 1. Select panel is an autonomous transaction that not impact the test lock
+      /* **note** 1. select_panel is an autonomous transaction that not impact the test lock
       /*-*/
-      select_panel(rcd_retrieve.tde_tes_code, rcd_retrieve.tde_pan_sel_type, '*MEMBER', rcd_retrieve.tde_hou_pet_multi, rcd_retrieve.tde_req_mem_count, rcd_retrieve.tde_req_res_count);
+      select_panel(rcd_retrieve.tde_tes_code, rcd_retrieve.tde_pan_sel_type, '*MEMBER', rcd_retrieve.tde_hou_pet_multi, rcd_retrieve.tde_req_mem_count, rcd_retrieve.tde_req_res_count, rcd_retrieve.tde_tes_code_panel);
       if rcd_pts_tes_definition.tde_req_res_count != 0 then
-         select_panel(rcd_retrieve.tde_tes_code, rcd_retrieve.tde_pan_sel_type, '*RESERVE', rcd_retrieve.tde_hou_pet_multi, rcd_retrieve.tde_req_mem_count, rcd_retrieve.tde_req_res_count);
+         select_panel(rcd_retrieve.tde_tes_code, rcd_retrieve.tde_pan_sel_type, '*RESERVE', rcd_retrieve.tde_hou_pet_multi, rcd_retrieve.tde_req_mem_count, rcd_retrieve.tde_req_res_count, rcd_retrieve.tde_tes_code_panel);
       end if;
-
+      
       /*-*/
       /* Commit the database
       /*-*/
@@ -3410,7 +3518,8 @@ package body         pts_tes_function as
             and t01.tru_fld_code = t02.sfi_fld_code
             and t01.tru_tes_code = rcd_retrieve.tde_tes_code
             and t01.tru_sel_group = rcd_group.tgr_sel_group
-          order by t01.tru_tab_code asc,
+          order by t01.tru_or_link_code asc,
+                   t01.tru_tab_code asc,
                    t01.tru_fld_code asc;
       rcd_rule csr_rule%rowtype;
 
@@ -3495,6 +3604,14 @@ package body         pts_tes_function as
       pipe row('</tr>');
       pipe row('<tr><td align=center colspan=6></td></tr>');
 
+      if rcd_retrieve.tde_tes_code_panel is not null then
+        pipe row('<tr>');
+        pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">NOTE</td>');
+        pipe row('<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#CCFFCC;COLOR:#000000;">Panel selection has been duplicated from test ('||to_char(rcd_retrieve.tde_tes_code_panel)||')</td>');
+        pipe row('</tr>');
+        pipe row('<tr><td align=center colspan=6></td></tr>');
+      end if;
+      
       /*-*/
       /* Retrieve the report data
       /*-*/
@@ -3544,6 +3661,15 @@ package body         pts_tes_function as
             var_output := '<tr>';
             var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Rule</td>';
             var_output := var_output||'<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||var_work||'</td>';
+            var_output := var_output||'</tr>';
+            pipe row(var_output);
+
+            /*-*/
+            /* Output the OR Group
+            /*-*/
+            var_output := '<tr>';
+            var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">OR Group</td>';
+            var_output := var_output||'<td align=left colspan=5 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||nvl(rcd_rule.tru_or_link_code,'*NONE')||'</td>';
             var_output := var_output||'</tr>';
             pipe row(var_output);
 
@@ -3610,7 +3736,81 @@ package body         pts_tes_function as
 
       end loop;
       close csr_group;
+      
+      if rcd_retrieve.tde_tes_code_panel is not null then
+        /*-*/
+        /* Retrieve the unselected pets
+        /*-*/
+        pipe row('<tr><td align=center colspan=6></td></tr>');
+        pipe row('<tr><td align=center colspan=6 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Pets from original test not selected for this test</td></tr>');
 
+        var_output := '<tr>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Reason</td>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Area</td>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Household</td>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Pet</td>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Type</td>';
+        var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">Size</td>';
+        var_output := var_output||'</tr>';
+        pipe row(var_output);
+
+        for panel_record in (
+          select    t01.*,
+                    decode(t02.pty_pet_type,null,'*UNKNOWN','('||t02.pty_pet_type||') '||t02.pty_typ_text) as type_text,
+                    decode(t03.tcl_val_code,null,'*UNKNOWN','('||t03.tcl_val_code||') '||t03.size_text) as size_text,
+                    decode(t04.gzo_geo_zone,null,'*UNKNOWN','('||t04.gzo_geo_zone||') '||t04.gzo_zon_text) as zone_text,
+                    case
+                      when t05.pde_pet_status <> 1 or (t06.hde_hou_status <> 1 and t06.hde_tes_code <> rcd_retrieve.tde_tes_code) then '*STATUS'
+                      when t05.pde_val_code is not null or t06.hde_val_code is not null then '*VALIDATION'
+                      else '*SELECTION'
+                    end as status_code           
+          from      pts_tes_panel t01
+                    inner join pts_pet_type t02 on t01.tpa_pet_type = t02.pty_pet_type
+                    inner join (
+                      select  t01.tcl_pan_code,
+                              t01.tcl_val_code,
+                              nvl(t02.sva_val_text,'*UNKNOWN') as size_text
+                      from    pts_tes_classification t01
+                              inner join (
+                                select  t01.sva_val_code,
+                                        t01.sva_val_text
+                                from    pts_sys_value t01
+                                where   t01.sva_tab_code = '*PET_CLA'
+                                        and t01.sva_fld_code = 8
+                              ) t02 on t01.tcl_val_code = t02.sva_val_code
+                      where   t01.tcl_tes_code = rcd_retrieve.tde_tes_code_panel
+                              and t01.tcl_tab_code = '*PET_CLA'
+                              and t01.tcl_fld_code = 8
+                    ) t03 on t01.tpa_pan_code = t03.tcl_pan_code
+                    left outer join pts_geo_zone t04 on (
+                      t01.tpa_geo_type = t04.gzo_geo_type
+                      and t01.tpa_geo_zone = t04.gzo_geo_zone
+                    )
+                    left outer join pts_pet_definition t05 on t01.tpa_pan_code = t05.pde_pet_code
+                    left outer join pts_hou_definition t06 on t05.pde_hou_code = t06.hde_hou_code
+          where     t01.tpa_tes_code = rcd_retrieve.tde_tes_code_panel
+                    and t01.tpa_pan_code not in (
+                      select  tpa_pan_code
+                      from    pts.pts_tes_panel
+                      where   tpa_tes_code = rcd_retrieve.tde_tes_code
+                    )
+          order by  t01.tpa_geo_zone asc,
+                    t01.tpa_pan_status asc,
+                    t01.tpa_hou_code asc,
+                    t01.tpa_pan_code asc
+        ) loop
+          var_output := '<tr>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;FONT-WEIGHT:bold;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||panel_record.status_code||'</td>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||panel_record.zone_text||'</td>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||panel_record.tpa_hou_code||') '||panel_record.tpa_con_fullname||', '||panel_record.tpa_loc_street||', '||panel_record.tpa_loc_town||'</td>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>('||panel_record.tpa_pan_code||') '||panel_record.tpa_pet_name||'</td>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||panel_record.type_text||'</td>';
+          var_output := var_output||'<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;" nowrap>'||panel_record.size_text||'</td>';
+          var_output := var_output||'</tr>';
+          pipe row(var_output);
+        end loop;
+      end if;
+      
       /*-*/
       /* End the report
       /*-*/
@@ -4837,7 +5037,7 @@ package body         pts_tes_function as
       /*-*/
       /* Local arrays
       /*-*/
-      type rcd_sdta is record(mkt_code varchar2(1 char),
+      type rcd_sdta is record(mkt_code varchar2(3 char),
                               sam_iden varchar2(20 char),
                               pan_seqn number,
                               pan_qnty number,
@@ -5322,10 +5522,19 @@ package body         pts_tes_function as
                 t01.sfi_fld_code,
                 t01.sfi_fld_text
            from pts_sys_field t01
-          where t01.sfi_tab_code = '*PET_CLA'
-            and t01.sfi_fld_status = '1'
-            and t01.sfi_fld_sel_type in ('*OPT_SINGLE_LIST','*MAN_SINGLE_LIST')
-          order by t01.sfi_fld_dsp_seqn asc,
+          where (
+                  (
+                    t01.sfi_tab_code = '*PET_DEF'
+                    and t01.sfi_fld_code = 6 --Pet age
+                  )
+                  or (
+                    t01.sfi_tab_code = '*PET_CLA'
+                    and t01.sfi_fld_sel_type in ('*OPT_SINGLE_LIST','*MAN_SINGLE_LIST')
+                  )
+                )
+                and t01.sfi_fld_status = '1'
+          order by t01.sfi_tab_code desc,
+                   t01.sfi_fld_dsp_seqn asc,
                    t01.sfi_fld_text asc;
       rcd_field csr_field%rowtype;
 
@@ -5456,6 +5665,7 @@ package body         pts_tes_function as
       var_per_eaten number;
       var_per_refuse number;
       var_output varchar2(4000 char);
+      var_query varchar2(32767);
 
       /*-*/
       /* Local cursors
@@ -5486,7 +5696,10 @@ package body         pts_tes_function as
          select t01.sfi_tab_code,
                 t01.sfi_fld_code,
                 t01.sfi_fld_text,
-                t01.sfi_fld_text as val_text
+                t01.sfi_fld_text as val_text,
+                t01.sfi_fld_sel_type,
+                t01.sfi_fld_rul_sql,
+                t01.sfi_fld_sel_sql
            from pts_sys_field t01
           where (t01.sfi_tab_code, t01.sfi_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
           order by t01.sfi_fld_text asc;
@@ -5532,10 +5745,11 @@ package body         pts_tes_function as
             and t01.tcl_tes_code = rcd_panel.tpa_tes_code
             and t01.tcl_pan_code = rcd_panel.tpa_pan_code
             and (t01.tcl_tab_code,t01.tcl_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
+            and t01.tcl_tab_code = '*PET_CLA'
           order by t01.tcl_tab_code asc,
                    t01.tcl_fld_code asc;
       rcd_panel_classification csr_panel_classification%rowtype;
-
+      
       cursor csr_allocation is
          select t01.*,
                 nvl(t02.tsa_rpt_code,'***') as tsa_rpt_code,
@@ -5663,6 +5877,18 @@ package body         pts_tes_function as
          /*-*/
          for idx in 1..tbl_cary.count loop
             tbl_cary(idx).val_text := null;
+            
+            -- If it's a pet logic column get the result
+            if tbl_cary(idx).sfi_fld_sel_type = '*LOGIC' then
+              var_query := 'select ';
+              var_query := var_query || tbl_cary(idx).sfi_fld_sel_sql;
+              var_query := var_query || 'from pts.pts_pet_definition p1 inner join pts.pts_hou_definition h1 on p1.pde_hou_code = h1.hde_hou_code ';
+              var_query := var_query || 'where p1.pde_pet_code = ' || to_char(rcd_panel.tpa_pet_code);
+              
+              execute immediate var_query
+              into tbl_cary(idx).val_text;
+            end if;
+            
          end loop;
          open csr_panel_classification;
          loop
@@ -7267,7 +7493,9 @@ package body         pts_tes_function as
                values(rcd_rule.tru_sel_group,
                       rcd_rule.tru_tab_code,
                       rcd_rule.tru_fld_code,
-                      rcd_rule.tru_rul_code);
+                      rcd_rule.tru_rul_code,
+                      rcd_rule.tru_or_link_code
+                      );
 
             /*-*/
             /* Load the rule array
@@ -7384,7 +7612,7 @@ package body         pts_tes_function as
    /****************************************************/
    /* This procedure performs the select panel routine */
    /****************************************************/
-   procedure select_panel(par_tes_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number) is
+   procedure select_panel(par_tes_code in number, par_sel_type in varchar2, par_pan_type in varchar2, par_pet_multiple in varchar2, par_req_mem_count in number, par_req_res_count in number, par_tes_code_duplicate in number) is
 
       /*-*/
       /* Autonomous transaction
@@ -7406,6 +7634,12 @@ package body         pts_tes_function as
       var_set_sel_count number;
       var_pan_selected boolean;
       var_available boolean;
+      var_ss_frequency int := 28;
+      var_wet_frequency int := 14;
+      var_dry_frequency int := 16;
+      var_snack_frequency int := 23;
+      var_wet_rule_count int := 0;
+      var_dry_rule_count int := 0;
       type rcd_sel_data is record(tab_code varchar2(32 char),
                                   fld_code number,
                                   val_code number);
@@ -7424,12 +7658,68 @@ package body         pts_tes_function as
            from pts_pet_definition t01,
                 pts_hou_definition t02
           where t01.pde_hou_code = t02.hde_hou_code
-            and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
-            and t01.pde_pet_status = 1
-            and (t02.hde_hou_status = 1 or t02.hde_tes_code = par_tes_code)
-            and t01.pde_val_code is null --Pet not on validation
-            and t02.hde_val_code is null --Household not on validation
-          order by dbms_random.value;
+                and t01.pde_pet_code in (select sel_code from table(pts_app.pts_gen_function.get_list_data('*PET',var_sel_group)))
+                and t01.pde_pet_status = 1
+                and (t02.hde_hou_status = 1 or t02.hde_tes_code = par_tes_code)
+                and t01.pde_val_code is null --Pet not on validation
+                and t02.hde_val_code is null --Household not on validation
+                and (
+                  par_tes_code_duplicate is null
+                  or t01.pde_pet_code in (
+                    select  tpa_pet_code
+                    from    pts.pts_tes_panel
+                    where   tpa_tes_code = par_tes_code_duplicate
+                  )
+                )
+          order by 
+                case
+                  when par_tes_code_duplicate is not null and exists ( --If duplicating, preferentially take pets from previous panel
+                    select  1
+                    from    pts.pts_tes_panel p
+                    where   p.tpa_pet_code = t01.pde_pet_code
+                            and tpa_pan_status = par_pan_type
+                            and tpa_tes_code = par_tes_code_duplicate
+                  ) then 0
+                  else 1
+                end,
+                --Preferentially take pets that are suitable only for wet/dry before taking pets that are suitable for both
+                --Where "suitable" is defined as:
+                --  1) Frequency in (1,2) = "3-4 days per week" or "5-7 days per week"
+                --  2) Validation = 1 (suitable)
+                nvl((
+                  select  sum(1)
+                  from    pts.pts_val_type vt
+                          inner join pts.pts_val_pet vp on vt.vty_val_type = vp.vpe_val_type
+                  where   vp.vpe_pet_code = t01.pde_pet_code
+                          and exists (
+                            select  1
+                            from    pts.pts_pet_classification pc
+                            where   pc.pcl_val_code in (1,2) --"3-4 days per week" or "5-7 days per week"
+                                    and pc.pcl_pet_code = t01.pde_pet_code
+                                    and (
+                                      (
+                                        var_wet_rule_count > 0
+                                        and pc.pcl_fld_code in (var_dry_frequency, var_snack_frequency)
+                                      )
+                                      or (
+                                        var_dry_rule_count > 0
+                                        and pc.pcl_fld_code in (var_ss_frequency, var_wet_frequency)
+                                      )
+                                    )
+                          )
+                          and vp.vpe_sta_code = 1 --suitable
+                          and (
+                            (
+                              var_wet_rule_count > 0
+                              and vt.vty_val_type in (1,2) --Dry difference, dry ranking
+                            )
+                            or (
+                              var_dry_rule_count > 0
+                              and vt.vty_val_type in (3,4) --Wet difference, wet ranking
+                            )
+                          )
+                ),0),
+                dbms_random.value;
       rcd_panel csr_panel%rowtype;
 
       cursor csr_classification is
@@ -7520,6 +7810,85 @@ package body         pts_tes_function as
       var_tot_req_res_count := par_req_res_count;
       var_tot_sel_mem_count := 0;
       var_tot_sel_res_count := 0;
+
+      /*-*/
+      /* Determine whether this is a wet or dry test. Both are needed because
+      /* some tests could be neither.
+      /*-*/
+      select    case
+                  when exists (
+                    select  1
+                    from    pts.pts_tes_rule r
+                    where   r.tru_tes_code = par_tes_code
+                            and r.tru_tab_code = '*PET_VAL'
+                            and r.tru_fld_code in (3,4) --Wet
+                            and (
+                              (
+                                r.tru_rul_code = '*SELECT_WHEN_EQUAL'
+                                and exists (
+                                  select  1
+                                  from    pts.pts_tes_value tv
+                                  where   tv.tva_tes_code = r.tru_tes_code
+                                          and tv.tva_tab_code = r.tru_tab_code
+                                          and tv.tva_fld_code = r.tru_fld_code
+                                          and tv.tva_val_code in (1) --Suitable
+                                )
+                              )
+                              or (
+                                r.tru_rul_code = '*SELECT_WHEN_NOT_EQUAL'
+                                and exists (
+                                  select  1
+                                  from    pts.pts_tes_value tv
+                                  where   tv.tva_tes_code = r.tru_tes_code
+                                          and tv.tva_tab_code = r.tru_tab_code
+                                          and tv.tva_fld_code = r.tru_fld_code
+                                          and tv.tva_val_code in (2,3,4) --Not suitable
+                                )
+                              )
+                            )
+                  ) then 1
+                  else 0
+                end      
+      into      var_wet_rule_count
+      from      dual;
+      
+      select    case
+                  when exists (
+                    select  1
+                    from    pts.pts_tes_rule r
+                    where   r.tru_tes_code = par_tes_code
+                            and r.tru_tab_code = '*PET_VAL'
+                            and r.tru_fld_code in (1,2) --Dry
+                            and (
+                              (
+                                r.tru_rul_code = '*SELECT_WHEN_EQUAL'
+                                and exists (
+                                  select  1
+                                  from    pts.pts_tes_value tv
+                                  where   tv.tva_tes_code = r.tru_tes_code
+                                          and tv.tva_tab_code = r.tru_tab_code
+                                          and tv.tva_fld_code = r.tru_fld_code
+                                          and tv.tva_val_code in (1) --Suitable
+                                )
+                              )
+                              or (
+                                r.tru_rul_code = '*SELECT_WHEN_NOT_EQUAL'
+                                and exists (
+                                  select  1
+                                  from    pts.pts_tes_value tv
+                                  where   tv.tva_tes_code = r.tru_tes_code
+                                          and tv.tva_tab_code = r.tru_tab_code
+                                          and tv.tva_fld_code = r.tru_fld_code
+                                          and tv.tva_val_code in (2,3,4) --Not suitable
+                                )
+                              )
+                            )
+                  ) then 1
+                  else 0
+                end      
+      into      var_dry_rule_count
+      from      dual;
+      
 
       /*-*/
       /* Process the test selection groups for panel inclusion
@@ -7987,6 +8356,7 @@ package body         pts_tes_function as
    /* End routine */
    /*-------------*/
    end select_panel;
+   
 
 end pts_tes_function;
 

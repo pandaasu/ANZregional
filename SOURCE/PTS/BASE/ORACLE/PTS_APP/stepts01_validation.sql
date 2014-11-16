@@ -19,6 +19,7 @@ PACKAGE         STEPTS01_VALIDATION as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2011/11   Peter Tylee    Created
+    2014/08   Peter Tylee    Modified comments for updated market code length
 
    *******************************************************************************/
 
@@ -99,7 +100,7 @@ PACKAGE BODY         STEPTS01_VALIDATION as
       var_day_code number;
       var_dsp_seqn number;
       var_res_value number;
-      var_mkt_code varchar2(20); --Length should never be more than 1, but we want it causing a validation message, not an exception
+      var_mkt_code varchar2(20); --Length should never be more than 3, but we want it causing a validation message, not an exception
       
       cursor csr_question is
          select t01.*

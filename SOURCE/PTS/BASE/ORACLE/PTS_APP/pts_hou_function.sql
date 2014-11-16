@@ -21,7 +21,8 @@ package         pts_hou_function as
     -------   ------         -----------
     2009/04   Steve Gregan   Created
     2011/11   Peter Tylee    Updated to support validation tests
-
+    2014/08   Peter Tylee    Added feeding frequencies and suitability to report
+    2014/08   Peter Tylee    Updated for household creation date
    *******************************************************************************/
 
    /*-*/
@@ -391,7 +392,8 @@ package body         pts_hou_function as
          var_output := var_output||' CONSNAM="'||pts_to_xml(rcd_retrieve.hde_con_surname)||'"';
          var_output := var_output||' CONFNAM="'||pts_to_xml(rcd_retrieve.hde_con_fullname)||'"';
          var_output := var_output||' CONBYER="'||to_char(rcd_retrieve.hde_con_birth_year)||'"';
-         var_output := var_output||' HOUNOTE="'||pts_to_xml(rcd_retrieve.hde_notes)||'"/>';
+         var_output := var_output||' HOUNOTE="'||pts_to_xml(rcd_retrieve.hde_notes)||'"';
+         var_output := var_output||' CRTDATE="'||to_char(rcd_retrieve.hde_crt_date,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CPYHOU' then
          var_output := '<HOUSEHOLD HOUCODE="*NEW"';
@@ -409,7 +411,8 @@ package body         pts_hou_function as
          var_output := var_output||' CONSNAM="'||pts_to_xml(rcd_retrieve.hde_con_surname)||'"';
          var_output := var_output||' CONFNAM="'||pts_to_xml(rcd_retrieve.hde_con_fullname)||'"';
          var_output := var_output||' CONBYER="'||to_char(rcd_retrieve.hde_con_birth_year)||'"';
-         var_output := var_output||' HOUNOTE="'||pts_to_xml(rcd_retrieve.hde_notes)||'"/>';
+         var_output := var_output||' HOUNOTE="'||pts_to_xml(rcd_retrieve.hde_notes)||'"';
+         var_output := var_output||' CRTDATE="'||to_char(sysdate,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       elsif var_action = '*CRTHOU' then
          var_output := '<HOUSEHOLD HOUCODE="*NEW"';
@@ -427,7 +430,8 @@ package body         pts_hou_function as
          var_output := var_output||' CONSNAM=""';
          var_output := var_output||' CONFNAM=""';
          var_output := var_output||' CONBYER=""';
-         var_output := var_output||' HOUNOTE=""/>';
+         var_output := var_output||' HOUNOTE=""';
+         var_output := var_output||' CRTDATE="'||to_char(sysdate,'DD/MM/YYYY')||'"/>';
          pipe row(pts_xml_object(var_output));
       end if;
 
@@ -606,6 +610,7 @@ package body         pts_hou_function as
       rcd_pts_hou_definition.hde_con_fullname := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@CONFNAM'));
       rcd_pts_hou_definition.hde_con_birth_year := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@CONBYER'));
       rcd_pts_hou_definition.hde_notes := pts_from_xml(xslProcessor.valueOf(obj_pts_request,'@HOUNOTE'));
+      rcd_pts_hou_definition.hde_crt_date := sysdate;
       if rcd_pts_hou_definition.hde_hou_code is null and not(xslProcessor.valueOf(obj_pts_request,'@HOUCODE') = '*NEW') then
          pts_gen_function.add_mesg_data('Household code ('||xslProcessor.valueOf(obj_pts_request,'@HOUCODE')||') must be a number');
       end if;
@@ -1116,6 +1121,10 @@ package body         pts_hou_function as
       var_household boolean;
       var_pet boolean;
       var_output varchar2(4000 char);
+      var_ss_frequency int := 28;
+      var_wet_frequency int := 14;
+      var_dry_frequency int := 16;
+      var_snack_frequency int := 23;
 
       /*-*/
       /* Local cursors
@@ -1275,7 +1284,52 @@ package body         pts_hou_function as
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;">'||rcd_pet.status_text||'</td>');
             pipe row('<td align=left colspan=1 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;BACKGROUND-COLOR:#FFFFFF;COLOR:#000000;"></td>');
             pipe row('</tr>');
-
+            
+            for rcd_frequency in (
+              select    f.sfi_fld_text,
+                        v.sva_val_text
+              from      pts.pts_pet_classification p
+                        inner join pts.pts_sys_field f on (
+                          p.pcl_fld_code = f.sfi_fld_code
+                          and p.pcl_tab_code = f.sfi_tab_code
+                        )
+                        inner join pts.pts_sys_value v on (
+                          p.pcl_val_code = v.sva_val_code
+                          and v.sva_fld_code = f.sfi_fld_code
+                          and v.sva_tab_code = f.sfi_tab_code
+                        )
+              where     p.pcl_pet_code = rcd_pet.pde_pet_code
+                        and p.pcl_fld_code in (
+                          var_ss_frequency,
+                          var_wet_frequency,
+                          var_dry_frequency,
+                          var_snack_frequency
+                        )
+              order by  f.sfi_fld_dsp_seqn asc
+            ) loop
+              pipe row('<tr>');
+              pipe row('<td colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;"></td>');
+              pipe row('<td colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;"><b>'||rcd_frequency.sfi_fld_text||'</b></td>');
+              pipe row('<td colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;">'||rcd_frequency.sva_val_text||'</td>');
+              pipe row('</tr>');
+            end loop;
+            
+            for val_status in (
+              select    t.vty_typ_text,
+                        s.vst_sta_text
+              from      pts.pts_val_pet p
+                        inner join pts.pts_val_status s on p.vpe_sta_code = s.vst_sta_code
+                        inner join pts.pts_val_type t on p.vpe_val_type = t.vty_val_type
+              where     p.vpe_pet_code = rcd_pet.pde_pet_code
+              order by  t.vty_typ_seq asc      
+            ) loop
+              pipe row('<tr>');
+              pipe row('<td colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;"></td>');
+              pipe row('<td colspan=3 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;"><b>'||val_status.vty_typ_text||'</b></td>');
+              pipe row('<td colspan=2 style="FONT-FAMILY:Arial;FONT-SIZE:8pt;">'||val_status.vst_sta_text||'</td>');
+              pipe row('</tr>');
+            end loop;
+            
          end loop;
          close csr_pet;
 

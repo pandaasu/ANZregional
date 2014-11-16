@@ -21,6 +21,7 @@ package         pts_pet_function as
     -------   ------         -----------
     2009/04   Steve Gregan   Created
     2011/11   Peter Tylee    Updated to support validation tests
+    2014/08   Peter Tylee    Added pet reporting
 
    *******************************************************************************/
 
@@ -34,6 +35,8 @@ package         pts_pet_function as
    procedure update_data(par_user in varchar2);
    function retrieve_restore return pts_xml_type pipelined;
    procedure update_restore(par_user in varchar2);
+   function retrieve_report_fields return pts_xml_type pipelined;
+   function report_pet(par_geo_zone in number) return pts_xls_type pipelined;
 
 end pts_pet_function;
  
@@ -1454,6 +1457,386 @@ package body         pts_pet_function as
    /* End routine */
    /*-------------*/
    end update_restore;
+   
+   
+   /**************************************************************/
+   /* This procedure performs the retrieve report fields routine */
+   /**************************************************************/
+   function retrieve_report_fields return pts_xml_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      obj_xml_parser xmlParser.parser;
+      obj_xml_document xmlDom.domDocument;
+      obj_pts_request xmlDom.domNode;
+      var_action varchar2(32);
+      var_found boolean;
+      var_geo_zone number;
+      var_output varchar2(2000 char);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_geo_zone t01
+          where t01.gzo_geo_type = 40
+            and t01.gzo_geo_zone = var_geo_zone;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_field is
+         select t01.sfi_tab_code,
+                t01.sfi_fld_code,
+                t01.sfi_fld_text
+           from pts_sys_field t01
+          where (
+                  (
+                    t01.sfi_tab_code = '*PET_DEF'
+                    and t01.sfi_fld_code = 6 --Pet age
+                  )
+                  or (
+                    t01.sfi_tab_code = '*PET_CLA'
+                    and t01.sfi_fld_sel_type in ('*OPT_SINGLE_LIST','*MAN_SINGLE_LIST')
+                  )
+                )
+                and t01.sfi_fld_status = '1'
+          order by t01.sfi_tab_code desc,
+                   t01.sfi_fld_dsp_seqn asc,
+                   t01.sfi_fld_text asc;
+      rcd_field csr_field%rowtype;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*------------------------------------------------*/
+      /* NOTE - This procedure must not commit/rollback */
+      /*------------------------------------------------*/
+
+      /*-*/
+      /* Clear the message data
+      /*-*/
+      pts_gen_function.clear_mesg_data;
+
+      /*-*/
+      /* Parse the XML input
+      /*-*/
+      obj_xml_parser := xmlParser.newParser();
+      xmlParser.parseClob(obj_xml_parser,lics_form.get_clob('PTS_STREAM'));
+      obj_xml_document := xmlParser.getDocument(obj_xml_parser);
+      xmlParser.freeParser(obj_xml_parser);
+      obj_pts_request := xslProcessor.selectSingleNode(xmlDom.makeNode(obj_xml_document),'/PTS_REQUEST');
+      var_action := upper(xslProcessor.valueOf(obj_pts_request,'@ACTION'));
+      if var_action != '*GETFLD' then
+         pts_gen_function.add_mesg_data('Invalid request action');
+         return;
+      end if;
+      var_geo_zone := pts_to_number(xslProcessor.valueOf(obj_pts_request,'@GEOCDE'));
+      if var_geo_zone is null then
+         pts_gen_function.add_mesg_data('Area code ('||xslProcessor.valueOf(obj_pts_request,'@GEOCDE')||') must be a number');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+      xmlDom.freeDocument(obj_xml_document);
+
+      /*-*/
+      /* Retrieve the test
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         pts_gen_function.add_mesg_data('Area ('||to_char(var_geo_zone)||') does not exist');
+      end if;
+      if pts_gen_function.get_mesg_count != 0 then
+         return;
+      end if;
+
+      /*-*/
+      /* Pipe the XML start
+      /*-*/
+      pipe row(pts_xml_object('<?xml version="1.0" encoding="UTF-8"?><PTS_RESPONSE>'));
+
+      /*-*/
+      /* Pipe the test xml
+      /*-*/
+      pipe row(pts_xml_object('<AREA TEXT="('||to_char(var_geo_zone)||') '||pts_to_xml(rcd_retrieve.gzo_zon_text)||'"/>'));
+
+      /*-*/
+      /* Pipe the pet classification XML
+      /*-*/
+      open csr_field;
+      loop
+         fetch csr_field into rcd_field;
+         if csr_field%notfound then
+         exit;
+         end if;
+         pipe row(pts_xml_object('<FIELD TABCDE="'||rcd_field.sfi_tab_code||'" FLDCDE="'||to_char(rcd_field.sfi_fld_code)||'" FLDTXT="'||pts_to_xml(rcd_field.sfi_fld_text)||'"/>'));
+      end loop;
+      close csr_field;
+
+      /*-*/
+      /* Pipe the XML end
+      /*-*/
+      pipe row(pts_xml_object('</PTS_RESPONSE>'));
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         pts_gen_function.add_mesg_data('FATAL ERROR - PTS_PET_FUNCTION - RETRIEVE_REPORT_FIELDS - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end retrieve_report_fields;
+
+  
+  /********************************************************/
+   /* This procedure performs the report pet routine      */
+   /*******************************************************/
+   function report_pet(par_geo_zone in number) return pts_xls_type pipelined is
+
+      /*-*/
+      /* Local definitions
+      /*-*/
+      var_geo_zone number;
+      var_found boolean;
+      var_household boolean;
+      var_pet boolean;
+      var_output varchar2(4000 char);
+      var_query varchar2(32767);
+
+      /*-*/
+      /* Local cursors
+      /*-*/
+      cursor csr_retrieve is
+         select t01.*
+           from pts_geo_zone t01
+          where t01.gzo_geo_type = 40
+            and t01.gzo_geo_zone = var_geo_zone;
+      rcd_retrieve csr_retrieve%rowtype;
+
+      cursor csr_pet is
+        select  distinct
+                t01.*,
+                t04.hde_hou_code,
+                decode(t01.pde_pet_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as pet_status_text,
+                decode(t04.hde_hou_status,1,'Available',2,'On Test',3,'Suspended',5,'Suspended On Test') as household_status_text,
+                decode(t02.pty_pet_type,null,'*UNKNOWN',t02.pty_typ_text) as type_text,
+                decode(t03.pcl_val_code,null,'*UNKNOWN',t03.size_text) as size_text,
+                nvl(t05.gzo_zon_text,'*UNKNOWN') as gzo_zon_text
+        from    pts_pet_definition t01
+                left outer join pts_pet_type t02 on t01.pde_pet_type = t02.pty_pet_type
+                left outer join (
+                  select  t01.pcl_pet_code,
+                          t01.pcl_val_code,
+                          nvl(t02.sva_val_text,'*UNKNOWN') as size_text
+                  from    pts_pet_classification t01
+                          left outer join (
+                            select  t01.sva_val_code,
+                                    t01.sva_val_text
+                            from    pts_sys_value t01
+                            where   t01.sva_tab_code = '*PET_CLA'
+                                    and t01.sva_fld_code = 8
+                          ) t02 on t01.pcl_val_code = t02.sva_val_code
+                  where   t01.pcl_tab_code = '*PET_CLA'
+                          and t01.pcl_fld_code = 8
+                ) t03 on t01.pde_pet_code = t03.pcl_pet_code
+                inner join pts.pts_hou_definition t04 on t01.pde_hou_code = t04.hde_hou_code
+                left outer join pts_geo_zone t05 on t04.hde_geo_zone = t05.gzo_geo_zone
+        where   t04.hde_geo_zone = par_geo_zone
+                and t01.pde_pet_status in (1,2,3,5)
+        order by t01.pde_pet_code asc;
+      rcd_pet csr_pet%rowtype;
+      
+      cursor csr_classification is
+         select t01.sfi_tab_code,
+                t01.sfi_fld_code,
+                t01.sfi_fld_text,
+                t01.sfi_fld_text as val_text,
+                t01.sfi_fld_sel_type,
+                t01.sfi_fld_rul_sql,
+                t01.sfi_fld_sel_sql
+           from pts_sys_field t01
+          where (t01.sfi_tab_code, t01.sfi_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
+          order by t01.sfi_fld_text asc;
+      
+      cursor csr_pet_classification is
+         select t01.pcl_tab_code,
+                t01.pcl_fld_code,
+                 nvl(t02.sva_val_text,t01.pcl_val_text) as val_text
+           from pts_pet_classification t01,
+                pts_sys_value t02
+          where t01.pcl_tab_code = t02.sva_tab_code(+)
+            and t01.pcl_fld_code = t02.sva_fld_code(+)
+            and t01.pcl_val_code = t02.sva_val_code(+)
+            and t01.pcl_pet_code = rcd_pet.pde_pet_code
+            and (t01.pcl_tab_code,t01.pcl_fld_code) in (select wtf_tab_code, wtf_fld_code from pts_wor_tab_field)
+            and t01.pcl_tab_code = '*PET_CLA'
+          order by t01.pcl_tab_code asc,
+                   t01.pcl_fld_code asc;
+      rcd_pet_classification csr_pet_classification%rowtype;
+      
+      /*-*/
+      /* Local arrays
+      /*-*/
+      type typ_cary is table of csr_classification%rowtype index by binary_integer;
+      tbl_cary typ_cary;
+
+   /*-------------*/
+   /* Begin block */
+   /*-------------*/
+   begin
+
+      /*-*/
+      /* Set the parameters
+      /*-*/
+      var_geo_zone := par_geo_zone;
+
+      /*-*/
+      /* Retrieve the area
+      /*-*/
+      var_found := false;
+      open csr_retrieve;
+      fetch csr_retrieve into rcd_retrieve;
+      if csr_retrieve%found then
+         var_found := true;
+      end if;
+      close csr_retrieve;
+      if var_found = false then
+         raise_application_error(-20000, 'Area ('||to_char(var_geo_zone)||') does not exist');
+      end if;
+
+      /*-*/
+      /* Retrieve and load the classification array
+      /*-*/
+      tbl_cary.delete;
+      open csr_classification;
+      fetch csr_classification bulk collect into tbl_cary;
+      close csr_classification;
+
+      /*-*/
+      /* Start the report
+      /*-*/
+      var_output := '"'||'Pet'||'"';
+      var_output := var_output||',"'||'Household'||'"';
+      var_output := var_output||',"'||'Area'||'"';
+      var_output := var_output||',"'||'Pet Type'||'"';
+      var_output := var_output||',"'||'Pet Size'||'"';
+      var_output := var_output||',"'||'Pet Status'||'"';
+      var_output := var_output||',"'||'Household Status'||'"';
+      for idx in 1..tbl_cary.count loop
+         var_output := var_output||',"'||tbl_cary(idx).sfi_fld_text||'"';
+      end loop;
+      pipe row(var_output);
+      
+      /*-*/
+      /* Retrieve the panel
+      /*-*/
+      open csr_pet;
+      loop
+         fetch csr_pet into rcd_pet;
+         if csr_pet%notfound then
+            exit;
+         end if;
+
+         /*-*/
+         /* Set the classification array text
+         /*-*/
+         for idx in 1..tbl_cary.count loop
+            tbl_cary(idx).val_text := null;
+            
+            -- If it's a pet logic column get the result
+            if tbl_cary(idx).sfi_fld_sel_type = '*LOGIC' then
+              var_query := 'select ';
+              var_query := var_query || tbl_cary(idx).sfi_fld_sel_sql;
+              var_query := var_query || 'from pts.pts_pet_definition p1 inner join pts.pts_hou_definition h1 on p1.pde_hou_code = h1.hde_hou_code ';
+              var_query := var_query || 'where p1.pde_pet_code = ' || to_char(rcd_pet.pde_pet_code);
+              
+              execute immediate var_query
+              into tbl_cary(idx).val_text;
+            end if;
+            
+         end loop;
+         open csr_pet_classification;
+         loop
+            fetch csr_pet_classification into rcd_pet_classification;
+            if csr_pet_classification%notfound then
+               exit;
+            end if;
+            for idx in 1..tbl_cary.count loop
+               if (tbl_cary(idx).sfi_tab_code = rcd_pet_classification.pcl_tab_code and
+                   tbl_cary(idx).sfi_fld_code = rcd_pet_classification.pcl_fld_code) then
+                  tbl_cary(idx).val_text := rcd_pet_classification.val_text;
+                  exit;
+               end if;
+            end loop;
+         end loop;
+         close csr_pet_classification;
+
+
+         var_output := '"'||to_char(rcd_pet.pde_pet_code)||'"';
+         var_output := var_output||',"'||to_char(rcd_pet.hde_hou_code)||'"';
+         var_output := var_output||',"'||replace(rcd_pet.gzo_zon_text,'"','""')||'"';
+         var_output := var_output||',"'||replace(rcd_pet.type_text,'"','""')||'"';
+         var_output := var_output||',"'||replace(rcd_pet.size_text,'"','""')||'"';
+         var_output := var_output||',"'||replace(rcd_pet.pet_status_text,'"','""')||'"';
+         var_output := var_output||',"'||replace(rcd_pet.household_status_text,'"','""')||'"';
+         
+         for idy in 1..tbl_cary.count loop
+            var_output := var_output||',"'||replace(tbl_cary(idy).val_text,'"','""')||'"';
+         end loop;
+         pipe row(var_output);
+
+      end loop;
+      close csr_pet;
+
+      /*-*/
+      /* Return
+      /*-*/
+      return;
+
+   /*-------------------*/
+   /* Exception handler */
+   /*-------------------*/
+   exception
+
+      /**/
+      /* Exception trap
+      /**/
+      when others then
+
+         /*-*/
+         /* Raise an exception to the calling application
+         /*-*/
+         raise_application_error(-20000, 'FATAL ERROR - PTS_PET_FUNCTION - REPORT_PET - ' || substr(SQLERRM, 1, 1536));
+
+   /*-------------*/
+   /* End routine */
+   /*-------------*/
+   end report_pet;
 
 end pts_pet_function;
 
