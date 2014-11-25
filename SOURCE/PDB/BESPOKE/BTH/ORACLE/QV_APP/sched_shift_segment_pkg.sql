@@ -372,7 +372,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
            and t01.schedule_id = (select max(schedule_id) from infor.ash_schedule_versions)
            and t02.batch_type = 'PROCESS'
            and t04.mars_week > (select distinct mars_week from mm.mars_date where calendar_date = trunc(sysdate))                
-           and (t05.resource_code is not null or t02.matl_code = '1034716' or t02.resource_code = 'L7 Re Pack Pack')
+           and (t05.resource_code is not null or t02.resource_code = 'L7 Re Pack Pack' or t02.matl_code in (select matl_code from qv.bth_ats_mat_inclusion))
     )
     loop
       pipe row(l_entity);
