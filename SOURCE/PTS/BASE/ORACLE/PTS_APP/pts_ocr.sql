@@ -19,10 +19,13 @@ package PTS_OCR as
     YYYY/MM   Author         Description
     -------   ------         -----------
     2011/11   Peter Tylee    Created
+    2014/11   Peter Tylee    Updated to support importing household and pet survey data
 
    *******************************************************************************/
 
   procedure data_import;
+  procedure data_import_hou;
+  procedure data_import_pet;
   procedure error_report;
  
 end PTS_OCR;
@@ -43,7 +46,7 @@ package body         PTS_OCR as
 
 /********************************************************************************
    NAME:      data_import
-   PURPOSE:   Validates uploaded CSV data and imports to response table
+   PURPOSE:   Validates uploaded CSV test data and imports to response table
    
    REVISIONS:
    Ver     Date        Author           Description
@@ -345,6 +348,200 @@ begin
       smtp_mailer.mail(v_sender_email, v_error_email, 'PTS CSV Validation Exception', 'Exception in PTS_OCR.VALIDATE_CSV'||chr(13)||SQLERRM);
 
 end data_import;
+
+
+/********************************************************************************
+   NAME:      data_import_hou
+   PURPOSE:   Imports household CSV data
+********************************************************************************/
+procedure data_import_hou is
+begin
+  
+  -- Merge into the hou_definition table
+  merge into pts.pts_hou_definition a
+  using (
+    select  hou_code,
+            trim(title ||' '|| first_name ||' '|| last_name) as full_name,
+            last_name,
+            trim(street_number ||' '|| street) as street,
+            city,
+            postcode,
+            tel_areacode,
+            tel_number,
+            geo_zone
+    from    pts.pts_inbound_hou
+  ) b on (
+    a.hde_hou_code = b.hou_code
+  )
+  when matched then
+    update
+    set     a.hde_upd_user = user,
+            a.hde_upd_date = sysdate,
+            a.hde_geo_type = 40,
+            a.hde_geo_zone = b.geo_zone,
+            a.hde_loc_street = b.street,
+            a.hde_loc_town = b.city,
+            a.hde_loc_postcode = b.postcode,
+            a.hde_tel_areacode = b.tel_areacode,
+            a.hde_tel_number = b.tel_number,
+            a.hde_con_surname = b.last_name,
+            a.hde_con_fullname = b.full_name
+  when not matched then
+    insert
+    (
+      hde_hou_code,
+      hde_hou_status,
+      hde_upd_user,
+      hde_upd_date,
+      hde_geo_type,
+      hde_geo_zone,
+      hde_dat_joined,
+      hde_loc_street,
+      hde_loc_town,
+      hde_loc_postcode,
+      hde_tel_areacode,
+      hde_tel_number,
+      hde_con_surname,
+      hde_con_fullname,
+      hde_crt_date
+    )
+    values
+    (
+      b.hou_code,
+      1, --Available
+      user,
+      sysdate,
+      40, --Area
+      b.geo_zone,
+      sysdate,
+      b.street,
+      b.city,
+      b.postcode,
+      b.tel_areacode,
+      b.tel_number,
+      b.last_name,
+      b.full_name,
+      sysdate
+    );
+    
+    
+  -- Remove old classification data for the households and tab/field codes
+  -- that are being imported
+  delete
+  from    pts_hou_classification
+  where   hcl_hou_code in (
+            select  distinct
+                    hou_code
+            from    pts.pts_inbound_hou_cla
+          )
+          and (hcl_tab_code, hcl_fld_code) in (
+            select  distinct
+                    tab_code,
+                    fld_code
+            from    pts.pts_inbound_config
+            where   config_type = '*HOU'
+          );
+  
+  -- Insert new values
+  insert into pts_hou_classification (
+    hcl_hou_code,
+    hcl_tab_code,
+    hcl_fld_code,
+    hcl_val_code
+  )
+  select  hou_code,
+          tab_code,
+          fld_code,
+          val_code
+  from    pts.pts_inbound_hou_cla;
+
+end data_import_hou;
+
+
+/********************************************************************************
+   NAME:      data_import_pet
+   PURPOSE:   Imports pet CSV data
+********************************************************************************/
+procedure data_import_pet is
+begin
+  
+  -- Merge into the pet_definition table
+  merge into pts.pts_pet_definition a
+  using (
+    select  hou_code,
+            pet_code,
+            pet_name,
+            pet_type,
+            birth_year
+    from    pts.pts_inbound_pet
+  ) b on (
+    a.pde_pet_code = b.pet_code
+  )
+  when matched then
+    update
+    set     a.pde_upd_user = user,
+            a.pde_upd_date = sysdate,
+            a.pde_pet_name = b.pet_name,
+            a.pde_pet_type = b.pet_type,
+            a.pde_birth_year = b.birth_year
+  when not matched then
+    insert
+    (
+      pde_hou_code,
+      pde_pet_code,
+      pde_pet_status,
+      pde_upd_user,
+      pde_upd_date,
+      pde_pet_name,
+      pde_pet_type,
+      pde_birth_year,
+      pde_crt_date
+    )
+    values
+    (
+      b.hou_code,
+      b.pet_code,
+      1, --Available
+      user,
+      sysdate,
+      b.pet_name,
+      b.pet_type,
+      b.birth_year,
+      sysdate
+    );
+    
+  -- Remove old classification data for the pets and tab/field codes
+  -- that are being imported
+  delete
+  from    pts_pet_classification
+  where   pcl_pet_code in (
+            select  distinct
+                    pet_code
+            from    pts.pts_inbound_pet_cla
+          )
+          and (pcl_tab_code, pcl_fld_code) in (
+            select  distinct
+                    tab_code,
+                    fld_code
+            from    pts.pts_inbound_config
+            where   config_type = '*PET'
+          );
+  
+  -- Insert new values
+  insert into pts_pet_classification (
+    pcl_pet_code,
+    pcl_tab_code,
+    pcl_fld_code,
+    pcl_val_code
+  )
+  select  pet_code,
+          tab_code,
+          fld_code,
+          val_code
+  from    pts.pts_inbound_pet_cla;
+
+end data_import_pet;
+
 
 /********************************************************************************
    NAME:      error_report
