@@ -1,4 +1,4 @@
-CREATE OR REPLACE package        dw_alignment as
+CREATE OR REPLACE package DW_APP.dw_alignment as
 
    /******************************************************************************/
    /* Package Definition                                                        */
@@ -22,7 +22,8 @@ CREATE OR REPLACE package        dw_alignment as
     2011/03   Steve Gregan   Added invoice trace lookup for closed documents
     2013/04   Trevor Keon    Fixed issue which caused orders to show as outstanding 
     2013/12   Upul Dangalle  Fixed issue which caused orders to show as outstanding
-    2014/03   Upul Dangalle  Additional logic changes made to fix the outstanding orders
+    2014/03   Upul Dangalle  Additional logic changes made to fix the outstanding orders  
+    2014/11   Trevor Keon    Updated order_base_status to ignore trace_status for NZ 
     *******************************************************************************/
 
    /*-*/
@@ -36,8 +37,7 @@ CREATE OR REPLACE package        dw_alignment as
 end dw_alignment;
 /
 
-
-CREATE OR REPLACE package body        dw_alignment as
+CREATE OR REPLACE package body DW_APP.dw_alignment as
 
    /*-*/
    /* Private exceptions
@@ -381,7 +381,7 @@ CREATE OR REPLACE package body        dw_alignment as
      cursor csr_invoice_trace is
           select  distinct t01.order_doc_num,t01.order_doc_line_num,t01.billed_gsv
            from sap_inv_trace t01
-          where t01.trace_status = '*ACTIVE'
+          where (par_company_code = '149' or (par_company_code <> '149' and t01.trace_status = '*ACTIVE')) -- Updated 12/11/2014 - Ignore Trace Status for NZ 
             and t01.order_doc_num      = rcd_order_base.order_doc_num
             and t01.order_doc_line_num = rcd_order_base.order_doc_line_num
             and t01.billed_gsv = 0;
@@ -519,48 +519,45 @@ CREATE OR REPLACE package body        dw_alignment as
          end loop;
          close csr_sales_base;
 
-         /*------------------------*/
-         /* ORDER_BASE Outstanding */
-         /*------------------------*/
+     /*------------------------*/
+     /* ORDER_BASE Outstanding */
+     /*------------------------*/
 
-         /*-*/
-         /* Set the order line status
-         /*-*/
-         
-       open csr_order_usage;
-      
-       fetch csr_order_usage into rcd_order_usage_gsv_falg;  
-       if  csr_order_usage%found then  --- NON GSV record found
-           rcd_order_base.order_line_status := '*CLOSED'; --- setting the order as CLOSED for NON GSV
-       
-       elsif (var_delivered or var_invoiced ) and rcd_order_base.order_line_rejectn_code is null  then
-             rcd_order_base.order_line_status := '*CLOSED';
-      
-       elsif rcd_order_base.order_line_rejectn_code is not null then 
+     /*-*/
+     /* Set the order line status
+     /*-*/         
+         open csr_order_usage;      
+         fetch csr_order_usage into rcd_order_usage_gsv_falg; 
+        
+         if csr_order_usage%found then  --- NON GSV record found
+            rcd_order_base.order_line_status := '*CLOSED'; --- setting the order as CLOSED for NON GSV           
+         elsif (var_delivered or var_invoiced ) and rcd_order_base.order_line_rejectn_code is null then
+            rcd_order_base.order_line_status := '*CLOSED';          
+         elsif rcd_order_base.order_line_rejectn_code is not null then 
             open csr_sap_doc_status;
             fetch csr_sap_doc_status into rcd_sap_doc_status;
-            if  csr_sap_doc_status%found then
-                rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
-            end if;  
+            if csr_sap_doc_status%found then
+               rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
+            end if; 
+             
             close csr_sap_doc_status;
-       else
-       open csr_invoice_trace; 
-       fetch csr_invoice_trace  into rcd_invoice_trace;
-       if  csr_invoice_trace%found then   ---- Checking for zero qty 
-           open csr_sap_doc_status;
-           fetch csr_sap_doc_status into rcd_sap_doc_status;
-           if  csr_sap_doc_status%found then
-                rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
-           end if;  
-           close csr_sap_doc_status;
-       end if;
-       
-       close csr_invoice_trace; 
-       
-       end if;
-       
+         else
+            open csr_invoice_trace; 
+            fetch csr_invoice_trace into rcd_invoice_trace;
+            if csr_invoice_trace%found then   ---- Checking for zero qty 
+               open csr_sap_doc_status;
+               fetch csr_sap_doc_status into rcd_sap_doc_status;
+               if csr_sap_doc_status%found then
+                   rcd_order_base.order_line_status := rcd_sap_doc_status.doc_status;
+               end if;  
+               
+               close csr_sap_doc_status;
+            end if;
+            
+            close csr_invoice_trace;       
+         end if;       
               
-       close csr_order_usage;
+         close csr_order_usage;
          /*-*/
          /* Calculate the outstanding values when required
          /* 1. Closed order lines have no outstanding values
