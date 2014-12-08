@@ -172,8 +172,8 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             matl_code,
             resource_code,
             resource_group_code,
-            resource_code as base_resource_code,
-            resource_group_code as base_resource_group_code,
+            base_resource_code,
+            base_resource_group_code,
             quantity as total_quantity,
             case
               when start_inflow >= end_outflow or start_datime >= end_datime
