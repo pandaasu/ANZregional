@@ -266,10 +266,11 @@ PACKAGE BODY         STEPTS04_LOADER as
    /**************************************************/
    procedure process_record(par_record in varchar2) is
 
-    var_hou_code integer;
-    var_pet_code integer;
-    var_pet_type integer;
-    var_last_name varchar2(120 char);
+    var_hou_code      integer;
+    var_pet_code      integer;
+    var_pet_type      integer;
+    var_last_name     varchar2(120 char);
+    var_is_new        integer := 0;
 
    /*-------------*/
    /* Begin block */
@@ -314,6 +315,10 @@ PACKAGE BODY         STEPTS04_LOADER as
       if var_pet_code is null then
         select  pts_pet_sequence.nextval
         into    var_pet_code
+        from    dual;
+        
+        select  1
+        into    var_is_new
         from    dual;
       end if;
       
@@ -399,6 +404,23 @@ PACKAGE BODY         STEPTS04_LOADER as
                 and b.val_code <> -1;
         
       end loop;
+      
+      -- And a default classification for new households
+      if var_is_new = 1 then
+        insert into pts.pts_inbound_pet_cla (
+          pet_code,
+          tab_code,
+          fld_code,
+          val_code
+        )
+        values
+        (
+          var_pet_code,
+          '*PET_CLA',
+          26, --Pet environment
+          1 --Household
+        );
+      end if;
         
       /*-*/
       /* Retrieve exceptions raised
