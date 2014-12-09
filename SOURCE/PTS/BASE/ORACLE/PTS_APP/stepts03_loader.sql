@@ -273,6 +273,7 @@ PACKAGE BODY         STEPTS03_LOADER as
     var_hou_code      integer;
     var_tel_areacode  varchar2(32 char);
     var_tel_number    varchar2(32 char);
+    var_is_new        integer := 0;
 
    /*-------------*/
    /* Begin block */
@@ -305,6 +306,10 @@ PACKAGE BODY         STEPTS03_LOADER as
       if var_hou_code is null then
         select  pts_hou_sequence.nextval
         into    var_hou_code
+        from    dual;
+        
+        select  1
+        into    var_is_new
         from    dual;
       end if;
       
@@ -432,7 +437,24 @@ PACKAGE BODY         STEPTS03_LOADER as
                 and b.val_code <> -1;
         
       end loop;
-        
+      
+      -- And a default classification for new households
+      if var_is_new = 1 then
+        insert into pts.pts_inbound_hou_cla (
+          hou_code,
+          tab_code,
+          fld_code,
+          val_code
+        )
+        values
+        (
+          var_hou_code,
+          '*HOU_CLA',
+          9, --Household urbanisation
+          2 --City suburbs
+        );
+      end if;
+      
       /*-*/
       /* Retrieve exceptions raised
       /*-*/
@@ -446,7 +468,6 @@ PACKAGE BODY         STEPTS03_LOADER as
    end process_record;
 
 end STEPTS03_LOADER;
-
 /
 
 /**************************/
