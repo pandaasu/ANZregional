@@ -121,8 +121,8 @@ PACKAGE BODY         STEPTS04_VALIDATION as
      
       var_last_name := trim(var_tokens(1));
       var_hou_code := pts_to_number(var_tokens(2));
-      var_pet_code := pts_to_number(var_tokens(3));
-      var_pet_type := trim(var_tokens(4));
+      var_pet_type := trim(var_tokens(3));
+      var_pet_code := pts_to_number(var_tokens(4));
       var_pet_name := trim(var_tokens(5));
       var_birth_year := pts_to_number(var_tokens(6));
      

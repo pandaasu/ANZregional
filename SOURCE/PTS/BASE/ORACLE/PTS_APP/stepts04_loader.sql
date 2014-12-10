@@ -80,8 +80,8 @@ PACKAGE BODY         STEPTS04_LOADER as
       
       lics_inbound_utility.set_csv_definition('LAST_NAME',1);
       lics_inbound_utility.set_csv_definition('HOU_CODE',2);
-      lics_inbound_utility.set_csv_definition('PET_CODE',3);
-      lics_inbound_utility.set_csv_definition('PET_TYPE',4);
+      lics_inbound_utility.set_csv_definition('PET_TYPE',3);
+      lics_inbound_utility.set_csv_definition('PET_CODE',4);
       lics_inbound_utility.set_csv_definition('PET_NAME',5);
       lics_inbound_utility.set_csv_definition('BIRTH_YEAR',6);
       
