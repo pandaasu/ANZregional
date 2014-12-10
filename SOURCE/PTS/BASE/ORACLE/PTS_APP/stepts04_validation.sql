@@ -164,8 +164,8 @@ PACKAGE BODY         STEPTS04_VALIDATION as
         
       end if;
       
-      -- Check that if the household code was provided that it is numeric
-      if trim(var_tokens(3)) is not null then
+      -- Check that if the pet code was provided that it is numeric
+      if trim(var_tokens(4)) is not null then
       
         --Check that the pet exists
         select count(1)
