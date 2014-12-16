@@ -633,6 +633,7 @@ package body fflu_data as
       rv_field.min_number := i_min_number;
       rv_field.max_number := i_max_number;
       rv_field.allow_null := i_allow_null;
+      rv_field.format := i_format;
       rv_field.nls_options := i_nls_options;
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;
@@ -664,6 +665,7 @@ package body fflu_data as
       rv_field.min_number := i_min_number;
       rv_field.max_number := i_max_number;
       rv_field.allow_null := i_allow_null;
+      rv_field.format := i_format;
       rv_field.nls_options := i_nls_options;
       -- Now add the field record to the fields collection.
       ptv_fields(ptv_fields.count+1) := rv_field;

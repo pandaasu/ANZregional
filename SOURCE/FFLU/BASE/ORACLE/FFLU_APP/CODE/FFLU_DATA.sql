@@ -51,6 +51,8 @@ package fflu_data as
   2013-09-05  Chris Horn            Added tab delimted file formatting.
   2014-05-07  Chris Horn            Fixed bug with lines starting with CSV
                                     quote qualifier.
+  2014-11-11  Chris Horn            Fixed a bug with number formating 
+                                    instructions not being applied to parsing.
 
 *******************************************************************************/
 
@@ -185,6 +187,8 @@ package fflu_data as
   1.0   2013-06-13 Chris Horn           Defined.
   1.1   2013-06-20 Chris Horn           Added column number to fixed width.
   1.2   2013-09-05 Chris Horn           Renamed csv to del to make generic.
+  1.3   2014-11-11 Chris Horn           Fixed a bug with number formating
+                                        instructions being applied.
   
 *******************************************************************************/  
   procedure add_number_field_del(
