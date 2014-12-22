@@ -61,12 +61,7 @@ alter table pxi_demand_header add constraint pxi_demand_header_pk primary key (d
   
 -- Indexes
 create index pxi_demand_header_i2 on pxi_demand_header (moe_code);
-create index pxi_demand_detail_i1 on pxi_demand_detail (demand_seq);
-create index pxi_demand_detail_i2 on pxi_demand_detail (demand_group);
-create index pxi_demand_detail_i3 on pxi_demand_detail (type_code);
-create index pxi_demand_detail_i4 on pxi_demand_detail (zrep_code);
-create index pxi_demand_detail_i5 on pxi_demand_detail (mars_week);
-
+create index pxi_demand_detail_i1 on pxi_demand_detail (demand_seq,demand_group,zrep_code,mars_week);
 
 -- Foreign key constraint.
 alter table pxi_demand_detail add constraint pxi_demand_detail_fk foreign key (demand_seq) referencing pxi_demand_header(demand_seq);

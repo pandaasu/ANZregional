@@ -33,7 +33,7 @@ create sequence pxi_uplift_seq minvalue 0 maxvalue 999999999999999 increment by 
 create table pxi_uplift_header (	
   uplift_seq      number(15,0) not null enable, 
   moe_code        varchar2(10 byte) not null enable, 
-  location        varchar2(50 byte),
+  location_code   varchar2(50 byte),
   demand_seq      number(15,0),
   estimate_seq    number(15,0), 
   modify_date     date, 
@@ -45,7 +45,6 @@ create table pxi_uplift_detail (
   row_seq         number(10,0) not null enable,
   demand_unit     varchar2(50 byte),
   demand_group     varchar2(50 byte),
-  model           varchar2(18 byte),
   start_date      date,
   duration        number(10,0),
   type_code       number(1,0),
@@ -70,7 +69,7 @@ alter table pxi_uplift_detail add constraint pxi_uplift_detail_fk foreign key (u
 COMMENT ON TABLE pxi_uplift_header  IS 'Apollo Uplift Extract Data';
 COMMENT ON COLUMN pxi_uplift_header.uplift_seq IS 'Uplift Sequence Code';
 COMMENT ON COLUMN pxi_uplift_header.moe_code IS 'Mars Organisational Entity Code';
-COMMENT ON COLUMN pxi_uplift_header.location IS 'Location Code';
+COMMENT ON COLUMN pxi_uplift_header.location_code IS 'Location Code';
 COMMENT ON COLUMN pxi_uplift_header.demand_seq IS 'Link to the Demand File.';
 COMMENT ON COLUMN pxi_uplift_header.estimate_seq IS 'Link to the Estimate File.';
 COMMENT ON COLUMN pxi_uplift_header.modify_date IS 'Date this file was modified.';
@@ -81,7 +80,6 @@ COMMENT ON COLUMN pxi_uplift_detail.uplift_seq IS 'Uplift Sequence Code';
 COMMENT ON COLUMN pxi_uplift_detail.row_seq IS 'File Row Number';
 COMMENT ON COLUMN pxi_uplift_detail.demand_unit IS 'Demand Unit';
 COMMENT ON COLUMN pxi_uplift_detail.demand_group IS 'Demand Group';
-COMMENT ON COLUMN pxi_uplift_detail.model IS 'Model';
 COMMENT ON COLUMN pxi_uplift_detail.start_date IS 'Start Date';
 COMMENT ON COLUMN pxi_uplift_detail.duration IS 'Duration';
 COMMENT ON COLUMN pxi_uplift_detail.type_code IS 'Type Code';

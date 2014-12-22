@@ -36,7 +36,7 @@ alter table pxi_moe_attributes add constraint pxi_moe_attributes_pk primary key 
   using index (create unique index pxi_moe_attributes_pk on pxi_moe_attributes(moe_code));
   
 -- Indexes
-create index pxi_moe_attributes_i2 on pxi_moe_attributes (interface_suffix);
+create unique index pxi_moe_attributes_ui2 on pxi_moe_attributes (interface_suffix);
 
 -- Comments
 COMMENT ON TABLE pxi_moe_attributes  IS 'MOE Code System Attribute and Configuration Information.';

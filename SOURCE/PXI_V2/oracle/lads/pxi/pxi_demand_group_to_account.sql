@@ -29,11 +29,11 @@ create table pxi_demand_group_to_account (
 );
 
 -- Primary Key
-alter table pxi_demand_group_to_account add constraint pxi_demand_group_to_account_pk primary key (demand_group,account_code)
-  using index (create unique index pxi_demand_group_to_account_pk on pxi_demand_group_to_account(demand_group,account_code));
+alter table pxi_demand_group_to_account add constraint pxi_demand_group_to_account_pk primary key (moe_code,account_code)
+  using index (create unique index pxi_demand_group_to_account_pk on pxi_demand_group_to_account(moe_code,account_code));
   
 -- Indexes
-create index pxi_demand_group_to_account_i2 on pxi_demand_group_to_account (account_code);
+create index pxi_demand_group_to_account_i2 on pxi_demand_group_to_account (moe_code,demand_group);
 
 -- Comments
 COMMENT ON TABLE pxi_demand_group_to_account  IS 'Apollo Demand Group to SAP Account Code Mapping Table';
