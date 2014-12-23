@@ -24,7 +24,7 @@ drop table pxi_baseline cascade constraints;
 
 -- Table
 create table pxi_baseline (
-  moe_code          varchar2(3 byte) not null enable,
+  moe_code          varchar2(10 byte) not null enable,
   px_company_code   varchar2(3 byte),
   px_division_code  varchar2(3 byte), 
   account_code      varchar2(20 byte) not null enable,
@@ -35,7 +35,7 @@ create table pxi_baseline (
   has_account_sku   varchar2(1),
   has_account       varchar2(1),
   has_sku           varchar2(1),
-  demand_group      varchar2(50),
+  demand_group      varchar2(50) not null,
   mars_week         number(7,0) not null,
   demand_seq        number(15,0),
   created_date      date,

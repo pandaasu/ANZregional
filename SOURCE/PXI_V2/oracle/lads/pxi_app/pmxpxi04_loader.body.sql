@@ -69,14 +69,7 @@ create or replace package body pmxpxi04_loader as
     -- Row Variables
     rv_detail pxi_estimate_detail%rowtype;
     v_ignore_row boolean;
-    
-    -- Used to perform a matl code validation.
-    cursor csr_matl_code (i_zrep_code in pxi_common.st_material) IS
-      select sap_material_code from bds_material_hdr
-      where material_type = 'ZREP' and mars_traded_unit_flag = 'X'
-        and sap_material_code = pxi_common.full_matl_code (i_zrep_code);
-      rv_matl_code csr_matl_code%ROWTYPE;
-    
+
   begin
     -- Now parse the incoming record.
     if fflu_data.parse_data(p_row) = true then
@@ -94,14 +87,11 @@ create or replace package body pmxpxi04_loader as
       -- Derived Fields
       rv_detail.mars_week := pxi_e2e_demand.get_mars_week(fflu_data.get_date_field(pc_field_week_date));
 
-      -- Now perform the matl code validation
-/*      open csr_matl_code (rv_detail.stock_code);
-      fetch csr_matl_code into rv_matl_code;
-      if csr_matl_code%notfound = true then
-        fflu_data.log_field_error(pc_field_stock_code,'Was not a valid ZREP Material Code.');
+      -- Check if the ZREP is valid.
+      if pxi_e2e_demand.is_valid_zrep(rv_detail.stock_code) = false then 
+        -- fflu_data.log_field_error(pc_field_stock_code,'Was not a valid ZREP Material Code.'); -- TODO ADD THIS LINE FOR PRODUCTION.
+        v_ignore_row := true; -- TODO REMOVE FOR PRODUCTION.  This is to cater for dud test data.
       end if;
-      close csr_matl_code; */
-
 
       -- Now perform the ignore row check.
       if abs(rv_detail.est_estimated_volume) + abs(rv_detail.est_normal_volume) + abs(rv_detail.est_incremental_volume) + abs(rv_detail.est_marketing_adj_volume) + abs(rv_detail.est_state_phasing_volume) = 0 then

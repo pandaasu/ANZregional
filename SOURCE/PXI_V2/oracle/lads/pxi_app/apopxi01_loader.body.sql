@@ -90,6 +90,9 @@ create or replace package body apopxi01_loader as
   begin
     -- Now parse the incoming record.
     if fflu_data.parse_data(p_row) = true then
+      -- Initialise Row Ignoring Variable.
+      v_ignore_row := false;
+      
       -- Perform an expected moe check on the data.
       if pv_expected_moe_code <> pxi_e2e_demand.get_moe_from_demand_unit(fflu_data.get_char_field(pc_field_demand_unit)) then 
         fflu_data.log_field_error(pc_field_demand_unit,'MOE Code did not match the expected moe code of [' || pv_expected_moe_code || '] for this interface.');
@@ -125,11 +128,16 @@ create or replace package body apopxi01_loader as
         fflu_data.log_field_error(pc_field_location_code,'Location code did not match the location code of the first row of data [' || prv_header.location_code || '].');
       end if;
       
+      -- Check if the ZREP is valid.
+      if pxi_e2e_demand.is_valid_zrep(rv_detail.zrep_code) = false then 
+        -- fflu_data.log_field_error(pc_field_demand_unit,'Was not a valid ZREP Material Code.'); -- TODO ADD THIS LINE FOR PRODUCTION.
+        v_ignore_row := true; -- TODO REMOVE FOR PRODUCTION.  This is to cater for dud test data.
+      end if;
+      
       -- Now perform the ignore row check.
       if rv_detail.type_code not in (pxi_e2e_demand.gc_type_1_base,pxi_e2e_demand.gc_type_4_reconcile,pxi_e2e_demand.gc_type_6_override) or rv_detail.qty = 0 then
         v_ignore_row := true;
       else 
-        v_ignore_row := false;
         -- Now perform a minimum maximum mars week check.
         if prv_header.min_mars_week is null then 
           prv_header.min_mars_week := rv_detail.mars_week;
@@ -184,8 +192,9 @@ create or replace package body apopxi01_loader as
     if fflu_data.was_errors then
       rollback;
     else
-      
       commit;
+      -- Now trigger the extract to Promax PX
+      pxipmx14_extract.execute(prv_header.demand_seq);
     end if;
 
     -- Perform a final cleanup and a last progress logging.
