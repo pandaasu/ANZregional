@@ -1,3 +1,7 @@
+---------------------------------------------------------------------------------
+-- REPLACE <password> WITH APPROPERIATE PRODUCTION SCHEMA PASSWORD BEFORE RUNNING
+---------------------------------------------------------------------------------
+
 set arraysize 5000
 set define '^'
 set echo off
@@ -8,7 +12,7 @@ set serveroutput on size 100000
 -- whenever sqlerror exit;
 
 -- Log Build
-spool build_e2e_demand_test.log
+spool build_e2e_demand_prod.log
 
 -- Parameters
 define BASE_PATH = .
@@ -24,9 +28,9 @@ prompt
 
 ----------------------------------------------------------------------------------------
 prompt :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-prompt :: LADS > connect pxi/{password}@ap0052t.ap.mars
+prompt :: LADS > connect pxi/{password}@ap0064p.ap.mars
 prompt :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-connect pxi/xipch521@ap0052t.ap.mars
+connect pxi/<password>@ap0064p.ap.mars
 prompt
 
 @^BASE_PATH\oracle\lads\pxi\pxi_moe_attributes.sql; 
@@ -42,9 +46,9 @@ prompt
 
 ----------------------------------------------------------------------------------------
 prompt :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-prompt :: LADS > connect pxi_app/{password}@ap0052t.ap.mars
+prompt :: LADS > connect pxi_app/{password}@ap0064p.ap.mars
 prompt :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-connect pxi_app/xipap395@ap0052t.ap.mars
+connect pxi_app/<password>@ap0064p.ap.mars
 prompt
 
 @^BASE_PATH\oracle\lads\pxi_app\pxi.synonyms.sql
