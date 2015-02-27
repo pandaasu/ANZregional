@@ -24,6 +24,7 @@ create or replace package qv_app.actual_prod_pkg as
   2014-06-04  Trevor Keon           Created 
   2014-06-25  Trevor Keon           Fixed issue with duplicates at shift changeover 
   2014-10-28  Trevor Keon           Updated ref_line table code to match new structure 
+  2014-12-10  Trevor Keon           Fixed issue with some L7 products showing in L6 
 
 *******************************************************************************/
 
@@ -104,16 +105,18 @@ create or replace package body qv_app.actual_prod_pkg as
                  case
                     when substr(line_desc, 1, 4) = 'Line'
                        then substr(line_desc, 1, 6)
+                    when line_desc = 'L9 Ext'
+                       then 'Line 9'
+                    when line_desc = 'L7 Repack'
+                       then 'Repack L1'
+                    when substr(line_desc, 1, 2) = 'L7'
+                       then 'Line 7'
                     when substr(sched_xref, 1, 4) = 'Line'
                        then 'Line ' || substr(sched_xref, 5, 1)
                     when substr(sched_xref, 1, 6) = 'Repack'
                        then 'SBL'
                     when substr(line_desc, 4, 7) = 'Outfeed'
                        then 'Line ' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6)
-                    when line_desc = 'L9 Ext'
-                       then 'Line 9'
-                    when line_desc = 'L7 Repack'
-                       then 'Repack L1'
                  end as prodn_line_code,
                  case
                     when substr(line_desc, 1, 4) = 'Line'
@@ -130,7 +133,7 @@ create or replace package body qv_app.actual_prod_pkg as
                        then 1
                  end as fg_line_flag,
                  decode(substr(line_desc, 4, 7), 'Outfeed', 1) as nake_line_flag,
-                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag     
+                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag   
               from manu.ref_line
               where line_desc <> '------'
            ) t05,
@@ -205,16 +208,18 @@ create or replace package body qv_app.actual_prod_pkg as
                  case
                     when substr(line_desc, 1, 4) = 'Line'
                        then substr(line_desc, 1, 6)
+                    when line_desc = 'L9 Ext'
+                       then 'Line 9'
+                    when line_desc = 'L7 Repack'
+                       then 'Repack L1'
+                    when substr(line_desc, 1, 2) = 'L7'
+                       then 'Line 7'
                     when substr(sched_xref, 1, 4) = 'Line'
                        then 'Line ' || substr(sched_xref, 5, 1)
                     when substr(sched_xref, 1, 6) = 'Repack'
                        then 'SBL'
                     when substr(line_desc, 4, 7) = 'Outfeed'
                        then 'Line ' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6)
-                    when line_desc = 'L9 Ext'
-                       then 'Line 9'
-                    when line_desc = 'L7 Repack'
-                       then 'Repack L1'
                  end as prodn_line_code,
                  case
                     when substr(line_desc, 1, 4) = 'Line'
@@ -231,7 +236,7 @@ create or replace package body qv_app.actual_prod_pkg as
                        then 1
                  end as fg_line_flag,
                  decode(substr(line_desc, 4, 7), 'Outfeed', 1) as nake_line_flag,
-                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag     
+                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag   
               from manu.ref_line
               where line_desc <> '------'
            ) t06,
@@ -308,16 +313,18 @@ create or replace package body qv_app.actual_prod_pkg as
                  case
                     when substr(line_desc, 1, 4) = 'Line'
                        then substr(line_desc, 1, 6)
+                    when line_desc = 'L9 Ext'
+                       then 'Line 9'
+                    when line_desc = 'L7 Repack'
+                       then 'Repack L1'
+                    when substr(line_desc, 1, 2) = 'L7'
+                       then 'Line 7'
                     when substr(sched_xref, 1, 4) = 'Line'
                        then 'Line ' || substr(sched_xref, 5, 1)
                     when substr(sched_xref, 1, 6) = 'Repack'
                        then 'SBL'
                     when substr(line_desc, 4, 7) = 'Outfeed'
                        then 'Line ' || decode(substr(line_desc, 2, 1), 1, 1, 2, 5, 3, 6, 4, 6)
-                    when line_desc = 'L9 Ext'
-                       then 'Line 9'
-                    when line_desc = 'L7 Repack'
-                       then 'Repack L1'
                  end as prodn_line_code,
                  case
                     when substr(line_desc, 1, 4) = 'Line'
@@ -334,7 +341,7 @@ create or replace package body qv_app.actual_prod_pkg as
                        then 1
                  end as fg_line_flag,
                  decode(substr(line_desc, 4, 7), 'Outfeed', 1) as nake_line_flag,
-                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag     
+                 decode(substr(line_desc, 1, 4), 'Line', 1) as dryer_line_flag    
               from manu.ref_line
               where line_desc <> '------'
            ) t06

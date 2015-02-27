@@ -25,6 +25,7 @@ create or replace package qv_app.sched_shift_segment_pkg as
   2014-10-28  Trevor Keon           Fixed issue when schedule matches shift start or end times 
   2014-10-30  Trevor Keon           Added view_full_latest_schedule function 
   2014-11-05  Trevor Keon           Updated view_locked to allow a exclusion date/time 
+  2014-12-08  Trevor Keon           Updated schedule queries to handle schedule with no kibmix 
 
 *******************************************************************************/
 
@@ -242,28 +243,50 @@ create or replace package body qv_app.sched_shift_segment_pkg as
                (
                     select distinct t01.schedule_id,
                        t01.batch_code,
-                       t06.resource_code,
-                       t06.resource_group_code
-                    from infor.ash_schedules t01, 
-                       infor.ash_schedule_relationships t02,
-                       infor.ash_schedule_relationships t03,
-                       infor.ash_schedule_relationships t04,
-                       infor.ash_schedule_relationships t05,
-                       infor.ash_schedules t06 
-                    where t01.schedule_id = t02.schedule_id
-                       and t01.batch_code = t02.process_batch_code
+                       decode(t02.resource_code, null, t03.resource_code, t02.resource_code) as resource_code,
+                       decode(t02.resource_group_code, null, t03.resource_group_code, t02.resource_group_code) as resource_group_code
+                    from infor.ash_schedules t01,
+                       (
+                          select t02.schedule_id,
+                             t02.process_batch_code,
+                             t06.resource_code,
+                             t06.resource_group_code
+                          from infor.ash_schedule_relationships t02,
+                             infor.ash_schedule_relationships t03,
+                             infor.ash_schedule_relationships t04,
+                             infor.ash_schedule_relationships t05,
+                             infor.ash_schedules t06
+                          where t02.schedule_id = t03.schedule_id
+                             and t02.tank_batch_code = t03.tank_batch_code
+                             and t03.schedule_id = t04.schedule_id
+                             and t03.process_batch_code = t04.process_batch_code
+                             and t04.schedule_id = t05.schedule_id
+                             and t04.tank_batch_code = t05.tank_batch_code
+                             and t05.schedule_id = t06.schedule_id
+                             and t05.process_batch_code = t06.batch_code
+                             and t03.flow_direction = 'PROCESS_TO_TANK'
+                             and t04.flow_direction = 'TANK_TO_PROCESS'
+                             and t05.flow_direction = 'PROCESS_TO_TANK'           
+                       ) t02,    -- schedule includes kibmix run 
+                       (
+                          select t02.schedule_id,
+                             t02.process_batch_code, 
+                             t06.resource_code,
+                             t06.resource_group_code  
+                          from infor.ash_schedule_relationships t02,
+                             infor.ash_schedule_relationships t03,
+                             infor.ash_schedules t06
+                          where t02.schedule_id = t03.schedule_id
+                             and t02.tank_batch_code = t03.tank_batch_code
+                             and t03.schedule_id = t06.schedule_id
+                             and t03.process_batch_code = t06.batch_code
+                             and t03.flow_direction = 'PROCESS_TO_TANK'
+                       ) t03     -- schedule down to the nake level only (no kibmix in schedule) 
+                    where t01.schedule_id = t02.schedule_id (+)
+                       and t01.batch_code = t02.process_batch_code (+)
                        and t01.schedule_id = t03.schedule_id
-                       and t02.tank_batch_code = t03.tank_batch_code
-                       and t01.schedule_id = t04.schedule_id
-                       and t03.process_batch_code = t04.process_batch_code
-                       and t01.schedule_id = t05.schedule_id
-                       and t04.tank_batch_code = t05.tank_batch_code
-                       and t01.schedule_id = t06.schedule_id
-                       and t05.process_batch_code = t06.batch_code
-                       and t01.batch_type = 'PROCESS'
-                       and t03.flow_direction = 'PROCESS_TO_TANK'
-                       and t04.flow_direction = 'TANK_TO_PROCESS'
-                       and t05.flow_direction = 'PROCESS_TO_TANK'           
+                       and t01.batch_code = t03.process_batch_code
+                       and t01.batch_type = 'PROCESS'           
                ) t05           
             where t01.schedule_id = t02.schedule_id
                and t02.end_outflow > t03.start_datime
@@ -338,30 +361,52 @@ create or replace package body qv_app.sched_shift_segment_pkg as
            pr.prodn_shift t03,
            mm.mars_date t04,
            (
-                select distinct t01.schedule_id,
-                   t01.batch_code,
-                   t06.resource_code,
-                   t06.resource_group_code
-                from infor.ash_schedules t01, 
-                   infor.ash_schedule_relationships t02,
-                   infor.ash_schedule_relationships t03,
-                   infor.ash_schedule_relationships t04,
-                   infor.ash_schedule_relationships t05,
-                   infor.ash_schedules t06 
-                where t01.schedule_id = t02.schedule_id
-                   and t01.batch_code = t02.process_batch_code
-                   and t01.schedule_id = t03.schedule_id
-                   and t02.tank_batch_code = t03.tank_batch_code
-                   and t01.schedule_id = t04.schedule_id
-                   and t03.process_batch_code = t04.process_batch_code
-                   and t01.schedule_id = t05.schedule_id
-                   and t04.tank_batch_code = t05.tank_batch_code
-                   and t01.schedule_id = t06.schedule_id
-                   and t05.process_batch_code = t06.batch_code
-                   and t01.batch_type = 'PROCESS'
-                   and t03.flow_direction = 'PROCESS_TO_TANK'
-                   and t04.flow_direction = 'TANK_TO_PROCESS'
-                   and t05.flow_direction = 'PROCESS_TO_TANK'           
+                    select distinct t01.schedule_id,
+                       t01.batch_code,
+                       decode(t02.resource_code, null, t03.resource_code, t02.resource_code) as resource_code,
+                       decode(t02.resource_group_code, null, t03.resource_group_code, t02.resource_group_code) as resource_group_code
+                    from infor.ash_schedules t01,
+                       (
+                          select t02.schedule_id,
+                             t02.process_batch_code,
+                             t06.resource_code,
+                             t06.resource_group_code
+                          from infor.ash_schedule_relationships t02,
+                             infor.ash_schedule_relationships t03,
+                             infor.ash_schedule_relationships t04,
+                             infor.ash_schedule_relationships t05,
+                             infor.ash_schedules t06
+                          where t02.schedule_id = t03.schedule_id
+                             and t02.tank_batch_code = t03.tank_batch_code
+                             and t03.schedule_id = t04.schedule_id
+                             and t03.process_batch_code = t04.process_batch_code
+                             and t04.schedule_id = t05.schedule_id
+                             and t04.tank_batch_code = t05.tank_batch_code
+                             and t05.schedule_id = t06.schedule_id
+                             and t05.process_batch_code = t06.batch_code
+                             and t03.flow_direction = 'PROCESS_TO_TANK'
+                             and t04.flow_direction = 'TANK_TO_PROCESS'
+                             and t05.flow_direction = 'PROCESS_TO_TANK'           
+                       ) t02,    -- schedule includes kibmix run 
+                       (
+                          select t02.schedule_id,
+                             t02.process_batch_code, 
+                             t06.resource_code,
+                             t06.resource_group_code  
+                          from infor.ash_schedule_relationships t02,
+                             infor.ash_schedule_relationships t03,
+                             infor.ash_schedules t06
+                          where t02.schedule_id = t03.schedule_id
+                             and t02.tank_batch_code = t03.tank_batch_code
+                             and t03.schedule_id = t06.schedule_id
+                             and t03.process_batch_code = t06.batch_code
+                             and t03.flow_direction = 'PROCESS_TO_TANK'
+                       ) t03     -- schedule down to the nake level only (no kibmix in schedule) 
+                    where t01.schedule_id = t02.schedule_id (+)
+                       and t01.batch_code = t02.process_batch_code (+)
+                       and t01.schedule_id = t03.schedule_id
+                       and t01.batch_code = t03.process_batch_code
+                       and t01.batch_type = 'PROCESS'           
            ) t05           
         where t01.schedule_id = t02.schedule_id
            and t02.end_outflow > t03.start_datime
