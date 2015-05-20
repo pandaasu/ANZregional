@@ -1,0 +1,360 @@
+
+set define off;
+
+create or replace package ods_app.qu5_qu5cdw32 as
+  /*****************************************************************************
+  ** Package Definition
+  ******************************************************************************
+
+    System   : qu5
+    Owner    : ods_app
+    Package  : qu5_qu5cdw32
+    Author   : [Auto-Generate]
+
+    Description
+    ----------------------------------------------------------------------------
+    [qu5] Quofore - Mars New Zealand
+    Loader Package, Interface [qu5cdw32] Entity [TaskCustomer] Table [qu5_task_cust][_load/_hist]
+
+    Package provides the standard LICS on_start, on_data, on_end callbacks,
+    plus a process_batch callback which moves records from _load to _hist table
+    on completion of batch
+
+    YYYY-MM-DD  Author                Description
+    ----------  --------------------  ------------------------------------------
+    2013-02-19  Mal Chambeyron        Created
+    2014-05-15  Mal Chambeyron        Make into a Template
+    2014-05-15  Mal Chambeyron        Cleanup Source Id
+    2014-05-15  Mal Chambeyron        Updated to Handle Special Case [digest]
+    2014-05-27  Mal Chambeyron        Use column name (30 char) instead of attribute name
+                                      for lics_inbound_utility.set_csv_definition
+                                      to avoid 32 char lics restriction
+    2015-03-18  Mal Chambeyron        Remove Source Id Completely
+    2015-05-13  [Auto-Generate]       [Auto-Generated] Created
+
+  *****************************************************************************/
+
+  -- Public : Procedures
+  procedure on_start;
+  procedure on_data(p_row in varchar2);
+  procedure on_end;
+  procedure process_batch(p_batch_id in number);
+
+end qu5_qu5cdw32;
+/
+
+create or replace package body ods_app.qu5_qu5cdw32 as
+
+  -- Private : Application Exception
+  g_application_exception exception;
+  pragma exception_init(g_application_exception, -20000);
+
+  -- Private : Procedures
+  procedure perform_preprocessing;
+  procedure process_header_row(p_row in varchar2);
+  procedure process_data_row(p_row in varchar2);
+
+  -- Private : Constants
+  g_package_name constant varchar2(64 char) := 'ods_app.qu5_qu5cdw32';
+  g_entity_name constant varchar2(64 char) := 'TaskCustomer';
+  g_delimiter constant varchar2(1)  := ',';
+  g_text_qualifier constant varchar2(1) := '"';
+
+  -- Private : Flags
+  g_abort_processing_flag boolean;
+  g_source_file_error_flag boolean;
+
+  g_first_row_flag boolean;
+  g_valid_header_row_found_flag boolean;
+  g_footer_row_found_flag boolean;
+
+  -- Private : Counters
+  g_row_count number(10);
+  g_data_row_count number(10);
+
+  -- Private : Variables
+  g_load_seq number;
+  g_interface_name varchar2(32 char);
+  g_prefixed_file_name varchar2(512 char);
+  g_original_file_name varchar2(512 char);
+  g_batch_id number(15);
+  g_timestamp date;
+
+  /*****************************************************************************
+  ** Procedure : On Start - Call Back for LICS Framework
+  **             Called by the LICS Framework BEFORE Processing the Record Set
+  *****************************************************************************/
+  procedure on_start is
+
+  begin
+    -- Initialise : Transaction flags
+    g_abort_processing_flag := false;
+    g_source_file_error_flag := false;
+
+    g_first_row_flag := true;
+    g_valid_header_row_found_flag := false;
+    g_footer_row_found_flag := false;
+
+    -- Initialise : Counters
+    g_row_count := 0;
+    g_data_row_count := 0;
+
+    -- Initialise : Layout definitions
+    lics_inbound_utility.clear_definition;
+    lics_inbound_utility.set_csv_definition('id',1);
+    lics_inbound_utility.set_csv_definition('created_date',2);
+    lics_inbound_utility.set_csv_definition('task_id',3);
+    lics_inbound_utility.set_csv_definition('cust_id',4);
+    lics_inbound_utility.set_csv_definition('hier_node_id',5);
+
+  end on_start;
+
+  /*****************************************************************************
+  ** Procedure : On Data - Call Back for LICS Framework
+  **             Called by the LICS Framework FOR EACH Record of the Record Set
+  *****************************************************************************/
+  procedure on_data(p_row in varchar2) is
+
+    l_row varchar2(4000 char);
+
+  begin
+    -- Return if Abort Processing Flag set / Stops Unnecessary Processing
+    if g_abort_processing_flag = true then
+      return;
+    end if ;
+
+    -- Remove leading and trailing whitespace (including cr/lf/tab/etc..)
+    l_row := trim(regexp_replace(p_row,'[[:space:]]*$',null));
+    if l_row is null then
+      return; -- Return on EMPTY Line
+    end if;
+
+    -- Process CSV ..
+    -- HEADER Row
+    if g_first_row_flag = true then
+      g_first_row_flag := false;
+      perform_preprocessing; -- Raises Exception on Failure
+      process_header_row(l_row);
+    else
+      -- FOOTER row .. Starts with FTR followed by any APLHA, NUMERIC, [_] and [.] .. Note, NO Comma [,]
+      if regexp_instr(l_row,'^FTR[A-Z0-9._]*$',1,1,0,'i') = 1 then -- Simple Check to Distinguish from DATA row
+        g_footer_row_found_flag := true;
+        if upper(l_row) != upper('FTR'||g_original_file_name) then -- Invalid FOOTER row / More Specific Check
+          lics_inbound_utility.add_exception('['||g_package_name||'.on_data] Invalid Footer Row .. Expected [FTR'||g_original_file_name||']');
+          g_source_file_error_flag := true;
+          return; -- Invalid Footer
+        end if;
+      -- DATA row
+      else
+        if g_footer_row_found_flag then -- cannot have DATA row after FOOTER row
+          lics_inbound_utility.add_exception('['||g_package_name||'.on_data] DATA Row Found After FOOTER Row');
+          g_source_file_error_flag := true;
+        end if;
+        process_data_row(l_row);
+      end if;
+    end if;
+
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.on_data] : '||SQLERRM, 1, 4000));
+
+  end on_data;
+
+  /*****************************************************************************
+  ** Procedure : Perform Preprocessing
+  *****************************************************************************/
+  procedure perform_preprocessing as
+
+  begin
+    -- Set Interface and Source File Names ..
+    g_prefixed_file_name := lics_inbound_processor.callback_file_name;
+    g_original_file_name := substr(g_prefixed_file_name, 5); -- remove prefix 'qu#_'
+    g_interface_name := upper(lics_inbound_processor.callback_interface); -- delibrate upper
+
+    -- Each of the remaining Procedures / Functions Raise Exception on Failure
+
+    -- Valid Interface Name
+    qu5_util.validate_interface_name(g_entity_name, g_interface_name);
+
+    -- Valid File Name
+    qu5_util.validate_file_name(g_entity_name, g_original_file_name);
+
+    -- File Name, Extract .. Timestamp, Batch Id
+    g_timestamp := qu5_util.get_file_timestamp(g_original_file_name);
+    g_batch_id := qu5_util.get_file_batch_id(g_original_file_name);
+
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.perform_preprocessing] : '||SQLERRM, 1, 4000));
+
+  end perform_preprocessing;
+
+  /*****************************************************************************
+  ** Procedure : On End - Call Back for LICS Framework
+  **             Called by the LICS Framework AFTER Processing the Record Set
+  *****************************************************************************/
+  procedure on_end is
+
+  begin
+
+    -- Commit/Rollback as necessary ..
+    if g_abort_processing_flag = false and g_source_file_error_flag = false and g_valid_header_row_found_flag = true and g_footer_row_found_flag = true then
+      qu5_interface.complete_load(g_load_seq, g_batch_id, g_entity_name, g_data_row_count);
+      commit;
+    else
+      rollback;
+      if g_valid_header_row_found_flag = true and g_footer_row_found_flag = false then
+        raise_application_error(-20000, 'FOOTER NOT FOUND .. Expected [FTR'||g_original_file_name||']');
+      end if;
+    end if;
+
+  exception
+    when others then
+      raise_application_error(-20000, substr('['||g_package_name||'.on_end] : '||SQLERRM, 1, 4000));
+
+  end on_end;
+
+  /*****************************************************************************
+  ** Procedure : Process HEADER Row
+  *****************************************************************************/
+  procedure process_header_row(p_row in varchar2) is
+
+    l_expected_row varchar2(4000 char) := 'Id,CreatedDate,Task_Id,Customer_Id,HierarchyNode_Id';
+
+  begin
+
+    if upper(p_row) = upper(l_expected_row) then -- Valid HEADER Row
+      g_valid_header_row_found_flag := true;
+      -- Start Interface Loader .. Raised Exception on Failure
+      g_load_seq := qu5_interface.start_load(g_batch_id, g_entity_name, g_interface_name, g_original_file_name, g_timestamp);
+    else
+      lics_inbound_utility.add_exception('['||g_package_name||'.process_header_row] Invalid Header Row .. Expected ['||l_expected_row||']');
+      g_abort_processing_flag := true;
+      g_source_file_error_flag := true;
+    end if;
+
+  exception
+    when others then
+      g_abort_processing_flag := true;
+      raise_application_error(-20000, substr('['||g_package_name||'.process_header_row] : '||SQLERRM, 1, 4000));
+
+  end process_header_row;
+
+  /*****************************************************************************
+  ** Procedure : Process DATA Row
+  *****************************************************************************/
+  procedure process_data_row(p_row in varchar2) is
+
+    l_entity_load_row ods.qu5_task_cust_load%rowtype;
+    l_raw_column_value varchar2(4000 char);
+
+  begin
+    -- Should NEVER reach this point .. Return if Abort Processing Flag set / Stops Unnecessary Processing
+    if g_abort_processing_flag = true then
+      return;
+    end if ;
+
+    -- Increment data row count
+    g_data_row_count := g_data_row_count + 1;
+
+    -- Parse DATA Row
+    lics_inbound_utility.parse_csv_record(p_row, g_delimiter, g_text_qualifier);
+
+    -- Populate DATA Row - CONTROL Columns
+    l_entity_load_row.q4x_load_seq := g_load_seq;
+    l_entity_load_row.q4x_load_data_seq := g_data_row_count;
+    l_entity_load_row.q4x_create_user := user;
+    l_entity_load_row.q4x_create_time := sysdate;
+    l_entity_load_row.q4x_modify_user := user;
+    l_entity_load_row.q4x_modify_time := sysdate;
+    l_entity_load_row.q4x_batch_id := g_batch_id;
+    l_entity_load_row.q4x_timestamp := g_timestamp; -- Interface File Timestamp used as Default Transaction Timestamp, as Quofore Advised that Create Date was not Reliable
+    -- Populate DATA Row - DATA Columns
+    begin
+      l_entity_load_row.id := qu5_util.get_number('id',10,0,false,g_source_file_error_flag);
+      l_entity_load_row.created_date := qu5_util.get_datetime('created_date',true,g_source_file_error_flag);
+      l_entity_load_row.task_id := qu5_util.get_number('task_id',10,0,false,g_source_file_error_flag);
+      l_entity_load_row.cust_id := qu5_util.get_number('cust_id',10,0,true,g_source_file_error_flag);
+      l_entity_load_row.hier_node_id := qu5_util.get_number('hier_node_id',10,0,true,g_source_file_error_flag);
+      exception
+      when others then
+         lics_inbound_utility.add_exception(substr('['||g_package_name||'.process_data_row] Unexpected Parsing Error : '||SQLERRM, 1, 4000));
+         g_source_file_error_flag := true;
+    end;
+
+    -- Retrieve exceptions raised
+    if lics_inbound_utility.has_errors = true then
+       g_source_file_error_flag := true;
+    end if;
+
+    -- Error, bypass insert once an error is found
+    if g_source_file_error_flag = true then
+       return;
+    end if;
+
+    -- Insert row
+    begin
+      insert into ods.qu5_task_cust_load values l_entity_load_row;
+    exception
+      when others then
+         lics_inbound_utility.add_exception(substr('['||g_package_name||'.process_data_row] Insert Failed [ods.qu5_task_cust_load] : '||SQLERRM, 1, 4000));
+         g_source_file_error_flag := true;
+    end;
+
+  end process_data_row;
+
+  /*****************************************************************************
+  ** Procedure : Process Batch .. Called from Batch / Digest Process
+  **             DO NOT COMMIT/ROLLBACK .. This is Performed by Calling Function
+  *****************************************************************************/
+  procedure process_batch(p_batch_id in number) is
+
+    l_batch_row_count number;
+
+  begin
+
+    -- Check if Anything to Process
+    select count(1) into l_batch_row_count
+    from ods.qu5_task_cust_load
+    where q4x_batch_id = p_batch_id;
+
+    -- Return is Nothing to Process
+    if l_batch_row_count = 0 then
+      return;
+    end if;
+
+    -- Update Modified User/Time
+    update ods.qu5_task_cust_load
+    set q4x_modify_user = user,
+      q4x_modify_time = sysdate
+    where q4x_batch_id = p_batch_id;
+
+    -- Insert ALL of Load Batch into History
+    insert into ods.qu5_task_cust_hist
+    select *
+    from ods.qu5_task_cust_load
+    where q4x_batch_id = p_batch_id;
+
+    -- Delete Load Batch
+    delete from ods.qu5_task_cust_load
+    where q4x_batch_id = p_batch_id;
+
+  exception
+    when others then
+      g_abort_processing_flag := true;
+      raise_application_error(-20000, substr('['||g_package_name||'.process_batch] Failed [ods.qu5_task_cust/_load/_hist] : '||SQLERRM, 1, 4000));
+
+  end process_batch;
+
+end qu5_qu5cdw32;
+/
+
+-- Synonyms
+create or replace public synonym qu5_qu5cdw32 for ods_app.qu5_qu5cdw32;
+
+-- Grants
+grant execute on ods_app.qu5_qu5cdw32 to lics_app;
+
+/*******************************************************************************
+** END-OF-FILE
+*******************************************************************************/
