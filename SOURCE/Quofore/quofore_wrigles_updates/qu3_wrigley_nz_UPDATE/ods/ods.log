@@ -1,0 +1,633 @@
+SQL> 
+SQL> -- Update Interface List
+SQL> @qu3_interface_list_UPDATE.sql
+SQL>   /*****************************************************************************
+SQL>   ** Table Definition
+SQL>   ******************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_interface_list
+SQL> 	 Author   : Mal Chambeyron
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 Interface / Entity / Table List
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2015-03-18  Mal Chambeyron	    Add new interface
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> insert into qu3_interface_list (q4x_interface_name,q4x_entity_name,q4x_table_name) values ('QU3CDW47','ACTIVITYDETAILPACKAGINGCHGAUDIT','QU3_ACT_DTL_PCKING_CHG');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- Add Columns to Tables
+SQL> @qu3_act_dtl_gpa_tables_UPDATE.sql
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_act_dtl_gpa
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 [qu3_act_dtl_gpa] table update script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2015-03-18  Mal Chambeyron	   Add New Columns
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu3_act_dtl_gpa_load add (
+  2    no_choc_bar_facing	       number(10, 0)		       null,
+  3    no_comp_gum_facing	       number(10, 0)		       null,
+  4    no_comp_mint_facing	       number(10, 0)		       null,
+  5    no_comp_candy_facing	       number(10, 0)		       null
+  6  )
+  7  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_gpa_hist add (
+  2    no_choc_bar_facing	       number(10, 0)		       null,
+  3    no_comp_gum_facing	       number(10, 0)		       null,
+  4    no_comp_mint_facing	       number(10, 0)		       null,
+  5    no_comp_candy_facing	       number(10, 0)		       null
+  6  )
+  7  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on column qu3_act_dtl_gpa_load.no_choc_bar_facing is '[NumChocBarFacing] Num Choc Singles facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_load.no_comp_gum_facing is '[NumCompGumFacing] Num Non-Wrigley Gum facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_load.no_comp_mint_facing is '[NumCompMintFacing] Num Non-Wrigley Mint facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_load.no_comp_candy_facing is '[NumCompCandyFacing] Num Non-Wrigley Candy facings';
+
+Comment created.
+
+SQL> 
+SQL> comment on column qu3_act_dtl_gpa_hist.no_choc_bar_facing is '[NumChocBarFacing] Num Choc Singles facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_hist.no_comp_gum_facing is '[NumCompGumFacing] Num Non-Wrigley Gum facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_hist.no_comp_mint_facing is '[NumCompMintFacing] Num Non-Wrigley Mint facings';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_gpa_hist.no_comp_candy_facing is '[NumCompCandyFacing] Num Non-Wrigley Candy facings';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu3_act_dtl_off_loc_tables_UPDATE.sql
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_act_dtl_off_loc
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 [qu3_act_dtl_off_loc] table update script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2015-03-18  Mal Chambeyron	   Add New Columns
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> 
+SQL> alter table ods.qu3_act_dtl_off_loc_load add (
+  2    -- coop_spend			  number(18, 4) 		  null,
+  3    sold_in_by		       number(10, 0)		       null,
+  4    built_by 		       number(10, 0)		       null
+  5  )
+  6  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_off_loc_hist add (
+  2    -- coop_spend			  number(18, 4) 		  null,
+  3    sold_in_by		       number(10, 0)		       null,
+  4    built_by 		       number(10, 0)		       null
+  5  )
+  6  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> -- comment on column qu3_act_dtl_off_loc_load.coop_spend is '[Coopspend] The Co Op Spend Amount.';
+SQL> comment on column qu3_act_dtl_off_loc_load.sold_in_by is '[SoldInBy] Sold In By';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_off_loc_load.built_by is '[BuiltBy] Built By';
+
+Comment created.
+
+SQL> 
+SQL> -- comment on column qu3_act_dtl_off_loc_hist.coop_spend is '[Coopspend] The Co Op Spend Amount.';
+SQL> comment on column qu3_act_dtl_off_loc_hist.sold_in_by is '[SoldInBy] Sold In By';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_off_loc_hist.built_by is '[BuiltBy] Built By';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu3_act_dtl_storeop_ro_tables_UPDATE.sql
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_act_dtl_storeop_ro
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 [qu3_act_dtl_storeop_ro] table update script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2015-03-18  Mal Chambeyron	   Add New Columns
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu3_act_dtl_storeop_ro_load add (
+  2    no_parallel_store	       number(10, 0)		       null,
+  3    no_paralle_wwy_stand	       number(10, 0)		       null,
+  4    no_comp_wwy_stand	       number(10, 0)		       null,
+  5    no_oos_wwy_stand 	       number(10, 0)		       null,
+  6    no_pack_date_issue	       number(10, 0)		       null,
+  7    pref_wholesaler		       number(10, 0)		       null
+  8  )
+  9  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_storeop_ro_hist add (
+  2    no_parallel_store	       number(10, 0)		       null,
+  3    no_paralle_wwy_stand	       number(10, 0)		       null,
+  4    no_comp_wwy_stand	       number(10, 0)		       null,
+  5    no_oos_wwy_stand 	       number(10, 0)		       null,
+  6    no_pack_date_issue	       number(10, 0)		       null,
+  7    pref_wholesaler		       number(10, 0)		       null
+  8  )
+  9  ;
+
+Table altered.
+
+SQL> 
+SQL> comment on column qu3_act_dtl_storeop_ro_load.no_parallel_store is '[NumParallelStore] Num Parallel Import SKUs in Store';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_load.no_paralle_wwy_stand is '[NumParallelWrigStand] Num Parallel Import SKUs on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_load.no_comp_wwy_stand is '[NumCompWrigStand] Num Competitor Products on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_load.no_oos_wwy_stand is '[NumOOSWrigStand] Num OOS facings on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_load.no_pack_date_issue is '[NumPacksDateIssue] Num Wrigley packs w. date issues found in Store';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_load.pref_wholesaler is '[PreferredWholesaler] Preferred Wholesaler';
+
+Comment created.
+
+SQL> 
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.no_parallel_store is '[NumParallelStore] Num Parallel Import SKUs in Store';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.no_paralle_wwy_stand is '[NumParallelWrigStand] Num Parallel Import SKUs on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.no_comp_wwy_stand is '[NumCompWrigStand] Num Competitor Products on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.no_oos_wwy_stand is '[NumOOSWrigStand] Num OOS facings on Wrigley Stands';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.no_pack_date_issue is '[NumPacksDateIssue] Num Wrigley packs w. date issues found in Store';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_storeop_ro_hist.pref_wholesaler is '[PreferredWholesaler] Preferred Wholesaler';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu3_act_dtl_top_sku_tables_UPDATE.sql
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_act_dtl_top_sku
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 [qu3_act_dtl_top_sku] table update script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2015-03-18  Mal Chambeyron	   Add New Columns
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu3_act_dtl_top_sku_load add (
+  2    no_std_chk_non_belt	       number(10, 0)		       null,
+  3    no_aisle 		       number(10, 0)		       null
+  4  )
+  5  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_top_sku_hist add (
+  2    no_std_chk_non_belt	       number(10, 0)		       null,
+  3    no_aisle 		       number(10, 0)		       null
+  4  )
+  5  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on column qu3_act_dtl_top_sku_load.no_std_chk_non_belt is '[NumStdChkNonBelt] PODs at Std Chk Non-belt side';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_top_sku_load.no_aisle is '[NumAisle] PODs at Aisle';
+
+Comment created.
+
+SQL> 
+SQL> comment on column qu3_act_dtl_top_sku_hist.no_std_chk_non_belt is '[NumStdChkNonBelt] PODs at Std Chk Non-belt side';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_top_sku_hist.no_aisle is '[NumAisle] PODs at Aisle';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- New Tables
+SQL> @qu3_act_dtl_pcking_chg_tables.sql
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu3
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu3_act_dtl_pcking_chg
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu3] Quofore - Wrigley New Zealand
+SQL> 	 [qu3_act_dtl_pcking_chg] table creation script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2013-02-19  Mal Chambeyron	   Created
+SQL> 	 2014-05-15  Mal Chambeyron	   Make into a Template
+SQL> 	 2014-05-15  Mal Chambeyron	   Cleanup Source Id
+SQL> 	 2014-05-15  Mal Chambeyron	   Updated to Handle Special Case [digest]
+SQL> 	 2015-03-18  Mal Chambeyron	   Remove Source Id Completely
+SQL> 	 2015-03-18  [Auto-Generate]	   [Auto-Generated] Created
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- _load -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu3_act_dtl_pcking_chg_load cascade constraints;
+drop table ods.qu3_act_dtl_pcking_chg_load cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu3_act_dtl_pcking_chg_load (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    percent_stock_in_new_pack       number(10, 0)		       null,
+ 13    prod_id			       number(10, 0)		       null
+ 14  )
+ 15  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu3_act_dtl_pcking_chg_load add constraint qu3_act_dtl_pcking_chg_load_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu3_act_dtl_pcking_chg_load_pk on ods.qu3_act_dtl_pcking_chg_load (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_pcking_chg_load add constraint qu3_act_dtl_pcking_chg_load_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu3_act_dtl_pcking_chg_load_uk on ods.qu3_act_dtl_pcking_chg_load (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu3_act_dtl_pcking_chg_load is '[ActivityDetail_PackagingChgAudit][LOAD] Detail file for Packaging Change Audit task';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.act_id is '[Activity_ID] Mandatory Foreign key from ActivityHeader.ID';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.percent_stock_in_new_pack is '[PctStockInNewPack] % of stock in store in new packaging';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_load.prod_id is '[Product_ID] Foreign key from Product.ID';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu3_act_dtl_pcking_chg_load for ods.qu3_act_dtl_pcking_chg_load;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu3_act_dtl_pcking_chg_load to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu3_act_dtl_pcking_chg_load to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> -- _hist -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu3_act_dtl_pcking_chg_hist cascade constraints;
+drop table ods.qu3_act_dtl_pcking_chg_hist cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu3_act_dtl_pcking_chg_hist (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    percent_stock_in_new_pack       number(10, 0)		       null,
+ 13    prod_id			       number(10, 0)		       null
+ 14  )
+ 15  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu3_act_dtl_pcking_chg_hist add constraint qu3_act_dtl_pcking_chg_hist_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu3_act_dtl_pcking_chg_hist_pk on ods.qu3_act_dtl_pcking_chg_hist (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu3_act_dtl_pcking_chg_hist add constraint qu3_act_dtl_pcking_chg_hist_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu3_act_dtl_pcking_chg_hist_uk on ods.qu3_act_dtl_pcking_chg_hist (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> create index ods.qu3_act_dtl_pcking_chg_hist_ts on ods.qu3_act_dtl_pcking_chg_hist (q4x_timestamp) compress;
+
+Index created.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu3_act_dtl_pcking_chg_hist is '[ActivityDetail_PackagingChgAudit][HIST] Detail file for Packaging Change Audit task';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.act_id is '[Activity_ID] Mandatory Foreign key from ActivityHeader.ID';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.percent_stock_in_new_pack is '[PctStockInNewPack] % of stock in store in new packaging';
+
+Comment created.
+
+SQL> comment on column qu3_act_dtl_pcking_chg_hist.prod_id is '[Product_ID] Foreign key from Product.ID';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu3_act_dtl_pcking_chg_hist for ods.qu3_act_dtl_pcking_chg_hist;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu3_act_dtl_pcking_chg_hist to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu3_act_dtl_pcking_chg_hist to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> spool off

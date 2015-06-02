@@ -1,0 +1,1475 @@
+SQL> 
+SQL> -- Update Interface List
+SQL> @qu2_interface_list_UPDATE.sql
+SQL> /*******************************************************************************
+SQL> ** Table Definition
+SQL> ********************************************************************************
+SQL> 
+SQL>  System : qu2
+SQL>  Table  : qu2_interface_list
+SQL>  Owner  : ods
+SQL>  Author : Mal Chambeyron
+SQL> 
+SQL>  Description
+SQL>  -------------------------------------------------------------------------------
+SQL>  Quofore Interface Control : Interface / Entity / Table List
+SQL> 
+SQL>  YYYY-MM-DD   Author		  Description
+SQL>  ----------   --------------------   -------------------------------------------
+SQL>  2015-03-04   Mal Chambeyron	  Updated Interface List
+SQL> 
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- NEW Loader: Interface [qu2cdw54] Entity [ActivityDetailCompetitionActivity] Table [qu2_act_dtl_comp_act]
+SQL> -- NEW Loader: Interface [qu2cdw55] Entity [ActivityDetailCompetitionFacings] Table [qu2_act_dtl_comp_face]
+SQL> -- NEW Loader: Interface [qu2cdw56] Entity [ActivityDetailExecCompliance] Table [qu2_act_dtl_exec_compl]
+SQL> insert into qu2_interface_list (q4x_interface_name,q4x_entity_name,q4x_table_name) values ('QU2CDW54','ACTIVITYDETAILCOMPETITIONACTIVITY','QU2_ACT_DTL_COMP_ACT');
+
+1 row created.
+
+SQL> insert into qu2_interface_list (q4x_interface_name,q4x_entity_name,q4x_table_name) values ('QU2CDW55','ACTIVITYDETAILCOMPETITIONFACINGS','QU2_ACT_DTL_COMP_FACE');
+
+1 row created.
+
+SQL> insert into qu2_interface_list (q4x_interface_name,q4x_entity_name,q4x_table_name) values ('QU2CDW56','ACTIVITYDETAILEXECCOMPLIANCE','QU2_ACT_DTL_EXEC_COMPL');
+
+1 row created.
+
+SQL> -- RETIRE Loader: Interface [qu2cdw36] Entity [ActivityDetailSecLocFridge] Table [qu2_act_dtl_fridge]
+SQL> -- RETIRE Loader: Interface [qu2cdw37] Entity [ActivityDetailSecLocCafeUnit] Table [qu2_act_dtl_cafe_unit]
+SQL> delete from qu2_interface_list where q4x_interface_name in ('QU2CDW36', 'QU2CDW37');
+
+2 rows deleted.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- Add Columns to Tables
+SQL> @qu2_act_dtl_a_loc_UPDATE.sql
+SQL> 
+SQL> /*******************************************************************************
+SQL> /* Table Definition
+SQL> /*******************************************************************************
+SQL> 
+SQL>   System : qu2
+SQL>   Owner  : ods
+SQL>   Table  : qu2_act_dtl_a_loc_load|hist
+SQL>   Author : Mal Chambeyron
+SQL> 
+SQL>   Description
+SQL>   ------------------------------------------------------------------------------
+SQL>   Quofore Loader [qu2_act_dtl_a_loc_load|hist] table creation script
+SQL> 
+SQL>   YYYY-MM-DD  Author		 Description
+SQL>   ----------  --------------------  --------------------------------------------
+SQL>   2015-03-04  Mal Chambeyron	 Add New Columns
+SQL> 
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu2_act_dtl_a_loc_load add (
+  2    secondary_loc		       number(10, 0)		       null,
+  3    other_loc		       number(10, 0)		       null,
+  4    no_ts			       number(10, 0)		       null
+  5  )
+  6  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_a_loc_hist add (
+  2    secondary_loc		       number(10, 0)		       null,
+  3    other_loc		       number(10, 0)		       null,
+  4    no_ts			       number(10, 0)		       null
+  5  )
+  6  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on column qu2_act_dtl_a_loc_load.secondary_loc is '[SecondaryLocation] Total number of hardware in secondary locations';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_a_loc_load.other_loc is '[OtherLocation] Total number of hardware in other locations';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_a_loc_load.no_ts is '[NumTS] Number of TS';
+
+Comment created.
+
+SQL> --
+SQL> comment on column qu2_act_dtl_a_loc_hist.secondary_loc is '[SecondaryLocation] Total number of hardware in secondary locations';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_a_loc_hist.other_loc is '[OtherLocation] Total number of hardware in other locations';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_a_loc_hist.no_ts is '[NumTS] Number of TS';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu2_act_dtl_off_loc_UPDATE.sql
+SQL> 
+SQL> /*******************************************************************************
+SQL> /* Table Definition
+SQL> /*******************************************************************************
+SQL> 
+SQL>   System : qu2
+SQL>   Owner  : ods
+SQL>   Table  : qu2_act_dtl_off_loc_load|hist
+SQL>   Author : Mal Chambeyron
+SQL> 
+SQL>   Description
+SQL>   ------------------------------------------------------------------------------
+SQL>   Quofore Loader [qu2_act_dtl_off_loc_load|hist] table creation script
+SQL> 
+SQL>   YYYY-MM-DD  Author		 Description
+SQL>   ----------  --------------------  --------------------------------------------
+SQL>   2015-03-04  Mal Chambeyron	 Add New Columns
+SQL> 
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu2_act_dtl_off_loc_load add (
+  2    promotional_type 	       number(10, 0)		       null,
+  3    brand			       number(10, 0)		       null,
+  4    promotional_impact	       number(10, 0)		       null,
+  5    no_pre_pack_units	       number(10, 0)		       null,
+  6    tm_influence		       number(10, 0)		       null
+  7  )
+  8  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_off_loc_hist add (
+  2    promotional_type 	       number(10, 0)		       null,
+  3    brand			       number(10, 0)		       null,
+  4    promotional_impact	       number(10, 0)		       null,
+  5    no_pre_pack_units	       number(10, 0)		       null,
+  6    tm_influence		       number(10, 0)		       null
+  7  )
+  8  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on column qu2_act_dtl_off_loc_load.promotional_type is '[PromotionalType] Promotion Type';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_load.brand is '[Brand] Brand';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_load.promotional_impact is '[PromotionalImpact] Impact of promotion';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_load.no_pre_pack_units is '[NumPrepackUnits] Number of prepack units';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_load.tm_influence is '[TMInfluence] TMInfluence';
+
+Comment created.
+
+SQL> --
+SQL> comment on column qu2_act_dtl_off_loc_hist.promotional_type is '[PromotionalType] Promotion Type';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_hist.brand is '[Brand] Brand';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_hist.promotional_impact is '[PromotionalImpact] Impact of promotion';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_hist.no_pre_pack_units is '[NumPrepackUnits] Number of prepack units';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_off_loc_hist.tm_influence is '[TMInfluence] TMInfluence';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu2_act_hdr_UPDATE.sql
+SQL> 
+SQL> /*******************************************************************************
+SQL> /* Table Definition
+SQL> /*******************************************************************************
+SQL> 
+SQL>   System : qu2
+SQL>   Owner  : ods
+SQL>   Table  : qu2_act_hdr_load|hist
+SQL>   Author : Mal Chambeyron
+SQL> 
+SQL>   Description
+SQL>   ------------------------------------------------------------------------------
+SQL>   Quofore Loader [qu2_act_hdr_load|hist] table creation script
+SQL> 
+SQL>   YYYY-MM-DD  Author		 Description
+SQL>   ----------  --------------------  --------------------------------------------
+SQL>   2015-03-04  Mal Chambeyron	 Add New Columns
+SQL> 
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- Table
+SQL> alter table ods.qu2_act_hdr_load add (
+  2    outcome_para_import_1	       number(10, 0)		       null,
+  3    letter_advising_1	       number(10, 0)		       null,
+  4    store_supply_1		       number(10, 0)		       null,
+  5    store_stock_1		       number(10, 0)		       null,
+  6    avg_inners_old_1 	       number(10, 0)		       null,
+  7    ranged_prod		       number(10, 0)		       null,
+  8    prod_ranging		       number(10, 0)		       null,
+  9    admin			       number(10, 0)		       null,
+ 10    conference		       number(10, 0)		       null,
+ 11    cust_not_in_quofore	       number(10, 0)		       null,
+ 12    development_time 	       number(10, 0)		       null,
+ 13    meeting_other		       number(10, 0)		       null,
+ 14    meeting_period		       number(10, 0)		       null,
+ 15    telesales		       number(10, 0)		       null,
+ 16    trade_show		       number(10, 0)		       null,
+ 17    training 		       number(10, 0)		       null,
+ 18    different_terr		       number(10, 0)		       null
+ 19  )
+ 20  ;
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_hdr_hist add (
+  2    outcome_para_import_1	       number(10, 0)		       null,
+  3    letter_advising_1	       number(10, 0)		       null,
+  4    store_supply_1		       number(10, 0)		       null,
+  5    store_stock_1		       number(10, 0)		       null,
+  6    avg_inners_old_1 	       number(10, 0)		       null,
+  7    ranged_prod		       number(10, 0)		       null,
+  8    prod_ranging		       number(10, 0)		       null,
+  9    admin			       number(10, 0)		       null,
+ 10    conference		       number(10, 0)		       null,
+ 11    cust_not_in_quofore	       number(10, 0)		       null,
+ 12    development_time 	       number(10, 0)		       null,
+ 13    meeting_other		       number(10, 0)		       null,
+ 14    meeting_period		       number(10, 0)		       null,
+ 15    telesales		       number(10, 0)		       null,
+ 16    trade_show		       number(10, 0)		       null,
+ 17    training 		       number(10, 0)		       null,
+ 18    different_terr		       number(10, 0)		       null
+ 19  )
+ 20  ;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on column qu2_act_hdr_load.outcome_para_import_1 is '[OutcomeParaImport1] Outcome';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.letter_advising_1 is '[LetterAdvising1] Letter advising of parallel importing?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.store_supply_1 is '[StoreSupply1] Who is supplying the Wrigley parallel products to the store?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.store_stock_1 is '[StoreStock1] How often does this store stock Wrigley parallel products?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.avg_inners_old_1 is '[AvgInnersold1] Average # of inners sold per month in total';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.ranged_prod is '[RangedProd] Where are the products ranged';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.prod_ranging is '[ProdRanging] Reason for ranging these products';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.admin is '[Administration] Administration';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.conference is '[Conference] Conference';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.cust_not_in_quofore is '[CustomerNotInQuofore] Customer Not In Quofore';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.development_time is '[DevelopmentTime] Development Time';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.meeting_other is '[MeetingOther] Meeting Other';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.meeting_period is '[MeetingPeriod] Meeting Period';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.telesales is '[Telesales] Telesales';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.trade_show is '[TradeShow] Trade Show';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.training is '[Training] Training';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_load.different_terr is '[DifferentTerritory] Different Territory';
+
+Comment created.
+
+SQL> --
+SQL> comment on column qu2_act_hdr_hist.outcome_para_import_1 is '[OutcomeParaImport1] Outcome';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.letter_advising_1 is '[LetterAdvising1] Letter advising of parallel importing?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.store_supply_1 is '[StoreSupply1] Who is supplying the Wrigley parallel products to the store?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.store_stock_1 is '[StoreStock1] How often does this store stock Wrigley parallel products?';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.avg_inners_old_1 is '[AvgInnersold1] Average # of inners sold per month in total';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.ranged_prod is '[RangedProd] Where are the products ranged';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.prod_ranging is '[ProdRanging] Reason for ranging these products';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.admin is '[Administration] Administration';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.conference is '[Conference] Conference';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.cust_not_in_quofore is '[CustomerNotInQuofore] Customer Not In Quofore';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.development_time is '[DevelopmentTime] Development Time';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.meeting_other is '[MeetingOther] Meeting Other';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.meeting_period is '[MeetingPeriod] Meeting Period';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.telesales is '[Telesales] Telesales';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.trade_show is '[TradeShow] Trade Show';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.training is '[Training] Training';
+
+Comment created.
+
+SQL> comment on column qu2_act_hdr_hist.different_terr is '[DifferentTerritory] Different Territory';
+
+Comment created.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> -- New Tables
+SQL> @qu2_act_dtl_comp_act_tables.sql;
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu2
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu2_act_dtl_comp_act
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu2] Quofore - Wrigley Australia
+SQL> 	 [qu2_act_dtl_comp_act] table creation script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2013-02-19  Mal Chambeyron	   Created
+SQL> 	 2014-05-15  Mal Chambeyron	   Make into a Template
+SQL> 	 2014-05-15  Mal Chambeyron	   Cleanup Source Id
+SQL> 	 2014-05-15  Mal Chambeyron	   Updated to Handle Special Case [digest]
+SQL> 	 2015-03-18  Mal Chambeyron	   Remove Source Id Completely
+SQL> 	 2015-03-18  [Auto-Generate]	   [Auto-Generated] Created
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- _load -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_comp_act_load cascade constraints;
+drop table ods.qu2_act_dtl_comp_act_load cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_comp_act_load (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    wwy_comp 		       number(10, 0)		       null,
+ 13    wwy_comp_call_cycle	       number(10, 0)		       null,
+ 14    wwy_comp_focus		       number(10, 0)		       null,
+ 15    wwy_offer_to_retailer	       number(10, 0)		       null,
+ 16    wwy_comp_act_app_by	       number(10, 0)		       null,
+ 17    wwy_impact_hardware	       number(10, 0)		       null,
+ 18    wwy_impact_facings	       number(10, 0)		       null,
+ 19    wwy_result_exit		       number(10, 0)		       null,
+ 20    wwy_value_reward 	       varchar2(4000 char)	       null,
+ 21    wwy_result_exit_app_by	       number(10, 0)		       null,
+ 22    hier_node_id		       number(10, 0)		       null
+ 23  )
+ 24  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_comp_act_load add constraint qu2_act_dtl_comp_act_load_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_comp_act_load_pk on ods.qu2_act_dtl_comp_act_load (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_comp_act_load add constraint qu2_act_dtl_comp_act_load_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_comp_act_load_uk on ods.qu2_act_dtl_comp_act_load (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_comp_act_load is '[ActivityDetail_CompetitionAct][LOAD] Detail file for Competition Activity task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_comp is '[WrigCompetitor] Competitor';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_comp_call_cycle is '[WrigCompCallCycle] Competitor call cycle';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_comp_focus is '[WrigCompFocus] Competitor focus';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_offer_to_retailer is '[WrigOfferToRetailer] Offer to retailer';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_comp_act_app_by is '[WrigCompActAppBy] Competitor activity approved by';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_impact_hardware is '[WrigImpactHardware] Impact on entry Wrigley hardware';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_impact_facings is '[WrigImpactFacings] Impact on entry Wrigley facings';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_result_exit is '[WrigResultExit] Wrigley result on exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_value_reward is '[WrigValueReward] Value of reward';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.wwy_result_exit_app_by is '[WrigResultExitAppBy] Wrigley result on exit approved by';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_load.hier_node_id is '[HierarchyNode_Id] Foreign key from [Product].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_comp_act_load for ods.qu2_act_dtl_comp_act_load;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_comp_act_load to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_comp_act_load to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> -- _hist -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_comp_act_hist cascade constraints;
+drop table ods.qu2_act_dtl_comp_act_hist cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_comp_act_hist (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    wwy_comp 		       number(10, 0)		       null,
+ 13    wwy_comp_call_cycle	       number(10, 0)		       null,
+ 14    wwy_comp_focus		       number(10, 0)		       null,
+ 15    wwy_offer_to_retailer	       number(10, 0)		       null,
+ 16    wwy_comp_act_app_by	       number(10, 0)		       null,
+ 17    wwy_impact_hardware	       number(10, 0)		       null,
+ 18    wwy_impact_facings	       number(10, 0)		       null,
+ 19    wwy_result_exit		       number(10, 0)		       null,
+ 20    wwy_value_reward 	       varchar2(4000 char)	       null,
+ 21    wwy_result_exit_app_by	       number(10, 0)		       null,
+ 22    hier_node_id		       number(10, 0)		       null
+ 23  )
+ 24  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_comp_act_hist add constraint qu2_act_dtl_comp_act_hist_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_comp_act_hist_pk on ods.qu2_act_dtl_comp_act_hist (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_comp_act_hist add constraint qu2_act_dtl_comp_act_hist_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_comp_act_hist_uk on ods.qu2_act_dtl_comp_act_hist (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> create index ods.qu2_act_dtl_comp_act_hist_ts on ods.qu2_act_dtl_comp_act_hist (q4x_timestamp) compress;
+
+Index created.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_comp_act_hist is '[ActivityDetail_CompetitionAct][HIST] Detail file for Competition Activity task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_comp is '[WrigCompetitor] Competitor';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_comp_call_cycle is '[WrigCompCallCycle] Competitor call cycle';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_comp_focus is '[WrigCompFocus] Competitor focus';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_offer_to_retailer is '[WrigOfferToRetailer] Offer to retailer';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_comp_act_app_by is '[WrigCompActAppBy] Competitor activity approved by';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_impact_hardware is '[WrigImpactHardware] Impact on entry Wrigley hardware';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_impact_facings is '[WrigImpactFacings] Impact on entry Wrigley facings';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_result_exit is '[WrigResultExit] Wrigley result on exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_value_reward is '[WrigValueReward] Value of reward';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.wwy_result_exit_app_by is '[WrigResultExitAppBy] Wrigley result on exit approved by';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_act_hist.hier_node_id is '[HierarchyNode_Id] Foreign key from [Product].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_comp_act_hist for ods.qu2_act_dtl_comp_act_hist;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_comp_act_hist to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_comp_act_hist to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu2_act_dtl_comp_face_tables.sql;
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu2
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu2_act_dtl_comp_face
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu2] Quofore - Wrigley Australia
+SQL> 	 [qu2_act_dtl_comp_face] table creation script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2013-02-19  Mal Chambeyron	   Created
+SQL> 	 2014-05-15  Mal Chambeyron	   Make into a Template
+SQL> 	 2014-05-15  Mal Chambeyron	   Cleanup Source Id
+SQL> 	 2014-05-15  Mal Chambeyron	   Updated to Handle Special Case [digest]
+SQL> 	 2015-03-18  Mal Chambeyron	   Remove Source Id Completely
+SQL> 	 2015-03-18  [Auto-Generate]	   [Auto-Generated] Created
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- _load -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_comp_face_load cascade constraints;
+drop table ods.qu2_act_dtl_comp_face_load cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_comp_face_load (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    facings_store		       number(10, 0)		       null,
+ 13    prod_id			       number(10, 0)		       null
+ 14  )
+ 15  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_comp_face_load add constraint qu2_act_dtl_comp_face_load_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_comp_face_load_pk on ods.qu2_act_dtl_comp_face_load (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_comp_face_load add constraint qu2_act_dtl_comp_face_load_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_comp_face_load_uk on ods.qu2_act_dtl_comp_face_load (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_comp_face_load is '[ActivityDetail_CompetitionFacings][LOAD] Detail file for Competition Facings task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.facings_store is '[facingsstore] Number of competitor facings';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_load.prod_id is '[Product_ID] Foreign key from [Hierarchy].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_comp_face_load for ods.qu2_act_dtl_comp_face_load;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_comp_face_load to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_comp_face_load to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> -- _hist -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_comp_face_hist cascade constraints;
+drop table ods.qu2_act_dtl_comp_face_hist cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_comp_face_hist (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    facings_store		       number(10, 0)		       null,
+ 13    prod_id			       number(10, 0)		       null
+ 14  )
+ 15  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_comp_face_hist add constraint qu2_act_dtl_comp_face_hist_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_comp_face_hist_pk on ods.qu2_act_dtl_comp_face_hist (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_comp_face_hist add constraint qu2_act_dtl_comp_face_hist_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_comp_face_hist_uk on ods.qu2_act_dtl_comp_face_hist (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> create index ods.qu2_act_dtl_comp_face_hist_ts on ods.qu2_act_dtl_comp_face_hist (q4x_timestamp) compress;
+
+Index created.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_comp_face_hist is '[ActivityDetail_CompetitionFacings][HIST] Detail file for Competition Facings task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.facings_store is '[facingsstore] Number of competitor facings';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_comp_face_hist.prod_id is '[Product_ID] Foreign key from [Hierarchy].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_comp_face_hist for ods.qu2_act_dtl_comp_face_hist;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_comp_face_hist to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_comp_face_hist to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> @qu2_act_dtl_exec_compl_tables.sql;
+SQL> 
+SQL>   /*****************************************************************************
+SQL>   /* Table Definition
+SQL>   /*****************************************************************************
+SQL> 
+SQL> 	 System   : qu2
+SQL> 	 Owner	  : ods
+SQL> 	 Table	  : qu2_act_dtl_exec_compl
+SQL> 	 Author   : [Auto-Generate]
+SQL> 
+SQL> 	 Description
+SQL> 	 ----------------------------------------------------------------------------
+SQL> 	 [qu2] Quofore - Wrigley Australia
+SQL> 	 [qu2_act_dtl_exec_compl] table creation script _load and _hist
+SQL> 
+SQL> 	 Both tables are transactional, with records temporarily stored in _load till
+SQL> 	 the batch is complete, at which time they are moved permanently to _hist
+SQL> 
+SQL> 	 YYYY-MM-DD  Author		   Description
+SQL> 	 ----------  --------------------  ------------------------------------------
+SQL> 	 2013-02-19  Mal Chambeyron	   Created
+SQL> 	 2014-05-15  Mal Chambeyron	   Make into a Template
+SQL> 	 2014-05-15  Mal Chambeyron	   Cleanup Source Id
+SQL> 	 2014-05-15  Mal Chambeyron	   Updated to Handle Special Case [digest]
+SQL> 	 2015-03-18  Mal Chambeyron	   Remove Source Id Completely
+SQL> 	 2015-03-18  [Auto-Generate]	   [Auto-Generated] Created
+SQL> 
+SQL>   *****************************************************************************/
+SQL> 
+SQL> -- _load -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_exec_compl_load cascade constraints;
+drop table ods.qu2_act_dtl_exec_compl_load cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_exec_compl_load (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    act_name 		       number(10, 0)		       null,
+ 13    objective		       number(10, 0)		       null,
+ 14    hardware_on_entry	       number(10, 0)		       null,
+ 15    pos_on_entry		       number(10, 0)		       null,
+ 16    planogram_on_entry	       number(10, 0)		       null,
+ 17    allocation_on_entry	       number(10, 0)		       null,
+ 18    promotion_compliance_on_entry   number(10, 0)		       null,
+ 19    over_all_compliance_on_entry    number(10, 0)		       null,
+ 20    commentary_on_entry	       number(10, 0)		       null,
+ 21    hardware_on_exit 	       number(10, 0)		       null,
+ 22    pos_on_exit		       number(10, 0)		       null,
+ 23    planogram_on_exit	       number(10, 0)		       null,
+ 24    allocation_on_exit	       number(10, 0)		       null,
+ 25    promotion_compliance_exit       number(10, 0)		       null,
+ 26    over_all_compliance_exit        number(10, 0)		       null,
+ 27    commentary_on_exit	       number(10, 0)		       null,
+ 28    action_plan		       number(10, 0)		       null,
+ 29    hier_node_id		       number(10, 0)		       null
+ 30  )
+ 31  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_exec_compl_load add constraint qu2_act_dtl_exec_compl_load_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_exec_compl_load_pk on ods.qu2_act_dtl_exec_compl_load (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_exec_compl_load add constraint qu2_act_dtl_exec_compl_load_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_exec_compl_load_uk on ods.qu2_act_dtl_exec_compl_load (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_exec_compl_load is '[ActivityDetail_ExecCompliance][LOAD] Detail file for Execution Compliance task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.act_name is '[ActivityName] Activity Name';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.objective is '[Objective] Objective';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.hardware_on_entry is '[HardwareOnEntry] Hardware On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.pos_on_entry is '[PositionOnEntry] Position in Store on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.planogram_on_entry is '[PlanogramOnEntry] Planogram On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.allocation_on_entry is '[AllocationOnEntry] Allocation on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.promotion_compliance_on_entry is '[PromotionComplianceOnEntry] Promotion Compliance on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.over_all_compliance_on_entry is '[OverallComplianceOnEntry] Overall Compliance on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.commentary_on_entry is '[CommentaryOnEntry] Commentary On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.hardware_on_exit is '[HardwareOnExit] Hardware on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.pos_on_exit is '[PositionOnExit] Position in Store On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.planogram_on_exit is '[PlanogramOnExit] Planogram On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.allocation_on_exit is '[AllocationOnExit] Allocation on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.promotion_compliance_exit is '[PromotionComplianceExit] Promotion Compliance On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.over_all_compliance_exit is '[OverallComplianceExit] Overall Compliance on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.commentary_on_exit is '[CommentaryOnExit] Commentary on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.action_plan is '[ActionPlan] Action Plan';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_load.hier_node_id is '[HierarchyNode_Id] Foreign key from [Hierarchy].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_exec_compl_load for ods.qu2_act_dtl_exec_compl_load;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_exec_compl_load to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_exec_compl_load to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> -- _hist -----------------------------------------------------------------------
+SQL> 
+SQL> -- Table
+SQL> drop table ods.qu2_act_dtl_exec_compl_hist cascade constraints;
+drop table ods.qu2_act_dtl_exec_compl_hist cascade constraints
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> 
+SQL> create table ods.qu2_act_dtl_exec_compl_hist (
+  2    q4x_load_seq		       number(15)		       not null,
+  3    q4x_load_data_seq	       number(10)		       not null,
+  4    q4x_create_user		       varchar2(32 char)	       not null,
+  5    q4x_create_time		       date			       not null,
+  6    q4x_modify_user		       varchar2(32 char)	       not null,
+  7    q4x_modify_time		       date			       not null,
+  8    q4x_batch_id		       number(15)		       not null,
+  9    q4x_timestamp		       date			       not null,
+ 10    id			       number(10, 0)		       not null,
+ 11    act_id			       number(10, 0)		       null,
+ 12    act_name 		       number(10, 0)		       null,
+ 13    objective		       number(10, 0)		       null,
+ 14    hardware_on_entry	       number(10, 0)		       null,
+ 15    pos_on_entry		       number(10, 0)		       null,
+ 16    planogram_on_entry	       number(10, 0)		       null,
+ 17    allocation_on_entry	       number(10, 0)		       null,
+ 18    promotion_compliance_on_entry   number(10, 0)		       null,
+ 19    over_all_compliance_on_entry    number(10, 0)		       null,
+ 20    commentary_on_entry	       number(10, 0)		       null,
+ 21    hardware_on_exit 	       number(10, 0)		       null,
+ 22    pos_on_exit		       number(10, 0)		       null,
+ 23    planogram_on_exit	       number(10, 0)		       null,
+ 24    allocation_on_exit	       number(10, 0)		       null,
+ 25    promotion_compliance_exit       number(10, 0)		       null,
+ 26    over_all_compliance_exit        number(10, 0)		       null,
+ 27    commentary_on_exit	       number(10, 0)		       null,
+ 28    action_plan		       number(10, 0)		       null,
+ 29    hier_node_id		       number(10, 0)		       null
+ 30  )
+ 31  compress;
+
+Table created.
+
+SQL> 
+SQL> -- Keys / Indexes
+SQL> alter table ods.qu2_act_dtl_exec_compl_hist add constraint qu2_act_dtl_exec_compl_hist_pk primary key (q4x_load_seq,q4x_load_data_seq)
+  2    using index (create unique index ods.qu2_act_dtl_exec_compl_hist_pk on ods.qu2_act_dtl_exec_compl_hist (q4x_load_seq,q4x_load_data_seq) compress);
+
+Table altered.
+
+SQL> 
+SQL> alter table ods.qu2_act_dtl_exec_compl_hist add constraint qu2_act_dtl_exec_compl_hist_uk unique (id,q4x_batch_id)
+  2    using index (create unique index ods.qu2_act_dtl_exec_compl_hist_uk on ods.qu2_act_dtl_exec_compl_hist (id,q4x_batch_id)) compress;
+
+Table altered.
+
+SQL> 
+SQL> create index ods.qu2_act_dtl_exec_compl_hist_ts on ods.qu2_act_dtl_exec_compl_hist (q4x_timestamp) compress;
+
+Index created.
+
+SQL> 
+SQL> -- Comments
+SQL> comment on table qu2_act_dtl_exec_compl_hist is '[ActivityDetail_ExecCompliance][HIST] Detail file for Execution Compliance task';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_load_seq is '* Unique Load Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_load_data_seq is '* Data Record Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_create_user is '* Create User - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_create_time is '* Create Date/Time - Set on Creation';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_modify_user is '* Modify User - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_modify_time is '* Modify Date/Time - Updated on Each Modification';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_batch_id is '* Quofore Batch Id';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.q4x_timestamp is '* Timestamp';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.id is '[ID] Unique Internal ID for the row';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.act_id is '[Activity_ID] Mandatory foreign key from [ActivityHeader].[Id].';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.act_name is '[ActivityName] Activity Name';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.objective is '[Objective] Objective';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.hardware_on_entry is '[HardwareOnEntry] Hardware On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.pos_on_entry is '[PositionOnEntry] Position in Store on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.planogram_on_entry is '[PlanogramOnEntry] Planogram On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.allocation_on_entry is '[AllocationOnEntry] Allocation on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.promotion_compliance_on_entry is '[PromotionComplianceOnEntry] Promotion Compliance on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.over_all_compliance_on_entry is '[OverallComplianceOnEntry] Overall Compliance on Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.commentary_on_entry is '[CommentaryOnEntry] Commentary On Entry';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.hardware_on_exit is '[HardwareOnExit] Hardware on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.pos_on_exit is '[PositionOnExit] Position in Store On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.planogram_on_exit is '[PlanogramOnExit] Planogram On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.allocation_on_exit is '[AllocationOnExit] Allocation on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.promotion_compliance_exit is '[PromotionComplianceExit] Promotion Compliance On Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.over_all_compliance_exit is '[OverallComplianceExit] Overall Compliance on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.commentary_on_exit is '[CommentaryOnExit] Commentary on Exit';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.action_plan is '[ActionPlan] Action Plan';
+
+Comment created.
+
+SQL> comment on column qu2_act_dtl_exec_compl_hist.hier_node_id is '[HierarchyNode_Id] Foreign key from [Hierarchy].[Id].';
+
+Comment created.
+
+SQL> 
+SQL> -- Synonyms
+SQL> create or replace public synonym qu2_act_dtl_exec_compl_hist for ods.qu2_act_dtl_exec_compl_hist;
+
+Synonym created.
+
+SQL> 
+SQL> -- Grants
+SQL> grant select,insert,update,delete on ods.qu2_act_dtl_exec_compl_hist to ods_app;
+
+Grant succeeded.
+
+SQL> grant select on ods.qu2_act_dtl_exec_compl_hist to dds_app, qv_user, bo_user;
+
+Grant succeeded.
+
+SQL> 
+SQL> /*******************************************************************************
+SQL> ** END-OF-FILE
+SQL> *******************************************************************************/
+SQL> 
+SQL> spool off

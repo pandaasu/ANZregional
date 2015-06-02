@@ -1,0 +1,2489 @@
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Connect
+SQL> -- connect lics_app/password@db1270p
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Setup LICS Settings
+SQL> 
+SQL> -- CREATE
+SQL> insert into lics_setting (set_group,set_code,set_value) values ('QU2_WRIGLEY_AU','EMAIL:DEFAULT','group_anz_venus_production_notification@effem.com');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> -- UPDATE (where already CREATED)
+SQL> update lics_setting
+  2  set set_value ='group_anz_venus_production_notification@effem.com'
+  3  where set_group = 'QU2_WRIGLEY_AU'
+  4  and set_code ='EMAIL:DEFAULT';
+
+1 row updated.
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Setup LICS Jobs
+SQL> 
+SQL> -- CREATE
+SQL> insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('IB_QU2_01','Quofore - Wrigley Australia - Inbound - 01',null,20,null,'group_anz_venus_production_notification@effem.com','*INBOUND','IB_QU2#01',null,'sysdate',null,'1');
+insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('IB_QU2_01','Quofore - Wrigley Australia - Inbound - 01',null,20,null,'group_anz_venus_production_notification@effem.com','*INBOUND','IB_QU2#01',null,'sysdate',null,'1')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_JOB_PK) violated 
+
+
+SQL> insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('FILE_QU2_01','Quofore - Wrigley Australia - File Processor - 01',null,20,null,'group_anz_venus_production_notification@effem.com','*FILE','FP_QU2#01',null,'sysdate',null,'1');
+insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('FILE_QU2_01','Quofore - Wrigley Australia - File Processor - 01',null,20,null,'group_anz_venus_production_notification@effem.com','*FILE','FP_QU2#01',null,'sysdate',null,'1')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_JOB_PK) violated 
+
+
+SQL> insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('QU2_PROCESS_BATCH','Quofore - Wrigley Australia - Process Batch - Every 15 Minutes',null,20,null,'group_anz_venus_production_notification@effem.com','*PROCEDURE',null,'ods_app.qu2_batch.process_batches','sysdate','sysdate+1/96','1');
+insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('QU2_PROCESS_BATCH','Quofore - Wrigley Australia - Process Batch - Every 15 Minutes',null,20,null,'group_anz_venus_production_notification@effem.com','*PROCEDURE',null,'ods_app.qu2_batch.process_batches','sysdate','sysdate+1/96','1')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_JOB_PK) violated 
+
+
+SQL> insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('QU2_CHECK_BATCH','Quofore - Wrigley Australia - Check Batches - Daily 07:00',null,20,null,'group_anz_venus_production_notification@effem.com','*PROCEDURE',null,'ods_app.qu2_batch.check_batches','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1');
+insert into lics_job (job_job,job_description,job_res_group,job_exe_history,job_opr_alert,job_ema_group,job_type,job_int_group,job_procedure,job_next,job_interval,job_status) values ('QU2_CHECK_BATCH','Quofore - Wrigley Australia - Check Batches - Daily 07:00',null,20,null,'group_anz_venus_production_notification@effem.com','*PROCEDURE',null,'ods_app.qu2_batch.check_batches','lics_time.schedule_next(''*ALL'',7)','lics_time.schedule_next(''*ALL'',7)','1')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_JOB_PK) violated 
+
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> -- UPDATE (where already CREATED)
+SQL> 
+SQL> -- deactivate existing
+SQL> update lics_job
+  2  set job_status = '0'
+  3  where job_job like 'QU2%'
+  4  or job_job like '%QU2_01';
+
+4 rows updated.
+
+SQL> 
+SQL> -- updates
+SQL> update lics_job
+  2  set
+  3    job_description = 'Quofore - Wrigley Australia - Inbound - 01',
+  4    job_res_group = null, job_exe_history = 20, job_opr_alert = null,
+  5    job_ema_group = 'group_anz_venus_production_notification@effem.com',
+  6    job_type = '*INBOUND',
+  7    job_int_group = 'IB_QU2#01',
+  8    job_procedure = null,
+  9    job_next = 'sysdate', job_interval = null,
+ 10    job_status = '1'
+ 11  where job_job = 'IB_QU2_01';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_job
+  2  set
+  3    job_description = 'Quofore - Wrigley Australia - File Processor - 01',
+  4    job_res_group = null,
+  5    job_exe_history = 20,
+  6    job_opr_alert = null,
+  7    job_ema_group = 'group_anz_venus_production_notification@effem.com',
+  8    job_type = '*FILE',
+  9    job_int_group = 'FP_QU2#01',
+ 10    job_procedure = null,
+ 11    job_next = 'sysdate',
+ 12    job_interval = null,
+ 13    job_status = '1'
+ 14  where job_job = 'FILE_QU2_01';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_job
+  2  set
+  3    job_description = 'Quofore - Wrigley Australia - Process Batch - Every 15 Minutes',
+  4    job_res_group = null,
+  5    job_exe_history = 20,
+  6    job_opr_alert = null,
+  7    job_ema_group = 'group_anz_venus_production_notification@effem.com',
+  8    job_type = '*PROCEDURE',
+  9    job_int_group = null,
+ 10    job_procedure = 'ods_app.qu2_batch.process_batches',
+ 11    job_next = 'sysdate',
+ 12    job_interval = 'sysdate+1/96',
+ 13    job_status = '1'
+ 14  where job_job = 'QU2_PROCESS_BATCH';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_job
+  2  set
+  3    job_description = 'Quofore - Wrigley Australia - Check Batches - Daily 07:00',
+  4    job_res_group = null,
+  5    job_exe_history = 20,
+  6    job_opr_alert = null,
+  7    job_ema_group = 'group_anz_venus_production_notification@effem.com',
+  8    job_type = '*PROCEDURE',
+  9    job_int_group = null,
+ 10    job_procedure = 'ods_app.qu2_batch.check_batches',
+ 11    job_next = 'lics_time.schedule_next(''*ALL'',7)',
+ 12    job_interval = 'lics_time.schedule_next(''*ALL'',7)',
+ 13    job_status = '1'
+ 14  where job_job = 'QU2_CHECK_BATCH';
+
+1 row updated.
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Setup LICS Interace Entries
+SQL> 
+SQL> -- CREATE
+SQL> 
+SQL> -- interfaces
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW00','Quofore - Wrigley Australia - Digest','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW00',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw00','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW00','Quofore - Wrigley Australia - Digest','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW00',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw00','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW01','Quofore - Wrigley Australia - Hierarchy','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW01',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw01','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW01','Quofore - Wrigley Australia - Hierarchy','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW01',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw01','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW02','Quofore - Wrigley Australia - GeneralList','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW02',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw02','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW02','Quofore - Wrigley Australia - GeneralList','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW02',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw02','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW03','Quofore - Wrigley Australia - Role','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW03',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw03','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW03','Quofore - Wrigley Australia - Role','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW03',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw03','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW04','Quofore - Wrigley Australia - Position','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW04',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw04','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW04','Quofore - Wrigley Australia - Position','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW04',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw04','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW05','Quofore - Wrigley Australia - Rep','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW05',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw05','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW05','Quofore - Wrigley Australia - Rep','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW05',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw05','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW06','Quofore - Wrigley Australia - RepAddress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW06',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw06','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW06','Quofore - Wrigley Australia - RepAddress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW06',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw06','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW07','Quofore - Wrigley Australia - Product','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW07',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw07','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW07','Quofore - Wrigley Australia - Product','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW07',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw07','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW08','Quofore - Wrigley Australia - ProductBarcode','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW08',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw08','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW08','Quofore - Wrigley Australia - ProductBarcode','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW08',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw08','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW09','Quofore - Wrigley Australia - Customer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW09',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw09','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW09','Quofore - Wrigley Australia - Customer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW09',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw09','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW10','Quofore - Wrigley Australia - CustomerAddress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW10',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw10','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW10','Quofore - Wrigley Australia - CustomerAddress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW10',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw10','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW11','Quofore - Wrigley Australia - CustomerNote','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW11',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw11','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW11','Quofore - Wrigley Australia - CustomerNote','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW11',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw11','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW12','Quofore - Wrigley Australia - CustomerContact','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW12',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw12','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW12','Quofore - Wrigley Australia - CustomerContact','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW12',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw12','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW13','Quofore - Wrigley Australia - CustomerVisitorDay','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW13',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw13','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW13','Quofore - Wrigley Australia - CustomerVisitorDay','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW13',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw13','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW14','Quofore - Wrigley Australia - AssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW14',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw14','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW14','Quofore - Wrigley Australia - AssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW14',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw14','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW15','Quofore - Wrigley Australia - CustomerAssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW15',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw15','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW15','Quofore - Wrigley Australia - CustomerAssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW15',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw15','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW16','Quofore - Wrigley Australia - ProductAssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW16',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw16','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW16','Quofore - Wrigley Australia - ProductAssortmentDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW16',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw16','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW17','Quofore - Wrigley Australia - AuthorisedListProduct','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW17',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw17','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW17','Quofore - Wrigley Australia - AuthorisedListProduct','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW17',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw17','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW18','Quofore - Wrigley Australia - Appointment','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW18',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw18','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW18','Quofore - Wrigley Australia - Appointment','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW18',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw18','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW19','Quofore - Wrigley Australia - CallCard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW19',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw19','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW19','Quofore - Wrigley Australia - CallCard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW19',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw19','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW20','Quofore - Wrigley Australia - CallcardNote','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW20',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw20','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW20','Quofore - Wrigley Australia - CallcardNote','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW20',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw20','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW21','Quofore - Wrigley Australia - OrderHeader','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW21',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw21','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW21','Quofore - Wrigley Australia - OrderHeader','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW21',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw21','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW22','Quofore - Wrigley Australia - OrderDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW22',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw22','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW22','Quofore - Wrigley Australia - OrderDetail','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW22',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw22','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW23','Quofore - Wrigley Australia - Territory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW23',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw23','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW23','Quofore - Wrigley Australia - Territory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW23',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw23','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW24','Quofore - Wrigley Australia - CustomerTerritory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW24',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw24','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW24','Quofore - Wrigley Australia - CustomerTerritory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW24',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw24','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW25','Quofore - Wrigley Australia - PositionTerritory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW25',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw25','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW25','Quofore - Wrigley Australia - PositionTerritory','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW25',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw25','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW26','Quofore - Wrigley Australia - Survey','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW26',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw26','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW26','Quofore - Wrigley Australia - Survey','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW26',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw26','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW27','Quofore - Wrigley Australia - SurveyQuestion','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW27',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw27','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW27','Quofore - Wrigley Australia - SurveyQuestion','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW27',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw27','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW28','Quofore - Wrigley Australia - ResponseOption','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW28',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw28','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW28','Quofore - Wrigley Australia - ResponseOption','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW28',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw28','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW29','Quofore - Wrigley Australia - Task','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW29',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw29','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW29','Quofore - Wrigley Australia - Task','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW29',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw29','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW30','Quofore - Wrigley Australia - TaskAssignment','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW30',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw30','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW30','Quofore - Wrigley Australia - TaskAssignment','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW30',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw30','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW31','Quofore - Wrigley Australia - TaskCustomer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW31',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw31','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW31','Quofore - Wrigley Australia - TaskCustomer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW31',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw31','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW32','Quofore - Wrigley Australia - TaskProduct','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW32',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw32','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW32','Quofore - Wrigley Australia - TaskProduct','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW32',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw32','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW33','Quofore - Wrigley Australia - TaskSurvey','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW33',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw33','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW33','Quofore - Wrigley Australia - TaskSurvey','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW33',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw33','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW34','Quofore - Wrigley Australia - ActivityHeader','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW34',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw34','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW34','Quofore - Wrigley Australia - ActivityHeader','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW34',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw34','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW35','Quofore - Wrigley Australia - ActivityDetail_ALoc','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW35',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw35','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW35','Quofore - Wrigley Australia - ActivityDetail_ALoc','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW35',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw35','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW38','Quofore - Wrigley Australia - ActivityDetail_Sell_In','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW38',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw38','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW38','Quofore - Wrigley Australia - ActivityDetail_Sell_In','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW38',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw38','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW39','Quofore - Wrigley Australia - ActivityDetail_OffLocation','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW39',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw39','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW39','Quofore - Wrigley Australia - ActivityDetail_OffLocation','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW39',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw39','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW40','Quofore - Wrigley Australia - ActivityDetail_Facing','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW40',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw40','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW40','Quofore - Wrigley Australia - ActivityDetail_Facing','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW40',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw40','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW41','Quofore - Wrigley Australia - ActivityDetail_Checkout_Std','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW41',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw41','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW41','Quofore - Wrigley Australia - ActivityDetail_Checkout_Std','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW41',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw41','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW42','Quofore - Wrigley Australia - ActivityDetail_Checkout_ExpressQZ','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW42',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw42','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW42','Quofore - Wrigley Australia - ActivityDetail_Checkout_ExpressQZ','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW42',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw42','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW43','Quofore - Wrigley Australia - ActivityDetail_Checkout_Express','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW43',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw43','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW43','Quofore - Wrigley Australia - ActivityDetail_Checkout_Express','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW43',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw43','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW44','Quofore - Wrigley Australia - ActivityDetail_Checkout_SelfscanQZ','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW44',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw44','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW44','Quofore - Wrigley Australia - ActivityDetail_Checkout_SelfscanQZ','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW44',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw44','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW45','Quofore - Wrigley Australia - ActivityDetail_Checkout_Selfscan','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW45',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw45','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW45','Quofore - Wrigley Australia - ActivityDetail_Checkout_Selfscan','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW45',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw45','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW46','Quofore - Wrigley Australia - ActivityDetail_LocOOS','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW46',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw46','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW46','Quofore - Wrigley Australia - ActivityDetail_LocOOS','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW46',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw46','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW47','Quofore - Wrigley Australia - ActivityDetail_PermDisplay','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW47',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw47','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW47','Quofore - Wrigley Australia - ActivityDetail_PermDisplay','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW47',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw47','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW48','Quofore - Wrigley Australia - SurveyAnswer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW48',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw48','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW48','Quofore - Wrigley Australia - SurveyAnswer','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW48',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw48','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW49','Quofore - Wrigley Australia - Graveyard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW49',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw49','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW49','Quofore - Wrigley Australia - Graveyard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW49',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw49','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW50','Quofore - Wrigley Australia - ActivityDetail_FacingAisle','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW50',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw50','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW50','Quofore - Wrigley Australia - ActivityDetail_FacingAisle','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW50',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw50','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW51','Quofore - Wrigley Australia - ActivityDetail_FacingExpress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW51',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw51','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW51','Quofore - Wrigley Australia - ActivityDetail_FacingExpress','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW51',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw51','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW52','Quofore - Wrigley Australia - ActivityDetail_FacingSelfScan','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW52',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw52','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW52','Quofore - Wrigley Australia - ActivityDetail_FacingSelfScan','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW52',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw52','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW53','Quofore - Wrigley Australia - ActivityDetail_FacingStandard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW53',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw53','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW53','Quofore - Wrigley Australia - ActivityDetail_FacingStandard','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW53',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw53','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW54','Quofore - Wrigley Australia - ActivityDetail_CompetitionAct','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW54',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw54','1','0',null,null,'*POLL','FP_QU2');
+
+1 row created.
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW55','Quofore - Wrigley Australia - ActivityDetail_CompetitionFacings','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW55',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw55','1','0',null,null,'*POLL','FP_QU2');
+
+1 row created.
+
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW56','Quofore - Wrigley Australia - ActivityDetail_ExecCompliance','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW56',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw56','1','0',null,null,'*POLL','FP_QU2');
+
+1 row created.
+
+SQL> -- router
+SQL> insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW99','Quofore - Wrigley Australia - Interface *ROUTER','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW99',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw99','1','0',null,null,'*POLL','FP_QU2');
+insert into lics_interface (int_interface,int_description,int_type,int_group,int_priority,int_hdr_history,int_dta_history,int_fil_path,int_fil_prefix,int_fil_sequence,int_fil_extension,int_opr_alert,int_ema_group,int_search,int_procedure,int_status,int_usr_invocation,int_usr_validation,int_usr_message,int_lod_type,int_lod_group) values ('QU2CDW99','Quofore - Wrigley Australia - Interface *ROUTER','*INBOUND','IB_QU2',1,7,7,'ICS_QU2CDW99',null,null,null,null,'group_anz_venus_production_notification@effem.com',null,'ods_app.qu2_qu2cdw99','1','0',null,null,'*POLL','FP_QU2')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_INTERFACE_PK) violated 
+
+
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> -- UPDATE (where already CREATED)
+SQL> 
+SQL> -- deactivate existing
+SQL> update lics_interface
+  2  set int_status = '0'
+  3  where int_interface like 'QU2CDW%';
+
+58 rows updated.
+
+SQL> 
+SQL> -- updates interfaces
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Digest',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW00',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw00',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW00';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Hierarchy',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW01',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw01',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW01';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - GeneralList',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW02',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw02',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW02';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Role',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW03',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw03',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW03';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Position',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW04',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw04',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW04';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Rep',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW05',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw05',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW05';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - RepAddress',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW06',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw06',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW06';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Product',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW07',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw07',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW07';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ProductBarcode',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW08',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw08',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW08';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Customer',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW09',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw09',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW09';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerAddress',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW10',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw10',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW10';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerNote',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW11',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw11',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW11';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerContact',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW12',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw12',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW12';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerVisitorDay',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW13',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw13',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW13';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - AssortmentDetail',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW14',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw14',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW14';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerAssortmentDetail',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW15',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw15',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW15';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ProductAssortmentDetail',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW16',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw16',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW16';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - AuthorisedListProduct',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW17',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw17',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW17';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Appointment',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW18',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw18',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW18';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CallCard',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW19',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw19',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW19';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CallcardNote',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW20',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw20',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW20';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - OrderHeader',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW21',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw21',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW21';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - OrderDetail',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW22',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw22',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW22';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Territory',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW23',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw23',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW23';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - CustomerTerritory',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW24',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw24',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW24';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - PositionTerritory',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW25',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw25',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW25';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Survey',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW26',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw26',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW26';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - SurveyQuestion',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW27',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw27',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW27';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ResponseOption',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW28',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw28',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW28';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Task',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW29',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw29',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW29';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - TaskAssignment',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW30',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw30',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW30';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - TaskCustomer',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW31',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw31',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW31';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - TaskProduct',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW32',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw32',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW32';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - TaskSurvey',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW33',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw33',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW33';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityHeader',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW34',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw34',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW34';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_ALoc',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW35',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw35',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW35';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Sell_In',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW38',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw38',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW38';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_OffLocation',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW39',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw39',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW39';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Facing',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW40',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw40',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW40';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Checkout_Std',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW41',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw41',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW41';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Checkout_ExpressQZ',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW42',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw42',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW42';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Checkout_Express',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW43',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw43',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW43';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Checkout_SelfscanQZ',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW44',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw44',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW44';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_Checkout_Selfscan',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW45',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw45',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW45';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_LocOOS',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW46',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw46',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW46';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_PermDisplay',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW47',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw47',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW47';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - SurveyAnswer',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW48',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw48',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW48';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Graveyard',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW49',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw49',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW49';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_FacingAisle',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW50',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw50',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW50';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_FacingExpress',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW51',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw51',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW51';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_FacingSelfScan',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW52',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw52',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW52';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_FacingStandard',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW53',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw53',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW53';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_CompetitionAct',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW54',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw54',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW54';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_CompetitionFacings',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW55',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw55',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW55';
+
+1 row updated.
+
+SQL> 
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - ActivityDetail_ExecCompliance',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW56',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw56',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW56';
+
+1 row updated.
+
+SQL> 
+SQL> -- updates router
+SQL> update lics_interface
+  2  set
+  3    int_description = 'Quofore - Wrigley Australia - Interface *ROUTER',
+  4    int_type = '*INBOUND',
+  5    int_group = 'IB_QU2',
+  6    int_priority = 1,
+  7    int_hdr_history = 7,
+  8    int_dta_history = 7,
+  9    int_fil_path = 'ICS_QU2CDW99',
+ 10    int_fil_prefix = null,
+ 11    int_fil_sequence = null,
+ 12    int_fil_extension = null,
+ 13    int_opr_alert = null,
+ 14    int_ema_group = 'group_anz_venus_production_notification@effem.com',
+ 15    int_search = null,
+ 16    int_procedure = 'ods_app.qu2_qu2cdw99',
+ 17    int_status = '1',
+ 18    int_usr_invocation = '0',
+ 19    int_usr_validation = null,
+ 20    int_usr_message = null,
+ 21    int_lod_type = '*POLL',
+ 22    int_lod_group = 'FP_QU2'
+ 23  where int_interface = 'QU2CDW99';
+
+1 row updated.
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Setup LICS Interface Groups
+SQL> 
+SQL> -- CREATE
+SQL> insert into lics_group (gro_group,gro_description) values ('QU2CDW_INBOUND','Quofore - Wrigley Australia - Inbound');
+insert into lics_group (gro_group,gro_description) values ('QU2CDW_INBOUND','Quofore - Wrigley Australia - Inbound')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (LICS.LICS_GROUP_PK) violated 
+
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> -- UPDATE (where already CREATED)
+SQL> update lics_group
+  2  set gro_description = ,'Quofore - Wrigley Australia - Inbound'
+  3  where gro_group = 'QU2CDW_INBOUND';
+set gro_description = ,'Quofore - Wrigley Australia - Inbound'
+                      *
+ERROR at line 2:
+ORA-00936: missing expression 
+
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> -- CREATE / UPDATE
+SQL> 
+SQL> -- cleanup
+SQL> delete from lics_grp_interface
+  2  where gri_group = 'QU2CDW_INBOUND';
+
+55 rows deleted.
+
+SQL> 
+SQL> -- create entry for interfaces
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW00');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW01');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW02');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW03');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW04');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW05');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW06');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW07');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW08');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW09');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW10');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW11');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW12');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW13');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW14');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW15');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW16');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW17');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW18');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW19');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW20');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW21');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW22');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW23');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW24');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW25');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW26');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW27');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW28');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW29');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW30');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW31');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW32');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW33');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW34');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW35');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW38');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW39');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW40');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW41');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW42');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW43');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW44');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW45');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW46');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW47');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW48');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW49');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW50');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW51');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW52');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW53');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW54');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW55');
+
+1 row created.
+
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW56');
+
+1 row created.
+
+SQL> 
+SQL> -- create entry for router
+SQL> insert into lics_grp_interface (gri_group,gri_interface) values ('QU2CDW_INBOUND','QU2CDW99');
+
+1 row created.
+
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Create Directories
+SQL> begin
+  2    lics_directory.create_directory('ICS_QU2CDW00', '/ics/cdw/prod/inbound/qu2cdw00');
+  3    lics_directory.create_directory('ICS_QU2CDW01', '/ics/cdw/prod/inbound/qu2cdw01');
+  4    lics_directory.create_directory('ICS_QU2CDW02', '/ics/cdw/prod/inbound/qu2cdw02');
+  5    lics_directory.create_directory('ICS_QU2CDW03', '/ics/cdw/prod/inbound/qu2cdw03');
+  6    lics_directory.create_directory('ICS_QU2CDW04', '/ics/cdw/prod/inbound/qu2cdw04');
+  7    lics_directory.create_directory('ICS_QU2CDW05', '/ics/cdw/prod/inbound/qu2cdw05');
+  8    lics_directory.create_directory('ICS_QU2CDW06', '/ics/cdw/prod/inbound/qu2cdw06');
+  9    lics_directory.create_directory('ICS_QU2CDW07', '/ics/cdw/prod/inbound/qu2cdw07');
+ 10    lics_directory.create_directory('ICS_QU2CDW08', '/ics/cdw/prod/inbound/qu2cdw08');
+ 11    lics_directory.create_directory('ICS_QU2CDW09', '/ics/cdw/prod/inbound/qu2cdw09');
+ 12    lics_directory.create_directory('ICS_QU2CDW10', '/ics/cdw/prod/inbound/qu2cdw10');
+ 13    lics_directory.create_directory('ICS_QU2CDW11', '/ics/cdw/prod/inbound/qu2cdw11');
+ 14    lics_directory.create_directory('ICS_QU2CDW12', '/ics/cdw/prod/inbound/qu2cdw12');
+ 15    lics_directory.create_directory('ICS_QU2CDW13', '/ics/cdw/prod/inbound/qu2cdw13');
+ 16    lics_directory.create_directory('ICS_QU2CDW14', '/ics/cdw/prod/inbound/qu2cdw14');
+ 17    lics_directory.create_directory('ICS_QU2CDW15', '/ics/cdw/prod/inbound/qu2cdw15');
+ 18    lics_directory.create_directory('ICS_QU2CDW16', '/ics/cdw/prod/inbound/qu2cdw16');
+ 19    lics_directory.create_directory('ICS_QU2CDW17', '/ics/cdw/prod/inbound/qu2cdw17');
+ 20    lics_directory.create_directory('ICS_QU2CDW18', '/ics/cdw/prod/inbound/qu2cdw18');
+ 21    lics_directory.create_directory('ICS_QU2CDW19', '/ics/cdw/prod/inbound/qu2cdw19');
+ 22    lics_directory.create_directory('ICS_QU2CDW20', '/ics/cdw/prod/inbound/qu2cdw20');
+ 23    lics_directory.create_directory('ICS_QU2CDW21', '/ics/cdw/prod/inbound/qu2cdw21');
+ 24    lics_directory.create_directory('ICS_QU2CDW22', '/ics/cdw/prod/inbound/qu2cdw22');
+ 25    lics_directory.create_directory('ICS_QU2CDW23', '/ics/cdw/prod/inbound/qu2cdw23');
+ 26    lics_directory.create_directory('ICS_QU2CDW24', '/ics/cdw/prod/inbound/qu2cdw24');
+ 27    lics_directory.create_directory('ICS_QU2CDW25', '/ics/cdw/prod/inbound/qu2cdw25');
+ 28    lics_directory.create_directory('ICS_QU2CDW26', '/ics/cdw/prod/inbound/qu2cdw26');
+ 29    lics_directory.create_directory('ICS_QU2CDW27', '/ics/cdw/prod/inbound/qu2cdw27');
+ 30    lics_directory.create_directory('ICS_QU2CDW28', '/ics/cdw/prod/inbound/qu2cdw28');
+ 31    lics_directory.create_directory('ICS_QU2CDW29', '/ics/cdw/prod/inbound/qu2cdw29');
+ 32    lics_directory.create_directory('ICS_QU2CDW30', '/ics/cdw/prod/inbound/qu2cdw30');
+ 33    lics_directory.create_directory('ICS_QU2CDW31', '/ics/cdw/prod/inbound/qu2cdw31');
+ 34    lics_directory.create_directory('ICS_QU2CDW32', '/ics/cdw/prod/inbound/qu2cdw32');
+ 35    lics_directory.create_directory('ICS_QU2CDW33', '/ics/cdw/prod/inbound/qu2cdw33');
+ 36    lics_directory.create_directory('ICS_QU2CDW34', '/ics/cdw/prod/inbound/qu2cdw34');
+ 37    lics_directory.create_directory('ICS_QU2CDW35', '/ics/cdw/prod/inbound/qu2cdw35');
+ 38    lics_directory.create_directory('ICS_QU2CDW38', '/ics/cdw/prod/inbound/qu2cdw38');
+ 39    lics_directory.create_directory('ICS_QU2CDW39', '/ics/cdw/prod/inbound/qu2cdw39');
+ 40    lics_directory.create_directory('ICS_QU2CDW40', '/ics/cdw/prod/inbound/qu2cdw40');
+ 41    lics_directory.create_directory('ICS_QU2CDW41', '/ics/cdw/prod/inbound/qu2cdw41');
+ 42    lics_directory.create_directory('ICS_QU2CDW42', '/ics/cdw/prod/inbound/qu2cdw42');
+ 43    lics_directory.create_directory('ICS_QU2CDW43', '/ics/cdw/prod/inbound/qu2cdw43');
+ 44    lics_directory.create_directory('ICS_QU2CDW44', '/ics/cdw/prod/inbound/qu2cdw44');
+ 45    lics_directory.create_directory('ICS_QU2CDW45', '/ics/cdw/prod/inbound/qu2cdw45');
+ 46    lics_directory.create_directory('ICS_QU2CDW46', '/ics/cdw/prod/inbound/qu2cdw46');
+ 47    lics_directory.create_directory('ICS_QU2CDW47', '/ics/cdw/prod/inbound/qu2cdw47');
+ 48    lics_directory.create_directory('ICS_QU2CDW48', '/ics/cdw/prod/inbound/qu2cdw48');
+ 49    lics_directory.create_directory('ICS_QU2CDW49', '/ics/cdw/prod/inbound/qu2cdw49');
+ 50    lics_directory.create_directory('ICS_QU2CDW50', '/ics/cdw/prod/inbound/qu2cdw50');
+ 51    lics_directory.create_directory('ICS_QU2CDW51', '/ics/cdw/prod/inbound/qu2cdw51');
+ 52    lics_directory.create_directory('ICS_QU2CDW52', '/ics/cdw/prod/inbound/qu2cdw52');
+ 53    lics_directory.create_directory('ICS_QU2CDW53', '/ics/cdw/prod/inbound/qu2cdw53');
+ 54    lics_directory.create_directory('ICS_QU2CDW54', '/ics/cdw/prod/inbound/qu2cdw54');
+ 55    lics_directory.create_directory('ICS_QU2CDW55', '/ics/cdw/prod/inbound/qu2cdw55');
+ 56    lics_directory.create_directory('ICS_QU2CDW56', '/ics/cdw/prod/inbound/qu2cdw56');
+ 57    lics_directory.create_directory('ICS_QU2CDW99', '/ics/cdw/prod/inbound/qu2cdw99');
+ 58  end;
+ 59  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Set Directory Permissions
+SQL> begin
+  2    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw00');
+  3    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw01');
+  4    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw02');
+  5    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw03');
+  6    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw04');
+  7    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw05');
+  8    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw06');
+  9    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw07');
+ 10    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw08');
+ 11    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw09');
+ 12    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw10');
+ 13    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw11');
+ 14    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw12');
+ 15    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw13');
+ 16    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw14');
+ 17    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw15');
+ 18    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw16');
+ 19    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw17');
+ 20    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw18');
+ 21    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw19');
+ 22    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw20');
+ 23    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw21');
+ 24    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw22');
+ 25    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw23');
+ 26    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw24');
+ 27    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw25');
+ 28    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw26');
+ 29    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw27');
+ 30    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw28');
+ 31    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw29');
+ 32    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw30');
+ 33    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw31');
+ 34    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw32');
+ 35    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw33');
+ 36    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw34');
+ 37    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw35');
+ 38    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw38');
+ 39    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw39');
+ 40    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw40');
+ 41    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw41');
+ 42    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw42');
+ 43    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw43');
+ 44    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw44');
+ 45    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw45');
+ 46    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw46');
+ 47    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw47');
+ 48    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw48');
+ 49    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw49');
+ 50    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw50');
+ 51    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw51');
+ 52    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw52');
+ 53    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw53');
+ 54    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw54');
+ 55    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw55');
+ 56    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw56');
+ 57    lics_filesystem.execute_external_procedure('/bin/chmod 777 /ics/cdw/prod/inbound/qu2cdw99');
+ 58  end;
+ 59  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --------------------------------------------------------------------------------
+SQL> -- Log Off
+SQL> spool off
