@@ -18,6 +18,7 @@ CREATE OR REPLACE package DW_APP.nzmkt_pricing as
     -------   ------            -----------
     ????/??   ???               Created 
     2013/09   Trevor Keon       Added support for new 996 Condition Table (KOTABNR) 
+    2015/01   Trevor Keon       Changed currency rate type from MPPR to ICB 
 
    *******************************************************************************/
 
@@ -131,7 +132,7 @@ CREATE OR REPLACE package body DW_APP.nzmkt_pricing as
                                              rcd_nzmkt_base.company_currcy_code,
                                              'AUD',
                                              rcd_nzmkt_base.creatn_date,
-                                             'MPPR'), 2);
+                                             'ICB'), 2);
          rcd_nzmkt_base.ord_gsv_usd := round(
                                           ods_app.currcy_conv(
                                              ods_app.currcy_conv(
@@ -143,7 +144,7 @@ CREATE OR REPLACE package body DW_APP.nzmkt_pricing as
                                              rcd_nzmkt_base.company_currcy_code,
                                              'USD',
                                              rcd_nzmkt_base.creatn_date,
-                                             'MPPR'), 2);
+                                             'ICB'), 2);
          rcd_nzmkt_base.ord_gsv_eur := round(
                                           ods_app.currcy_conv(
                                              ods_app.currcy_conv(
@@ -155,7 +156,7 @@ CREATE OR REPLACE package body DW_APP.nzmkt_pricing as
                                              rcd_nzmkt_base.company_currcy_code,
                                              'EUR',
                                              rcd_nzmkt_base.creatn_date,
-                                             'MPPR'), 2);
+                                             'ICB'), 2);
 
          /*-*/
          /* Calculate the confirmed GSV values
