@@ -1,11 +1,11 @@
-create or replace package qv_app.qv_csvqvs06_loader as
+create or replace package bi_app.qv_csvqvs06_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     Package : qv_csvqvs06_loader
-    Owner   : qv_app
+    Owner   : bi_app
 
     Description
     -----------
@@ -13,8 +13,9 @@ create or replace package qv_app.qv_csvqvs06_loader as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2011/02   Trevor Keon    Created
-    2011/11   Trevor Keon    Updated to support ICS v2
+    2011/02   Trevor Keon    Created 
+    2011/11   Trevor Keon    Updated to support ICS v2 
+    2014/07   Trevor Keon    Updated to support FLU 
 
    *******************************************************************************/
 
@@ -24,10 +25,13 @@ create or replace package qv_app.qv_csvqvs06_loader as
    procedure on_start;
    procedure on_data(par_record in varchar2);
    procedure on_end;
+   -- FFLU Hooks.
+   function on_get_file_type return varchar2;
+   function on_get_csv_qualifier return varchar2; 
 
 end qv_csvqvs06_loader;
 
-create or replace package body qv_app.qv_csvqvs06_loader as
+create or replace package body bi_app.qv_csvqvs06_loader as
 
    /*-*/
    /* Private exceptions
@@ -76,7 +80,7 @@ create or replace package body qv_app.qv_csvqvs06_loader as
       /*-*/
       /* Set sequence number
       /*-*/
-      select shp_ftc_op_seq.nextval
+      select qv.shp_ftc_op_seq.nextval
       into var_sequence
       from dual;
       
@@ -108,7 +112,7 @@ create or replace package body qv_app.qv_csvqvs06_loader as
       /*-*/
       /* Delete the existing data
       /*-*/
-      delete from shp_ftc_op;
+      delete from qv.shp_ftc_op;
 
    /*-------------------*/
    /* Exception handler */
@@ -156,7 +160,7 @@ create or replace package body qv_app.qv_csvqvs06_loader as
       /*-*/
       /* Ignore blank lines
       /*-*/      
-      if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
+      if qv_app.qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
          lics_logging.write_log('Found blank line - #' || var_trn_count);
          return;
       end if;        
@@ -188,7 +192,7 @@ create or replace package body qv_app.qv_csvqvs06_loader as
             /*-*/
             /* Insert the row when required
             /*-*/            
-            insert into shp_ftc_op values rcd_shp_ftc_op;
+            insert into qv.shp_ftc_op values rcd_shp_ftc_op;
          end loop;
       end if; 
 
@@ -274,14 +278,30 @@ create or replace package body qv_app.qv_csvqvs06_loader as
    /*-------------*/
    end on_end;
 
+  ------------------------------------------------------------------------------
+  -- FFLU : ON_GET_FILE_TYPE
+  ------------------------------------------------------------------------------
+  function on_get_file_type return varchar2 is 
+  begin 
+    return fflu_common.gc_file_type_csv;
+  end on_get_file_type;
+
+  ------------------------------------------------------------------------------
+  -- FFLU : ON_GET_CSV_QUALIFER
+  ------------------------------------------------------------------------------
+  function on_get_csv_qualifier return varchar2 is
+  begin 
+    return fflu_common.gc_csv_qualifier_null;
+  end on_get_csv_qualifier;   
+
 end qv_csvqvs06_loader;
 
 /**/
 /* Authority 
 /**/
-grant execute on qv_csvqvs06_loader to lics_app;
+grant execute on qv_csvqvs06_loader to lics_app, fflu_app;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym qv_csvqvs06_loader for qv_app.qv_csvqvs06_loader;
+create or replace public synonym qv_csvqvs06_loader for bi_app.qv_csvqvs06_loader;

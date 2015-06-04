@@ -1,20 +1,21 @@
-create or replace package qv_app.qv_csvqvs05_loader as
+create or replace package bi_app.qv_csvqvs05_loader as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     Package : qv_csvqvs05_loader
-    Owner   : qv_app
+    Owner   : bi_app
 
     Description
     -----------
-    CSV File to Qlikview - CSVQVS05 - Shipment Sales Tonnes OP
+    CSV File to Qlikview - CSVQVS05 - Shipment Sales Tonnes OP 
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2011/02   Trevor Keon    Created
-    2011/11   Trevor Keon    Updated to support ICS v2
+    2011/02   Trevor Keon    Created 
+    2011/11   Trevor Keon    Updated to support ICS v2 
+    2014/07   Trevor Keon    Updated to support FLU 
 
    *******************************************************************************/
 
@@ -24,10 +25,13 @@ create or replace package qv_app.qv_csvqvs05_loader as
    procedure on_start;
    procedure on_data(par_record in varchar2);
    procedure on_end;
+   -- FFLU Hooks.
+   function on_get_file_type return varchar2;
+   function on_get_csv_qualifier return varchar2; 
 
 end qv_csvqvs05_loader;
 
-create or replace package body qv_app.qv_csvqvs05_loader as
+create or replace package body bi_app.qv_csvqvs05_loader as
 
    /*-*/
    /* Private exceptions
@@ -76,7 +80,7 @@ create or replace package body qv_app.qv_csvqvs05_loader as
       /*-*/
       /* Set sequence number
       /*-*/
-      select shp_sls_tons_op_seq.nextval
+      select qv.shp_sls_tons_op_seq.nextval
       into var_sequence
       from dual;
       
@@ -108,7 +112,7 @@ create or replace package body qv_app.qv_csvqvs05_loader as
       /*-*/
       /* Delete the existing data
       /*-*/
-      delete from shp_sls_tons_op;
+      delete from qv.shp_sls_tons_op;
 
    /*-------------------*/
    /* Exception handler */
@@ -181,7 +185,7 @@ create or replace package body qv_app.qv_csvqvs05_loader as
             /*-*/
             if not(rcd_shp_sls_tons_op.sst_accnt_assignmnt is null) or
                not(rcd_shp_sls_tons_op.sst_plng_src is null) then               
-               insert into shp_sls_tons_op values rcd_shp_sls_tons_op;
+               insert into qv.shp_sls_tons_op values rcd_shp_sls_tons_op;
             else
                lics_logging.write_log('Found blank line - #' || var_trn_count);
             end if;
@@ -269,15 +273,31 @@ create or replace package body qv_app.qv_csvqvs05_loader as
    /* End routine */
    /*-------------*/
    end on_end;
+   
+  ------------------------------------------------------------------------------
+  -- FFLU : ON_GET_FILE_TYPE
+  ------------------------------------------------------------------------------
+  function on_get_file_type return varchar2 is 
+  begin 
+    return fflu_common.gc_file_type_csv;
+  end on_get_file_type;
+
+  ------------------------------------------------------------------------------
+  -- FFLU : ON_GET_CSV_QUALIFER
+  ------------------------------------------------------------------------------
+  function on_get_csv_qualifier return varchar2 is
+  begin 
+    return fflu_common.gc_csv_qualifier_null;
+  end on_get_csv_qualifier;   
 
 end qv_csvqvs05_loader;
 
 /**/
 /* Authority 
 /**/
-grant execute on qv_csvqvs05_loader to lics_app;
+grant execute on qv_csvqvs05_loader to lics_app, fflu_app;
 
 /**/
 /* Synonym 
 /**/
-create or replace public synonym qv_csvqvs05_loader for qv_app.qv_csvqvs05_loader;
+create or replace public synonym qv_csvqvs05_loader for bi_app.qv_csvqvs05_loader;

@@ -1,11 +1,11 @@
-create or replace package qv_app.qv_csvqvs06_validation as
+create or replace package bi_app.qv_csvqvs06_validation as
 
    /******************************************************************************/
    /* Package Definition                                                         */
    /******************************************************************************/
    /**
     Package : qv_csvqvs06_validation
-    Owner   : qv_app
+    Owner   : bi_app
     Author  : Trevor Keon
 
     Description
@@ -27,7 +27,7 @@ create or replace package qv_app.qv_csvqvs06_validation as
 
 end qv_csvqvs06_validation;
 
-create or replace package body qv_app.qv_csvqvs06_validation as
+create or replace package body bi_app.qv_csvqvs06_validation as
 
    /*-*/
    /* Private constants 
@@ -117,7 +117,7 @@ create or replace package body qv_app.qv_csvqvs06_validation as
       /*-*/
       /* Ignore blank lines
       /*-*/      
-      if qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
+      if qv_app.qv_validation_utilities.check_blank_line(par_record, con_delimiter) = true then
          return var_message;
       end if;
 
@@ -136,7 +136,7 @@ create or replace package body qv_app.qv_csvqvs06_validation as
             var_period_text := 'PERIOD_' || to_char(i);
             var_period := lics_inbound_utility.get_variable(var_period_text);
             
-            if qv_validation_utilities.check_mars_calendar(var_period, '*PERIOD') = false then
+            if qv_app.qv_validation_utilities.check_mars_calendar(var_period, '*PERIOD') = false then
                if not(var_message is null) then
                   var_message := var_message || '; ';
                end if;
@@ -157,7 +157,7 @@ create or replace package body qv_app.qv_csvqvs06_validation as
             var_period_text := 'PERIOD_' || to_char(i);
             var_forecast := lics_inbound_utility.get_variable(var_period_text);
             
-            if qv_validation_utilities.check_number(var_forecast) = false then
+            if qv_app.qv_validation_utilities.check_number(var_forecast) = false then
                if not(var_message is null) then
                   var_message := var_message || '; ';
                end if;
@@ -186,4 +186,4 @@ grant execute on qv_csvqvs06_validation to lics_app;
 /**/
 /* Synonym 
 /**/
-create or replace public synonym qv_csvqvs06_validation for qv_app.qv_csvqvs06_validation;
+create or replace public synonym qv_csvqvs06_validation for bi_app.qv_csvqvs06_validation;
