@@ -31,8 +31,12 @@ create or replace package dds_app.qu5_assort_pkg as
                                       *_hier_id column found in Customer and Produce
     2015-03-18  Mal Chambeyron        Remove Source Id Completely
     2015-05-04  [Auto-Generate]       [Auto-Generated] Created
+    *****************************************************************
+    ** BESPOKE TO EARLIER QUOFORE INSTACES FROM THIS POINT FORWARD **
+    *****************************************************************
     2015-05-06  Mal Chambeyron        Hand code bespoke Mars NZ Customer Logic
                                       - ((OR within Hierarchy) AND across Hierarchies) OR direct Assignment)
+    2015-06-22  Mal Chambeyron        Restrict Cust Assort on Assortment Detail
 
   *****************************************************************************/
 
@@ -946,57 +950,71 @@ create or replace package body qu5_assort_pkg as
 
       select *
       from table(qu5_assort_pkg.cust_assort_x_view_at_date(p_at_date, 0)) cust_assort
-      where (assort_id, cust_id) in (
+      where (assort_id, assort_dtl_id, cust_id) in (
         -- add AND of hierarchy assigned customers
         select assort_cust_hier_count.assort_id,
+          assort_cust_hier_count.assort_dtl_id,
           assort_cust_hier_count.cust_id
         from (
           select assort_id,
+            assort_dtl_id,
             cust_id,
             count(1) assort_cust_hier_type_count
           from (
             select assort_id,
+              assort_dtl_id,
               cust_id,
               cust_hier_type
             from table(qu5_assort_pkg.cust_assort_x_view_at_date(p_at_date, 0))
             where root_cust_type = 'Hierarchy'
             group by assort_id,
+              assort_dtl_id,
               cust_id,
               cust_hier_type
           )
           group by assort_id,
+            assort_dtl_id,
             cust_id
         ) assort_cust_hier_count, -- cust_hier_type count, by assort_id, cust_id
         (
           select assort_id,
+            assort_dtl_id,
             count(1) assort_hier_type_count
           from (
             select assort_id,
+              assort_dtl_id,
               cust_hier_type
             from table(qu5_assort_pkg.cust_assort_x_view_at_date(p_at_date, 0))
             where root_cust_type = 'Hierarchy'
             group by assort_id,
+              assort_dtl_id,
               cust_hier_type
           )
-          group by assort_id
+          group by assort_id,
+            assort_dtl_id
         ) assort_hier_count -- cust_hier_type count, by assort_id
         -- filter where assort_id has the same cust_hier_type count, as assort_id, cust_id
         where assort_cust_hier_count.assort_id = assort_hier_count.assort_id
+        and assort_cust_hier_count.assort_dtl_id = assort_hier_count.assort_dtl_id
         and assort_cust_hier_count.assort_cust_hier_type_count = assort_hier_count.assort_hier_type_count
         group by assort_cust_hier_count.assort_id,
+          assort_cust_hier_count.assort_dtl_id,
           assort_cust_hier_count.cust_id
         --
         union all
         -- add ALL directly assigned customers
         select assort_id,
+          assort_dtl_id,
           cust_id
         from table(qu5_assort_pkg.cust_assort_x_view_at_date(p_at_date, 0))
         where root_cust_type = 'Customer'
         group by assort_id,
+          assort_dtl_id,
           cust_id
       )
       order by cust_id,
         assort_id,
+        assort_dtl_id,
         assort_dtl_direct_flag desc,
         assort_dtl_level desc,
         cust_direct_flag desc,
