@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package ods_atlods12_monitor as
+CREATE OR REPLACE package ODS_APP.ods_atlods12_monitor as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -18,7 +15,8 @@ create or replace package ods_atlods12_monitor as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2007/10   Steve Gregan   Created
+    2007/10   Steve Gregan   Created 
+    2015/06   Trevor Keon    Updated to support ICS v32 
 
    *******************************************************************************/
 
@@ -30,10 +28,7 @@ create or replace package ods_atlods12_monitor as
 end ods_atlods12_monitor;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body ods_atlods12_monitor as
+CREATE OR REPLACE package body ODS_APP.ods_atlods12_monitor as
 
    /*-*/
    /* Private exceptions
@@ -99,10 +94,13 @@ create or replace package body ods_atlods12_monitor as
       /*-*/
       /* Stream the triggered aggregation when required
       /*-*/
-      if var_rec_return = '*OK' or 
+      if var_rec_return = '*OK' or
          var_rec_return = '*VAR_ACCEPT' then
-         lics_stream_loader.execute('DW_TRIGGERED_STREAM_'||par_bukrs,
-                                    'dw_app.dw_triggered_aggregation.execute(''*DATE'',''*ALL'','''||par_fkdat||''','''||par_bukrs||''')');
+--         lics_stream_loader.execute('DW_TRIGGERED_STREAM_'||par_bukrs,
+--                                    'dw_app.dw_triggered_aggregation.execute(''*DATE'',''*ALL'','''||par_fkdat||''','''||par_bukrs||''')');
+           lics_stream_loader.load('DW_TRIGGERED_STREAM_'||par_bukrs, 'Running DW triggered stream for company '||par_bukrs, 'dw_app.dw_triggered_aggregation.execute(''*DATE'',''*ALL'','''||par_fkdat||''','''||par_bukrs||''')');    
+           lics_stream_loader.execute;
+            
       end if;
 
    /*-------------------*/
@@ -133,8 +131,5 @@ create or replace package body ods_atlods12_monitor as
 end ods_atlods12_monitor;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
+grant execute on ods_atlods12_monitor to lics_app, ods_app_exec;
 create or replace public synonym ods_atlods12_monitor for ods_app.ods_atlods12_monitor;
-grant execute on ods_atlods12_monitor to lics_app;

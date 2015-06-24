@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package dw_process_poller as
+CREATE OR REPLACE package DW_APP.dw_process_poller as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -21,6 +18,7 @@ create or replace package dw_process_poller as
     2008/08   Steve Gregan   Created
     2011/04   Steve Gregan   Added new flag base triggers
     2011/04   Steve Gregan   Added new flattening trigger
+    2015/06   Trevor Keon    Updated to support ICS v32 
 
    *******************************************************************************/
 
@@ -32,10 +30,7 @@ create or replace package dw_process_poller as
 end dw_process_poller;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body dw_process_poller as
+CREATE OR REPLACE package body DW_APP.dw_process_poller as
 
    /*-*/
    /* Private exceptions
@@ -183,7 +178,9 @@ create or replace package body dw_process_poller as
                                                    to_char(var_polling_date,'yyyymmdd'),
                                                    'DATAMART_'||var_company||'_FIRED');
          if var_return = true then
-            lics_stream_loader.execute('DW_DATAMART_STREAM_'||var_company,null);
+--            lics_stream_loader.execute('DW_DATAMART_STREAM_'||var_company,null);
+           lics_stream_loader.load('DW_DATAMART_STREAM_'||var_company, 'Running data mart stream for company '||var_company, null);    
+           lics_stream_loader.execute;  
          end if;
 
          /*-*/
@@ -202,7 +199,9 @@ create or replace package body dw_process_poller as
                                                       to_char(var_polling_date,'yyyymmdd'),
                                                       'FLAGBASE_'||var_company||'_FIRED');
             if var_return = true then
-               lics_stream_loader.execute('DW_FLAGBASE_STREAM_'||var_company,null);
+--               lics_stream_loader.execute('DW_FLAGBASE_STREAM_'||var_company,null);
+               lics_stream_loader.load('DW_FLAGBASE_STREAM_'||var_company, 'Running flag base stream for company '||var_company, null);    
+               lics_stream_loader.execute;                 
             end if;
 
             /*-*/
@@ -212,7 +211,9 @@ create or replace package body dw_process_poller as
                                                       to_char(var_polling_date,'yyyymmdd'),
                                                       'FLAGFILE_'||var_company||'_FIRED');
             if var_return = true then
-               lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
+--               lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
+               lics_stream_loader.load('DW_FLAGFILE_STREAM_', 'Running flag file stream for company '||var_company, null);    
+               lics_stream_loader.execute;                 
             end if;
 
          end if;
@@ -238,7 +239,9 @@ create or replace package body dw_process_poller as
                                                          to_char(var_polling_date,'yyyymmdd'),
                                                          'FLAGBASE_CON_FIRED');
                if var_return = true then
-                  lics_stream_loader.execute('DW_FLAGBASE_STREAM_CON',null);
+--                  lics_stream_loader.execute('DW_FLAGBASE_STREAM_CON',null);
+                  lics_stream_loader.load('DW_FLAGBASE_STREAM_CON', 'Running consolidated flag base stream', null);    
+                  lics_stream_loader.execute;                    
                end if;
 
                /*-*/
@@ -248,7 +251,9 @@ create or replace package body dw_process_poller as
                                                          to_char(var_polling_date,'yyyymmdd'),
                                                          'FLAGFILE_CON_FIRED');
                if var_return = true then
-                  lics_stream_loader.execute('DW_FLAGFILE_STREAM_CON',null);
+--                  lics_stream_loader.execute('DW_FLAGFILE_STREAM_CON',null);
+                  lics_stream_loader.load('DW_FLAGFILE_STREAM_CON', 'Running consolidated flag file stream', null);    
+                  lics_stream_loader.execute;                     
                end if;
 
             end if;
@@ -284,9 +289,3 @@ create or replace package body dw_process_poller as
 
 end dw_process_poller;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym dw_process_poller for dw_app.dw_process_poller;
-grant execute on dw_process_poller to public;

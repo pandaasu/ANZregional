@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package ods_app.efxcdw_poller as
+CREATE OR REPLACE package ODS_APP.efxcdw_poller as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -18,7 +15,8 @@ create or replace package ods_app.efxcdw_poller as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2001/06   Steve Gregan   Created
+    2001/06   Steve Gregan   Created 
+    2015/06   Trevor Keon    Updated to support ICS v32 
 
    *******************************************************************************/
 
@@ -30,10 +28,7 @@ create or replace package ods_app.efxcdw_poller as
 end efxcdw_poller;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body ods_app.efxcdw_poller as
+CREATE OR REPLACE package body ODS_APP.efxcdw_poller as
 
    /*-*/
    /* Private exceptions
@@ -260,7 +255,9 @@ create or replace package body ods_app.efxcdw_poller as
             /* Load the processing stream when completed
             /*-*/
             if var_extract_status = '*COMPLETED' then
-               lics_stream_loader.execute('EFEX_CDW_STREAM_'||var_company,null);
+--               lics_stream_loader.execute('EFEX_CDW_STREAM_'||var_company,null);
+               lics_stream_loader.load('EFEX_CDW_STREAM_', 'Running EFEX CDW stream for company '||var_company, null);    
+               lics_stream_loader.execute;
             end if;
 
             /*-*/
@@ -424,9 +421,3 @@ create or replace package body ods_app.efxcdw_poller as
 
 end efxcdw_poller;
 /
-
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
-create or replace public synonym efxcdw_poller for ods_app.efxcdw_poller;
-grant execute on efxcdw_poller to public;

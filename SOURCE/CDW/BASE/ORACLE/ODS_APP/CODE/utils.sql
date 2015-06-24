@@ -627,7 +627,8 @@ CREATE OR REPLACE PACKAGE ODS_APP.utils AS
     i_matl_code IN VARCHAR2
     ) RETURN NUMBER;
 
-END utils;
+END utils; 
+/
 
 CREATE OR REPLACE PACKAGE BODY ODS_APP.utils AS
 
@@ -2624,4 +2625,6 @@ BEGIN
   v_item_code_6           := NULL;
   v_valdtn_reasn_dtl_seq  := NULL;
 
-END utils;
+END utils; 
+/
+
