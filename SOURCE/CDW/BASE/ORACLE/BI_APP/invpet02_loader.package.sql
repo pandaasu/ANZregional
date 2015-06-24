@@ -94,8 +94,8 @@ create or replace package body invpet02_loader as
     fflu_data.add_char_field_del(pc_account,16,'Account',1,100,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
     fflu_data.add_number_field_del(pc_deal_qty,17,'Deal QTY','999999.9',0,999999.99,fflu_data.gc_allow_null,fflu_data.gc_null_nls_options);
     fflu_data.add_date_field_del(pc_inv_date, 18, 'Invoice Date', 'dd/mm/yyyy', fflu_data.gc_null_offset, fflu_data.gc_null_offset_len, fflu_data.gc_null_min_date, fflu_data.gc_null_max_date, fflu_data.gc_allow_null);    
-    fflu_data.add_char_field_del(pc_comment_1,19,'Comment Field #1',1,1000,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
-    fflu_data.add_char_field_del(pc_comment_2,20,'Comment Field #2',1,1000,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_comment_1,19,'Comment Field #1',0,1000,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
+    fflu_data.add_char_field_del(pc_comment_2,20,'Comment Field #2',0,1000,fflu_data.gc_allow_null,fflu_data.gc_not_trim);
     
     -- Get user name - MUST be called after initialising fflu_data, or after fflu_utils.log_interface_progress.
     pv_user := fflu_utils.get_interface_user;
