@@ -212,7 +212,7 @@ CREATE OR REPLACE package body DW_APP.dw_process_poller as
                                                       'FLAGFILE_'||var_company||'_FIRED');
             if var_return = true then
 --               lics_stream_loader.execute('DW_FLAGFILE_STREAM_'||var_company,null);
-               lics_stream_loader.load('DW_FLAGFILE_STREAM_', 'Running flag file stream for company '||var_company, null);    
+               lics_stream_loader.load('DW_FLAGFILE_STREAM_||var_company', 'Running flag file stream for company '||var_company, null);    
                lics_stream_loader.execute;                 
             end if;
 

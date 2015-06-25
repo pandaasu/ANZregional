@@ -1,7 +1,4 @@
-/******************/
-/* Package Header */
-/******************/
-create or replace package ods_sapods01 as
+CREATE OR REPLACE package ODS_APP.ods_sapods01 as
 
    /******************************************************************************/
    /* Package Definition                                                         */
@@ -18,7 +15,8 @@ create or replace package ods_sapods01 as
 
     YYYY/MM   Author         Description
     -------   ------         -----------
-    2008/06   Steve Gregan   Created
+    2008/06   Steve Gregan   Created 
+    2015/06   Trevor Keon    Updated to support ICS v32 
 
    *******************************************************************************/
 
@@ -32,10 +30,7 @@ create or replace package ods_sapods01 as
 end ods_sapods01;
 /
 
-/****************/
-/* Package Body */
-/****************/
-create or replace package body ods_sapods01 as
+CREATE OR REPLACE package body ODS_APP.ods_sapods01 as
 
    /*-*/
    /* Private exceptions
@@ -172,7 +167,9 @@ create or replace package body ods_sapods01 as
       /* Trigger the data warehouse alignment stream when required
       /*-*/
       if not(var_company_code is null) then
-         lics_stream_loader.execute('DW_ALIGNMENT_STREAM_'||var_company_code,null);
+--         lics_stream_loader.execute('DW_ALIGNMENT_STREAM_'||var_company_code,null);
+           lics_stream_loader.load('DW_ALIGNMENT_STREAM_'||var_company_code, 'Running DW alignment stream for company '||var_company_code, null);    
+           lics_stream_loader.execute;
       end if;
 
    /*-------------*/
@@ -567,9 +564,5 @@ create or replace package body ods_sapods01 as
 end ods_sapods01;
 /
 
-/**************************/
-/* Package Synonym/Grants */
-/**************************/
+grant execute on ods_sapods01 to ics_app, lics_app;
 create or replace public synonym ods_sapods01 for ods_app.ods_sapods01;
-grant execute on ods_sapods01 to lics_app;
-grant execute on ods_sapods01 to ics_app;
