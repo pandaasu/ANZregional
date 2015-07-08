@@ -25,6 +25,8 @@ create or replace package qv_app.actual_prod_pkg as
   2014-06-25  Trevor Keon           Fixed issue with duplicates at shift changeover 
   2014-10-28  Trevor Keon           Updated ref_line table code to match new structure 
   2014-12-10  Trevor Keon           Fixed issue with some L7 products showing in L6 
+  2015-03-11  Trevor Keon           Added base line description to support Rubicon 
+  2015-03-12  Trevor Keon           Added batch code to the extract 
 
 *******************************************************************************/
 
@@ -36,11 +38,13 @@ create or replace package qv_app.actual_prod_pkg as
     xactn_time number,
     prodn_shift_code char(10),
     matl_code varchar2(8),
+    zpppi_batch varchar2(10),
     reason varchar2(12 char),
     qty number(12,3),
     uom varchar2(4),
     proc_order varchar(12),
     start_datime date,
+    base_line_desc varchar2(32),
     line_desc varchar2(32),
     prodn_line_code varchar2(32),
     nake_line_code varchar2(32),
@@ -82,11 +86,13 @@ create or replace package body qv_app.actual_prod_pkg as
            t02.xactn_time,
            t04.prodn_shift_code,
            t01.matl_code,
+           t01.zpppi_batch,
            t02.reason,
            t01.qty,
            t01.uom,
            t03.proc_order,
-           t04.start_datime,
+           t04.start_datime,           
+           t05.line_desc as base_line_desc,
            initcap(decode(t06.resource_code, null, t05.line_desc, t06.resource_code)) as line_desc,
            initcap(decode(t06.resource_code, null, t05.prodn_line_code, t06.resource_code)) as prodn_line_code,
            t05.nake_line_code,
@@ -184,11 +190,13 @@ create or replace package body qv_app.actual_prod_pkg as
            t02.xactn_time,
            t05.prodn_shift_code,
            t01.matl_code,
+           t01.zpppi_batch,
            t02.reason,
            t01.qty,
            t01.uom,
            t04.proc_order,
-           t05.start_datime,
+           t05.start_datime,         
+           t06.line_desc as base_line_desc,
            initcap(decode(t07.resource_code, null, t06.line_desc, t07.resource_code)) as line_desc,
            initcap(decode(t07.resource_code, null, t06.prodn_line_code, t07.resource_code)) as prodn_line_code,
            t06.nake_line_code,
@@ -289,11 +297,13 @@ create or replace package body qv_app.actual_prod_pkg as
            t02.xactn_time,
            t05.prodn_shift_code,
            t01.matl_code,
+           t01.zpppi_batch,
            t02.reason,
            t01.qty,
            t01.uom,
            t04.proc_order,
-           t05.start_datime,
+           t05.start_datime,         
+           t06.line_desc as base_line_desc,
            t06.line_desc,
            t06.prodn_line_code,
            t06.nake_line_code,
