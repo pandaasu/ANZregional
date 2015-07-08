@@ -1,4 +1,4 @@
-CREATE OR REPLACE package body PXI_APP.apopxi01_loader as
+create or replace package body apopxi01_loader as
 /*******************************************************************************
   Package Constants
 *******************************************************************************/
@@ -88,8 +88,7 @@ CREATE OR REPLACE package body PXI_APP.apopxi01_loader as
     end create_header;
 
   begin
-    -- Now parse the incoming record.
-       -- (CD - 2 Feb 2014) rpad put in place to deal with truncated rows being delivered from Apollo
+    -- Now parse the incoming record.  Pad maximum lenght for when Apollo doesn't pad the last column.
     if fflu_data.parse_data(rpad(p_row,387,' ')) = true then
       -- Initialise Row Ignoring Variable.
       v_ignore_row := false;
@@ -222,4 +221,3 @@ CREATE OR REPLACE package body PXI_APP.apopxi01_loader as
   end on_get_csv_qualifier;
 
 end apopxi01_loader;
-/

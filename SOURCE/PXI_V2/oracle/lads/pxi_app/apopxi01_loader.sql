@@ -9,12 +9,12 @@ create or replace package apopxi01_loader as
   Package   : APOPXI01_LOADER
   Author    : Chris Horn
   Interface : Apollo Dmeand to Promax PX Interfacing - Demand Data
-  
+
   Description
   ------------------------------------------------------------------------------
   This package is used to load the demand data from Apollo into PXI Lads Schema
   tables.
-  
+
   Functions
   ------------------------------------------------------------------------------
   + LICS Hooks
@@ -28,7 +28,8 @@ create or replace package apopxi01_loader as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2014-12-16  Chris Horn            Created Interface
-                                      
+  2014-02-14  Craig Drew            Added padding for when Apollo doesn't pad.
+
 *******************************************************************************/
   -- LICS Hooks.
   procedure on_start;
@@ -37,6 +38,5 @@ create or replace package apopxi01_loader as
   -- FFLU Hooks.
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
-    
+
 end apopxi01_loader;
-/
