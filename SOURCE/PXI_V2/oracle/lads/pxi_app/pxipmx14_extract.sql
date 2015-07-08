@@ -8,11 +8,11 @@ create or replace package pxipmx14_extract as
   Package   : PXIPMX14_EXTRACT
   Author    : Chris Horn
   Interface : Promax PX Interfacing to Promax PX - External Baseline
-  
+
   Description
   ------------------------------------------------------------------------------
   This package is used to load the the demand forecast to promax.
-  
+
   Functions
   ------------------------------------------------------------------------------
   + Exposed Internal Pipelined Table Functions
@@ -31,8 +31,10 @@ create or replace package pxipmx14_extract as
   Date        Author                Description
   ----------  --------------------  --------------------------------------------
   2014-12-18  Chris Horn            Created Interface
-  2014-12-23  Chris Horn            Implemented the extract. 
+  2014-12-23  Chris Horn            Implemented the extract.
   2014-12-24  Chris Horn            Completed the extract.
+  2015-07-08  Chris Horn            Fixed bug, overzealous baseline zero'ing.
+  
 *******************************************************************************/
 
 /*******************************************************************************
@@ -62,8 +64,8 @@ create or replace package pxipmx14_extract as
 
 /*******************************************************************************
   NAME:      UPDATE_BASELINE                                              PUBLIC
-  PURPOSE:   Takes a new demand file and updates the baseline data with the 
-             latest information.  This function will delete any data older than 
+  PURPOSE:   Takes a new demand file and updates the baseline data with the
+             latest information.  This function will delete any data older than
              20 periods as a part of the update.
 
   REVISIONS:
@@ -88,10 +90,10 @@ create or replace package pxipmx14_extract as
 
 /*******************************************************************************
   NAME:      PT_BASELINE                                                  PUBLIC
-  PURPOSE:   Takes the caculated baseline data and orders it and adds demand 
-             capping records as required.  Demand capping is used to send a zero 
-             records for all missing locations in the baseline account sku 
-             combinations within the minium and maximum weeks of the current 
+  PURPOSE:   Takes the caculated baseline data and orders it and adds demand
+             capping records as required.  Demand capping is used to send a zero
+             records for all missing locations in the baseline account sku
+             combinations within the minium and maximum weeks of the current
              baseline data.  Any records that do not have a Y on Has Account,
              Sku, Account Sku will be skipped.
 
@@ -102,7 +104,7 @@ create or replace package pxipmx14_extract as
 *******************************************************************************/
   -- Baseline Extract Table Type
   type tt_baseline is table of pxi_baseline%rowtype;
-  -- Baseline Extract Pipelined Table Function 
+  -- Baseline Extract Pipelined Table Function
   function pt_baseline(
     i_moe_code in pxi_common.st_moe_code
     ) return tt_baseline pipelined;
@@ -123,14 +125,14 @@ create or replace package pxipmx14_extract as
   );
   -- Baseline Extract Table Type
   type tt_baseline_extract is table of rt_baseline_extract;
-  -- Baseline Extract Pipelined Table Function 
+  -- Baseline Extract Pipelined Table Function
   function pt_baseline_extract(
     i_moe_code in pxi_common.st_moe_code
     ) return tt_baseline_extract pipelined;
-    
+
 /*******************************************************************************
   NAME:      CREATE_EXTRACT                                               PUBLIC
-  PURPOSE:   This procedure actually creates the extract and sends to it to 
+  PURPOSE:   This procedure actually creates the extract and sends to it to
              promax via ICS Lads.
 
   REVISIONS:
@@ -140,7 +142,7 @@ create or replace package pxipmx14_extract as
 *******************************************************************************/
   procedure create_extract(
     i_moe_code in pxi_common.st_moe_code);
-  
+
 /*******************************************************************************
   NAME:      PT_BASELINE_ERROR_REPORT                                     PUBLIC
   PURPOSE:   This pipelined table function will create a record set of errors.
@@ -168,11 +170,11 @@ create or replace package pxipmx14_extract as
   -- Pipeline Table Function
   function pt_baseline_error_report (
     i_moe_code in pxi_common.st_moe_code
-  ) return tt_baseline_error_report pipelined;  
-  
+  ) return tt_baseline_error_report pipelined;
+
 /*******************************************************************************
   NAME:      EMAIL_BASELINE_ERROR_REPORT                                  PUBLIC
-  PURPOSE:   This procedure will look at the baseline table and report any 
+  PURPOSE:   This procedure will look at the baseline table and report any
              missing account, missing sku or missing account sku mappings within
              promax.
 
@@ -182,11 +184,11 @@ create or replace package pxipmx14_extract as
   1.1   2014-12-23 Chris Horn           Created.
 *******************************************************************************/
   procedure email_baseline_error_report(
-    i_moe_code in pxi_common.st_moe_code);  
- 
+    i_moe_code in pxi_common.st_moe_code);
+
 /*******************************************************************************
   NAME:      EMAIL_CONFIG_ERROR_REPORT                                    PUBLIC
-  PURPOSE:   This procedure report on any missing demand group to account 
+  PURPOSE:   This procedure report on any missing demand group to account
              configuration errors.
 
   REVISIONS:
@@ -195,11 +197,11 @@ create or replace package pxipmx14_extract as
   1.1   2014-12-23 Chris Horn           Created.
 *******************************************************************************/
   procedure email_config_error_report(
-    i_demand_seq in pxi_e2e_demand.st_sequence);   
-    
+    i_demand_seq in pxi_e2e_demand.st_sequence);
+
 /*******************************************************************************
   NAME:      EXECUTE                                                      PUBLIC
-  PURPOSE:   This procedures creates an extract for the Promax PX using the 
+  PURPOSE:   This procedures creates an extract for the Promax PX using the
              supplied Apollo Demand file as a base.
 
   REVISIONS:
@@ -211,4 +213,3 @@ create or replace package pxipmx14_extract as
     i_demand_seq in pxi_e2e_demand.st_sequence);
 
 end pxipmx14_extract;
-/

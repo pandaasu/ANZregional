@@ -1,7 +1,7 @@
 create or replace package body pxipmx14_extract as
 /*******************************************************************************
   Package Constants
-*******************************************************************************/  
+*******************************************************************************/
   -- Package Name
   pc_package_name          constant pxi_common.st_package_name := 'PXIPMX14_EXTRACT';
   pc_outbound_interface    constant pxi_common.st_interface_name := 'PXIPMX14';
@@ -9,7 +9,7 @@ create or replace package body pxipmx14_extract as
 
 /*******************************************************************************
   Package Variables
-*******************************************************************************/  
+*******************************************************************************/
 
 /*******************************************************************************
   NAME: PT_MARS_WEEK                                                      PUBLIC
@@ -36,7 +36,7 @@ create or replace package body pxipmx14_extract as
 
 /*******************************************************************************
   NAME:      GET_MOE_CODE                                                PRIVATE
-  PURPOSE:   This function will take the demand sequence code and return the 
+  PURPOSE:   This function will take the demand sequence code and return the
              moe code for it.  If it cannot find the value it will raise
              and exception.
 
@@ -52,7 +52,7 @@ create or replace package body pxipmx14_extract as
     select moe_code into v_moe_code from pxi_demand_header where demand_seq = i_demand_seq;
     return v_moe_code;
   exception
-    when others then 
+    when others then
       pxi_common.raise_promax_error(pc_package_name,'EXECUTE','Could not determine moe code for Demand Sequence [' || i_demand_seq || '].');
   end get_moe_code;
 
@@ -68,32 +68,32 @@ create or replace package body pxipmx14_extract as
     cursor csr_moe_attributes is select * from pxi_moe_attributes where moe_code = rv_header.moe_code;
     rv_moe_attributes csr_moe_attributes%rowtype;
     -- Cursor for the demand forecast.
-    cursor csr_detail is 
+    cursor csr_detail is
       select
         zrep_code,
         demand_group,
-        mars_week, 
-        sum(qty) as volume 
-      from 
-        pxi_demand_detail 
-      where 
-        demand_seq = i_demand_seq and 
+        mars_week,
+        sum(qty) as volume
+      from
+        pxi_demand_detail
+      where
+        demand_seq = i_demand_seq and
         type_code in (pxi_e2e_demand.fc_type_1_base, pxi_e2e_demand.fc_type_4_reconcile, pxi_e2e_demand.fc_type_6_override)
       group by
         zrep_code,
         demand_group,
         mars_week
-      having 
-        sum(qty) >= 0;  -- Promax cannot handle any negatives. 
+      having
+        sum(qty) >= 0;  -- Promax cannot handle any negatives.
     rv_detail csr_detail%rowtype;
     -- Query to use for cap checking.
     cursor csr_baseline is
-      select 
-        * 
-      from pxi_baseline 
+      select
+        *
+      from pxi_baseline
       where
         moe_code = rv_header.moe_code
-      order by 
+      order by
         account_code,
         zrep_code,
         mars_week;
@@ -109,18 +109,18 @@ create or replace package body pxipmx14_extract as
     open csr_header;
     fetch csr_header into rv_header;
     close csr_header;
-    if rv_header.moe_code is null then 
+    if rv_header.moe_code is null then
       pxi_common.raise_promax_error(pc_package_name,'UPDATE_BASELINE','Unable to fetch demand header information for Demand Sequence [' || i_demand_seq || '].');
     end if;
     -- Now fetch the moe attributes
     open csr_moe_attributes;
     fetch csr_moe_attributes into rv_moe_attributes;
     close csr_moe_attributes;
-    if rv_header.moe_code is null then 
+    if rv_header.moe_code is null then
       pxi_common.raise_promax_error(pc_package_name,'UPDATE_BASELINE','Unable to fetch moe attribute information for Moe Code [' || rv_header.moe_code || '].');
     end if;
     -- Delete Old Baseline Information
-    delete from pxi_baseline where moe_code = rv_header.moe_code and 
+    delete from pxi_baseline where moe_code = rv_header.moe_code and
     mars_week < (select mars_week from mars_date where calendar_date = trunc(sysdate) - pc_baseline_history_days);
     -- Set the modification date.
     v_modify_date := sysdate;
@@ -139,7 +139,7 @@ create or replace package body pxipmx14_extract as
     loop
       fetch csr_detail into rv_detail;
       exit when csr_detail%notfound = true;
-      -- Now process each detail record. 
+      -- Now process each detail record.
       rv_baseline.zrep_code := rv_detail.zrep_code;
       rv_baseline.demand_group := rv_detail.demand_group;
       rv_baseline.mars_week := rv_detail.mars_week;
@@ -152,14 +152,14 @@ create or replace package body pxipmx14_extract as
       -- Now perform an update and if no update then perform an insert if we have an account code.  Otherwise skip record.
       if rv_baseline.account_code is not null then
         update pxi_baseline
-        set 
+        set
           volume = rv_baseline.volume,
           demand_group = rv_baseline.demand_group,
           demand_seq = rv_baseline.demand_seq,
           modified_date = rv_baseline.modified_date
         where
           moe_code = rv_baseline.moe_code and
-          account_code = rv_baseline.account_code and 
+          account_code = rv_baseline.account_code and
           zrep_code = rv_baseline.zrep_code and
           mars_week = rv_baseline.mars_week;
         if sql%rowcount = 0 then
@@ -170,8 +170,9 @@ create or replace package body pxipmx14_extract as
     close csr_detail;
     -- Now zero any records within the demand forecast range that weren't modified.
     update pxi_baseline set volume = 0, modified_date = v_modify_date, demand_seq = i_demand_seq
-    where modified_date <> v_modify_date and 
-      mars_week between rv_header.min_mars_week and rv_header.max_mars_week;
+    where modified_date <> v_modify_date and
+      mars_week between rv_header.min_mars_week and rv_header.max_mars_week and
+      moe_code = rv_header.moe_code;
     -- Now insert any capping records that may be required.
     rv_previous := null;
     open csr_baseline;
@@ -181,7 +182,7 @@ create or replace package body pxipmx14_extract as
       -- Detect and add Zero Capping Record if Required.
       if (rv_previous.account_code <> rv_baseline.account_code or
           rv_previous.zrep_code <> rv_baseline.zrep_code or
-          rv_previous.start_date + 7 <> rv_baseline.start_date) and 
+          rv_previous.start_date + 7 <> rv_baseline.start_date) and
           rv_previous.volume <> 0 then
         -- Now Modify the Previous Record to Create the Capping Record.
         rv_previous.volume := 0;
@@ -189,12 +190,12 @@ create or replace package body pxipmx14_extract as
         rv_previous.stop_date := rv_previous.stop_date + 7;
         rv_previous.mars_week := pxi_e2e_demand.get_mars_week(rv_previous.start_date);
         insert into pxi_baseline values rv_previous;
-      end if;      
+      end if;
       rv_previous := rv_baseline;
     end loop;
     close csr_baseline;
   exception
-    when pxi_common.ge_promax_exception then 
+    when pxi_common.ge_promax_exception then
       raise;
     when others then
       pxi_common.reraise_promax_exception(pc_package_name,'UPDATE_BASELINE');
@@ -207,8 +208,8 @@ create or replace package body pxipmx14_extract as
     i_moe_code in pxi_common.st_moe_code) is
     v_system_code pxi_e2e_demand.st_lics_setting;
     -- Cursor to lookup the valid account sku information from promax.
-    cursor csr_promax_data is 
-      select 
+    cursor csr_promax_data is
+      select
         moe_code,
         account_code,
         zrep_code,
@@ -216,13 +217,13 @@ create or replace package body pxipmx14_extract as
         case when account_sku_details_x.as_row_id is null then pxi_e2e_demand.fc_no else pxi_e2e_demand.fc_yes end as has_account_sku,
         case when ac.ac_code is null then pxi_e2e_demand.fc_no else pxi_e2e_demand.fc_yes end as has_account,
         case when sku.sku_stock_code is null then pxi_e2e_demand.fc_no else pxi_e2e_demand.fc_yes end as has_sku
-      from 
+      from
         pxi_baseline t1,
         table(pxi_promax_connect.pt_account_sku_details_x(v_system_code)) account_sku_details_x,
         table(pxi_promax_connect.pt_account(v_system_code)) ac,
         table(pxi_promax_connect.pt_sku(v_system_code)) sku
-      where 
-        t1.moe_code = i_moe_code and 
+      where
+        t1.moe_code = i_moe_code and
         t1.account_code = account_sku_details_x.ac_code(+) and -- forecast > account_sku_details_x
         t1.zrep_code = account_sku_details_x.sku_stock_code(+) and
         t1.start_date >= account_sku_details_x.asd_start_date(+) and
@@ -239,7 +240,7 @@ create or replace package body pxipmx14_extract as
       fetch csr_promax_data into rv_promax_data;
       exit when csr_promax_data%notfound = true;
       update pxi_baseline
-      set 
+      set
         has_account = rv_promax_data.has_account,
         has_sku = rv_promax_data.has_sku,
         has_account_sku = rv_promax_data.has_account_sku
@@ -258,30 +259,31 @@ create or replace package body pxipmx14_extract as
 /*******************************************************************************
   NAME:      PT_BASELINE                                                  PUBLIC
 *******************************************************************************/
-  -- Uplift Extract Pipelined Table Function 
+  -- Uplift Extract Pipelined Table Function
   function pt_baseline(
     i_moe_code in pxi_common.st_moe_code
     ) return tt_baseline pipelined is
     v_from_mars_week pxi_e2e_demand.st_mars_week;
     cursor csr_baseline is
-      select 
-        * 
-      from pxi_baseline 
+      select
+        *
+      from pxi_baseline
       where
         moe_code = i_moe_code and
-        has_account_sku = pxi_e2e_demand.fc_yes and 
+        has_account_sku = pxi_e2e_demand.fc_yes and
         has_account = pxi_e2e_demand.fc_yes and
         has_sku = pxi_e2e_demand.fc_yes and
         mars_week >= v_from_mars_week
-      order by 
+      order by
         account_code,
         zrep_code,
         mars_week;
     rv_baseline csr_baseline%rowtype;
   begin
     -- Find the first week in P13 of the previous year.
+    -- Changed P13 to P1. padma 18/03/2015.
     select min(mars_week) into v_from_mars_week from mars_date where mars_year = (
-    select mars_year-1 from mars_date where calendar_date = trunc(sysdate)) and period_num = 13;
+    select mars_year-1 from mars_date where calendar_date = trunc(sysdate)) and period_num = 1;
     -- Iterate over the baseline.
     open csr_baseline;
     loop
@@ -294,11 +296,11 @@ create or replace package body pxipmx14_extract as
     when others then
       pxi_common.reraise_promax_exception(pc_package_name,'PT_BASELINE');
   end pt_baseline;
-  
+
 /*******************************************************************************
   NAME:      PT_BASELINE_EXTRACT                                          PUBLIC
 *******************************************************************************/
-  -- Uplift Extract Pipelined Table Function 
+  -- Uplift Extract Pipelined Table Function
   function pt_baseline_extract(
     i_moe_code in pxi_common.st_moe_code
     ) return tt_baseline_extract pipelined is
@@ -361,13 +363,13 @@ create or replace package body pxipmx14_extract as
             max(stop_date) as end_date,
             count(*) as record_count,
             sum(volume) as volume
-          from 
-            pxi_baseline 
+          from
+            pxi_baseline
           where
-            moe_code = i_moe_code and 
+            moe_code = i_moe_code and
             has_account = pxi_e2e_demand.fc_no
           group by
-            account_code, 
+            account_code,
             demand_group
           having max(stop_date) > trunc(sysdate)
           -- Collect the missing SKU in promax.
@@ -383,10 +385,10 @@ create or replace package body pxipmx14_extract as
             max(stop_date) as end_date,
             count(*) as record_count,
             sum(volume) as volume
-          from 
+          from
             pxi_baseline
-          where 
-            moe_code = i_moe_code and 
+          where
+            moe_code = i_moe_code and
             has_sku = pxi_e2e_demand.fc_no
           group by
             zrep_code
@@ -404,10 +406,10 @@ create or replace package body pxipmx14_extract as
             max(stop_date) as end_date,
             count(*) as record_count,
             sum(volume) as volume
-          from 
+          from
             pxi_baseline
-          where 
-            moe_code = i_moe_code and 
+          where
+            moe_code = i_moe_code and
             has_account_sku = pxi_e2e_demand.fc_no
           group by
             account_code,
@@ -435,7 +437,7 @@ create or replace package body pxipmx14_extract as
     i_moe_code in pxi_common.st_moe_code
   ) is
     -- Cursor to select and format the error result.
-    cursor csr_baseline_errors is 
+    cursor csr_baseline_errors is
       select
         trim(replace(error_desc, ',', ' ')) || ',' ||
         trim(replace(account_code, ',', ' ')) || ',' ||
@@ -454,7 +456,7 @@ create or replace package body pxipmx14_extract as
       loop
         fetch csr_baseline_errors into rv_baseline_error;
         exit when csr_baseline_errors%notfound = true;
-        if lics_mailer.is_created = false then 
+        if lics_mailer.is_created = false then
           lics_mailer.create_email(pxi_e2e_demand.gc_email_sender,pxi_e2e_demand.get_config_err_email_group(pxi_e2e_demand.get_system_code(i_moe_code)),'Promax PX End to End Demand Missing Promax Accounts and SKUs Report',null,null);
           lics_mailer.create_part(null);
           lics_mailer.append_data('');
@@ -467,7 +469,7 @@ create or replace package body pxipmx14_extract as
       end loop;
       close csr_baseline_errors;
       if lics_mailer.is_created = true then
-        lics_mailer.finalise_email;    
+        lics_mailer.finalise_email;
       end if;
    exception
      when others then
@@ -485,11 +487,11 @@ create or replace package body pxipmx14_extract as
     i_demand_seq in pxi_e2e_demand.st_sequence) is
     v_moe_code pxi_common.st_moe_code;
     cursor csr_missing_demand is
-      select 
+      select
           t10.demand_group
         from
-          ( select distinct t1.demand_group 
-            from pxi_demand_detail t1 
+          ( select distinct t1.demand_group
+            from pxi_demand_detail t1
             where t1.demand_seq = i_demand_seq) t10
         where
           pxi_e2e_demand.get_account_code(v_moe_code,t10.demand_group) is null;
@@ -502,7 +504,7 @@ create or replace package body pxipmx14_extract as
     loop
       fetch csr_missing_demand into rv_missing_demand;
       exit when csr_missing_demand%notfound = true;
-      if lics_mailer.is_created = false then 
+      if lics_mailer.is_created = false then
         lics_mailer.create_email(pxi_e2e_demand.gc_email_sender,pxi_e2e_demand.get_config_err_email_group(pxi_e2e_demand.get_system_code(v_moe_code)),'Promax PX End to End Demand Missing Configuration Report',null,null);
         lics_mailer.create_part(null);
         lics_mailer.append_data('');
@@ -514,7 +516,7 @@ create or replace package body pxipmx14_extract as
     end loop;
     close csr_missing_demand;
     if lics_mailer.is_created = true then
-      lics_mailer.finalise_email;    
+      lics_mailer.finalise_email;
     end if;
   exception
     when others then
@@ -529,8 +531,8 @@ create or replace package body pxipmx14_extract as
   NAME:      CREATE_EXTRACT                                               PUBLIC
 *******************************************************************************/
   procedure create_extract(
-    i_moe_code in pxi_common.st_moe_code) is 
-    cursor csr_baseline_extract is 
+    i_moe_code in pxi_common.st_moe_code) is
+    cursor csr_baseline_extract is
       select * from table (pxipmx14_extract.pt_baseline_extract(i_moe_code));
     rv_baseline_extract csr_baseline_extract%rowtype;
     v_instance pxi_e2e_demand.st_sequence;
@@ -541,7 +543,7 @@ create or replace package body pxipmx14_extract as
     loop
       fetch csr_baseline_extract into rv_baseline_extract;
       exit when csr_baseline_extract%notfound;
-      if lics_outbound_loader.is_created = false then 
+      if lics_outbound_loader.is_created = false then
         -- Create the interface.
         v_suffix := pxi_e2e_demand.get_suffix_from_moe(i_moe_code);
         v_instance := lics_outbound_loader.create_interface(pc_outbound_interface || '.' || v_suffix);
@@ -550,13 +552,13 @@ create or replace package body pxipmx14_extract as
     end loop;
     close csr_baseline_extract;
     -- Finalise the interface.
-    if lics_outbound_loader.is_created = true then 
+    if lics_outbound_loader.is_created = true then
       lics_outbound_loader.finalise_interface;
     end if;
   exception
-    when pxi_common.ge_promax_exception then 
+    when pxi_common.ge_promax_exception then
       raise;
-    when others then 
+    when others then
      if lics_outbound_loader.is_created = true then
         lics_outbound_loader.add_exception(substr(SQLERRM, 1, 512));
         lics_outbound_loader.finalise_interface;
@@ -571,7 +573,7 @@ create or replace package body pxipmx14_extract as
     i_demand_seq in pxi_e2e_demand.st_sequence) is
     v_moe_code pxi_common.st_moe_code;
   begin
-    -- Now fetch the moe code 
+    -- Now fetch the moe code
     v_moe_code := get_moe_code(i_demand_seq);
     --  Update the baseline table.
     update_baseline(i_demand_seq);
@@ -581,14 +583,13 @@ create or replace package body pxipmx14_extract as
     commit;
     -- Create an extract to Promax.
     create_extract(v_moe_code);
-    -- Create a configuration email report that 
+    -- Create a configuration email report that
     email_config_error_report(i_demand_seq);
-    -- Create a baseline email report 
+    -- Create a baseline email report
     email_baseline_error_report(v_moe_code);
   exception
-    when others then 
+    when others then
       pxi_common.reraise_promax_exception(pc_package_name,'EXECUTE');
   end execute;
 
 end pxipmx14_extract;
-/
