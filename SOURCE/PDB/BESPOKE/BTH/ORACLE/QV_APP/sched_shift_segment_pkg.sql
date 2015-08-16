@@ -28,6 +28,7 @@ create or replace package qv_app.sched_shift_segment_pkg as
   2014-12-08  Trevor Keon           Updated schedule queries to handle schedule with no kibmix 
   2015-03-04  Trevor Keon           Added view_shift_schedule function to support new ATS measure 
   2015-04-29  Trevor Keon           Updated logic to handle multiple resource groups 
+  2015-07-08  Trevor Keon           Updated logic in view_locked function to include separate ATS shift quantity field 
 
 *******************************************************************************/
 
@@ -51,6 +52,7 @@ create or replace package qv_app.sched_shift_segment_pkg as
      base_resource_code varchar2(20),
      base_resource_group_code varchar2(20),     
      total_quantity number(30,10),
+     ats_shift_qty number(30,10),
      shift_quantity number(30,10),
      sched_shift_type number,
      start_outflow date,
@@ -95,6 +97,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             t01.resource_code as base_resource_code,
             t01.resource_group_code as base_resource_group_code,    
             t01.quantity as total_quantity,
+            0 as ats_shift_qty,
             case
               when t02.start_datime >= t01.start_inflow and t02.end_datime <= t01.end_outflow
                  then t01.outflow_rate * ((t02.end_datime - t02.start_datime) * 24)
@@ -190,6 +193,17 @@ create or replace package body qv_app.sched_shift_segment_pkg as
               when start_datime >= start_inflow and end_datime >= end_outflow
                  then outflow_rate * ((end_outflow - start_datime) * 24)
               else quantity
+            end as ats_shift_qty,
+            case
+              when start_inflow >= original_end_outflow or start_datime >= original_end_datime
+                 then 0
+              when start_datime >= start_inflow and original_end_datime <= original_end_outflow
+                 then outflow_rate * ((original_end_datime - start_datime) * 24)
+              when start_datime <= start_inflow and original_end_datime <= original_end_outflow
+                 then outflow_rate * ((original_end_datime - start_inflow) * 24)
+              when start_datime >= start_inflow and original_end_datime >= original_end_outflow
+                 then outflow_rate * ((original_end_outflow - start_datime) * 24)
+              else quantity
             end as shift_quantity,
             case
               when start_inflow >= end_outflow or start_datime >= end_datime
@@ -231,7 +245,8 @@ create or replace package body qv_app.sched_shift_segment_pkg as
                    when p_week_finish is null or t03.end_datime <= p_week_finish
                       then t03.end_datime
                    else p_week_finish
-                end as end_datime,                
+                end as end_datime, 
+                t03.end_datime as original_end_datime,                 
                 t02.outflow_rate,            
                 t02.start_inflow,
                 case
@@ -239,6 +254,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
                       then t02.end_outflow
                    else p_week_finish
                 end as end_outflow,
+                t02.end_outflow as original_end_outflow,
                 t03.prodn_shift_code
             from infor.ash_schedule_versions t01,
                infor.ash_schedules t02,
@@ -329,6 +345,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             t02.resource_code as base_resource_code,
             t02.resource_group_code as base_resource_group_code,
             t02.quantity as total_quantity,
+            0 as ats_shift_qty,
             case
               when t03.start_datime >= t02.start_inflow and t03.end_datime <= t02.end_outflow
                  then t02.outflow_rate * ((t03.end_datime - t03.start_datime) * 24)
@@ -450,6 +467,7 @@ create or replace package body qv_app.sched_shift_segment_pkg as
             t02.resource_code as base_resource_code,
             t02.resource_group_code as base_resource_group_code,
             t02.quantity as total_quantity,
+            0 as ats_shift_qty,
             case
               when t03.start_datime >= t02.start_inflow and t03.end_datime <= t02.end_outflow
                  then t02.outflow_rate * ((t03.end_datime - t03.start_datime) * 24)
