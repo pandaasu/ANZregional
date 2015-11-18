@@ -605,7 +605,7 @@ create or replace package body lics_notification as
       /*-*/
       /* Initialise the email
       /*-*/
-      utl_smtp.mail(var_connection, par_system || '_' || par_unit || '_' || par_environment);
+      utl_smtp.mail(var_connection, par_system || '_' || par_unit || '_' || par_environment || lics_parameter.email_suffix);
 
       /*-*/
       /* Set the recipient
