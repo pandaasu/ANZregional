@@ -1,0 +1,19 @@
+--------------------------------------------------------
+--  DDL for Table LICS_JOB
+--------------------------------------------------------
+
+  CREATE TABLE "LICS"."LICS_JOB" ("JOB_JOB" VARCHAR2(32 CHAR), "JOB_DESCRIPTION" VARCHAR2(128 CHAR), "JOB_RES_GROUP" VARCHAR2(32 CHAR), "JOB_EXE_HISTORY" NUMBER(5,0), "JOB_OPR_ALERT" VARCHAR2(256 CHAR), "JOB_EMA_GROUP" VARCHAR2(64 CHAR), "JOB_TYPE" VARCHAR2(10 CHAR), "JOB_INT_GROUP" VARCHAR2(10 CHAR), "JOB_PROCEDURE" VARCHAR2(256 CHAR), "JOB_NEXT" VARCHAR2(4000 CHAR), "JOB_INTERVAL" VARCHAR2(4000 CHAR), "JOB_STATUS" VARCHAR2(1 CHAR)) ;
+
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_JOB" IS 'Job - job identifier';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_DESCRIPTION" IS 'Job - job description';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_RES_GROUP" IS 'Job - process identifier';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_EXE_HISTORY" IS 'Job - trace history to retain (number)';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_OPR_ALERT" IS 'Job - operator alert message';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_EMA_GROUP" IS 'Job - email group';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_TYPE" IS 'Job - job type';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_INT_GROUP" IS 'Job - interface group';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_PROCEDURE" IS 'Job - procedure to execute';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_NEXT" IS 'Job - next execution';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_INTERVAL" IS 'Job - execution interval';
+   COMMENT ON COLUMN "LICS"."LICS_JOB"."JOB_STATUS" IS 'Job - job status';
+   COMMENT ON TABLE "LICS"."LICS_JOB"  IS 'LICS Job table';

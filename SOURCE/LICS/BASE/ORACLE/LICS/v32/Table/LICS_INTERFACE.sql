@@ -1,0 +1,28 @@
+--------------------------------------------------------
+--  DDL for Table LICS_INTERFACE
+--------------------------------------------------------
+
+  CREATE TABLE "LICS"."LICS_INTERFACE" ("INT_INTERFACE" VARCHAR2(32 CHAR), "INT_DESCRIPTION" VARCHAR2(128 CHAR), "INT_TYPE" VARCHAR2(10 CHAR), "INT_GROUP" VARCHAR2(10 CHAR), "INT_PRIORITY" NUMBER(2,0), "INT_HDR_HISTORY" NUMBER(5,0), "INT_DTA_HISTORY" NUMBER(5,0), "INT_FIL_PATH" VARCHAR2(128 CHAR), "INT_FIL_PREFIX" VARCHAR2(10 CHAR), "INT_FIL_SEQUENCE" NUMBER(2,0), "INT_FIL_EXTENSION" VARCHAR2(10 CHAR), "INT_OPR_ALERT" VARCHAR2(256 CHAR), "INT_EMA_GROUP" VARCHAR2(64 CHAR), "INT_SEARCH" VARCHAR2(256 CHAR), "INT_PROCEDURE" VARCHAR2(256 CHAR), "INT_STATUS" VARCHAR2(1 CHAR), "INT_USR_INVOCATION" VARCHAR2(1 CHAR), "INT_USR_VALIDATION" VARCHAR2(256 CHAR), "INT_USR_MESSAGE" VARCHAR2(64 CHAR), "INT_LOD_TYPE" VARCHAR2(10 CHAR), "INT_LOD_GROUP" VARCHAR2(10 CHAR)) ;
+
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_INTERFACE" IS 'Interface - interface identifier';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_DESCRIPTION" IS 'Interface - interface description';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_TYPE" IS 'Interface - interface type';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_GROUP" IS 'Interface - interface group';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_PRIORITY" IS 'Interface - processing priority';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_HDR_HISTORY" IS 'Interface - header history to retain (days)';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_DTA_HISTORY" IS 'Interface - data history to retain (days)';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_FIL_PATH" IS 'Interface - file path';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_FIL_PREFIX" IS 'Interface - file prefix';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_FIL_SEQUENCE" IS 'Interface - file sequence length';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_FIL_EXTENSION" IS 'Interface - file extension';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_OPR_ALERT" IS 'Interface - operator alert message';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_EMA_GROUP" IS 'Interface - email group';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_SEARCH" IS 'Interface - search procedure';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_PROCEDURE" IS 'Interface - processing procedure';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_STATUS" IS 'Interface - interface status';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_USR_INVOCATION" IS 'Interface - user invocation indicator (0=No or 1=Yes)';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_USR_VALIDATION" IS 'Interface - user invocation validation procedure';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_USR_MESSAGE" IS 'Interface - user invocation message name (*OUTBOUND only)';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_LOD_TYPE" IS 'Interface - interface load type (*NONE=outbound interfaces, *PUSH=load pushing, *POLL=load polling)';
+   COMMENT ON COLUMN "LICS"."LICS_INTERFACE"."INT_LOD_GROUP" IS 'Interface - interface load group (*NONE=load type *PUSH or *NONE, group=load type *POLL)';
+   COMMENT ON TABLE "LICS"."LICS_INTERFACE"  IS 'LICS Interface Table';
