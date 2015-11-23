@@ -19,7 +19,7 @@ set define ^;
 /**/
 /* Define the work variables
 /**/
-define tab_path = C:\<PATH>\LICS\TABLE
+define tab_path = C:\<PATH>\LICS\v32\TABLE
 define spl_path = C:\<PATH>
 define database = <DATABASE>.ap.mars
 define datauser = lics
