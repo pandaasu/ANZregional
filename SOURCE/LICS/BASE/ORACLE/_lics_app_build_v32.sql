@@ -27,7 +27,7 @@ set define ^;
 /*-*/
 /* Define the work variables
 /*-*/
-define pro_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP_PKG\
+define pro_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP\CODE
 define spl_path = <LOG_PATH>
 define database = <DATABASE>
 define codeuser = LICS_APP
