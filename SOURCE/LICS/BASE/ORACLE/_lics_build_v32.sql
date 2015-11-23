@@ -102,13 +102,13 @@ prompt CREATING LICS TABLES ...
 @^tab_path\lics_triggered_sequence.sql;
 
 prompt CREATING LICS CONSTRAINTS ...
-@^spl_path\LICS\_create_constraints.sql;
+@^tab_path\..\_create_constraints.sql;
 
 prompt CREATING LICS INDEXES ...
-@^spl_path\LICS\_create_indexes.sql;
+@^tab_path\..\_create_indexes.sql;
 
 prompt CREATING PUBLIC SYNONYM ...
-@^spl_path\LICS\_create_public_synonyms.sql;
+@^tab_path\..\_create_public_synonyms.sql;
 
 
 /**/
