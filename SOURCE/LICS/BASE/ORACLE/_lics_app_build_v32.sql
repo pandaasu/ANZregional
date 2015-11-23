@@ -11,6 +11,7 @@
 /*  D. Scan for <INSTALLATION> and replace with the installation folder in the source repository (eg. NORTH_ASIA from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
 /*  E. Scan for <ENVIRONMENT> and replace with the environment folder in the source repository (eg. TEST from the path <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\INSTALL\NORTH_ASIA\TEST)
 /*  F. Scan for <LICS_PARAMETERS_PATH> and replace with the folder of LICS_PARAMETER.SQL
+/*  G. Scan for <LOG_PATH> and replace with your log path.
 /******************************************************************/
 
 /*-*/
@@ -27,7 +28,7 @@ set define ^;
 /* Define the work variables
 /*-*/
 define pro_path = <SOURCE_PATH>\SOURCE\LICS\BASE\ORACLE\LICS_APP_PKG\
-define spl_path = D:\TEMP
+define spl_path = <LOG_PATH>
 define database = <DATABASE>
 define codeuser = LICS_APP
 define code_password = <LICS_APP_PASSWORD>
