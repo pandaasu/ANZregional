@@ -68,14 +68,15 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Job execution history must not be zero';
       }
-      if (document.main.INP_JobType.value == '*INBOUND' ||
+      if (document.main.INP_JobType.value == '*FILE' ||
+          document.main.INP_JobType.value == '*INBOUND' ||
           document.main.INP_JobType.value == '*OUTBOUND' ||
           document.main.INP_JobType.value == '*PASSTHRU' ||
           document.main.INP_JobType.value == '*DAEMON' ||
           document.main.INP_JobType.value == '*POLLER') {
          if (document.main.INP_JobIntGroup.value == '') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Job group must be entered for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            strMessage = strMessage + 'Job group must be entered for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          } else {
             bolCharError = false;
             intHashCount = 0;
@@ -119,13 +120,13 @@
          } else {
             if (document.main.INP_JobProcedure.value != '') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Job procedure must not be entered for *INBOUND, *OUTBOUND, *PASSTHRU';
+               strMessage = strMessage + 'Job procedure must not be entered for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU';
             }
          }
          if (document.main.INP_JobNext.value != 'sysdate' &&
              document.main.INP_JobNext.value != 'SYSDATE') {
             if (strMessage != '') {strMessage = strMessage + '\r\n';}
-            strMessage = strMessage + 'Job next must be SYSDATE for *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
+            strMessage = strMessage + 'Job next must be SYSDATE for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU, *DAEMON or *POLLER';
          }
          if (document.main.INP_JobType.value == '*POLLER') {
             if (document.main.INP_JobInterval.value == '') {
@@ -135,7 +136,7 @@
          } else {
             if (document.main.INP_JobInterval.value != '') {
                if (strMessage != '') {strMessage = strMessage + '\r\n';}
-               strMessage = strMessage + 'Job interval must not be entered for *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
+               strMessage = strMessage + 'Job interval must not be entered for *FILE, *INBOUND, *OUTBOUND, *PASSTHRU or *DAEMON';
             }
          }
       } else {
@@ -243,6 +244,7 @@
          <td class="clsLabelBB" align=right valign=center colspan=1 nowrap><nobr>&nbsp;Job Type:&nbsp;</nobr></td>
          <td class="clsLabelBN" align=left valign=center colspan=1 nowrap><nobr>
             <select class="clsInputBN" name="sltJobType" onChange="selectType(this);">
+			   <option value="*FILE"<%if objForm.Fields().Item("DTA_JobType") = "*FILE" then%> selected<%end if%>>*FILE
                <option value="*INBOUND"<%if objForm.Fields().Item("DTA_JobType") = "*INBOUND" then%> selected<%end if%>>*INBOUND
                <option value="*OUTBOUND"<%if objForm.Fields().Item("DTA_JobType") = "*OUTBOUND" then%> selected<%end if%>>*OUTBOUND
                <option value="*PASSTHRU"<%if objForm.Fields().Item("DTA_JobType") = "*PASSTHRU" then%> selected<%end if%>>*PASSTHRU

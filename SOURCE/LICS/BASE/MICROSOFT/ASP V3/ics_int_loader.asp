@@ -159,28 +159,37 @@ sub ProcessSubmit()
    '//
    '// Load the form data
    '//
-   call objProcedure.Execute("lics_form.clear_form")
+   '//call objProcedure.Execute("lics_form.clear_form")
+   objProcedure.PutStatement("lics_form.clear_form")
    lngCount = clng(objForm.Fields().Item("StreamCount"))
    
    for i = 1 to lngCount	
-      call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(objForm.Fields().Item("StreamPart" & i)) & "')")      
+      '//call objProcedure.Execute("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(objForm.Fields().Item("StreamPart" & i)) & "')")      
+      objProcedure.PutStatement("lics_form.set_value('LOAD_STREAM','" & objSecurity.FixString(objForm.Fields().Item("StreamPart" & i)) & "')")
+   next 
       
-   next
-   response.end
-
    '//
    '// Execute the interface loader
    '//
    strStatement = "lics_interface_loader."
    strStatement = strStatement & "execute("
-   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields().Item("SLT_Interface")) & "')"
-   strReturn = objFunction.Execute(strStatement)
+   strStatement = strStatement & "'" & objSecurity.FixString(objForm.Fields().Item("SLT_Interface")) & "',"
+   strStatement = strStatement & "'" & GetUser() & "')"
+   '//strReturn = objFunction.Execute(strStatement)
+   objProcedure.PutStatement(strStatement)
+   objProcedure.PutStatement("lics_form.clear_form")
+   strReturn = objProcedure.ExecuteProcedureBatchAndFunction()
+   
    if strReturn <> "*OK" then
       strError = FormatError(strReturn)
    else
       strMode = "SELECT"
       strConfirm = "Interface " & objForm.Fields().Item("SLT_Interface") & " loaded"
    end if
+   
+   '//call objProcedure.Execute("lics_form.clear_form")
+   set objProcedure = nothing
+
    call ProcessSelect
 
 end sub

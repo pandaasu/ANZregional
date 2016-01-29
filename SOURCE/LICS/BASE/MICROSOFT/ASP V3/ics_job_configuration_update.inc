@@ -63,7 +63,8 @@
          if (strMessage != '') {strMessage = strMessage + '\r\n';}
          strMessage = strMessage + 'Job execution history must not be zero';
       }
-      if (document.main.INP_JobType.value == '*INBOUND' ||
+      if (document.main.INP_JobType.value == '*FILE' || 
+          document.main.INP_JobType.value == '*INBOUND' ||
           document.main.INP_JobType.value == '*OUTBOUND' ||
           document.main.INP_JobType.value == '*PASSTHRU' ||
           document.main.INP_JobType.value == '*DAEMON' ||
