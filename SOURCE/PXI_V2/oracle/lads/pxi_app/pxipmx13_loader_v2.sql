@@ -1,6 +1,4 @@
-prompt :: Compile Package [pxipmx13_loader_v2] ::::::::::::::::::::::::::::::::::::::::
-
-create or replace package pxi_app.pxipmx13_loader_v2 as
+CREATE OR REPLACE PACKAGE "PXI_APP"."PXIPMX13_LOADER_V2" as
 /*******************************************************************************
 ** PACKAGE DEFINITION
 ********************************************************************************
@@ -29,6 +27,7 @@ create or replace package pxi_app.pxipmx13_loader_v2 as
   2014-02-20  Mal Chambeyron        Created Interface
   2014-03-12  Mal Chambeyron        After Promax PX Fix, Forward both Total Amount
                                     and Tax Amount
+  2016-04-03  Mal Chambeyron        Fold Single Unit Loads into Universial Load
 
 *******************************************************************************/
   -- LICS Hooks.
@@ -39,12 +38,9 @@ create or replace package pxi_app.pxipmx13_loader_v2 as
   function on_get_file_type return varchar2;
   function on_get_csv_qualifier return varchar2;
 
-  procedure execute;
-
-end pxipmx13_loader_v2;
+end PXIPMX13_LOADER_V2;
 /
-
-create or replace package body pxi_app.pxipmx13_loader_v2 as
+CREATE OR REPLACE PACKAGE BODY "PXI_APP"."PXIPMX13_LOADER_V2" as
 
   -- Package Cosntants
   pc_package_name constant pxi_common.st_package_name := 'PXIPMX13_LOADER_V2';
@@ -53,7 +49,6 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
   pc_schema_name constant pxi_common.st_package_name := 'PXI_APP';
 
   -- Package Variables
-  pv_interface_suffix varchar2(3 char);
   pv_user fflu_common.st_user;
 
   -- Interface Field Definitions
@@ -68,22 +63,10 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
   pc_invoice_date constant fflu_common.st_name := 'Invoice Date';
   pc_claim_comment constant fflu_common.st_name := 'Claim Comment';
 
-/*******************************************************************************
-  NAME:      ON_START                                                     PUBLIC
-*******************************************************************************/
+--------------------------------------------------------------------------------
   procedure on_start is
 
   begin
-    -- Get Interface Suffix
-    pv_interface_suffix := fflu_app.fflu_utils.get_interface_suffix;
-    if pv_interface_suffix not in (pxi_common.fc_interface_snack,pxi_common.fc_interface_food,pxi_common.fc_interface_pet,pxi_common.fc_interface_nz) then
-      pxi_common.raise_promax_error(pc_package_name,'ON_START','Unknown Suffix ['||pv_interface_suffix||'], Expected ['||
-        pxi_common.fc_interface_snack||','||
-        pxi_common.fc_interface_food||','||
-        pxi_common.fc_interface_pet||','||
-        pxi_common.fc_interface_nz||']');
-    end if;
-
     -- request lock (on interface)
     begin
       lics_locking.request(pc_inbound_interface_name);
@@ -115,9 +98,7 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       fflu_data.log_interface_exception('ON_START');
   end on_start;
 
-/*******************************************************************************
-  NAME:      ON_DATA                                                      PUBLIC
-*******************************************************************************/
+--------------------------------------------------------------------------------
   procedure on_data(p_row in varchar2) is
 
     vr_spendvision pxi.pxi_361_spendv_history%rowtype;
@@ -142,6 +123,11 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       vr_spendvision.invoice_date := fflu_data.get_date_field(pc_invoice_date);
       vr_spendvision.claim_comment := fflu_data.get_char_field(pc_claim_comment);
 
+      -- Check Company Code (Limit to Australia, remainder of Logic Handles NZ to Facilitate Future Inclusion)
+      if vr_spendvision.company_code not in ('47') then
+          fflu_data.log_field_error(pc_company_code,'Only Australia is Supported at this Time .. Expecting [47 (Australia)]');
+      end if;
+
       -- Check and Set Company Code
       if vr_spendvision.company_code not in ('47','49') then
           fflu_data.log_field_error(pc_company_code,'Expecting [47 (Australia), 49 (New Zealand)]');
@@ -157,36 +143,6 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       else
         vr_spendvision.promax_division_code := '0'||vr_spendvision.division_code;
       end if;
-
-      -- Check Suffix against Expected Promax Company / Division
-      case pv_interface_suffix
-        when pxi_common.fc_interface_snack then
-          if not (vr_spendvision.promax_company_code = pxi_common.fc_australia and vr_spendvision.promax_division_code = pxi_common.fc_bus_sgmnt_snack) then
-            fflu_data.log_field_error(pc_division_code,'Wrong Promax Company / Division ['||vr_spendvision.company_code||' / '||vr_spendvision.division_code||
-              '] for Suffix ['||pv_interface_suffix||'], Expected ['||ltrim(pxi_common.fc_australia,'1')||' / '||ltrim(pxi_common.fc_bus_sgmnt_snack,'0')||']');
-          end if;
-        when pxi_common.fc_interface_food then
-          if not (vr_spendvision.promax_company_code = pxi_common.fc_australia and vr_spendvision.promax_division_code = pxi_common.fc_bus_sgmnt_food) then
-            fflu_data.log_field_error(pc_division_code,'Wrong Promax Company / Division ['||vr_spendvision.company_code||' / '||vr_spendvision.division_code||
-              '] for Suffix ['||pv_interface_suffix||'], Expected ['||ltrim(pxi_common.fc_australia,'1')||' / '||ltrim(pxi_common.fc_bus_sgmnt_food,'0')||']');
-          end if;
-        when pxi_common.fc_interface_pet then
-          if not (vr_spendvision.promax_company_code = pxi_common.fc_australia and vr_spendvision.promax_division_code = pxi_common.fc_bus_sgmnt_petcare) then
-            fflu_data.log_field_error(pc_division_code,'Wrong Promax Company / Division ['||vr_spendvision.company_code||' / '||vr_spendvision.division_code||
-              '] for Suffix ['||pv_interface_suffix||'], Expected ['||ltrim(pxi_common.fc_australia,'1')||' / '||ltrim(pxi_common.fc_bus_sgmnt_petcare,'0')||']');
-          end if;
-        when pxi_common.fc_interface_nz then
-          if not (vr_spendvision.promax_company_code = pxi_common.fc_new_zealand and vr_spendvision.promax_division_code = pxi_common.fc_new_zealand) then
-            fflu_data.log_field_error(pc_division_code,'Wrong Promax Company / Division ['||vr_spendvision.company_code||' / '||vr_spendvision.division_code||
-              '] for Suffix ['||pv_interface_suffix||'], Expected ['||ltrim(pxi_common.fc_new_zealand,'1')||' / '||ltrim(pxi_common.fc_new_zealand,'0')||']');
-          end if;
-        else
-          fflu_data.log_field_error(pc_division_code,'Unknown Suffix ['||pv_interface_suffix||'], Expected ['||
-            pxi_common.fc_interface_snack||','||
-            pxi_common.fc_interface_food||','||
-            pxi_common.fc_interface_pet||','||
-            pxi_common.fc_interface_nz||']');
-      end case;
 
       -- Check if Customer Code Exists
       select count(1) into v_customer_found
@@ -213,7 +169,7 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       -- Check for Claim Code ALREADY Processed - This Load
       select count(1) into v_previous_claim_found from pxi.pxi_361_spendv_history_temp where claim_code = vr_spendvision.claim_code;
       if v_previous_claim_found > 0 then
-        fflu_data.log_field_error(pc_claim_code,'Claim Code has ALREADY Encountered This Load');
+        fflu_data.log_field_error(pc_claim_code,'Claim Code has ALREADY been Encountered This Load');
       end if;
 
       -- Set Promax Amount
@@ -228,9 +184,132 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       fflu_data.log_interface_exception('ON_DATA');
   end on_data;
 
-/*******************************************************************************
-  NAME:      ON_END                                                       PUBLIC
-*******************************************************************************/
+--------------------------------------------------------------------------------
+  function get_suffix_by_company_div(
+    i_promax_company in pxi_common.st_company,
+    i_promax_division in pxi_common.st_promax_division
+  ) return varchar2 is
+
+    v_suffix varchar2(2);
+    v_msg varchar(4000);
+
+  begin
+
+    if i_promax_company = '149' then -- NZ
+      v_msg := 'Invalid Promax Company / Division ['||i_promax_company||' / '||i_promax_division||'], NZ Not Supported for this Interface';
+      pxi_common.raise_promax_error(pc_package_name, 'GET_SUFFIX_BY_COMPANY_DIV', v_msg);
+    end if;
+
+    select max(interface_suffix) into v_suffix
+    from pxi.pxi_moe_attributes
+    where px_company_code = i_promax_company
+    and px_division_code = i_promax_division
+    ;
+
+    if v_suffix is null then
+      v_msg := 'Invalid Promax Company / Division ['||i_promax_company||' / '||i_promax_division||'], Not Found in [pxi.pxi_moe_attributes]';
+      pxi_common.raise_promax_error(pc_package_name, 'GET_SUFFIX_BY_COMPANY_DIV', v_msg);
+    end if;
+
+    return v_suffix;
+  end;
+
+--------------------------------------------------------------------------------
+  procedure create_extract(
+    i_promax_company in pxi_common.st_company,
+    i_promax_division in pxi_common.st_promax_division
+  ) is
+
+    v_instance pxi_e2e_demand.st_sequence;
+    v_suffix pxi_common.st_interface_name;
+
+  begin
+
+    for rv_row in (
+
+      select
+        pxi_common.char_format('361002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '361002' -> ICRecordType
+        pxi_common.char_format(promax_company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
+        pxi_common.char_format(promax_division_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
+        pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- cust_code -> AccountCode
+        pxi_common.char_format(claim_comment, 20, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- claim_comment -> Reference
+        pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> ActionFlag
+        pxi_common.char_format('1', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '1' -> Type
+        pxi_common.date_format(promax_invoice_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- posting_date -> Date
+        pxi_common.char_format(claim_code, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- claim_ref -> Number
+        pxi_common.char_format('0', 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '0' -> ParentNumber
+        pxi_common.char_format('', 65, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> ExtReference
+        pxi_common.char_format('', 80, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> InvoiceLink
+        pxi_common.char_format('', 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> ReasonCode
+        pxi_common.numb_format(promax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- claim_amount_ex_gst -> Amount
+        pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
+        pxi_common.char_format('Promotion ['||promotion_code||'] Customer ['||cust_code||'] Vendor ['||case when promax_company_code = '147' then '15110074' when promax_company_code = '149' then '15064445' else '*ERROR' end||']', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
+        pxi_common.char_format(case when promax_company_code = '147' then 'AUD' when promax_company_code = '149' then 'NZD' else '***' end, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- currency -> Currency
+        as output_record
+      from pxi.pxi_361_spendv_history_temp
+      where promax_company_code = i_promax_company
+      and promax_division_code = i_promax_division
+
+    )
+    loop
+      if lics_outbound_loader.is_created = false then -- create interface.
+        v_suffix := get_suffix_by_company_div(i_promax_company, i_promax_division);
+        v_instance := lics_outbound_loader.create_interface(pc_outbound_interface_name || '.' || v_suffix);
+      end if;
+      lics_outbound_loader.append_data(rv_row.output_record);
+    end loop;
+
+    -- Finalise interface when required
+    if lics_outbound_loader.is_created = true then
+      lics_outbound_loader.finalise_interface;
+    end if;
+
+  exception
+    when others then
+      rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(sqlerrm, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       fflu_data.log_interface_exception('CREATE_EXTRACT');
+  end create_extract;
+
+--------------------------------------------------------------------------------
+  procedure execute is
+
+  begin
+
+    -- Create Extract for Each Unit Found
+    for rv_row in (
+      select distinct
+        promax_company_code,
+        promax_division_code
+      from pxi.pxi_361_spendv_history_temp
+      order by
+        promax_company_code,
+        promax_division_code
+    )
+    loop
+      create_extract(rv_row.promax_company_code, rv_row.promax_division_code);
+    end loop;
+
+    -- Add Current Spendvision Transactions to History
+    insert into pxi.pxi_361_spendv_history select * from pxi.pxi_361_spendv_history_temp; -- pxi_361_spendv_history and pxi_361_spendv_history_temp have identical structures
+
+    -- Commit Spendvision Transactions to History
+    commit;
+
+  exception
+    when others then
+      rollback;
+       if lics_outbound_loader.is_created = true then
+         lics_outbound_loader.add_exception(substr(sqlerrm, 1, 512));
+         lics_outbound_loader.finalise_interface;
+       end if;
+       fflu_data.log_interface_exception('EXECUTE');
+  end execute;
+
+--------------------------------------------------------------------------------
   procedure on_end is
 
   begin
@@ -254,96 +333,19 @@ create or replace package body pxi_app.pxipmx13_loader_v2 as
       lics_locking.release(pc_inbound_interface_name);
   end on_end;
 
-/*******************************************************************************
-  NAME:      EXECUTE                                                      PUBLIC
-*******************************************************************************/
-  procedure execute is
-
-    v_interface_name_with_suffix varchar2(64 char);
-    v_instance number(15,0);
-
-  begin
-
-    -- Set interface name (including Suffix)
-    v_interface_name_with_suffix := pc_outbound_interface_name || '.' || pv_interface_suffix;
-
-    for rv_row in (
-
-      select
-        pxi_common.char_format('361002', 6, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '361002' -> ICRecordType
-        pxi_common.char_format(promax_company_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_company -> PXCompanyCode
-        pxi_common.char_format(promax_division_code, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- promax_division -> PXDivisionCode
-        pxi_common.char_format(cust_code, 10, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- cust_code -> AccountCode
-        pxi_common.char_format(claim_comment, 20, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- claim_comment -> Reference
-        pxi_common.char_format('A', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT 'A' -> ActionFlag
-        pxi_common.char_format('1', 1, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '1' -> Type
-        pxi_common.date_format(promax_invoice_date, 'yyyymmdd', pxi_common.fc_is_not_nullable) || -- posting_date -> Date
-        pxi_common.char_format(claim_code, 18, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- claim_ref -> Number
-        pxi_common.char_format('0', 18, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) || -- CONSTANT '0' -> ParentNumber
-        pxi_common.char_format('', 65, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> ExtReference
-        pxi_common.char_format('', 80, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> InvoiceLink
-        pxi_common.char_format('', 5, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> ReasonCode
-        pxi_common.numb_format(promax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- claim_amount_ex_gst -> Amount
-        --pxi_common.numb_format(claim_amount_ex_gst, '9999999990.00', pxi_common.fc_is_not_nullable) || -- claim_amount_ex_gst -> Amount
-        pxi_common.numb_format(tax_amount, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
-        -- pxi_common.numb_format(0, '9999999990.00', pxi_common.fc_is_not_nullable) || -- tax_amount -> TaxAmount
-        pxi_common.char_format('Promotion ['||promotion_code||'] Customer ['||cust_code||'] Vendor ['||case when promax_company_code = '147' then '15110074' when promax_company_code = '149' then '15064445' else '*ERROR' end||']', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
-        -- pxi_common.char_format('', 256, pxi_common.fc_format_type_none, pxi_common.fc_is_nullable) || -- CONSTANT '' -> Note
-        pxi_common.char_format(case when promax_company_code = '147' then 'AUD' when promax_company_code = '149' then 'NZD' else '***' end, 3, pxi_common.fc_format_type_none, pxi_common.fc_is_not_nullable) -- currency -> Currency
-        as output_record
-      from pxi.pxi_361_spendv_history_temp
-
-    )
-    loop
-
-      -- Create interface when required
-      if lics_outbound_loader.is_created = false then
-        v_instance := lics_outbound_loader.create_interface(v_interface_name_with_suffix);
-      end if;
-
-      -- Append Data
-      lics_outbound_loader.append_data(rv_row.output_record);
-
-    end loop;
-
-    -- Add current Spendvision Transactions to History
-    insert into pxi.pxi_361_spendv_history select * from pxi.pxi_361_spendv_history_temp; -- pxi_361_spendv_history and pxi_361_spendv_history_temp have identical structures
-
-    -- Finalise interface when required
-    if lics_outbound_loader.is_created = true then
-      lics_outbound_loader.finalise_interface;
-    end if;
-
-    -- Commit Spendvision Transactions to History
-    commit;
-
-  exception
-    when others then
-      rollback;
-       if lics_outbound_loader.is_created = true then
-         lics_outbound_loader.add_exception(substr(sqlerrm, 1, 512));
-         lics_outbound_loader.finalise_interface;
-       end if;
-       fflu_data.log_interface_exception('EXECUTE');
-  end execute;
-
-/*******************************************************************************
-  NAME:      ON_GET_FILE_TYPE                                             PUBLIC
-*******************************************************************************/
+--------------------------------------------------------------------------------
   function on_get_file_type return varchar2 is
   begin
     return fflu_common.gc_file_type_csv;
   end on_get_file_type;
 
-/*******************************************************************************
-  NAME:      ON_GET_CSV_QUALIFER                                          PUBLIC
-*******************************************************************************/
+--------------------------------------------------------------------------------
   function on_get_csv_qualifier return varchar2 is
   begin
     return fflu_common.gc_csv_qualifier_null;
   end on_get_csv_qualifier;
 
-end pxipmx13_loader_v2;
+end PXIPMX13_LOADER_V2;
 /
 
-grant execute on pxi_app.pxipmx13_loader_v2 to lics_app, fflu_app, site_app;
+grant execute on pxi_app.PXIPMX13_LOADER_V2 to lics_app, site_app, fflu_app, lics_exec;
