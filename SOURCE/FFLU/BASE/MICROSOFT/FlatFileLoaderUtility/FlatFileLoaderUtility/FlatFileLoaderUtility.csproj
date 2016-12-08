@@ -17,6 +17,10 @@
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>false</UseIISExpress>
     <WebGreaseLibPath>..\packages\WebGrease.1.5.2\lib</WebGreaseLibPath>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication>enabled</IISExpressAnonymousAuthentication>
+    <IISExpressWindowsAuthentication>enabled</IISExpressWindowsAuthentication>
+    <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -437,6 +441,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Content\chosen.css" />
+    <None Include="Properties\PublishProfiles\Profile1.pubxml" />
     <None Include="Scripts\chosen\chosen.jquery.js" />
     <None Include="Scripts\chosen\chosen.jquery.min.js" />
     <None Include="Scripts\jquery.hoverintent.js" />
@@ -521,7 +526,9 @@
     </Content>
     <None Include="Scripts\placeholders.js" />
     <None Include="Scripts\placeholders.min.js" />
-    <None Include="Scripts\site.js" />
+    <Content Include="Scripts\site.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Scripts\site.minified.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

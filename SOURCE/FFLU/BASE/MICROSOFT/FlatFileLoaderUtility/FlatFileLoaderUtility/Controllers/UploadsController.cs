@@ -148,7 +148,7 @@ namespace FlatFileLoaderUtility.Controllers
         }
 
         [HttpPost]
-        public JsonResult Segment(string interfaceCode, string filename, string segmentData, bool isFinalSegment, long fileSize, bool needsEncodingFix)
+        public JsonResult Segment(string interfaceCode, string filename, string segmentData, bool isFinalSegment, long fileSize)
         {
             var status = default(Status);
 
@@ -186,30 +186,7 @@ namespace FlatFileLoaderUtility.Controllers
                     thread.Start();
                 }
 
-                // Ok... this may need some explanation...
-                // For uploading the data, the HTML5 FileReader works without any problems, just as expected. 
-                // But as it turns out, getting it to work in IE7/8 is not so simple. IE 7/8 has to rely on ActiveX components 
-                // to access the file system. There are two possible components it can use to do that:
-                //
-                // Scripting.FileSystemObject – this is a light-weight reader. It is considered a “safe” ActiveX component 
-                // and doesn’t generate security warnings in the browser. It can read files encoded as ASCII and “Unicode”. 
-                // But it turns out that when the documentation says “Unicode” it really means UTF-16 only. It has no support 
-                // for UTF-8 encoding.
-                //
-                // ADODB.Stream – this is a fully functional stream component, but is considered a security risk and in the Mars 
-                // environment it seems to be completely locked down. Even though the security settings in IE8 are set to allow 
-                // cross-domain data sources for trusted and intranet sites, and even though the *.ap.mars domain is set as an 
-                // intranet site, it *does not work*. I can’t see why, but the group policy security settings are set such that 
-                // nothing is editable, so I don’t really even have access to investigate.
-                //
-                // So the only option was to use Scripting.FileSystemObject, and read the file as UTF-16. It passes the data to 
-                // the server as "UTF-16 encoded", but is really UTF-8 data. The server then has to fix the encoding to get it 
-                // back to UTF-8. This encoding fix is only needed when uploading via old versions of Internet Explorer, and 
-                // should place negligible extra load on the server.
-                if (needsEncodingFix)
-                {
-                    segmentData = Encoding.UTF8.GetString(Encoding.Unicode.GetBytes(segmentData));
-                }
+                segmentData = Encoding.UTF8.GetString(Encoding.GetEncoding(1252).GetBytes(segmentData));
 
                 status.AddSegment(new Segment(segmentData), isFinalSegment);
                 status.FileSize = fileSize;
@@ -437,6 +414,9 @@ namespace FlatFileLoaderUtility.Controllers
                 // 5- The Lics processing is complete
 
                 status = Status.GetStatus(this.Container.Access.Username, this.Container.Connection);
+
+                if (status == null)
+                    throw new Exception("Status not found in cache");
 
                 if (status.Exception != null)
                     throw status.Exception;

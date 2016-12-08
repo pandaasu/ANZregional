@@ -9,14 +9,11 @@
     <meta name="viewport" content="width=device-width" />
     @*@Styles.Render("~/Content/css")*@
     <link href="/Content/site.minified.css" rel="stylesheet" />
-    <!--[if lte IE 8]>
-        <link rel="stylesheet" type="text/css" href="/Content/SiteIE8.css" />
-    <![endif]-->
     <script type="text/javascript">
         var isTest = @((ViewBag.IsTest ?? false).ToString().ToLower());
     </script>
     @*@Scripts.Render("~/bundles/site")*@
-    <script type="text/javascript" src="/scripts/site.minified.js"></script>
+    <script type="text/javascript" src="/scripts/site.minified.js?v2"></script>
     <script type="text/javascript" src="/scripts/jtable/jquery.jtable.min.js"></script>
     @RenderSection("JavascriptImport", false)
     <script type="text/javascript">

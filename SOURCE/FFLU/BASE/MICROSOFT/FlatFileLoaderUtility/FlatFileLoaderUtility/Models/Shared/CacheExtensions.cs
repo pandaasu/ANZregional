@@ -104,7 +104,7 @@ namespace FlatFileLoaderUtility.Models.Shared
                     if (result == null)
                     {
                         result = obj != null ? obj : default(T);
-                        cache.Insert(key, result, null, Cache.NoAbsoluteExpiration, TimeSpan.FromMinutes(expireInMinutes));
+                        cache.Insert(key, result, null, Cache.NoAbsoluteExpiration, TimeSpan.FromMinutes(expireInMinutes), CacheItemPriority.NotRemovable, null);
                     }
                 }
             }

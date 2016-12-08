@@ -19,7 +19,6 @@
         var inProgressLastSegment = @Model.LastSegment;
         var inProgressReceivedLength = @Model.ReceivedStringLength;
         var isResuming = false;
-        var isModernBrowser = (window.File && window.FileReader && window.Blob);
         var doCancel = false;
         var continueMonitoring = true;
         var compressionMode = 1;
@@ -72,9 +71,7 @@
 
             $("#file").change(function () {
                 $("#fakefile").val($("#file").val().replace(/C:\\fakepath\\/i, ''));
-                if (isModernBrowser) {
-                    fileData = this.files[0];
-                }
+                fileData = this.files[0];
             });
 
             $("#fakefile").click(function () {
@@ -266,28 +263,23 @@
             
             continueMonitoring = true;
 
-            if (isModernBrowser) {
-                var fr = new FileReader();
-                fr.onload = function (e) {
-                    ustatus.Remainder = e.target.result;
-                    ustatus.TotalLength = ustatus.Remainder.length;
+            var fr = new FileReader();
+            fr.onload = function (e) {
+                ustatus.Remainder = e.target.result;
+                ustatus.TotalLength = ustatus.Remainder.length;
 
-                    if (isResuming && inProgressReceivedLength > 0) {
-                        ustatus.Remainder = ustatus.Remainder.substr(inProgressReceivedLength);
-                    }
-                    if (ustatus.Remainder.length <= ustatus.MinCompressionBytes) {
-                        ustatus.UseCompression = false;
-                    }
-                    if (ustatus.UseCompression) {
-                        ProcessCompression();
-                    }
-                    UploadInitiatePart2();
-                };
-                fr.readAsText(fileData, "UTF-8");
-            }
-            else {
+                if (isResuming && inProgressReceivedLength > 0) {
+                    ustatus.Remainder = ustatus.Remainder.substr(inProgressReceivedLength);
+                }
+                if (ustatus.Remainder.length <= ustatus.MinCompressionBytes) {
+                    ustatus.UseCompression = false;
+                }
+                if (ustatus.UseCompression) {
+                    ProcessCompression();
+                }
                 UploadInitiatePart2();
-            }
+            };
+            fr.readAsText(fileData, "UTF-8");
         }
 
         // Called to initiate an upload. Split into 2 parts to support async file read on modern browsers (done here to support async compression).
@@ -339,43 +331,11 @@
             SetProgressDescription("Step 2 - Uploading data");
 
             // Next, start uploading the segments.
-            // This is handled differently depending on whether or not the browser supports the necessary HTML5 elements.
-            // If not, then it has to use ActiveX (which means Internet Explorer)
-            if (isModernBrowser) {
-                if (ustatus.TotalLength == 0) {
-                    SetNoMoreSegments();
-                }
-                else {
-                    ProcessSegment();
-                }
+            if (ustatus.TotalLength == 0) {
+                SetNoMoreSegments();
             }
-            else if (ActiveXObject) {
-                
-                var fso = new ActiveXObject("Scripting.FileSystemObject");
-                ustatus.TotalLength = fso.getFile(ustatus.FilePath).size;
-                ustatus.FileSize = ustatus.TotalLength;
-                ustatus.File = fso.OpenTextFile(ustatus.FilePath, 1, false, -1); // -1 = Unicode
-                ustatus.NeedsEncodingFix = true;
-
-                if (isResuming && ustatus.FileSize != inProgressFileSize && inProgressFileSize > 0) {
-                    ustatus.File.Close();
-                    ustatus.Message = "File size does not match original upload. Cannot resume without the same file.";
-                    ustatus.Exception = "";
-                    ustatus.IsError = true;
-                    ShowResult(true);
-                    return;
-                }
-
-                // Now that the file is accessed, the size is available
-                $("#spanFilesize").text(addCommas(parseInt(Math.ceil(parseFloat(ustatus.TotalLength)/1024))) + " kB");
-                
-                if (ustatus.TotalLength == 0) {
-                    ustatus.File.Close();
-                    SetNoMoreSegments();
-                }
-                else {
-                    ProcessSegment();
-                }
+            else {
+                ProcessSegment();
             }
         }
 
@@ -408,7 +368,7 @@
                     setTimeout("ProcessSegment();", 125);
                 }
             }
-            else if (isModernBrowser) {
+            else {
                 if (ustatus.Remainder.length == 0) {
                     // The upload phase is complete, now monitor the progress
                     UploadMonitor();
@@ -445,72 +405,6 @@
                         return;
                     }
                     // this is for the case where a file is resumed after the last segment is actually uploaded
-                    UploadMonitor();
-                }
-            }
-            else {
-                if (ustatus.File.AtEndOfStream) {
-                    ustatus.File.Close();
-
-                    // The upload phase is complete, now monitor the progress
-                    UploadMonitor();
-                }
-                else {
-                    while (!ustatus.File.AtEndOfStream) {
-                        var aryData = new Array();
-                        var x = 0;
-                        if (ustatus.DanglingChar != "") {
-                            aryData[x++] = ustatus.DanglingChar;
-                            ustatus.DanglingChar = "";
-                        }
-                        aryData[x++] = ustatus.File.Read(ustatus.SegmentBytes - ustatus.MaxRowSize - 10);
-                        while (!ustatus.File.AtEndOfStream) {
-                            var c = ustatus.File.Read(1);
-                            var code = c.charCodeAt(0);
-                            // It's read 16 bits, so have to mask all but the lower 8 bits to read read ASCII character (10 == newline)
-                            // There's also a possibility that the newline will be in the upper half, so have to shift 8 bits.
-                            // But in that case, the lower byte would need to be preserved for the next segment
-                            //alert("upper: " + String.fromCharCode(code & 0xFF) + "(" + (code & 0xFF) + "), lower: " + String.fromCharCode(code >> 8) + "(" + (code >> 8) + ")")
-                            if ((code & 0xFF) == 10) {
-                                aryData[x++] = String.fromCharCode((13 << 8) + 10);
-                                ustatus.DanglingChar = String.fromCharCode((13 << 8) + (code >> 8));
-                                break;
-                            }
-                            if ((code >> 8) == 10) {
-                                aryData[x++] = c;
-                                break;
-                            }
-                            aryData[x++] = c;
-
-                            if (x > (ustatus.MaxRowSize / 2) + 5) {
-                                // The line exceeds the maximum line length. Terminate upload process.
-                                ustatus.File.Close();
-                                ustatus.IsError = true;
-                                ustatus.Message = "End of line not found within maximum line length.";
-                                ustatus.Exception = "Please check line length and end of line encoding in the file.";
-                                UploadCancel(true);
-                                ShowResult(false);
-                                return;
-                            }
-                        }
-                        ustatus.SegmentCount++;
-
-                        var segment = aryData.join('');
-                        ustatus.ProcessedLength += segment.length;
-
-                        // ProcessedLength * 200 percent because the data is read 2 bytes at a time
-                        $("#progressbar").progressbar("value", ustatus.ProcessedLength * 200 / ustatus.TotalLength);
-
-                        if (!isResuming || ustatus.SegmentCount > inProgressLastSegment) {
-                            UploadSegment(segment, ustatus.File.AtEndOfStream);
-                            return;
-                        }
-                    }
-
-                    // this is for the case where a file is resumed after the last segment is actually uploaded
-                    ustatus.File.Close();
-
-                    // The upload phase is complete, now monitor the progress
                     UploadMonitor();
                 }
             }
@@ -650,8 +544,7 @@
                     filename: ustatus.FileName,
                     segmentData: segmentData,
                     isFinalSegment: isFinalSegment,
-                    fileSize: ustatus.FileSize,
-                    needsEncodingFix: ustatus.NeedsEncodingFix
+                    fileSize: ustatus.FileSize
                 });
             }
             
