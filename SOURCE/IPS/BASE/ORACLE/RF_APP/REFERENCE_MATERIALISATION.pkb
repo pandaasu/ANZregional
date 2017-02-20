@@ -487,7 +487,7 @@ PACKAGE BODY        "REFERENCE_MATERIALISATION" AS
               v_return := rowit.mark_rowid_found (v_rowid, v_return_msg);
 
               IF v_return <> common.gc_success THEN
-                v_processing_msg := 'Unable to mark row id as found in tracking system. ' || common.nest_err_msg (v_return_msg);
+                v_processing_msg := 'Primary key in destination table has most likely already been found, duplicats in source possibly. ' || common.nest_err_msg (v_return_msg);
                 RAISE common.ge_error;
               END IF;
 

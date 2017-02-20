@@ -19,7 +19,10 @@ PACKAGE          "REFERENCE_MATERIALISATION" AS
    Ver   Date       Author               Description
    ----- ---------- -------------------- ----------------------------------------
    1.0   15/07/2006 Chris Horn           Created function specificaton.
-
+   1.1              David Zhang          solve Ora-1555 issue
+   1.2   20/02/2017 Chris Horn           Changed error message to make root
+                                         cause of duplicats in source data
+                                         more clear.
    NOTES:
   ********************************************************************************/
   FUNCTION materialise_table (
