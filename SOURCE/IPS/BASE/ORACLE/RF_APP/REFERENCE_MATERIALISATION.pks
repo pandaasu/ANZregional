@@ -1,4 +1,5 @@
-CREATE OR REPLACE PACKAGE RF_APP.reference_materialisation AS
+create or replace 
+PACKAGE          "REFERENCE_MATERIALISATION" AS
   /******************************************************************************
    NAME:       REFERENCE_MATERIALISATION
    PURPOSE:    This package is used to provide a generic flattening program to
@@ -28,5 +29,5 @@ CREATE OR REPLACE PACKAGE RF_APP.reference_materialisation AS
     o_result_msg  OUT     common.st_message_string)
     RETURN common.st_result;
 END reference_materialisation; 
-/
-
+ 
+ 

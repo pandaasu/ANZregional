@@ -1,8 +1,10 @@
-CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
+create or replace 
+PACKAGE BODY        "REFERENCE_MATERIALISATION" AS
   pc_package_name  common.st_package_name := 'REFERENCE_MATERIALISATION';
 
   --------------------------------------------------------------------------------
   /*This procedure is used only to copy table data as specified to solve Ora-1555 issue */
+  /* Added by David Zhang */
   PROCEDURE cp_big_tbl_data
   IS
   /* DEST==>'LADS_CLA_CHR', SRC==>'PLAN_LADS_CLA_CHR',... */
@@ -13,27 +15,31 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
    tabRec       tabRecTyp;
    
    v_processing_msg       common.st_message_string;
+   limit_in             CONSTANT PLS_INTEGER := 1000;
     
   BEGIN
+     logit.log('==> Start at '||to_char(sysdate, 'DD-MON-YYYY HH24:MI:SS'));
      OPEN tabNameCur FOR 'SELECT * FROM  PLAN_LADS_CLA_CHR' ;
-     FETCH tabNameCur BULK COLLECT INTO tabRec;
-     CLOSE tabNameCur;
-      
-     FOR idx iN tabRec.FIRST..tabRec.LAST
+     
      LOOP
-       INSERT INTO lads_cla_chr
-       VALUES tabRec(idx);
+       FETCH tabNameCur BULK COLLECT INTO tabRec LIMIT limit_in;
        
-       /* commit at every 10000 rows inserted */
-        --       IF MOD(idx, 10000) = 0 THEN
-        --         COMMIT;
-        --       END IF;
+       FOR idx IN 1..tabRec.COUNT
+       LOOP
+         INSERT INTO lads_cla_chr
+         VALUES tabRec(idx);
+       END LOOP;
+       
+       EXIT WHEN tabRec.COUNT < limit_in;
+       
      END LOOP;
+     CLOSE tabNameCur;
      COMMIT;
+     logit.log('==> Completed at '||to_char(sysdate, 'DD-MON-YYYY HH24:MI:SS'));
   EXCEPTION
      WHEN OTHERS THEN
         ROLLBACK;
-        v_processing_msg := 'RF_APP.reference_materialisation.cp_big_tbl_data failed to complete data insert into LADS_CLA_CHR';
+        v_processing_msg := 'RF_APP.reference_materialisation.cp_big_tbl_data failed inserting LADS_CLA_CHR.'||common.create_sql_error_msg;
         logit.log_error (common.create_error_msg (v_processing_msg) );
         RAISE common.ge_error;
   END;
@@ -76,7 +82,7 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
 
     TYPE t_csrs IS TABLE OF INTEGER
       INDEX BY common.st_counter;
-
+      
     v_column_name          common.st_oracle_name;
     v_primary_key_columns  t_columns;
     v_table                t_table;
@@ -89,6 +95,10 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
     csr_rowids             common.t_ref_cursor;
     v_rowid                ROWID;
     v_delete_sql           common.st_sql;
+    
+    /* Added by David Zhang */
+    v_deleted              common.st_count;           -- number of rows to be deleted    
+    
   BEGIN
     logit.enter_method (pc_package_name, 'MATERIALISE_TABLE');
     logit.LOG ('Destination Table : ' || i_dest_table);
@@ -155,13 +165,25 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
       logit.LOG ('Deleting all data from destination table : ' || i_dest_table);
 
       BEGIN
-        EXECUTE IMMEDIATE 'delete from ' || i_dest_table;
-        logit.LOG ('Deleted '||i_dest_table||' Records : ' || SQL%ROWCOUNT);
-        
-        COMMIT;
+--    Modified by David Zhang. Rewrite due to Oracle error on deletion of large size table records (e.g., 8223860 rows): 
+--       Unable to delete destination table LADS_CLA_CHR.SQL ERROR: [ORA-01555: snapshot too old: rollback segment number 6 with name "_SYSSMU6$" too small]
+       
+--        EXECUTE IMMEDIATE 'delete from ' || i_dest_table;
+--        logit.LOG ('Deleted '||i_dest_table||' Records : ' || SQL%ROWCOUNT);
+--        
+--        COMMIT;
+         
+      EXECUTE IMMEDIATE 'select count(*) from '||i_dest_table||' ' into v_deleted;
+
+      v_sql :='BEGIN RF.SCHEMA_MANAGEMENT.truncate_table(' ||''''|| i_dest_table ||''''|| '); END;';        
+      
+      EXECUTE IMMEDIATE v_sql;      
+
+      logit.LOG ('Deleted '||i_dest_table||' Records : ' || v_deleted);
+
       EXCEPTION
         WHEN OTHERS THEN
-          ROLLBACK;
+          /* ROLLBACK; */ /* Commented it as no longer needed due to DDL operation. Modified by David Zhang. */ 
           v_processing_msg := 'Unable to delete destination table '||i_dest_table ||'.'|| common.create_sql_error_msg;
           RAISE common.ge_error;
       END;
@@ -313,7 +335,7 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
 
             v_counter := v_counter + 1;
           END LOOP;
-
+          
           logit.LOG ('Creating Insert Columns');
           v_insert_columns := '';
           v_counter := 1;
@@ -328,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
 
             v_counter := v_counter + 1;
           END LOOP;
-
+          
           logit.LOG ('Parsing Cursors.');
           dbms_sql.parse (v_source_select, 'select ' || v_columns || ' from ' || i_source_obj, dbms_sql.native);
           v_sql := 'select ' || v_columns || ',rowid from ' || i_dest_table || v_where_clause;
@@ -351,6 +373,7 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
             dbms_sql.parse (v_update_csrs (v_counter), v_sql, dbms_sql.native);
             v_counter := v_counter + 1;
           END LOOP;
+          
         EXCEPTION
           WHEN OTHERS THEN
             v_processing_msg := 'Unable to parse queries. ' || common.create_sql_error_msg;
@@ -670,5 +693,3 @@ CREATE OR REPLACE PACKAGE BODY RF_APP.reference_materialisation AS
       RETURN common.gc_error;
   END materialise_table;
 END reference_materialisation; 
-/
-
