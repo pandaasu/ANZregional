@@ -1,4 +1,4 @@
-grant select on bds_sto_po_header to manu_app
+grant select on bds_sto_po_header to manu_app;
 
 /* Formatted on 14/02/2013 1:31:37 PM (QP5 v5.215.12089.38647) */
 CREATE OR REPLACE FORCE VIEW BDS.BDS_STO_PO_VW
@@ -58,15 +58,15 @@ AS
            bds_material_plant_local t03
      WHERE     t01.purch_order_doc_num = t02.purch_order_doc_num
            AND t02.sap_material_code = t03.sap_material_code(+)
-           AND t02.plant_code = t03.plant_code(+))
+           AND t02.plant_code = t03.plant_code(+));
 /
 
 
-CREATE OR REPLACE PUBLIC SYNONYM BDS_STO_PO_VW FOR BDS.BDS_STO_PO_VW
+CREATE OR REPLACE PUBLIC SYNONYM BDS_STO_PO_VW FOR BDS.BDS_STO_PO_VW;
 /
 
 
-GRANT SELECT ON BDS.BDS_STO_PO_VW TO BDS_APP WITH GRANT OPTION
+GRANT SELECT ON BDS.BDS_STO_PO_VW TO BDS_APP WITH GRANT OPTION;
 /
 
 grant select on bds.bds_sto_po_vw to appsupport;
