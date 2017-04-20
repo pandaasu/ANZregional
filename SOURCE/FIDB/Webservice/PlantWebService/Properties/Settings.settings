@@ -1,0 +1,35 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="PlantWebService.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="LoggingLevel" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="UseOracle" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="OracleConnectionString" Type="(Connection string)" Scope="Application">
+      <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;ConnectionString&gt;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=pchlx001.pch.ap.mars)(PORT=1521))(CONNECT_DATA=(SID=db1091t)));User ID=manu_app;Password=manice;Pooling=true;&lt;/ConnectionString&gt;
+&lt;/SerializableConnectionString&gt;</DesignTimeValue>
+      <Value Profile="(Default)">Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=pchlx001.pch.ap.mars)(PORT=1521))(CONNECT_DATA=(SID=db1091t)));User ID=manu_app;Password=manice;Pooling=true;</Value>
+    </Setting>
+    <Setting Name="SqlConnectionString" Type="(Connection string)" Scope="Application">
+      <DesignTimeValue Profile="(Default)" />
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="OracleAppSchema" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">manu_app</Value>
+    </Setting>
+    <Setting Name="OracleAppPackage" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">fctry_cntl_sys_service</Value>
+    </Setting>
+    <Setting Name="SiteCode" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">101122106</Value>
+    </Setting>
+    <Setting Name="PlantCode" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">TH01</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

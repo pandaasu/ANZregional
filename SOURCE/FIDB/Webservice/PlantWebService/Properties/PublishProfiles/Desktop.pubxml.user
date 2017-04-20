@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+This file is used by the publish/package process of your Web project. You can customize the behavior of this process
+by editing this MSBuild file. In order to learn more about this please visit http://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <_PublishTargetUrl>C:\Users\tyleepe2\Desktop\PlantWebServicePublished</_PublishTargetUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <File Include="bin/log4net.dll">
+      <publishTime>03/13/2017 15:36:06</publishTime>
+    </File>
+    <File Include="bin/Oracle.ManagedDataAccess.dll">
+      <publishTime>03/13/2017 15:38:40</publishTime>
+    </File>
+    <File Include="bin/PlantWebService.dll">
+      <publishTime>04/12/2017 08:20:41</publishTime>
+    </File>
+    <File Include="bin/WCFExtrasPlus.dll">
+      <publishTime>03/13/2017 13:39:25</publishTime>
+    </File>
+    <File Include="FactoryService.svc">
+      <publishTime>03/23/2017 13:44:15</publishTime>
+    </File>
+    <File Include="packages.config">
+      <publishTime>03/13/2017 15:38:41</publishTime>
+    </File>
+    <File Include="PlantService.svc">
+      <publishTime>03/10/2017 15:23:56</publishTime>
+    </File>
+    <File Include="Web.config">
+      <publishTime>03/30/2017 15:10:23</publishTime>
+    </File>
+  </ItemGroup>
+</Project>
