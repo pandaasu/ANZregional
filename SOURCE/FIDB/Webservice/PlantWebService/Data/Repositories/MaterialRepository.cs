@@ -196,7 +196,7 @@ namespace PlantWebService.Data.Repositories
 
                         result.MaterialInformation.MaterialDefinition[rowCount].MaterialDefinitionProperty[6] = new MaterialDefinitionPropertyType()
                         {
-                            ID = new IdentifierType() { Value = "PROPERTY=PLANT_ORIGINATED_MATERIAL_TYPE" },
+                            ID = new IdentifierType() { Value = "PROPERTY=PLANT_ORIENTED_MATERIAL_TYPE" },
                             Value = new Models.ValueType[1]
                         };
                         result.MaterialInformation.MaterialDefinition[rowCount].MaterialDefinitionProperty[6].Value[0] = new Models.ValueType()
