@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="PlantWebService.TestSite.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ServiceURL" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://test.webservice.fidb.ap.mars/FactoryService.svc</Value>
+    </Setting>
+    <Setting Name="PlantWebService_TestSite_mars_ap_fidb_webservice_test_FactoryService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://test.webservice.fidb.ap.mars/FactoryService.svc</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

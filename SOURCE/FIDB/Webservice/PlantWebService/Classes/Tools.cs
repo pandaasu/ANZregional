@@ -138,7 +138,7 @@ namespace PlantWebService.Classes
         {
             DateTime output;
 
-            var isDateTime = DateTime.TryParseExact(input, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out output);
+            var isDateTime = DateTime.TryParseExact(input.Replace("CET", "+01:00"), format, CultureInfo.InvariantCulture, DateTimeStyles.None, out output);
 
             if (isDateTime)
                 return output;

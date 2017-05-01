@@ -6,7 +6,7 @@ using System.ServiceModel;
 
 namespace PlantWebService.Models
 {
-    [MessageContract(IsWrapped = false)]
+    [MessageContract(IsWrapped = true)]
     public class CreateScrapMaterialRequest
     {
         [MessageBodyMember(Namespace = "http://www.wbf.org/xml/B2MML-V0401")]

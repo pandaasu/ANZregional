@@ -69,27 +69,31 @@ namespace PlantWebService.Data.Repositories
             public RetrieveMarsCalendarResponse RetrieveMarsCalendar(RetrieveMarsCalendarRequest request)
             {
                 var result = new RetrieveMarsCalendarResponse();
-                var dataset = new DataSet();
 
                 if (Properties.Settings.Default.UseOracle)
                 {
                     this.OracleCommand = new OracleCommand();
                     this.OracleCommand.Connection = this.OracleConnection;
                     this.OracleCommand.Transaction = this.OracleTransaction;
-                    this.OracleCommand.CommandType = CommandType.Text;
-                    this.OracleCommand.CommandText = string.Format("select * from table({0}.{1}.retrieve_mars_date(:par_mode, :par_system_key, :par_cal_dte, :par_hist_yrs))", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
+                    this.OracleCommand.CommandType = CommandType.StoredProcedure;
+                    this.OracleCommand.CommandText = string.Format("{0}.{1}.retrieve_mars_date", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
                     this.OracleCommand.Parameters.Add("par_system_key", OracleDbType.Varchar2).Value = request.SystemKey.ToSqlNullable();
                     this.OracleCommand.Parameters.Add("par_mode", OracleDbType.Int32).Value = (int)request.Mode;
                     this.OracleCommand.Parameters.Add("par_cal_dte", OracleDbType.Date).Value = request.Date.ToSqlNullable<DateTime>();
                     this.OracleCommand.Parameters.Add("par_hist_yrs", OracleDbType.Int32).Value = request.HistoryYears;
-
+                    this.OracleCommand.Parameters.Add("rc_out", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                     this.Log();
-                    this.OracleAdapter = new OracleDataAdapter(this.OracleCommand);
-                    this.OracleAdapter.Fill(dataset);
+                    this.OracleReader = this.OracleCommand.ExecuteReader();
+
+                    if (!this.OracleReader.HasRows)
+                    {
+                        return result;
+                    }
 
                     var rowCount = 0;
+                    var dataList = new List<ProductionParameterType>();
                     
-                    foreach (DataRow row in dataset.Tables[0].Rows)
+                    while (this.OracleReader.Read())
                     {
                         if (rowCount == 0)
                         {
@@ -101,128 +105,131 @@ namespace PlantWebService.Data.Repositories
                             result.ProductionSchedule.ProductionRequest[0] = new ProductionRequestType();
                             result.ProductionSchedule.ProductionRequest[0].SegmentRequirement = new SegmentRequirementType[1];
                             result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0] = new SegmentRequirementType();
-                            result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter = new ProductionParameterType[dataset.Tables[0].Rows.Count];
+                            //result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter = new ProductionParameterType[dataset.Tables[0].Rows.Count];
                         }
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount] = new ProductionParameterType();
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter = new ParameterType();
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.ID = new IdentifierType() { Value = "MarsDateData" };
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value = new Models.ValueType[16];
+                        var dataItem = new ProductionParameterType();
+                        dataItem.Parameter = new ParameterType();
+                        dataItem.Parameter.ID = new IdentifierType() { Value = "MarsDateData" };
+                        dataItem.Parameter.Value = new Models.ValueType[16];
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[0] = new Models.ValueType()
+                        dataItem.Parameter.Value[0] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "datetime" },
                             Key = new IdentifierType() { Value = "CalendarDate" },
-                            ValueString = new ValueStringType() { Value = string.Format("{0:o}", Convert.ToDateTime(row["calendar_date"])) }
+                            ValueString = new ValueStringType() { Value = string.Format("{0:o}", Convert.ToDateTime(this.OracleReader["calendar_date"])) }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[1] = new Models.ValueType()
+                        dataItem.Parameter.Value[1] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "Year" },
-                            ValueString = new ValueStringType() { Value = row["year_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["year_num"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[2] = new Models.ValueType()
+                        dataItem.Parameter.Value[2] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "Month" },
-                            ValueString = new ValueStringType() { Value = row["month_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["month_num"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[3] = new Models.ValueType()
+                        dataItem.Parameter.Value[3] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "PeriodNumber" },
-                            ValueString = new ValueStringType() { Value = row["period_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["period_num"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[4] = new Models.ValueType()
+                        dataItem.Parameter.Value[4] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MonthDayNumber" },
-                            ValueString = new ValueStringType() { Value = row["month_day_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["month_day_num"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[5] = new Models.ValueType()
+                        dataItem.Parameter.Value[5] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "PeriodDayNumber" },
-                            ValueString = new ValueStringType() { Value = row["period_day_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["period_day_num"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[6] = new Models.ValueType()
+                        dataItem.Parameter.Value[6] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "JulianDate" },
-                            ValueString = new ValueStringType() { Value = row["julian_date"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["julian_date"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[7] = new Models.ValueType()
+                        dataItem.Parameter.Value[7] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MarsPeriod" },
-                            ValueString = new ValueStringType() { Value = row["mars_period"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mars_period"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[8] = new Models.ValueType()
+                        dataItem.Parameter.Value[8] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "YearToDayDate" },
-                            ValueString = new ValueStringType() { Value = row["yyyymmdd_date"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["yyyymmdd_date"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[9] = new Models.ValueType()
+                        dataItem.Parameter.Value[9] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "YearToQuarterDate" },
-                            ValueString = new ValueStringType() { Value = row["yyyyqq_date"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["yyyyqq_date"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[10] = new Models.ValueType()
+                        dataItem.Parameter.Value[10] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MarsYearToQuarterDate" },
-                            ValueString = new ValueStringType() { Value = row["mars_yyyyqq_date"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mars_yyyyqq_date"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[11] = new Models.ValueType()
+                        dataItem.Parameter.Value[11] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MarsWeek" },
-                            ValueString = new ValueStringType() { Value = row["mars_week"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mars_week"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[12] = new Models.ValueType()
+                        dataItem.Parameter.Value[12] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MarsYearPeriodDay" },
-                            ValueString = new ValueStringType() { Value = row["mars_yyyyppdd"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mars_yyyyppdd"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[13] = new Models.ValueType()
+                        dataItem.Parameter.Value[13] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "MarsYear" },
-                            ValueString = new ValueStringType() { Value = row["mars_year"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mars_year"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[14] = new Models.ValueType()
+                        dataItem.Parameter.Value[14] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "WmcDate" },
-                            ValueString = new ValueStringType() { Value = row["mwc_date"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["mwc_date"].ToString() }
                         };
 
-                        result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter[rowCount].Parameter.Value[15] = new Models.ValueType()
+                        dataItem.Parameter.Value[15] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "integer" },
                             Key = new IdentifierType() { Value = "PeriodBusinessDayNumber" },
-                            ValueString = new ValueStringType() { Value = row["period_bus_day_num"].ToString() }
+                            ValueString = new ValueStringType() { Value = this.OracleReader["period_bus_day_num"].ToString() }
                         };
 
                         rowCount++;
+                        dataList.Add(dataItem);
                     }
+
+                    result.ProductionSchedule.ProductionRequest[0].SegmentRequirement[0].ProductionParameter = dataList.ToArray();
                 }
                 else
                 {

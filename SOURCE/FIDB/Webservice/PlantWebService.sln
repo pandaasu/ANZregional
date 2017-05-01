@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Express 2013 for Web
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantWebService", "PlantWebService\PlantWebService.csproj", "{1F297586-6E37-45C0-A030-06161866CC01}"
 EndProject
@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantWebService.TestClient"
 	ProjectSection(ProjectDependencies) = postProject
 		{1F297586-6E37-45C0-A030-06161866CC01} = {1F297586-6E37-45C0-A030-06161866CC01}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantWebService.TestSite", "PlantWebService.TestSite\PlantWebService.TestSite.csproj", "{2F0D84B1-8BCA-49E6-B153-9388B97E7B5D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +26,10 @@ Global
 		{175DD1FC-E333-4239-8CC8-A24F34A1CE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{175DD1FC-E333-4239-8CC8-A24F34A1CE5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{175DD1FC-E333-4239-8CC8-A24F34A1CE5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F0D84B1-8BCA-49E6-B153-9388B97E7B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F0D84B1-8BCA-49E6-B153-9388B97E7B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F0D84B1-8BCA-49E6-B153-9388B97E7B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F0D84B1-8BCA-49E6-B153-9388B97E7B5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

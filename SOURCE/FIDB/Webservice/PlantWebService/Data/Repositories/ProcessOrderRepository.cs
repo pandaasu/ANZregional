@@ -129,24 +129,23 @@ namespace PlantWebService.Data.Repositories
             public RetrieveProcessOrderResponse RetrieveProcessOrder(RetrieveProcessOrderRequest request)
             {
                 var result = new RetrieveProcessOrderResponse();
-                var dataset = new DataSet();
-
+                
                 if (Properties.Settings.Default.UseOracle)
                 {
                     this.OracleCommand = new OracleCommand();
                     this.OracleCommand.Connection = this.OracleConnection;
                     this.OracleCommand.Transaction = this.OracleTransaction;
-                    this.OracleCommand.CommandType = CommandType.Text;
-                    this.OracleCommand.CommandText = string.Format("select * from table({0}.{1}.retrieve_process_orders(:par_system_key, :par_proc_order))", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
+                    this.OracleCommand.CommandType = CommandType.StoredProcedure;
+                    this.OracleCommand.CommandText = string.Format("{0}.{1}.retrieve_process_orders", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
                     this.OracleCommand.Parameters.Add("par_system_key", OracleDbType.Varchar2).Value = request.SystemKey;
                     this.OracleCommand.Parameters.Add("par_proc_order", OracleDbType.Varchar2).Value = request.ProcessOrder;
+                    this.OracleCommand.Parameters.Add("rc_out", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                     this.Log();
-                    this.OracleAdapter = new OracleDataAdapter(this.OracleCommand);
-                    this.OracleAdapter.Fill(dataset);
+                    this.OracleReader = this.OracleCommand.ExecuteReader();
 
-                    if (dataset.Tables[0].Rows.Count > 0)
+                    if (!this.OracleReader.HasRows)
                     {
-                        result.ProductionSchedule = new ProductionScheduleType();
+                        return result;
                     }
 
                     var rowCount = 0;
@@ -161,25 +160,26 @@ namespace PlantWebService.Data.Repositories
                     var seq = new ParameterType();
                     var operationCounter = 0;
 
-                    foreach (DataRow row in dataset.Tables[0].Rows)
+                    while (this.OracleReader.Read())
                     {
                         if (rowCount == 0)
                         {
-                            result.ProductionSchedule.ID = new IdentifierType() { Value = row["proc_order"].ToString() };
+                            result.ProductionSchedule = new ProductionScheduleType();
+                            result.ProductionSchedule.ID = new IdentifierType() { Value = this.OracleReader["proc_order"].ToString() };
                             result.ProductionSchedule.Description = new DescriptionType[1];
                             result.ProductionSchedule.Description[0] = new DescriptionType() { Value = "Process Order" };
                             result.ProductionSchedule.Location = new LocationType();
                             result.ProductionSchedule.Location.EquipmentID = new EquipmentIDType() { Value = Properties.Settings.Default.SiteCode };
                             result.ProductionSchedule.Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "Site" };
                             result.ProductionSchedule.Location.Location = new LocationType();
-                            result.ProductionSchedule.Location.Location.EquipmentID = new EquipmentIDType() { Value = row["plant"].ToString() };
+                            result.ProductionSchedule.Location.Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["plant"].ToString() };
                             result.ProductionSchedule.Location.Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "Area" };
-                            result.ProductionSchedule.PublishedDate = new PublishedDateType() { Value = Convert.ToDateTime(row["upd_datime"]) };
-                            result.ProductionSchedule.StartTime = new StartTimeType() { Value = Convert.ToDateTime(row["sched_start_datime"]) };
-                            result.ProductionSchedule.EndTime = new EndTimeType() { Value = Convert.ToDateTime(row["run_end_datime"]) };
+                            result.ProductionSchedule.PublishedDate = new PublishedDateType() { Value = Convert.ToDateTime(this.OracleReader["upd_datime"]) };
+                            result.ProductionSchedule.StartTime = new StartTimeType() { Value = Convert.ToDateTime(this.OracleReader["sched_start_datime"]) };
+                            result.ProductionSchedule.EndTime = new EndTimeType() { Value = Convert.ToDateTime(this.OracleReader["run_end_datime"]) };
                         }
 
-                        if (operationCode != row["opertn"].ToString())
+                        if (operationCode != this.OracleReader["opertn"].ToString())
                         {
                             if (phaseList.Count > 0)
                             {
@@ -187,15 +187,15 @@ namespace PlantWebService.Data.Repositories
                             }
 
                             operationCounter++;
-                            operationCode = row["opertn"].ToString();
+                            operationCode = this.OracleReader["opertn"].ToString();
 
                             operation = new ProductionRequestType();
                             operation.ID = new IdentifierType() { Value = result.ProductionSchedule.ID.Value + "-" + operationCounter.ToString() };
                             operation.SegmentRequirement = new SegmentRequirementType[1];
                             operation.SegmentRequirement[0] = new SegmentRequirementType();
-                            operation.SegmentRequirement[0].ID = new IdentifierType() { Value = row["resrce_code"].ToString() };
+                            operation.SegmentRequirement[0].ID = new IdentifierType() { Value = this.OracleReader["resrce_code"].ToString() };
                             operation.SegmentRequirement[0].Location = new LocationType();
-                            operation.SegmentRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = row["plant"].ToString() };
+                            operation.SegmentRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["plant"].ToString() };
                             operation.SegmentRequirement[0].Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "Area" };
                             operation.SegmentRequirement[0].ProductionParameter = new ProductionParameterType[3];
                             operation.SegmentRequirement[0].ProductionParameter[0] = new ProductionParameterType();
@@ -223,13 +223,13 @@ namespace PlantWebService.Data.Repositories
                             };
                             operation.SegmentRequirement[0].ProductionParameter[1].Parameter.Parameter[0].Value = new PlantWebService.Models.ValueType[2];
                             operation.SegmentRequirement[0].ProductionParameter[1].Parameter.Parameter[0].Value[0] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["batch_size_target_value"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["batch_size_target_value"].ToString() },
                                 DataType = new DataTypeType() { Value = "decimal" },
                                 Key = new IdentifierType() { Value = "VALUE" },
                                 UnitOfMeasure = new UnitOfMeasureType() { Value = "kg" }
                             };
                             operation.SegmentRequirement[0].ProductionParameter[1].Parameter.Parameter[0].Value[1] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["batch_size_target_low"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["batch_size_target_low"].ToString() },
                                 DataType = new DataTypeType() { Value = "decimal" },
                                 Key = new IdentifierType() { Value = "LOW" },
                                 UnitOfMeasure = new UnitOfMeasureType() { Value = "kg" }
@@ -239,7 +239,7 @@ namespace PlantWebService.Data.Repositories
                             };
                             operation.SegmentRequirement[0].ProductionParameter[1].Parameter.Parameter[1].Value = new PlantWebService.Models.ValueType[1];
                             operation.SegmentRequirement[0].ProductionParameter[1].Parameter.Parameter[1].Value[0] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["opertn_pans"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["opertn_pans"].ToString() },
                                 DataType = new DataTypeType() { Value = "decimal" },
                                 Key = new IdentifierType() { Value = "VALUE" },
                                 UnitOfMeasure = new UnitOfMeasureType()
@@ -250,25 +250,25 @@ namespace PlantWebService.Data.Repositories
                             };
                             operation.SegmentRequirement[0].ProductionParameter[2].Parameter.Value = new PlantWebService.Models.ValueType[4];
                             operation.SegmentRequirement[0].ProductionParameter[2].Parameter.Value[0] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["cntl_rec_id"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["cntl_rec_id"].ToString() },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "ID" },
                                 UnitOfMeasure = new UnitOfMeasureType()
                             };
                             operation.SegmentRequirement[0].ProductionParameter[2].Parameter.Value[1] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["recipe_text"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["recipe_text"].ToString() },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "DESCRIPTION" },
                                 UnitOfMeasure = new UnitOfMeasureType()
                             };
                             operation.SegmentRequirement[0].ProductionParameter[2].Parameter.Value[2] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["version"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["version"].ToString() },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "PRODUCTION_VERSION" },
                                 UnitOfMeasure = new UnitOfMeasureType()
                             };
                             operation.SegmentRequirement[0].ProductionParameter[2].Parameter.Value[3] = new PlantWebService.Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = string.Format("{0:o}", row["upd_datime"]) },
+                                ValueString = new ValueStringType() { Value = string.Format("{0:o}", this.OracleReader["upd_datime"]) },
                                 DataType = new DataTypeType() { Value = "DateTime" },
                                 Key = new IdentifierType() { Value = "MODIFIED_DATE" },
                                 UnitOfMeasure = new UnitOfMeasureType()
@@ -277,22 +277,22 @@ namespace PlantWebService.Data.Repositories
                             operation.SegmentRequirement[0].MaterialRequirement[0] = new MaterialRequirementType();
                             operation.SegmentRequirement[0].MaterialRequirement[0].MaterialDefinitionID = new MaterialDefinitionIDType[1];
                             operation.SegmentRequirement[0].MaterialRequirement[0].MaterialDefinitionID[0] = new MaterialDefinitionIDType() {
-                                Value = row["code_produced"].ToString()
+                                Value = this.OracleReader["code_produced"].ToString()
                             };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Description = new DescriptionType[1];
                             operation.SegmentRequirement[0].MaterialRequirement[0].Description[0] = new DescriptionType() {
-                                Value = row["description_produced"].ToString()
+                                Value = this.OracleReader["description_produced"].ToString()
                             };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Location = new LocationType();
-                            operation.SegmentRequirement[0].MaterialRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = row["plant_produced"].ToString() };
+                            operation.SegmentRequirement[0].MaterialRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["plant_produced"].ToString() };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "Area" };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Location.Location = new LocationType();
-                            operation.SegmentRequirement[0].MaterialRequirement[0].Location.Location.EquipmentID = new EquipmentIDType() { Value = row["strge_locn_produced"].ToString() };
+                            operation.SegmentRequirement[0].MaterialRequirement[0].Location.Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["strge_locn_produced"].ToString() };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Location.Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "StorageZone" };
                             operation.SegmentRequirement[0].MaterialRequirement[0].MaterialUse = new MaterialUseType() { Value = "Produced" };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Quantity = new QuantityValueType[1];
                             operation.SegmentRequirement[0].MaterialRequirement[0].Quantity[0] = new QuantityValueType();
-                            operation.SegmentRequirement[0].MaterialRequirement[0].Quantity[0].QuantityString = new QuantityStringType() { Value = row["total_qty_produced"].ToString() };
+                            operation.SegmentRequirement[0].MaterialRequirement[0].Quantity[0].QuantityString = new QuantityStringType() { Value = this.OracleReader["total_qty_produced"].ToString() };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Quantity[0].DataType = new DataTypeType() { Value = "decimal" };
                             operation.SegmentRequirement[0].MaterialRequirement[0].Quantity[0].UnitOfMeasure = new UnitOfMeasureType() { Value = "kg" };
                             operation.SegmentRequirement[0].MaterialRequirement[0].MaterialRequirementProperty = new MaterialRequirementPropertyType[1];
@@ -308,10 +308,10 @@ namespace PlantWebService.Data.Repositories
                             operation.SegmentRequirement[0].SegmentRequirement = new SegmentRequirementType[1];
                             operation.SegmentRequirement[0].SegmentRequirement[0] = new SegmentRequirementType();
                             operation.SegmentRequirement[0].SegmentRequirement[0].ProcessSegmentID = new ProcessSegmentIDType() {
-                                Value = row["operation_name"].ToString()
+                                Value = this.OracleReader["operation_name"].ToString()
                             };
                             operation.SegmentRequirement[0].SegmentRequirement[0].Location = new LocationType();
-                            operation.SegmentRequirement[0].SegmentRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = row["resrce_code"].ToString() };
+                            operation.SegmentRequirement[0].SegmentRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["resrce_code"].ToString() };
                             operation.SegmentRequirement[0].SegmentRequirement[0].Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "ProductionUnit" };
                             operation.SegmentRequirement[0].SegmentRequirement[0].ProductionParameter = new ProductionParameterType[1];
                             operation.SegmentRequirement[0].SegmentRequirement[0].ProductionParameter[0] = new ProductionParameterType();
@@ -320,13 +320,13 @@ namespace PlantWebService.Data.Repositories
                                 Value = new Models.ValueType[2]
                             };
                             operation.SegmentRequirement[0].SegmentRequirement[0].ProductionParameter[0].Parameter.Value[0] = new Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["opertn"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["opertn"].ToString() },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "ID" },
                                 UnitOfMeasure = new UnitOfMeasureType()
                             };
                             operation.SegmentRequirement[0].SegmentRequirement[0].ProductionParameter[0].Parameter.Value[1] = new Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["opertn_header"].ToString() },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["opertn_header"].ToString() },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "DESCRIPTION" },
                                 UnitOfMeasure = new UnitOfMeasureType()
@@ -338,16 +338,16 @@ namespace PlantWebService.Data.Repositories
                             operationList.Add(operation);
                         }
 
-                        if (phaseCode != row["phase"].ToString())
+                        if (phaseCode != this.OracleReader["phase"].ToString())
                         {
                             if (seqList.Count > 0)
                             {
                                 phase.ProductionParameter[0].Parameter.Parameter = seqList.ToArray();
                             }
 
-                            phaseCode = row["phase"].ToString();
+                            phaseCode = this.OracleReader["phase"].ToString();
 
-                            phase = new SegmentRequirementType() { ProcessSegmentID = new ProcessSegmentIDType() { Value = row["phase_name"].ToString() } };
+                            phase = new SegmentRequirementType() { ProcessSegmentID = new ProcessSegmentIDType() { Value = this.OracleReader["phase_name"].ToString() } };
                             phase.ProductionParameter = new ProductionParameterType[2];
                             phase.ProductionParameter[0] = new ProductionParameterType() { Parameter = new ParameterType() {
                                 ID = new IdentifierType() { Value = "RECIPE_STEP_PROCESS_PARAMETERS" } }
@@ -360,7 +360,7 @@ namespace PlantWebService.Data.Repositories
                             {
                                 ValueString = new ValueStringType()
                                 {
-                                    Value = row["phase_mpi_v"].ToString()
+                                    Value = this.OracleReader["phase_mpi_v"].ToString()
                                 },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "SRC_PHASE_ID" },
@@ -370,7 +370,7 @@ namespace PlantWebService.Data.Repositories
                             {
                                 ValueString = new ValueStringType()
                                 {
-                                    Value = row["phase_mpi_m"].ToString()
+                                    Value = this.OracleReader["phase_mpi_m"].ToString()
                                 },
                                 DataType = new DataTypeType() { Value = "string" },
                                 Key = new IdentifierType() { Value = "MATERIAL_PHASE_ID" },
@@ -380,17 +380,17 @@ namespace PlantWebService.Data.Repositories
                             phase.MaterialRequirement = new MaterialRequirementType[1];
                             phase.MaterialRequirement[0] = new MaterialRequirementType();
                             phase.MaterialRequirement[0].MaterialDefinitionID = new MaterialDefinitionIDType[1];
-                            phase.MaterialRequirement[0].MaterialDefinitionID[0] = new MaterialDefinitionIDType() { Value = row["code_consumed"].ToString() };
+                            phase.MaterialRequirement[0].MaterialDefinitionID[0] = new MaterialDefinitionIDType() { Value = this.OracleReader["code_consumed"].ToString() };
                             phase.MaterialRequirement[0].Location = new LocationType();
-                            phase.MaterialRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = row["plant"].ToString() };
+                            phase.MaterialRequirement[0].Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["plant"].ToString() };
                             phase.MaterialRequirement[0].Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "Area" };
                             phase.MaterialRequirement[0].Location.Location = new LocationType();
-                            phase.MaterialRequirement[0].Location.Location.EquipmentID = new EquipmentIDType() { Value = row["strge_locn_consumed"].ToString() };
+                            phase.MaterialRequirement[0].Location.Location.EquipmentID = new EquipmentIDType() { Value = this.OracleReader["strge_locn_consumed"].ToString() };
                             phase.MaterialRequirement[0].Location.Location.EquipmentElementLevel = new EquipmentElementLevelType() { Value = "StorageZone" };
                             phase.MaterialRequirement[0].MaterialUse = new MaterialUseType() { Value = "Consumed" };
                             phase.MaterialRequirement[0].Quantity = new QuantityValueType[1];
                             phase.MaterialRequirement[0].Quantity[0] = new QuantityValueType();
-                            phase.MaterialRequirement[0].Quantity[0].QuantityString = new QuantityStringType() { Value = row["total_qty_consumed"].ToString() };
+                            phase.MaterialRequirement[0].Quantity[0].QuantityString = new QuantityStringType() { Value = this.OracleReader["total_qty_consumed"].ToString() };
                             phase.MaterialRequirement[0].Quantity[0].DataType = new DataTypeType() { Value = "decimal" };
                             phase.MaterialRequirement[0].Quantity[0].UnitOfMeasure = new UnitOfMeasureType() { Value = "kg" };
                             phase.MaterialRequirement[0].MaterialRequirementProperty = new MaterialRequirementPropertyType[2];
@@ -408,7 +408,7 @@ namespace PlantWebService.Data.Repositories
                                 Value = new Models.ValueType[1]
                             };
                             phase.MaterialRequirement[0].MaterialRequirementProperty[1].Value[0] = new Models.ValueType() {
-                                ValueString = new ValueStringType() { Value = row["bf_item"].ToString() == "N" ? "false" : "true" },
+                                ValueString = new ValueStringType() { Value = this.OracleReader["bf_item"].ToString() == "N" ? "false" : "true" },
                                 DataType = new DataTypeType { Value = "boolean" },
                                 UnitOfMeasure = new UnitOfMeasureType()
                             };
@@ -419,16 +419,16 @@ namespace PlantWebService.Data.Repositories
                         }
 
                         seq = new ParameterType();
-                        seq.ID = new IdentifierType() { Value = row["code"].ToString() };
+                        seq.ID = new IdentifierType() { Value = this.OracleReader["code"].ToString() };
                         seq.Value = new Models.ValueType[1];
                         seq.Value[0] = new Models.ValueType() {
                             DataType = new DataTypeType() { Value = "string" },
-                            Key = new IdentifierType() { Value = row["code"].ToString() }
+                            Key = new IdentifierType() { Value = this.OracleReader["code"].ToString() }
                         };
-                        if (!string.IsNullOrEmpty(row["value"].ToString()))
-                            seq.Value[0].ValueString = new ValueStringType() { Value = row["value"].ToString() };
-                        if (!string.IsNullOrEmpty(row["uom"].ToString()))
-                            seq.Value[0].UnitOfMeasure = new UnitOfMeasureType() { Value = row["uom"].ToString() };
+                        if (!string.IsNullOrEmpty(this.OracleReader["value"].ToString()))
+                            seq.Value[0].ValueString = new ValueStringType() { Value = this.OracleReader["value"].ToString() };
+                        if (!string.IsNullOrEmpty(this.OracleReader["uom"].ToString()))
+                            seq.Value[0].UnitOfMeasure = new UnitOfMeasureType() { Value = this.OracleReader["uom"].ToString() };
                             
                         seqList.Add(seq);
 
@@ -462,7 +462,6 @@ namespace PlantWebService.Data.Repositories
             public RetrieveProcessOrderListResponse RetrieveProcessOrderList(RetrieveProcessOrderListRequest request)
             {
                 var result = new RetrieveProcessOrderListResponse();
-                var dataset = new DataSet();
 
                 result.ProductionSchedule = new ProductionScheduleType();
 
@@ -471,22 +470,22 @@ namespace PlantWebService.Data.Repositories
                     this.OracleCommand = new OracleCommand();
                     this.OracleCommand.Connection = this.OracleConnection;
                     this.OracleCommand.Transaction = this.OracleTransaction;
-                    this.OracleCommand.CommandType = CommandType.Text;
-                    this.OracleCommand.CommandText = string.Format("select * from table({0}.{1}.retrieve_control_recipes(:par_mode, :par_system_key))", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
+                    this.OracleCommand.CommandType = CommandType.StoredProcedure;
+                    this.OracleCommand.CommandText = string.Format("{0}.{1}.retrieve_control_recipes", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
                     this.OracleCommand.Parameters.Add("par_system_key", OracleDbType.Varchar2).Value = request.SystemKey.ToSqlNullable();
                     this.OracleCommand.Parameters.Add("par_mode", OracleDbType.Int32).Value = (int)request.Mode;
+                    this.OracleCommand.Parameters.Add("rc_out", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                     this.Log();
-                    this.OracleAdapter = new OracleDataAdapter(this.OracleCommand);
-                    this.OracleAdapter.Fill(dataset);
+                    this.OracleReader = this.OracleCommand.ExecuteReader();
 
                     var processOrderCodes = new List<string>();
                     var plantCode = default(string);
                     var productionRequests = new List<ProductionRequestType>();
 
-                    foreach (DataRow row in dataset.Tables[0].Rows)
+                    while (this.OracleReader.Read())
                     {
-                        var processOrderCode = row["proc_order"].ToString();
-                        plantCode = row["plant"].ToString();
+                        var processOrderCode = this.OracleReader["proc_order"].ToString();
+                        plantCode = this.OracleReader["plant"].ToString();
 
                         var productionRequest = new ProductionRequestType()
                         {
@@ -587,12 +586,12 @@ namespace PlantWebService.Data.Repositories
                     || request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value == null)
                     throw new Exception("Use by date must be provided");
 
-                var useByDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:sszzz");
+                var useByDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 if (useByDate == null 
                     && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value)
                     && !string.Equals(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "N/A", StringComparison.InvariantCultureIgnoreCase))
-                    throw new Exception("Use by date invalid format, expected: yyyy-MM-ddTHH:mm:sszzz");
+                    throw new Exception("Use by date invalid format, expected: yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 if (request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID == null
                     || request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID.Length == 0
@@ -665,12 +664,12 @@ namespace PlantWebService.Data.Repositories
                     || request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_START_DT").Value[0].ValueString.Value == null)
                     throw new Exception("Start date must be provided");
 
-                var startDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_START_DT").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:sszzz");
+                var startDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_START_DT").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 if (startDate == null 
                     && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_START_DT").Value[0].ValueString.Value)
                     && !string.Equals(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_START_DT").Value[0].ValueString.Value, "N/A", StringComparison.InvariantCultureIgnoreCase))
-                    throw new Exception("Start date invalid format, expected: yyyy-MM-ddTHH:mm:sszzz");
+                    throw new Exception("Start date invalid format, expected: yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 if (request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT") == null
                                     || request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value == null
@@ -679,12 +678,12 @@ namespace PlantWebService.Data.Repositories
                                     || request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value[0].ValueString.Value == null)
                     throw new Exception("Start date must be provided");
 
-                var endDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:sszzz");
+                var endDate = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 if (endDate == null 
                     && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value[0].ValueString.Value)
                     && !string.Equals(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "PALLET_END_DT").Value[0].ValueString.Value, "N/A", StringComparison.InvariantCultureIgnoreCase))
-                    throw new Exception("End date invalid format, expected: yyyy-MM-ddTHH:mm:sszzz");
+                    throw new Exception("End date invalid format, expected: yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                 #endregion
 
@@ -1017,7 +1016,7 @@ namespace PlantWebService.Data.Repositories
                     if (!batchExpiry.HasValue 
                         && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value)
                         && !string.Equals(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "N/A", StringComparison.InvariantCultureIgnoreCase))
-                        throw new Exception("Expiry date invalid format, expected: yyyy-MM-ddTHH:mm:sszzz");
+                        throw new Exception("Expiry date invalid format, expected: yyyy-MM-ddTHH:mm:ss.ffffffzzz");
                 }
                 
                 #endregion
@@ -1258,7 +1257,7 @@ namespace PlantWebService.Data.Repositories
                     if (!batchExpiry.HasValue
                         && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value)
                         && !string.Equals(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "N/A", StringComparison.InvariantCultureIgnoreCase))
-                        throw new Exception("Expiry date invalid format, expected: yyyy-MM-ddTHH:mm:sszzz");
+                        throw new Exception("Expiry date invalid format, expected: yyyy-MM-ddTHH:mm:ss.ffffffzzz");
                 }
 
                 #endregion

@@ -132,9 +132,7 @@
     </Compile>
     <Compile Include="XmlTextWriterFull.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="App_Data\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="packages.config" />
     <None Include="Properties\PublishProfiles\Desktop.pubxml" />
