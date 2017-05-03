@@ -148,7 +148,12 @@
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Result.cs" />
+    <Compile Include="ViewModels\RetrieveFactoryTransfersViewModel.cs" />
+    <Compile Include="ViewModels\RetrieveMarsCalendarViewModel.cs" />
+    <Compile Include="ViewModels\RetrieveMaterialBatchListViewModel.cs" />
+    <Compile Include="ViewModels\RetrieveMaterialsViewModel.cs" />
     <Compile Include="ViewModels\RetrieveProcessOrderListViewModel.cs" />
+    <Compile Include="ViewModels\RetrieveProcessOrderViewModel.cs" />
     <Compile Include="Web References\mars.ap.fidb.webservice.test\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -279,6 +284,11 @@
     <None Include="Service References\FactoryService\FactoryService.wsdl" />
     <Content Include="Views\Home\RetrieveProcessOrderList.cshtml" />
     <Content Include="Views\Home\Result.cshtml" />
+    <Content Include="Views\Home\RetrieveMaterialBatchList.cshtml" />
+    <Content Include="Views\Home\RetrieveMarsCalendar.cshtml" />
+    <Content Include="Views\Home\RetrieveProcessOrder.cshtml" />
+    <Content Include="Views\Home\RetrieveMaterials.cshtml" />
+    <Content Include="Views\Home\RetrieveFactoryTransfers.cshtml" />
     <None Include="Web References\mars.ap.fidb.webservice.test\FactoryService.wsdl" />
     <Content Include="Web References\mars.ap.fidb.webservice.test\MaterialInformationType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
