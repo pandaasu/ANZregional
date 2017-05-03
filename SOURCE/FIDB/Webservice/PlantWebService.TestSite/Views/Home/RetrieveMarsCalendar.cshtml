@@ -1,0 +1,68 @@
+﻿@model PlantWebService.TestSite.ViewModels.RetrieveMarsCalendarViewModel
+@{
+    ViewBag.Title = "RetrieveMarsCalendar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using (Html.BeginForm("RetrieveMarsCalendar", "Home", FormMethod.Post, new { id = "validationForm", @class = "form form-horizontal", enctype = "multipart/form-data", autocomplete = "off" }))
+{
+    <div class="container-fluid">
+        <div class="row" id="title-row">
+            <div class="col-xs-3">
+                <h3>@ViewBag.Title</h3>
+            </div>
+        </div>
+        <br />
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="DisplayTypes" class="col-sm-4 control-label">Display Type</label>
+                    <div class="col-sm-4">
+                        @Html.DropDownList("DisplayTypes", null, null, new { name = "DisplayType", id = "DisplayType", style = "width:100%;", @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="Modes" class="col-sm-4 control-label">Mode</label>
+                    <div class="col-sm-4">
+                        @Html.DropDownList("Modes", null, null, new { name = "Mode", id = "Mode", style = "width:100%;", @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="SystemKey" class="col-sm-4 control-label text-right">System Key</label>
+                    <div class="col-sm-4">
+                        @Html.TextBoxFor(x => x.SystemKey, new { @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="HistoryYears" class="col-sm-4 control-label text-right">History (Years)</label>
+                    <div class="col-sm-4">
+                        @Html.TextBoxFor(x => x.HistoryYears, new { @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="Date" class="col-sm-4 control-label text-right">Date</label>
+                    <div class="col-sm-4">
+                        @Html.TextBoxFor(x => x.Date, new { @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="form-group row">
+                    <label for="" class="col-sm-4 control-label text-right"></label>
+                    <div class="col-sm-4">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
