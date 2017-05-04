@@ -10,6 +10,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
+using PlantWebService.TestSite.Classes;
 
 namespace PlantWebService.TestSite.Controllers
 {
@@ -270,6 +271,353 @@ namespace PlantWebService.TestSite.Controllers
             var result = svc.RetrieveProcessOrderList((FactoryService.RetrieveMode)Modes, SystemKey);
 
 
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult CreateGRProcessOrder()
+        {
+            var viewModel = new CreateGRProcessOrderViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult CreateGRProcessOrder(int DisplayTypes, string SystemKey, string ProcessOrder, string PlantCode, string MaterialCode, string UserID, string SenderName, string TransactionDate, string BatchCode, string BatchStatus, string UseByDate, string PalletCode, decimal Quantity, string FullPallet, string LastGRFlag, string PalletType, string StartDate, string EndDate)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.ID = new FactoryService.IdentifierType()
+            {
+                Value = ProcessOrder
+            };
+            productionPerformance.Description = new FactoryService.DescriptionType[1];
+            productionPerformance.Description[0] = new FactoryService.DescriptionType()
+            {
+                Value = SenderName
+            };
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionScheduleID = new FactoryService.ProductionScheduleIDType()
+            {
+                Value = ProcessOrder
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = ProcessOrder
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = ProcessOrder
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData = new FactoryService.ProductionDataType[2];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[0] = new FactoryService.ProductionDataType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "USER_ID"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = UserID ?? ""
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[1] = new FactoryService.ProductionDataType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "SENDER_NAME"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[1].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = SenderName
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                MaterialUse = new FactoryService.MaterialUseType(),
+                Quantity = new FactoryService.QuantityValueType[1],
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[8]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialUse = new FactoryService.MaterialUseType()
+            {
+                Value = "Produced"
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = "kg"
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "BATCH_STATUS"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = BatchStatus
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[1] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "EXPIRY_DATE"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[1].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = UseByDate
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "DateTime"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[2] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "SSCC_NUMBER"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[2].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = PalletCode
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[3] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "FULL_PALLET"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[3].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = FullPallet == "Y" ? "true" : "false"
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "boolean"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[4] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "LAST_PROCESS_ORDER_GOODS_RECEIPT"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[4].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = LastGRFlag == "Y" ? "true" : "false" 
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "boolean"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[5] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "PALLET_TYPE"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[5].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = PalletType
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[6] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "PALLET_START_DT"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[6].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = StartDate
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "DateTime"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[7] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "PALLET_END_DT"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[7].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = EndDate
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "DateTime"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+
+            var request = new FactoryService.CreateGRProcessOrderRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CreateGRProcessOrder(request);
+            
             XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
 
             using (StringWriter textWriter = new StringWriter())

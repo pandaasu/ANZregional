@@ -132,6 +132,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Classes\Tools.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -152,6 +153,7 @@
     <Compile Include="ViewModels\RetrieveMarsCalendarViewModel.cs" />
     <Compile Include="ViewModels\RetrieveMaterialBatchListViewModel.cs" />
     <Compile Include="ViewModels\RetrieveMaterialsViewModel.cs" />
+    <Compile Include="ViewModels\CreateGRProcessOrderViewModel.cs" />
     <Compile Include="ViewModels\RetrieveProcessOrderListViewModel.cs" />
     <Compile Include="ViewModels\RetrieveProcessOrderViewModel.cs" />
     <Compile Include="Web References\mars.ap.fidb.webservice.test\Reference.cs">
@@ -289,6 +291,7 @@
     <Content Include="Views\Home\RetrieveProcessOrder.cshtml" />
     <Content Include="Views\Home\RetrieveMaterials.cshtml" />
     <Content Include="Views\Home\RetrieveFactoryTransfers.cshtml" />
+    <Content Include="Views\Home\CreateGRProcessOrder.cshtml" />
     <None Include="Web References\mars.ap.fidb.webservice.test\FactoryService.wsdl" />
     <Content Include="Web References\mars.ap.fidb.webservice.test\MaterialInformationType.datasource">
       <DependentUpon>Reference.map</DependentUpon>

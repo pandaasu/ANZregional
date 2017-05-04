@@ -355,7 +355,8 @@ namespace PlantWebService.Data.Repositories
                             ID = new IdentifierType() { Value = "BATCH_OLC_STATUS" },
                             Value = new Models.ValueType[1]
                         };
-                        result.MaterialInformation.MaterialDefinition[rowCount].MaterialDefinitionProperty[0].Value[0] = new Models.ValueType()
+                        dataItem.MaterialLotProperty[0].Value = new Models.ValueType[1];
+                        dataItem.MaterialLotProperty[0].Value[0] = new Models.ValueType()
                         {
                             DataType = new DataTypeType() { Value = "string" },
                             ValueString = new ValueStringType() { Value = this.OracleReader["batch_olc_status"].ToString() }
@@ -366,7 +367,8 @@ namespace PlantWebService.Data.Repositories
                             ID = new IdentifierType() { Value = "EXPIRY_DATE" },
                             Value = new Models.ValueType[1]
                         };
-                        result.MaterialInformation.MaterialDefinition[rowCount].MaterialDefinitionProperty[1].Value[0] = new Models.ValueType()
+                        dataItem.MaterialLotProperty[1].Value = new Models.ValueType[1];
+                        dataItem.MaterialLotProperty[1].Value[0] = new Models.ValueType()
                         {
                             ValueString = new ValueStringType() { Value = string.Format("{0:o}", this.OracleReader["batch_expiry_date"]) },
                             DataType = new DataTypeType() { Value = "datetime" }
