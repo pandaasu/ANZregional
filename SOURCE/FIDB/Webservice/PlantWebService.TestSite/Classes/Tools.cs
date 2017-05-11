@@ -264,5 +264,12 @@ namespace PlantWebService.TestSite.Classes
             var result = firstThursday.AddDays(weekNum * 7);
             return result.AddDays(-3);
         }
+
+        public static XmlElement GetElement(string xml)
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
+            return doc.DocumentElement;
+        }
     }
 }

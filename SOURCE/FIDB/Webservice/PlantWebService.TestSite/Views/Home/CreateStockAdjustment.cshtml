@@ -1,10 +1,10 @@
-﻿@model PlantWebService.TestSite.ViewModels.CreateGRProcessOrderViewModel
+﻿@model PlantWebService.TestSite.ViewModels.CreateStockAdjustmentViewModel
 @{
-    ViewBag.Title = "CreateGRProcessOrder";
+    ViewBag.Title = "CreateStockAdjustment";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@using (Html.BeginForm("CreateGRProcessOrder", "Home", FormMethod.Post, new { id = "validationForm", @class = "form form-horizontal", enctype = "multipart/form-data", autocomplete = "off" }))
+@using (Html.BeginForm("CreateStockAdjustment", "Home", FormMethod.Post, new { id = "validationForm", @class = "form form-horizontal", enctype = "multipart/form-data", autocomplete = "off" }))
 {
     <div class="container-fluid">
         <div class="row" id="title-row">
@@ -49,14 +49,6 @@
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="SenderName" class="col-sm-4 control-label text-right">Sender Name</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.SenderName, new { @class = "form-control" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
                     <label for="BatchCode" class="col-sm-4 control-label text-right">Batch Code</label>
                     <div class="col-sm-4">
                         @Html.TextBoxFor(x => x.BatchCode, new { @class = "form-control" })
@@ -65,25 +57,9 @@
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="ProcessOrder" class="col-sm-4 control-label text-right">Process Order</label>
+                    <label for="ExpiryDate" class="col-sm-4 control-label text-right">Batch Expiry Date</label>
                     <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.ProcessOrder, new { @class = "form-control" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
-                    <label for="BatchStatus" class="col-sm-4 control-label text-right">Batch Status (i_dispn_code)</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.BatchStatus, new { @class = "form-control" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
-                    <label for="UseByDate" class="col-sm-4 control-label text-right">Use By Date</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.UseByDate, new { @class = "form-control", placeholder = "yyyy-MM-ddTHH:mm:ss.ffffffzzz Eg. 2017-03-31T17:09:14.569237+11:00" })
+                        @Html.TextBoxFor(x => x.ExpiryDate, new { @class = "form-control", placeholder = "yyyy-MM-ddTHH:mm:ss.ffffffzzz Eg. 2017-03-31T17:09:14.569237+11:00" })
                     </div>
                 </div>
             </div>
@@ -97,14 +73,6 @@
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="PalletCode" class="col-sm-4 control-label text-right">Pallet Code</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.PalletCode, new { @class = "form-control" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
                     <label for="Quantity" class="col-sm-4 control-label text-right">Quantity</label>
                     <div class="col-sm-4">
                         @Html.TextBoxFor(x => x.Quantity, new { @class = "form-control" })
@@ -113,49 +81,25 @@
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="FullPallet" class="col-sm-4 control-label text-right">Full Pallet</label>
+                    <label for="Uom" class="col-sm-4 control-label text-right">UOM</label>
                     <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.FullPallet, new { @class = "form-control", placeholder = "Y or N" })
+                        @Html.TextBoxFor(x => x.Uom, new { @class = "form-control" })
                     </div>
                 </div>
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="UserID" class="col-sm-4 control-label text-right">User ID</label>
+                    <label for="StorageLocation" class="col-sm-4 control-label text-right">Storage Location</label>
                     <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.UserID, new { @class = "form-control" })
+                        @Html.TextBoxFor(x => x.StorageLocation, new { @class = "form-control" })
                     </div>
                 </div>
             </div>
             <div class="col-xs-12">
                 <div class="form-group row">
-                    <label for="LastGRFlag" class="col-sm-4 control-label text-right">Last GR Flag</label>
+                    <label for="MovementCode" class="col-sm-4 control-label text-right">Movement Code</label>
                     <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.LastGRFlag, new { @class = "form-control", placeholder = "Y or N" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
-                    <label for="PalletType" class="col-sm-4 control-label text-right">Pallet Type</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.PalletType, new { @class = "form-control" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
-                    <label for="StartDate" class="col-sm-4 control-label text-right">Start Date</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.StartDate, new { @class = "form-control", placeholder = "yyyy-MM-ddTHH:mm:ss.ffffffzzz Eg. 2017-03-31T17:09:14.569237+11:00" })
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group row">
-                    <label for="EndDate" class="col-sm-4 control-label text-right">End Date</label>
-                    <div class="col-sm-4">
-                        @Html.TextBoxFor(x => x.EndDate, new { @class = "form-control", placeholder = "yyyy-MM-ddTHH:mm:ss.ffffffzzz Eg. 2017-03-31T17:09:14.569237+11:00" })
+                        @Html.TextBoxFor(x => x.MovementCode, new { @class = "form-control" })
                     </div>
                 </div>
             </div>

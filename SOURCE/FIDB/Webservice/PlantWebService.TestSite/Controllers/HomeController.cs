@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Net;
@@ -297,6 +298,57 @@ namespace PlantWebService.TestSite.Controllers
             }
         }
 
+        public ActionResult AcknowledgeProcessOrder()
+        {
+            var viewModel = new AcknowledgeProcessOrderViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult AcknowledgeProcessOrder(int DisplayTypes, string SystemKey, string ProcessOrder, string Processed, string Message)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var request = new FactoryService.AcknowledgeProcessOrderRequest();
+            request.SystemKey = SystemKey;
+            request.Message = Message;
+            request.Processed = Processed == "Y";
+            request.ProcessOrder = ProcessOrder;
+
+            var result = svc.AcknowledgeProcessOrder(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+        
         public ActionResult CreateGRProcessOrder()
         {
             var viewModel = new CreateGRProcessOrderViewModel();
@@ -642,6 +694,899 @@ namespace PlantWebService.TestSite.Controllers
                     };
                 }
             }
+        }
+
+        public ActionResult CancelGRProcessOrder()
+        {
+            var viewModel = new CancelGRProcessOrderViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult CancelGRProcessOrder(int DisplayTypes, string SystemKey, string UserID, string SenderName, string TransactionDate, string PalletCode)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.Description = new FactoryService.DescriptionType[1];
+            productionPerformance.Description[0] = new FactoryService.DescriptionType()
+            {
+                Value = SenderName
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData = new FactoryService.ProductionDataType[2];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[0] = new FactoryService.ProductionDataType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "USER_ID"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = UserID ?? ""
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[1] = new FactoryService.ProductionDataType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "SENDER_NAME"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].ProductionData[1].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = SenderName
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "SSCC_NUMBER"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = PalletCode
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+
+            var request = new FactoryService.CancelGRProcessOrderRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CancelGRProcessOrder(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult CreateConsumption()
+        {
+            var viewModel = new CreateConsumptionViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult CreateConsumption(int DisplayTypes, string SystemKey, string ProcessOrder, string PlantCode, string MaterialCode, string TransactionID, string TransactionDate, string BatchCode, decimal Quantity)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.ID = new FactoryService.IdentifierType()
+            {
+                Value = ProcessOrder
+            };
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionScheduleID = new FactoryService.ProductionScheduleIDType()
+            {
+                Value = ProcessOrder
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = ProcessOrder
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = ProcessOrder
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                Quantity = new FactoryService.QuantityValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = "kg"
+                }
+            };
+            productionPerformance.Any = new FactoryService.AnyType[1];
+            productionPerformance.Any[0] = new FactoryService.AnyType();
+            productionPerformance.Any[0].Any = new XmlElement[1];
+            productionPerformance.Any[0].Any[0] = Tools.GetElement(string.Format(@"<EIG>EVENT_ID={0}</EIG>", TransactionID));
+
+            var request = new FactoryService.CreateConsumptionRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CreateConsumption(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        [HttpPost]
+        public ActionResult CreateStockAdjustment(int DisplayTypes, string SystemKey, string Uom, string ExpiryDate, string StorageLocation, string MovementCode, string PlantCode, string MaterialCode, string TransactionDate, string BatchCode, decimal Quantity)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.ID = new FactoryService.IdentifierType()
+            {
+                Value = MovementCode
+            };
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                Quantity = new FactoryService.QuantityValueType[1],
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[1],
+                Location = new FactoryService.LocationType()
+                {
+                    EquipmentID = new FactoryService.EquipmentIDType()
+                    {
+                        Value = StorageLocation
+                    }
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = Uom ?? "kg"
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "EXPIRY_DATE"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = ExpiryDate
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "DateTime"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+            
+
+            var request = new FactoryService.CreateStockAdjustmentRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CreateStockAdjustment(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult CreateStockAdjustment()
+        {
+            var viewModel = new CreateStockAdjustmentViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult CreateBlend(int DisplayTypes, string SystemKey, string Uom, string ExpiryDate, string StorageLocation, string MovementCode, string PlantCode, string MaterialCode, string TransactionDate, string BatchCode, decimal Quantity)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.ID = new FactoryService.IdentifierType()
+            {
+                Value = MovementCode
+            };
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                Quantity = new FactoryService.QuantityValueType[1],
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[1],
+                Location = new FactoryService.LocationType()
+                {
+                    EquipmentID = new FactoryService.EquipmentIDType()
+                    {
+                        Value = StorageLocation
+                    }
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = Uom ?? "kg"
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "EXPIRY_DATE"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = ExpiryDate
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "DateTime"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+
+
+            var request = new FactoryService.CreateBlendRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CreateBlend(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult CreateBlend()
+        {
+            var viewModel = new CreateBlendViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult CreateScrapMaterial(int DisplayTypes, string SystemKey, string Uom, string StorageLocation, string ReasonCode, string PlantCode, string MaterialCode, string TransactionDate, string BatchCode, decimal Quantity)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                Quantity = new FactoryService.QuantityValueType[1],
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[1],
+                Location = new FactoryService.LocationType()
+                {
+                    EquipmentID = new FactoryService.EquipmentIDType()
+                    {
+                        Value = StorageLocation
+                    }
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = Uom ?? "kg"
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0] = new FactoryService.MaterialActualPropertyType()
+            {
+                ID = new FactoryService.IdentifierType()
+                {
+                    Value = "REASON_CODE"
+                },
+                Value = new FactoryService.ValueType[1]
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty[0].Value[0] = new FactoryService.ValueType()
+            {
+                ValueString = new FactoryService.ValueStringType()
+                {
+                    Value = ReasonCode
+                },
+                DataType = new FactoryService.DataTypeType()
+                {
+                    Value = "string"
+                },
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+            };
+
+
+            var request = new FactoryService.CreateScrapMaterialRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.CreateScrapMaterial(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult CreateScrapMaterial()
+        {
+            var viewModel = new CreateScrapMaterialViewModel();
+
+            return View(viewModel);
+        }
+
+        public ActionResult StartProcessOrder()
+        {
+            var viewModel = new StartProcessOrderViewModel();
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public ActionResult StartProcessOrder(int DisplayTypes, string SystemKey, string ProcessOrder, string FlocCode)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.ID = new FactoryService.IdentifierType()
+            {
+                Value = ProcessOrder
+            };
+            productionPerformance.ProductionScheduleID = new FactoryService.ProductionScheduleIDType()
+            {
+                Value = FlocCode
+            };
+
+            var request = new FactoryService.StartProcessOrderRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.StartProcessOrder(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        [HttpPost]
+        public ActionResult LoadStockBalance(int DisplayTypes, string SystemKey, string StorageLocation, string PlantCode, string MaterialCode, string TransactionDate, string BatchCode, decimal Quantity)
+        {
+            var binding = new BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 2147483647;
+            binding.MaxBufferSize = 2147483647;
+
+            var txDate = Tools.TryDateTime(TransactionDate, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
+
+            var endpoint = new EndpointAddress(Properties.Settings.Default.ServiceURL);
+            var svc = new FactoryService.FactoryServiceClient(binding, endpoint);
+
+            var productionPerformance = new FactoryService.ProductionPerformanceType();
+            productionPerformance.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = "101122106"
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Site"
+                }
+            };
+            productionPerformance.Location.Location = new FactoryService.LocationType()
+            {
+                EquipmentID = new FactoryService.EquipmentIDType()
+                {
+                    Value = PlantCode
+                },
+                EquipmentElementLevel = new FactoryService.EquipmentElementLevelType()
+                {
+                    Value = "Area"
+                }
+            };
+            productionPerformance.PublishedDate = new FactoryService.PublishedDateType()
+            {
+                Value = txDate ?? DateTime.Now
+            };
+            productionPerformance.ProductionResponse = new FactoryService.ProductionResponseType[1];
+            productionPerformance.ProductionResponse[0] = new FactoryService.ProductionResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse = new FactoryService.SegmentResponseType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0] = new FactoryService.SegmentResponseType();
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual = new FactoryService.MaterialActualType[1];
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0] = new FactoryService.MaterialActualType()
+            {
+                MaterialDefinitionID = new FactoryService.MaterialDefinitionIDType[1],
+                MaterialLotID = new FactoryService.MaterialLotIDType[1],
+                MaterialSubLotID = new FactoryService.MaterialSubLotIDType[1],
+                Quantity = new FactoryService.QuantityValueType[1],
+                MaterialActualProperty = new FactoryService.MaterialActualPropertyType[1],
+                Location = new FactoryService.LocationType()
+                {
+                    EquipmentID = new FactoryService.EquipmentIDType()
+                    {
+                        Value = StorageLocation
+                    }
+                }
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialDefinitionID[0] = new FactoryService.MaterialDefinitionIDType()
+            {
+                Value = MaterialCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialLotID[0] = new FactoryService.MaterialLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialSubLotID[0] = new FactoryService.MaterialSubLotIDType()
+            {
+                Value = BatchCode
+            };
+            productionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].Quantity[0] = new FactoryService.QuantityValueType()
+            {
+                QuantityString = new FactoryService.QuantityStringType()
+                {
+                    Value = Quantity.ToString()
+                },
+                DataType = new FactoryService.DataTypeType(),
+                UnitOfMeasure = new FactoryService.UnitOfMeasureType()
+                {
+                    Value = "kg"
+                }
+            };
+
+            var request = new FactoryService.LoadStockBalanceRequest();
+            request.SystemKey = SystemKey;
+            request.ProductionPerformance = productionPerformance;
+
+            var result = svc.LoadStockBalance(request);
+
+            XmlSerializer xmlSerializer = new XmlSerializer(result.GetType());
+
+            using (StringWriter textWriter = new StringWriter())
+            {
+                xmlSerializer.Serialize(textWriter, result);
+
+                if (DisplayTypes == 1)
+                {
+                    var model = new ResultViewModel();
+                    model.ResultXml = textWriter.ToString();
+                    return View("Result", model);
+                }
+                else
+                {
+                    this.Response.AddHeader("Content-Disposition", @"attachment; filename=result.xml");
+
+                    return new ContentResult()
+                    {
+                        ContentEncoding = Encoding.UTF8,
+                        ContentType = "application/text",
+                        Content = textWriter.ToString()
+                    };
+                }
+            }
+        }
+
+        public ActionResult LoadStockBalance()
+        {
+            var viewModel = new LoadStockBalanceViewModel();
+
+            return View(viewModel);
         }
     }
 }

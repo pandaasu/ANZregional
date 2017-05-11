@@ -148,6 +148,14 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\LoadStockBalanceViewModel.cs" />
+    <Compile Include="ViewModels\StartProcessOrderViewModel.cs" />
+    <Compile Include="ViewModels\AcknowledgeProcessOrderViewModel.cs" />
+    <Compile Include="ViewModels\CancelGRProcessOrderViewModel.cs" />
+    <Compile Include="ViewModels\CreateConsumptionViewModel.cs" />
+    <Compile Include="ViewModels\CreateBlendViewModel.cs" />
+    <Compile Include="ViewModels\CreateScrapMaterialViewModel.cs" />
+    <Compile Include="ViewModels\CreateStockAdjustmentViewModel.cs" />
     <Compile Include="ViewModels\Result.cs" />
     <Compile Include="ViewModels\RetrieveFactoryTransfersViewModel.cs" />
     <Compile Include="ViewModels\RetrieveMarsCalendarViewModel.cs" />
@@ -292,6 +300,14 @@
     <Content Include="Views\Home\RetrieveMaterials.cshtml" />
     <Content Include="Views\Home\RetrieveFactoryTransfers.cshtml" />
     <Content Include="Views\Home\CreateGRProcessOrder.cshtml" />
+    <Content Include="Views\Home\AcknowledgeProcessOrder.cshtml" />
+    <Content Include="Views\Home\CancelGRProcessOrder.cshtml" />
+    <Content Include="Views\Home\CreateConsumption.cshtml" />
+    <Content Include="Views\Home\CreateStockAdjustment.cshtml" />
+    <Content Include="Views\Home\CreateBlend.cshtml" />
+    <Content Include="Views\Home\CreateScrapMaterial.cshtml" />
+    <Content Include="Views\Home\StartProcessOrder.cshtml" />
+    <Content Include="Views\Home\LoadStockBalance.cshtml" />
     <None Include="Web References\mars.ap.fidb.webservice.test\FactoryService.wsdl" />
     <Content Include="Web References\mars.ap.fidb.webservice.test\MaterialInformationType.datasource">
       <DependentUpon>Reference.map</DependentUpon>

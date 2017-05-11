@@ -903,7 +903,7 @@ namespace PlantWebService.Data.Repositories
                     this.OracleCommand.Connection = this.OracleConnection;
                     this.OracleCommand.Transaction = this.OracleTransaction;
                     this.OracleCommand.CommandType = CommandType.StoredProcedure;
-                    this.OracleCommand.CommandText = string.Format("{0}.{1}.create_gr_proc_order", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
+                    this.OracleCommand.CommandText = string.Format("{0}.{1}.create_consumption", Properties.Settings.Default.OracleAppSchema, Properties.Settings.Default.OracleAppPackage);
                     this.OracleCommand.Parameters.Add("i_system_key", OracleDbType.Varchar2).Value = request.SystemKey.ToSqlNullable();
                     this.OracleCommand.Parameters.Add("i_trans_id", OracleDbType.Int64).Value = transactionId;
                     this.OracleCommand.Parameters.Add("i_xactn_date", OracleDbType.Date).Value = transactionDate;
@@ -1011,7 +1011,7 @@ namespace PlantWebService.Data.Repositories
                     && request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString != null
                     && request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value != null)
                 {
-                    batchExpiry = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.fffzzz");
+                    batchExpiry = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                     if (!batchExpiry.HasValue 
                         && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value)
@@ -1252,7 +1252,7 @@ namespace PlantWebService.Data.Repositories
                     && request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString != null
                     && request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value != null)
                 {
-                    batchExpiry = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.fffzzz");
+                    batchExpiry = Tools.TryDateTime(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value, "yyyy-MM-ddTHH:mm:ss.ffffffzzz");
 
                     if (!batchExpiry.HasValue
                         && !string.IsNullOrEmpty(request.ProductionPerformance.ProductionResponse[0].SegmentResponse[0].MaterialActual[0].MaterialActualProperty.FirstOrDefault(x => x.ID.Value == "EXPIRY_DATE").Value[0].ValueString.Value)

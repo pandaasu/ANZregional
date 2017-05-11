@@ -25,7 +25,7 @@ namespace PlantWebService.TestSite.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://test.webservice.fidb.ap.mars/FactoryService.svc")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:52818/FactoryService.svc")]
         public string ServiceURL {
             get {
                 return ((string)(this["ServiceURL"]));
@@ -35,7 +35,7 @@ namespace PlantWebService.TestSite.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://test.webservice.fidb.ap.mars/FactoryService.svc")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:52818/FactoryService.svc")]
         public string PlantWebService_TestSite_mars_ap_fidb_webservice_test_FactoryService {
             get {
                 return ((string)(this["PlantWebService_TestSite_mars_ap_fidb_webservice_test_FactoryService"]));
